@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.text.csv;
+package com.island.ohara.kafka.connector.csv.source;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
@@ -24,16 +24,18 @@ import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestCsvSourceConverter extends SmallTest {
+public class TestCsvRecordConverter extends SmallTest {
   private final List<String> topicNames = Arrays.asList("T1", "T2");
   private final List<Column> schema =
       Arrays.asList(
@@ -43,7 +45,7 @@ public class TestCsvSourceConverter extends SmallTest {
 
   private String path;
   private File tempFile;
-  private CsvSourceConverter converter;
+  private CsvRecordConverter converter;
   private Map<Integer, List<Cell<String>>> data;
 
   @Before
@@ -52,21 +54,26 @@ public class TestCsvSourceConverter extends SmallTest {
     path = tempFile.getName();
   }
 
-  private CsvSourceConverter createConverter() {
-    return new CsvSourceConverter.Builder()
+  private CsvRecordConverter createConverter() {
+    return new CsvRecordConverter.Builder()
         .path(path)
         .topics(topicNames)
         .offsetCache(new FakeOffsetCache())
         .build();
   }
 
-  private CsvSourceConverter createConverter(List<Column> schema) {
-    return new CsvSourceConverter.Builder()
+  private CsvRecordConverter createConverter(List<Column> schema) {
+    return new CsvRecordConverter.Builder()
         .path(path)
         .topics(topicNames)
         .offsetCache(new FakeOffsetCache())
         .schema(schema)
         .build();
+  }
+
+  private BufferedReader createReader() throws IOException {
+    return new BufferedReader(
+        new InputStreamReader(new FileInputStream(tempFile), Charset.forName("UTF-8")));
   }
 
   private Supplier<InputStreamReader> createReaderSupplier =
@@ -206,10 +213,10 @@ public class TestCsvSourceConverter extends SmallTest {
     for (RowSourceRecord record : records) {
       Assert.assertTrue(topicNames.contains(record.topicName()));
       Assert.assertEquals(
-          Collections.singletonMap(CsvSourceConverter.CSV_PARTITION_KEY, path),
+          Collections.singletonMap(CsvRecordConverter.CSV_PARTITION_KEY, path),
           record.sourcePartition());
       Assert.assertEquals(
-          Collections.singletonMap(CsvSourceConverter.CSV_OFFSET_KEY, index),
+          Collections.singletonMap(CsvRecordConverter.CSV_OFFSET_KEY, index),
           record.sourceOffset());
       Assert.assertEquals(row, record.row());
     }
@@ -229,23 +236,27 @@ public class TestCsvSourceConverter extends SmallTest {
   public void testToCells() throws IOException {
     converter = createConverter();
     data = setupInputData();
-    InputStreamReader reader = createReaderSupplier.get();
-    Assert.assertEquals(data, converter.toCells(reader));
+    try (BufferedReader reader = createReader()) {
+      Stream<String> lines = reader.lines();
+      Assert.assertEquals(data, converter.toCells(lines));
+    }
   }
 
   @Test
-  public void testConvert() {
+  public void testConvert() throws IOException {
     converter = createConverter();
     data = setupInputData();
-    List<RowSourceRecord> records = converter.convert(createReaderSupplier);
-
-    Assert.assertEquals(topicNames.size() * data.size(), records.size());
+    try (BufferedReader reader = createReader()) {
+      Stream<String> lines = reader.lines();
+      List<RowSourceRecord> records = converter.convert(lines);
+      Assert.assertEquals(topicNames.size() * data.size(), records.size());
+    }
   }
 
   @Test
   public void testConvert_IfAllCached() throws IOException {
     converter =
-        new CsvSourceConverter.Builder()
+        new CsvRecordConverter.Builder()
             .path(path)
             .topics(topicNames)
             .offsetCache(
@@ -264,20 +275,22 @@ public class TestCsvSourceConverter extends SmallTest {
             .schema(schema)
             .build();
     setupInputData();
-    List<RowSourceRecord> records = converter.convert(createReaderSupplier);
-
-    Assert.assertEquals(0, records.size());
+    try (BufferedReader reader = createReader()) {
+      Stream<String> lines = reader.lines();
+      List<RowSourceRecord> records = converter.convert(lines);
+      Assert.assertEquals(0, records.size());
+    }
   }
 
   @Test
   public void testRegex() {
-    String[] splits = "1,\"2,3,4\",5".split(CsvSourceConverter.CSV_REGEX);
+    String[] splits = "1,\"2,3,4\",5".split(CsvRecordConverter.CSV_REGEX);
     Assert.assertEquals(3, splits.length);
     Assert.assertEquals("1", splits[0]);
     Assert.assertEquals("\"2,3,4\"", splits[1]);
     Assert.assertEquals("5", splits[2]);
 
-    String[] splits2 = "1,3,5".split(CsvSourceConverter.CSV_REGEX);
+    String[] splits2 = "1,3,5".split(CsvRecordConverter.CSV_REGEX);
     Assert.assertEquals(3, splits.length);
     Assert.assertEquals("1", splits2[0]);
     Assert.assertEquals("3", splits2[1]);

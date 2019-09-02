@@ -21,6 +21,7 @@ const setup = () => {
   const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
   const brokerClusterName = generate.serviceName({ prefix: 'broker' });
   const workerClusterName = generate.serviceName({ prefix: 'worker' });
+  const topicName = generate.serviceName({ prefix: 'topic' });
 
   cy.createNode({
     name: nodeName,
@@ -52,53 +53,69 @@ const setup = () => {
 
   cy.startWorker(workerClusterName);
 
+  cy.createTopic({
+    name: topicName,
+    brokerClusterName,
+  }).as('createTopic');
+
+  cy.startTopic(topicName);
+
   return {
     workerClusterName,
+    topicName,
   };
+};
+
+const assignValue = (acc, def) => {
+  const { defaultValue, key, valueType } = def;
+  const stringTypes = ['STRING', 'CLASS', 'PASSWORD', 'JDBC_TABLE', 'TAGS'];
+  const numberTypes = ['LONG', 'INT', 'PORT'];
+
+  if (defaultValue) {
+    acc[key] = defaultValue;
+  } else {
+    if (stringTypes.includes(valueType)) {
+      acc[key] = generate.word();
+    } else if (numberTypes.includes(valueType)) {
+      acc[key] = generate.port();
+    }
+  }
+
+  return acc;
 };
 
 describe('Validate API', () => {
   before(() => cy.deleteAllServices());
 
   it('validateConnector', () => {
-    const { workerClusterName } = setup();
+    const { workerClusterName, topicName } = setup();
 
-    const params = {
-      author: 'root',
-      columns: [
-        { dataType: 'STRING', name: 'test', newName: 'test', order: 1 },
-      ],
-      name: 'source',
-      'connector.class': 'com.island.ohara.connector.ftp.FtpSource',
-      'connector.name': 'source',
-      'ftp.completed.folder': 'test',
-      'ftp.encode': 'UTF-8',
-      'ftp.error.folder': 'test',
-      'ftp.hostname': 'test',
-      'ftp.input.folder': 'test',
-      'ftp.port': 20,
-      'ftp.user.name': 'test',
-      'ftp.user.password': 'test',
-      kind: 'source',
-      revision: '1e7da9544e6aa7ad2f9f2792ed8daf5380783727',
-      'tasks.max': 1,
-      topics: ['topicName'],
-      version: '0.8.0-SNAPSHOT',
-      workerClusterName,
-    };
+    cy.fetchWorker(workerClusterName).then(response => {
+      const connector = response.data.result.connectors[0]; // Test the very first connector
 
-    cy.validateConnector(params).then(response => {
-      cy.log(response);
-      const {
-        data: { isSuccess, result },
-      } = response;
+      let params = connector.definitions
+        .filter(def => !def.internal)
+        .reduce(assignValue, {});
 
-      const { errorCount, settings } = result;
+      params = {
+        ...params,
+        'connector.class': connector.className,
+        topicKeys: [{ group: 'default', name: topicName }],
+        workerClusterName,
+      };
 
-      expect(isSuccess).to.eq(true);
+      cy.validateConnector(params).then(response => {
+        const {
+          data: { isSuccess, result },
+        } = response;
 
-      expect(errorCount).to.eq(0);
-      expect(settings).to.be.a('array');
+        const { errorCount, settings } = result;
+
+        expect(isSuccess).to.eq(true);
+
+        expect(errorCount).to.eq(0);
+        expect(settings).to.be.an('array');
+      });
     });
   });
 });

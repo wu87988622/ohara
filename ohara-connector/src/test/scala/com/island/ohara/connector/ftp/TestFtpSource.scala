@@ -53,13 +53,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   private[this] val brokerClient = BrokerClient.of(testUtil.brokersConnProps())
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
-  private[this] val ftpClient = FtpClient
-    .builder()
-    .hostname(testUtil.ftpServer.hostname)
-    .port(testUtil.ftpServer.port)
-    .user(testUtil.ftpServer.user)
-    .password(testUtil.ftpServer.password)
-    .build()
+  private[this] val ftpStorage = new FtpStorage(
+    FtpClient
+      .builder()
+      .hostname(testUtil.ftpServer.hostname)
+      .port(testUtil.ftpServer.port)
+      .user(testUtil.ftpServer.user)
+      .password(testUtil.ftpServer.password)
+      .build())
 
   private[this] val props = FtpSourceProps(
     inputFolder = "/input",
@@ -74,7 +75,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] def setupInput(): Unit = {
     val writer = new BufferedWriter(
-      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))))
+      new OutputStreamWriter(ftpStorage.create(CommonUtils.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()
@@ -90,22 +91,18 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @Before
   def setup(): Unit = {
     def rebuild(path: String): Unit = {
-      if (ftpClient.exist(path)) {
-        ftpClient
-          .listFileNames(path)
-          .map(com.island.ohara.common.util.CommonUtils.path(path, _))
-          .foreach(ftpClient.delete)
-        ftpClient.listFileNames(path).size shouldBe 0
-        ftpClient.delete(path)
+      if (ftpStorage.exists(path)) {
+        ftpStorage.delete(path, true)
       }
-      ftpClient.mkdir(path)
+      ftpStorage.mkdirs(path)
+      ftpStorage.list(path).asScala.size shouldBe 0
     }
     // cleanup all files in order to avoid corrupted files
     rebuild(props.inputFolder)
     rebuild(props.errorFolder)
     rebuild(props.completedFolder.get)
     setupInput()
-    ftpClient.listFileNames(props.inputFolder).isEmpty shouldBe false
+    ftpStorage.list(props.inputFolder).asScala.isEmpty shouldBe false
     brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(methodName()).create()
     val topicInfo = brokerClient.topicDescription(methodName())
     topicInfo.numberOfPartitions() shouldBe 1
@@ -130,11 +127,11 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   private[this] def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
     CommonUtils.await(
       () => {
-        ftpClient.listFileNames(props.inputFolder).size == inputCount &&
-        ftpClient.listFileNames(props.completedFolder.get).size == outputCount &&
-        ftpClient.listFileNames(props.errorFolder).size == errorCount
+        ftpStorage.list(props.inputFolder).asScala.size == inputCount &&
+        ftpStorage.list(props.completedFolder.get).asScala.size == outputCount &&
+        ftpStorage.list(props.errorFolder).asScala.size == errorCount
       },
-      Duration.ofSeconds(30)
+      Duration.ofSeconds(20)
     )
   }
 
@@ -342,7 +339,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .connectorKey(connectorKey)
         .columns(schema)
         // will use default UTF-8
-        .settings(props.toMap - FTP_ENCODE)
+        .settings(props.toMap - FILE_ENCODE_CONFIG)
         .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
@@ -479,8 +476,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      checkFileCount(0, 0, 0)
-
+      CommonUtils.await(
+        () => {
+          ftpStorage.list(props.inputFolder).asScala.size == 0
+        },
+        Duration.ofSeconds(20)
+      )
       val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
@@ -510,12 +511,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       encode = "UTF-8"
     )
 
-    ftpClient.mkdir(props.inputFolder)
+    ftpStorage.mkdirs(props.inputFolder)
     val source = new FtpSource
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     source.start(ConnectorFormatter.of().connectorKey(connectorKey).settings(props.toMap.asJava).raw())
-    ftpClient.exist(props.errorFolder) shouldBe true
-    ftpClient.exist(props.completedFolder.get) shouldBe true
+    ftpStorage.exists(props.errorFolder) shouldBe true
+    ftpStorage.exists(props.completedFolder.get) shouldBe true
   }
 
   @Test
@@ -540,6 +541,6 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def tearDown(): Unit = {
     if (brokerClient.exist(methodName())) brokerClient.deleteTopic(methodName())
     Releasable.close(brokerClient)
-    Releasable.close(ftpClient)
+    Releasable.close(ftpStorage)
   }
 }

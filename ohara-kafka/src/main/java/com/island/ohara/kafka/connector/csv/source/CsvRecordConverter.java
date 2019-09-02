@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.text.csv;
+package com.island.ohara.kafka.connector.csv.source;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.*;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.StreamUtils;
 import com.island.ohara.kafka.connector.RowSourceRecord;
-import com.island.ohara.kafka.connector.text.TextSourceConverter;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -36,7 +30,7 @@ import java.util.stream.Stream;
  * A converter to be used to read data from a csv file, and convert to records of Kafka Connect
  * format
  */
-public class CsvSourceConverter implements TextSourceConverter {
+public class CsvRecordConverter implements RecordConverter {
   @VisibleForTesting static final String CSV_REGEX = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
   public static final String CSV_PARTITION_KEY = "csv.file.path";
   public static final String CSV_OFFSET_KEY = "csv.file.line";
@@ -44,27 +38,23 @@ public class CsvSourceConverter implements TextSourceConverter {
   private final String path;
   private final List<String> topics;
   private final List<Column> schema;
+
   private final Map<String, String> partition;
   private final OffsetCache cache;
 
   @Override
-  public List<RowSourceRecord> convert(Supplier<InputStreamReader> supplier) {
-    try (InputStreamReader reader = supplier.get()) {
-      Map<Integer, List<Cell<String>>> cellsAndIndex = toCells(reader);
-      Map<Integer, Row> rowsAndIndex = transform(cellsAndIndex);
-      List<RowSourceRecord> records = toRecords(rowsAndIndex);
-      // ok. all data are prepared. let's update the cache
-      rowsAndIndex.keySet().forEach(index -> cache.update(path, index));
-      return records;
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  public List<RowSourceRecord> convert(Stream<String> lines) {
+    Map<Integer, List<Cell<String>>> cellsAndIndex = toCells(lines);
+    Map<Integer, Row> rowsAndIndex = transform(cellsAndIndex);
+    List<RowSourceRecord> records = toRecords(rowsAndIndex);
+    // ok. all data are prepared. let's update the cache
+    rowsAndIndex.keySet().forEach(index -> cache.update(path, index));
+    return records;
   }
 
   /** read all lines from a reader, and then convert them to cells. */
   @VisibleForTesting
-  Map<Integer, List<Cell<String>>> toCells(InputStreamReader input) {
-    Stream<String> lines = new BufferedReader(input).lines();
+  Map<Integer, List<Cell<String>>> toCells(Stream<String> lines) {
     Map<Integer, String> lineAndIndex =
         StreamUtils.zipWithIndex(lines)
             .filter(
@@ -185,7 +175,7 @@ public class CsvSourceConverter implements TextSourceConverter {
   }
 
   public static class Builder
-      implements com.island.ohara.common.pattern.Builder<CsvSourceConverter> {
+      implements com.island.ohara.common.pattern.Builder<CsvRecordConverter> {
     // Required parameters
     private String path;
     private List<String> topics;
@@ -216,15 +206,15 @@ public class CsvSourceConverter implements TextSourceConverter {
     }
 
     @Override
-    public CsvSourceConverter build() {
+    public CsvRecordConverter build() {
       Objects.requireNonNull(path);
       CommonUtils.requireNonEmpty(topics);
       Objects.requireNonNull(offsetCache);
-      return new CsvSourceConverter(this);
+      return new CsvRecordConverter(this);
     }
   }
 
-  private CsvSourceConverter(Builder builder) {
+  private CsvRecordConverter(Builder builder) {
     path = builder.path;
     topics = builder.topics;
     schema = builder.schema;

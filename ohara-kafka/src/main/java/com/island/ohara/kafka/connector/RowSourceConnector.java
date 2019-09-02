@@ -92,7 +92,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
   @Override
-  public final List<Map<String, String>> taskConfigs(int maxTasks) {
+  public List<Map<String, String>> taskConfigs(int maxTasks) {
     return _taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
   }
 
@@ -116,7 +116,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
 
   /** @return custom definitions + core definitions */
   @Override
-  public final List<SettingDef> definitions() {
+  public List<SettingDef> definitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SOURCE_KIND_DEFINITION),

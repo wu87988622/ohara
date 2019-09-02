@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.text.csv;
+package com.island.ohara.kafka.connector.csv.source;
 
 import com.island.ohara.kafka.connector.RowSourceContext;
 import java.util.Collections;
@@ -26,7 +26,7 @@ public class CsvOffsetCache implements OffsetCache {
 
   public void update(RowSourceContext context, String path) {
     Map<String, Object> offset =
-        context.offset(Collections.singletonMap(CsvSourceConverter.CSV_PARTITION_KEY, path));
+        context.offset(Collections.singletonMap(CsvRecordConverter.CSV_PARTITION_KEY, path));
     if (!offset.isEmpty()) update(path, getOffsetValue(offset));
   }
 
@@ -47,7 +47,7 @@ public class CsvOffsetCache implements OffsetCache {
   }
 
   private int getOffsetValue(Map<String, Object> offset) {
-    Object value = offset.get(CsvSourceConverter.CSV_OFFSET_KEY);
+    Object value = offset.get(CsvRecordConverter.CSV_OFFSET_KEY);
     if (value instanceof Short) {
       return ((Short) value).intValue();
     } else if (value instanceof Integer) {

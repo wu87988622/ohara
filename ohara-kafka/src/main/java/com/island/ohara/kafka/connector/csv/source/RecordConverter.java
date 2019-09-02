@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.text;
+package com.island.ohara.kafka.connector.csv.source;
 
 import com.island.ohara.kafka.connector.RowSourceRecord;
-import java.io.InputStreamReader;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-/**
- * A converter to be used to read data from a reader, and convert to records of Kafka Connect format
- */
+/** A record converter is used to convert the text lines to Kafka source records */
 @FunctionalInterface
-public interface TextSourceConverter {
+public interface RecordConverter {
 
   /**
-   * Read lines from text file and convert to records. Note: remember to release resources after
-   * using InputStreamReader.
+   * Convert the text lines to records.
    *
    * <p>Depending on the situation, you can choose to handle IOException or throw an unchecked
    * exception.
    *
-   * @param supplier a supplier of InputStreamReader
+   * @param lines a stream of String
    * @return a array from RowSourceRecord
    */
-  List<RowSourceRecord> convert(Supplier<InputStreamReader> supplier);
+  List<RowSourceRecord> convert(Stream<String> lines);
 }

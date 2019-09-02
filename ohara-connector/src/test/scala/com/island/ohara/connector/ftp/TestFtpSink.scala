@@ -276,7 +276,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   def testNormalCaseWithoutEncode(): Unit = {
     val connectorKey = randomConnectorKey()
     //will use default UTF-8
-    val settings = props.toMap - FTP_ENCODE
+    val settings = props.toMap - FILE_ENCODE_CONFIG
     createConnector(connectorKey, schema, settings)
 
     try {

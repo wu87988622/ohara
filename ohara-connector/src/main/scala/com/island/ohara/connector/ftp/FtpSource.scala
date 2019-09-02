@@ -21,38 +21,20 @@ import java.util
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskSetting}
+import com.island.ohara.kafka.connector.csv.CsvSourceConnector
+import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceTask, TaskSetting}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
-class FtpSource extends RowSourceConnector {
+class FtpSource extends CsvSourceConnector {
   private[this] var settings: TaskSetting = _
   private[this] var props: FtpSourceProps = _
   private[this] var schema: Seq[Column] = _
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[FtpSourceTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = {
-    (0 until maxTasks)
-      .map(
-        index =>
-          settings.append(
-            FtpSourceTaskProps(
-              total = maxTasks,
-              hash = index,
-              inputFolder = props.inputFolder,
-              completedFolder = props.completedFolder,
-              errorFolder = props.errorFolder,
-              encode = props.encode,
-              hostname = props.hostname,
-              port = props.port,
-              user = props.user,
-              password = props.password
-            ).toMap.asJava)
-      )
-      .asJava
-  }
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
 
   override protected[ftp] def _start(settings: TaskSetting): Unit = {
     this.settings = settings
@@ -79,61 +61,30 @@ class FtpSource extends RowSourceConnector {
   override protected def _definitions(): util.List[SettingDef] = Seq(
     SettingDef
       .builder()
-      .displayName("input folder")
-      .documentation("ftp source connector will load csv file from this folder")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_INPUT)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("completed folder")
-      .documentation("this folder is used to store the completed files. If you don't define a folder," +
-        " all completed files will be deleted from ftp server")
-      .valueType(SettingDef.Type.STRING)
-      .optional()
-      .key(FTP_COMPLETED_FOLDER)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("error folder")
-      .documentation("this folder is used to keep the invalid file. For example, non-csv file")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_ERROR)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("csv file encode")
-      .documentation("The encode is used to parse input csv files")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_ENCODE)
-      .optional(FTP_ENCODE_DEFAULT)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("hostname of ftp server")
-      .documentation("hostname of ftp server")
+      .displayName("Hostname")
+      .documentation("Hostname of FTP server")
       .valueType(SettingDef.Type.STRING)
       .key(FTP_HOSTNAME)
       .build(),
     SettingDef
       .builder()
-      .displayName("port of ftp server")
-      .documentation("port of ftp server")
+      .displayName("Port")
+      .documentation("Port of FTP server")
       .valueType(SettingDef.Type.PORT)
       .key(FTP_PORT)
       .build(),
     SettingDef
       .builder()
-      .displayName("user of ftp server")
+      .displayName("User")
       .documentation(
-        "user of ftp server. This account must have read/delete permission of input folder and error folder")
+        "User of FTP server. This account must have read/delete permission of input folder and error folder")
       .valueType(SettingDef.Type.STRING)
       .key(FTP_USER_NAME)
       .build(),
     SettingDef
       .builder()
-      .displayName("password of ftp server")
-      .documentation("password of ftp server")
+      .displayName("Password")
+      .documentation("Password of FTP server")
       .valueType(SettingDef.Type.PASSWORD)
       .key(FTP_PASSWORD)
       .build(),

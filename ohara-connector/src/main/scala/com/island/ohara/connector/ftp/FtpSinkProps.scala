@@ -16,35 +16,34 @@
 
 package com.island.ohara.connector.ftp
 
-import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.kafka.connector.TaskSetting
 
-case class FtpSinkProps(hostname: String,
+case class FtpSinkProps(topicsDir: String,
+                        needHeader: Boolean,
+                        encode: String,
+                        hostname: String,
                         port: Int,
                         user: String,
-                        password: String,
-                        @VisibleForTesting topicsDir: String,
-                        @VisibleForTesting needHeader: Boolean,
-                        @VisibleForTesting encode: String) {
+                        password: String) {
   def toMap: Map[String, String] = Map(
+    TOPICS_DIR_CONFIG -> topicsDir,
+    FILE_NEED_HEADER_CONFIG -> needHeader.toString,
+    FILE_ENCODE_CONFIG -> encode,
     FTP_HOSTNAME -> hostname,
     FTP_PORT -> port.toString,
     FTP_USER_NAME -> user,
-    FTP_PASSWORD -> password,
-    TOPICS_DIR_CONFIG -> topicsDir,
-    FILE_NEED_HEADER_CONFIG -> needHeader.toString,
-    FILE_ENCODE_CONFIG -> encode
+    FTP_PASSWORD -> password
   ).filter(_._2.nonEmpty)
 }
 
 object FtpSinkProps {
   def apply(settings: TaskSetting): FtpSinkProps = FtpSinkProps(
+    topicsDir = settings.stringValue(TOPICS_DIR_CONFIG),
+    needHeader = settings.booleanOption(FILE_NEED_HEADER_CONFIG).orElse(FILE_NEED_HEADER_DEFAULT),
+    encode = settings.stringOption(FILE_ENCODE_CONFIG).orElse(FILE_ENCODE_DEFAULT),
     hostname = settings.stringValue(FTP_HOSTNAME),
     port = settings.intValue(FTP_PORT),
     user = settings.stringValue(FTP_USER_NAME),
-    password = settings.stringValue(FTP_PASSWORD),
-    topicsDir = settings.stringValue(TOPICS_DIR_CONFIG),
-    needHeader = settings.booleanOption(FILE_NEED_HEADER_CONFIG).orElse(FILE_NEED_HEADER_DEFAULT),
-    encode = settings.stringOption(FILE_ENCODE_CONFIG).orElse(FILE_ENCODE_DEFAULT)
+    password = settings.stringValue(FTP_PASSWORD)
   )
 }

@@ -25,32 +25,32 @@ class TestFtpSourceProps extends SmallTest with Matchers {
 
   @Test
   def testGetter(): Unit = {
-    val inputFolder = CommonUtils.randomString()
-    val completedFolder = CommonUtils.randomString()
-    val errorFolder = CommonUtils.randomString()
-    val encode = CommonUtils.randomString()
     val hostname = CommonUtils.randomString()
     val port = 12345
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
+    val inputFolder = CommonUtils.randomString()
+    val completedFolder = CommonUtils.randomString()
+    val errorFolder = CommonUtils.randomString()
+    val encode = CommonUtils.randomString()
     val props = FtpSourceProps(
-      inputFolder = inputFolder,
-      completedFolder = Some(completedFolder),
-      errorFolder = errorFolder,
-      encode = encode,
       hostname = hostname,
       port = port,
       user = user,
-      password = password
+      password = password,
+      inputFolder = inputFolder,
+      completedFolder = Some(completedFolder),
+      errorFolder = errorFolder,
+      encode = encode
     ).toMap
-    props(FTP_INPUT) shouldBe inputFolder
-    props(FTP_COMPLETED_FOLDER) shouldBe completedFolder
-    props(FTP_ERROR) shouldBe errorFolder
-    props(FTP_ENCODE) shouldBe encode
     props(FTP_HOSTNAME) shouldBe hostname
     props(FTP_PORT).toInt shouldBe port
     props(FTP_USER_NAME) shouldBe user
     props(FTP_PASSWORD) shouldBe password
+    props(INPUT_FOLDER_CONFIG) shouldBe inputFolder
+    props(COMPLETED_FOLDER_CONFIG) shouldBe completedFolder
+    props(ERROR_FOLDER_CONFIG) shouldBe errorFolder
+    props(FILE_ENCODE_CONFIG) shouldBe encode
   }
 
 }

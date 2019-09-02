@@ -19,14 +19,15 @@ package com.island.ohara.connector.ftp
 import java.util.Collections
 
 import com.island.ohara.client.ftp.FtpClient
-import com.island.ohara.common.data.Cell
+import com.island.ohara.common.exception.OharaException
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.TaskSetting
+import com.island.ohara.kafka.connector.csv.CsvConnector
+import com.island.ohara.kafka.connector.csv.source.CsvDataReader
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
-import com.island.ohara.kafka.connector.text.TextFileSystem
-import com.island.ohara.kafka.connector.text.csv.CsvSourceConverterFactory
+import com.island.ohara.kafka.connector.storage.Storage
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -37,9 +38,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
 
-  private[this] val props = FtpSourceTaskProps(
-    hash = 0,
-    total = 1,
+  private[this] val props = FtpSourceProps(
     inputFolder = "/input",
     completedFolder = Some("/completed"),
     errorFolder = "/error",
@@ -48,6 +47,11 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     hostname = ftpServer.hostname,
     port = ftpServer.port,
     encode = "UTF-8"
+  )
+
+  private[this] val settings = props.toMap ++ Map(
+    CsvConnector.TASK_TOTAL_CONFIG -> "1",
+    CsvConnector.TASK_HASH_CONFIG -> "0"
   )
 
   @Before
@@ -64,33 +68,10 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   private[this] def createFtpClient() =
     FtpClient.builder().hostname(props.hostname).password(props.password).port(props.port).user(props.user).build()
 
-  private[this] def setupInputData(path: String): Map[Int, Seq[Cell[String]]] = {
-    val header = Seq("cf0", "cf1", "cf2")
-    val line0 = Seq("a", "b", "c")
-    val line1 = Seq("a", "d", "c")
-    val line2 = Seq("a", "f", "c")
-    val data =
-      s"""${header.mkString(",")}
-         |${line0.mkString(",")}
-         |${line1.mkString(",")}
-         |${line2.mkString(",")}""".stripMargin
-    val ftpClient = createFtpClient()
-    try {
-      ftpClient.attach(path, data)
-    } finally ftpClient.close()
-
-    // start with 1 since the 0 is header
-    Map(
-      1 -> header.zipWithIndex.map {
-        case (h, index) => Cell.of(h, line0(index))
-      },
-      2 -> header.zipWithIndex.map {
-        case (h, index) => Cell.of(h, line1(index))
-      },
-      3 -> header.zipWithIndex.map {
-        case (h, index) => Cell.of(h, line2(index))
-      }
-    )
+  private[this] def createStorage(): Storage = {
+    val task = createTask()
+    val config = TaskSetting.of(settings.asJava)
+    task._storage(config)
   }
 
   private[this] def createTask() = {
@@ -100,53 +81,50 @@ class TestFtpSourceTask extends SmallTest with Matchers {
         .of()
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
-        .settings(props.toMap.asJava)
+        .settings(settings.asJava)
         .raw())
     task
   }
 
-  private[this] def createFileSystem(): TextFileSystem = {
-    val task = createTask();
-    val config = TaskSetting.of(props.toMap.asJava)
-    task.getFileSystem(config)
-  }
-
-  private[this] def assertNumberOfFiles(numberOfInput: Int, numberOfCompleted: Int, numberOfError: Int) = {
-    val ftpClient = createFtpClient()
-    try {
-      ftpClient.listFileNames(props.inputFolder).size shouldBe numberOfInput
-      ftpClient.listFileNames(props.completedFolder.get).size shouldBe numberOfCompleted
-      ftpClient.listFileNames(props.errorFolder).size shouldBe numberOfError
-    } finally ftpClient.close()
+  private[this] def createTask(settings: Map[String, String]) = {
+    val task = new FtpSourceTask()
+    task.start(
+      ConnectorFormatter
+        .of()
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+        .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+        .settings(settings.asJava)
+        .raw())
+    task
   }
 
   @Test
-  def testGetConverterFactory(): Unit = {
-    val task = createTask()
-    val config = TaskSetting.of(Map("topics" -> "T1").asJava)
-    task.getConverterFactory(config).getClass shouldBe classOf[CsvSourceConverterFactory]
+  def testGetDataReader(): Unit = {
+    val task = createTask(settings)
+    task.getDataReader().getClass shouldBe classOf[CsvDataReader]
   }
 
   @Test
-  def testGetConverterFactory_WithEmptyConfig(): Unit = {
-    val task = createTask()
+  def testGetDataReader_WithEmptyConfig(): Unit = {
+    val settings = Map.empty[String, String]
     intercept[NoSuchElementException] {
-      task.getConverterFactory(TaskSetting.of(Collections.emptyMap()))
+      val task = createTask(settings)
+      task.getDataReader()
     }
   }
 
   @Test
-  def testGetFileReader(): Unit = {
+  def testStorage(): Unit = {
     val task = createTask()
-    val config = TaskSetting.of(props.toMap.asJava)
-    task.getFileSystem(config) should not be (null)
+    val config = TaskSetting.of(settings.asJava)
+    task._storage(config) should not be (null)
   }
 
   @Test
-  def testGetFileReader_WithEmptyConfig(): Unit = {
+  def testStorage_WithEmptyConfig(): Unit = {
     val task = createTask()
     intercept[NoSuchElementException] {
-      task.getFileSystem(TaskSetting.of(Collections.emptyMap()))
+      task._storage(TaskSetting.of(Collections.emptyMap()))
     }
   }
 
@@ -156,9 +134,11 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     try ftpClient.delete(props.inputFolder)
     finally ftpClient.close()
 
-    val fileSystem = createFileSystem()
-    // input folder doesn't exist but no error is thrown.
-    fileSystem.listInputFiles().size() shouldBe 0
+    val storage = createStorage()
+    // input folder doesn't exist should throw error
+    intercept[OharaException] {
+      storage.list(props.inputFolder).asScala.size shouldBe 0
+    }
   }
 
   @Test
@@ -171,26 +151,8 @@ class TestFtpSourceTask extends SmallTest with Matchers {
         ftpClient.attach(CommonUtils.path(props.inputFolder, index.toString), data))
     } finally ftpClient.close()
 
-    val fileSystem = createFileSystem()
-    fileSystem.listInputFiles().size() shouldBe 3
-  }
-
-  @Test
-  def testHandleCompletedFile(): Unit = {
-    val path = CommonUtils.path(props.inputFolder, methodName)
-    setupInputData(path)
-    val fileSystem = createFileSystem()
-    fileSystem.handleCompletedFile(path)
-    assertNumberOfFiles(0, 1, 0)
-  }
-
-  @Test
-  def testHandleErrorFile(): Unit = {
-    val path = CommonUtils.path(props.inputFolder, methodName)
-    setupInputData(path)
-    val fileSystem = createFileSystem()
-    fileSystem.handleErrorFile(path)
-    assertNumberOfFiles(0, 0, 1)
+    val storage = createStorage()
+    storage.list(props.inputFolder).asScala.size shouldBe 3
   }
 
   @After

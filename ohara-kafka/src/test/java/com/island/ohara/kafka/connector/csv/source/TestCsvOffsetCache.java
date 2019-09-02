@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.text.csv;
+package com.island.ohara.kafka.connector.csv.source;
 
 import com.island.ohara.common.rule.SmallTest;
 import org.junit.Assert;
