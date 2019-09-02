@@ -73,6 +73,68 @@ public class TestProducerToConsumer extends WithBroker {
   }
 
   @Test
+  public void testResetConsumer() {
+    try (Producer<String, String> producer =
+        Producer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      for (int i = 0; i < 100; i++)
+        producer.sender().key("key" + i).value("value" + i).topicName(topicName).send();
+    }
+
+    try (Consumer<String, String> consumer =
+        Consumer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .offsetFromBegin()
+            .topicName(topicName)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      List<Consumer.Record<String, String>> record1s = consumer.poll(Duration.ofSeconds(30), 100);
+      Assert.assertEquals(100, record1s.size());
+
+      List<Consumer.Record<String, String>> record2s = consumer.poll(Duration.ofSeconds(1), 0);
+      Assert.assertEquals(0, record2s.size());
+
+      consumer.seekToBeginning(consumer.assignment()); // Reset topic to beginning
+
+      List<Consumer.Record<String, String>> record3s = consumer.poll(Duration.ofSeconds(30), 100);
+      Assert.assertEquals(100, record3s.size());
+    }
+
+    try (Producer<String, String> producer =
+        Producer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      for (int i = 0; i < 100; i++)
+        producer.sender().key("key" + i).value("value" + i).topicName(topicName).send();
+    }
+
+    try (Consumer<String, String> consumer =
+        Consumer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .offsetFromBegin()
+            .topicName(topicName)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      List<Consumer.Record<String, String>> record1s = consumer.poll(Duration.ofSeconds(30), 200);
+      Assert.assertEquals(200, record1s.size());
+
+      consumer.seekToBeginning();
+      List<Consumer.Record<String, String>> record2s = consumer.poll(Duration.ofSeconds(30), 200);
+      Assert.assertEquals(200, record2s.size());
+
+      List<Consumer.Record<String, String>> record3s = consumer.poll(Duration.ofSeconds(1), 0);
+      Assert.assertEquals(0, record3s.size());
+    }
+  }
+
+  @Test
   public void testOffset() {
     try (Producer<String, String> producer =
         Producer.<String, String>builder()

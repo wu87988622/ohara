@@ -19,17 +19,9 @@ package com.island.ohara.kafka;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
+import com.island.ohara.kafka.connector.TopicPartition;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -110,6 +102,19 @@ public interface Consumer<K, V> extends Releasable {
 
   /** @return the topic names subscribed by this consumer */
   Set<String> subscription();
+
+  /** @return Get the set of partitions currently assigned to this consumer. */
+  Set<TopicPartition> assignment();
+
+  /**
+   * Seek to the first offset for each of the given partitions.
+   *
+   * @param partitions setting Partition list
+   */
+  void seekToBeginning(Collection<TopicPartition> partitions);
+
+  /** Seek to the first offset for all partitions */
+  void seekToBeginning();
 
   /** break the poll right now. */
   void wakeup();
@@ -295,6 +300,27 @@ public interface Consumer<K, V> extends Releasable {
         @Override
         public Set<String> subscription() {
           return Collections.unmodifiableSet(kafkaConsumer.subscription());
+        }
+
+        @Override
+        public Set<TopicPartition> assignment() {
+          return kafkaConsumer.assignment().stream()
+              .map(x -> new TopicPartition(x.topic(), x.partition()))
+              .collect(Collectors.toSet());
+        }
+
+        @Override
+        public void seekToBeginning(Collection<TopicPartition> partitions) {
+          kafkaConsumer.seekToBeginning(
+              partitions.stream()
+                  .map(
+                      x -> new org.apache.kafka.common.TopicPartition(x.topicName(), x.partition()))
+                  .collect(Collectors.toList()));
+        }
+
+        @Override
+        public void seekToBeginning() {
+          seekToBeginning(assignment());
         }
 
         @Override

@@ -78,17 +78,17 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
         .create()
     )
 
-    val consumer1 =
-      Consumer
-        .builder[Row, Array[Byte]]()
-        .topicName(topicKey.topicNameOnKafka)
-        .offsetFromBegin()
-        .connectionProps(testUtil.brokersConnProps)
-        .keySerializer(Serializer.ROW)
-        .valueSerializer(Serializer.BYTES)
-        .build()
+    val consumer = Consumer
+      .builder[Row, Array[Byte]]()
+      .topicName(topicKey.topicNameOnKafka)
+      .offsetFromBegin()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
+
     try {
-      val poll1 = consumer1.poll(java.time.Duration.ofSeconds(30), 1).asScala
+      val poll1 = consumer.poll(java.time.Duration.ofSeconds(30), 1).asScala
 
       poll1.size < 1000 shouldBe true
 
@@ -100,7 +100,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
       row0.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
 
       //Confirm topic data is zero
-      val poll2 = consumer1.poll(java.time.Duration.ofSeconds(30), 0).asScala
+      val poll2 = consumer.poll(java.time.Duration.ofSeconds(1), 0).asScala
       poll2.isEmpty shouldBe true
 
       //Insert Data before resuming connector
@@ -112,93 +112,66 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
       //Resume JDBC Source Connector
       await(workerClient.resume(connectorKey))
 
-      val consumer2 =
-        Consumer
-          .builder[Row, Array[Byte]]()
-          .topicName(topicKey.topicNameOnKafka)
-          .offsetFromBegin()
-          .connectionProps(testUtil.brokersConnProps)
-          .keySerializer(Serializer.ROW)
-          .valueSerializer(Serializer.BYTES)
-          .build()
-      try {
-        val poll3 = consumer2.poll(java.time.Duration.ofSeconds(60), 1001).asScala
-        poll3.size shouldBe 1001
+      consumer.seekToBeginning() //Reset consumer
 
-        poll3.head.key.get.cell(1).name shouldBe "column2"
-        poll3.head.key.get.cell(1).value shouldBe "a1-1"
+      val poll3 = consumer.poll(java.time.Duration.ofSeconds(60), 1001).asScala
+      poll3.size shouldBe 1001
 
-        poll3(500).key.get.cell(1).name shouldBe "column2"
-        poll3(500).key.get.cell(1).value shouldBe "a501-1"
+      poll3.head.key.get.cell(1).name shouldBe "column2"
+      poll3.head.key.get.cell(1).value shouldBe "a1-1"
 
-        poll3(1000).key.get.cell(1).name shouldBe "column2"
-        poll3.last.key.get.cell(1).name shouldBe "column2"
-        poll3.last.key.get.cell(1).value shouldBe "a1001-1"
+      poll3(500).key.get.cell(1).name shouldBe "column2"
+      poll3(500).key.get.cell(1).value shouldBe "a501-1"
 
-        //Delete JDBC Source Connector
-        await(workerClient.delete(connectorKey))
+      poll3(1000).key.get.cell(1).name shouldBe "column2"
+      poll3.last.key.get.cell(1).name shouldBe "column2"
+      poll3.last.key.get.cell(1).value shouldBe "a1001-1"
 
-        val poll4 = consumer2.poll(java.time.Duration.ofSeconds(30), 0).asScala
-        poll4.isEmpty shouldBe true
+      //Delete JDBC Source Connector
+      await(workerClient.delete(connectorKey))
 
-        //Create JDBC Source Connector
-        await(
-          workerClient
-            .connectorCreator()
-            .connectorKey(connectorKey)
-            .connectorClass(classOf[JDBCSourceConnector])
-            .topicKey(topicKey)
-            .numberOfTasks(1)
-            .settings(props.toMap)
-            .create()
-        )
-        statement.executeUpdate(
-          s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-02 00:00:01', 'a1002-1', 'a1002-2', 1002)")
+      val poll4 = consumer.poll(java.time.Duration.ofSeconds(1), 0).asScala
+      poll4.isEmpty shouldBe true
 
-        //Get all topic data for test
-        val consumer3 =
-          Consumer
-            .builder[Row, Array[Byte]]()
-            .topicName(topicKey.topicNameOnKafka)
-            .offsetFromBegin()
-            .connectionProps(testUtil.brokersConnProps)
-            .keySerializer(Serializer.ROW)
-            .valueSerializer(Serializer.BYTES)
-            .build()
-        try {
-          val poll5 = consumer3.poll(java.time.Duration.ofSeconds(30), 1001).asScala
-          poll5.size shouldBe 1002
-          poll5.last.key.get.cell(1).name shouldBe "column2"
-          poll5.last.key.get.cell(1).value shouldBe "a1002-1"
+      //Create JDBC Source Connector
+      await(
+        workerClient
+          .connectorCreator()
+          .connectorKey(connectorKey)
+          .connectorClass(classOf[JDBCSourceConnector])
+          .topicKey(topicKey)
+          .numberOfTasks(1)
+          .settings(props.toMap)
+          .create()
+      )
+      statement.executeUpdate(
+        s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-02 00:00:01', 'a1002-1', 'a1002-2', 1002)")
 
-          poll5.last.key.get.cell(2).name shouldBe "column3"
-          poll5.last.key.get.cell(2).value shouldBe "a1002-2"
+      //Get all topic data for test
+      consumer.seekToBeginning() //Reset consumer
+      val poll5 = consumer.poll(java.time.Duration.ofSeconds(30), 1002).asScala
+      poll5.size shouldBe 1002
+      poll5.last.key.get.cell(1).name shouldBe "column2"
+      poll5.last.key.get.cell(1).value shouldBe "a1002-1"
 
-          poll5(1000).key.get.cell(2).name shouldBe "column3"
-          poll5(1000).key.get.cell(2).value shouldBe "a1001-2"
+      poll5.last.key.get.cell(2).name shouldBe "column3"
+      poll5.last.key.get.cell(2).value shouldBe "a1002-2"
 
-          poll5(1001).key.get.cell(2).value shouldBe "a1002-2"
+      poll5(1000).key.get.cell(2).name shouldBe "column3"
+      poll5(1000).key.get.cell(2).value shouldBe "a1001-2"
 
-          //Test repartition topic
-          TopicApi.access.request.numberOfPartitions(1)
-          TopicApi.Update
+      poll5(1001).key.get.cell(2).value shouldBe "a1002-2"
 
-          val consumer4 =
-            Consumer
-              .builder[Row, Array[Byte]]()
-              .topicName(topicKey.topicNameOnKafka)
-              .offsetFromBegin()
-              .connectionProps(testUtil.brokersConnProps)
-              .keySerializer(Serializer.ROW)
-              .valueSerializer(Serializer.BYTES)
-              .build()
-          try {
-            val poll6 = consumer4.poll(java.time.Duration.ofSeconds(30), 1002).asScala
-            poll6.size shouldBe 1002
-          } finally consumer4.close()
-        } finally consumer3.close()
-      } finally consumer2.close()
-    } finally consumer1.close()
+      //Test repartition topic
+      TopicApi.access.request.numberOfPartitions(1)
+      TopicApi.Update
+
+      consumer.seekToBeginning() //Reset consumer
+      val poll6 = consumer.poll(java.time.Duration.ofSeconds(30), 1002).asScala
+      poll6.size shouldBe 1002
+    } finally {
+      consumer.close
+    }
   }
 
   @After
