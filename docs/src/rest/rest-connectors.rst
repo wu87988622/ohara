@@ -34,11 +34,11 @@ write your connector.
 Apart from custom settings, common settings are required by all
 connectors. The common settings are shown below.
 
-#. connector.group (**string**) — the value of group is always "default"
+#. group (**string**) — the value of group is always "default"
    (and it will be replaced by workerClusterName...see :ohara-issue:`1734`
-#. connector.name (**string**) — the name of this connector
+#. name (**string**) — the name of this connector
 #. connector.class (**class**) — class name of connector implementation
-#. topics(**array(string)**) — the source topics or target topics for this connector
+#. topicKeys(**array(object)**) — the source topics or target topics for this connector
 #. columns (**array(object)**) — the schema of data for this connector
 
    - columns[i].name (**string**) — origin name of column
@@ -80,6 +80,16 @@ you will observe the following response after you store the settings with connec
        }
      }
 
+  .. note::
+    Each connector has their custom settings. Please see :ref:`Get Worker Cluster info <rest-workers-get>` to fetch
+    the available settings of your connector on specific worker cluster.
+
+The following keys are internal and protected so you can't define them in creating/updating connector.
+
+#. connectorKey — It points to the really (group, name) for the connector running in kafka.
+#. topics —  It points to the really topic names in kafka for the connector running in kafka.
+
+
 
 .. _rest-connectors-create-settings:
 
@@ -97,28 +107,36 @@ settings will introduce a error.
 Example Request
   .. code-block:: json
 
-     {
-       "name": "jdbc_name",
-       "connector.class": "com.island.ohara.connector.ftp.FtpSource"
-     }
+    {
+      "name":"pc",
+      "connector.class":"com.island.ohara.connector.perf.PerfSource"
+    }
 
 Example Response
   .. code-block:: json
 
-     {
-       "lastModified": 1540967970407,
-       "group": "default",
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-         "tags": {}
-       },
-       "metrics": {
-         "meters": []
-       }
-     }
+    {
+      "name": "pc",
+      "lastModified": 1567520697909,
+      "metrics": {
+        "meters": []
+      }
+      "group": "default",
+      "settings": {
+        "topicKeys": [],
+        "name": "pc",
+        "tags": {},
+        "workerClusterName": "wk",
+        "tasks.max": 1,
+        "connector.class": "com.island.ohara.connector.perf.PerfSource",
+        "columns": [],
+        "group": "default"
+      }
+    }
 
+  .. note::
+    Normally, you should define the "workerClusterName" for your connector. However, Ohara Configurator will pick up a
+    worker cluster if the field is ignored and 2) there is only one running worker cluster in backend.
 
 update the settings of connector
 --------------------------------
@@ -126,33 +144,47 @@ update the settings of connector
 *PUT /v0/connectors/${name}?group=${group}*
 
   .. note::
-    you cannot delete a non-stopped connector.
+    you cannot update a non-stopped connector.
 
 Example Request
 
   .. code-block:: json
 
-     {
-       "name": "jdbc_name",
-       "connector.class": "com.island.ohara.connector.ftp.FtpSource"
-     }
+    {
+      "topicKeys":[
+        {
+          "group": "default",
+          "name": "tp"
+        }
+      ]
+    }
 
 Example Response
   .. code-block:: json
 
-     {
-       "lastModified": 1540967970407,
-       "group": "default",
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-         "tags": {}
-       },
-       "metrics": {
-         "meters": []
-       }
-     }
+    {
+      "name": "pc",
+      "lastModified": 1567520826794,
+      "metrics": {
+        "meters": []
+      }
+      "group": "default",
+      "settings": {
+        "topicKeys": [
+          {
+            "group": "default",
+            "name": "tp"
+          }
+        ],
+        "name": "pc",
+        "tags": {},
+        "workerClusterName": "wk",
+        "tasks.max": 1,
+        "connector.class": "com.island.ohara.connector.perf.PerfSource",
+        "columns": [],
+        "group": "default"
+      }
+    }
 
 
 list information of all connectors
@@ -163,21 +195,31 @@ list information of all connectors
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "lastModified": 1540967970407,
-         "group": "default",
-         "name": "jdbc_name",
-         "settings": {
-           "connector.name": "jdbc_name",
-           "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-           "tags": {}
-         },
-         "metrics": {
-           "meters": []
-         }
-       }
-     ]
+    [
+      {
+        "name": "pc",
+        "lastModified": 1567520826794,
+        "metrics": {
+          "meters": []
+        },
+        "group": "default",
+        "settings": {
+          "topicKeys": [
+            {
+              "group": "default",
+              "name": "tp"
+            }
+          ],
+          "name": "pc",
+          "tags": {},
+          "workerClusterName": "wk",
+          "tasks.max": 1,
+          "connector.class": "com.island.ohara.connector.perf.PerfSource",
+          "columns": [],
+          "group": "default"
+        }
+      }
+    ]
 
 
 .. _rest-connectors-delete:
@@ -210,19 +252,29 @@ get information of connector
 Example Response
   .. code-block:: json
 
-     {
-       "lastModified": 1540967970407,
-       "group": "default",
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-         "tags": {}
-       },
-       "metrics": {
-         "meters": []
-       }
-     }
+    {
+      "name": "pc",
+      "lastModified": 1567520826794,
+      "metrics": {
+        "meters": []
+      }
+      "group": "default",
+      "settings": {
+        "topicKeys": [
+          {
+            "group": "default",
+            "name": "tp"
+          }
+        ],
+        "name": "pc",
+        "tags": {},
+        "workerClusterName": "wk",
+        "tasks.max": 1,
+        "connector.class": "com.island.ohara.connector.perf.PerfSource",
+        "columns": [],
+        "group": "default"
+      }
+    }
 
 start a connector
 -----------------
@@ -279,29 +331,12 @@ source/sink. The connector is still alive in kafka. This request is
 idempotent so it is safe to send this request repeatedly.
 
 Example Response
-  .. code-block:: json
+  ::
 
-     {
-       "lastModified": 1540967970407,
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource"
-       },
-       "state": "PAUSED",
-       "metrics": {
-         "meters": [
-           {
-             "value": 1234,
-             "unit": "rows",
-             "document": "number of processed rows",
-             "queryTime": 15623429590505,
-             "startTime": 15623429590505
-           }
-         ]
-       }
-     }
+    202 Accepted
 
+  .. note::
+    You should use :ref:`Get Connector info <rest-connectors-get-info>` to fetch up-to-date status
 
 resume a connector
 ------------------
@@ -313,26 +348,10 @@ source/sink. This request is idempotent so it is safe to retry this
 command repeatedly.
 
 Example Response
-  .. code-block:: json
+  ::
 
-     {
-       "lastModified": 1540967970407,
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource"
-       },
-       "state": "RUNNING",
-       "metrics": {
-         "meters": [
-           {
-             "value": 1234,
-             "unit": "rows",
-             "document": "number of processed rows",
-             "queryTime": 1563429509054,
-             "startTime": 1563429590505
-           }
-         ]
-       }
-     }
+    202 Accepted
+
+  .. note::
+    You should use :ref:`Get Connector info <rest-connectors-get-info>` to fetch up-to-date status
 
