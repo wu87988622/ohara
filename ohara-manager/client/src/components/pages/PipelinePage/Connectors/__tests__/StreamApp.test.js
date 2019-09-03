@@ -144,7 +144,7 @@ describe('<StreamApp />', () => {
     const { instances } = res.data.result.settings;
 
     getByText('Stream app');
-    expect(getByLabelText('Instances')).toHaveAttribute(
+    expect(getByLabelText('Instances *')).toHaveAttribute(
       'value',
       String(instances),
     );

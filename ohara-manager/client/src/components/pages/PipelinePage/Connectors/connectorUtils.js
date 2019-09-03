@@ -164,8 +164,9 @@ export const switchType = type => {
     case 'STRING':
       return 'text';
     case 'INT':
-    case 'PORT':
     case 'LONG':
+    case 'SHORT':
+    case 'DOUBLE':
       return 'number';
     case 'PASSWORD':
       return 'password';
@@ -569,18 +570,20 @@ export const renderer = props => {
       isRunning,
       tableKeys,
       displayValue,
+      required,
     } = params;
     const columnTableHeader = tableKeys.concat(tableActions);
 
     switch (valueType) {
       case 'STRING':
-      case 'INT':
       case 'CLASS':
       case 'PASSWORD':
       case 'JDBC_TABLE':
-      case 'LONG':
-      case 'PORT':
       case 'TAGS':
+      case 'INT':
+      case 'LONG':
+      case 'SHORT':
+      case 'DOUBLE':
         const inputType = switchType(valueType);
 
         return (
@@ -595,6 +598,29 @@ export const renderer = props => {
               name={key}
               disabled={!editable || isRunning}
               inputProps={{ 'data-testid': key }}
+              required={required}
+            />
+          </FormGroup>
+        );
+
+      case 'PORT':
+        return (
+          <FormGroup key={key}>
+            <Field
+              type="number"
+              component={InputField}
+              label={displayName}
+              id={displayName}
+              helperText={documentation}
+              width="100%"
+              name={key}
+              disabled={!editable || isRunning}
+              required={required}
+              inputProps={{
+                'data-testid': key,
+                min: 0,
+                max: 65535,
+              }}
             />
           </FormGroup>
         );
@@ -609,6 +635,7 @@ export const renderer = props => {
               helperText={documentation}
               component={Checkbox}
               disabled={!editable || isRunning}
+              required={required}
               inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
@@ -639,6 +666,7 @@ export const renderer = props => {
               id={displayName}
               helperText={documentation}
               width="100%"
+              required={required}
               name={key}
               disabled={!editable || isRunning}
               inputProps={{ 'data-testid': key }}
@@ -649,7 +677,14 @@ export const renderer = props => {
   };
 
   const renderWithReference = params => {
-    const { reference, key, displayName, isRunning, documentation } = params;
+    const {
+      reference,
+      key,
+      displayName,
+      isRunning,
+      documentation,
+      required,
+    } = params;
 
     switch (reference) {
       case 'TOPIC':
@@ -662,6 +697,7 @@ export const renderer = props => {
               component={Select}
               name={key}
               width="100%"
+              required={required}
               disabled={isRunning}
               inputProps={{ 'data-testid': key }}
             />
@@ -679,6 +715,7 @@ export const renderer = props => {
               width="100%"
               name={key}
               disabled={true}
+              required={required}
               inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
