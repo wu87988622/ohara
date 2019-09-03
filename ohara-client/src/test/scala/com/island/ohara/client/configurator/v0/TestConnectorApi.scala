@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.setting.{ConnectorKey, PropGroups, TopicKey}
+import com.island.ohara.common.setting.{PropGroups, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -43,7 +43,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def testParseCreation(): Unit = {
     val workerClusterName = CommonUtils.randomString()
     val className = CommonUtils.randomString()
-    val topicNames = Seq(CommonUtils.randomString())
+    val topicKeys = Set(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
     val numberOfTasks = 10
     val tags = Map("a" -> JsString("b"), "b" -> JsNumber(1))
     val anotherKey = CommonUtils.randomString()
@@ -53,8 +53,8 @@ class TestConnectorApi extends SmallTest with Matchers {
        |{
        |  "workerClusterName": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
-       |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector).toString()},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
+       |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
        |  "tags": ${JsObject(tags)},
        |  "$anotherKey": "$anotherValue"
        |}
@@ -65,7 +65,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation.workerClusterName.get shouldBe workerClusterName
     creation.className shouldBe className
     creation.columns shouldBe Seq.empty
-    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(ConnectorApi.GROUP_DEFAULT, n)).toSet
+    creation.topicKeys shouldBe topicKeys
     creation.numberOfTasks shouldBe 1
     creation.tags shouldBe tags
     // this key is deprecated so json converter will replace it by new one
@@ -89,7 +89,7 @@ class TestConnectorApi extends SmallTest with Matchers {
        |  "workerClusterName": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
        |  "$COLUMNS_KEY": ${PropGroups.ofColumn(column).toJsonString},
-       |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector).toString()},
+       |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
        |  "$anotherKey": "$anotherValue"
        |}""".stripMargin.parseJson)
@@ -98,7 +98,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation2.workerClusterName.get shouldBe workerClusterName
     creation2.className shouldBe className
     creation2.columns shouldBe Seq(column)
-    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(ConnectorApi.GROUP_DEFAULT, n)).toSet
+    creation.topicKeys shouldBe topicKeys
     creation2.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
     creation2.settings.contains("className") shouldBe false
@@ -156,10 +156,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def renderJsonWithConnectorClass(): Unit = {
     val className = CommonUtils.randomString()
     val response = ConnectorDescription(
-      settings = Map(
-        CONNECTOR_CLASS_KEY -> JsString(className),
-        NAME_KEY -> JsString(CommonUtils.randomString())
-      ),
+      settings = access.request.className(className).creation.settings,
       state = None,
       error = None,
       metrics = Metrics.EMPTY,
@@ -171,18 +168,6 @@ class TestConnectorApi extends SmallTest with Matchers {
       // previous name
       .fields
       .contains("className") shouldBe false
-  }
-
-  @Test
-  def parsePreviousKeyOfClassNameFromConnectorCreationRequest(): Unit = {
-    import spray.json._
-    val className = CommonUtils.randomString()
-    val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-      | {
-      | "className": "$className"
-      | }
-      | """.stripMargin.parseJson)
-    an[NoSuchElementException] should be thrownBy connectorCreationRequest.className
   }
 
   @Test
@@ -207,16 +192,17 @@ class TestConnectorApi extends SmallTest with Matchers {
   @Test
   def parsePropGroups(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-      | {
-      | "columns": [
-      |   {
-      |     "order": 1,
-      |     "name": "abc",
-      |     "newName": "ccc",
-      |     "dataType": "STRING"
-      |   }
-      | ]
-      | }
+      |  {
+      |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
+      |    "columns": [
+      |      {
+      |       "order": 1,
+      |       "name": "abc",
+      |       "newName": "ccc",
+      |       "dataType": "STRING"
+      |      }
+      |    ]
+      |  }
       | """.stripMargin.parseJson)
     val column = PropGroups.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
     column.order() shouldBe 1
@@ -228,46 +214,44 @@ class TestConnectorApi extends SmallTest with Matchers {
   @Test
   def parseStaleConfigs(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-                                                                                      | {
-                                                                                      |  "name": "ftp source",
-                                                                                      |  "$COLUMNS_KEY": [
-                                                                                      |    {
-                                                                                      |      "name": "col1",
-                                                                                      |      "newName": "col1",
-                                                                                      |      "dataType": "STRING",
-                                                                                      |      "order": 1
-                                                                                      |    },
-                                                                                      |    {
-                                                                                      |      "name": "col2",
-                                                                                      |      "newName": "col2",
-                                                                                      |      "dataType": "STRING",
-                                                                                      |      "order": 2
-                                                                                      |    },
-                                                                                      |    {
-                                                                                      |      "name": "col3",
-                                                                                      |      "newName": "col3",
-                                                                                      |      "dataType": "STRING",
-                                                                                      |      "order": 3
-                                                                                      |    }
-                                                                                      |  ],
-                                                                                      |  "className": "com.island.ohara.connector.ftp.FtpSource",
-                                                                                      |  "topics": [
-                                                                                      |    "47e45b56-6cee-4bc5-83e4-62e872552880"
-                                                                                      |  ],
-                                                                                      |  "numberOfTasks": 1,
-                                                                                      |  "configs": {
-                                                                                      |    "ftp.input.folder": "/demo_folder/input",
-                                                                                      |    "ftp.completed.folder": "/demo_folder/complete",
-                                                                                      |    "ftp.error.folder": "/demo_folder/error",
-                                                                                      |    "ftp.encode": "UTF-8",
-                                                                                      |    "ftp.hostname": "10.2.0.28",
-                                                                                      |    "ftp.port": "21",
-                                                                                      |    "ftp.user.name": "ohara",
-                                                                                      |    "ftp.user.password": "island123",
-                                                                                      |    "currTask": "1"
-                                                                                      |  }
-                                                                                      |}
-                                                                                      |     """.stripMargin.parseJson)
+          |  {
+          |    "name": "ftp source",
+          |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
+          |    "$COLUMNS_KEY": [
+          |    {
+          |      "name": "col1",
+          |      "newName": "col1",
+          |      "dataType": "STRING",
+          |      "order": 1
+          |    },
+          |    {
+          |      "name": "col2",
+          |      "newName": "col2",
+          |      "dataType": "STRING",
+          |      "order": 2
+          |    },
+          |    {
+          |      "name": "col3",
+          |      "newName": "col3",
+          |      "dataType": "STRING",
+          |      "order": 3
+          |    }
+          |  ],
+          |  "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
+          |  "numberOfTasks": 1,
+          |  "configs": {
+          |    "ftp.input.folder": "/demo_folder/input",
+          |    "ftp.completed.folder": "/demo_folder/complete",
+          |    "ftp.error.folder": "/demo_folder/error",
+          |    "ftp.encode": "UTF-8",
+          |    "ftp.hostname": "10.2.0.28",
+          |    "ftp.port": "21",
+          |    "ftp.user.name": "ohara",
+          |    "ftp.user.password": "island123",
+          |    "currTask": "1"
+          |  }
+          |}
+          |     """.stripMargin.parseJson)
     // the deprecated APIs should not be supported now!!!
     creationRequest.settings.contains("ftp.input.folder") shouldBe false
     creationRequest.settings.contains("ftp.completed.folder") shouldBe false
@@ -278,16 +262,22 @@ class TestConnectorApi extends SmallTest with Matchers {
   }
 
   @Test
+  def ignoreClassNameOnCreation(): Unit = intercept[DeserializationException] {
+    ConnectorApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
+  }.getMessage should include(CONNECTOR_CLASS_KEY)
+
+  @Test
   def ignoreNameOnCreation(): Unit = ConnectorApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
+    .className(CommonUtils.randomString())
     .creation
     .name
     .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access
+  def ignoreNameOnUpdate(): Unit = an[NoSuchElementException] should be thrownBy ConnectorApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -314,8 +304,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy ConnectorApi.access.request.className(null)
 
   @Test
-  def emptyColumns(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.columns(Seq.empty)
+  def emptyColumns(): Unit = ConnectorApi.access.request.columns(Seq.empty)
 
   @Test
   def nullColumns(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.columns(null)
@@ -329,8 +318,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy ConnectorApi.access.request.workerClusterName(null)
 
   @Test
-  def emptyTopicKeys(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.topicKeys(Set.empty)
+  def emptyTopicKeys(): Unit = ConnectorApi.access.request.topicKeys(Set.empty)
 
   @Test
   def nullTopicKeys(): Unit =
@@ -349,9 +337,9 @@ class TestConnectorApi extends SmallTest with Matchers {
     val className = CommonUtils.randomString(10)
     val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
     val map = Map(
-      CommonUtils.randomString(10) -> CommonUtils.randomString(10),
-      CommonUtils.randomString(10) -> CommonUtils.randomString(10),
-      CommonUtils.randomString(10) -> CommonUtils.randomString(10)
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
     )
     val creation =
       ConnectorApi.access.request.name(name).className(className).topicKeys(topicKeys).settings(map).creation
@@ -359,16 +347,17 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation.className shouldBe className
     creation.topicKeys shouldBe topicKeys
     map.foreach {
-      case (k, v) => creation.plain(k) shouldBe v
+      case (k, v) => creation.plain(k) shouldBe v.convertTo[String]
     }
   }
 
   @Test
   def testDefaultNumberOfTasks(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-      | {
-      |  "name": "ftp source"
-      |}
+      |  {
+      |    "name": "ftp source",
+      |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
+      |  }
       |     """.stripMargin.parseJson).numberOfTasks shouldBe 1
 
   @Test
@@ -379,6 +368,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val order = 1
     val creation = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                             |  {
+                                            |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
                                             |    "$COLUMNS_KEY": [
                                             |      {
                                             |        "name": "$name",
@@ -398,6 +388,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
     val creation2 = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                        |  {
+                                                                       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                        |    "$COLUMNS_KEY": [
                                                                        |      {
                                                                        |        "name": "$name",
@@ -419,6 +410,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNameForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "",
@@ -433,6 +425,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNewNameForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
@@ -448,6 +441,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def negativeOrderForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                         |  {
+                                                        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                         |    "$COLUMNS_KEY": [
                                                         |      {
                                                         |        "name": "AA",
@@ -463,6 +457,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def duplicateOrderForCreatingColumns(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
@@ -484,6 +479,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNameForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                         |  {
+                                                                                                        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                         |    "$COLUMNS_KEY": [
                                                                                                         |      {
                                                                                                         |        "name": "",
@@ -498,6 +494,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNewNameForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
@@ -513,6 +510,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def negativeOrderForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                  |  {
+                                                                                                 |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                  |    "$COLUMNS_KEY": [
                                                                                                  |      {
                                                                                                  |        "name": "AA",
@@ -528,6 +526,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def duplicateOrderForUpdatingColumns(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
@@ -554,6 +553,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def parseTags(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
+      |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
       |    "tags": {
       |      "a": "bb",
       |      "b": 123
@@ -568,6 +568,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def parseNullTags(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
+      |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
       |  }
       |     """.stripMargin.parseJson).tags shouldBe Map.empty
 
@@ -589,47 +590,16 @@ class TestConnectorApi extends SmallTest with Matchers {
   }
 
   @Test
-  def parseConnectorKey(): Unit = {
-    // try connector key
-    val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-         |  {
-         |    "$CONNECTOR_KEY": {
-         |      "group": "$group",
-         |      "name": "$name"
-         |    }
-         |  }
-         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(group, name)
-
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-         |  {
-         |    "$CONNECTOR_KEY": {
-         |      "name": "$name"
-         |    }
-         |  }
-         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(ConnectorApi.GROUP_DEFAULT, name)
-
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-         |  {
-         |    "group": "$group",
-         |    "name": "$name"
-         |  }
-         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(group, name)
-
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-         |  {
-         |    "name": "$name"
-         |  }
-         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(ConnectorApi.GROUP_DEFAULT, name)
-
-    // the name is random string
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-         |  {
-         |    "name": "$name"
-         |  }
-         |     """.stripMargin.parseJson).key.group() shouldBe ConnectorApi.GROUP_DEFAULT
-  }
+  def parseConnectorKey(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+       |  {
+       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
+       |    "$CONNECTOR_KEY_KEY": {
+       |      "group": "g",
+       |      "name": "n"
+       |    }
+       |  }
+       |     """.stripMargin.parseJson)
 
   @Test
   def testCustomGroup(): Unit = ConnectorApi.access
@@ -637,6 +607,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .group("abc")
+    .className(CommonUtils.randomString())
     .creation
     .group shouldBe "abc"
 
@@ -645,6 +616,17 @@ class TestConnectorApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
+    .className(CommonUtils.randomString())
     .creation
     .group shouldBe GROUP_DEFAULT
+
+  @Test
+  def rejectTopicKeyword(): Unit = intercept[DeserializationException] {
+    CONNECTOR_CREATION_FORMAT.read(s"""
+                                      |{
+                                      |  "connector.class": "aa",
+                                      |  "topics": []
+                                      |}
+      """.stripMargin.parseJson)
+  }.getMessage should include("illegal word")
 }

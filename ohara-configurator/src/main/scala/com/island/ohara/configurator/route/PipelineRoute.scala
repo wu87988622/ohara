@@ -23,9 +23,9 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -114,7 +114,7 @@ private[configurator] object PipelineRoute {
       kind = data.kind,
       // Just cast the input data to get the correct className
       className = data match {
-        case description: ConnectorDescription => description.plain.get(ConnectorApi.CONNECTOR_CLASS_KEY)
+        case description: ConnectorDescription => Some(description.className)
         case description: StreamClusterInfo    => description.definition.map(_.className)
         case _                                 => None
       },

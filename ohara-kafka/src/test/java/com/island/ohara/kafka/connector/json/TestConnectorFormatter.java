@@ -97,4 +97,12 @@ public class TestConnectorFormatter extends SmallTest {
   public void nullConnectorKey() {
     ConnectorFormatter.of().connectorKey(null).requestOfCreation();
   }
+
+  @Test
+  public void emptyListShouldDisappear() {
+    ConnectorFormatter format = ConnectorFormatter.of();
+    int initialSize = format.settings.size();
+    format.setting("a", "[]");
+    Assert.assertEquals(initialSize, format.settings.size());
+  }
 }

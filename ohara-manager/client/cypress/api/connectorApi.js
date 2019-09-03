@@ -62,7 +62,7 @@ const setup = () => {
   cy.startTopic(topicName);
 
   cy.createConnector({
-    className: 'com.island.ohara.connector.ftp.FtpSource',
+    'connector.class': 'com.island.ohara.connector.ftp.FtpSource',
     'connector.name': connectorName,
     name: connectorName,
     topicKeys: [{ group: 'default', name: topicName }],
@@ -136,7 +136,7 @@ describe('Connector API', () => {
         columns: [
           { dataType: 'STRING', name: 'test', newName: 'test', order: 1 },
         ],
-        className: 'com.island.ohara.connector.ftp.FtpSource',
+        'connector.class': 'com.island.ohara.connector.ftp.FtpSource',
         'connector.name': 'Untitled source',
         'ftp.completed.folder': 'test',
         'ftp.encode': 'UTF-8',

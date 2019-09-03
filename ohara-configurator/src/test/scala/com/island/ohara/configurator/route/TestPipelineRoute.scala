@@ -361,7 +361,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testRefresh(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    val connector = result(connectorApi.request.name(CommonUtils.randomString(10)).create())
+    val connector = result(
+      connectorApi.request.name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
     val pipeline = result(
       pipelineApi.request
       // the first flow contains the topic in "to"

@@ -28,8 +28,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestConnectorRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
@@ -133,7 +133,8 @@ class TestConnectorRoute extends SmallTest with Matchers {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     // absent worker cluster is ok since there is only one worker cluster
-    val connector = result(connectorApi.request.topicKey(topic.key).create())
+    val connector = result(
+      connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     // In creation, workerClusterName will not be auto-filled
     connector.workerClusterName shouldBe defaultWk.name
     // data stored in configurator should also get the auto-filled result
@@ -304,15 +305,6 @@ class TestConnectorRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def defaultNumberOfTasksShouldExist(): Unit = {
-    val connectorDesc = result(
-      connectorApi.request.name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
-    connectorDesc.numberOfTasks shouldBe ConnectorApi.DEFAULT_NUMBER_OF_TASKS
-
-    result(connectorApi.request.name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).update()).numberOfTasks shouldBe ConnectorApi.DEFAULT_NUMBER_OF_TASKS
-  }
-
-  @Test
   def testStartAnNonexistentConnector(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.start(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
@@ -332,54 +324,25 @@ class TestConnectorRoute extends SmallTest with Matchers {
       connectorApi.resume(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
 
   @Test
-  def testParseCreationJson(): Unit = {
-    import spray.json._
-    val request =
-      ConnectorApi.CONNECTOR_CREATION_FORMAT.read("""
-          |{
-          |  "name":"perf",
-          |  "connector.class":"com.island.ohara.connector.perf.PerfSource",
-          |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
-          |  "tasks.max":1,
-          |  "perf.batch":"1",
-          |  "perf.frequence":"2 seconds",
-          |  "columns":[{
-          |    "name": "cf0",
-          |    "newName": "cf0",
-          |    "dataType": "int",
-          |    "order": 1
-          |  },{
-          |    "name": "cf1",
-          |    "newName": "cf1",
-          |    "dataType": "bytes",
-          |    "order": 2
-          |  }]
-          |}
-        """.stripMargin.parseJson)
-    request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
-    request.topicKeys.head.name shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
-    request.numberOfTasks shouldBe 1
-    request.plain("perf.batch") shouldBe "1"
-    request.columns.size shouldBe 2
-    request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
-    request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
-    request.tags shouldBe Map.empty
-  }
-
-  @Test
   def updateTags(): Unit = {
     val tags = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val connectorDesc = result(connectorApi.request.tags(tags).create())
+    val connectorDesc = result(
+      connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").tags(tags).create())
     connectorDesc.tags shouldBe tags
 
     val tags2 = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val connectorDesc2 = result(connectorApi.request.name(connectorDesc.name).tags(tags2).update())
+    val connectorDesc2 = result(
+      connectorApi.request
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .name(connectorDesc.name)
+        .tags(tags2)
+        .update())
     connectorDesc2.tags shouldBe tags2
 
     val connectorDesc3 = result(connectorApi.request.name(connectorDesc.name).update())
@@ -392,7 +355,8 @@ class TestConnectorRoute extends SmallTest with Matchers {
   @Test
   def failToDeletePropertiesOfRunningConnector(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    val connectorDesc = result(connectorApi.request.topicKey(topic.key).create())
+    val connectorDesc = result(
+      connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     result(topicApi.start(topic.key))
     result(connectorApi.start(connectorDesc.key))
 
@@ -404,7 +368,8 @@ class TestConnectorRoute extends SmallTest with Matchers {
   @Test
   def failToRunConnectorWithStoppedTopic(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    val connectorDesc = result(connectorApi.request.topicKey(topic.key).create())
+    val connectorDesc = result(
+      connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connectorDesc.key))
 
     result(topicApi.start(topic.key))

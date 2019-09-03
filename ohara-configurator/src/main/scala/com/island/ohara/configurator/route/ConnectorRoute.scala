@@ -28,7 +28,6 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
-import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
@@ -91,7 +90,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorDescription] =
     (creation: Creation) =>
       creation.workerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { clusterName =>
-        toRes(creation.copy(settings = creation.settings + (WORKER_CLUSTER_NAME_KEY -> JsString(clusterName))))
+        toRes(
+          creation.copy(
+            settings = access.request.settings(creation.settings).workerClusterName(clusterName).creation.settings))
     }
 
   private[this] def hookOfUpdate(implicit workerCollie: WorkerCollie,
@@ -120,13 +121,14 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         }
         .map { clusterName =>
           toRes(
-            Creation(
-              settings = previous.map(_.settings).getOrElse(Map.empty) ++ update.settings ++
-                // Update request may not carry the name via payload so we copy the name from url to payload manually
-                Map(NAME_KEY -> JsString(key.name),
-                    GROUP_KEY -> JsString(key.group),
-                    WORKER_CLUSTER_NAME_KEY -> JsString(clusterName))
-            ))
+            access.request
+              .settings(previous.map(_.settings).getOrElse(Map.empty))
+              .settings(update.settings)
+              // rewrite the group and name to prevent user updates the both group and name.
+              .name(key.name)
+              .group(key.group)
+              .workerClusterName(clusterName)
+              .creation)
       }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,

@@ -25,6 +25,7 @@ import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -161,7 +162,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .className("com.island.ohara.connector.perf.PerfSource")
         .topicKey(topic.key)
         .numberOfTasks(1)
-        .settings(Map("perf.batch" -> "1", "perf.frequence" -> java.time.Duration.ofSeconds(1).toString))
+        .settings(Map("perf.batch" -> JsNumber(1),
+                      "perf.frequence" -> JsString(java.time.Duration.ofSeconds(1).toString)))
         .create())
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)

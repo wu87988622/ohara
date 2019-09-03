@@ -199,8 +199,8 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                     case (cluster, workerClient) =>
                       workerClient
                         .connectorValidator()
-                        .className(req.className)
                         .settings(req.plain)
+                        .className(req.className)
                         // we define the cluster name again since user may ignore the worker cluster in request
                         // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
                         .setting(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)

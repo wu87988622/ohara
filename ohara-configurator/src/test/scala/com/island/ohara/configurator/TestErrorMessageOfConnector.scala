@@ -23,6 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.JsBoolean
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -46,7 +47,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
-        .setting("you_should_fail", "true")
+        .setting("you_should_fail", JsBoolean(true))
         .create())
 
     result(connectorApi.start(connector.key))

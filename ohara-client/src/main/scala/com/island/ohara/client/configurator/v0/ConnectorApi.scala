@@ -19,32 +19,38 @@ import java.util.Objects
 
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.Data
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroups, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat, _}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ConnectorApi {
+
+  val CONNECTORS_PREFIX_PATH: String = "connectors"
 
   /**
     * The default value of group for this API.
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-  val WORKER_CLUSTER_NAME_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key()
-  val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
-  val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
-  val TOPIC_NAME_KEYS: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
-  val CONNECTOR_CLASS_KEY: String = ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()
-  val COLUMNS_KEY: String = ConnectorDefUtils.COLUMNS_DEFINITION.key()
-  val CONNECTOR_KEY: String = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
-  val CONNECTORS_PREFIX_PATH: String = "connectors"
-  val DEFAULT_NUMBER_OF_TASKS: Int = 1
+  private[this] val WORKER_CLUSTER_NAME_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key()
+  private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
+  private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
+  private[this] val TOPIC_NAMES_KEY: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
+  private[v0] val CONNECTOR_CLASS_KEY: String = ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()
+  @VisibleForTesting
+  private[v0] val COLUMNS_KEY: String = ConnectorDefUtils.COLUMNS_DEFINITION.key()
+  @VisibleForTesting
+  private[v0] val CONNECTOR_KEY_KEY: String = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
+  private[this] val GROUP_KEY: String = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
+  private[this] val NAME_KEY: String = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
+  private[this] val DEFAULT_NUMBER_OF_TASKS: Int = 1
 
   /**
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
@@ -61,6 +67,8 @@ object ConnectorApi {
 
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
@@ -71,60 +79,19 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    def className: String = plain(CONNECTOR_CLASS_KEY)
-    def columns: Seq[Column] =
-      plain.get(COLUMNS_KEY).map(s => PropGroups.ofJson(s).toColumns.asScala).getOrElse(Seq.empty)
-    def numberOfTasks: Int = plain(NUMBER_OF_TASKS_KEY).toInt
-    def workerClusterName: Option[String] = plain.get(WORKER_CLUSTER_NAME_KEY)
+    def className: String = settings.className.get
+    def columns: Seq[Column] = settings.columns.get
+    def numberOfTasks: Int = settings.numberOfTasks.get
+    def workerClusterName: Option[String] = settings.workerClusterName
+    def topicKeys: Set[TopicKey] = settings.topicKeys.get
 
-    /**
-      * TODO: remove this old key parser ... by chia
-      */
-    private[this] def topicKeysFromTopicNames: Set[TopicKey] =
-      plain
-        .get(TOPIC_NAME_KEYS)
-        .map(s => StringList.ofJson(s).asScala.toSet)
-        .map(_.map(TopicKey.of(GROUP_DEFAULT, _)))
-        .getOrElse(Set.empty)
-    def topicKeys: Set[TopicKey] =
-      noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]]).getOrElse(topicKeysFromTopicNames)
+    override def group: String = settings.group.get
 
-    /**
-      * find the value of "CONNECTOR_KEY". It is ignorable since it is able to be replaced by "group" and "name"
-      * @return connector key
-      */
-    private[this] def connectorKey: Option[ConnectorKey] =
-      noJsNull(settings).get(CONNECTOR_KEY).map(_.convertTo[ConnectorKey])
+    override def name: String = settings.name.get
 
-    /**
-      * return the group of connectorKey. If connectorKey does not exist, the value of "group" returned.
-      * @return group
-      */
-    override def group: String = connectorKey.map(_.group()).getOrElse(plain(GROUP_KEY))
+    def key: ConnectorKey = ConnectorKey.of(group, name)
 
-    /**
-      * return the name of connectorKey. If connectorKey does not exist, the value of "name" returned.
-      * @return name
-      */
-    override def name: String = connectorKey.map(_.name()).getOrElse(plain(NAME_KEY))
-
-    /**
-      * the search path is shown below.
-      * 1) value of "ConnectorKey"
-      * 2) value of "group"
-      * 3) value of "name"
-      * @return
-      */
-    def key: ConnectorKey = connectorKey.getOrElse(ConnectorKey.of(group, name))
-
-    override def tags: Map[String, JsValue] = noJsNull(settings)
-      .get(TAGS_KEY)
-      .map {
-        case s: JsObject => s.fields
-        case other: JsValue =>
-          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
-      }
-      .getOrElse(Map.empty)
+    override def tags: Map[String, JsValue] = settings.tags.get
   }
 
   implicit val CONNECTOR_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
@@ -138,6 +105,14 @@ object ConnectorApi {
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(TAGS_KEY)
+    .nullToEmptyArray(COLUMNS_KEY)
+    .nullToEmptyArray(TOPIC_KEYS_KEY)
+    // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
+    // to users to save their life :)
+    .rejectKeyword(TOPIC_NAMES_KEY)
+    // CONNECTOR_KEY_KEY is internal keyword
+    .rejectKeyword(CONNECTOR_KEY_KEY)
+    .requireKey(CONNECTOR_CLASS_KEY)
     .valueChecker(
       COLUMNS_KEY, {
         case v: JsArray if v.elements.nonEmpty =>
@@ -171,7 +146,19 @@ object ConnectorApi {
     .refine
 
   final case class Update(settings: Map[String, JsValue]) {
-    def workerClusterName: Option[String] = Creation(settings).workerClusterName
+    private[ConnectorApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
+    private[ConnectorApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
+
+    def columns: Option[Seq[Column]] =
+      noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroups.ofJson(s.toString).toColumns.asScala)
+    def numberOfTasks: Option[Int] = noJsNull(settings).get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
+    def workerClusterName: Option[String] = noJsNull(settings).get(WORKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+
+    def topicKeys: Option[Set[TopicKey]] =
+      noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
+
+    def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
   }
 
   implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
@@ -179,6 +166,11 @@ object ConnectorApi {
       override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Update = Update(json.asJsObject.fields)
     })
+    // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
+    // to users to save their life :)
+    .rejectKeyword(TOPIC_NAMES_KEY)
+    // CONNECTOR_KEY_KEY is internal keyword
+    .rejectKeyword(CONNECTOR_KEY_KEY)
     .rejectEmptyString()
     .valueChecker(
       COLUMNS_KEY, {
@@ -200,49 +192,26 @@ object ConnectorApi {
                                         lastModified: Long)
       extends Data {
 
-    override def key: ConnectorKey = ConnectorKey.of(group, name)
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(settings)
 
-    override def group: String = plain(GROUP_KEY)
+    override def key: ConnectorKey = settings.key
+
+    override def group: String = settings.group
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
-    def plain: Map[String, String] = noJsNull(settings).map {
-      case (k, v) =>
-        k -> (v match {
-          case JsString(value) => value
-          case _               => v.toString()
-        })
-    }
+    def plain: Map[String, String] = settings.plain
 
-    override def name: String = plain(NAME_KEY)
+    override def name: String = settings.name
     override def kind: String = "connector"
-    def className: String = plain(CONNECTOR_CLASS_KEY)
+    def className: String = settings.className
 
-    def columns: Seq[Column] =
-      plain.get(COLUMNS_KEY).map(s => PropGroups.ofJson(s).toColumns.asScala).getOrElse(Seq.empty)
-    def numberOfTasks: Int = plain(NUMBER_OF_TASKS_KEY).toInt
-    def workerClusterName: String = plain(WORKER_CLUSTER_NAME_KEY)
-
-    /**
-      * TODO: remove this old key parser ... by chia
-      */
-    private[this] def topicKeysFromTopicNames: Set[TopicKey] =
-      plain
-        .get(TOPIC_NAME_KEYS)
-        .map(s => StringList.ofJson(s).asScala.toSet)
-        .map(_.map(TopicKey.of(GROUP_DEFAULT, _)))
-        .getOrElse(Set.empty)
-    def topicKeys: Set[TopicKey] =
-      noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]]).getOrElse(topicKeysFromTopicNames)
-    override def tags: Map[String, JsValue] = noJsNull(settings)
-      .get(TAGS_KEY)
-      .map {
-        case s: JsObject => s.fields
-        case other: JsValue =>
-          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
-      }
-      .getOrElse(Map.empty)
+    def columns: Seq[Column] = settings.columns
+    def numberOfTasks: Int = settings.numberOfTasks
+    def workerClusterName: String = settings.workerClusterName.get
+    def topicKeys: Set[TopicKey] = settings.topicKeys
+    override def tags: Map[String, JsValue] = settings.tags
   }
 
   implicit val CONNECTOR_STATE_FORMAT: RootJsonFormat[ConnectorState] =
@@ -271,93 +240,55 @@ object ConnectorApi {
     * We use private[v0] instead of "sealed" since it is extendable to ValidationApi.
     */
   abstract class BasicRequest private[v0] {
-    protected[this] var group: String = GROUP_DEFAULT
-    protected[this] var name: String = _
-    protected[this] var className: String = _
-    protected[this] var columns: Seq[Column] = _
-    protected[this] var topicKeys: Set[TopicKey] = _
-    protected[this] var numberOfTasks: Int = DEFAULT_NUMBER_OF_TASKS
-    protected[this] var settings: Map[String, String] = Map.empty
-    protected[this] var workerClusterName: String = _
-    protected[this] var tags: Map[String, JsValue] = _
+    protected[this] var settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 
-    /**
-      * set the group and name via key
-      * @param objectKey object key
-      * @return this request
-      */
-    def key(objectKey: ObjectKey): BasicRequest.this.type = {
-      group(objectKey.group())
-      name(objectKey.name())
+    def key(key: ConnectorKey): BasicRequest.this.type = {
+      group(key.group())
+      name(key.name())
     }
+    def group(group: String): BasicRequest.this.type =
+      setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
+    def name(name: String): BasicRequest.this.type =
+      setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
 
-    @Optional("default group is \"default\"")
-    def group(group: String): BasicRequest.this.type = {
-      this.group = CommonUtils.requireNonEmpty(group)
-      this
-    }
-    @Optional("default name is a random string. But it is required in updating")
-    def name(name: String): BasicRequest.this.type = {
-      this.name = CommonUtils.requireNonEmpty(name)
-      this
-    }
-
-    @Optional(
-      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
-    def className(className: String): BasicRequest.this.type = {
-      this.className = CommonUtils.requireNonEmpty(className)
-      this
-    }
+    def className(className: String): BasicRequest.this.type =
+      setting(CONNECTOR_CLASS_KEY, JsString(CommonUtils.requireNonEmpty(className)))
 
     @Optional("Not all connectors demand this field. See connectors document for more details")
-    def columns(columns: Seq[Column]): BasicRequest.this.type = {
-      import scala.collection.JavaConverters._
-      this.columns = CommonUtils.requireNonEmpty(columns.asJava).asScala
-      this
-    }
+    def columns(columns: Seq[Column]): BasicRequest.this.type =
+      setting(COLUMNS_KEY, PropGroups.ofColumns(columns.asJava).toJsonString.parseJson)
 
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
-    def topicKey(topicKey: TopicKey): BasicRequest.this.type = topicKeys(Set(topicKey))
+    def topicKey(topicKey: TopicKey): BasicRequest.this.type = topicKeys(Set(Objects.requireNonNull(topicKey)))
 
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
-    def topicKeys(topicKeys: Set[TopicKey]): BasicRequest.this.type = {
-      import scala.collection.JavaConverters._
-      this.topicKeys = CommonUtils.requireNonEmpty(topicKeys.asJava).asScala.toSet
-      this
-    }
+    def topicKeys(topicKeys: Set[TopicKey]): BasicRequest.this.type =
+      setting(TOPIC_KEYS_KEY, TopicKey.toJsonString(topicKeys.asJava).parseJson)
 
     @Optional("default value is 1")
-    def numberOfTasks(numberOfTasks: Int): BasicRequest.this.type = {
-      this.numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks)
-      this
-    }
+    def numberOfTasks(numberOfTasks: Int): BasicRequest.this.type =
+      setting(NUMBER_OF_TASKS_KEY, JsNumber(CommonUtils.requirePositiveInt(numberOfTasks)))
 
     @Optional("server will match a worker cluster for you if the wk name is ignored")
-    def workerClusterName(workerClusterName: String): BasicRequest.this.type = {
-      this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
-      this
-    }
+    def workerClusterName(workerClusterName: String): BasicRequest.this.type =
+      setting(WORKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(workerClusterName)))
 
     @Optional("extra settings for this connectors")
-    def setting(key: String, value: String): BasicRequest.this.type = settings(
-      Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value)))
+    def setting(key: String, value: JsValue): BasicRequest.this.type = settings(
+      Map(CommonUtils.requireNonEmpty(key) -> Objects.requireNonNull(value)))
 
     @Optional("extra settings for this connectors")
-    def settings(settings: Map[String, String]): BasicRequest.this.type = {
+    def settings(settings: Map[String, JsValue]): BasicRequest.this.type = {
       import scala.collection.JavaConverters._
-      this.settings = CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+      this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
       this
     }
 
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Map[String, JsValue]): BasicRequest.this.type = {
-      this.tags = Objects.requireNonNull(tags)
-      this
-    }
-
-    import spray.json._
+    def tags(tags: Map[String, JsValue]): BasicRequest.this.type =
+      setting(TAGS_KEY, JsObject(Objects.requireNonNull(tags)))
 
     /**
       * generate the payload for request. It removes the ignored fields and keeping all value in json representation.
@@ -365,38 +296,7 @@ object ConnectorApi {
       * Noted, it throw unchecked exception if you haven't filled all required fields
       * @return creation object
       */
-    private[v0] def creation: Creation = Creation(
-      update.settings ++
-        Map(
-          GROUP_KEY -> JsString(if (CommonUtils.isEmpty(group)) GROUP_DEFAULT else group),
-          NAME_KEY -> JsString(if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name)
-        ))
-
-    private[v0] def update: Update = Update(
-      settings.map {
-        case (k, v) => k -> JsString(v)
-      } ++ Map(
-        CONNECTOR_CLASS_KEY -> (if (className == null) JsNull
-                                else JsString(CommonUtils.requireNonEmpty(className))),
-        COLUMNS_KEY -> (if (columns == null) JsNull
-                        else if (columns.isEmpty) JsArray.empty
-                        else
-                          PropGroups.ofColumns(columns.asJava).toJsonString.parseJson),
-        TOPIC_KEYS_KEY -> (if (topicKeys == null) JsNull
-                           else if (topicKeys.isEmpty) JsArray.empty
-                           else JsArray(topicKeys.map(TOPIC_KEY_FORMAT.write).toVector)),
-        NUMBER_OF_TASKS_KEY -> JsNumber(CommonUtils.requirePositiveInt(numberOfTasks)),
-        WORKER_CLUSTER_NAME_KEY -> (if (workerClusterName == null) JsNull
-                                    else
-                                      JsString(CommonUtils.requireNonEmpty(workerClusterName))),
-        TAGS_KEY -> (if (tags == null) JsNull else JsObject(tags))
-      ).filter {
-        case (_, value) =>
-          value match {
-            case JsNull => false
-            case _      => true
-          }
-      })
+    def creation: Creation = CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(Creation(settings.toMap)))
   }
 
   /**
@@ -455,11 +355,17 @@ object ConnectorApi {
     def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, RESUME_COMMAND)
 
     def request: Request = new Request {
+      private[v0] def update: Update =
+        CONNECTOR_UPDATE_FORMAT.read(CONNECTOR_UPDATE_FORMAT.write(Update(settings.toMap)))
+
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
         exec.post[Creation, ConnectorDescription, ErrorApi.Error](url, creation)
 
-      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.put[Update, ConnectorDescription, ErrorApi.Error](url(ConnectorKey.of(group, name)), update)
+      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] = {
+        exec.put[Update, ConnectorDescription, ErrorApi.Error](
+          url(ObjectKey.of(update.group.getOrElse(GROUP_DEFAULT), update.name.get)),
+          update)
+      }
     }
   }
 

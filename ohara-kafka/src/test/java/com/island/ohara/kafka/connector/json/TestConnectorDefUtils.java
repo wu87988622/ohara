@@ -336,7 +336,7 @@ public class TestConnectorDefUtils extends SmallTest {
             .findFirst()
             .get();
     Assert.assertTrue(setting.required());
-    Assert.assertTrue(setting.internal());
+    Assert.assertFalse(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());
@@ -351,7 +351,7 @@ public class TestConnectorDefUtils extends SmallTest {
             .findFirst()
             .get();
     Assert.assertTrue(setting.required());
-    Assert.assertFalse(setting.internal());
+    Assert.assertTrue(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
     Assert.assertEquals(SettingDef.Type.CONNECTOR_KEY, setting.valueType());

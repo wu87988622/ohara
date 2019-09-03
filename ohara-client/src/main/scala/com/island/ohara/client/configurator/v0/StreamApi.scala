@@ -66,7 +66,7 @@ object StreamApi {
 
     def brokerClusterName: Option[String] = settings.brokerClusterName
 
-    override def name: String = plain(StreamDefUtils.NAME_DEFINITION.key())
+    override def name: String = settings.name.get
 
     override def group: String = GROUP_DEFAULT
 
@@ -137,7 +137,8 @@ object StreamApi {
       .refine
 
   final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
-
+    private[StreamApi] def name: Option[String] =
+      noJsNull(settings).get(StreamDefUtils.NAME_DEFINITION.key()).map(_.convertTo[String])
     def brokerClusterName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key()).map(_.convertTo[String])
 
@@ -388,7 +389,8 @@ object StreamApi {
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
         exec.put[Update, StreamClusterInfo, ErrorApi.Error](
-          s"$url/${CommonUtils.requireNonEmpty(settings(StreamDefUtils.NAME_DEFINITION.key()).convertTo[String])}",
+          // use update to parse the name :)
+          s"$url/${update.name.get}",
           update
         )
       }

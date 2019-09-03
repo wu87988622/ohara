@@ -65,8 +65,11 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.errorCount() shouldBe 0
   }
 
+  /**
+    * the classname is required so the request will be rejected directly
+    */
   @Test
-  def ignoreClassName(): Unit = an[IllegalArgumentException] should be thrownBy result(
+  def ignoreClassName(): Unit = an[DeserializationException] should be thrownBy result(
     ValidationApi.access
       .hostname(configurator.hostname)
       .port(configurator.port)

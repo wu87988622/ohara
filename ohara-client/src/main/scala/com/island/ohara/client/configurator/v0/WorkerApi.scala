@@ -68,7 +68,7 @@ object WorkerApi {
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(noJsNull(settings))
     override def group: String = GROUP_DEFAULT
-    override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
+    override def name: String = settings.name.get
     override def imageName: String = settings.imageName.get
     def brokerClusterName: Option[String] = settings.brokerClusterName
     def clientPort: Int = settings.clientPort.get
@@ -123,6 +123,7 @@ object WorkerApi {
       .refine
 
   final case class Update private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+    private[WorkerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     override def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
     def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
@@ -383,8 +384,8 @@ object WorkerApi {
 
       override def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
         exec.put[Update, WorkerClusterInfo, ErrorApi.Error](
-          // use creation to parse the name :)
-          s"$url/${creation.name}",
+          // use update to parse the name :)
+          s"$url/${update.name.get}",
           update
         )
     }

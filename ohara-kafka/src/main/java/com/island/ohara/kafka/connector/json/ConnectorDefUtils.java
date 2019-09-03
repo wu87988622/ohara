@@ -47,6 +47,10 @@ public final class ConnectorDefUtils {
   // -------------------------------[default setting]-------------------------------//
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
 
+  /**
+   * A internal field used to indicate the real group/name to connector. the name exists in both
+   * Ohara and Kafka but it has different value to both as well...
+   */
   public static final SettingDef CONNECTOR_KEY_DEFINITION =
       SettingDef.builder()
           .displayName("Connector key")
@@ -55,9 +59,24 @@ public final class ConnectorDefUtils {
           .documentation("the key of this connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .internal()
           .build();
 
-  /** this setting is mapped to kafka's name. */
+  public static final SettingDef CONNECTOR_GROUP_DEFINITION =
+      SettingDef.builder()
+          .displayName("Connector group")
+          .key("group")
+          .valueType(Type.STRING)
+          .documentation("the group of this connector")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .build();
+
+  /**
+   * this is a embarrassed field to Ohara since we also have a filed called name for all objects.
+   * our solution is to expose this field via definition but we always replace the value when
+   * creating connector.
+   */
   public static final SettingDef CONNECTOR_NAME_DEFINITION =
       SettingDef.builder()
           .displayName("Connector name")
@@ -66,7 +85,6 @@ public final class ConnectorDefUtils {
           .documentation("the name of this connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .internal()
           .build();
 
   public static final SettingDef CONNECTOR_CLASS_DEFINITION =

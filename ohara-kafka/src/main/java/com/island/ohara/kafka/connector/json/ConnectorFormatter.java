@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.ConnectorKey;
 import com.island.ohara.common.setting.PropGroups;
@@ -39,12 +40,23 @@ public final class ConnectorFormatter {
     return new ConnectorFormatter();
   }
 
-  private final Map<String, String> settings = new HashMap<>();
+  @VisibleForTesting final Map<String, String> settings = new HashMap<>();
 
   private ConnectorFormatter() {
     // ohara has custom serializeration so the json converter is useless for ohara
     converterTypeOfKey(ConverterType.NONE);
     converterTypeOfValue(ConverterType.NONE);
+  }
+
+  /**
+   * the group is not exposed now since we have a salted connector group. This connector group is
+   * defined when user input connector key.
+   *
+   * @param group connector group on kafka
+   * @return this formatter
+   */
+  private ConnectorFormatter group(String group) {
+    return setting(ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key(), group);
   }
 
   /**
@@ -61,6 +73,7 @@ public final class ConnectorFormatter {
   public ConnectorFormatter connectorKey(ConnectorKey connectorKey) {
     setting(
         ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key(), ConnectorKey.toJsonString(connectorKey));
+    group(connectorKey.group());
     return name(connectorKey.connectorNameOnKafka());
   }
 
@@ -72,7 +85,11 @@ public final class ConnectorFormatter {
     try {
       List<String> ss = StringList.ofJson(value);
       // yep, this value is in json array
-      settings.put(key, StringList.toKafkaString(ss));
+      // the empty string list and empty object list have same json representation "[]"
+      // so we can't distinguish them here. In order to reduce the ambiguation, we DON'T put the
+      // empty list to the
+      // setting by default.
+      if (!ss.isEmpty()) settings.put(key, StringList.toKafkaString(ss));
     } catch (IllegalArgumentException e) {
       settings.put(key, value);
     }
@@ -95,6 +112,7 @@ public final class ConnectorFormatter {
    * @return this formatter
    */
   private ConnectorFormatter topicNames(Set<String> topicNames) {
+    // the array value required by kafka is a,b,c,d,e than json array ...
     return setting(
         ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicNames));
   }
