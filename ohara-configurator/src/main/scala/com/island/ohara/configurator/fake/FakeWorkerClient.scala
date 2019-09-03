@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
+import java.lang.reflect.Modifier
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
@@ -138,6 +139,8 @@ object FakeWorkerClient {
       .getSubTypesOf(classOf[RowSinkConnector])
       .asScala
     classes
+    // the abstract class is not instantiable.
+      .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
       .flatMap { clz =>
         try Some((clz.getName, clz.newInstance().definitions().asScala))
         catch {
