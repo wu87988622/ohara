@@ -26,10 +26,12 @@ import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.mockito.MockitoSugar._
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestConfiguratorBuilder extends MediumTest with Matchers {
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+
   @Test
   def nullHomeFolder(): Unit = an[NullPointerException] should be thrownBy Configurator.builder.homeFolder(null)
 
@@ -63,16 +65,14 @@ class TestConfiguratorBuilder extends MediumTest with Matchers {
       case (numberOfBrokers, numberOfWorkers) =>
         val configurator = Configurator.builder.fake(numberOfBrokers, numberOfWorkers).build()
         try {
-          Await.result(configurator.clusterCollie.brokerCollie.clusters(), 20 seconds).size shouldBe numberOfBrokers
-          Await.result(configurator.clusterCollie.workerCollie.clusters(), 20 seconds).size shouldBe numberOfWorkers
-          Await
-            .result(configurator.clusterCollie.clusters(), 30 seconds)
-            // one broker generates one zk cluster
-            .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
-          val nodes = Await.result(configurator.store.values[Node](), 20 seconds)
+          result(configurator.clusterCollie.brokerCollie.clusters()).size shouldBe numberOfBrokers
+          result(configurator.clusterCollie.workerCollie.clusters()).size shouldBe numberOfWorkers
+          result(configurator.clusterCollie.clusters())
+          // one broker generates one zk cluster
+          .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
+          val nodes = result(configurator.store.values[Node]())
           nodes.isEmpty shouldBe false
-          Await
-            .result(configurator.clusterCollie.clusters(), 20 seconds)
+          result(configurator.clusterCollie.clusters())
             .flatMap(_._1.nodeNames)
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
         } finally configurator.close()
@@ -87,7 +87,7 @@ class TestConfiguratorBuilder extends MediumTest with Matchers {
   @Test
   def createFakeConfiguratorWithoutClusters(): Unit = {
     val configurator = Configurator.builder.fake(0, 0).build()
-    try Await.result(configurator.clusterCollie.clusters(), 20 seconds).size shouldBe 0
+    try result(configurator.clusterCollie.clusters()).size shouldBe 0
     finally configurator.close()
   }
 
