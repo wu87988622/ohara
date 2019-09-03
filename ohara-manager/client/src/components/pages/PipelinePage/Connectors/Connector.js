@@ -26,8 +26,8 @@ import { TitleWrapper, H5Wrapper } from './styles';
 import { Box } from 'components/common/Layout';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
-const HdfsSink = props => {
-  const { defs, updateHasChanges } = props;
+const Connector = props => {
+  const { updateHasChanges, connectors } = props;
   const [state, setState, configs, setConfigs] = utils.useFetchConnectors(
     props,
   );
@@ -38,8 +38,15 @@ const HdfsSink = props => {
 
   if (!configs) return null;
 
+  const [targetConnector] = props.graph.filter(g => g.name === connectorName);
+  const configFormTitle = targetConnector.className.split('.').pop();
+
+  const [defs] = connectors.filter(
+    connector => connector.className === targetConnector.className,
+  );
+
   const formData = utils.getRenderData({
-    defs,
+    defs: defs.definitions,
     configs,
     state,
   });
@@ -72,7 +79,7 @@ const HdfsSink = props => {
   return (
     <Box>
       <TitleWrapper>
-        <H5Wrapper>HDFS sink connector</H5Wrapper>
+        <H5Wrapper>{configFormTitle}</H5Wrapper>
         <Controller
           kind="connector"
           connectorName={connectorName}
@@ -114,6 +121,6 @@ const HdfsSink = props => {
   );
 };
 
-HdfsSink.propTypes = types.connector;
+Connector.propTypes = types.connector;
 
-export default HdfsSink;
+export default Connector;

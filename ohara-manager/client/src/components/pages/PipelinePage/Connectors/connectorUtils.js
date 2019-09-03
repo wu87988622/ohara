@@ -22,7 +22,7 @@ import { Field } from 'react-final-form';
 import * as connectorApi from 'api/connectorApi';
 import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
-import ColumnTable from './CustomConnector/ColumnTable';
+import ColumnTable from './ColumnTable';
 import Tabs from './Tabs';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { validateConnector } from 'api/validateApi';

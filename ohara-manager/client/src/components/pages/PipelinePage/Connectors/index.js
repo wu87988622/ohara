@@ -14,24 +14,8 @@
  * limitations under the License.
  */
 
-import FtpSink from './FtpSink';
-import FtpSource from './FtpSource';
-import JdbcSource from './JdbcSource';
-import PerfSource from './PerfSource';
-import ConsoleSink from './ConsoleSink';
-import HdfsSink from './HdfsSink';
 import Topic from './Topic';
 import StreamApp from './StreamApp';
-import CustomConnector from './CustomConnector/CustomConnector';
+import Connector from './Connector';
 
-export {
-  FtpSink,
-  FtpSource,
-  JdbcSource,
-  PerfSource,
-  ConsoleSink,
-  HdfsSink,
-  Topic,
-  StreamApp,
-  CustomConnector,
-};
+export { Topic, StreamApp, Connector };

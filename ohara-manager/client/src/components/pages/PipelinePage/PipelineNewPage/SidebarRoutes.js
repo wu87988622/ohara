@@ -18,144 +18,25 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Route } from 'react-router-dom';
 
-import * as Connectors from '../Connectors';
-import * as PIPELINES from 'constants/pipelines';
+import { Connector, Topic, StreamApp } from '../Connectors';
 
 const SidebarRoutes = props => {
-  const { connectorProps, connectors } = props;
+  const { connectorProps } = props;
   const routeBaseUrl = `/pipelines/(new|edit)`;
-
-  const getConnectorDefs = ({ connectors, type }) => {
-    const getByClassName = connector => connector.className === type;
-    const connector = connectors.find(getByClassName);
-    return connector.definitions;
-  };
-
-  const {
-    jdbcSource,
-    ftpSource,
-    perfSource,
-    consoleSink,
-    hdfsSink,
-    ftpSink,
-    customSource,
-    customSink,
-  } = PIPELINES.CONNECTOR_TYPES;
 
   return (
     <div data-testid="pipeline-config-form">
       <Route
-        path={`${routeBaseUrl}/${jdbcSource}`}
-        render={() => (
-          <Connectors.JdbcSource
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: jdbcSource,
-            })}
-          />
-        )}
+        path={`${routeBaseUrl}/(source|sink)`}
+        render={() => <Connector {...connectorProps} />}
       />
-
-      <Route
-        path={`${routeBaseUrl}/${ftpSource}`}
-        render={() => (
-          <Connectors.FtpSource
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: ftpSource,
-            })}
-          />
-        )}
-      />
-
-      <Route
-        path={`${routeBaseUrl}/${perfSource}`}
-        render={() => (
-          <Connectors.PerfSource
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: perfSource,
-            })}
-          />
-        )}
-      />
-
-      <Route
-        path={`${routeBaseUrl}/${ftpSink}`}
-        render={() => (
-          <Connectors.FtpSink
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: ftpSink,
-            })}
-          />
-        )}
-      />
-
       <Route
         path={`${routeBaseUrl}/topic`}
-        render={() => <Connectors.Topic {...connectorProps} />}
+        render={() => <Topic {...connectorProps} />}
       />
-
-      <Route
-        path={`${routeBaseUrl}/${hdfsSink}`}
-        render={() => (
-          <Connectors.HdfsSink
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: hdfsSink,
-            })}
-          />
-        )}
-      />
-
-      <Route
-        path={`${routeBaseUrl}/${consoleSink}`}
-        render={() => (
-          <Connectors.ConsoleSink
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: consoleSink,
-            })}
-          />
-        )}
-      />
-
       <Route
         path={`${routeBaseUrl}/stream`}
-        render={() => <Connectors.StreamApp {...connectorProps} />}
-      />
-
-      <Route
-        path={`${routeBaseUrl}/${customSource}`}
-        render={() => (
-          <Connectors.CustomConnector
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: customSource,
-            })}
-          />
-        )}
-      />
-
-      <Route
-        path={`${routeBaseUrl}/${customSink}`}
-        render={() => (
-          <Connectors.CustomConnector
-            {...connectorProps}
-            defs={getConnectorDefs({
-              connectors,
-              type: customSink,
-            })}
-          />
-        )}
+        render={() => <StreamApp {...connectorProps} />}
       />
     </div>
   );

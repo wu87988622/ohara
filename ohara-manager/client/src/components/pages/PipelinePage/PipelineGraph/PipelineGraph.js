@@ -103,14 +103,14 @@ const PipelineGraph = props => {
       const { history, graph, match, updateGraph } = props;
       const { pipelineName } = match.params;
       const currentConnector = graph.find(g => g.name === current);
-      const { className = 'streamApp', name: connectorName } = currentConnector;
+      const { name: connectorName, kind } = currentConnector;
       updateGraph({
         update: currentConnector,
         dispatcher: { name: 'GRAPH' },
       });
 
       const action = match.url.includes('/edit/') ? 'edit' : 'new';
-      const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;
+      const baseUrl = `/pipelines/${action}/${kind}/${pipelineName}`;
 
       if (connectorName) {
         history.push(`${baseUrl}/${connectorName}`);

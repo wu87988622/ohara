@@ -69,7 +69,12 @@ export const connector = {
   refreshGraph: func.isRequired,
   pipelineTopics: array.isRequired,
   globalTopics: arrayOf(topic).isRequired,
-  defs: arrayOf(definition),
+  connectors: arrayOf(
+    shape({
+      className: string.isRequired,
+      definitions: arrayOf(definition),
+    }),
+  ),
   graph: arrayOf(graph).isRequired,
   pipeline: shape({
     name: string.isRequired,
