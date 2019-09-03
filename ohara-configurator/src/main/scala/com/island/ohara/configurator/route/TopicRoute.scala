@@ -132,8 +132,7 @@ private[configurator] object TopicRoute {
         TopicInfo(
           // the default custom configs is at first since it is able to be replaced by creation.
           settings = TOPIC_CUSTOM_CONFIGS
-            ++ creation.settings
-            + (BROKER_CLUSTER_NAME_KEY -> JsString(clusterName)),
+            ++ access.request.settings(creation.settings).brokerClusterName(clusterName).creation.settings,
           partitionInfos = Seq.empty,
           metrics = Metrics.EMPTY,
           state = None,
@@ -158,10 +157,14 @@ private[configurator] object TopicRoute {
                 if (topicFromKafkaOption.isDefined)
                   throw new IllegalStateException(
                     s"the topic:$key is working now. Please stop it before updating the properties")
+
                 try TopicInfo(
-                  settings = previous.map(_.settings).getOrElse(Map.empty)
-                    ++ update.settings
-                    + (BROKER_CLUSTER_NAME_KEY -> JsString(cluster.name)),
+                  settings = access.request
+                    .settings(previous.map(_.settings).getOrElse(Map.empty))
+                    .settings(update.settings)
+                    .brokerClusterName(cluster.name)
+                    .creation
+                    .settings,
                   partitionInfos = Seq.empty,
                   metrics = Metrics.EMPTY,
                   state = None,

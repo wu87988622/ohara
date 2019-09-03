@@ -38,15 +38,15 @@ object TopicApi {
   /**
     * The default value of group for this API.
     */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-  val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
-  val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
-  val TOPICS_PREFIX_PATH: String = "topics"
+  private[ohara] val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
+  private[v0] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
+  private[v0] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
+  private[ohara] val TOPICS_PREFIX_PATH: String = "topics"
 
-  val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
-  val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
-  val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
-  val TAGS_KEY = "tags"
+  private[v0] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
+  private[v0] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+  private[v0] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
+  private[this] val TAGS_KEY = "tags"
 
   /**
     * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
@@ -243,11 +243,19 @@ object TopicApi {
   val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
 
   case class Update private[TopicApi] (settings: Map[String, JsValue]) {
-    private[this] def plain: Map[String, String] = settings.filter(_._2.isInstanceOf[JsString]).map {
-      case (key, value) => key -> value.convertTo[String]
-    }
+    def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
 
-    def brokerClusterName: Option[String] = plain.get(BROKER_CLUSTER_NAME_KEY)
+    private[TopicApi] def numberOfPartitions: Option[Int] =
+      noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
+
+    private[TopicApi] def numberOfReplications: Option[Short] =
+      noJsNull(settings).get(NUMBER_OF_REPLICATIONS_KEY).map(_.convertTo[Short])
+
+    private[TopicApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
+
+    private[TopicApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+
+    private[TopicApi] def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
   }
 
   implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
@@ -260,22 +268,21 @@ object TopicApi {
       .refine
 
   case class Creation private[TopicApi] (settings: Map[String, JsValue]) extends CreationRequest {
+
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+
     def key: TopicKey = TopicKey.of(group, name)
 
-    private[this] def plain: Map[String, String] = settings.filter(_._2.isInstanceOf[JsString]).map {
-      case (key, value) => key -> value.convertTo[String]
-    }
+    def brokerClusterName: Option[String] = settings.brokerClusterName
 
-    def brokerClusterName: Option[String] = plain.get(BROKER_CLUSTER_NAME_KEY)
+    def numberOfPartitions: Int = settings.numberOfPartitions.get
+    def numberOfReplications: Short = settings.numberOfReplications.get
 
-    def numberOfPartitions: Int = settings(NUMBER_OF_PARTITIONS_KEY).convertTo[Int]
-    def numberOfReplications: Short = settings(NUMBER_OF_REPLICATIONS_KEY).convertTo[Short]
+    override def group: String = settings.group.get
 
-    override def group: String = plain(GROUP_KEY)
+    override def name: String = settings.name.get
 
-    override def name: String = plain(NAME_KEY)
-
-    override def tags: Map[String, JsValue] = settings(TAGS_KEY).asJsObject.fields
+    override def tags: Map[String, JsValue] = settings.tags.get
   }
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
@@ -290,7 +297,7 @@ object TopicApi {
     .withDash()
     .withUnderLine()
     .toRefiner
-    .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
+    .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_PARTITIONS)
     .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
@@ -318,6 +325,9 @@ object TopicApi {
                        state: Option[TopicState],
                        lastModified: Long)
       extends Data {
+
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(settings)
+
     override def key: TopicKey = TopicKey.of(group, name)
     override def kind: String = "topic"
 
@@ -327,25 +337,21 @@ object TopicApi {
       */
     def topicNameOnKafka: String = key.topicNameOnKafka
 
-    override def group: String = noJsNull(settings)(GROUP_KEY).convertTo[String]
+    override def group: String = settings.group
 
-    override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
+    override def name: String = settings.name
 
-    override def tags: Map[String, JsValue] =
-      noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields).getOrElse(Map.empty)
+    override def tags: Map[String, JsValue] = settings.tags
 
-    def brokerClusterName: String = noJsNull(settings)(BROKER_CLUSTER_NAME_KEY).convertTo[String]
-    def numberOfPartitions: Int =
-      noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int]).getOrElse(DEFAULT_NUMBER_OF_PARTITIONS)
-    def numberOfReplications: Short = noJsNull(settings)
-      .get(NUMBER_OF_REPLICATIONS_KEY)
-      .map(_.convertTo[Short])
-      .getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
+    def brokerClusterName: String = settings.brokerClusterName.get
+    def numberOfPartitions: Int = settings.numberOfPartitions
+
+    def numberOfReplications: Short = settings.numberOfReplications
 
     /**
       * @return the custom configs. the core configs are not included
       */
-    def configs: Map[String, String] = settings
+    def configs: Map[String, String] = noJsNull(settings)
       .filter {
         case (key, value) =>
           TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG).exists(_.key() == key) &&
@@ -390,27 +396,46 @@ object TopicApi {
     }
 
     @Optional("default group is \"default\"")
-    def group(group: String): Request
+    def group(group: String): Request = setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
 
     @Optional("default name is a random string. But it is required in updating")
-    def name(name: String): Request
+    def name(name: String): Request =
+      setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
 
     @Optional("server will match a broker cluster for you if the bk name is ignored")
-    def brokerClusterName(brokerClusterName: String): Request
+    def brokerClusterName(brokerClusterName: String): Request =
+      setting(BROKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
 
     @Optional("default value is DEFAULT_NUMBER_OF_PARTITIONS")
-    def numberOfPartitions(numberOfPartitions: Int): Request
+    def numberOfPartitions(numberOfPartitions: Int): Request =
+      setting(NUMBER_OF_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(numberOfPartitions)))
 
     @Optional("default value is DEFAULT_NUMBER_OF_REPLICATIONS")
-    def numberOfReplications(numberOfReplications: Short): Request
+    def numberOfReplications(numberOfReplications: Short): Request =
+      setting(NUMBER_OF_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(numberOfReplications)))
 
     @Optional("default configs is empty array")
-    def configs(configs: Map[String, String]): Request
+    def configs(configs: Map[String, String]): Request = {
+      configs.foreach {
+        case (key, value) => setting(key, JsString(value))
+      }
+      this
+    }
 
     @Optional("default value is empty array")
-    def tags(tags: Map[String, JsValue]): Request
+    def tags(tags: Map[String, JsValue]): Request =
+      setting(TAGS_KEY, JsObject(Objects.requireNonNull(tags)))
 
-    private[v0] def creation: Creation
+    def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
+
+    def settings(settings: Map[String, JsValue]): Request
+
+    /**
+      * Creation instance includes many useful parsers for custom settings so we open it to code with a view to reusing
+      * those convenient parsers.
+      * @return the payload of creation
+      */
+    def creation: Creation
 
     private[v0] def update: Update
 
@@ -437,37 +462,12 @@ object TopicApi {
       private[this] var settings: mutable.Map[String, JsValue] = new mutable.HashMap() + (GROUP_KEY -> JsString(
         GROUP_DEFAULT))
 
-      override def group(group: String): Request =
-        add(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
-
-      override def name(name: String): Request =
-        add(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
-
-      override def brokerClusterName(brokerClusterName: String): Request =
-        add(BROKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
-
-      override def numberOfPartitions(numberOfPartitions: Int): Request =
-        add(NUMBER_OF_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(numberOfPartitions)))
-
-      override def numberOfReplications(numberOfReplications: Short): Request =
-        add(NUMBER_OF_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(numberOfReplications)))
-
-      override def configs(configs: Map[String, String]): Request = {
-        settings ++= configs.map {
-          case (key, value) => key -> JsString(value)
-        }
+      override def settings(settings: Map[String, JsValue]): Request = {
+        this.settings ++= settings
         this
       }
 
-      override def tags(tags: Map[String, JsValue]): Request =
-        add(TAGS_KEY, JsObject(Objects.requireNonNull(tags)))
-
-      private[this] def add(key: String, value: JsValue): Request = {
-        settings += key -> value
-        this
-      }
-
-      override private[v0] def creation: Creation =
+      override def creation: Creation =
         // rewrite the creation via format since the format will auto-complete the creation
         // this make the creaion is consistent to creation sent to server
         TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(Creation(settings.toMap)))
@@ -484,9 +484,7 @@ object TopicApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.put[Update, TopicInfo, ErrorApi.Error](
-          url(
-            TopicKey.of(settings.get(GROUP_KEY).map(_.convertTo[String]).getOrElse(GROUP_DEFAULT),
-                        settings.get(NAME_KEY).map(_.convertTo[String]).orNull)),
+          url(TopicKey.of(update.group.getOrElse(GROUP_DEFAULT), update.name.get)),
           update
         )
     }

@@ -22,7 +22,7 @@ import java.util.Objects
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Definition, StreamApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -37,7 +37,7 @@ import scala.concurrent.{Await, Future}
 class TestStreamCreator extends SmallTest with Matchers {
 
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
-  private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
+  private[this] def topicKey(name: String): TopicKey = TopicKey.of("group", name)
 
   private[this] def streamCreator(): StreamCollie.ClusterCreator =
     (clusterName,

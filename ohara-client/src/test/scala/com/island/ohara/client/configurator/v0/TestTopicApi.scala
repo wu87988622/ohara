@@ -50,7 +50,7 @@ class TestTopicApi extends SmallTest with Matchers {
     .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy TopicApi.access
+  def ignoreNameOnUpdate(): Unit = an[NoSuchElementException] should be thrownBy TopicApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request

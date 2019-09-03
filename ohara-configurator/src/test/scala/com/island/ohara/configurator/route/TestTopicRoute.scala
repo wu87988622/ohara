@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState, _}
+import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.TopicKey
@@ -28,8 +28,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestTopicRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder.fake(1, 0).build()
@@ -225,7 +225,8 @@ class TestTopicRoute extends SmallTest with Matchers {
     updatePartOfField(
       _.numberOfPartitions(numberOfPartitions),
       topicInfo =>
-        topicInfo.copy(settings = topicInfo.settings + (NUMBER_OF_PARTITIONS_KEY -> JsNumber(numberOfPartitions)))
+        topicInfo.copy(settings =
+          TopicApi.access.request.settings(topicInfo.settings).numberOfPartitions(numberOfPartitions).creation.settings)
     )
   }
 
@@ -235,7 +236,12 @@ class TestTopicRoute extends SmallTest with Matchers {
     updatePartOfField(
       _.numberOfReplications(numberOfReplications),
       topicInfo =>
-        topicInfo.copy(settings = topicInfo.settings + (NUMBER_OF_REPLICATIONS_KEY -> JsNumber(numberOfReplications)))
+        topicInfo.copy(
+          settings = TopicApi.access.request
+            .settings(topicInfo.settings)
+            .numberOfReplications(numberOfReplications)
+            .creation
+            .settings)
     )
   }
 
