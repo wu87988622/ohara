@@ -217,8 +217,8 @@ const PipelineListPage = props => {
                             name="name"
                             label="Pipeline name"
                             placeholder="PipelineName"
-                            testId="name-input"
                             component={InputField}
+                            inputProps={{ 'data-testid': 'name-input' }}
                             autoFocus
                           />
                         </DialogContent>
