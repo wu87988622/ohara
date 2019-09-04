@@ -22,7 +22,11 @@ import { Connector, Topic, StreamApp } from '../Connectors';
 
 const SidebarRoutes = props => {
   const { connectorProps } = props;
-  const routeBaseUrl = `/pipelines/(new|edit)`;
+  const {
+    pipeline: { name },
+  } = connectorProps;
+
+  const routeBaseUrl = `/pipelines/edit/${name}`;
 
   return (
     <div data-testid="pipeline-config-form">

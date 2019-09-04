@@ -15,7 +15,7 @@
  */
 
 import * as generate from 'utils/generate';
-import * as utils from '../pipelineNewPageUtils';
+import * as utils from '../pipelineEditPageUtils';
 
 describe('removePrevConnector()', () => {
   it('removes previous connection', () => {

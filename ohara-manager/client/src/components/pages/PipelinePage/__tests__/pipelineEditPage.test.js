@@ -23,7 +23,7 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
 import * as workerApi from 'api/workerApi';
 import * as topicApi from 'api/topicApi';
-import PipelineNewPage from '../PipelineNewPage';
+import PipelineEditPage from '../PipelineEditPage';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_EDIT } from 'constants/documentTitles';
 import { renderWithProvider } from 'utils/testUtils';
@@ -110,12 +110,12 @@ const setup = () => {
 
 afterEach(cleanup);
 
-describe('<PipelineNewPage />', () => {
+describe('<PipelineEditPage />', () => {
   it('renders self', async () => {
     const { props } = setup();
 
     await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
   });
 
@@ -123,7 +123,7 @@ describe('<PipelineNewPage />', () => {
     const { props } = setup();
 
     await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
     expect(document.title).toBe(PIPELINE_EDIT);
   });
@@ -132,7 +132,7 @@ describe('<PipelineNewPage />', () => {
     const { pipeline, props } = setup();
 
     const { getByText } = await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
     getByText(pipeline.name);
   });
@@ -141,7 +141,7 @@ describe('<PipelineNewPage />', () => {
     const { props } = setup();
 
     const { getByText, getByTestId } = await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
     getByTestId('toolbar-sources');
     getByTestId('toolbar-topics');
@@ -154,7 +154,7 @@ describe('<PipelineNewPage />', () => {
     const { props, pipeline } = setup();
 
     const { getByText, getByTestId } = await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
     getByText('Operate');
     getByTestId('start-btn');
@@ -195,7 +195,7 @@ describe('<PipelineNewPage />', () => {
     );
 
     const { getByTestId } = await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
 
     // Start the pipeline
@@ -241,7 +241,7 @@ describe('<PipelineNewPage />', () => {
     );
 
     const { getByTestId } = await waitForElement(() =>
-      renderWithProvider(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineEditPage {...props} />),
     );
 
     // Stop the pipeline

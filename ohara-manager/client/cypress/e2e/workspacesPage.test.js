@@ -72,7 +72,7 @@ describe('WorkspacesPage', () => {
         cy.registerService(name, 'brokers');
       });
 
-    cy.getByText(workerName).should('have.length', 1);
+    cy.getByText(workerName, { timeout: 40000 }).should('have.length', 1);
   });
 
   it('adds a new topic', () => {

@@ -18,7 +18,7 @@ import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 import * as generate from '../../src/utils/generate';
 
-describe('PipelineNewPage', () => {
+describe('PipelineEditPage', () => {
   before(() => {
     cy.removeWorkers();
     cy.addWorker();

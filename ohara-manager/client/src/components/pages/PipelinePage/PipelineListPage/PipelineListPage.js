@@ -95,7 +95,7 @@ const PipelineListPage = props => {
     if (pipelineName) {
       setIsNewModalOpen(false);
       showMessage(MESSAGES.PIPELINE_CREATION_SUCCESS);
-      history.push(`${match.url}/new/${pipelineName}`);
+      history.push(`${match.url}/edit/${pipelineName}`);
     }
   };
 

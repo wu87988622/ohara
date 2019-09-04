@@ -24,7 +24,7 @@ import GlobalStyle from 'theme/globalStyle';
 import Header from 'components/common/Header';
 import HomePage from 'components/pages/HomePage';
 import PipelinePage from 'components/pages/PipelinePage';
-import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
+import PipelineEditPage from 'components/pages/PipelinePage/PipelineEditPage';
 import NodesPage from 'components/pages/NodePage/NodeListPage';
 import WorkspacesPage from 'components/pages/WorkspacesPage';
 import WorkspacesDetailPage from 'components/pages/WorkspacesPage/WorkspacesDetailPage';
@@ -49,13 +49,8 @@ class App extends React.Component {
               <Header />
               <Switch>
                 <Route
-                  path="/pipelines/new/:page?/:pipelineName/:connectorName?"
-                  component={PipelineNewPage}
-                  data-testid="pipeline-new-page"
-                />
-                <Route
-                  path="/pipelines/edit/:page?/:pipelineName/:connectorName?"
-                  component={PipelineNewPage}
+                  path="/pipelines/edit/:pipelineName/:connectorKind?/:connectorName?"
+                  component={PipelineEditPage}
                   data-testid="pipeline-edit-page"
                 />
                 <Route

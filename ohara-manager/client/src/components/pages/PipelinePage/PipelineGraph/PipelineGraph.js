@@ -109,8 +109,7 @@ const PipelineGraph = props => {
         dispatcher: { name: 'GRAPH' },
       });
 
-      const action = match.url.includes('/edit/') ? 'edit' : 'new';
-      const baseUrl = `/pipelines/${action}/${kind}/${pipelineName}`;
+      const baseUrl = `/pipelines/edit/${pipelineName}/${kind}`;
 
       if (connectorName) {
         history.push(`${baseUrl}/${connectorName}`);

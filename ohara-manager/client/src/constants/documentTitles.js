@@ -18,7 +18,6 @@ const brandName = 'Ohara Stream';
 
 export const HOME = `${brandName} - home`;
 export const PIPELINE = `${brandName} - Pipelines`;
-export const PIPELINE_NEW = `${brandName} - New Pipeline`;
 export const PIPELINE_EDIT = `${brandName} - Edit Pipeline`;
 export const NODES = `${brandName} - Nodes`;
 export const WORKSPACES = `${brandName} - Workspaces`;

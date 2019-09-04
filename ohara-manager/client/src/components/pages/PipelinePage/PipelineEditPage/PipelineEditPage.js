@@ -24,16 +24,16 @@ import * as MESSAGES from 'constants/messages';
 import * as pipelineApi from 'api/pipelineApi';
 import * as topicApi from 'api/topicApi';
 import * as workerApi from 'api/workerApi';
-import * as utils from './pipelineNewPageUtils';
+import * as utils from './pipelineEditPageUtils';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
 import Operate from './Operate';
 import SidebarRoutes from './SidebarRoutes';
 import Metrics from './Metrics';
-import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
+import { PIPELINE_EDIT } from 'constants/documentTitles';
 import { Wrapper, Main, Sidebar, Heading2 } from './styles';
 
-class PipelineNewPage extends React.Component {
+class PipelineEditPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
       params: PropTypes.shape({
@@ -278,11 +278,10 @@ class PipelineNewPage extends React.Component {
     };
 
     return (
-      <DocumentTitle title={pipelineName ? PIPELINE_EDIT : PIPELINE_NEW}>
+      <DocumentTitle title={PIPELINE_EDIT}>
         <>
           <Prompt
             message={location =>
-              location.pathname.startsWith('/pipelines/new') ||
               location.pathname.startsWith('/pipelines/edit')
                 ? true
                 : MESSAGES.LEAVE_WITHOUT_SAVE
@@ -343,4 +342,4 @@ class PipelineNewPage extends React.Component {
   }
 }
 
-export default PipelineNewPage;
+export default PipelineEditPage;

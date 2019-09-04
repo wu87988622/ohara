@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import PipelineNewPage from './PipelineNewPage';
+import PipelineEditPage from './PipelineEditPage';
 
-export default PipelineNewPage;
+export default PipelineEditPage;
