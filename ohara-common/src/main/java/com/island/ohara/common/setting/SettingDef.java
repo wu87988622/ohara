@@ -26,6 +26,7 @@ import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.Serializable;
+import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,6 +88,11 @@ public class SettingDef implements JsonObject, Serializable {
     DURATION,
     /** The legal range for port is [1, 65535]. */
     PORT,
+    /**
+     * The legal range for port is [1, 65535]. The difference between PORT and BINDING_PORT is that
+     * we will check the availability for the BINDING_PORT.
+     */
+    BINDING_PORT,
     /** { "group": "default", "name":" name.jar" } */
     JAR_KEY,
     /** [ { "group": "g", "name":" n" } ] */
@@ -290,12 +296,21 @@ public class SettingDef implements JsonObject, Serializable {
                 this.key, trueValue, "can't be converted to Duration type");
           }
           break;
+        case BINDING_PORT:
         case PORT:
           try {
             int port = Integer.valueOf(String.valueOf(trueValue));
             if (!CommonUtils.isConnectionPort(port))
               throw new OharaConfigException(
                   "the legal range for port is [1, 65535], but actual port is " + port);
+            if (valueType == Type.BINDING_PORT) {
+              // tries to bind the port :)
+              try (ServerSocket socket = new ServerSocket(port)) {
+                if (port != socket.getLocalPort())
+                  throw new OharaConfigException(
+                      "the port:" + port + " is not available in host:" + CommonUtils.hostname());
+              }
+            }
           } catch (Exception e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }

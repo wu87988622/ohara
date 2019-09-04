@@ -281,6 +281,9 @@ public final class CommonUtils {
     else return port;
   }
 
+  /**
+   * @return the available port in this host. Noted that the returned port is must bigger than 1024.
+   */
   public static int availablePort() {
     try (ServerSocket socket = new ServerSocket(0)) {
       socket.setReuseAddress(true);

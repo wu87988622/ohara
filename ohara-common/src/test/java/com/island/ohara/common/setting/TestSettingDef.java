@@ -21,6 +21,8 @@ import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -532,5 +534,22 @@ public class TestSettingDef extends SmallTest {
 
     // empty string means empty list, it is ok
     def.checker().accept("");
+  }
+
+  @Test
+  public void testBindingPort() throws IOException {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.BINDING_PORT)
+            .build();
+    def.checker().accept(CommonUtils.availablePort());
+
+    int port = CommonUtils.availablePort();
+    try (ServerSocket server = new ServerSocket(port)) {
+      assertException(
+          OharaConfigException.class, () -> def.checker().accept(server.getLocalPort()));
+    }
+    def.checker().accept(port);
   }
 }

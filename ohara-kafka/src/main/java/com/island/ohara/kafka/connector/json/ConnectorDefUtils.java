@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
@@ -248,12 +247,6 @@ public final class ConnectorDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
 
-  // Use to check the custom checker for specific value
-  @VisibleForTesting
-  static void check(Consumer<Object> consumer, Object value) {
-    consumer.accept(value);
-  }
-
   @VisibleForTesting
   static ConfigDef.Type toType(Type type) {
     switch (type) {
@@ -271,6 +264,7 @@ public final class ConnectorDefUtils {
       case SHORT:
         return ConfigDef.Type.SHORT;
       case PORT:
+      case BINDING_PORT:
       case INT:
         return ConfigDef.Type.INT;
       case LONG:

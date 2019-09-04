@@ -420,6 +420,13 @@ to Port involve a check that only the port which is small than 65536 and
 bigger than zero can be accepted. Other port value will be rejected in
 starting connector.
 
+Type.BINDING_PORT
+^^^^^^^^^^^^^^^^^
+
+This type is similar to Type.PORT except that the value mapped to BINDING_PORT has a extra check to the availability on
+the target nodes. For example, you define value 5555 as a BINDING_PORT, and you will get a exception when you try to
+deploy your code on the node which is using port 5555 as well.
+
 Type.JAR_KEY
 ^^^^^^^^^^^^
 

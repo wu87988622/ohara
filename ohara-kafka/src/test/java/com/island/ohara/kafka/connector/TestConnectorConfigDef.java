@@ -17,7 +17,10 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,5 +50,15 @@ public class TestConnectorConfigDef extends SmallTest {
   public void testKind() {
     DumbSink sink = new DumbSink();
     Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.KIND_DEFINITION.key()));
+  }
+
+  /** make sure all types from SettingDef are acceptable to kafka type. */
+  @Test
+  public void testToConfigKey() {
+    Stream.of(SettingDef.Type.values())
+        .forEach(
+            type ->
+                ConnectorDefUtils.toConfigKey(
+                    SettingDef.builder().key(CommonUtils.randomString()).valueType(type).build()));
   }
 }
