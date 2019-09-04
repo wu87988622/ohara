@@ -180,7 +180,10 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
         nodeNames = creation.nodeNames,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
+        deadNodes = creation.nodeNames -- containers
+          .filter(_.state == ContainerState.RUNNING.name)
+          .map(_.nodeName)
+          .toSet,
         // We do not care the user parameters since it's stored in configurator already
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
