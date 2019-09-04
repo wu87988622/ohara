@@ -23,7 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeBrokerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -137,7 +137,12 @@ class TestBrokerRoute extends MediumTest with Matchers {
         brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
 
-      val updated = result(brokerApi.request.zookeeperClusterName(anotherZk).nodeNames(nodeNames).update())
+      val updated = result(
+        brokerApi.request
+          .name(CommonUtils.randomString(10))
+          .zookeeperClusterName(anotherZk)
+          .nodeNames(nodeNames)
+          .update())
       updated.zookeeperClusterName shouldBe anotherZk
       // after assigned, start is ok
       result(brokerApi.start(updated.name))
@@ -258,7 +263,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testInvalidClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(brokerApi.request.name("--]").nodeNames(nodeNames).create())
+    an[DeserializationException] should be thrownBy result(brokerApi.request.name("--]").nodeNames(nodeNames).create())
 
   @Test
   def runMultiBkClustersOnSameZkCluster(): Unit = {
@@ -429,7 +434,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(
       brokerApi.request.name(bk.name).nodeNames(nodeNames).update())
     result(brokerApi.stop(bk.name))
-    result(brokerApi.request.nodeNames(nodeNames).update())
+    result(brokerApi.request.name(bk.name).nodeNames(nodeNames).update())
     result(brokerApi.start(bk.name))
   }
 

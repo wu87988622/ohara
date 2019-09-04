@@ -128,8 +128,7 @@ class TestListCluster extends IntegrationTest with Matchers {
       try result(
         clusterCollie.brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-          // the port:1000 is not illegal so we can't create broker cluster
-          .clientPort(1000)
+          .clientPort(CommonUtils.availablePort())
           .exporterPort(CommonUtils.availablePort())
           .nodeNames(nodeCache.map(_.name).toSet)
           .clusterName(name)
@@ -137,9 +136,17 @@ class TestListCluster extends IntegrationTest with Matchers {
           .create()
       )
       catch {
-        case _: Throwable =>
-        // creation is "async" so we can't assume the result...
+        case e: Throwable =>
+          // this is a normal case to start zookeeper, there should not have any exception...
+          throw e
       }
+
+      // we stop the running containers to simulate a "dead" cluster
+      nameHolder.release(
+        clusterNames = Set(name),
+        // remove all containers
+        excludedNodes = Set.empty
+      )
 
       log.info("[TestListCluster] before check bk containers")
       nodeCache.foreach { node =>

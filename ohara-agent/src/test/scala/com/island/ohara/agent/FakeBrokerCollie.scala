@@ -69,15 +69,15 @@ private class FakeBrokerCollie(nodes: Seq[Node],
       //Pre create broker container for test
       Map(
         BrokerClusterInfo(
-          name = "bk1",
-          imageName = BrokerApi.IMAGE_NAME_DEFAULT,
-          zookeeperClusterName = "zk1",
-          clientPort = 2181,
-          exporterPort = 2182,
-          jmxPort = 2183,
-          nodeNames = Set("node1"),
+          settings = BrokerApi.access.request
+            .name("bk1")
+            .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+            .zookeeperClusterName("zk1")
+            .nodeNames(nodes.map(_.hostname).toSet)
+            .creation
+            .settings,
+          nodeNames = nodes.map(_.hostname).toSet,
           deadNodes = Set.empty,
-          tags = Map.empty,
           lastModified = CommonUtils.current(),
           state = None,
           error = None,

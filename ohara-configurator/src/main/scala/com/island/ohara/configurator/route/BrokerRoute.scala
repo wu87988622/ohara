@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
-import com.island.ohara.client.configurator.v0.TopicApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
@@ -33,15 +33,9 @@ object BrokerRoute {
     (creation: Creation) =>
       creation.zookeeperClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { zkName =>
         BrokerClusterInfo(
-          name = creation.name,
-          imageName = creation.imageName,
-          zookeeperClusterName = zkName,
-          clientPort = creation.clientPort,
-          exporterPort = creation.exporterPort,
-          jmxPort = creation.jmxPort,
+          settings = BrokerApi.access.request.settings(creation.settings).zookeeperClusterName(zkName).creation.settings,
           nodeNames = creation.nodeNames,
           deadNodes = Set.empty,
-          tags = creation.tags,
           state = None,
           error = None,
           lastModified = CommonUtils.current(),
@@ -53,45 +47,28 @@ object BrokerRoute {
     implicit zookeeperCollie: ZookeeperCollie,
     clusterCollie: ClusterCollie,
     executionContext: ExecutionContext): HookOfUpdate[Creation, Update, BrokerClusterInfo] =
-    (key: ObjectKey, update: Update, previous: Option[BrokerClusterInfo]) =>
+    (key: ObjectKey, update: Update, previousOption: Option[BrokerClusterInfo]) =>
       clusterCollie.brokerCollie
         .clusters()
         .flatMap { clusters =>
           if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
           update.zookeeperClusterName
-            .orElse(previous.map(_.zookeeperClusterName))
+            .orElse(previousOption.map(_.zookeeperClusterName))
             .map(Future.successful)
             .getOrElse(CollieUtils.singleCluster())
         }
         .map { zkName =>
-          previous.fold(
-            BrokerClusterInfo(
-              name = key.name,
-              imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-              zookeeperClusterName = zkName,
-              clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
-              exporterPort = update.exporterPort.getOrElse(CommonUtils.availablePort()),
-              jmxPort = update.jmxPort.getOrElse(CommonUtils.availablePort()),
-              nodeNames = update.nodeNames.getOrElse(Set.empty),
-              deadNodes = Set.empty,
-              tags = update.tags.getOrElse(Map.empty),
-              state = None,
-              error = None,
-              lastModified = CommonUtils.current(),
-              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-            )) { previous =>
-            previous.copy(
-              imageName = update.imageName.getOrElse(previous.imageName),
-              zookeeperClusterName = zkName,
-              clientPort = update.clientPort.getOrElse(previous.clientPort),
-              exporterPort = update.exporterPort.getOrElse(previous.exporterPort),
-              jmxPort = update.jmxPort.getOrElse(previous.jmxPort),
-              nodeNames = update.nodeNames.getOrElse(previous.nodeNames),
-              tags = update.tags.getOrElse(previous.tags),
-              lastModified = CommonUtils.current()
-            )
-          }
+          val newSettings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings
+          BrokerClusterInfo(
+            settings = BrokerApi.access.request.settings(newSettings).zookeeperClusterName(zkName).creation.settings,
+            nodeNames = update.nodeNames.orElse(previousOption.map(_.nodeNames)).getOrElse(Set.empty),
+            deadNodes = Set.empty,
+            state = None,
+            error = None,
+            lastModified = CommonUtils.current(),
+            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+          )
       }
 
   private[this] def hookOfStart(implicit store: DataStore,

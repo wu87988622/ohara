@@ -43,29 +43,16 @@ class TestBrokerCreator extends SmallTest with Matchers {
     tags = Map.empty
   )
   private[this] def bkCreator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
+    (executionContext, creation) => {
       // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
       if (executionContext == null) throw new AssertionError()
-      if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
-      if (imageName == null || imageName.isEmpty) throw new AssertionError()
-      if (clientPort <= 0) throw new AssertionError()
-      if (exporterPort <= 0) throw new AssertionError()
-      if (jmxPort <= 0) throw new AssertionError()
-      if (zookeeperClusterName == null || zookeeperClusterName.isEmpty) throw new AssertionError()
-      if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
       Future.successful(
         BrokerClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          zookeeperClusterName = zookeeperClusterName,
-          clientPort = clientPort,
-          exporterPort = exporterPort,
-          jmxPort = jmxPort,
-          nodeNames = nodeNames,
+          settings = BrokerApi.access.request.settings(creation.settings).creation.settings,
+          nodeNames = creation.nodeNames,
           deadNodes = Set.empty,
           state = None,
           error = None,
-          tags = Map.empty,
           lastModified = 0,
           topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
         ))
@@ -142,18 +129,19 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
   @Test
   def testCopy(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
-      name = CommonUtils.randomString(10),
-      imageName = CommonUtils.randomString(),
-      zookeeperClusterName = CommonUtils.randomString(),
-      exporterPort = 10,
-      clientPort = 10,
-      jmxPort = 10,
-      nodeNames = Set(CommonUtils.randomString()),
+      settings = BrokerApi.access.request
+        .name(CommonUtils.randomString(10))
+        .imageName(CommonUtils.randomString)
+        .zookeeperClusterName(CommonUtils.randomString)
+        .nodeNames(nodeNames)
+        .creation
+        .settings,
+      nodeNames = nodeNames,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = 0,
       topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
     )
@@ -232,8 +220,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
         "containername",
         "",
         Seq.empty,
-        Map(BrokerCollie.CLIENT_PORT_KEY -> "9092",
-            BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> FakeBrokerCollie.zookeeperClusterName),
+        Map(BrokerApi.CLIENT_PORT_KEY -> "9092",
+            BrokerApi.ZOOKEEPER_CLUSTER_NAME_KEY -> FakeBrokerCollie.zookeeperClusterName),
         "host"
       ))
 
@@ -287,9 +275,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
         "containername",
         "",
         Seq.empty,
-        Map(BrokerCollie.ID_KEY -> "0",
-            BrokerCollie.CLIENT_PORT_KEY -> "9092",
-            BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> FakeBrokerCollie.zookeeperClusterName),
+        Map(BrokerApi.ID_KEY -> "0",
+            BrokerApi.CLIENT_PORT_KEY -> "9092",
+            BrokerApi.ZOOKEEPER_CLUSTER_NAME_KEY -> FakeBrokerCollie.zookeeperClusterName),
         "host"
       ))
 

@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi, TopicApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -43,43 +43,30 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     */
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
 
-  override def creator: BrokerCollie.ClusterCreator =
-    (_, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) =>
-      Future.successful(
-        addCluster(
-          BrokerClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            clientPort = clientPort,
-            exporterPort = exporterPort,
-            jmxPort = jmxPort,
-            zookeeperClusterName = zookeeperClusterName,
-            nodeNames = nodeNames,
-            deadNodes = Set.empty,
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ClusterState.RUNNING.name),
-            error = None,
-            tags = Map.empty,
-            lastModified = CommonUtils.current(),
-            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-          )))
+  override def creator: BrokerCollie.ClusterCreator = (_, creation) =>
+    Future.successful(
+      addCluster(
+        BrokerClusterInfo(
+          settings = creation.settings,
+          nodeNames = creation.nodeNames,
+          deadNodes = Set.empty,
+          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+          state = Some(ClusterState.RUNNING.name),
+          error = None,
+          lastModified = CommonUtils.current(),
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+        )))
 
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future
     .successful(
       addCluster(BrokerClusterInfo(
-        name = previousCluster.name,
-        imageName = previousCluster.imageName,
-        zookeeperClusterName = previousCluster.zookeeperClusterName,
-        exporterPort = previousCluster.exporterPort,
-        clientPort = previousCluster.clientPort,
-        jmxPort = previousCluster.jmxPort,
+        settings = previousCluster.settings,
         nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
         deadNodes = Set.empty,
         // In fake mode, we need to assign a state in creation for "GET" method to act like real case
         state = Some(ClusterState.RUNNING.name),
         error = None,
-        tags = Map.empty,
         lastModified = CommonUtils.current(),
         topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
       )))
@@ -100,18 +87,12 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = Future.successful(
     addCluster(
       BrokerClusterInfo(
-        name = previousCluster.name,
-        imageName = previousCluster.imageName,
-        zookeeperClusterName = previousCluster.zookeeperClusterName,
-        clientPort = previousCluster.clientPort,
-        exporterPort = previousCluster.exporterPort,
-        jmxPort = previousCluster.jmxPort,
+        settings = previousCluster.settings,
         nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
         deadNodes = Set.empty,
         // In fake mode, we need to assign a state in creation for "GET" method to act like real case
         state = Some(ClusterState.RUNNING.name),
         error = None,
-        tags = Map.empty,
         lastModified = CommonUtils.current(),
         topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
       )))

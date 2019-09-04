@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -235,7 +235,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
             "ohara-xxx-bk-0000",
             "unknown",
             Seq.empty,
-            Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
+            Map(BrokerApi.CLIENT_PORT_KEY -> "9092"),
             "ohara-xxx-bk-0000"
           )
         ))
@@ -344,7 +344,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
             "ohara-xxx-bk-0000",
             "unknown",
             Seq.empty,
-            Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
+            Map(BrokerApi.CLIENT_PORT_KEY -> "9092"),
             "ohara-xxx-bk-0000"
           )
         ))

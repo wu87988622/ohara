@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, WorkerApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -86,7 +86,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
               if (brokerContainers.isEmpty)
                 throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterName} doesn't exist")
               val brokers = brokerContainers
-                .map(c => s"${c.nodeName}:${c.environments(BrokerCollie.CLIENT_PORT_KEY).toInt}")
+                .map(c => s"${c.nodeName}:${c.environments(BrokerApi.CLIENT_PORT_KEY).toInt}")
                 .mkString(",")
 
               val route = resolveHostNames(

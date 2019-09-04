@@ -43,13 +43,12 @@ fi
 
 # jmx setting
 
-if [[ -z $JMX_PORT ]]; then
-  # Noted the default value should be equal to BrokerApi.JMX_PORT_DEFAULT
-  $JMX_PORT="9093"
+if [[ -z $jmxPort ]]; then
+  jmxPort="9093"
 fi
 
-if [[ -z $JMX_HOSTNAME ]]; then
-  echo "JMX_HOSTNAME is required!!!"
+if [[ -z $jmxHostname ]]; then
+  echo "jmxHostname is required!!!"
   exit 2
 fi
 
@@ -57,9 +56,9 @@ fi
 export KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote \
 -Dcom.sun.management.jmxremote.authenticate=false \
 -Dcom.sun.management.jmxremote.ssl=false \
--Dcom.sun.management.jmxremote.port=$JMX_PORT \
--Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT \
--Djava.rmi.server.hostname=$JMX_HOSTNAME
+-Dcom.sun.management.jmxremote.port=$jmxPort \
+-Dcom.sun.management.jmxremote.rmi.port=$jmxPort \
+-Djava.rmi.server.hostname=$jmxHostname
 "
 
 # default setting
@@ -78,33 +77,33 @@ echo "log.segment.bytes=1073741824" >> "$CONFIG"
 echo "log.retention.check.interval.ms=300000" >> "$CONFIG"
 echo "zookeeper.connection.timeout.ms=6000" >> "$CONFIG"
 echo "group.initial.rebalance.delay.ms=0" >> "$CONFIG"
-if [[ -z "${BROKER_ID}" ]]; then
-  BROKER_ID="0"
+if [[ -z "${brokerId}" ]]; then
+  brokerId="0"
 fi
-echo "broker.id=$BROKER_ID" >> "$CONFIG"
+echo "broker.id=$brokerId" >> "$CONFIG"
 
-if [[ -z "${BROKER_CLIENT_PORT}" ]]; then
-  BROKER_CLIENT_PORT=9092
+if [[ -z "${clientPort}" ]]; then
+  clientPort=9092
 fi
-echo "listeners=PLAINTEXT://:$BROKER_CLIENT_PORT" >> "$CONFIG"
+echo "listeners=PLAINTEXT://:$clientPort" >> "$CONFIG"
 
-if [[ -z "${BROKER_DATA_DIR}" ]]; then
-  BROKER_DATA_DIR="/tmp/broker/data"
+if [[ -z "${dataDir}" ]]; then
+  dataDir="/tmp/broker/data"
 fi
-echo "log.dirs=$BROKER_DATA_DIR" >> "$CONFIG"
+echo "log.dirs=$dataDir" >> "$CONFIG"
 
-if [[ -z "${BROKER_ZOOKEEPERS}" ]]; then
-  echo "You have to define BROKER_ZOOKEEPERS"
+if [[ -z "${zookeepers}" ]]; then
+  echo "You have to define zookeepers"
   exit 2
 fi
-echo "zookeeper.connect=$BROKER_ZOOKEEPERS" >> "$CONFIG"
+echo "zookeeper.connect=$zookeepers" >> "$CONFIG"
 
-if [[ -z "$BROKER_ADVERTISED_CLIENT_PORT" ]]; then
-  BROKER_ADVERTISED_CLIENT_PORT=$BROKER_CLIENT_PORT
+if [[ -z "$advertisedClientPort" ]]; then
+  advertisedClientPort=$clientPort
 fi
 
-if [[ -n "$BROKER_ADVERTISED_HOSTNAME" ]]; then
-  echo "advertised.listeners=PLAINTEXT://$BROKER_ADVERTISED_HOSTNAME:$BROKER_ADVERTISED_CLIENT_PORT" >> "$CONFIG"
+if [[ -n "$advertisedHostname" ]]; then
+  echo "advertised.listeners=PLAINTEXT://$advertisedHostname:$advertisedClientPort" >> "$CONFIG"
 fi
 
 if [[ -z "$KAFKA_HOME" ]]; then
@@ -123,11 +122,11 @@ if [[ ! -z "$PROMETHEUS_EXPORTER" ]]; then
     exit 2
   fi
 
-  if [[ -z "$PROMETHEUS_EXPORTER_PORT" ]]; then
-    PROMETHEUS_EXPORTER_PORT="7071"
+  if [[ -z "$exporterPort" ]]; then
+    exporterPort="7071"
   fi
 
-  export KAFKA_OPTS="-javaagent:$PROMETHEUS_EXPORTER=$PROMETHEUS_EXPORTER_PORT:$PROMETHEUS_EXPORTER_CONFIG"
+  export KAFKA_OPTS="-javaagent:$PROMETHEUS_EXPORTER=$exporterPort:$PROMETHEUS_EXPORTER_CONFIG"
 fi
 
 exec $KAFKA_HOME/bin/kafka-server-start.sh "$CONFIG"

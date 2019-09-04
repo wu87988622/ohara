@@ -22,9 +22,13 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
 
 class TestBrokerApi extends SmallTest with Matchers {
+
+  private[this] final val access =
+    BrokerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
 
   @Test
   def testClone(): Unit = {
@@ -33,17 +37,11 @@ class TestBrokerApi extends SmallTest with Matchers {
     val error = Some(CommonUtils.randomString())
     val state = Some(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
-      name = CommonUtils.randomString(),
-      imageName = CommonUtils.randomString(),
-      zookeeperClusterName = CommonUtils.randomString(),
-      clientPort = 10,
-      exporterPort = 10,
-      jmxPort = 10,
+      settings = access.nodeNames(nodeNames).creation.settings,
       nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = CommonUtils.current(),
       topicSettingDefinitions = Seq.empty
     )
@@ -55,6 +53,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       metrics = Metrics.EMPTY,
       tags = Map.empty
     )
+    newOne.settings(NODE_NAMES_KEY).convertTo[Set[String]] shouldBe nodeNames
     newOne.nodeNames shouldBe nodeNames
     newOne.deadNodes shouldBe deadNodes
     newOne.error shouldBe error
@@ -62,20 +61,10 @@ class TestBrokerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .nodeName(CommonUtils.randomString(10))
-    .creation
-    .name
-    .length should not be 0
+  def ignoreNameOnCreation(): Unit = access.nodeName(CommonUtils.randomString(10)).creation.name.length should not be 0
 
   @Test
-  def testTags(): Unit = BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
+  def testTags(): Unit = access
     .nodeName(CommonUtils.randomString(10))
     .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
     .creation
@@ -83,103 +72,53 @@ class TestBrokerApi extends SmallTest with Matchers {
     .size shouldBe 2
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .name(CommonUtils.randomString())
-    .creation
+  def ignoreNodeNamesOnCreation(): Unit =
+    an[DeserializationException] should be thrownBy access.name(CommonUtils.randomString(10)).creation
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy access.name(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy access.name("")
 
   @Test
-  def nullZookeeperClusterName(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .zookeeperClusterName(null)
+  def nullZookeeperClusterName(): Unit = an[NullPointerException] should be thrownBy access.zookeeperClusterName(null)
 
   @Test
-  def emptyZookeeperClusterName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .zookeeperClusterName("")
+  def emptyZookeeperClusterName(): Unit =
+    an[IllegalArgumentException] should be thrownBy access.zookeeperClusterName("")
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .imageName(null)
+  def nullImageName(): Unit = an[NullPointerException] should be thrownBy access.imageName(null)
 
   @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .imageName("")
+  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy access.imageName("")
 
   @Test
-  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .nodeNames(null)
+  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy access.nodeNames(null)
 
   @Test
-  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .nodeNames(Set.empty)
+  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy access.nodeNames(Set.empty)
 
   @Test
-  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .clientPort(-1)
+  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy access.clientPort(-1)
 
   @Test
-  def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .jmxPort(-1)
+  def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy access.jmxPort(-1)
 
   @Test
-  def negativeExporterPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .exporterPort(-1)
+  def negativeExporterPort(): Unit = an[IllegalArgumentException] should be thrownBy access.exporterPort(-1)
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
     val zookeeperClusterName = CommonUtils.randomString()
     val nodeName = CommonUtils.randomString()
-    val creation = BrokerApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
+    val creation = access
       .name(name)
       .zookeeperClusterName(zookeeperClusterName)
       .imageName(imageName)
@@ -198,13 +137,23 @@ class TestBrokerApi extends SmallTest with Matchers {
   }
 
   @Test
+  def testExtraSettingInCreation(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val name2 = JsString(CommonUtils.randomString(10))
+    val creation = access.name(name).nodeNames(Set("n1")).settings(Map("name" -> name2)).creation
+
+    // settings() has higher priority than name()
+    creation.name shouldBe name2.value
+  }
+
+  @Test
   def parseCreation(): Unit = {
     val nodeName = CommonUtils.randomString()
     val creation = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                       |  {
-                                                                                       |    "nodeNames": ["$nodeName"]
-                                                                                       |  }
-                                                                     """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": ["$nodeName"]
+      |  }
+      """.stripMargin.parseJson)
     creation.group shouldBe BrokerApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
@@ -222,15 +171,15 @@ class TestBrokerApi extends SmallTest with Matchers {
     val exporterPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     val creation2 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                 |  {
-                                                                                 |    "name": "$name",
-                                                                                 |    "clientPort": $clientPort,
-                                                                                 |    "exporterPort": $exporterPort,
-                                                                                 |    "jmxPort": $jmxPort,
-                                                                                 |    "zookeeperClusterName": "$zookeeperClusterName",
-                                                                                 |    "nodeNames": ["$nodeName"]
-                                                                                 |  }
-                                                                     """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name",
+      |    "clientPort": $clientPort,
+      |    "exporterPort": $exporterPort,
+      |    "jmxPort": $jmxPort,
+      |    "zookeeperClusterName": "$zookeeperClusterName",
+      |    "nodeNames": ["$nodeName"]
+      |  }
+      """.stripMargin.parseJson)
     // node does support custom group
     creation2.group shouldBe BrokerApi.GROUP_DEFAULT
     creation2.name shouldBe name
@@ -243,11 +192,11 @@ class TestBrokerApi extends SmallTest with Matchers {
     creation2.jmxPort shouldBe jmxPort
 
     val creation3 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                |  {
-                                                                |    "name": "$name",
-                                                                |    "nodeNames": ["$nodeName"]
-                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name",
+      |    "nodeNames": ["$nodeName"]
+      |  }
+      """.stripMargin.parseJson)
 
     creation3.name shouldBe name
     creation3.nodeNames.size shouldBe 1
@@ -259,223 +208,240 @@ class TestBrokerApi extends SmallTest with Matchers {
   }
 
   @Test
+  def testDefaultName(): Unit = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "nodeNames": ["n1"]
+      |  }
+      """.stripMargin.parseJson).name.nonEmpty shouldBe true
+
+  @Test
+  def parseNameField(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "name": ""
+      |  }
+      |  """.stripMargin.parseJson)
+    thrown1.getMessage should include("the value of \"name\" can't be empty string")
+  }
+
+  @Test
+  def parseImageNameField(): Unit = {
+    val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "imageName": ""
+      |  }
+      |  """.stripMargin.parseJson)
+    thrown2.getMessage should include("the value of \"imageName\" can't be empty string")
+  }
+
+  @Test
+  def parseImageNameOnUpdate(): Unit = {
+    val thrown = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATE_JSON_FORMAT.read(s"""
+      |  {
+      |    "imageName": ""
+      |  }
+      """.stripMargin.parseJson)
+    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
+  }
+
+  @Test
   def testEmptyNodeNames(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-     |  {
-     |    "name": "name",
-     |    "nodeNames": []
-     |  }
+      |  {
+      |    "name": "name",
+      |    "nodeNames": []
+      |  }
       """.stripMargin.parseJson)
 
   @Test
   def parseNodeNamesOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                   |  {
-                                                                                                   |    "nodeNames": ""
-                                                                                                   |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": ""
+      |  }
+      """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
   }
 
   @Test
   def parseZeroClientPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "name": "name",
-                                                                                                |    "clientPort": 0,
-                                                                                                |    "nodeNames": ["n"]
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "clientPort": 0,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseNegativeClientPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "name": "name",
-                                                                                                |    "clientPort": -1,
-                                                                                                |    "nodeNames": ["n"]
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "clientPort": -1,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseLargeClientPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "name": "name",
-                                                                                                |    "clientPort": 999999,
-                                                                                                |    "nodeNames": ["n"]
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "clientPort": 999999,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseClientPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                     |  {
-                                                                                                     |    "clientPort": 0
-                                                                                                     |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "clientPort": 0
+      |  }
+      """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                     |  {
-                                                                                                     |    "clientPort": -9
-                                                                                                     |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "clientPort": -9
+      |  }
+      """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                     |  {
-                                                                                                     |    "clientPort": 99999
-                                                                                                     |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "clientPort": 99999
+      |  }
+      """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
   }
 
   @Test
   def parseZeroExporterPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "name",
-                                                                                                  |    "exporterPort": 0,
-                                                                                                  |    "nodeNames": ["n"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "exporterPort": 0,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseNegativeExporterPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "name",
-                                                                                                  |    "exporterPort": -1,
-                                                                                                  |    "nodeNames": ["n"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "exporterPort": -1,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseLargeExporterPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "name",
-                                                                                                  |    "exporterPort": 999999,
-                                                                                                  |    "nodeNames": ["n"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "exporterPort": 999999,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseExporterPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                       |  {
-                                                                                                       |    "exporterPort": 0
-                                                                                                       |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "exporterPort": 0
+      |  }
+      """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                       |  {
-                                                                                                       |    "exporterPort": -9
-                                                                                                       |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "exporterPort": -9
+      |  }
+      """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                       |  {
-                                                                                                       |    "exporterPort": 99999
-                                                                                                       |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "exporterPort": 99999
+      |  }
+      """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
   }
 
   @Test
   def parseZeroJmxPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "name",
-                                                                                                  |    "jmxPort": 0,
-                                                                                                  |    "nodeNames": ["n"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "jmxPort": 0,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseNegativeJmxPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "name",
-                                                                                                  |    "jmxPort": -1,
-                                                                                                  |    "nodeNames": ["n"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "jmxPort": -1,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseLargeJmxPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "name",
-                                                                                                  |    "jmxPort": 999999,
-                                                                                                  |    "nodeNames": ["n"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "name",
+      |    "jmxPort": 999999,
+      |    "nodeNames": ["n"]
+      |  }
+      """.stripMargin.parseJson)
 
   @Test
   def parseJmxPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                       |  {
-                                                                                                       |    "jmxPort": 0
-                                                                                                       |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "jmxPort": 0
+      |  }
+      """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                       |  {
-                                                                                                       |    "jmxPort": -9
-                                                                                                       |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "jmxPort": -9
+      |  }
+      """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                       |  {
-                                                                                                       |    "jmxPort": 99999
-                                                                                                       |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "jmxPort": 99999
+      |  }
+      """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
   }
 
   @Test
   def testInvalidNodeNames(): Unit = {
-    an[DeserializationException] should be thrownBy BrokerApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("start")
-      .creation
-    an[DeserializationException] should be thrownBy BrokerApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("stop")
-      .creation
-    an[DeserializationException] should be thrownBy BrokerApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("start")
-      .update
-    an[DeserializationException] should be thrownBy BrokerApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("stop")
-      .update
+    an[DeserializationException] should be thrownBy access.nodeName("start").creation
+    an[DeserializationException] should be thrownBy access.nodeName("stop").creation
+    an[DeserializationException] should be thrownBy access.nodeName("start").update
+    an[DeserializationException] should be thrownBy access.nodeName("stop").update
 
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "nodeNames": ["start", "stop"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": ["start", "stop"]
+      |  }
+      """.stripMargin.parseJson)
   }
 
   @Test
   def testDefaultUpdate(): Unit = {
-    val data = BrokerApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.update
+    val data = access.name(CommonUtils.randomString(10)).update
     data.imageName.isEmpty shouldBe true
     data.zookeeperClusterName.isEmpty shouldBe true
     data.exporterPort.isEmpty shouldBe true
@@ -487,26 +453,81 @@ class TestBrokerApi extends SmallTest with Matchers {
   @Test
   def testEmptyString(): Unit = {
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                                  |  {
-                                                                                                                  |    "name": "",
-                                                                                                                  |    "nodeNames": ["a0"]
-                                                                                                                  |  }
+      |  {
+      |    "name": "",
+      |    "nodeNames": ["a0"]
+      |  }
       """.stripMargin.parseJson)
 
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                                  |  {
-                                                                                                                  |    "name": "name",
-                                                                                                                  |    "zookeeperClusterName": "",
-                                                                                                                  |    "nodeNames": ["a0"]
-                                                                                                                  |  }
+      |  {
+      |    "name": "name",
+      |    "zookeeperClusterName": "",
+      |    "nodeNames": ["a0"]
+      |  }
       """.stripMargin.parseJson)
 
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                                  |  {
-                                                                                                                  |    "name": "name",
-                                                                                                                  |    "imageName": "",
-                                                                                                                  |    "nodeNames": ["a0"]
-                                                                                                                  |  }
+      |  {
+      |    "name": "name",
+      |    "imageName": "",
+      |    "nodeNames": ["a0"]
+      |  }
       """.stripMargin.parseJson)
+  }
+
+  @Test
+  def groupShouldAppearInResponse(): Unit = {
+    val name = CommonUtils.randomString(5)
+    val res = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.write(
+      BrokerClusterInfo(
+        settings =
+          BrokerApi.access.request.name(name).zookeeperClusterName("zk1").nodeNames(Set("n1")).creation.settings,
+        nodeNames = Set.empty,
+        deadNodes = Set.empty,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current(),
+        topicSettingDefinitions = Seq.empty
+      ))
+    // serialize to json should see the object key (group, name)
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe BrokerApi.GROUP_DEFAULT
+
+    // // deserialize to info should see the object key (group, name)
+    val data = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.read(res)
+    data.name shouldBe name
+    data.group shouldBe BrokerApi.GROUP_DEFAULT
+  }
+
+  @Test
+  def testTagsOnUpdate(): Unit = access.update.tags shouldBe None
+
+  @Test
+  def testOverwriteSettings(): Unit = {
+    val r1 =
+      access.nodeName("n1").clientPort(12345).jmxPort(45678).creation
+
+    val r2 = access.nodeName("n1").clientPort(12345).settings(Map("name" -> JsString("fake"))).creation
+
+    r1.nodeNames shouldBe r2.nodeNames
+    r1.clientPort shouldBe r2.clientPort
+    // settings will overwrite default value
+    r1.name should not be r2.name
+  }
+
+  @Test
+  def testAliveNodes(): Unit = {
+    val cluster = BrokerClusterInfo(
+      settings = Map.empty,
+      nodeNames = Set("n0", "n1"),
+      deadNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current(),
+      topicSettingDefinitions = Seq.empty
+    )
+    cluster.aliveNodes shouldBe Set("n1")
+    cluster.copy(state = None).aliveNodes shouldBe Set.empty
   }
 }

@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.pattern.Builder
@@ -131,18 +131,19 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val host = pair.map(_.split(":").head).head
         val port = pair.map(_.split(":").last).head.toInt
         BrokerClusterInfo(
-          name = embeddedBkName,
-          imageName = "None",
-          zookeeperClusterName = "None",
-          exporterPort = -1,
-          jmxPort = -1,
-          clientPort = port,
+          settings = BrokerApi.access.request
+            .name(embeddedBkName)
+            .imageName("None")
+            .zookeeperClusterName("None")
+            .clientPort(port)
+            .nodeName(host)
+            .creation
+            .settings,
           nodeNames = Set(host),
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
           error = None,
-          tags = Map.empty,
           lastModified = CommonUtils.current(),
           topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
         )
@@ -226,19 +227,18 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         case (zkCluster, index) =>
           collie.brokerCollie.addCluster(
             BrokerClusterInfo(
-              name = s"$bkClusterNamePrefix$index",
-              imageName = s"fakeImage$index",
-              zookeeperClusterName = zkCluster.name,
-              // Assigning a negative value can make test fail quickly.
-              clientPort = -1,
-              exporterPort = -1,
-              jmxPort = -1,
+              settings = BrokerApi.access.request
+                .name(s"$bkClusterNamePrefix$index")
+                .imageName(s"fakeImage$index")
+                .zookeeperClusterName(zkCluster.name)
+                .nodeNames(zkCluster.nodeNames)
+                .creation
+                .settings,
               nodeNames = zkCluster.nodeNames,
               deadNodes = Set.empty,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING.name),
               error = None,
-              tags = Map.empty,
               lastModified = CommonUtils.current(),
               topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
             ))

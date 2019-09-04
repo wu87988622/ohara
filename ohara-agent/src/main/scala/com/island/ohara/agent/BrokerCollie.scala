@@ -18,7 +18,7 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -28,7 +28,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
-import spray.json.JsString
+import spray.json.{JsString, JsValue}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,148 +46,155 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
     * 7) update existed containers (if we are adding new node into a running cluster)
     * @return creator of broker cluster
     */
-  override def creator: BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
-      implicit val exec: ExecutionContext = executionContext
-      clusters().flatMap(clusters => {
-        clusters
-          .filter(_._1.isInstanceOf[BrokerClusterInfo])
-          .map {
-            case (cluster, containers) => cluster.asInstanceOf[BrokerClusterInfo] -> containers
-          }
-          .find(_._1.name == clusterName)
-          .map(_._2)
-          .map(containers =>
-            nodeCollie
-              .nodes(containers.map(_.nodeName).toSet)
-              .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
-          .getOrElse(Future.successful(Map.empty))
-          .map {
-            existNodes =>
-              // if there is a running cluster already, we should check the consistency of configuration
-              existNodes.values.foreach {
-                container =>
-                  def checkValue(previous: String, newValue: String): Unit =
-                    if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+  override def creator: BrokerCollie.ClusterCreator = (executionContext, creation) => {
+    implicit val exec: ExecutionContext = executionContext
+    clusters().flatMap(clusters => {
+      clusters
+        .filter(_._1.isInstanceOf[BrokerClusterInfo])
+        .map {
+          case (cluster, containers) => cluster.asInstanceOf[BrokerClusterInfo] -> containers
+        }
+        .find(_._1.name == creation.name)
+        .map(_._2)
+        .map(containers =>
+          nodeCollie
+            .nodes(containers.map(_.nodeName).toSet)
+            .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
+        .getOrElse(Future.successful(Map.empty))
+        .map {
+          existNodes =>
+            // if there is a running cluster already, we should check the consistency of configuration
+            existNodes.values.foreach {
+              container =>
+                def checkValue(previous: String, newValue: String): Unit =
+                  if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
 
-                  def check(key: String, newValue: String): Unit = {
-                    val previous = container.environments(key)
-                    if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                  }
-
-                  checkValue(container.imageName, imageName)
-                  check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-                  check(BrokerCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
-              }
-              existNodes
-          }
-          .flatMap(existNodes =>
-            nodeCollie
-              .nodes(nodeNames)
-              .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
-              .map((existNodes, _)))
-          .map {
-            case (existNodes, newNodes) =>
-              existNodes.keys.foreach(node =>
-                if (newNodes.keys.exists(_.name == node.name))
-                  throw new IllegalArgumentException(s"${node.name} is running on a $clusterName"))
-
-              (existNodes, newNodes, zookeeperContainers(zookeeperClusterName))
-          }
-          .flatMap {
-            case (existNodes, newNodes, zkContainers) =>
-              zkContainers
-                .flatMap(zkContainers => {
-                  if (zkContainers.isEmpty)
-                    throw new IllegalArgumentException(s"$clusterName zookeeper container doesn't exist")
-                  val zookeepers = zkContainers
-                    .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
-                    .mkString(",")
-
-                  val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys
-                    .map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
-                  existNodes.foreach {
-                    case (node, container) => hookOfNewRoute(node, container, route)
-                  }
-
-                  // the new broker node can't take used id so we find out the max id which is used by current cluster
-                  val maxId: Int =
-                    if (existNodes.isEmpty) 0
-                    else existNodes.values.map(_.environments(BrokerCollie.ID_KEY).toInt).toSet.max + 1
-
-                  // ssh connection is slow so we submit request by multi-thread
-                  Future.sequence(newNodes.zipWithIndex.map {
-                    case ((node, containerName), index) =>
-                      val containerInfo = ContainerInfo(
-                        nodeName = node.name,
-                        id = Collie.UNKNOWN,
-                        imageName = imageName,
-                        created = Collie.UNKNOWN,
-                        state = Collie.UNKNOWN,
-                        kind = Collie.UNKNOWN,
-                        name = containerName,
-                        size = Collie.UNKNOWN,
-                        portMappings = Seq(PortMapping(
-                          hostIp = Collie.UNKNOWN,
-                          portPairs = Seq(
-                            PortPair(
-                              hostPort = clientPort,
-                              containerPort = clientPort
-                            ),
-                            PortPair(
-                              hostPort = exporterPort,
-                              containerPort = exporterPort
-                            ),
-                            PortPair(
-                              hostPort = jmxPort,
-                              containerPort = jmxPort
-                            )
-                          )
-                        )),
-                        environments = Map(
-                          BrokerCollie.ID_KEY -> (maxId + index).toString,
-                          BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                          BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.hostname,
-                          BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                          BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                          BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                          BrokerCollie.JMX_HOSTNAME_KEY -> node.hostname,
-                          BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                        ),
-                        hostname = containerName
-                      )
-                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route).map(_ =>
-                        Some(containerInfo))
-                  })
-                })
-                .map(_.flatten.toSeq)
-                .map {
-                  successfulContainers =>
-                    if (successfulContainers.isEmpty)
-                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                    val clusterInfo = BrokerClusterInfo(
-                      name = clusterName,
-                      imageName = imageName,
-                      zookeeperClusterName = zookeeperClusterName,
-                      exporterPort = exporterPort,
-                      clientPort = clientPort,
-                      jmxPort = jmxPort,
-                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
-                      deadNodes = Set.empty,
-                      // We do not care the user parameters since it's stored in configurator already
-                      tags = Map.empty,
-                      state = None,
-                      error = None,
-                      lastModified = CommonUtils.current(),
-                      topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-                    )
-                    postCreateBrokerCluster(clusterInfo, successfulContainers)
-                    clusterInfo
+                def check(key: String, newValue: String): Unit = {
+                  val previous = container.environments(key)
+                  if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
                 }
-          }
-      })
-    }
+
+                checkValue(container.imageName, creation.imageName)
+                check(BrokerApi.CLIENT_PORT_KEY, creation.clientPort.toString)
+                check(BrokerApi.ZOOKEEPER_CLUSTER_NAME_KEY, creation.zookeeperClusterName.get)
+            }
+            existNodes
+        }
+        .flatMap(existNodes =>
+          nodeCollie
+            .nodes(creation.nodeNames)
+            .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
+            .map((existNodes, _)))
+        .map {
+          case (existNodes, newNodes) =>
+            existNodes.keys.foreach(node =>
+              if (newNodes.keys.exists(_.name == node.name))
+                throw new IllegalArgumentException(s"${node.name} is running on a ${creation.name}"))
+
+            (existNodes, newNodes, zookeeperContainers(creation.zookeeperClusterName.get))
+        }
+        .flatMap {
+          case (existNodes, newNodes, zkContainers) =>
+            zkContainers
+              .flatMap(zkContainers => {
+                if (zkContainers.isEmpty)
+                  throw new IllegalArgumentException(s"${creation.name} zookeeper container doesn't exist")
+                val zookeepers = zkContainers
+                  .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
+                  .mkString(",")
+
+                val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys
+                  .map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
+                existNodes.foreach {
+                  case (node, container) => hookOfNewRoute(node, container, route)
+                }
+
+                // the new broker node can't take used id so we find out the max id which is used by current cluster
+                val maxId: Int =
+                  if (existNodes.isEmpty) 0
+                  else existNodes.values.map(_.environments(BrokerApi.ID_KEY).toInt).toSet.max + 1
+
+                // ssh connection is slow so we submit request by multi-thread
+                Future.sequence(newNodes.zipWithIndex.map {
+                  case ((node, containerName), index) =>
+                    val containerInfo = ContainerInfo(
+                      nodeName = node.name,
+                      id = Collie.UNKNOWN,
+                      imageName = creation.imageName,
+                      created = Collie.UNKNOWN,
+                      state = Collie.UNKNOWN,
+                      kind = Collie.UNKNOWN,
+                      name = containerName,
+                      size = Collie.UNKNOWN,
+                      portMappings = Seq(PortMapping(
+                        hostIp = Collie.UNKNOWN,
+                        portPairs = Seq(
+                          PortPair(
+                            hostPort = creation.clientPort,
+                            containerPort = creation.clientPort
+                          ),
+                          PortPair(
+                            hostPort = creation.exporterPort,
+                            containerPort = creation.exporterPort
+                          ),
+                          PortPair(
+                            hostPort = creation.jmxPort,
+                            containerPort = creation.jmxPort
+                          )
+                        )
+                      )),
+                      environments = creation.settings.map {
+                        case (k, v) =>
+                          k -> (v match {
+                            // the string in json representation has quote in the beginning and end.
+                            // we don't like the quotes since it obstruct us to cast value to pure string.
+                            case JsString(s) => s
+                            // save the json string for all settings
+                            case _ => CommonUtils.toEnvString(v.toString)
+                          })
+                      }
+                      // each broker instance needs an unique id to identify
+                        + (BrokerApi.ID_KEY -> (maxId + index).toString)
+                      // connect to user defined zookeeper cluster
+                        + (BrokerApi.ZOOKEEPERS_KEY -> zookeepers)
+                      // expose the borker hostname for zookeeper to register
+                        + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> node.hostname)
+                      // jmx exporter host name
+                        + (BrokerApi.JMX_HOSTNAME_KEY -> node.hostname)
+                      // we convert all settings to specific string in order to fetch all settings from
+                      // container env quickly. Also, the specific string enable us to pick up the "true" settings
+                      // from envs since there are many system-defined settings in container envs.
+                        + toEnvString(creation.settings),
+                      hostname = containerName
+                    )
+                    doCreator(executionContext, creation.name, containerName, containerInfo, node, route).map(_ =>
+                      Some(containerInfo))
+                })
+              })
+              .map(_.flatten.toSeq)
+              .map {
+                successfulContainers =>
+                  if (successfulContainers.isEmpty)
+                    throw new IllegalArgumentException(s"failed to create ${creation.name} on $serviceName")
+                  val clusterInfo = BrokerClusterInfo(
+                    settings = BrokerApi.access.request
+                      .settings(creation.settings)
+                      .nodeNames(successfulContainers.map(_.nodeName).toSet)
+                      .creation
+                      .settings,
+                    nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
+                    deadNodes = Set.empty,
+                    state = None,
+                    error = None,
+                    lastModified = CommonUtils.current(),
+                    topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+                  )
+                  postCreateBrokerCluster(clusterInfo, successfulContainers)
+                  clusterInfo
+              }
+        }
+    })
+  }
 
   /**
     * Please setting nodeCollie to implement class
@@ -275,20 +282,17 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
   private[agent] def toBrokerCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
     val first = containers.head
+    val creation = BrokerApi.access.request
+      .settings(seekSettings(first.environments))
+      .nodeNames(containers.map(_.nodeName).toSet)
+      .creation
     Future.successful(
       BrokerClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        zookeeperClusterName = first.environments(BrokerCollie.ZOOKEEPER_CLUSTER_NAME),
-        exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
-        clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
-        jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName).toSet,
+        settings = creation.settings,
+        nodeNames = creation.nodeNames,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-        // We do not care the user parameters since it's stored in configurator already
-        tags = Map.empty,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None,
@@ -324,10 +328,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 object BrokerCollie {
 
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
-    private[this] var clientPort: Int = CommonUtils.availablePort()
-    private[this] var zookeeperClusterName: String = _
-    private[this] var exporterPort: Int = CommonUtils.availablePort()
-    private[this] var jmxPort: Int = CommonUtils.availablePort()
+    private[this] val request = BrokerApi.access.request
 
     override protected def doCopy(clusterInfo: BrokerClusterInfo): Unit = {
       zookeeperClusterName(clusterInfo.zookeeperClusterName)
@@ -337,67 +338,55 @@ object BrokerCollie {
     }
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
-      this.zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName)
+      request.zookeeperClusterName(zookeeperClusterName)
       this
     }
 
     @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtils.requireConnectionPort(clientPort)
+      request.clientPort(clientPort)
       this
     }
 
     @Optional("default is random port")
     def exporterPort(exporterPort: Int): ClusterCreator = {
-      this.exporterPort = CommonUtils.requireConnectionPort(exporterPort)
+      request.exporterPort(exporterPort)
       this
     }
 
     @Optional("default is random port")
     def jmxPort(jmxPort: Int): ClusterCreator = {
-      this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
+      request.jmxPort(jmxPort)
       this
     }
 
-    override def create(): Future[BrokerClusterInfo] = doCreate(
-      executionContext = Objects.requireNonNull(executionContext),
-      clusterName = CommonUtils.requireNonEmpty(clusterName),
-      imageName = CommonUtils.requireNonEmpty(imageName),
-      zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName),
-      clientPort = CommonUtils.requireConnectionPort(clientPort),
-      exporterPort = CommonUtils.requireConnectionPort(exporterPort),
-      jmxPort = CommonUtils.requireConnectionPort(jmxPort),
-      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
-    )
+    /**
+      * add a key-value data map for container
+      *
+      * @param key data key
+      * @param value data value
+      * @return this creator
+      */
+    @Optional("default is empty map")
+    def setting(key: String, value: JsValue): ClusterCreator = {
+      request.setting(key, value)
+      this
+    }
+
+    override def create(): Future[BrokerClusterInfo] = {
+      // initial the basic creation required parameters (defined in ClusterInfo) for broker
+      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+      doCreate(
+        executionContext = Objects.requireNonNull(executionContext),
+        creation = creation
+      )
+    }
 
     override protected def checkClusterName(clusterName: String): String = {
       BrokerApi.BROKER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
       clusterName
     }
 
-    protected def doCreate(executionContext: ExecutionContext,
-                           clusterName: String,
-                           imageName: String,
-                           zookeeperClusterName: String,
-                           clientPort: Int,
-                           exporterPort: Int,
-                           jmxPort: Int,
-                           nodeNames: Set[String]): Future[BrokerClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[BrokerClusterInfo]
   }
-
-  private[agent] val ID_KEY: String = "BROKER_ID"
-  private[agent] val DATA_DIRECTORY_KEY: String = "BROKER_DATA_DIR"
-  private[agent] val ZOOKEEPERS_KEY: String = "BROKER_ZOOKEEPERS"
-  private[agent] val CLIENT_PORT_KEY: String = "BROKER_CLIENT_PORT"
-  private[agent] val ADVERTISED_HOSTNAME_KEY: String = "BROKER_ADVERTISED_HOSTNAME"
-  private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "BROKER_ADVERTISED_CLIENT_PORT"
-  private[agent] val EXPORTER_PORT_KEY: String = "PROMETHEUS_EXPORTER_PORT"
-  private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
-  private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
-
-  /**
-    * internal key used to save the zookeeper cluster name.
-    * All nodes of broker cluster should have this environment variable.
-    */
-  private[agent] val ZOOKEEPER_CLUSTER_NAME: String = "CCI_ZOOKEEPER_CLUSTER_NAME"
 }

@@ -34,15 +34,20 @@ on same zookeeper cluster.
 
 The properties which can be set by user are shown below.
 
-#. name (**string**) — cluster name
-#. imageName (**string**) — docker image
-#. clientPort (**int**) — broker client port
-#. exporterPort (**int**) — port used by internal communication
-#. jmxPort (**int**) — port used by jmx service
-#. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
-#. nodeNames (**array(string)**) — the nodes running the broker process
+#. settings (**object**) — custom settings. Apart from the following fields, you can add any setting if needed.
+
+   - the official support fields are listed below
+
+     - name (**string**) — cluster name
+     - imageName (**string**) — docker image
+     - clientPort (**int**) — broker client port.
+     - exporterPort (**int**) — port used by internal communication
+     - jmxPort (**int**) — port used by jmx service
+     - zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
+     - nodeNames (**array(string)**) — the nodes running the zookeeper process
+     - tags (**object**) — the user defined parameters
+
 #. deadNodes (**array(string)**) — the nodes that have failed containers of broker
-#. tags (**object**) — the user defined parameters
 #. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
 #. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
 #. lastModified (**long**) — last modified this jar time
@@ -85,17 +90,19 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "bk00",
-       "zookeeperClusterName": "zk00",
-       "imageName": "oharastream/broker:$|version|",
-       "exporterPort": 12346,
-       "clientPort": 12345,
-       "jmxPort": 12347,
-       "nodeNames": [
-         "node00"
-       ],
+       "settings": {
+         "name": "bk00",
+         "zookeeperClusterName": "zk00",
+         "imageName": "oharastream/broker:$|version|",
+         "exporterPort": 12346,
+         "clientPort": 12345,
+         "jmxPort": 12347,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       }
        "deadNodes": [],
-       "tags": {},
        "lastModified": 1563158986411
      }
 
@@ -126,18 +133,21 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "bk00",
-       "zookeeperClusterName": "zk00",
-       "imageName": "oharastream/broker:$|version|",
-       "exporterPort": 7071,
-       "clientPort": 9092,
-       "jmxPort": 9093,
-       "nodeNames": [
-         "node00"
-       ],
-       "deadNodes": []
+       "settings": {
+         "name": "bk00",
+         "zookeeperClusterName": "zk00",
+         "imageName": "oharastream/broker:$|version|",
+         "exporterPort": 12346,
+         "clientPort": 12345,
+         "jmxPort": 12347,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       }
+       "deadNodes": [],
+       "lastModified": 1563158986411
      }
-
 
 list all broker clusters
 ------------------------
@@ -149,18 +159,20 @@ Example Response
 
      [
        {
-         "name": "bk00",
-         "zookeeperClusterName": "zk00",
-         "imageName": "oharastream/broker:$|version|",
-         "exporterPort": 7071,
-         "clientPort": 9092,
-         "jmxPort": 9093,
-         "nodeNames": [
-           "node00"
-         ],
+         "settings": {
+           "name": "bk00",
+           "zookeeperClusterName": "zk00",
+           "imageName": "oharastream/broker:$|version|",
+           "exporterPort": 12346,
+           "clientPort": 12345,
+           "jmxPort": 12347,
+           "nodeNames": [
+             "node00"
+           ],
+           "tags": {}
+         }
          "deadNodes": [],
-         "tags": {},
-         "state": "RUNNING"
+         "lastModified": 1563158986411
        }
      ]
 
@@ -193,18 +205,21 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "bk00",
-       "zookeeperClusterName": "zk00",
-       "imageName": "oharastream/broker:$|version|",
-       "exporterPort": 7071,
-       "clientPort": 9092,
-       "jmxPort": 9093,
-       "nodeNames": [
-         "node00"
-       ],
+       "settings": {
+         "name": "bk00",
+         "zookeeperClusterName": "zk00",
+         "imageName": "oharastream/broker:$|version|",
+         "exporterPort": 7071,
+         "clientPort": 9092,
+         "jmxPort": 9093,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       }
        "deadNodes": [],
-       "tags": {},
-       "state": "RUNNING"
+       "state": "RUNNING",
+       "lastModified": 1563158986411
      }
 
 
