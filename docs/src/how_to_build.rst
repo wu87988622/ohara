@@ -53,7 +53,7 @@ to simplify the development of ohara.
       $ gradle clean build -x test
 
     .. note::
-      the tar file is located at ohara-assembly/distributions
+      the tar file is located at ohara-assembly/build/distributions
 
   Run All UTs
 
