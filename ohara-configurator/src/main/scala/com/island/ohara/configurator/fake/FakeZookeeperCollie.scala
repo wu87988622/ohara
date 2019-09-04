@@ -18,8 +18,8 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{ClusterState, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,24 +27,23 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     extends FakeCollie[ZookeeperClusterInfo](node)
     with ZookeeperCollie {
-  override def creator: ZookeeperCollie.ClusterCreator =
-    (_, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-      Future.successful(
-        addCluster(
-          ZookeeperClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            clientPort = clientPort,
-            peerPort = peerPort,
-            electionPort = electionPort,
-            nodeNames = nodeNames,
-            deadNodes = Set.empty,
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ClusterState.RUNNING.name),
-            error = None,
-            tags = Map.empty,
-            lastModified = CommonUtils.current()
-          )))
+  override def creator: ZookeeperCollie.ClusterCreator = (_, creation) =>
+    Future.successful(
+      addCluster(
+        ZookeeperClusterInfo(
+          settings = ZookeeperApi.access.request
+            .name(creation.name)
+            .imageName(creation.imageName)
+            .settings(creation.settings)
+            .creation
+            .settings,
+          nodeNames = creation.nodeNames,
+          deadNodes = Set.empty,
+          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+          state = Some(ClusterState.RUNNING.name),
+          error = None,
+          lastModified = CommonUtils.current()
+        )))
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =

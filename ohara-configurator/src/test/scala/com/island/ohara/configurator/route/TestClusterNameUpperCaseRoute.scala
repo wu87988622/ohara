@@ -22,15 +22,16 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
-    Configurator.builder.fake(numberOfCluster, numberOfCluster, "ZookeeperCluster").build()
+    Configurator.builder.fake(numberOfCluster, numberOfCluster, "zk").build()
   private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -39,7 +40,7 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   def testAddZookeeper(): Unit = {
     result(nodeApi.request.hostname("host1").port(22).user("b").password("c").create())
 
-    an[IllegalArgumentException] should be thrownBy result(
+    an[DeserializationException] should be thrownBy result(
       zookeeperApi.request.name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create())
   }
 

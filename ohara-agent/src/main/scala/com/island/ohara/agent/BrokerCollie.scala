@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, TopicApi, ZookeeperApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -101,7 +101,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                   if (zkContainers.isEmpty)
                     throw new IllegalArgumentException(s"$clusterName zookeeper container doesn't exist")
                   val zookeepers = zkContainers
-                    .map(c => s"${c.nodeName}:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
+                    .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
                     .mkString(",")
 
                   val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys

@@ -23,7 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeZookeeperCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -172,7 +172,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testInvalidClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
+    an[DeserializationException] should be thrownBy result(
       zookeeperApi.request.name("abc def").nodeNames(nodeNames).create()
     )
 
@@ -290,7 +290,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(
       zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
     result(zookeeperApi.stop(zk.name))
-    result(zookeeperApi.request.nodeNames(nodeNames).update())
+    result(zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
     result(zookeeperApi.start(zk.name))
   }
 

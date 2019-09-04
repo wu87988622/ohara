@@ -43,19 +43,18 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
     */
   private[this] val fakeClientCache = new ConcurrentHashMap[WorkerClusterInfo, FakeWorkerClient]
-  override def creator: WorkerCollie.ClusterCreator =
-    (_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, settings, nodeNames) =>
-      Future.successful(
-        addCluster(
-          WorkerClusterInfo(
-            settings = settings,
-            connectors = FakeWorkerClient.localConnectorDefinitions,
-            deadNodes = Set.empty,
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ClusterState.RUNNING.name),
-            error = None,
-            lastModified = CommonUtils.current()
-          )))
+  override def creator: WorkerCollie.ClusterCreator = (_, creation) =>
+    Future.successful(
+      addCluster(
+        WorkerClusterInfo(
+          settings = creation.settings,
+          connectors = FakeWorkerClient.localConnectorDefinitions,
+          deadNodes = Set.empty,
+          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+          state = Some(ClusterState.RUNNING.name),
+          error = None,
+          lastModified = CommonUtils.current()
+        )))
 
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future

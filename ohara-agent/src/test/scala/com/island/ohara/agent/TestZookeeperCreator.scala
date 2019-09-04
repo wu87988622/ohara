@@ -31,27 +31,15 @@ class TestZookeeperCreator extends SmallTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] def zkCreator(): ZookeeperCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
-      // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
+    (executionContext, creation) => {
       if (executionContext == null) throw new AssertionError()
-      if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
-      if (imageName == null || imageName.isEmpty) throw new AssertionError()
-      if (clientPort <= 0) throw new AssertionError()
-      if (peerPort <= 0) throw new AssertionError()
-      if (electionPort <= 0) throw new AssertionError()
-      if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
       Future.successful(
         ZookeeperClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          clientPort = clientPort,
-          peerPort = peerPort,
-          electionPort = electionPort,
-          nodeNames = nodeNames,
+          settings = ZookeeperApi.access.request.settings(creation.settings).creation.settings,
+          nodeNames = creation.nodeNames,
           deadNodes = Set.empty,
           state = None,
           error = None,
-          tags = Map.empty,
           lastModified = 0
         ))
     }
@@ -117,17 +105,18 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
   @Test
   def testCopy(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
-      name = CommonUtils.randomString(10),
-      imageName = CommonUtils.randomString(),
-      clientPort = 10,
-      peerPort = 10,
-      electionPort = 10,
-      nodeNames = Set(CommonUtils.randomString()),
+      settings = ZookeeperApi.access.request
+        .name(CommonUtils.randomString(10))
+        .imageName(CommonUtils.randomString)
+        .nodeNames(nodeNames)
+        .creation
+        .settings,
+      nodeNames = nodeNames,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = 0
     )
     Await.result(zkCreator().copy(zookeeperClusterInfo).create(), 30 seconds) shouldBe zookeeperClusterInfo

@@ -144,7 +144,7 @@ public final class CommonUtils {
     if (useException) {
       logger.error(
           "Running test method time is "
-              + (current() - startTs)
+              + (current() - startTs) / 1000
               + " seconds more than the timeout time "
               + d.getSeconds()
               + " seconds. Please turning your timeout time.");

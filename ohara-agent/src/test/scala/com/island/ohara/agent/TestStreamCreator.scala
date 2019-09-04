@@ -17,7 +17,6 @@
 package com.island.ohara.agent
 
 import java.net.URL
-import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
@@ -30,7 +29,6 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -39,40 +37,20 @@ class TestStreamCreator extends SmallTest with Matchers {
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of("group", name)
 
-  private[this] def streamCreator(): StreamCollie.ClusterCreator =
-    (clusterName,
-     nodeNames,
-     imageName,
-     brokerClusterName,
-     jarInfo,
-     jmxPort,
-     fromTopics,
-     toTopics,
-     settings,
-     executionContext) => {
-      // We only check required variables
-      CommonUtils.requireNonEmpty(clusterName)
-      CommonUtils.requireNonEmpty(nodeNames.asJava)
-      CommonUtils.requireNonEmpty(imageName)
-      Objects.requireNonNull(jarInfo)
-      CommonUtils.requireConnectionPort(jmxPort)
-      CommonUtils.requireNonEmpty(brokerClusterName)
-      CommonUtils.requireNonEmpty(fromTopics.asJava)
-      CommonUtils.requireNonEmpty(toTopics.asJava)
-      Objects.requireNonNull(settings)
-      Objects.requireNonNull(executionContext)
-      Future.successful {
-        StreamClusterInfo(
-          settings = settings,
-          definition = None,
-          deadNodes = Set.empty,
-          metrics = Metrics.EMPTY,
-          state = None,
-          error = None,
-          lastModified = CommonUtils.current()
-        )
-      }
+  private[this] def streamCreator(): StreamCollie.ClusterCreator = (executionContext, creation) => {
+    if (executionContext == null) throw new AssertionError()
+    Future.successful {
+      StreamClusterInfo(
+        settings = creation.settings,
+        definition = None,
+        deadNodes = Set.empty,
+        metrics = Metrics.EMPTY,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current()
+      )
     }
+  }
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

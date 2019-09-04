@@ -15,14 +15,15 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsString, JsValue}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperApi {
@@ -41,16 +42,35 @@ object ZookeeperApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtils.VERSION}"
 
-  final case class Creation private[ZookeeperApi] (name: String,
-                                                   imageName: String,
-                                                   clientPort: Int,
-                                                   peerPort: Int,
-                                                   electionPort: Int,
-                                                   nodeNames: Set[String],
-                                                   tags: Map[String, JsValue])
-      extends ClusterCreationRequest {
+  //------------------------ The key name list in settings field ---------------------------------/
+  // export this variable to broker collie
+  private[ohara] val CLIENT_PORT_KEY = "clientPort"
+  private[this] val PEER_PORT_KEY = "peerPort"
+  private[this] val ELECTION_PORT_KEY = "electionPort"
+  // export these variables to collie for creating
+  private[ohara] val ZK_ID_KEY = "zkId"
+  private[ohara] val SERVERS_KEY = "servers"
+  private[ohara] val DATA_DIR_KEY = "dataDir"
+
+  final case class Creation(settings: Map[String, JsValue]) extends ClusterCreationRequest {
+
+    /**
+      * reuse the parser from Update.
+      * @param settings settings
+      * @return update
+      */
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+
+    override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
     override def group: String = GROUP_DEFAULT
+    override def imageName: String = settings.imageName.get
+    override def nodeNames: Set[String] = settings.nodeNames.get
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
+    override def tags: Map[String, JsValue] = settings.tags.get
+
+    def clientPort: Int = settings.clientPort.get
+    def peerPort: Int = settings.peerPort.get
+    def electionPort: Int = settings.electionPort.get
   }
 
   /**
@@ -58,46 +78,79 @@ object ZookeeperApi {
     */
   private[ohara] implicit val ZOOKEEPER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
-      .format(jsonFormat7(Creation))
-      .nullToRandomPort("clientPort")
-      .requireBindPort("clientPort")
-      .nullToRandomPort("peerPort")
-      .requireBindPort("peerPort")
-      .nullToRandomPort("electionPort")
-      .requireBindPort("electionPort")
+      .format(new RootJsonFormat[Creation] {
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
+      })
+      // default values
+      .nullToRandomPort(CLIENT_PORT_KEY)
+      .nullToRandomPort(PEER_PORT_KEY)
+      .nullToRandomPort(ELECTION_PORT_KEY)
+      // restrict rules
+      .requireBindPort(CLIENT_PORT_KEY)
+      .requireBindPort(PEER_PORT_KEY)
+      .requireBindPort(ELECTION_PORT_KEY)
       .refine
 
-  final case class Update private[ZookeeperApi] (imageName: Option[String],
-                                                 clientPort: Option[Int],
-                                                 peerPort: Option[Int],
-                                                 electionPort: Option[Int],
-                                                 nodeNames: Option[Set[String]],
-                                                 tags: Option[Map[String, JsValue]])
-      extends ClusterUpdateRequest
+  final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+    override def imageName: Option[String] =
+      noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
+    override def nodeNames: Option[Set[String]] =
+      noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
+    override def tags: Option[Map[String, JsValue]] =
+      noJsNull(settings).get(TAGS_KEY).map {
+        case s: JsObject => s.fields
+        case other: JsValue =>
+          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
+      }
+
+    def clientPort: Option[Int] =
+      noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+    def peerPort: Option[Int] =
+      noJsNull(settings).get(PEER_PORT_KEY).map(_.convertTo[Int])
+    def electionPort: Option[Int] =
+      noJsNull(settings).get(ELECTION_PORT_KEY).map(_.convertTo[Int])
+  }
+
   implicit val ZOOKEEPER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
     basicRulesOfUpdate[Update]
-      .format(jsonFormat6(Update))
-      .requireBindPort("clientPort")
-      .requireBindPort("peerPort")
-      .requireBindPort("electionPort")
+      .format(new RootJsonFormat[Update] {
+        override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+      })
+      // restrict rules
+      .requireBindPort(CLIENT_PORT_KEY)
+      .requireBindPort(PEER_PORT_KEY)
+      .requireBindPort(ELECTION_PORT_KEY)
       .refine
 
-  final case class ZookeeperClusterInfo private[ZookeeperApi] (name: String,
-                                                               imageName: String,
-                                                               clientPort: Int,
-                                                               peerPort: Int,
-                                                               electionPort: Int,
+  final case class ZookeeperClusterInfo private[ZookeeperApi] (settings: Map[String, JsValue],
                                                                nodeNames: Set[String],
                                                                deadNodes: Set[String],
-                                                               tags: Map[String, JsValue],
                                                                lastModified: Long,
                                                                state: Option[String],
                                                                error: Option[String])
       extends ClusterInfo {
+
+    /**
+      * reuse the parser from Creation.
+      * @param settings settings
+      * @return creation
+      */
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
+
     // cluster does not support to define group
     override def group: String = GROUP_DEFAULT
+    override def name: String = settings.name
     override def kind: String = ZOOKEEPER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
+    override def tags: Map[String, JsValue] = settings.tags
+
+    // TODO remove this duplicated fields after #2191
+    def imageName: String = settings.imageName
+    def clientPort: Int = settings.clientPort
+    def peerPort: Int = settings.peerPort
+    def electionPort: Int = settings.electionPort
 
     override def clone(nodeNames: Set[String],
                        deadNodes: Set[String],
@@ -105,11 +158,11 @@ object ZookeeperApi {
                        error: Option[String],
                        metrics: Metrics,
                        tags: Map[String, JsValue]): ZookeeperClusterInfo = copy(
+      settings = access.request.settings(settings).nodeNames(nodeNames).tags(tags).creation.settings,
       nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
-      error = error,
-      tags = tags
+      error = error
     )
 
     // TODO: expose the metrics for zk
@@ -120,26 +173,58 @@ object ZookeeperApi {
     * exposed to configurator
     */
   private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[ZookeeperClusterInfo] =
-    JsonRefiner[ZookeeperClusterInfo].format(jsonFormat11(ZookeeperClusterInfo)).refine
+    JsonRefiner[ZookeeperClusterInfo]
+      .format(new RootJsonFormat[ZookeeperClusterInfo] {
+        private[this] val format = jsonFormat6(ZookeeperClusterInfo)
+        override def read(json: JsValue): ZookeeperClusterInfo = format.read(json)
+        override def write(obj: ZookeeperClusterInfo): JsValue =
+          JsObject(
+            noJsNull(
+              format.write(obj).asJsObject.fields ++
+                // TODO: remove this stale fields
+                Map(
+                  NAME_KEY -> JsString(obj.name),
+                  GROUP_KEY -> JsString(obj.group),
+                  IMAGE_NAME_KEY -> JsString(obj.imageName),
+                  NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
+                  CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
+                  PEER_PORT_KEY -> JsNumber(obj.peerPort),
+                  ELECTION_PORT_KEY -> JsNumber(obj.electionPort),
+                  TAGS_KEY -> JsObject(obj.tags)
+                )
+            ))
+      })
+      .refine
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   sealed trait Request {
-    @Optional("default name is a random string")
-    def name(name: String): Request
+    @Optional("default name is a random string. But it is required in updating")
+    def name(name: String): Request =
+      setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
     @Optional("the default image is IMAGE_NAME_DEFAULT")
-    def imageName(imageName: String): Request
+    def imageName(imageName: String): Request =
+      setting(IMAGE_NAME_KEY, JsString(CommonUtils.requireNonEmpty(imageName)))
     @Optional("the default port is random")
-    def clientPort(clientPort: Int): Request
+    def clientPort(clientPort: Int): Request =
+      setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
     @Optional("the default port is random")
-    def peerPort(clientPort: Int): Request
+    def peerPort(peerPort: Int): Request =
+      setting(PEER_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(peerPort)))
     @Optional("the default port is random")
-    def electionPort(clientPort: Int): Request
+    def electionPort(electionPort: Int): Request =
+      setting(ELECTION_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(electionPort)))
     def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
-    def nodeNames(nodeNames: Set[String]): Request
+    def nodeNames(nodeNames: Set[String]): Request =
+      setting(NODE_NAMES_KEY, JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Map[String, JsValue]): Request
+    def tags(tags: Map[String, JsValue]): Request = setting(TAGS_KEY, JsObject(tags))
+
+    @Optional("extra settings is empty by default")
+    def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
+    @Optional("extra settings is empty by default")
+    def settings(settings: Map[String, JsValue]): Request
 
     /**
       * generate the POST request
@@ -156,10 +241,12 @@ object ZookeeperApi {
     def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo]
 
     /**
-      * for testing only
-      * @return the payload of creation
+      * zookeeper information creation.
+      * Here we open the access for reusing the creation to other module
+      *
+      * @return the payload of create
       */
-    private[v0] def creation: Creation
+    def creation: Creation
 
     /**
       * for testing only
@@ -171,68 +258,19 @@ object ZookeeperApi {
   final class Access private[ZookeeperApi]
       extends ClusterAccess[ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH, GROUP_DEFAULT) {
     def request: Request = new Request {
-      private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)
-      private[this] var imageName: Option[String] = None
-      private[this] var clientPort: Option[Int] = None
-      private[this] var peerPort: Option[Int] = None
-      private[this] var electionPort: Option[Int] = None
-      private[this] var nodeNames: Option[Set[String]] = None
-      private[this] var tags: Map[String, JsValue] = _
-      override def name(name: String): Request = {
-        this.name = CommonUtils.requireNonEmpty(name)
+      private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
+      override def settings(settings: Map[String, JsValue]): Request = {
+        this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
         this
       }
 
-      override def imageName(imageName: String): Request = {
-        this.imageName = Some(CommonUtils.requireNonEmpty(imageName))
-        this
-      }
+      override def creation: Creation =
+        // auto-complete the creation via our refiner
+        ZOOKEEPER_CREATION_JSON_FORMAT.read(ZOOKEEPER_CREATION_JSON_FORMAT.write(Creation(settings.toMap)))
 
-      override def clientPort(clientPort: Int): Request = {
-        this.clientPort = Some(CommonUtils.requireConnectionPort(clientPort))
-        this
-      }
-
-      override def peerPort(peerPort: Int): Request = {
-        this.peerPort = Some(CommonUtils.requireConnectionPort(peerPort))
-        this
-      }
-
-      override def electionPort(electionPort: Int): Request = {
-        this.electionPort = Some(CommonUtils.requireConnectionPort(electionPort))
-        this
-      }
-
-      import scala.collection.JavaConverters._
-      override def nodeNames(nodeNames: Set[String]): Request = {
-        this.nodeNames = Some(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet)
-        ZOOKEEPER_CREATION_JSON_FORMAT.check("nodeNames", JsArray(nodeNames.map(JsString(_)).toVector))
-        this
-      }
-
-      override def tags(tags: Map[String, JsValue]): Request = {
-        this.tags = Objects.requireNonNull(tags)
-        this
-      }
-
-      override private[v0] def creation: Creation = Creation(
-        name = CommonUtils.requireNonEmpty(name),
-        imageName = CommonUtils.requireNonEmpty(imageName.getOrElse(IMAGE_NAME_DEFAULT)),
-        clientPort = CommonUtils.requireConnectionPort(clientPort.getOrElse(CommonUtils.availablePort())),
-        peerPort = CommonUtils.requireConnectionPort(peerPort.getOrElse(CommonUtils.availablePort())),
-        electionPort = CommonUtils.requireConnectionPort(electionPort.getOrElse(CommonUtils.availablePort())),
-        nodeNames = CommonUtils.requireNonEmpty(nodeNames.getOrElse(Set.empty).asJava).asScala.toSet,
-        tags = if (tags == null) Map.empty else tags
-      )
-
-      override private[v0] def update: Update = Update(
-        imageName = imageName.map(CommonUtils.requireNonEmpty),
-        clientPort = clientPort.map(CommonUtils.requireConnectionPort),
-        peerPort = peerPort.map(CommonUtils.requireConnectionPort),
-        electionPort = electionPort.map(CommonUtils.requireConnectionPort),
-        nodeNames = nodeNames.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet),
-        tags = Option(tags)
-      )
+      override private[v0] def update: Update =
+        // auto-complete the update via our refiner
+        ZOOKEEPER_UPDATE_JSON_FORMAT.read(ZOOKEEPER_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
         exec.post[Creation, ZookeeperClusterInfo, ErrorApi.Error](
@@ -242,7 +280,7 @@ object ZookeeperApi {
 
       override def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
         exec.put[Update, ZookeeperClusterInfo, ErrorApi.Error](
-          s"$url/${CommonUtils.requireNonEmpty(name)}",
+          s"$url/${CommonUtils.requireNonEmpty(settings(NAME_KEY).convertTo[String])}",
           update
         )
     }

@@ -31,14 +31,9 @@ object ZookeeperRoute {
   private[this] def hookOfCreation: HookOfCreation[Creation, ZookeeperClusterInfo] = (creation: Creation) =>
     Future.successful(
       ZookeeperClusterInfo(
-        name = creation.name,
-        imageName = creation.imageName,
-        clientPort = creation.clientPort,
-        peerPort = creation.peerPort,
-        electionPort = creation.electionPort,
+        settings = creation.settings,
         nodeNames = creation.nodeNames,
         deadNodes = Set.empty,
-        tags = creation.tags,
         state = None,
         error = None,
         lastModified = CommonUtils.current()
@@ -47,35 +42,21 @@ object ZookeeperRoute {
   private[this] def hookOfUpdate(
     implicit clusterCollie: ClusterCollie,
     executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
-    (key: ObjectKey, update: Update, previous: Option[ZookeeperClusterInfo]) =>
+    (key: ObjectKey, update: Update, previousOption: Option[ZookeeperClusterInfo]) =>
       clusterCollie.zookeeperCollie.clusters().map { clusters =>
         if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
           throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
         else
-          previous.fold(
-            ZookeeperClusterInfo(
-              name = key.name,
-              imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-              clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
-              peerPort = update.peerPort.getOrElse(CommonUtils.availablePort()),
-              electionPort = update.electionPort.getOrElse(CommonUtils.availablePort()),
-              nodeNames = update.nodeNames.getOrElse(Set.empty),
-              deadNodes = Set.empty,
-              tags = update.tags.getOrElse(Map.empty),
-              state = None,
-              error = None,
-              lastModified = CommonUtils.current()
-            )) { previous =>
-            previous.copy(
-              imageName = update.imageName.getOrElse(previous.imageName),
-              clientPort = update.clientPort.getOrElse(previous.clientPort),
-              peerPort = update.peerPort.getOrElse(previous.peerPort),
-              electionPort = update.electionPort.getOrElse(previous.electionPort),
-              nodeNames = update.nodeNames.getOrElse(previous.nodeNames),
-              tags = update.tags.getOrElse(previous.tags),
-              lastModified = CommonUtils.current()
-            )
-          }
+          // use PUT as creation request
+          ZookeeperClusterInfo(
+            settings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings,
+            nodeNames = update.nodeNames.orElse(previousOption.map(_.nodeNames)).getOrElse(Set.empty),
+            // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
+            deadNodes = Set.empty,
+            state = None,
+            error = None,
+            lastModified = CommonUtils.current()
+          )
     }
 
   private[this] def hookOfStart(implicit store: DataStore,

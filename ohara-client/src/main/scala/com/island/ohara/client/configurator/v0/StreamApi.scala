@@ -91,7 +91,7 @@ object StreamApi {
     def jmxPort: Int = settings.jmxPort.get
 
     def from: Set[TopicKey] = settings.from.get
-
+    // TODO: the name "to" collides the collection.to method...maybe we should change the nameing?
     def to: Set[TopicKey] = Update(settings).to.get
 
     //TODO remove this field after #2288
@@ -142,7 +142,7 @@ object StreamApi {
     def brokerClusterName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key()).map(_.convertTo[String])
 
-    def imageName: Option[String] =
+    override def imageName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
 
     def jarKey: Option[ObjectKey] = jarInfo
@@ -168,14 +168,14 @@ object StreamApi {
     def to: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
-    def nodeNames: Option[Set[String]] =
+    override def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(StreamDefUtils.NODE_NAMES_DEFINITION.key()).map(_.convertTo[Seq[String]].toSet)
 
     //TODO remove this field after #2288
     def instances: Option[Int] =
       noJsNull(settings).get(StreamDefUtils.INSTANCES_DEFINITION.key()).map(_.convertTo[Int])
 
-    def tags: Option[Map[String, JsValue]] =
+    override def tags: Option[Map[String, JsValue]] =
       noJsNull(settings).get(StreamDefUtils.TAGS_DEFINITION.key()).map {
         case s: JsObject => s.fields
         case other: JsValue =>

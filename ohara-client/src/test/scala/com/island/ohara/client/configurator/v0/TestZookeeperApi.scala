@@ -22,8 +22,12 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DefaultJsonProtocol._
 import spray.json._
 class TestZookeeperApi extends SmallTest with Matchers {
+
+  private[this] final val access =
+    ZookeeperApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
 
   @Test
   def testClone(): Unit = {
@@ -32,16 +36,11 @@ class TestZookeeperApi extends SmallTest with Matchers {
     val error = Some(CommonUtils.randomString())
     val state = Some(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
-      name = CommonUtils.randomString(),
-      imageName = CommonUtils.randomString(),
-      clientPort = 10,
-      peerPort = 10,
-      electionPort = 10,
+      settings = access.nodeNames(nodeNames).creation.settings,
       nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = CommonUtils.current()
     )
     val newOne = zookeeperClusterInfo.clone(
@@ -52,6 +51,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
       metrics = Metrics.EMPTY,
       tags = Map.empty
     )
+    newOne.settings(NODE_NAMES_KEY).convertTo[Set[String]] shouldBe nodeNames
     newOne.nodeNames shouldBe nodeNames
     newOne.deadNodes shouldBe deadNodes
     newOne.error shouldBe error
@@ -59,20 +59,10 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .nodeName(CommonUtils.randomString(10))
-    .creation
-    .name
-    .length should not be 0
+  def ignoreNameOnCreation(): Unit = access.nodeName(CommonUtils.randomString(10)).creation.name.length should not be 0
 
   @Test
-  def testTags(): Unit = ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
+  def testTags(): Unit = access
     .nodeName(CommonUtils.randomString(10))
     .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
     .creation
@@ -80,79 +70,42 @@ class TestZookeeperApi extends SmallTest with Matchers {
     .size shouldBe 2
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .name(CommonUtils.randomString())
-    .creation
+  def ignoreNodeNamesOnCreation(): Unit =
+    an[DeserializationException] should be thrownBy access.name(CommonUtils.randomString(10)).creation
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy access.name(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy access.name("")
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .imageName(null)
+  def nullImageName(): Unit = an[NullPointerException] should be thrownBy access.imageName(null)
 
   @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .imageName("")
+  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy access.imageName("")
 
   @Test
-  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .nodeNames(null)
+  def nullNodeNames(): Unit = {
+    an[NullPointerException] should be thrownBy access.nodeNames(null)
+    an[IllegalArgumentException] should be thrownBy access.nodeNames(Set.empty)
+  }
 
   @Test
-  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .nodeNames(Set.empty)
+  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy access.nodeNames(Set.empty)
 
   @Test
-  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .clientPort(-1)
+  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy access.clientPort(-1)
 
   @Test
-  def negativeElectionPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .electionPort(-1)
+  def negativeElectionPort(): Unit = an[IllegalArgumentException] should be thrownBy access.electionPort(-1)
 
   @Test
-  def negativePeerPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .peerPort(-1)
+  def negativePeerPort(): Unit = an[IllegalArgumentException] should be thrownBy access.peerPort(-1)
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
@@ -178,13 +131,23 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
+  def testExtraSettingInCreation(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val name2 = JsString(CommonUtils.randomString(10))
+    val creation = access.name(name).nodeNames(Set("n1")).settings(Map("name" -> name2)).creation
+
+    // settings() has higher priority than name()
+    creation.name shouldBe name2.value
+  }
+
+  @Test
   def parseCreation(): Unit = {
-    val nodeName = CommonUtils.randomString()
+    val nodeName = "n1"
     val creation = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
-                                                                        |  {
-                                                                        |    "nodeNames": ["$nodeName"]
-                                                                        |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": ["$nodeName"]
+      |  }
+      """.stripMargin.parseJson)
 
     creation.group shouldBe ZookeeperApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
@@ -197,12 +160,12 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
     val name = CommonUtils.randomString(10)
     val creation2 = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
-         |  {
-         |    "group": "${CommonUtils.randomString()}",
-         |    "name": "$name",
-         |    "nodeNames": ["$nodeName"]
-         |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "group": "${CommonUtils.randomString()}",
+      |    "name": "$name",
+      |    "nodeNames": ["$nodeName"]
+      |  }
+      """.stripMargin.parseJson)
     // node does support custom group
     creation2.group shouldBe ZookeeperApi.GROUP_DEFAULT
     creation2.name shouldBe name
@@ -212,6 +175,33 @@ class TestZookeeperApi extends SmallTest with Matchers {
     creation2.clientPort should not be 0
     creation2.electionPort should not be 0
     creation2.peerPort should not be 0
+  }
+
+  @Test
+  def testDefaultName(): Unit = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "nodeNames": ["n1"]
+      |  }
+      """.stripMargin.parseJson).name.nonEmpty shouldBe true
+
+  @Test
+  def parseNameField(): Unit = {
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "name": ""
+      |  }
+      |  """.stripMargin.parseJson)
+    thrown2.getMessage should include("the value of \"name\" can't be empty string")
+  }
+
+  @Test
+  def parseImageNameField(): Unit = {
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "imageName": ""
+      |  }
+      |  """.stripMargin.parseJson)
+    thrown2.getMessage should include("the value of \"imageName\" can't be empty string")
   }
 
   @Test
@@ -228,7 +218,8 @@ class TestZookeeperApi extends SmallTest with Matchers {
   def parseEmptyNodeNames(): Unit =
     an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
-         |    "name": "name"
+         |    "name": "name",
+         |    "nodeNames": []
          |  }
            """.stripMargin.parseJson)
 
@@ -406,45 +397,78 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def testInvalidNodeNames(): Unit = {
-    an[DeserializationException] should be thrownBy ZookeeperApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("start")
-      .creation
-    an[DeserializationException] should be thrownBy ZookeeperApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("stop")
-      .creation
-    an[DeserializationException] should be thrownBy ZookeeperApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("start")
-      .update
-    an[DeserializationException] should be thrownBy ZookeeperApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .nodeName("stop")
-      .update
+    an[DeserializationException] should be thrownBy access.nodeName("start").creation
+    an[DeserializationException] should be thrownBy access.nodeName("stop").creation
+    an[DeserializationException] should be thrownBy access.nodeName("start").update
+    an[DeserializationException] should be thrownBy access.nodeName("stop").update
 
     an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "nodeNames": ["start", "stop"]
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": ["start", "stop"]
+      |  }
+      """.stripMargin.parseJson)
   }
 
   @Test
   def testDefaultUpdate(): Unit = {
-    val data = ZookeeperApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.update
+    val name = CommonUtils.randomString(10)
+    val data = access.name(name).update
     data.imageName.isEmpty shouldBe true
     data.peerPort.isEmpty shouldBe true
     data.electionPort.isEmpty shouldBe true
     data.clientPort.isEmpty shouldBe true
     data.nodeNames.isEmpty shouldBe true
+  }
+
+  @Test
+  def groupShouldAppearInResponse(): Unit = {
+    val name = CommonUtils.randomString(5)
+    val res = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(
+      ZookeeperClusterInfo(
+        settings = ZookeeperApi.access.request.name(name).nodeNames(Set("n1")).creation.settings,
+        nodeNames = Set.empty,
+        deadNodes = Set.empty,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current()
+      ))
+    // serialize to json should see the object key (group, name)
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ZookeeperApi.GROUP_DEFAULT
+
+    // // deserialize to info should see the object key (group, name)
+    val data = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.read(res)
+    data.name shouldBe name
+    data.group shouldBe ZookeeperApi.GROUP_DEFAULT
+  }
+
+  @Test
+  def testTagsOnUpdate(): Unit = access.update.tags shouldBe None
+
+  @Test
+  def testOverwriteSettings(): Unit = {
+    val r1 =
+      access.nodeName("n1").clientPort(12345).peerPort(45678).creation
+
+    val r2 = access.nodeName("n1").clientPort(12345).settings(Map("name" -> JsString("fake"))).creation
+
+    r1.nodeNames shouldBe r2.nodeNames
+    r1.clientPort shouldBe r2.clientPort
+    // settings will overwrite default value
+    r1.name should not be r2.name
+  }
+
+  @Test
+  def testAliveNodes(): Unit = {
+    val cluster = ZookeeperClusterInfo(
+      settings = Map.empty,
+      nodeNames = Set("n0", "n1"),
+      deadNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    cluster.aliveNodes shouldBe Set("n1")
+    cluster.copy(state = None).aliveNodes shouldBe Set.empty
   }
 }

@@ -48,11 +48,11 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
         .build())
 
   override def creator: StreamCollie.ClusterCreator =
-    (_, _, _, _, _, _, _, _, settings, _) =>
+    (_, creation) =>
       Future.successful(
         addCluster(
           StreamApi.StreamClusterInfo(
-            settings = settings,
+            settings = creation.settings,
             // convert to list in order to be serializable
             definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
             deadNodes = Set.empty,

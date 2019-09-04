@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.TopicKey
@@ -47,23 +47,38 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
   private[this] val LOG = Logger(classOf[StreamCollie])
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, brokerClusterName, jarInfo, jmxPort, _, _, settings, executionContext) => {
+    (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
-        if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
-          Future.failed(new IllegalArgumentException(s"stream cluster:$clusterName exists!"))
-        else
+        if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == creation.name))
+          Future.failed(new IllegalArgumentException(s"stream cluster:${creation.name} exists!"))
+        else {
+          val jarInfo = creation.jarInfo.getOrElse(throw new RuntimeException("jarInfo should be defined"))
           nodeCollie
-            .nodes(nodeNames)
-            .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
-            .flatMap(nodes => brokerContainers(brokerClusterName).map(cs => (nodes, cs)))
+            .nodes(creation.nodeNames)
+            .map(
+              _.map(
+                node => node -> Collie.format(prefixKey, creation.name, serviceName)
+              ).toMap
+            )
+            // the broker cluster should be defined in data creating phase already
+            // here we just throw an exception for absent value to ensure everything works as expect
+            .flatMap(
+              nodes =>
+                brokerContainers(
+                  creation.brokerClusterName.getOrElse(
+                    throw new RuntimeException("broker cluser name should be defined")
+                  )
+                ).map(cs => (nodes, cs))
+            )
             .flatMap {
               case (nodes, brokerContainers) =>
                 val route = resolveHostNames(
                   (nodes.map(_._1.hostname)
                     ++ brokerContainers.map(_.nodeName)
                   // make sure the streamApp can connect to configurator
-                    ++ Seq(jarInfo.url.getHost)).toSet)
+                    ++ Seq(jarInfo.url.getHost)).toSet
+                )
                 // ssh connection is slow so we submit request by multi-thread
                 Future
                   .sequence(nodes.map {
@@ -71,7 +86,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                       val containerInfo = ContainerInfo(
                         nodeName = node.name,
                         id = Collie.UNKNOWN,
-                        imageName = imageName,
+                        imageName = creation.imageName,
                         created = Collie.UNKNOWN,
                         state = Collie.UNKNOWN,
                         kind = Collie.UNKNOWN,
@@ -82,13 +97,13 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                             hostIp = Collie.UNKNOWN,
                             portPairs = Seq(
                               PortPair(
-                                hostPort = jmxPort,
-                                containerPort = jmxPort
+                                hostPort = creation.jmxPort,
+                                containerPort = creation.jmxPort
                               )
                             )
                           )
                         ),
-                        environments = settings.map {
+                        environments = creation.settings.map {
                           case (k, v) =>
                             k -> (v match {
                               // the string in json representation has quote in the beginning and end.
@@ -102,24 +117,35 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                         // we convert all settings to specific string in order to fetch all settings from
                         // container env quickly. Also, the specific string enable us to pick up the "true" settings
                         // from envs since there are many system-defined settings in container envs.
-                          + toEnvString(settings),
+                          + toEnvString(creation.settings),
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName
                       )
-                      doCreator(executionContext, containerName, containerInfo, node, route, jmxPort, jarInfo).map(_ =>
-                        Some(containerInfo))
+                      doCreator(executionContext, containerName, containerInfo, node, route, creation.jmxPort, jarInfo)
+                        .map(_ => Some(containerInfo))
                   })
                   .map(_.flatten.toSeq)
-                  .flatMap(cs => loadDefinition(jarInfo.url).map(definition => cs -> definition))
+                  .flatMap(
+                    cs =>
+                      loadDefinition(
+                        creation.jarInfo
+                          .getOrElse(
+                            throw new RuntimeException("jarInfo should be defined")
+                          )
+                          .url
+                      ).map(definition => cs -> definition)
+                  )
                   .map {
                     case (successfulContainers, definition) =>
                       if (successfulContainers.isEmpty)
-                        throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                        throw new IllegalArgumentException(
+                          s"failed to create ${creation.name} on $serviceName"
+                        )
                       val clusterInfo = StreamClusterInfo(
                         // the other arguments (clusterName, imageName and so on) are extracted from settings so
                         // we don't need to add them back to settings.
                         settings = StreamApi.access.request
-                          .settings(settings)
+                          .settings(creation.settings)
                           .nodeNames(successfulContainers.map(_.nodeName).toSet)
                           .creation
                           .settings,
@@ -136,6 +162,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                       clusterInfo
                   }
             }
+        }
       })
     }
 
@@ -315,22 +342,18 @@ object StreamCollie {
     }
 
     override def create(): Future[StreamClusterInfo] = {
+      // initial the basic creation required parameters (defined in ClusterInfo) for stream
       val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+
+      // TODO: the to/from topics should not be empty in building creation ... However, our stream route
+      // allowed user to enter empty for both fields... With a view to keeping the compatibility
+      // we have to move the check from "parsing json" to "running cluster"
+      // I'd say it is inconsistent to our cluster route ... by chia
+      CommonUtils.requireNonEmpty(creation.from.asJava)
+      CommonUtils.requireNonEmpty(creation.to.asJava)
       doCreate(
-        clusterName = creation.name,
-        nodeNames = creation.nodeNames,
-        imageName = creation.imageName,
-        brokerClusterName = creation.brokerClusterName.get,
-        jarInfo = creation.jarInfo.get,
-        jmxPort = creation.jmxPort,
-        // TODO: the to/from topics should not be empty in building creation ... However, our stream route
-        // allowed user to enter empty for both fields... With a view to keeping the compatibility
-        // we have to move the check from "parsing json" to "running cluster"
-        // I'd say it is inconsistent to our cluster route ... by chia
-        fromTopics = CommonUtils.requireNonEmpty(creation.from.asJava).asScala.toSet,
-        toTopics = CommonUtils.requireNonEmpty(creation.to.asJava).asScala.toSet,
-        settings = creation.settings,
-        executionContext = Objects.requireNonNull(executionContext)
+        executionContext = Objects.requireNonNull(executionContext),
+        creation = creation
       )
     }
 
@@ -339,16 +362,7 @@ object StreamCollie {
       clusterName
     }
 
-    protected def doCreate(clusterName: String,
-                           nodeNames: Set[String],
-                           imageName: String,
-                           brokerClusterName: String,
-                           jarInfo: FileInfo,
-                           jmxPort: Int,
-                           fromTopics: Set[TopicKey],
-                           toTopics: Set[TopicKey],
-                           settings: Map[String, JsValue],
-                           executionContext: ExecutionContext): Future[StreamClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[StreamClusterInfo]
   }
 
   /**

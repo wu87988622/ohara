@@ -45,24 +45,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
     * 7) update existed containers (if we are adding new node into a running cluster)
     * @return description of worker cluster
     */
-  override def creator: WorkerCollie.ClusterCreator = (executionContext,
-                                                       clusterName,
-                                                       imageName,
-                                                       brokerClusterName,
-                                                       clientPort,
-                                                       jmxPort,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       _,
-                                                       settings,
-                                                       nodeNames) => {
+  override def creator: WorkerCollie.ClusterCreator = (executionContext, creation) => {
     implicit val exec: ExecutionContext = executionContext
     clusters().flatMap(clusters => {
       clusters
@@ -70,7 +53,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         .map {
           case (cluster, containers) => cluster.asInstanceOf[WorkerClusterInfo] -> containers
         }
-        .find(_._1.name == clusterName)
+        .find(_._1.name == creation.name)
         .map(_._2)
         .map(containers =>
           nodeCollie
@@ -79,23 +62,29 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         .getOrElse(Future.successful(Map.empty))
         .flatMap(existNodes =>
           nodeCollie
-            .nodes(nodeNames)
-            .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
+            .nodes(creation.nodeNames)
+            .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
             .map((existNodes, _)))
         .map {
           case (existNodes, newNodes) =>
             existNodes.keys.foreach(node =>
               if (newNodes.keys.exists(_.name == node.name))
-                throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
+                throw new IllegalArgumentException(s"${node.name} has run the worker service for ${creation.name}"))
 
-            (existNodes, newNodes, brokerContainers(brokerClusterName))
+            // the broker cluster should be defined in data creating phase already
+            // here we just throw an exception for absent value to ensure everything works as expect
+            (existNodes,
+             newNodes,
+             brokerContainers(
+               creation.brokerClusterName.getOrElse(
+                 throw new RuntimeException("The broker cluser name should be define"))))
         }
         .flatMap {
           case (existNodes, newNodes, brokerContainers) =>
             brokerContainers.flatMap(brokerContainers => {
 
               if (brokerContainers.isEmpty)
-                throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
+                throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterName} doesn't exist")
               val brokers = brokerContainers
                 .map(c => s"${c.nodeName}:${c.environments(BrokerCollie.CLIENT_PORT_KEY).toInt}")
                 .mkString(",")
@@ -114,25 +103,24 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                     val containerInfo = ContainerInfo(
                       nodeName = node.name,
                       id = Collie.UNKNOWN,
-                      imageName = imageName,
+                      imageName = creation.imageName,
                       created = Collie.UNKNOWN,
                       state = Collie.UNKNOWN,
                       kind = Collie.UNKNOWN,
                       name = containerName,
                       size = Collie.UNKNOWN,
-                      portMappings = Seq(
-                        PortMapping(
-                          hostIp = Collie.UNKNOWN,
-                          portPairs = Seq(PortPair(
-                                            hostPort = clientPort,
-                                            containerPort = clientPort
-                                          ),
-                                          PortPair(
-                                            hostPort = jmxPort,
-                                            containerPort = jmxPort
-                                          ))
-                        )),
-                      environments = settings.map {
+                      portMappings = Seq(PortMapping(
+                        hostIp = Collie.UNKNOWN,
+                        portPairs = Seq(PortPair(
+                                          hostPort = creation.clientPort,
+                                          containerPort = creation.clientPort
+                                        ),
+                                        PortPair(
+                                          hostPort = creation.jmxPort,
+                                          containerPort = creation.jmxPort
+                                        ))
+                      )),
+                      environments = creation.settings.map {
                         case (k, v) =>
                           k -> (v match {
                             // the string in json representation has quote in the beginning and end.
@@ -154,20 +142,20 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                       // we convert all settings to specific string in order to fetch all settings from
                       // container env quickly. Also, the specific string enable us to pick up the "true" settings
                       // from envs since there are many system-defined settings in container envs.
-                        + toEnvString(settings),
+                        + toEnvString(creation.settings),
                       hostname = containerName
                     )
-                    doCreator(executionContext, clusterName, containerName, containerInfo, node, route).map(_ =>
+                    doCreator(executionContext, creation.name, containerName, containerInfo, node, route).map(_ =>
                       Some(containerInfo))
                 })
                 .map(_.flatten.toSeq)
                 .map {
                   successfulContainers =>
                     if (successfulContainers.isEmpty)
-                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                      throw new IllegalArgumentException(s"failed to create ${creation.name} on $serviceName")
                     val clusterInfo = WorkerClusterInfo(
                       settings = WorkerApi.access.request
-                        .settings(settings)
+                        .settings(creation.settings)
                         .nodeNames((successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet)
                         .creation
                         .settings,
@@ -400,26 +388,11 @@ object WorkerCollie {
     }
 
     override def create(): Future[WorkerClusterInfo] = {
+      // initial the basic creation required parameters (defined in ClusterInfo) for worker
       val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        clusterName = creation.name,
-        imageName = creation.imageName,
-        brokerClusterName = creation.brokerClusterName.get,
-        clientPort = creation.clientPort,
-        jmxPort = creation.jmxPort,
-        groupId = creation.groupId,
-        offsetTopicName = creation.offsetTopicName,
-        offsetTopicReplications = creation.offsetTopicReplications,
-        offsetTopicPartitions = creation.offsetTopicPartitions,
-        statusTopicName = creation.statusTopicName,
-        statusTopicReplications = creation.statusTopicReplications,
-        statusTopicPartitions = creation.statusTopicPartitions,
-        configTopicName = creation.configTopicName,
-        configTopicReplications = creation.configTopicReplications,
-        jarInfos = creation.jarInfos,
-        settings = creation.settings,
-        nodeNames = creation.nodeNames
+        creation = creation
       )
     }
 
@@ -428,24 +401,7 @@ object WorkerCollie {
       clusterName
     }
 
-    protected def doCreate(executionContext: ExecutionContext,
-                           clusterName: String,
-                           imageName: String,
-                           brokerClusterName: String,
-                           clientPort: Int,
-                           jmxPort: Int,
-                           groupId: String,
-                           offsetTopicName: String,
-                           offsetTopicReplications: Short,
-                           offsetTopicPartitions: Int,
-                           statusTopicName: String,
-                           statusTopicReplications: Short,
-                           statusTopicPartitions: Int,
-                           configTopicName: String,
-                           configTopicReplications: Short,
-                           jarInfos: Seq[FileInfo],
-                           settings: Map[String, JsValue],
-                           nodeNames: Set[String]): Future[WorkerClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: WorkerApi.Creation): Future[WorkerClusterInfo]
   }
   private[agent] val BROKERS_KEY: String = "WORKER_BROKERS"
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"

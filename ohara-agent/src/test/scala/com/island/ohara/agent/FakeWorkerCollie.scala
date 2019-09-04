@@ -16,7 +16,6 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -58,7 +57,7 @@ class FakeWorkerCollie(nodes: Seq[Node],
           connectors = Seq.empty,
           deadNodes = Set.empty,
           lastModified = CommonUtils.current(),
-          state = Some(ContainerState.RUNNING.name),
+          state = Some(ClusterState.RUNNING.name),
           error = None
         ) -> nodes
           .map(_.hostname)

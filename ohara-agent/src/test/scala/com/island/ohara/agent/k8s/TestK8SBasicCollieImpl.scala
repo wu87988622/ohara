@@ -20,6 +20,7 @@ import com.island.ohara.agent.fake.FakeK8SClient
 import com.island.ohara.agent.{Collie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -65,23 +66,24 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
     val nodeCollie = NodeCollie(nodes)
     val k8sClient = new FakeK8SClient(true, None, containerName)
 
-    val k8sBasicCollieImpl =
+    val k8sBasicCollieImpl: K8SBasicCollieImpl[ZookeeperClusterInfo] =
       new K8SBasicCollieImpl[ZookeeperClusterInfo](nodeCollie, k8sClient) {
         override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
           implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
           Future.successful(
-            ZookeeperClusterInfo(clusterName,
-                                 containers.head.imageName,
-                                 2181,
-                                 2182,
-                                 2183,
-                                 Set.empty,
-                                 Set.empty,
-                                 Map.empty,
-                                 0L,
-                                 None,
-                                 None)
-          )
+            ZookeeperClusterInfo(
+              settings = ZookeeperApi.access.request
+                .name(clusterName)
+                .imageName(containers.head.imageName)
+                .nodeNames(nodes.map(_.name).toSet)
+                .creation
+                .settings,
+              nodeNames = Set.empty,
+              deadNodes = Set.empty,
+              state = None,
+              error = None,
+              lastModified = 0
+            ))
 
         override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")

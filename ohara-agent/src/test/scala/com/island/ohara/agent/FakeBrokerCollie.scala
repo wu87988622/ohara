@@ -15,15 +15,15 @@
  */
 
 package com.island.ohara.agent
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-private class FakeBrokerCollie(node: NodeCollie,
+private class FakeBrokerCollie(nodes: Seq[Node],
                                zkContainers: Seq[ContainerInfo],
                                bkExistContainers: Seq[ContainerInfo])
     extends BrokerCollie {
@@ -31,17 +31,16 @@ private class FakeBrokerCollie(node: NodeCollie,
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future.successful(
     Map(
       ZookeeperClusterInfo(
-        FakeBrokerCollie.zookeeperClusterName,
-        ZookeeperApi.IMAGE_NAME_DEFAULT,
-        2181,
-        2182,
-        2183,
-        Set("node1"),
-        Set.empty,
-        Map.empty,
-        0L,
-        Some(ContainerState.RUNNING.name),
-        None
+        settings = ZookeeperApi.access.request
+          .name(FakeBrokerCollie.zookeeperClusterName)
+          .nodeNames(nodes.map(_.hostname).toSet)
+          .creation
+          .settings,
+        nodeNames = Set.empty,
+        deadNodes = Set.empty,
+        lastModified = 0L,
+        state = Some(ClusterState.RUNNING.name),
+        error = None
       ) -> zkContainers,
     )
   )
@@ -103,7 +102,7 @@ private class FakeBrokerCollie(node: NodeCollie,
     *
     * @return
     */
-  override protected def nodeCollie: NodeCollie = node
+  override protected def nodeCollie: NodeCollie = NodeCollie(nodes)
 
   /**
     * Implement prefix name for the platform

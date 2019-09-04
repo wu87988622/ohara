@@ -32,47 +32,12 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
-  private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext,
-                                                                clusterName,
-                                                                imageName,
-                                                                brokerClusterName,
-                                                                clientPort,
-                                                                jmxPort,
-                                                                groupId: String,
-                                                                offsetTopicName: String,
-                                                                offsetTopicReplications,
-                                                                offsetTopicPartitions,
-                                                                statusTopicName,
-                                                                statusTopicReplications,
-                                                                statusTopicPartitions,
-                                                                configTopicName,
-                                                                configTopicReplications,
-                                                                jarInfos,
-                                                                settings,
-                                                                nodeNames) => {
+  private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext, creation) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
     if (executionContext == null) throw new AssertionError()
-    if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
-    if (imageName == null || imageName.isEmpty) throw new AssertionError()
-    if (brokerClusterName == null || brokerClusterName.isEmpty) throw new AssertionError()
-    if (clientPort <= 0) throw new AssertionError()
-    if (jmxPort <= 0) throw new AssertionError()
-    if (groupId == null || groupId.isEmpty) throw new AssertionError()
-    if (offsetTopicName == null || offsetTopicName.isEmpty) throw new AssertionError()
-    if (offsetTopicReplications <= 0) throw new AssertionError()
-    if (offsetTopicPartitions <= 0) throw new AssertionError()
-    if (statusTopicName == null || offsetTopicName.isEmpty) throw new AssertionError()
-    if (statusTopicReplications <= 0) throw new AssertionError()
-    if (statusTopicPartitions <= 0) throw new AssertionError()
-    if (configTopicName == null || offsetTopicName.isEmpty) throw new AssertionError()
-    if (configTopicReplications <= 0) throw new AssertionError()
-    // it is ok to accept empty url
-    if (jarInfos == null) throw new AssertionError()
-    if (settings == null || settings.isEmpty) throw new AssertionError()
-    if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
     Future.successful(
       WorkerClusterInfo(
-        settings = settings,
+        settings = creation.settings,
         connectors = Seq.empty,
         deadNodes = Set.empty,
         state = None,

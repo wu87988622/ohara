@@ -22,10 +22,10 @@ import java.util.Objects
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.pattern.Builder
@@ -203,20 +203,20 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkClusters = (0 until numberOfBrokerCluster).map { index =>
+        val nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
         collie.zookeeperCollie.addCluster(
           ZookeeperClusterInfo(
-            name = s"$zkClusterNamePrefix$index",
-            imageName = s"fakeImage$index",
-            // Assigning a negative value can make test fail quickly.
-            clientPort = -1,
-            electionPort = -1,
-            peerPort = -1,
-            nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet,
+            settings = ZookeeperApi.access.request
+              .name(s"$zkClusterNamePrefix$index")
+              .imageName(s"fakeImage$index")
+              .nodeNames(nodeNames)
+              .creation
+              .settings,
+            nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,
-            tags = Map.empty,
             lastModified = CommonUtils.current()
           ))
       }

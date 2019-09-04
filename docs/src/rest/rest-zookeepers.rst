@@ -30,14 +30,19 @@ Zookeeper service has many configs which make you spend a lot of time to
 read and set. Ohara provides default values to all configs but open a
 room to enable you to overwrite somethings you do care.
 
-#. name (**string**) — cluster name
-#. imageName (**string**) — docker image
-#. clientPort (**int**) — broker client port.
-#. electionPort (**int**) — used to select the zk node leader
-#. peerPort (**int**) — port used by internal communication
-#. nodeNames (**array(string)**) — the nodes running the zookeeper process
+#. settings (**object**) — custom settings. Apart from the following fields, you can add any setting if needed.
+
+   - the official support fields are listed below
+
+     - name (**string**) — cluster name
+     - imageName (**string**) — docker image
+     - clientPort (**int**) — broker client port.
+     - electionPort (**int**) — used to select the zk node leader
+     - peerPort (**int**) — port used by internal communication
+     - nodeNames (**array(string)**) — the nodes running the zookeeper process
+     - tags (**object**) — the user defined parameters
+
 #. deadNodes (**array(string)**) — the nodes that have failed containers of zookeeper
-#. tags (**object**) — the user defined parameters
 #. state (**option(string)**) — only started/failed zookeeper has state (RUNNING or DEAD)
 #. error (**option(string)**) — the error message from a failed zookeeper.
    If zookeeper is fine or un-started, you won’t get this field.
@@ -78,16 +83,18 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "zk00",
-       "imageName": "oharastream/zookeeper:$|version|",
-       "clientPort": 12345,
-       "peerPort": 12346,
-       "electionPort": 12347,
-       "nodeNames": [
-         "node00"
-       ],
+       "settings": {
+         "name": "zk00",
+         "imageName": "oharastream/zookeeper:$|version|",
+         "clientPort": 12345,
+         "peerPort": 12346,
+         "electionPort": 12347,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       },
        "deadNodes": [],
-       "tags": {},
        "lastModified": 1563158986411
      }
 
@@ -112,16 +119,18 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "zk00",
-       "electionPort": 3888,
-       "imageName": "oharastream/zookeeper:$|version|",
-       "clientPort": 2181,
-       "peerPort": 2888,
-       "nodeNames": [
-         "node00"
-       ],
+       "settings": {
+         "name": "zk00",
+         "imageName": "oharastream/zookeeper:$|version|",
+         "clientPort": 12345,
+         "peerPort": 12346,
+         "electionPort": 12347,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       },
        "deadNodes": [],
-       "tags": {},
        "lastModified": 1563158986411
      }
 
@@ -136,17 +145,20 @@ Example Response
 
      [
        {
-         "name": "zk00",
-         "electionPort": 12347,
-         "imageName": "oharastream/zookeeper:$|version|",
-         "clientPort": 12345,
-         "peerPort": 12346,
-         "nodeNames": [
-           "node00"
-         ],
+         "settings": {
+           "name": "zk00",
+           "imageName": "oharastream/zookeeper:$|version|",
+           "clientPort": 12345,
+           "peerPort": 12346,
+           "electionPort": 12347,
+           "nodeNames": [
+             "node00"
+           ],
+           "tags": {}
+         },
+         "state": "RUNNING",
          "deadNodes": [],
-         "tags": {},
-         "state": "RUNNING"
+         "lastModified": 1563158986411
        }
      ]
 
@@ -181,17 +193,20 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "zk00",
-       "electionPort": 12347,
-       "imageName": "oharastream/zookeeper:$|version|",
-       "clientPort": 12345,
-       "peerPort": 12346,
-       "nodeNames": [
-         "node00"
-       ],
+       "settings": {
+         "name": "zk00",
+         "imageName": "oharastream/zookeeper:$|version|",
+         "clientPort": 12345,
+         "peerPort": 12346,
+         "electionPort": 12347,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       },
+       "state": "RUNNING",
        "deadNodes": [],
-       "tags": {},
-       "state": "RUNNING"
+       "lastModified": 1563158986411
      }
 
 
