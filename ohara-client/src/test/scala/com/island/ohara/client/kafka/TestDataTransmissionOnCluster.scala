@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -88,7 +88,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     await(() => result(workerClient.config(connectorKey)).topicNames.nonEmpty)
     await(
       () =>
-        try result(workerClient.status(connectorKey)).connector.state == ConnectorState.RUNNING
+        try result(workerClient.status(connectorKey)).connector.state == State.RUNNING.name
         catch {
           case _: Throwable => false
       })

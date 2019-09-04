@@ -56,14 +56,21 @@ object ConnectorApi {
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
     */
   // Make this class to be serializable since it's stored in configurator
-  abstract sealed class ConnectorState(val name: String) extends Serializable
-  object ConnectorState extends Enum[ConnectorState] {
-    case object UNASSIGNED extends ConnectorState("UNASSIGNED")
-    case object RUNNING extends ConnectorState("RUNNING")
-    case object PAUSED extends ConnectorState("PAUSED")
-    case object FAILED extends ConnectorState("FAILED")
-    case object DESTROYED extends ConnectorState("DESTROYED")
+  abstract sealed class State(val name: String) extends Serializable
+  object State extends Enum[State] {
+    case object UNASSIGNED extends State("UNASSIGNED")
+    case object RUNNING extends State("RUNNING")
+    case object PAUSED extends State("PAUSED")
+    case object FAILED extends State("FAILED")
+    case object DESTROYED extends State("DESTROYED")
   }
+
+  implicit val CONNECTOR_STATE_FORMAT: RootJsonFormat[State] =
+    new RootJsonFormat[State] {
+      override def write(obj: State): JsValue = JsString(obj.name)
+      override def read(json: JsValue): State =
+        State.forName(json.convertTo[String])
+    }
 
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
@@ -182,12 +189,15 @@ object ConnectorApi {
 
   import MetricsApi._
 
+  case class Status(state: State, nodeName: String, error: Option[String])
+  implicit val STATUS_FORMAT: RootJsonFormat[Status] = jsonFormat3(Status)
+
   /**
     * this is what we store in configurator
     */
   final case class ConnectorDescription(settings: Map[String, JsValue],
-                                        state: Option[ConnectorState],
-                                        error: Option[String],
+                                        status: Option[Status],
+                                        tasksStatus: Seq[Status],
                                         metrics: Metrics,
                                         lastModified: Long)
       extends Data {
@@ -214,13 +224,6 @@ object ConnectorApi {
     override def tags: Map[String, JsValue] = settings.tags
   }
 
-  implicit val CONNECTOR_STATE_FORMAT: RootJsonFormat[ConnectorState] =
-    new RootJsonFormat[ConnectorState] {
-      override def write(obj: ConnectorState): JsValue = JsString(obj.name)
-      override def read(json: JsValue): ConnectorState =
-        ConnectorState.forName(json.convertTo[String])
-    }
-
   implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorDescription] =
     new RootJsonFormat[ConnectorDescription] {
       private[this] val format = jsonFormat5(ConnectorDescription)
@@ -229,9 +232,13 @@ object ConnectorApi {
       override def write(obj: ConnectorDescription): JsValue =
         JsObject(
           noJsNull(
-            format.write(obj).asJsObject.fields ++
-              // TODO: the group should be equal to workerClusterName ... by chia
-              Map(GROUP_KEY -> JsString(GROUP_DEFAULT), NAME_KEY -> obj.settings.getOrElse(NAME_KEY, JsNull))))
+            format.write(obj).asJsObject.fields
+            // TODO: the group should be equal to workerClusterName ... by chia
+              + (GROUP_KEY -> JsString(GROUP_DEFAULT))
+              + (NAME_KEY -> obj.settings.getOrElse(NAME_KEY, JsNull))
+              + ("state" -> obj.status.map(_.state.name).map(JsString(_)).getOrElse(JsNull))
+              + ("error" -> obj.status.flatMap(_.error).map(JsString(_)).getOrElse(JsNull))
+          ))
     }
 
   /**

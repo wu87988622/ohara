@@ -18,7 +18,7 @@ package com.island.ohara.client.kafka
 
 import java.util.Collections
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -102,7 +102,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         // pause connector
         result(workerClient.pause(connectorKey))
 
-        await(() => result(workerClient.status(connectorKey)).connector.state == ConnectorState.PAUSED)
+        await(() => result(workerClient.status(connectorKey)).connector.state == State.PAUSED.name)
 
         // try to receive all data from topic...10 seconds should be enough in this case
         rows = consumer.poll(java.time.Duration.ofSeconds(10), Int.MaxValue)
@@ -115,7 +115,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         // resume connector
         result(workerClient.resume(connectorKey))
 
-        await(() => result(workerClient.status(connectorKey)).connector.state == ConnectorState.RUNNING)
+        await(() => result(workerClient.status(connectorKey)).connector.state == State.RUNNING.name)
 
         // since connector is resumed so some data are generated
         rows = consumer.poll(java.time.Duration.ofSeconds(20), 1)

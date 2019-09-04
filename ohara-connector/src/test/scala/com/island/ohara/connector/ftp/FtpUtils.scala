@@ -17,7 +17,7 @@
 package com.island.ohara.connector.ftp
 import java.time.Duration
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
@@ -31,7 +31,7 @@ object FtpUtils {
   def assertFailedConnector(testUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit = CommonUtils.await(
     () => {
       val workerClient = WorkerClient(testUtil.workersConnProps)
-      try Await.result(workerClient.status(connectorKey), 10 seconds).connector.state == ConnectorState.FAILED
+      try Await.result(workerClient.status(connectorKey), 10 seconds).connector.state == State.FAILED.name
       catch {
         case _: Throwable => false
       }
@@ -50,7 +50,7 @@ object FtpUtils {
     CommonUtils.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
-        try Await.result(workerClient.status(connectorKey), 10 seconds).connector.state == ConnectorState.RUNNING
+        try Await.result(workerClient.status(connectorKey), 10 seconds).connector.state == State.RUNNING.name
         catch {
           case _: Throwable => false
         }

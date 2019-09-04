@@ -55,10 +55,18 @@ The following information are updated by Ohara.
 #. group (**string**) — connector’s group
 #. name (**string**) — connector’s name
 #. lastModified (**long**) — the last time to update this connector
-#. state (**option(string)**) — the state of a started connector.
-   If the connector is not started, you won’t see this field
-#. error (**option(string)**) — the error message from a failed connector.
-   If the connector is fine or un-started, you won’t get this field.
+#. status (**option(object)**) — the status of this connector. If the connector is not started, you won’t see this field
+
+    - state (**string**) — the state of a started connector
+    - nodeName (**string**) — the node hosting this connector
+    - error (**option(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won’t get this field.
+
+#. tasksStatus (**Array(object)**) — the tasks status of this connector
+
+    - tasksStatus[i].state (**string**) — the state of a started task.
+    - tasksStatus[i].nodeName (**string**) — the node hosting this task
+    - tasksStatus[i].error (**option(string)**) — the error message from a failed task. If the task is fine or un-started, you won’t get this field.
+
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from a running connector
 
    - meters (**array(object)**) — the metrics in meter type

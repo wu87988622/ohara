@@ -73,7 +73,14 @@ public interface Workers extends Releasable {
                           ConnectorConfig.VALUE_CONVERTER_CLASS_CONFIG,
                           "org.apache.kafka.connect.json.JsonConverter");
                       config.put("value.converter.schemas.enable", "true");
-                      config.put(WorkerConfig.LISTENERS_CONFIG, "http://0.0.0.0:" + availablePort);
+                      config.put(
+                          WorkerConfig.LISTENERS_CONFIG,
+                          // the worker hostname is a part of information used by restful apis.
+                          // the 0.0.0.0 make all connector say that they are executed by 0.0.0.0
+                          // and it does make sense in production. With a view to testing the
+                          // related codes in other modules, we have to define the "really" hostname
+                          // in starting worker cluster.
+                          "http://" + CommonUtils.hostname() + ":" + availablePort);
                       config.put(
                           WorkerConfig.OFFSET_COMMIT_INTERVAL_MS_CONFIG, String.valueOf(500));
 

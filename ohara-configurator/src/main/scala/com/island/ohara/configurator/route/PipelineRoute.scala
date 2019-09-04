@@ -62,7 +62,7 @@ private[configurator] object PipelineRoute {
         workerClient.exist(data.key).flatMap {
           if (_) workerClient.status(data.key).map { connectorInfo =>
             obj.copy(
-              state = Some(connectorInfo.connector.state.name),
+              state = Some(connectorInfo.connector.state),
               error = connectorInfo.connector.trace
             )
           } else Future.successful(obj)

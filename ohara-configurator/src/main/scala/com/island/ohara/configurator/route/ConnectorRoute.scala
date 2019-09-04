@@ -38,8 +38,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     ConnectorDescription(
       settings = request.settings,
       // we don't need to fetch connector from kafka since it has not existed in kafka.
-      state = None,
-      error = None,
+      status = None,
+      tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
@@ -50,23 +50,29 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                                             meterCache: MeterCache): Future[ConnectorDescription] =
     workerClient
       .statusOrNone(connectorConfig.key)
-      .map(statusOption => statusOption.map(_.connector))
-      .map(connectorOption =>
-        connectorOption.map(connector => Some(connector.state) -> connector.trace).getOrElse(None -> None))
       .recover {
         case e: Throwable =>
           val message = s"failed to fetch stats for $connectorConfig"
           LOG.error(message, e)
-          None -> None
+          None
       }
-      .map {
-        case (state, trace) =>
-          connectorConfig.copy(
-            state = state,
-            error = trace,
-            metrics = Metrics(meterCache.meters(cluster).getOrElse(connectorConfig.key.connectorNameOnKafka, Seq.empty))
-          )
-      }
+      .map(_.map { connectorInfoFromKafka =>
+        connectorConfig.copy(
+          status = Some(Status(
+            state = State.forName(connectorInfoFromKafka.connector.state),
+            error = connectorInfoFromKafka.connector.trace,
+            nodeName = connectorInfoFromKafka.connector.workerHostname
+          )),
+          tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
+            Status(
+              state = State.forName(taskStatus.state),
+              error = taskStatus.trace,
+              nodeName = taskStatus.workerHostname
+            )
+          },
+          metrics = Metrics(meterCache.meters(cluster).getOrElse(connectorConfig.key.connectorNameOnKafka, Seq.empty))
+        )
+      }.getOrElse(connectorConfig))
 
   private[this] def hookOfGet(implicit workerCollie: WorkerCollie,
                               executionContext: ExecutionContext,
@@ -104,7 +110,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         .map { desc =>
           CollieUtils.workerClient(desc.workerClusterName).flatMap {
             case (cluster, client) =>
-              updateState(desc, cluster, client).map(_.state)
+              updateState(desc, cluster, client).map(_.status.map(_.state))
           }
         }
         .getOrElse(Future.successful(None))
@@ -212,7 +218,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
           case (_, wkClient) =>
             wkClient.status(ConnectorKey.of(key.group, key.name)).map(_.connector.state).flatMap {
-              case ConnectorState.PAUSED => Future.unit
+              case State.PAUSED.name => Future.unit
               case _ =>
                 wkClient.pause(ConnectorKey.of(key.group, key.name)).map(_ => Unit)
             }
@@ -227,9 +233,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
           case (_, wkClient) =>
             wkClient.status(ConnectorKey.of(key.group, key.name)).map(_.connector.state).flatMap {
-              case ConnectorState.PAUSED =>
+              case State.PAUSED.name =>
                 wkClient.resume(ConnectorKey.of(key.group, key.name)).map(_ => Unit)
-              case s => Future.unit
+              case _ => Future.unit
             }
         }
     }

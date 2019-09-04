@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -46,13 +46,13 @@ class TestFakeWorkerClient extends SmallTest with Matchers {
 
     result(fake.exist(connectorKey)) shouldBe true
 
-    result(fake.status(connectorKey)).connector.state shouldBe ConnectorState.RUNNING
+    result(fake.status(connectorKey)).connector.state shouldBe State.RUNNING.name
 
     result(fake.pause(connectorKey))
-    result(fake.status(connectorKey)).connector.state shouldBe ConnectorState.PAUSED
+    result(fake.status(connectorKey)).connector.state shouldBe State.PAUSED.name
 
     result(fake.resume(connectorKey))
-    result(fake.status(connectorKey)).connector.state shouldBe ConnectorState.RUNNING
+    result(fake.status(connectorKey)).connector.state shouldBe State.RUNNING.name
 
     result(fake.delete(connectorKey))
     result(fake.exist(connectorKey)) shouldBe false

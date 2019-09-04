@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
+import com.island.ohara.client.configurator.v0.ConnectorApi.State._
 import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
@@ -121,7 +121,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testState(): Unit = {
-    ConnectorState.all shouldBe Seq(
+    State.all shouldBe Seq(
       UNASSIGNED,
       RUNNING,
       PAUSED,
@@ -132,7 +132,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testStateJson(): Unit = {
-    ConnectorState.all.foreach(state =>
+    State.all.foreach(state =>
       ConnectorApi.CONNECTOR_STATE_FORMAT.read(ConnectorApi.CONNECTOR_STATE_FORMAT.write(state)) shouldBe state)
   }
 
@@ -143,8 +143,8 @@ class TestConnectorApi extends SmallTest with Matchers {
         CommonUtils.randomString() -> JsString(CommonUtils.randomString()),
         NAME_KEY -> JsString(CommonUtils.randomString())
       ),
-      state = None,
-      error = None,
+      status = None,
+      tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
@@ -157,8 +157,8 @@ class TestConnectorApi extends SmallTest with Matchers {
     val className = CommonUtils.randomString()
     val response = ConnectorDescription(
       settings = access.request.className(className).creation.settings,
-      state = None,
-      error = None,
+      status = None,
+      tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
@@ -175,16 +175,17 @@ class TestConnectorApi extends SmallTest with Matchers {
     import spray.json._
     val className = CommonUtils.randomString()
     val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.read(s"""
-      | {
-      | "id": "asdasdsad",
-      | "lastModified": 123,
-      | "settings": {
-      | "className": "$className"
-      | },
-      | "metrics": {
-      |   "meters":[]
-      | }
-      | }
+      |  {
+      |    "id": "asdasdsad",
+      |    "lastModified": 123,
+      |    "settings": {
+      |    "className": "$className"
+      |    },
+      |    "metrics": {
+      |      "meters":[]
+      |    },
+      |    "tasksStatus": []
+      |  }
       | """.stripMargin.parseJson)
     an[NoSuchElementException] should be thrownBy connectorDescription.className
   }
@@ -580,8 +581,8 @@ class TestConnectorApi extends SmallTest with Matchers {
         settings = Map(
           NAME_KEY -> JsString(name)
         ),
-        state = None,
-        error = None,
+        status = None,
+        tasksStatus = Seq.empty,
         metrics = Metrics.EMPTY,
         lastModified = CommonUtils.current()
       ))
