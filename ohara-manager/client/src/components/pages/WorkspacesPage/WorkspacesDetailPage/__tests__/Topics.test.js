@@ -39,6 +39,7 @@ describe('<Topics />', () => {
         url: generate.url(),
       },
       worker: {
+        name: generate.name(),
         brokerClusterName,
       },
     };

@@ -32,7 +32,20 @@ export const connectors = () => {
       className: type,
 
       // empty array for now as I don't really see the need for these valus
-      definitions: [],
+      definitions: [
+        {
+          defaultValue: name(),
+          key: 'kind',
+        },
+        {
+          defaultValue: name(),
+          key: 'version',
+        },
+        {
+          defaultValue: name(),
+          key: 'author',
+        },
+      ],
     };
   });
 
@@ -101,6 +114,48 @@ export const nodes = ({ count = 1, overrides = {} } = {}) => {
   }
 
   return nodes;
+};
+
+export const broker = ({ nodeCount = 1, overrides = {} } = {}) => {
+  let nodeNames = [];
+
+  while (nodeCount > 0) {
+    nodeCount--;
+    const nodeName = serviceName();
+
+    nodeNames.push(nodeName);
+  }
+  const broker = {
+    clientPort: port(),
+    imageName: name(),
+    jmxPort: port(),
+    name: serviceName(),
+    nodeNames,
+    zookeeperClusterName: serviceName(),
+    ...overrides,
+  };
+
+  return broker;
+};
+
+export const zookeeper = ({ nodeCount = 1, overrides = {} } = {}) => {
+  let nodeNames = [];
+
+  while (nodeCount > 0) {
+    nodeCount--;
+    const nodeName = serviceName();
+
+    nodeNames.push(nodeName);
+  }
+  const zookeeper = {
+    clientPort: port(),
+    imageName: name(),
+    name: serviceName(),
+    nodeNames,
+    ...overrides,
+  };
+
+  return zookeeper;
 };
 
 export const workers = ({ count = 1, overrides } = {}) => {

@@ -43,7 +43,6 @@ const OverviewConnectors = props => {
         info: { ...displayInfo, className },
       };
     });
-
   return (
     <>
       <TabHeading>

@@ -17,16 +17,32 @@
 import React from 'react';
 import { cleanup, waitForElement } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import { divide, floor } from 'lodash';
 
 import * as generate from 'utils/generate';
 import Overview from '../Overview';
 import { renderWithProvider } from 'utils/testUtils';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
+jest.mock('api/infoApi');
+jest.mock('components/controller');
 afterEach(cleanup);
 
 // Skip the tests for now. We should mock the XHR requests in the test
 describe('<Overview />', () => {
   const brokerClusterName = generate.serviceName();
+  const topics = generate.topics({ brokerClusterName });
+  const broker = generate.broker();
+
+  const zookeeper = generate.zookeeper();
+
+  const jars = {
+    name: generate.name(),
+    size: generate.number(),
+  };
+
+  const connectors = generate.connectors();
 
   const props = {
     history: {
@@ -36,13 +52,13 @@ describe('<Overview />', () => {
       name: generate.name(),
       clientPort: generate.port(),
       jmxPort: generate.port(),
-      connectors: [],
-      nodeNames: [generate.name()],
+      connectors,
+      nodeNames: [generate.serviceName()],
       brokerClusterName,
       imageName: generate.name(),
       tags: {
         broker: {
-          name: generate.name(),
+          name: brokerClusterName,
           imageName: generate.name(),
         },
         zookeeper: {
@@ -53,17 +69,155 @@ describe('<Overview />', () => {
     },
   };
 
-  it('renders the page', async () => {
-    await waitForElement(() => renderWithProvider(<Overview {...props} />));
+  jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
+    if (url === `${URL.TOPIC_URL}?group=${props.worker.name}-topic`) {
+      return {
+        data: {
+          data: {
+            result: topics,
+          },
+        },
+        isLoading: false,
+      };
+    }
+    if (url.includes(URL.FILE_URL)) {
+      return {
+        data: {
+          data: {
+            result: [jars],
+          },
+        },
+        isLoading: false,
+        refetch: jest.fn(),
+      };
+    }
+    if (url.includes(URL.WORKER_URL)) {
+      return {
+        data: {
+          data: {
+            result: [props.worker],
+          },
+        },
+        isLoading: false,
+        refetch: jest.fn(),
+      };
+    }
+    if (url.includes(URL.BROKER_URL)) {
+      return {
+        data: {
+          data: {
+            result: broker,
+          },
+        },
+        isLoading: false,
+      };
+    }
+    if (url.includes(URL.ZOOKEEPER_URL)) {
+      return {
+        data: {
+          data: {
+            result: zookeeper,
+          },
+        },
+        isLoading: false,
+      };
+    }
   });
 
-  it('renders the correct docker image name', async () => {
-    const { getByText } = await renderWithProvider(<Overview {...props} />);
-
-    getByText(`Worker Image: ${props.worker.imageName}`);
+  fit('renders the page', async () => {
+    await waitForElement(() => renderWithProvider(<Overview {...props} />));
   });
 
   // The rest of the tests are covered in the end-to-end tests
   // since these tests require a LOT of mocking, it's probably to
   // test them in the end-to-end for now
+
+  fit('renders the correct paper titles', async () => {
+    const { getByText } = await renderWithProvider(<Overview {...props} />);
+
+    getByText('Basic info');
+    getByText('Nodes');
+    getByText('Topics');
+    getByText('Connectors');
+    getByText('Stream Jars');
+  });
+
+  fit('renders the correct basic info content', async () => {
+    const { getByText } = await renderWithProvider(<Overview {...props} />);
+
+    getByText('Worker Image: ' + props.worker.imageName);
+    getByText('Broker Image: ' + props.worker.tags.broker.imageName);
+    getByText('Zookeeper Image: ' + props.worker.tags.zookeeper.imageName);
+  });
+
+  fit('renders the correct nodes headers', async () => {
+    const { getByText, getAllByText } = await renderWithProvider(
+      <Overview {...props} />,
+    );
+
+    getByText('Cluster type');
+    getByText('Node');
+    getAllByText('More info');
+  });
+
+  fit('renders the correct nodes content', async () => {
+    const { getByText, getAllByText } = await renderWithProvider(
+      <Overview {...props} />,
+    );
+
+    getByText('Worker');
+    getAllByText(props.worker.nodeNames[0] + ':' + props.worker.clientPort);
+  });
+
+  fit('renders the correct topics headers', async () => {
+    const { getByText, getAllByText } = await renderWithProvider(
+      <Overview {...props} />,
+    );
+
+    getAllByText('Name');
+    getByText('Partitions');
+    getByText('Replication factor');
+  });
+
+  fit('renders the correct topics content', async () => {
+    const { getByText } = await renderWithProvider(<Overview {...props} />);
+
+    getByText(topics[0].name);
+    const partitionValue = topics[0].numberOfPartitions;
+    getByText(partitionValue.toString());
+    const replicaValue = topics[0].numberOfReplications;
+    getByText(replicaValue.toString());
+  });
+
+  fit('renders the correct connectors headers ', async () => {
+    const { getAllByText } = await renderWithProvider(<Overview {...props} />);
+
+    getAllByText('Name');
+    getAllByText('More info');
+  });
+
+  fit('renders the correct connectors content', async () => {
+    const { getByText } = await renderWithProvider(<Overview {...props} />);
+
+    getByText('ConsoleSink');
+    getByText('FtpSink');
+    getByText('FtpSource');
+    getByText('HDFSSink');
+    getByText('JDBCSourceConnector');
+  });
+
+  fit('renders the correct stream jars headers', async () => {
+    const { getAllByText } = await renderWithProvider(<Overview {...props} />);
+
+    getAllByText('Jar name');
+    getAllByText('File size(KB)');
+  });
+
+  fit('renders the correct stream jars content', async () => {
+    const { getAllByText } = await renderWithProvider(<Overview {...props} />);
+
+    getAllByText(jars.name);
+    const fileSize = floor(divide(jars.size, 1024), 1);
+    getAllByText(fileSize.toString());
+  });
 });

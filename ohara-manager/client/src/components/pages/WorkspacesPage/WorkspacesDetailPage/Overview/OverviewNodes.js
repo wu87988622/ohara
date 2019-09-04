@@ -114,7 +114,7 @@ const OverviewNodes = props => {
           const { clusterType, nodeName, shouldRender, moreInfo } = node;
           return (
             <TableRow key={idx}>
-              <StyledTableCell component="td">
+              <StyledTableCell component="td" data-testid={'node-type'}>
                 {shouldRender && clusterType}
               </StyledTableCell>
               <StyledTableCell component="td">{nodeName}</StyledTableCell>
@@ -124,7 +124,7 @@ const OverviewNodes = props => {
                   placement="right"
                   data-testid={`${clusterType}-${nodeName}`}
                   title={
-                    <TooltipBody>
+                    <TooltipBody data-testid={`${clusterType}-${nodeName}-tip`}>
                       {moreInfo &&
                         Object.keys(moreInfo).map(key => (
                           <li key={key}>
