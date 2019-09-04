@@ -30,10 +30,7 @@ web-based user interface built with `React.js <https://reactjs.org/>`__
 Initial machine setup
 ---------------------
 
-1. Install `Node.js <https://nodejs.org/en/>`__ 8.12.0 (This means you
-   can install node.js >=8.12.0 and < 9.0.0 see the `npm
-   docs <https://docs.npmjs.com/misc/semver#caret-ranges-123-025-004>`__
-   for more info.)
+1. Install `Node.js <https://nodejs.org/en/>`__ 10.16.3 or node.js >=10.16.3 and < 11.0.0
 
 2. Install `Yarn <https://yarnpkg.com/en/docs/install#mac-stable>`__
    1.13.0 or greater

@@ -32,12 +32,12 @@ RUN yum install -y \
   numactl
 
 # install nodejs
-# NOTED: ohara-manager requires nodejs 8.x
-RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash -
+# NOTED: ohara-manager requires nodejs 10.x
+RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 RUN yum install -y nodejs
 
 # install yarn
-RUN npm install -g yarn@1.15.0
+RUN npm install -g yarn@1.17.3
 
 # install dependencies for cypress
 RUN yum install -y \

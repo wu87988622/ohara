@@ -32,12 +32,12 @@ RUN $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara.sh -v > 
 FROM centos:7.6.1810
 
 # install nodejs
-# NOTED: ohara-manager requires nodejs 8.x
-RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash -
+# NOTED: ohara-manager requires nodejs 10.x
+RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 RUN yum install -y nodejs
 
 # install yarn
-RUN npm install -g yarn@1.15.0
+RUN npm install -g yarn@1.17.3
 
 # add user
 ARG USER=ohara
