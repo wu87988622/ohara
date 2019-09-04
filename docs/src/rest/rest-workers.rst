@@ -43,6 +43,11 @@ The properties which can be set by user are shown below.
   #. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
   #. clientPort (**int**) — worker client port
   #. jmxPort (**int**) — worker jmx port
+  #. freePorts (**Array(int)**) — thr ports you want to pre-bind for the connectors. If your connectors want
+                                  to build a service on a port which is available to external nodes, you have to
+                                  define the free ports for your worker cluster so as to make Configurator pre-bind
+                                  the ports on your worker cluster. Otherwise, your connectors is disable to build service
+                                  on the port of worker cluster and be connected by external node.
   #. groupId (**string**) — the id of worker stored in broker cluster
   #. configTopicName (**string**) — a internal topic used to store connector configuration
   #. configTopicReplications (**int**) — number of replications for config topic
@@ -175,6 +180,7 @@ Example Request
       "name": "wk00",
       "clientPort": 12345,
       "jmxPort": 12346,
+      "freePorts": [],
       "brokerClusterName": "preCreatedBkCluster",
       "groupId": "abcdefg",
       "configTopicName": "configTopic",
@@ -214,6 +220,7 @@ Example Response
         "configTopicName": "configTopic",
         "jmxPort": 12346,
         "clientPort": 12345,
+        "freePorts": [],
         "jarKeys": [],
         "nodeNames": [
           "node00"
@@ -267,6 +274,7 @@ Example Response
         "configTopicName": "4fdfdabb51",
         "jmxPort": 37116,
         "clientPort": 37634,
+        "freePorts": [],
         "jarKeys": [],
         "nodeNames": [
           "node10"
@@ -306,6 +314,7 @@ Example Response
           "configTopicName": "configTopic",
           "jmxPort": 12346,
           "clientPort": 12345,
+          "freePorts": [],
           "jarKeys": [],
           "nodeNames": [
             "node00"
@@ -644,6 +653,7 @@ Example Response
             "statusTopicPartitions":1,
             "configTopicName":"4279f8a236",
             "jmxPort":33983,
+            "freePorts": [],
             "clientPort":34601,
             "jarKeys":[
 

@@ -109,17 +109,17 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                       kind = Collie.UNKNOWN,
                       name = containerName,
                       size = Collie.UNKNOWN,
-                      portMappings = Seq(PortMapping(
-                        hostIp = Collie.UNKNOWN,
-                        portPairs = Seq(PortPair(
-                                          hostPort = creation.clientPort,
-                                          containerPort = creation.clientPort
-                                        ),
-                                        PortPair(
-                                          hostPort = creation.jmxPort,
-                                          containerPort = creation.jmxPort
-                                        ))
-                      )),
+                      portMappings = Seq(
+                        PortMapping(
+                          hostIp = Collie.UNKNOWN,
+                          portPairs = creation.ports
+                            .map(port =>
+                              PortPair(
+                                hostPort = port,
+                                containerPort = port
+                            ))
+                            .toSeq
+                        )),
                       environments = creation.settings.map {
                         case (k, v) =>
                           k -> (v match {

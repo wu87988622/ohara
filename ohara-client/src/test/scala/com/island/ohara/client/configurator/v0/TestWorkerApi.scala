@@ -480,4 +480,16 @@ class TestWorkerApi extends SmallTest with Matchers {
     cluster.aliveNodes shouldBe Set("n1")
     cluster.copy(state = None).aliveNodes shouldBe Set.empty
   }
+
+  @Test
+  def testFreePorts(): Unit = {
+    WorkerApi.access.request.nodeName(CommonUtils.randomString()).creation.freePorts shouldBe Set.empty
+
+    val freePorts = Set(CommonUtils.availablePort(), CommonUtils.availablePort())
+    WorkerApi.access.request
+      .nodeName(CommonUtils.randomString())
+      .freePorts(freePorts)
+      .creation
+      .freePorts shouldBe freePorts
+  }
 }

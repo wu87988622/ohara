@@ -58,6 +58,7 @@ object WorkerApi {
   private[this] val JAR_KEYS_KEY = "jarKeys"
   private[this] val JAR_INFOS_KEY = "jarInfos"
   private[this] val TAGS_KEY = "tags"
+  private[this] val FREE_PORTS_KEY = "freePorts"
 
   final case class Creation private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterCreationRequest {
 
@@ -83,6 +84,7 @@ object WorkerApi {
     def offsetTopicPartitions: Int = settings.offsetTopicPartitions.get
     def offsetTopicReplications: Short = settings.offsetTopicReplications.get
     def jarKeys: Set[ObjectKey] = settings.jarKeys.getOrElse(Set.empty)
+    def freePorts: Set[Int] = settings.freePorts.get
 
     /**
       * expose to WorkerCollie
@@ -91,7 +93,7 @@ object WorkerApi {
 
     override def tags: Map[String, JsValue] = settings.tags.get
     override def nodeNames: Set[String] = settings.nodeNames.get
-    override def ports: Set[Int] = Set(clientPort, jmxPort)
+    override def ports: Set[Int] = freePorts + clientPort + jmxPort
   }
 
   /**
@@ -120,6 +122,7 @@ object WorkerApi {
       .nullToInt(STATUS_TOPIC_PARTITIONS_KEY, 1)
       .nullToShort(STATUS_TOPIC_REPLICATIONS_KEY, 1)
       .nullToEmptyArray(JAR_KEYS_KEY)
+      .nullToEmptyArray(FREE_PORTS_KEY)
       .refine
 
   final case class Update private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterUpdateRequest {
@@ -144,6 +147,8 @@ object WorkerApi {
     def jarKeys: Option[Set[ObjectKey]] = jarInfos
       .map(_.map(_.key).toSet)
       .orElse(noJsNull(settings).get(JAR_KEYS_KEY).map(js => ObjectKey.toObjectKeys(js.toString).asScala.toSet))
+    def freePorts: Option[Set[Int]] =
+      noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
 
     /**
       * Normally, Update request should not carry the jar infos since the jar infos is returned by file store according
@@ -203,6 +208,7 @@ object WorkerApi {
     def jarInfos: Seq[FileInfo] = settings.jarInfos
     def jarKeys: Set[ObjectKey] = settings.jarKeys
     def nodeNames: Set[String] = settings.nodeNames
+    def freePorts: Set[Int] = settings.freePorts
     override def tags: Map[String, JsValue] = settings.tags
 
     /**
@@ -328,6 +334,14 @@ object WorkerApi {
       setting(NODE_NAMES_KEY, JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request = setting(TAGS_KEY, JsObject(tags))
+
+    /**
+      * set the port to pre-bind by this worker cluster
+      * @param port port to pre-bind
+      * @return this request
+      */
+    def freePort(port: Int): Request = freePorts(Set(port))
+    def freePorts(ports: Set[Int]): Request = setting(FREE_PORTS_KEY, JsArray(ports.map(JsNumber(_)).toVector))
 
     def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
 
