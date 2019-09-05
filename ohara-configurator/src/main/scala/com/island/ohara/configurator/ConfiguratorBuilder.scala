@@ -33,6 +33,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.fake._
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
+import org.rocksdb.RocksDBException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -343,9 +344,18 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     homeFolder
   }
 
-  private[this] def getOrCreateStore(): DataStore = if (store == null) {
+  private[this] def getOrCreateStore(): DataStore = if (store == null) try {
     store = DataStore.builder.persistentFolder(folder("store")).build()
     store
+  } catch {
+    case e: RocksDBException =>
+      if (e.getMessage.contains("Permission denied"))
+        throw new RuntimeException(
+          "Permission denied! if you are trying to mount host folder to Configurator container, " +
+            "the UID of the host folder must be 1000 since the user of Configurator container is ohara and its UID is 1000",
+          e
+        )
+      else throw e
   } else store
 
   private[this] def getOrCreateFileStore(): FileStore = if (fileStore == null) {
