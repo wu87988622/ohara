@@ -219,24 +219,27 @@ class TestBrokerCreator extends SmallTest with Matchers {
         "",
         Seq.empty,
         Map(BrokerApi.CLIENT_PORT_KEY -> "9092",
+            BrokerApi.ID_KEY -> "1",
             BrokerApi.ZOOKEEPER_CLUSTER_NAME_KEY -> FakeBrokerCollie.zookeeperClusterName),
         "host"
       ))
 
     val brokerCollie = new FakeBrokerCollie(Seq(node1), zkContainers, bkContainers)
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .clusterName("bk1")
-      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
-      .clientPort(9092)
-      .exporterPort(9093)
-      .jmxPort(9094)
-      .nodeName(node1Name) //node1 is running on a bk1
-      .create()
 
-    an[IllegalArgumentException] shouldBe thrownBy {
-      Await.result(bkCreator, TIMEOUT)
-    }
+    Await
+      .result(
+        brokerCollie.creator
+          .clusterName("bk1")
+          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+          .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
+          .clientPort(9092)
+          .exporterPort(9093)
+          .jmxPort(9094)
+          .nodeName(node1Name) //node1 is running on a bk1
+          .create(),
+        TIMEOUT
+      )
+      .nodeNames shouldBe Set(node1Name)
   }
 
   @Test

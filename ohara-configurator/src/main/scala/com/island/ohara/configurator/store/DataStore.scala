@@ -82,6 +82,16 @@ trait DataStore extends Releasable {
   /**
     * add an object in the store. If the name doesn't  exists, an exception will be thrown.
     * Noted, the new one replaces the previous stuff if the data returned by updater has the same group and name.
+    * @param newOne used to update data
+    * @tparam T type from data
+    * @return the updated data
+    */
+  def addIfPresent[T <: Data: ClassTag](newOne: T)(implicit executor: ExecutionContext): Future[T] =
+    addIfPresent[T](newOne.key, (_: T) => newOne)
+
+  /**
+    * add an object in the store. If the name doesn't  exists, an exception will be thrown.
+    * Noted, the new one replaces the previous stuff if the data returned by updater has the same group and name.
     * @param updater used to update data
     * @tparam T type from data
     * @return the updated data

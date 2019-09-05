@@ -31,7 +31,7 @@ class FakeWorkerCollie(nodes: Seq[Node],
   override protected def brokerContainers(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
-      brokerClusters.get(clusterName).getOrElse(throw new NoSuchClusterException(s"$clusterName does not exist")))
+      brokerClusters.getOrElse(clusterName, throw new NoSuchClusterException(s"$clusterName does not exist")))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,

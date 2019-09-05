@@ -137,21 +137,14 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                   )
                   .map {
                     case (successfulContainers, definition) =>
-                      if (successfulContainers.isEmpty)
-                        throw new IllegalArgumentException(
-                          s"failed to create ${creation.name} on $serviceName"
-                        )
                       val clusterInfo = StreamClusterInfo(
-                        // the other arguments (clusterName, imageName and so on) are extracted from settings so
-                        // we don't need to add them back to settings.
                         settings = StreamApi.access.request
                           .settings(creation.settings)
-                          .nodeNames(successfulContainers.map(_.nodeName).toSet)
+                          .nodeNames(creation.nodeNames ++ nodes.keySet.map(_.hostname))
                           .creation
                           .settings,
-                        // TODO: cluster info
                         definition = definition,
-                        deadNodes = Set.empty,
+                        deadNodes = nodes.keySet.map(_.hostname) -- successfulContainers.map(_.nodeName),
                         metrics = Metrics.EMPTY,
                         // creating cluster success but still need to update state by another request
                         state = None,

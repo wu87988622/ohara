@@ -99,12 +99,7 @@ case class FakeCollieClusterInfo(name: String, nodeNames: Set[String], state: Op
 
   override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
-  override def clone(nodeNames: Set[String],
-                     deadNodes: Set[String],
-                     state: Option[String],
-                     error: Option[String],
-                     metrics: Metrics,
-                     tags: Map[String, JsValue]): FakeCollieClusterInfo = throw new UnsupportedOperationException
+  override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
 }
 
 object FakeCollie {

@@ -17,7 +17,6 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -33,30 +32,15 @@ class TestBrokerApi extends SmallTest with Matchers {
   @Test
   def testClone(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
-    val deadNodes = Set(CommonUtils.randomString())
-    val error = Some(CommonUtils.randomString())
-    val state = Some(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
-      settings = access.nodeNames(nodeNames).creation.settings,
+      settings = access.nodeNames(Set(CommonUtils.randomString())).creation.settings,
       deadNodes = Set.empty,
       state = None,
       error = None,
       lastModified = CommonUtils.current(),
       topicSettingDefinitions = Seq.empty
     )
-    val newOne = brokerClusterInfo.clone(
-      nodeNames = nodeNames,
-      deadNodes = deadNodes,
-      error = error,
-      state = state,
-      metrics = Metrics.EMPTY,
-      tags = Map.empty
-    )
-    newOne.settings(NODE_NAMES_KEY).convertTo[Set[String]] shouldBe nodeNames
-    newOne.nodeNames shouldBe nodeNames
-    newOne.deadNodes shouldBe deadNodes
-    newOne.error shouldBe error
-    newOne.state shouldBe state
+    brokerClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test

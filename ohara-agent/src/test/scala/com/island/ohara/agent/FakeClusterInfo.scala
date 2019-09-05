@@ -45,10 +45,5 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
-  override def clone(nodeNames: Set[String],
-                     deadNodes: Set[String],
-                     state: Option[String],
-                     error: Option[String],
-                     metrics: Metrics,
-                     tags: Map[String, JsValue]): FakeClusterInfo = throw new UnsupportedOperationException
+  override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
 }

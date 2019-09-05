@@ -596,6 +596,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiZkClustersOnSingleNode(): Unit = {
+    if (nodeCache.size < 2) skipTest("the size of nodes must be bigger than 1")
     val names = (0 until numberOfClusters).map(_ => generateClusterName())
     val zkClusters = names.map { name =>
       result(
@@ -633,6 +634,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiBkClustersOnSingleNode(): Unit = {
+    if (nodeCache.size < 2) skipTest("the size of nodes must be bigger than 1")
     val zkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     val bkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     // NOTED: It is illegal to run multi bk clusters on same zk cluster so we have got to instantiate multi zk clusters first.
@@ -666,6 +668,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiWkClustersOnSingleNode(): Unit = {
+    if (nodeCache.size < 2) skipTest("the size of nodes must be bigger than 1")
     val zkName = generateClusterName()
     val bkName = generateClusterName()
     val wkNames = (0 until numberOfClusters).map(_ => generateClusterName())

@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
 import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.util.CommonUtils
@@ -60,15 +59,10 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future
     .successful(
-      addCluster(previousCluster.clone(
-        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
-        deadNodes = Set.empty,
-        // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-        state = Some(ClusterState.RUNNING.name),
-        error = None,
-        tags = previousCluster.tags,
-        metrics = Metrics.EMPTY
-      )))
+      addCluster(
+        previousCluster
+          .clone(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
+          .asInstanceOf[BrokerClusterInfo]))
     .map(_ => true)
 
   override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin =
@@ -84,16 +78,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     previousCluster: BrokerClusterInfo,
     previousContainers: Seq[ContainerApi.ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = Future.successful(
-    addCluster(
-      previousCluster.clone(
-        nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
-        deadNodes = Set.empty,
-        // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-        state = Some(ClusterState.RUNNING.name),
-        error = None,
-        tags = previousCluster.tags,
-        metrics = Metrics.EMPTY
-      )))
+    addCluster(previousCluster.clone(previousCluster.nodeNames ++ Set(newNodeName)).asInstanceOf[BrokerClusterInfo]))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,

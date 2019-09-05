@@ -573,20 +573,31 @@ package object route {
           )
         )
         // handle the node increment
-        .hook((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
-          collie.cluster(key.name()).map(_._1).flatMap { cluster =>
+        .hook { (key: ObjectKey, nodeName: String, _: Map[String, String]) =>
+          store.value[Cluster](key).flatMap { cluster =>
             // A BIT hard-code here to reuse the checker :(
             rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))
             if (cluster.nodeNames.contains(nodeName)) Future.unit
-            else collie.addNode(key.name(), nodeName).map(_ => Unit)
-        })
+            else
+              collie
+                .addNode(key.name(), nodeName)
+                .flatMap(_ => store.addIfPresent(cluster.clone(cluster.nodeNames + nodeName).asInstanceOf[Cluster]))
+                .flatMap(_ => Future.unit)
+          }
+        }
         .build(),
       // handle the node decrement
       HookOfSubNameOfDeletion = HookOfSubName((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
-        collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
-          if (clusters.exists(cluster => cluster.name == key.name() && cluster.nodeNames.contains(nodeName)))
-            collie.removeNode(key.name(), nodeName).map(_ => Unit)
-          else Future.unit
+        store.get[Cluster](key).flatMap { clusterOption =>
+          clusterOption
+            .filter(_.nodeNames.contains(nodeName))
+            .map { cluster =>
+              collie
+                .removeNode(key.name(), nodeName)
+                .flatMap(_ => store.addIfPresent(cluster.clone(cluster.nodeNames - nodeName).asInstanceOf[Cluster]))
+                .flatMap(_ => Future.unit)
+            }
+            .getOrElse(Future.unit)
       })
     )
 
@@ -672,46 +683,64 @@ package object route {
 
   private[this] def updateState[Cluster <: ClusterInfo: ClassTag](cluster: Cluster, metricsKey: Option[String])(
     implicit meterCache: MeterCache,
-    store: DataStore,
     collie: Collie[Cluster],
     executionContext: ExecutionContext): Future[Cluster] =
-    store
-      .value[Cluster](cluster.key)
-      .flatMap(
-        data =>
-          collie
-            .clusters()
-            .map(
-              _.keys
-                .find(_.name == cluster.name)
-                .map(existedCluster =>
-                  existedCluster.clone(
-                    nodeNames = existedCluster.nodeNames,
-                    deadNodes = existedCluster.deadNodes,
-                    state = existedCluster.state,
-                    error = existedCluster.error,
-                    metrics = Metrics(
-                      metricsKey.flatMap(key => meterCache.meters(existedCluster).get(key)).getOrElse(Seq.empty)),
-                    tags = data.tags
-                ))
-                .getOrElse(cluster.clone(
-                  nodeNames = cluster.nodeNames,
-                  // no running cluster. It means no state and no dead nodes.
-                  // noted that the failed containers should still exist and we can "get" the cluster from collie.
-                  // the case of getting nothing from collie is only one that there is absolutely no containers and
-                  // we assume the cluster is NOT running.
+    collie
+      .clusters()
+      .map(
+        _.keys
+          .find(_.name == cluster.name)
+          .map {
+            case c: ZookeeperClusterInfo =>
+              c.copy(settings = cluster.settings)
+            case c: BrokerClusterInfo =>
+              c.copy(settings = cluster.settings)
+            case c: WorkerClusterInfo =>
+              c.copy(settings = cluster.settings)
+            case c: StreamClusterInfo =>
+              c.copy(
+                settings = cluster.settings,
+                metrics = Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
+              )
+          }
+          .getOrElse {
+            // no running cluster. It means no state and no dead nodes.
+            // noted that the failed containers should still exist and we can "get" the cluster from collie.
+            // the case of getting nothing from collie is only one that there is absolutely no containers and
+            // we assume the cluster is NOT running.
+            cluster match {
+              case c: ZookeeperClusterInfo =>
+                c.copy(
+                  deadNodes = Set.empty,
+                  state = None,
+                  error = None,
+                )
+              case c: BrokerClusterInfo =>
+                c.copy(
+                  deadNodes = Set.empty,
+                  state = None,
+                  error = None,
+                )
+              case c: WorkerClusterInfo =>
+                c.copy(
+                  deadNodes = Set.empty,
+                  state = None,
+                  error = None,
+                )
+              case c: StreamClusterInfo =>
+                c.copy(
                   deadNodes = Set.empty,
                   state = None,
                   error = None,
                   // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
-                  metrics = Metrics.EMPTY,
-                  // add the user-defined field
-                  tags = data.tags
-                ))
-                // the actual type is erased since the clone method returns the ClusterInfo type.
-                // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
-                .asInstanceOf[Cluster]
-          ))
+                  metrics = Metrics.EMPTY
+                )
+            }
+          }
+          // the actual type is erased since the clone method returns the ClusterInfo type.
+          // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
+          .asInstanceOf[Cluster]
+      )
 
   private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag](metricsKey: Option[String])(
     implicit store: DataStore,

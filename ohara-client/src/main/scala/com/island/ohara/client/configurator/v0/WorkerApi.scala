@@ -222,18 +222,6 @@ object WorkerApi {
 
     override def kind: String = WORKER_SERVICE_NAME
 
-    override def clone(nodeNames: Set[String],
-                       deadNodes: Set[String],
-                       state: Option[String],
-                       error: Option[String],
-                       metrics: Metrics,
-                       tags: Map[String, JsValue]): WorkerClusterInfo = copy(
-      settings = access.request.settings(settings).nodeNames(nodeNames).tags(tags).creation.settings,
-      deadNodes = deadNodes,
-      state = state,
-      error = error
-    )
-
     // TODO: expose the metrics for wk
     override def metrics: Metrics = Metrics.EMPTY
   }

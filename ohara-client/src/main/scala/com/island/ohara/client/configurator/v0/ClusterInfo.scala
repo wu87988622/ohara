@@ -17,7 +17,11 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import spray.json.JsValue
 
 /**
@@ -68,15 +72,29 @@ trait ClusterInfo extends Data {
     */
   def error: Option[String]
 
+  /**
+    * the metrics of this cluster. Noted that only stream cluster is able to fetch the metrics.
+    * @return metrics
+    */
   def metrics: Metrics
 
   /**
-    * create an new instance with new fields. This is a workaround to "expose" the copy from the sub class.
+    * @return the settings to set up this cluster. This is the raw data of settings.
     */
-  def clone(nodeNames: Set[String],
-            deadNodes: Set[String],
-            state: Option[String],
-            error: Option[String],
-            metrics: Metrics,
-            tags: Map[String, JsValue]): ClusterInfo
+  def settings: Map[String, JsValue]
+
+  /**
+    * this is a small helper method used to update the node names for cluster info
+    * @return updated cluster info
+    */
+  def clone(newNodeNames: Set[String]): ClusterInfo = this match {
+    case c: ZookeeperClusterInfo =>
+      c.copy(settings = ZookeeperApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+    case c: BrokerClusterInfo =>
+      c.copy(settings = BrokerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+    case c: WorkerClusterInfo =>
+      c.copy(settings = WorkerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+    case c: StreamClusterInfo =>
+      c.copy(settings = StreamApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+  }
 }

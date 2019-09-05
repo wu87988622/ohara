@@ -116,14 +116,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
     nodeCollie.node(beRemovedContainer.nodeName).map { node =>
       dockerCache.exec(node, _.stop(beRemovedContainer.name))
       clusterCache.put(
-        previousCluster.clone(
-          nodeNames = previousCluster.nodeNames.filter(_ != beRemovedContainer.nodeName),
-          deadNodes = previousCluster.deadNodes,
-          state = previousCluster.state,
-          error = previousCluster.error,
-          metrics = previousCluster.metrics,
-          tags = previousCluster.tags
-        ),
+        previousCluster.clone(previousCluster.nodeNames.filter(_ != beRemovedContainer.nodeName)),
         clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name)
       )
       true
@@ -132,7 +125,12 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
 
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T] =
-    creator.copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
+    // create the cluster with more nodes again. the creation progress handles the "add" than "creation" by default
+    creator
+      .copy(previousCluster)
+      .nodeNames(previousCluster.nodeNames + newNodeName)
+      .threadPool(executionContext)
+      .create()
 
   override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] = {
     if (containers.isEmpty) None

@@ -116,15 +116,13 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                 .map(_.flatten.toSeq)
                 .map {
                   successfulContainers =>
-                    if (successfulContainers.isEmpty)
-                      throw new IllegalArgumentException(s"failed to create ${creation.name} on $serviceName")
                     val clusterInfo = ZookeeperClusterInfo(
                       settings = ZookeeperApi.access.request
                         .settings(creation.settings)
-                        .nodeNames(successfulContainers.map(_.nodeName).toSet)
+                        .nodeNames(creation.nodeNames ++ nodes.keySet.map(_.hostname))
                         .creation
                         .settings,
-                      deadNodes = Set.empty,
+                      deadNodes = nodes.keySet.map(_.hostname) -- successfulContainers.map(_.nodeName),
                       // We do not care the user parameters since it's stored in configurator already
                       state = None,
                       error = None,

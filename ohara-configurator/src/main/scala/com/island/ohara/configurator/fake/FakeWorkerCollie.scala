@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{ClusterState, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
@@ -59,15 +58,10 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future
     .successful(
-      addCluster(previousCluster.clone(
-        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
-        deadNodes = Set.empty,
-        // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-        state = Some(ClusterState.RUNNING.name),
-        error = None,
-        tags = previousCluster.tags,
-        metrics = Metrics.EMPTY
-      )))
+      addCluster(
+        previousCluster
+          .clone(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
+          .asInstanceOf[WorkerClusterInfo]))
     .map(_ => true)
 
   override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
@@ -84,16 +78,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     previousContainers: Seq[ContainerApi.ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
     Future.successful(
-      addCluster(
-        previousCluster.clone(
-          nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
-          deadNodes = Set.empty,
-          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
-          error = None,
-          tags = previousCluster.tags,
-          metrics = Metrics.EMPTY
-        )))
+      addCluster(previousCluster.clone(previousCluster.nodeNames ++ Set(newNodeName)).asInstanceOf[WorkerClusterInfo]))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,

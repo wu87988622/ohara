@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -26,9 +25,9 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestBrokerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -248,17 +247,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
     result(brokerApi.start(cluster.name))
 
-    result(brokerApi.addNode(cluster.name, nodeNames.last).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe
-      cluster
-        .clone(
-          nodeNames = cluster.nodeNames ++ Set(nodeNames.last),
-          deadNodes = Set.empty,
-          state = None,
-          error = None,
-          metrics = Metrics.EMPTY,
-          tags = Map.empty
-        )
-        .nodeNames
+    result(brokerApi.addNode(cluster.name, nodeNames.last).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames ++ Set(
+      nodeNames.last)
   }
 
   @Test

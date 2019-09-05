@@ -251,25 +251,8 @@ object StreamApi {
     def nodeNames: Set[String] = settings.nodeNames
 
     def connectionProps: String = settings.connectionProps
-
-    override def clone(nodeNames: Set[String],
-                       deadNodes: Set[String],
-                       state: Option[String],
-                       error: Option[String],
-                       metrics: Metrics,
-                       tags: Map[String, JsValue]): StreamClusterInfo = copy(
-      settings = {
-        val req = access.request.settings(settings).tags(tags)
-        // TODO: the empty node names should never happen in stream route ... by chia
-        if (nodeNames.nonEmpty) req.nodeNames(nodeNames)
-        req.creation.settings
-      },
-      deadNodes = deadNodes,
-      state = state,
-      error = error,
-      metrics = metrics
-    )
   }
+
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
     JsonRefiner[StreamClusterInfo]
       .format(new RootJsonFormat[StreamClusterInfo] {
@@ -318,9 +301,8 @@ object StreamApi {
     def instances(instances: Int): Request =
       setting(StreamDefUtils.INSTANCES_DEFINITION.key(), JsNumber(CommonUtils.requirePositiveInt(instances)))
     @Optional("you should not set both nodeNames and instances")
-    def nodeNames(nodeNames: Set[String]): Request = setting(
-      StreamDefUtils.NODE_NAMES_DEFINITION.key(),
-      JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
+    def nodeNames(nodeNames: Set[String]): Request =
+      setting(StreamDefUtils.NODE_NAMES_DEFINITION.key(), JsArray(nodeNames.map(JsString(_)).toVector))
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request = setting(StreamDefUtils.TAGS_DEFINITION.key(), JsObject(tags))
 

@@ -16,14 +16,12 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.DeserializationException
-import spray.json._
+import spray.json.{DeserializationException, _}
 
 class TestWorkerApi extends SmallTest with Matchers {
 
@@ -48,29 +46,15 @@ class TestWorkerApi extends SmallTest with Matchers {
   @Test
   def testClone(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
-    val deadNodes = Set(CommonUtils.randomString())
-    val error = Some(CommonUtils.randomString())
-    val state = Some(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
-      settings = Map("a" -> JsString("b")),
+      settings = WorkerApi.access.request.nodeNames(Set(CommonUtils.randomString())).creation.settings,
       connectors = Seq.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
       lastModified = CommonUtils.current()
     )
-    val newOne = workerClusterInfo.clone(
-      nodeNames = nodeNames,
-      deadNodes = deadNodes,
-      error = error,
-      state = state,
-      metrics = Metrics.EMPTY,
-      tags = Map.empty
-    )
-    newOne.nodeNames shouldBe nodeNames
-    newOne.deadNodes shouldBe deadNodes
-    newOne.error shouldBe error
-    newOne.state shouldBe state
+    workerClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test

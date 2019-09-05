@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
@@ -50,20 +50,8 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def testClone(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
-    val deadNodes = Set(CommonUtils.randomString())
-    val error = Some(CommonUtils.randomString())
-    val state = Some(CommonUtils.randomString())
-    val metrics = Metrics(
-      Seq(
-        Meter(
-          value = 123,
-          unit = CommonUtils.randomString(),
-          document = CommonUtils.randomString(),
-          queryTime = CommonUtils.current(),
-          startTime = None
-        )))
     val streamClusterInfo = StreamClusterInfo(
-      settings = StreamApi.access.request.creation.settings,
+      settings = StreamApi.access.request.nodeNames(Set(CommonUtils.randomString())).creation.settings,
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
       deadNodes = Set.empty,
       state = None,
@@ -71,20 +59,7 @@ class TestStreamApi extends SmallTest with Matchers {
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
-    val newOne = streamClusterInfo.clone(
-      nodeNames = nodeNames,
-      deadNodes = deadNodes,
-      error = error,
-      state = state,
-      metrics = metrics,
-      tags = Map.empty
-    )
-    newOne.settings(StreamDefUtils.NODE_NAMES_DEFINITION.key()).convertTo[Set[String]] shouldBe nodeNames
-    newOne.nodeNames shouldBe nodeNames
-    newOne.deadNodes shouldBe deadNodes
-    newOne.error shouldBe error
-    newOne.state shouldBe state
-    newOne.metrics shouldBe metrics
+    streamClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test
@@ -192,7 +167,8 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def nodeNamesFieldCheck(): Unit = {
     an[NullPointerException] should be thrownBy accessRequest.nodeNames(null)
-    an[IllegalArgumentException] should be thrownBy accessRequest.nodeNames(Set.empty)
+    // empty node names is legal to streamapp
+    accessRequest.nodeNames(Set.empty)
 
     // default value
     accessRequest.name(CommonUtils.randomString(5)).creation.nodeNames shouldBe Set.empty

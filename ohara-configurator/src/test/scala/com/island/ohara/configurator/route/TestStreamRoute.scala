@@ -25,7 +25,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -449,7 +449,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     info.nodeNames shouldBe Set.empty
 
     // cannot update empty array
-    an[IllegalArgumentException] should be thrownBy result(
+    an[DeserializationException] should be thrownBy result(
       accessStream.request.name(info.name).nodeNames(Set.empty).update())
     // non-exist node
     an[IllegalArgumentException] should be thrownBy result(

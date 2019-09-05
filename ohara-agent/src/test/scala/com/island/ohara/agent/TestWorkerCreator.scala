@@ -280,28 +280,43 @@ class TestWorkerCreator extends SmallTest with Matchers {
     )
 
     val wkName = CommonUtils.randomString(5)
-    val fakeWorkerCollie = new FakeWorkerCollie(Seq(node1), Map.empty, wkName)
-    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
-      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-      .clusterName(wkName)
-      .clientPort(8083)
-      .jmxPort(8084)
-      .brokerClusterName("bk1")
-      .groupId(CommonUtils.randomString(10))
-      .configTopicName(CommonUtils.randomString(10))
-      .configTopicReplications(1)
-      .statusTopicName(CommonUtils.randomString(10))
-      .statusTopicPartitions(1)
-      .statusTopicReplications(1)
-      .offsetTopicName(CommonUtils.randomString(10))
-      .offsetTopicPartitions(1)
-      .offsetTopicReplications(1)
-      .nodeName(node1Name)
-      .create()
-
-    an[IllegalArgumentException] shouldBe thrownBy {
-      Await.result(workerClusterInfo, TIMEOUT)
-    }
+    val bkContainer = Map(
+      "bk1" -> Seq(ContainerInfo(
+        node1Name,
+        "aaaa",
+        "connect-worker",
+        "2019-05-28 00:00:00",
+        "RUNNING",
+        "unknown",
+        "ohara-xxx-wk-0000",
+        "unknown",
+        Seq.empty,
+        Map(BrokerApi.CLIENT_PORT_KEY -> "12345"),
+        "ohara-xxx-wk-0000"
+      )))
+    val fakeWorkerCollie = new FakeWorkerCollie(Seq(node1), bkContainer, wkName)
+    Await
+      .result(
+        fakeWorkerCollie.creator
+          .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
+          .clusterName(wkName)
+          .clientPort(8083)
+          .jmxPort(8084)
+          .brokerClusterName("bk1")
+          .groupId(CommonUtils.randomString(10))
+          .configTopicName(CommonUtils.randomString(10))
+          .configTopicReplications(1)
+          .statusTopicName(CommonUtils.randomString(10))
+          .statusTopicPartitions(1)
+          .statusTopicReplications(1)
+          .offsetTopicName(CommonUtils.randomString(10))
+          .offsetTopicPartitions(1)
+          .offsetTopicReplications(1)
+          .nodeName(node1Name)
+          .create(),
+        TIMEOUT
+      )
+      .nodeNames shouldBe Set(node1Name)
   }
 
   @Test

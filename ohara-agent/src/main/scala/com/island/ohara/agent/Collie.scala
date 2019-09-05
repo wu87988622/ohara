@@ -372,6 +372,12 @@ object Collie {
       this
     }
 
+    /**
+      * submit a creation progress in background. the implementation should avoid creating duplicate containers on the
+      * same nodes. If the pass nodes already have containers, this creation should be viewed as "adding" than creation.
+      * for example, the cluster-A exists and it is running on node-01. When user pass a creation to run cluster-A on
+      * node-02, the creation progress should be aware of that user tries to add a new node (node-02) to the cluster-A.
+      */
     override def create(): Future[T]
   }
 }

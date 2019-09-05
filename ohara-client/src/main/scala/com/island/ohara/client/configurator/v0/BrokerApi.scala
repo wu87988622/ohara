@@ -158,19 +158,6 @@ object BrokerApi {
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
     def zookeeperClusterName: String = settings.zookeeperClusterName.get
-
-    override def clone(nodeNames: Set[String],
-                       deadNodes: Set[String],
-                       state: Option[String],
-                       error: Option[String],
-                       metrics: Metrics,
-                       tags: Map[String, JsValue]): BrokerClusterInfo = copy(
-      settings = access.request.settings(settings).nodeNames(nodeNames).tags(tags).creation.settings,
-      deadNodes = deadNodes,
-      state = state,
-      error = error
-    )
-
     // TODO: expose the metrics for bk
     override def metrics: Metrics = Metrics.EMPTY
   }

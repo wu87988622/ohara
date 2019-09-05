@@ -86,12 +86,11 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
             .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
             .map((existNodes, _)))
         .map {
-          case (existNodes, newNodes) =>
-            existNodes.keys.foreach(node =>
-              if (newNodes.keys.exists(_.name == node.name))
-                throw new IllegalArgumentException(s"${node.name} is running on a ${creation.name}"))
-
-            (existNodes, newNodes, zookeeperContainers(creation.zookeeperClusterName.get))
+          case (existNodes, nodes) =>
+            (existNodes,
+             // find the nodes which have not run the services
+             nodes.filterNot(n => existNodes.exists(_._1.hostname == n._1.hostname)),
+             zookeeperContainers(creation.zookeeperClusterName.get))
         }
         .flatMap {
           case (existNodes, newNodes, zkContainers) =>
@@ -174,15 +173,15 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
               .map(_.flatten.toSeq)
               .map {
                 successfulContainers =>
-                  if (successfulContainers.isEmpty)
-                    throw new IllegalArgumentException(s"failed to create ${creation.name} on $serviceName")
                   val clusterInfo = BrokerClusterInfo(
+                    // combine the 1) node names from creation and 2) the running nodes
                     settings = BrokerApi.access.request
                       .settings(creation.settings)
-                      .nodeNames(successfulContainers.map(_.nodeName).toSet)
+                      .nodeNames(
+                        creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(_.hostname))
                       .creation
                       .settings,
-                    deadNodes = Set.empty,
+                    deadNodes = newNodes.keySet.map(_.hostname) -- successfulContainers.map(_.nodeName),
                     state = None,
                     error = None,
                     lastModified = CommonUtils.current(),

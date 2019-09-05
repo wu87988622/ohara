@@ -66,15 +66,12 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
             .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
             .map((existNodes, _)))
         .map {
-          case (existNodes, newNodes) =>
-            existNodes.keys.foreach(node =>
-              if (newNodes.keys.exists(_.name == node.name))
-                throw new IllegalArgumentException(s"${node.name} has run the worker service for ${creation.name}"))
-
+          case (existNodes, nodes) =>
             // the broker cluster should be defined in data creating phase already
             // here we just throw an exception for absent value to ensure everything works as expect
             (existNodes,
-             newNodes,
+             // find the nodes which have not run the services
+             nodes.filterNot(n => existNodes.exists(_._1.hostname == n._1.hostname)),
              brokerContainers(
                creation.brokerClusterName.getOrElse(
                  throw new RuntimeException("The broker cluser name should be define"))))
@@ -151,16 +148,15 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                 .map(_.flatten.toSeq)
                 .map {
                   successfulContainers =>
-                    if (successfulContainers.isEmpty)
-                      throw new IllegalArgumentException(s"failed to create ${creation.name} on $serviceName")
                     val clusterInfo = WorkerClusterInfo(
                       settings = WorkerApi.access.request
                         .settings(creation.settings)
-                        .nodeNames((successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet)
+                        .nodeNames(
+                          creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(_.hostname))
                         .creation
                         .settings,
                       connectors = Seq.empty,
-                      deadNodes = Set.empty,
+                      deadNodes = newNodes.keySet.map(_.hostname) -- successfulContainers.map(_.nodeName),
                       state = None,
                       error = None,
                       lastModified = CommonUtils.current()
