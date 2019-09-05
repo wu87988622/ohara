@@ -141,6 +141,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val response = ConnectorDescription(
       settings = Map(
         CommonUtils.randomString() -> JsString(CommonUtils.randomString()),
+        GROUP_KEY -> JsString(CommonUtils.randomString()),
         NAME_KEY -> JsString(CommonUtils.randomString())
       ),
       status = None,
@@ -574,23 +575,6 @@ class TestConnectorApi extends SmallTest with Matchers {
       |     """.stripMargin.parseJson).tags shouldBe Map.empty
 
   @Test
-  def groupShouldAppearInResponse(): Unit = {
-    val name = CommonUtils.randomString()
-    val js = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.write(
-      ConnectorDescription(
-        settings = Map(
-          NAME_KEY -> JsString(name)
-        ),
-        status = None,
-        tasksStatus = Seq.empty,
-        metrics = Metrics.EMPTY,
-        lastModified = CommonUtils.current()
-      ))
-    js.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ConnectorApi.GROUP_DEFAULT
-    js.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-  }
-
-  @Test
   def parseConnectorKey(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
        |  {
@@ -630,4 +614,22 @@ class TestConnectorApi extends SmallTest with Matchers {
                                       |}
       """.stripMargin.parseJson)
   }.getMessage should include("illegal word")
+
+  @Test
+  def testStaleNameAndGroup(): Unit = {
+    val name = CommonUtils.randomString(5)
+    val group = CommonUtils.randomString(5)
+    val connectorInfo = ConnectorDescription(
+      settings =
+        ConnectorApi.access.request.group(group).name(name).className(CommonUtils.randomString()).creation.settings,
+      status = None,
+      tasksStatus = Seq.empty,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+
+    val js = CONNECTOR_DESCRIPTION_FORMAT.write(connectorInfo)
+    js.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    js.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe group
+  }
 }

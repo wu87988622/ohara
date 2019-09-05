@@ -234,8 +234,8 @@ object ConnectorApi {
           noJsNull(
             format.write(obj).asJsObject.fields
             // TODO: the group should be equal to workerClusterName ... by chia
-              + (GROUP_KEY -> JsString(GROUP_DEFAULT))
-              + (NAME_KEY -> obj.settings.getOrElse(NAME_KEY, JsNull))
+              + (GROUP_KEY -> JsString(obj.group))
+              + (NAME_KEY -> JsString(obj.name))
               + ("state" -> obj.status.map(_.state.name).map(JsString(_)).getOrElse(JsNull))
               + ("error" -> obj.status.flatMap(_.error).map(JsString(_)).getOrElse(JsNull))
           ))
