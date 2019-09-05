@@ -22,12 +22,15 @@ import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
 
 import * as CSS_VARS from './theme/variables';
 import MuiTheme from './theme/muiTheme';
+import ErrorBoundary from 'components/common/ErrorBoundary';
 import 'toastrConfigs';
 
 ReactDOM.render(
   <MuiThemeProvider theme={MuiTheme}>
     <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </ThemeProvider>
   </MuiThemeProvider>,
   document.getElementById('root'),
