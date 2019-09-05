@@ -125,7 +125,6 @@ object ZookeeperApi {
       .refine
 
   final case class ZookeeperClusterInfo private[ZookeeperApi] (settings: Map[String, JsValue],
-                                                               nodeNames: Set[String],
                                                                deadNodes: Set[String],
                                                                lastModified: Long,
                                                                state: Option[String],
@@ -145,6 +144,7 @@ object ZookeeperApi {
     override def kind: String = ZOOKEEPER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
     override def tags: Map[String, JsValue] = settings.tags
+    def nodeNames: Set[String] = settings.nodeNames
 
     // TODO remove this duplicated fields after #2191
     def imageName: String = settings.imageName
@@ -159,7 +159,6 @@ object ZookeeperApi {
                        metrics: Metrics,
                        tags: Map[String, JsValue]): ZookeeperClusterInfo = copy(
       settings = access.request.settings(settings).nodeNames(nodeNames).tags(tags).creation.settings,
-      nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
       error = error
@@ -175,7 +174,7 @@ object ZookeeperApi {
   private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[ZookeeperClusterInfo] =
     JsonRefiner[ZookeeperClusterInfo]
       .format(new RootJsonFormat[ZookeeperClusterInfo] {
-        private[this] val format = jsonFormat6(ZookeeperClusterInfo)
+        private[this] val format = jsonFormat5(ZookeeperClusterInfo)
         override def read(json: JsValue): ZookeeperClusterInfo = format.read(json)
         override def write(obj: ZookeeperClusterInfo): JsValue =
           JsObject(

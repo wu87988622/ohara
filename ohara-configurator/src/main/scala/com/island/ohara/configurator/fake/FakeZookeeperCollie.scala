@@ -18,8 +18,8 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{ClusterState, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,13 +31,7 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     Future.successful(
       addCluster(
         ZookeeperClusterInfo(
-          settings = ZookeeperApi.access.request
-            .name(creation.name)
-            .imageName(creation.imageName)
-            .settings(creation.settings)
-            .creation
-            .settings,
-          nodeNames = creation.nodeNames,
+          settings = creation.settings,
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),

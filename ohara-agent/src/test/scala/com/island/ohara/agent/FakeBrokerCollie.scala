@@ -36,7 +36,6 @@ private class FakeBrokerCollie(nodes: Seq[Node],
           .nodeNames(nodes.map(_.hostname).toSet)
           .creation
           .settings,
-        nodeNames = Set.empty,
         deadNodes = Set.empty,
         lastModified = 0L,
         state = Some(ClusterState.RUNNING.name),

@@ -37,7 +37,6 @@ class TestZookeeperApi extends SmallTest with Matchers {
     val state = Some(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
       settings = access.nodeNames(nodeNames).creation.settings,
-      nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
@@ -426,7 +425,6 @@ class TestZookeeperApi extends SmallTest with Matchers {
     val res = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(
       ZookeeperClusterInfo(
         settings = ZookeeperApi.access.request.name(name).nodeNames(Set("n1")).creation.settings,
-        nodeNames = Set.empty,
         deadNodes = Set.empty,
         state = None,
         error = None,
@@ -461,13 +459,13 @@ class TestZookeeperApi extends SmallTest with Matchers {
   @Test
   def testAliveNodes(): Unit = {
     val cluster = ZookeeperClusterInfo(
-      settings = Map.empty,
-      nodeNames = Set("n0", "n1"),
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       deadNodes = Set("n0"),
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current()
     )
+    cluster.nodeNames shouldBe Set("n0", "n1")
     cluster.aliveNodes shouldBe Set("n1")
     cluster.copy(state = None).aliveNodes shouldBe Set.empty
   }

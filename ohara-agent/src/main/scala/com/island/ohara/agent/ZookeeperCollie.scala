@@ -124,7 +124,6 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                         .nodeNames(successfulContainers.map(_.nodeName).toSet)
                         .creation
                         .settings,
-                      nodeNames = successfulContainers.map(_.nodeName).toSet,
                       deadNodes = Set.empty,
                       // We do not care the user parameters since it's stored in configurator already
                       state = None,
@@ -177,7 +176,6 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
     Future.successful(
       ZookeeperClusterInfo(
         settings = creation.settings,
-        nodeNames = creation.nodeNames,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = creation.nodeNames -- containers

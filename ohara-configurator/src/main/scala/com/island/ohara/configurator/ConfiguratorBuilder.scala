@@ -213,7 +213,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               .nodeNames(nodeNames)
               .creation
               .settings,
-            nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),

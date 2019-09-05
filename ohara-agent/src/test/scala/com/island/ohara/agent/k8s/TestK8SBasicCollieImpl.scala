@@ -78,7 +78,6 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
                 .nodeNames(nodes.map(_.name).toSet)
                 .creation
                 .settings,
-              nodeNames = Set.empty,
               deadNodes = Set.empty,
               state = None,
               error = None,

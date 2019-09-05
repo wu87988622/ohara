@@ -36,7 +36,6 @@ class TestZookeeperCreator extends SmallTest with Matchers {
       Future.successful(
         ZookeeperClusterInfo(
           settings = ZookeeperApi.access.request.settings(creation.settings).creation.settings,
-          nodeNames = creation.nodeNames,
           deadNodes = Set.empty,
           state = None,
           error = None,
@@ -113,7 +112,6 @@ class TestZookeeperCreator extends SmallTest with Matchers {
         .nodeNames(nodeNames)
         .creation
         .settings,
-      nodeNames = nodeNames,
       deadNodes = Set.empty,
       state = None,
       error = None,

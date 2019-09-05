@@ -32,7 +32,6 @@ object ZookeeperRoute {
     Future.successful(
       ZookeeperClusterInfo(
         settings = creation.settings,
-        nodeNames = creation.nodeNames,
         deadNodes = Set.empty,
         state = None,
         error = None,
@@ -50,7 +49,6 @@ object ZookeeperRoute {
           // use PUT as creation request
           ZookeeperClusterInfo(
             settings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings,
-            nodeNames = update.nodeNames.orElse(previousOption.map(_.nodeNames)).getOrElse(Set.empty),
             // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
             deadNodes = Set.empty,
             state = None,
