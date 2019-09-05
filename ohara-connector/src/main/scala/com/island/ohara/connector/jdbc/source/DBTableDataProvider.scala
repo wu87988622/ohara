@@ -41,8 +41,12 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
     if (queryFlag) {
-      val sql =
+      /*val sql =
         s"""SELECT * FROM \"$tableName\" WHERE \"$timeStampColumnName\" > ? and \"$timeStampColumnName\" < ? ORDER BY \"$timeStampColumnName\""""
+       */
+      val sql =
+        s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? AND $timeStampColumnName < ? ORDER BY $timeStampColumnName"
+
       val connection: Connection = client.connection
       connection.setAutoCommit(false) //setAutoCommit must be set to false when setting the fetch size
 
@@ -60,6 +64,7 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
   }
 
   def releaseResultSet(queryFlag: Boolean): Unit = {
+    Releasable.close(resultSet.getStatement())
     Releasable.close(resultSet)
     resultSet = null
     // Use the JDBC fetchSize function, should setting setAutoCommit function to false.

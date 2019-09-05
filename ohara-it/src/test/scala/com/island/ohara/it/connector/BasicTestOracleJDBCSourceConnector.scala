@@ -16,7 +16,7 @@
 
 package com.island.ohara.it.connector
 
-abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestJDBCSourceConnector {
+abstract class BasicTestOracleJDBCSourceConnector extends BasicTestJDBCSourceConnector {
 
   override protected def dbUrl(): Option[String] = sys.env.get(DB_URL_KEY)
 
@@ -24,11 +24,10 @@ abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestJDBCSourc
 
   override protected def dbPassword(): Option[String] = sys.env.get(DB_PASSWORD_KEY)
 
-  override protected def dbName(): String = "postgresql"
+  override protected def dbName(): String = "oracle"
 
-  override protected def jdbcDriverJarFileName(): String = "postgresql-42.2.6.jar"
+  override protected def jdbcDriverJarFileName(): String = "ojdbc8.jar"
 
   override protected def insertTableSQL(tableName: String, columns: Seq[String], value: Int): String =
-    s"INSERT INTO $tableName(${columns(0)}, ${columns(1)}, ${columns(2)}) VALUES('2018-09-01 00:00:00', 'a${value}', ${value})"
-
+    s"INSERT INTO $tableName(${columns(0)}, ${columns(1)}, ${columns(2)}) VALUES(TO_TIMESTAMP('2018-09-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'a${value}', ${value})"
 }

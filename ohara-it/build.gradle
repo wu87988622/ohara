@@ -69,10 +69,16 @@ dependencies {
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
   testImplementation project(":ohara-connector").sourceSets.main.output
-  testImplementation libs.postgresql
   testImplementation libs.scalatest
   testImplementation libs.junit
   testImplementation libs.akkaStream
+
+  if (project.hasProperty("ohara.it.jar.folder")) {
+    // Load jar file for JDBC driver test
+    fileTree(project.getProperty("ohara.it.jar.folder")).visit { FileVisitDetails jar ->
+      testImplementation files(jar.file.path)
+    }
+  }
 }
 
 /**
@@ -117,6 +123,7 @@ test {
     "ohara.it.db.url",
     "ohara.it.db.username",
     "ohara.it.db.password",
+    "ohara.it.jar.folder"
   ]
   keywords.forEach {
     keyword ->

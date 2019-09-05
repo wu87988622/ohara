@@ -20,12 +20,14 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 
-class TestSshPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSourceConnector {
+class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   private[this] var _clusterCollie: ClusterCollie = _
 
   override protected val nodeCache: Seq[NodeApi.Node] = CollieTestUtils.nodeCache()
 
-  override protected val nameHolder = ClusterNameHolder(nodeCache)
+  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodeCache)
+
+  override protected def clusterCollie(): ClusterCollie = _clusterCollie
 
   override protected def createConfigurator(nodeCache: Seq[NodeApi.Node], hostname: String, port: Int): Configurator =
     Configurator.builder.hostname(hostname).port(port).build()
@@ -33,6 +35,4 @@ class TestSshPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSource
   override protected def checkClusterInfo(): Unit =
     if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
     else _clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(nodeCache)).build()
-
-  override protected def clusterCollie: ClusterCollie = _clusterCollie
 }

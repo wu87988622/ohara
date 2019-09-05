@@ -16,15 +16,14 @@
 
 package com.island.ohara.it.connector
 
-import com.island.ohara.agent._
+import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.ClusterNameHolder
 
-class TestK8sPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSourceConnector {
-
+class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
 
@@ -52,6 +51,10 @@ class TestK8sPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSource
             tags = Map.empty
         ))
 
+  override protected def clusterCollie: ClusterCollie = _clusterCollie
+
+  override protected def nameHolder: ClusterNameHolder = _nameHolder
+
   override protected def checkClusterInfo(): Unit =
     if (nodeCache.isEmpty)
       skipTest(s"The k8s is skip test, Please setting $K8S_API_SERVER_URL_KEY and $K8S_API_NODE_NAME_KEY properties")
@@ -61,10 +64,6 @@ class TestK8sPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSource
 
       _nameHolder = ClusterNameHolder(nodeCache, K8SClient(API_SERVER_URL.get))
     }
-
-  override protected def clusterCollie: ClusterCollie = _clusterCollie
-
-  override protected def nameHolder: ClusterNameHolder = _nameHolder
 
   override protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator =
     Configurator.builder.hostname(hostname).port(port).k8sClient(K8SClient(API_SERVER_URL.get)).build()

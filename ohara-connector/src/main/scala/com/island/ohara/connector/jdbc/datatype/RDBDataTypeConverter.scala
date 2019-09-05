@@ -36,7 +36,7 @@ class RDBDataTypeConverter {
       case RDB_TYPE_BIT =>
         java.lang.Byte.valueOf(resultSet.getByte(columnName))
 
-      case RDB_TYPE_INTEGER | RDB_TYPE_INTEGER_2 =>
+      case RDB_TYPE_INTEGER | RDB_TYPE_INTEGER_2 | ORACLE_TYPE_NUMBER =>
         java.lang.Integer.valueOf(resultSet.getInt(columnName))
 
       case RDB_TYPE_BIGINT =>
@@ -48,10 +48,10 @@ class RDBDataTypeConverter {
       case RDB_TYPE_DOUBLE =>
         java.lang.Double.valueOf(resultSet.getDouble(columnName))
 
-      case RDB_TYPE_CHAR | RDB_TYPE_VARCHAR | RDB_TYPE_LONGVARCHAR =>
+      case RDB_TYPE_CHAR | RDB_TYPE_VARCHAR | RDB_TYPE_LONGVARCHAR | ORACLE_TYPE_VARCHAR2 =>
         Optional.ofNullable(resultSet.getString(columnName)).orElseGet(() => "null")
 
-      case RDB_TYPE_TIMESTAMP =>
+      case RDB_TYPE_TIMESTAMP | ORACLE_TYPE_TIMESTAMP6 =>
         Optional
           .ofNullable(resultSet.getTimestamp(columnName, DateTimeUtils.CALENDAR))
           .orElseGet(() => new Timestamp(0))
@@ -85,4 +85,7 @@ object RDBDataTypeConverter {
   val RDB_TYPE_TIMESTAMP: String = "TIMESTAMP"
   val RDB_TYPE_DATE: String = "DATE"
   val RDB_TYPE_TIME: String = "TIME"
+  val ORACLE_TYPE_TIMESTAMP6: String = "TIMESTAMP(6)" //TODO #1733 Refactor DB datatype
+  val ORACLE_TYPE_VARCHAR2: String = "VARCHAR2" //TODO #1733 Refactor DB datatype
+  val ORACLE_TYPE_NUMBER: String = "NUMBER" //TODO #1733 Refactor DB datatype
 }

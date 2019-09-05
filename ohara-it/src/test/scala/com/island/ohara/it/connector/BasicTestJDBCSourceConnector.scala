@@ -16,15 +16,20 @@
 
 package com.island.ohara.it.connector
 
+import java.io.File
 import java.sql.{Statement, Timestamp}
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.FileInfoApi
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.Configurator
 import com.island.ohara.connector.jdbc.source.{JDBCSourceConnector, JDBCSourceConnectorConfig}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
@@ -33,42 +38,75 @@ import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 import org.junit.{After, Before, Test}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
   private[this] val log = Logger(classOf[BasicTestJDBCSourceConnector])
-  private[this] val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-  private[this] val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-
-  private[this] val tableName: String = s"table_${CommonUtils.randomString(10)}"
-  private[this] val timestampColumn: String = "column1"
-  private[this] var client: DatabaseClient = _
 
   protected[this] val DB_URL_KEY: String = "ohara.it.db.url"
   protected[this] val DB_USER_NAME_KEY: String = "ohara.it.db.username"
   protected[this] val DB_PASSWORD_KEY: String = "ohara.it.db.password"
 
+  private[this] val HOST_NAME_KEY: String = "ohara.it.hostname"
+  private[this] val JAR_FOLDER_KEY: String = "ohara.it.jar.folder"
+
+  private[this] val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
+  private[this] val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+
+  private[this] val tableName: String = s"TABLE${CommonUtils.randomString(5)}".toUpperCase
+  private[this] val timestampColumn: String = "COLUMN1"
+
+  private[this] var client: DatabaseClient = _
+  private[this] val invalidHostname = "unknown"
+
+  private[this] val publicHostname: String = sys.env.getOrElse(HOST_NAME_KEY, invalidHostname)
+  private[this] val publicPort = CommonUtils.availablePort()
+  private[this] val jarFolderPath = sys.env.getOrElse(JAR_FOLDER_KEY, "/jar")
+
+  private[this] var jdbcJarFileInfo: FileInfo = _
+
   protected def dbUrl(): Option[String]
   protected def dbUserName(): Option[String]
   protected def dbPassword(): Option[String]
-  protected def dataBaseClient(): DatabaseClient
+  protected def dbName(): String
+  protected def insertTableSQL(tableName: String, columns: Seq[String], value: Int): String
   protected def checkClusterInfo(): Unit
 
+  protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator
+
+  /**
+    * This function for setting database JDBC jar file name.
+    * from local upload to configurator server for connector worker container to download use.
+    * @return JDBC driver file name
+    */
+  protected def jdbcDriverJarFileName(): String
+
+  private[this] var configurator: Configurator = _
   protected val cleanup: Boolean = true
+
+  protected def dataBaseClient(): DatabaseClient =
+    DatabaseClient.builder.url(dbUrl.get).user(dbUserName.get).password(dbPassword.get).build
+
+  override protected def jdbcJarUrl(): String = jdbcJarFileInfo.url.toString //For worker download JDBC jar file
 
   @Before
   final def setup(): Unit = {
     checkClusterInfo()
 
+    runConfiguratorServer() //For upload JDBC jar
     //Check db info
     if (dbUrl.isEmpty || dbUserName.isEmpty || dbPassword.isEmpty)
       skipTest(
-        s"skip postgresql jdbc source connector test, Please setting $DB_URL_KEY, $DB_USER_NAME_KEY and $DB_PASSWORD_KEY properties")
+        s"Skip $dbName jdbc source connector test, Please setting $DB_URL_KEY, $DB_USER_NAME_KEY and $DB_PASSWORD_KEY properties")
+
+    if (!dbUrl.get.contains(dbName))
+      skipTest(s"Your connection $DB_URL_KEY not eqauls $dbName")
 
     client = dataBaseClient()
 
-    val columnName1 = "column1"
-    val columnName2 = "column2"
-    val columnName3 = "column3"
+    val columnName1 = "COLUMN1"
+    val columnName2 = "COLUMN2"
+    val columnName3 = "COLUMN3"
 
     val column1 = RdbColumn(columnName1, "TIMESTAMP", false)
     val column2 = RdbColumn(columnName2, "varchar(45)", false)
@@ -78,8 +116,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
     val statement: Statement = client.connection.createStatement()
 
     (1 to 100).foreach(i => {
-      statement.executeUpdate(
-        s"INSERT INTO $tableName($columnName1, $columnName2, $columnName3) VALUES('2018-09-01 00:00:00', 'a${i}', ${i})")
+      statement.execute(insertTableSQL(tableName, Seq(columnName1, columnName2, columnName3), i))
     })
   }
 
@@ -226,14 +263,28 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
         "source.db.username" -> dbUserName.get,
         "source.db.password" -> dbPassword.get,
         "source.table.name" -> tableName,
-        "source.timestamp.column.name" -> timestampColumn
+        "source.timestamp.column.name" -> timestampColumn,
+        "source.schema.pattern" -> "TUSER"
       ).asJava))
+  }
+
+  private[this] def runConfiguratorServer(): Unit = {
+    configurator = createConfigurator(nodeCache, publicHostname, publicPort)
+    val jarApi: FileInfoApi.Access = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+    val jar = new File(CommonUtils.path(jarFolderPath, jdbcDriverJarFileName))
+    jdbcJarFileInfo = result(jarApi.request.file(jar).upload())
   }
 
   @After
   def afterTest(): Unit = {
+    if (client != null) {
+      val statement: Statement = client.connection.createStatement()
+      statement.execute(s"drop table $tableName")
+    }
+
     Releasable.close(client)
     Releasable.close(clusterCollie)
+    log.info(s"After test to close zk, bk and wk. cleanup is $cleanup")
     if (cleanup) Releasable.close(nameHolder)
   }
 
