@@ -38,7 +38,6 @@ class TestBrokerApi extends SmallTest with Matchers {
     val state = Some(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
       settings = access.nodeNames(nodeNames).creation.settings,
-      nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
@@ -483,7 +482,6 @@ class TestBrokerApi extends SmallTest with Matchers {
       BrokerClusterInfo(
         settings =
           BrokerApi.access.request.name(name).zookeeperClusterName("zk1").nodeNames(Set("n1")).creation.settings,
-        nodeNames = Set.empty,
         deadNodes = Set.empty,
         state = None,
         error = None,
@@ -519,8 +517,7 @@ class TestBrokerApi extends SmallTest with Matchers {
   @Test
   def testAliveNodes(): Unit = {
     val cluster = BrokerClusterInfo(
-      settings = Map.empty,
-      nodeNames = Set("n0", "n1"),
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       deadNodes = Set("n0"),
       state = Some("running"),
       error = None,

@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator.route
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -248,7 +249,16 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.start(cluster.name))
 
     result(brokerApi.addNode(cluster.name, nodeNames.last).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe
-      cluster.copy(nodeNames = cluster.nodeNames ++ Set(nodeNames.last)).nodeNames
+      cluster
+        .clone(
+          nodeNames = cluster.nodeNames ++ Set(nodeNames.last),
+          deadNodes = Set.empty,
+          state = None,
+          error = None,
+          metrics = Metrics.EMPTY,
+          tags = Map.empty
+        )
+        .nodeNames
   }
 
   @Test

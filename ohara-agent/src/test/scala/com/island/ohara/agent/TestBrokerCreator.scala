@@ -49,7 +49,6 @@ class TestBrokerCreator extends SmallTest with Matchers {
       Future.successful(
         BrokerClusterInfo(
           settings = BrokerApi.access.request.settings(creation.settings).creation.settings,
-          nodeNames = creation.nodeNames,
           deadNodes = Set.empty,
           state = None,
           error = None,
@@ -138,7 +137,6 @@ class TestBrokerCreator extends SmallTest with Matchers {
         .nodeNames(nodeNames)
         .creation
         .settings,
-      nodeNames = nodeNames,
       deadNodes = Set.empty,
       state = None,
       error = None,

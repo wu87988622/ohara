@@ -140,7 +140,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .nodeName(host)
             .creation
             .settings,
-          nodeNames = Set(host),
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
@@ -234,7 +233,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
                 .nodeNames(zkCluster.nodeNames)
                 .creation
                 .settings,
-              nodeNames = zkCluster.nodeNames,
               deadNodes = Set.empty,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING.name),

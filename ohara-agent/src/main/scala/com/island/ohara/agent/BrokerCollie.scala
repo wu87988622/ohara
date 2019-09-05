@@ -182,7 +182,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                       .nodeNames(successfulContainers.map(_.nodeName).toSet)
                       .creation
                       .settings,
-                    nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
                     deadNodes = Set.empty,
                     state = None,
                     error = None,
@@ -289,7 +288,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
     Future.successful(
       BrokerClusterInfo(
         settings = creation.settings,
-        nodeNames = creation.nodeNames,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = creation.nodeNames -- containers

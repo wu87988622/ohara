@@ -130,7 +130,6 @@ object BrokerApi {
       .refine
 
   final case class BrokerClusterInfo private[BrokerApi] (settings: Map[String, JsValue],
-                                                         nodeNames: Set[String],
                                                          deadNodes: Set[String],
                                                          lastModified: Long,
                                                          state: Option[String],
@@ -150,6 +149,7 @@ object BrokerApi {
     override def kind: String = BROKER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags
+    def nodeNames: Set[String] = settings.nodeNames
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
     // TODO remove this duplicated fields after #2191
@@ -166,7 +166,6 @@ object BrokerApi {
                        metrics: Metrics,
                        tags: Map[String, JsValue]): BrokerClusterInfo = copy(
       settings = access.request.settings(settings).nodeNames(nodeNames).tags(tags).creation.settings,
-      nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
       error = error
@@ -182,7 +181,7 @@ object BrokerApi {
   private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[BrokerClusterInfo] =
     JsonRefiner[BrokerClusterInfo]
       .format(new RootJsonFormat[BrokerClusterInfo] {
-        private[this] val format = jsonFormat7(BrokerClusterInfo)
+        private[this] val format = jsonFormat6(BrokerClusterInfo)
         override def read(json: JsValue): BrokerClusterInfo = format.read(json)
         override def write(obj: BrokerClusterInfo): JsValue =
           JsObject(
