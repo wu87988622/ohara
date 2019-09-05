@@ -38,30 +38,30 @@ The properties which can be set by user are shown below.
 
 #. settings (**objects**) — cluster settings passed by user
 
-  #. name (**string**) — cluster name
-  #. imageName (**string**) — docker image
-  #. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-  #. clientPort (**int**) — worker client port
-  #. jmxPort (**int**) — worker jmx port
-  #. freePorts (**Array(int)**) — thr ports you want to pre-bind for the connectors. If your connectors want
-                                  to build a service on a port which is available to external nodes, you have to
-                                  define the free ports for your worker cluster so as to make Configurator pre-bind
-                                  the ports on your worker cluster. Otherwise, your connectors is disable to build service
-                                  on the port of worker cluster and be connected by external node.
-  #. groupId (**string**) — the id of worker stored in broker cluster
-  #. configTopicName (**string**) — a internal topic used to store connector configuration
-  #. configTopicReplications (**int**) — number of replications for config topic
-  #. offsetTopicName (**string**) — a internal topic used to store connector offset
-  #. offsetTopicPartitions (**int**) — number of partitions for offset topic
-  #. offsetTopicReplications (**int**) — number of replications for offset topic
-  #. statusTopicName (**string**) — a internal topic used to store connector status
-  #. statusTopicPartitions (**int**) — number of partitions for status topic
-  #. statusTopicReplications (**int**) — number of replications for status topic
-  #. jarKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
+   - name (**string**) — cluster name
+   - imageName (**string**) — docker image
+   - brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
+   - clientPort (**int**) — worker client port
+   - jmxPort (**int**) — worker jmx port
+   - freePorts (**Array(int)**) — thr ports you want to pre-bind for the connectors. If your connectors want
+     to build a service on a port which is available to external nodes, you have to
+     define the free ports for your worker cluster so as to make Configurator pre-bind
+     the ports on your worker cluster. Otherwise, your connectors is disable to build service
+     on the port of worker cluster and be connected by external node.
+   - groupId (**string**) — the id of worker stored in broker cluster
+   - configTopicName (**string**) — a internal topic used to store connector configuration
+   - configTopicReplications (**int**) — number of replications for config topic
+   - offsetTopicName (**string**) — a internal topic used to store connector offset
+   - offsetTopicPartitions (**int**) — number of partitions for offset topic
+   - offsetTopicReplications (**int**) — number of replications for offset topic
+   - statusTopicName (**string**) — a internal topic used to store connector status
+   - statusTopicPartitions (**int**) — number of partitions for status topic
+   - statusTopicReplications (**int**) — number of replications for status topic
+   - jarKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
      You can require worker cluster to load the jars stored in ohara if you want to run custom connectors
      on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. Noted: the response
      will replace this by :ref:`JarInfo <rest-files>`.
-  #. nodeNames (**array(string)**) — the nodes running the worker process
+   - nodeNames (**array(string)**) — the nodes running the worker process
 
 #. deadNodes (**array(string)**) — the nodes that have failed containers of worker
 
