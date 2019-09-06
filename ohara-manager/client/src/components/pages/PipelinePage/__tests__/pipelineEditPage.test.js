@@ -166,10 +166,12 @@ describe('<PipelineEditPage />', () => {
 
   it('starts the pipeline', async () => {
     const { props } = setup();
+    const group = generate.name();
 
     const data = {
       result: {
         name: 'test',
+        group,
         objects: [
           { kind: 'source', name: 'c', className: CONNECTOR_TYPES.ftpSource },
           { kind: 'sink', name: 'b', className: CONNECTOR_TYPES.ftpSink },
@@ -203,15 +205,19 @@ describe('<PipelineEditPage />', () => {
 
     expect(connectorApi.startConnector).toHaveBeenCalledTimes(2);
     expect(connectorApi.startConnector).toHaveBeenCalledWith(
+      group,
       data.result.objects[0].name,
     );
     expect(connectorApi.startConnector).toHaveBeenCalledWith(
+      group,
       data.result.objects[1].name,
     );
   });
 
   it('stops the pipeline', async () => {
     const { props } = setup();
+
+    const group = generate.name();
 
     const data = {
       result: {
@@ -226,6 +232,7 @@ describe('<PipelineEditPage />', () => {
           { from: { group: 'default', name: 'b' }, to: [] },
           { from: { group: 'default', name: 'a' }, to: [] },
         ],
+        group,
         tags: {
           workerClusterName: generate.name(),
         },
@@ -249,9 +256,11 @@ describe('<PipelineEditPage />', () => {
 
     expect(connectorApi.stopConnector).toHaveBeenCalledTimes(2);
     expect(connectorApi.stopConnector).toHaveBeenCalledWith(
+      group,
       data.result.objects[0].name,
     );
     expect(connectorApi.stopConnector).toHaveBeenCalledWith(
+      group,
       data.result.objects[1].name,
     );
   });

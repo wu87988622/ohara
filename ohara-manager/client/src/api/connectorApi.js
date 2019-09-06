@@ -18,9 +18,11 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchConnector = async name => {
+export const fetchConnector = async (group, name) => {
   try {
-    const res = await axiosInstance.get(`/api/connectors/${name}`);
+    const res = await axiosInstance.get(
+      `/api/connectors/${name}?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -48,9 +50,12 @@ export const createConnector = async params => {
   }
 };
 
-export const updateConnector = async ({ name, params }) => {
+export const updateConnector = async ({ name, group, params }) => {
   try {
-    const res = await axiosInstance.put(`/api/connectors/${name}`, params);
+    const res = await axiosInstance.put(
+      `/api/connectors/${name}?group=${group}`,
+      params,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -63,9 +68,11 @@ export const updateConnector = async ({ name, params }) => {
   }
 };
 
-export const startConnector = async name => {
+export const startConnector = async (group, name) => {
   try {
-    const res = await axiosInstance.put(`/api/connectors/${name}/start`);
+    const res = await axiosInstance.put(
+      `/api/connectors/${name}/start?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -78,9 +85,11 @@ export const startConnector = async name => {
   }
 };
 
-export const stopConnector = async name => {
+export const stopConnector = async (group, name) => {
   try {
-    const res = await axiosInstance.put(`/api/connectors/${name}/stop`);
+    const res = await axiosInstance.put(
+      `/api/connectors/${name}/stop?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -93,9 +102,11 @@ export const stopConnector = async name => {
   }
 };
 
-export const deleteConnector = async name => {
+export const deleteConnector = async (group, name) => {
   try {
-    const res = await axiosInstance.delete(`/api/connectors/${name}`);
+    const res = await axiosInstance.delete(
+      `/api/connectors/${name}?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

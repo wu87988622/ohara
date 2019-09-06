@@ -83,16 +83,22 @@ Cypress.Commands.add('deleteWorker', workerClusterName =>
 );
 
 // Property API
-Cypress.Commands.add('deleteProperty', params =>
-  streamApp.deleteProperty(params),
+Cypress.Commands.add('deleteProperty', (group, name) =>
+  streamApp.deleteProperty(group, name),
 );
-Cypress.Commands.add('startStreamApp', name => streamApp.startStreamApp(name));
-Cypress.Commands.add('stopStreamApp', name => streamApp.stopStreamApp(name));
+Cypress.Commands.add('startStreamApp', (group, name) =>
+  streamApp.startStreamApp(group, name),
+);
+Cypress.Commands.add('stopStreamApp', (group, name) =>
+  streamApp.stopStreamApp(group, name),
+);
 Cypress.Commands.add('updateProperty', params =>
   streamApp.updateProperty(params),
 );
 
-Cypress.Commands.add('fetchProperty', name => streamApp.fetchProperty(name));
+Cypress.Commands.add('fetchProperty', (group, name) =>
+  streamApp.fetchProperty(group, name),
+);
 
 Cypress.Commands.add('createProperty', params =>
   streamApp.createProperty(params),
@@ -128,39 +134,51 @@ Cypress.Commands.add('uploadStreamAppJar', params => {
 
 // Topic API
 Cypress.Commands.add('fetchTopics', () => topicApi.fetchTopics());
-Cypress.Commands.add('fetchTopic', name => topicApi.fetchTopic(name));
+Cypress.Commands.add('fetchTopic', (group, name) =>
+  topicApi.fetchTopic(group, name),
+);
 Cypress.Commands.add('createTopic', params => topicApi.createTopic(params));
-Cypress.Commands.add('deleteTopic', name => topicApi.deleteTopic(name));
-Cypress.Commands.add('startTopic', name => topicApi.startTopic(name));
-Cypress.Commands.add('stopTopic', name => topicApi.stopTopic(name));
+Cypress.Commands.add('deleteTopic', (group, name) =>
+  topicApi.deleteTopic(group, name),
+);
+Cypress.Commands.add('startTopic', (group, name) =>
+  topicApi.startTopic(group, name),
+);
+Cypress.Commands.add('stopTopic', (group, name) =>
+  topicApi.stopTopic(group, name),
+);
 
 // Connector API
-Cypress.Commands.add('deleteConnector', name =>
-  connectorApi.deleteConnector(name),
+Cypress.Commands.add('deleteConnector', (group, name) =>
+  connectorApi.deleteConnector(group, name),
 );
-Cypress.Commands.add('stopConnector', name => connectorApi.stopConnector(name));
-Cypress.Commands.add('startConnector', name =>
-  connectorApi.startConnector(name),
+Cypress.Commands.add('stopConnector', (group, name) =>
+  connectorApi.stopConnector(group, name),
+);
+Cypress.Commands.add('startConnector', (group, name) =>
+  connectorApi.startConnector(group, name),
 );
 Cypress.Commands.add('updateConnector', params =>
   connectorApi.updateConnector(params),
 );
-Cypress.Commands.add('fetchConnector', name =>
-  connectorApi.fetchConnector(name),
+Cypress.Commands.add('fetchConnector', (group, name) =>
+  connectorApi.fetchConnector(group, name),
 );
 Cypress.Commands.add('createConnector', params =>
   connectorApi.createConnector(params),
 );
 
 // Pipeline API
-Cypress.Commands.add('deletePipeline', name =>
-  pipelineApi.deletePipeline(name),
+Cypress.Commands.add('deletePipeline', (group, name) =>
+  pipelineApi.deletePipeline(group, name),
 );
 Cypress.Commands.add('updatePipeline', params =>
   pipelineApi.updatePipeline(params),
 );
 Cypress.Commands.add('fetchPipelines', () => pipelineApi.fetchPipelines());
-Cypress.Commands.add('fetchPipeline', name => pipelineApi.fetchPipeline(name));
+Cypress.Commands.add('fetchPipeline', (group, name) =>
+  pipelineApi.fetchPipeline(group, name),
+);
 Cypress.Commands.add('createPipeline', params =>
   pipelineApi.createPipeline(params),
 );
@@ -214,9 +232,9 @@ Cypress.Commands.add('deleteAllServices', () => {
     if (!isEmpty(streams)) {
       streams.forEach(stream => {
         if (!isUndefined(stream.state)) {
-          cy.stopStreamApp(stream.name);
+          cy.stopStreamApp(stream.group, stream.name);
         }
-        cy.request('DELETE', `api/stream/${stream.name}`);
+        cy.deleteProperty(stream.group, stream.name);
       });
     }
   });
@@ -231,6 +249,20 @@ Cypress.Commands.add('deleteAllServices', () => {
     }
   });
 
+  cy.fetchTopics().then(response => {
+    const { result: topics } = response.data;
+
+    if (!isEmpty(topics)) {
+      topics.forEach(topic => {
+        if (!isUndefined(topic.state)) {
+          cy.stopTopic(topic.group, topic.name);
+        }
+
+        cy.deleteTopic(topic.group, topic.name);
+      });
+    }
+  });
+
   cy.fetchWorkers().then(response => {
     const { result: workers } = response.data;
 
@@ -240,20 +272,6 @@ Cypress.Commands.add('deleteAllServices', () => {
           cy.stopWorker(worker.name);
         }
         cy.request('DELETE', `api/workers/${worker.name}`);
-      });
-    }
-  });
-
-  cy.fetchTopics().then(response => {
-    const { result: topics } = response.data;
-
-    if (!isEmpty(topics)) {
-      topics.forEach(topic => {
-        if (!isUndefined(topic.state)) {
-          cy.stopTopic(topic.name);
-        }
-
-        cy.deleteTopic(topic.name);
       });
     }
   });

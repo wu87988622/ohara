@@ -21,12 +21,14 @@ import '@testing-library/jest-dom/extend-expect';
 import PipelineListPage from '../PipelineListPage/PipelineListPage';
 import { PIPELINE } from 'constants/documentTitles';
 import { renderWithProvider } from 'utils/testUtils';
+import { fetchWorkers } from 'api/workerApi';
+import { fetchPipelines } from 'api/pipelineApi';
 import * as generate from 'utils/generate';
 import * as URLS from 'constants/urls';
 import * as useApi from 'components/controller';
-import * as API_URL from 'components/controller/url';
 
-jest.mock('api/infoApi');
+jest.mock('api/workerApi');
+jest.mock('api/pipelineApi');
 jest.mock('components/controller');
 
 const props = {
@@ -43,61 +45,41 @@ jest.doMock('../PipelineToolbar', () => {
 
 afterEach(cleanup);
 
-const workers = generate.workers({ count: 1 });
-const pipelines = [
-  {
-    name: generate.name(),
-    status: 'Stopped',
-    objects: [{ kind: 'topic', name: 'bb' }, { kind: 'source', name: 'dd' }],
-    tags: { workerClusterName: generate.serviceName() },
-  },
-];
-
 describe('<PipelineListPage />', () => {
+  let pipelines;
   beforeEach(() => {
+    const workers = generate.workers({ count: 1 });
+
+    pipelines = [
+      {
+        name: generate.name(),
+        status: 'Stopped',
+        objects: [
+          { kind: 'topic', name: 'bb' },
+          { kind: 'source', name: 'dd' },
+        ],
+        tags: { workerClusterName: generate.serviceName() },
+      },
+    ];
+
+    fetchWorkers.mockImplementation(() =>
+      Promise.resolve({
+        data: {
+          result: workers,
+        },
+      }),
+    );
+
+    fetchPipelines.mockImplementation(() =>
+      Promise.resolve({
+        data: {
+          result: pipelines,
+        },
+      }),
+    );
+
     jest.spyOn(useApi, 'useWaitApi').mockImplementation(() => {
       return { putApi: jest.fn() };
-    });
-
-    jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
-      return { waitApi: jest.fn() };
-    });
-
-    jest.spyOn(useApi, 'usePostApi').mockImplementation(() => {
-      return { getData: jest.fn() };
-    });
-
-    jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
-      return {
-        getData: jest.fn(),
-      };
-    });
-
-    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
-      if (url === `${API_URL.WORKER_URL}`) {
-        return {
-          data: {
-            data: {
-              result: [workers],
-            },
-          },
-          isLoading: false,
-          refetch: jest.fn(),
-        };
-      }
-
-      if (url === API_URL.PIPELINE_URL) {
-        return {
-          data: {
-            data: {
-              isSuccess: true,
-              result: pipelines,
-            },
-          },
-          isLoading: false,
-          refetch: jest.fn(),
-        };
-      }
     });
   });
 
@@ -175,46 +157,6 @@ describe('<PipelineListPage />', () => {
   });
 
   it('toggles delete pipeline modal', async () => {
-    const pipelineName = generate.name();
-
-    const pipelines = [
-      {
-        name: pipelineName,
-        status: 'Stopped',
-        objects: [
-          { kind: 'topic', name: 'bb' },
-          { kind: 'source', name: 'dd' },
-        ],
-        tags: { workerClusterName: generate.serviceName() },
-      },
-    ];
-
-    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
-      if (url === `${API_URL.WORKER_URL}`) {
-        return {
-          data: {
-            data: {
-              result: [workers],
-            },
-          },
-          isLoading: false,
-          refetch: jest.fn(),
-        };
-      }
-      if (url === API_URL.PIPELINE_URL) {
-        return {
-          data: {
-            data: {
-              isSuccess: true,
-              result: pipelines,
-            },
-          },
-          isLoading: false,
-          refetch: jest.fn(),
-        };
-      }
-    });
-
     const { getByText, getByTestId } = await waitForElement(() =>
       renderWithProvider(<PipelineListPage {...props} />),
     );
@@ -224,7 +166,7 @@ describe('<PipelineListPage />', () => {
     getByTestId('delete-dialog');
     getByText('Delete pipeline?');
     getByText(
-      `Are you sure you want to delete the pipeline: ${pipelineName}? This action cannot be undone!`,
+      `Are you sure you want to delete the pipeline: ${pipelines[0].name}? This action cannot be undone!`,
     );
 
     expect(getByTestId('delete-dialog')).toBeVisible();
@@ -234,27 +176,13 @@ describe('<PipelineListPage />', () => {
   });
 
   it(`displays a redirect message when there's no workspace in the dropdown`, async () => {
-    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
-      if (url === `${API_URL.WORKER_URL}`) {
-        return {
-          data: {},
-          isLoading: false,
-          refetch: jest.fn(),
-        };
-      }
-      if (url === API_URL.PIPELINE_URL) {
-        return {
-          data: {
-            data: {
-              isSuccess: true,
-              result: pipelines,
-            },
-          },
-          isLoading: false,
-          refetch: jest.fn(),
-        };
-      }
-    });
+    fetchWorkers.mockImplementation(() =>
+      Promise.resolve({
+        data: {
+          result: [],
+        },
+      }),
+    );
 
     const { getByText, getByTestId } = await waitForElement(() =>
       renderWithProvider(<PipelineListPage {...props} />),

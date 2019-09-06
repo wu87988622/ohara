@@ -49,16 +49,19 @@ describe('removePrevConnector()', () => {
 
 describe('updatePipelineFlows()', () => {
   it('updates params correctly', () => {
+    const group = generate.word();
+
     const pipeline = {
       name: 'abc',
       objects: {},
+      group,
       flows: [
         {
-          from: { group: 'default', name: 'abc' },
+          from: { group, name: 'abc' },
           to: [],
         },
         {
-          from: { group: 'default', name: 'efg' },
+          from: { group, name: 'efg' },
           to: [],
         },
       ],
@@ -74,11 +77,11 @@ describe('updatePipelineFlows()', () => {
 
     const expected = [
       {
-        from: { group: 'default', name: 'abc' },
-        to: [{ group: 'default', name: 'efg' }],
+        from: { group, name: 'abc' },
+        to: [{ group, name: 'efg' }],
       },
       {
-        from: { group: 'default', name: 'efg' },
+        from: { group, name: 'efg' },
         to: [],
       },
     ];

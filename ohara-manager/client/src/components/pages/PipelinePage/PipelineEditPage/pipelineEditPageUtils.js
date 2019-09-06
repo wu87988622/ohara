@@ -37,7 +37,11 @@ export const updateFlows = ({
   streamAppName = null,
   dispatcher,
 }) => {
-  let { flows } = pipeline;
+  let {
+    flows,
+    group: pipelineGroup,
+    tags: { workerClusterName },
+  } = pipeline;
 
   // Remove previous connector from the graph as we're only allowing single
   // connection between a connector to a topic for now
@@ -46,15 +50,25 @@ export const updateFlows = ({
     flows = removePrevConnector(flows, connectorName);
   }
 
-  const { name: connectorName, to } = update;
+  const { name: connectorName, kind, to } = update;
   let updatedFlows = null;
+
+  let group;
+
+  if (kind === 'topic') {
+    group = `${workerClusterName}-topic`;
+  } else if (kind === 'stream') {
+    // The group support hasn't added to stream apps yet. See the issue below:
+    // https://github.com/oharastream/ohara/issues/2563
+    // after #2563 is done, the proper group name should be `workerClusterName-pipelineName`
+    group = 'default';
+  } else {
+    group = pipelineGroup;
+  }
 
   if (dispatcher.name === 'TOOLBAR') {
     // Toolbar update only needs to `add` new connector to the graph
-    updatedFlows = [
-      ...flows,
-      { from: { group: 'default', name: connectorName }, to: [] },
-    ];
+    updatedFlows = [...flows, { from: { group, name: connectorName }, to: [] }];
   } else if (
     dispatcher.name === 'CONNECTOR' ||
     dispatcher.name === 'STREAM_APP'
@@ -63,7 +77,7 @@ export const updateFlows = ({
       if (flow.from.name === connectorName) {
         const newTo = to.map(t => {
           // If the to is a string, let's wrap it with an object
-          if (isString(t)) return { group: 'default', name: t };
+          if (isString(t)) return { group, name: t };
           return t;
         });
 

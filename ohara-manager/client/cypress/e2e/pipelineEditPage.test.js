@@ -32,6 +32,7 @@ describe('PipelineEditPage', () => {
     cy.route('GET', 'api/topics').as('getTopics');
     cy.route('GET', 'api/workers').as('getWorkers');
     cy.route('GET', '/api/connectors/*').as('getConnector');
+    cy.route('PUT', '/api/connectors/*').as('putConnector');
 
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
@@ -385,12 +386,6 @@ describe('PipelineEditPage', () => {
   });
 
   it('connects perf source -> Topic', () => {
-    cy.server();
-    cy.route('PUT', '/api/pipelines/*').as('putPipeline');
-    cy.route('GET', '/api/pipelines/*').as('getPipeline');
-    cy.route('GET', '/api/connectors/*').as('getConnector');
-    cy.route('PUT', '/api/connectors/*').as('putConnector');
-
     const perfName = generate.serviceName({ prefix: 'connector' });
     const topicName = Cypress.env('TOPIC_NAME');
 
@@ -439,7 +434,10 @@ describe('PipelineEditPage', () => {
       .should('have.length', 1)
       .get('@getPipeline')
       .then(xhr => {
-        const perf = xhr.response.body.objects[1];
+        const perf = xhr.response.body.objects.find(
+          object => object.name === perfName,
+        );
+
         const metricsCount = perf.metrics.meters.length;
         cy.get('[data-testid="metric-item"]').should(
           'have.length',
@@ -467,7 +465,10 @@ describe('PipelineEditPage', () => {
       .click({ force: true })
       .get('@getPipeline')
       .then(xhr => {
-        const topic = xhr.response.body.objects[0];
+        const topic = xhr.response.body.objects.find(
+          object => object.name === topicName,
+        );
+
         const metricsCount = topic.metrics.meters.length;
         cy.get('[data-testid="metric-item"]').should(
           'have.length',

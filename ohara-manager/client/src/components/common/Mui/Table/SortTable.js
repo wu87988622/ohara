@@ -88,6 +88,7 @@ const SortTable = props => {
               const { id, label, sortable = true } = row;
               const align =
                 id === headRows[headRows.length - 1].id ? 'right' : 'left';
+
               return (
                 <React.Fragment key={id}>
                   {sortable ? (

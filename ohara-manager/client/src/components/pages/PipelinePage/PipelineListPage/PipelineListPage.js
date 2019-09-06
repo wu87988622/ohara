@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -24,6 +24,10 @@ import { Link } from 'react-router-dom';
 import { get, isEmpty, isUndefined } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
+import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
+import * as workerApi from 'api/workerApi';
+import * as streamApi from 'api/streamApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from './pipelineListPageUtils';
 import * as URLS from 'constants/urls';
@@ -50,52 +54,61 @@ const PipelineListPage = props => {
   const [pipelineToBeDeleted, setPipelineToBeDeleted] = useState('');
   const [steps, setSteps] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
+  const [pipelines, setPipelines] = useState([]);
+  const [workers, setWorkers] = useState([]);
+  const [isFetchingPipeline, setIsFetchingPipeline] = useState(false);
+  const [isFetchingWorker, setIsFetchingWorker] = useState(false);
 
   const { showMessage } = useSnackbar();
-  const {
-    data: pipelinesResponse,
-    isLoading: isFetchingPipeline,
-    refetch: refetchPipelines,
-  } = useApi.useFetchApi(URL.PIPELINE_URL);
-
-  const { data: workers, isLoading: isFetchingWorker } = useApi.useFetchApi(
-    URL.WORKER_URL,
-  );
-  const { getData: pipelineRes, postApi: createPipeline } = useApi.usePostApi(
-    URL.PIPELINE_URL,
-  );
-  const { putApi: stopConnector } = useApi.usePutApi(URL.CONNECTOR_URL);
-  const { putApi: stopStreamApp } = useApi.usePutApi(URL.STREAM_URL);
-  const { putApi: updatePipeline } = useApi.usePutApi(URL.PIPELINE_URL);
-  const { deleteApi: deleteConnector } = useApi.useDeleteApi(URL.CONNECTOR_URL);
-  const { deleteApi: deleteStreamApp } = useApi.useDeleteApi(URL.STREAM_URL);
-  const {
-    getData: deletePipelineResponse,
-    deleteApi: deletePipeline,
-  } = useApi.useDeleteApi(URL.PIPELINE_URL);
-
   const { waitApi } = useApi.useWaitApi();
 
-  const pipelines = get(pipelinesResponse, 'data.result', []);
+  const fetchPipelines = useCallback(async () => {
+    setIsFetchingPipeline(true);
+    const response = await pipelineApi.fetchPipelines();
+    const pipelines = get(response, 'data.result', []);
+    setIsFetchingPipeline(false);
+    setPipelines(pipelines);
+  }, []);
+
+  useEffect(() => {
+    fetchPipelines();
+  }, [fetchPipelines]);
+
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      setIsFetchingWorker(true);
+      const response = await workerApi.fetchWorkers();
+      const workers = get(response, 'data.result', []);
+      setIsFetchingWorker(false);
+      setWorkers(workers);
+    };
+
+    fetchWorkers();
+  }, []);
 
   const handleNewModalSubmit = async values => {
     const { history, match } = props;
+    const { name: pipelineName, workspace: workerClusterName } = values;
+
     const params = {
       name: values.name,
+      group: `${workerClusterName}-${pipelineName}`,
       tags: {
-        workerClusterName: values.workspace,
+        workerClusterName,
       },
     };
 
     setIsNewModalWorking(true);
-    await createPipeline(params);
+    const response = await pipelineApi.createPipeline(params);
+    const updatedPipelineName = get(response, 'data.result.name', null);
     setIsNewModalWorking(false);
-    const pipelineName = get(pipelineRes(), 'data.result.name', null);
 
-    if (pipelineName) {
+    if (updatedPipelineName) {
       setIsNewModalOpen(false);
       showMessage(MESSAGES.PIPELINE_CREATION_SUCCESS);
-      history.push(`${match.url}/edit/${pipelineName}`);
+      history.push(
+        `${match.url}/edit/${workerClusterName}/${updatedPipelineName}`,
+      );
     }
   };
 
@@ -109,7 +122,7 @@ const PipelineListPage = props => {
     setPipelineToBeDeleted('');
   };
 
-  const deleteObjects = async objects => {
+  const deleteObjects = async (group, objects) => {
     const runningObjects = objects.filter(
       object => object.kind !== 'topic' && Boolean(object.state),
     );
@@ -133,24 +146,24 @@ const PipelineListPage = props => {
       // be deleted in the workspace not pipeline for now!
       if (isConnector) {
         if (isRunning) {
-          await stopConnector(`/${objectName}/stop`);
+          await connectorApi.stopConnector(group, objectName);
           await waitApi({
-            url: `${URL.CONNECTOR_URL}/${objectName}`,
+            url: `${URL.CONNECTOR_URL}/${objectName}?group=${group}`,
             checkFn: response => isUndefined(response.data.result.state),
           });
         }
-        await deleteConnector(`/${objectName}`);
+        await connectorApi.deleteConnector(group, objectName);
       }
 
       if (kind === 'stream') {
         if (isRunning) {
-          await stopStreamApp(`/${objectName}/stop`);
+          await streamApi.stopStreamApp(group, objectName);
           await waitApi({
-            url: `${URL.STREAM_URL}/${objectName}`,
+            url: `${URL.STREAM_URL}/${objectName}?group=${group}`,
             checkFn: response => isUndefined(response.data.result.state),
           });
         }
-        await deleteStreamApp(`/${objectName}`);
+        await streamApi.deleteProperty(group, objectName);
       }
 
       index++;
@@ -160,25 +173,33 @@ const PipelineListPage = props => {
 
   const handleDeleteConfirm = async () => {
     setIsDeleteModalWorking(true);
-    const [targetPipeline] = pipelines.filter(
+    const [{ name, objects, group }] = pipelines.filter(
       pipeline => pipeline.name === pipelineToBeDeleted,
     );
-    const { objects } = targetPipeline;
-
     // First, stop running objects then delete them
-    await deleteObjects(objects);
+    await deleteObjects(group, objects);
 
     // Second, update pipeline flows, so everthing is relased from this pipeline
-    await updatePipeline(`/${pipelineToBeDeleted}`, { flows: [] });
+    pipelineApi.updatePipeline({
+      name,
+      group,
+      params: {
+        flows: [],
+      },
+    });
 
     // Finally, let's delete the pipeline
-    await deletePipeline(pipelineToBeDeleted);
-    const isSuccess = get(deletePipelineResponse(), 'data.isSuccess', false);
+    const response = await pipelineApi.deletePipeline(group, name);
+    const isSuccess = get(response, 'data.isSuccess', false);
+
     setIsDeleteModalWorking(false);
 
     if (isSuccess) {
       setIsDeleteModalOpen(false);
-      refetchPipelines(true);
+      const response = await pipelineApi.fetchPipelines();
+      const pipelines = get(response, 'data.result', []);
+      setPipelines(pipelines);
+
       showMessage(
         `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
       );
@@ -200,8 +221,12 @@ const PipelineListPage = props => {
   };
 
   const editButton = pipeline => {
-    const { name } = pipeline;
-    const url = `${props.match.url}/edit/${name}`;
+    const {
+      name,
+      tags: { workerClusterName },
+    } = pipeline;
+
+    const url = `${props.match.url}/edit/${workerClusterName}/${name}`;
 
     return (
       <Tooltip title={`Edit ${name} pipeline`} enterDelay={1000}>
@@ -270,13 +295,13 @@ const PipelineListPage = props => {
                 }}
                 testId="new-pipeline-modal"
               >
-                {isFetchingWorker ? (
+                {isFetchingWorker || isFetchingPipeline ? (
                   <s.LoaderWrapper>
                     <ListLoader />
                   </s.LoaderWrapper>
                 ) : (
                   <>
-                    {isEmpty(get(workers, 'data.result')) ? (
+                    {isEmpty(workers) ? (
                       <DialogContent>
                         <Warning
                           text={
@@ -310,9 +335,7 @@ const PipelineListPage = props => {
                             inputProps={{
                               'data-testid': 'workspace-name-select',
                             }}
-                            list={get(workers, 'data.result', []).map(
-                              worker => worker.name,
-                            )}
+                            list={workers.map(worker => worker.name)}
                             component={Select}
                             required
                           />

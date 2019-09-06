@@ -23,6 +23,8 @@ const setup = () => {
   const workerClusterName = generate.serviceName({ prefix: 'worker' });
   const topicName = generate.serviceName({ prefix: 'topic' });
 
+  const topicGroup = `${workerClusterName}-topic`;
+
   cy.createNode({
     name: nodeName,
     port: generate.port(),
@@ -56,9 +58,10 @@ const setup = () => {
   cy.createTopic({
     name: topicName,
     brokerClusterName,
+    group: topicGroup,
   }).as('createTopic');
 
-  cy.startTopic(topicName);
+  cy.startTopic(topicGroup, topicName);
 
   return {
     workerClusterName,

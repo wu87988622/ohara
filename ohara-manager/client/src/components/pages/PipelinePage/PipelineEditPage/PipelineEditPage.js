@@ -38,6 +38,7 @@ class PipelineEditPage extends React.Component {
     match: PropTypes.shape({
       params: PropTypes.shape({
         pipelineName: PropTypes.string.isRequired,
+        workspaceName: PropTypes.string.isRequired,
         connectorName: PropTypes.string,
       }).isRequired,
     }).isRequired,
@@ -119,11 +120,12 @@ class PipelineEditPage extends React.Component {
   };
 
   fetchPipeline = async () => {
-    const { match } = this.props;
-    const pipelineName = get(match, 'params.pipelineName', null);
+    const { workspaceName, pipelineName } = this.props.match.params;
+
+    const group = `${workspaceName}-${pipelineName}`;
 
     if (pipelineName) {
-      const res = await pipelineApi.fetchPipeline(pipelineName);
+      const res = await pipelineApi.fetchPipeline(group, pipelineName);
       const pipeline = get(res, 'data.result', null);
 
       if (pipeline) {
@@ -131,9 +133,9 @@ class PipelineEditPage extends React.Component {
           object => object.kind === 'topic',
         );
 
-        const hasRunningServices = pipeline.objects.some(object =>
-          Boolean(object.state),
-        );
+        const hasRunningServices = pipeline.objects
+          .filter(object => object.kind !== 'topic') // topics are not counted as running objects
+          .some(object => Boolean(object.state));
 
         this.setState({ pipeline, pipelineTopics, hasRunningServices }, () => {
           this.loadGraph(this.state.pipeline);
@@ -207,7 +209,7 @@ class PipelineEditPage extends React.Component {
 
   updatePipeline = async (update = {}) => {
     const { pipeline } = this.state;
-    const { name, flows } = pipeline;
+    const { name, flows, group } = pipeline;
 
     const updatedFlows = utils.updateFlows({ pipeline, ...update });
 
@@ -219,6 +221,7 @@ class PipelineEditPage extends React.Component {
     this.setState({ isUpdating: true }, async () => {
       const response = await pipelineApi.updatePipeline({
         name,
+        group,
         params: { flows: updatedFlows },
       });
 
@@ -259,9 +262,7 @@ class PipelineEditPage extends React.Component {
 
     if (isEmpty(pipeline) || isEmpty(connectors)) return null;
 
-    const pipelineName = get(this, 'props.match.params.pipelineName', null);
-    const { name: pipelineTitle, tags, objects: pipelineConnectors } = pipeline;
-
+    const { name: pipelineTitle, tags } = pipeline;
     const { workerClusterName } = tags;
 
     const connectorProps = {
@@ -315,9 +316,7 @@ class PipelineEditPage extends React.Component {
               <Sidebar>
                 <Heading2>{pipelineTitle}</Heading2>
                 <Operate
-                  pipelineName={pipelineName}
-                  pipelineConnectors={pipelineConnectors}
-                  workerClusterName={workerClusterName}
+                  pipeline={pipeline}
                   fetchPipeline={this.fetchPipeline}
                   updateHasRunningServices={this.updateHasRunningServices}
                 />

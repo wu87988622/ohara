@@ -41,12 +41,16 @@ class StreamApp extends React.Component {
     graph: PropTypes.arrayOf(graphPropType).isRequired,
     pipeline: PropTypes.shape({
       name: PropTypes.string.isRequired,
+      group: PropTypes.string.isRequired,
       flows: PropTypes.arrayOf(
         PropTypes.shape({
           from: PropTypes.object,
           to: PropTypes.arrayOf(PropTypes.object),
         }),
       ).isRequired,
+      tags: PropTypes.shape({
+        workerClusterName: PropTypes.string.isRequired,
+      }).isRequired,
     }).isRequired,
     updateGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
@@ -69,8 +73,9 @@ class StreamApp extends React.Component {
   };
 
   componentDidMount() {
+    this.streamGroup = 'default';
     this.streamAppName = this.props.match.params.connectorName;
-    this.fetchStreamApp(this.streamAppName);
+    this.fetchStreamApp();
     this.setTopics();
   }
 
@@ -86,7 +91,8 @@ class StreamApp extends React.Component {
     }
 
     if (prevConnectorName !== currConnectorName) {
-      this.fetchStreamApp(currConnectorName);
+      this.streamAppName = currConnectorName;
+      this.fetchStreamApp();
     }
   }
 
@@ -96,7 +102,11 @@ class StreamApp extends React.Component {
   };
 
   fetchStreamApp = async name => {
-    const res = await streamApi.fetchProperty(name);
+    const res = await streamApi.fetchProperty(
+      this.streamGroup,
+      this.streamAppName,
+    );
+
     this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
 
@@ -150,13 +160,15 @@ class StreamApp extends React.Component {
       toTopic = [];
     }
 
+    const { workerClusterName } = this.props.pipeline.tags;
+    const topicGroup = `${workerClusterName}-topic`;
     const fromKey = isEmpty(fromTopic)
       ? fromTopic
-      : [{ group: 'default', name: fromTopic[0] }];
+      : [{ group: topicGroup, name: fromTopic[0] }];
 
     const toKey = isEmpty(toTopic)
       ? toTopic
-      : [{ group: 'default', name: toTopic[0] }];
+      : [{ group: topicGroup, name: toTopic[0] }];
 
     const params = {
       ...values,
@@ -166,7 +178,11 @@ class StreamApp extends React.Component {
       to: toKey,
     };
 
-    const res = await streamApi.updateProperty(params);
+    const res = await streamApi.updateProperty({
+      group: this.streamGroup,
+      name: this.streamAppName,
+      params,
+    });
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -224,7 +240,12 @@ class StreamApp extends React.Component {
 
   handleDeleteStreamApp = async () => {
     const { refreshGraph, history, pipeline } = this.props;
-    const { name: pipelineName, flows } = pipeline;
+    const {
+      name: pipelineName,
+      flows,
+      group: pipelineGroup,
+      tags: { workerClusterName },
+    } = pipeline;
 
     if (this.state.state) {
       toastr.error(
@@ -235,6 +256,7 @@ class StreamApp extends React.Component {
     }
 
     const connectorResponse = await streamApi.deleteProperty(
+      this.streamGroup,
       this.streamAppName,
     );
 
@@ -246,6 +268,7 @@ class StreamApp extends React.Component {
 
     const pipelineResponse = await pipelineApi.updatePipeline({
       name: pipelineName,
+      group: pipelineGroup,
       params: {
         name: pipelineName,
         flows: updatedFlows,
@@ -260,7 +283,7 @@ class StreamApp extends React.Component {
       );
       await refreshGraph();
 
-      const path = `/pipelines/edit/${pipelineName}`;
+      const path = `/pipelines/edit/${workerClusterName}/${pipelineName}`;
       history.push(path);
     }
   };
@@ -268,9 +291,12 @@ class StreamApp extends React.Component {
   triggerStreamApp = async action => {
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamApi.startStreamApp(this.streamAppName);
+      res = await streamApi.startStreamApp(
+        this.streamGroup,
+        this.streamAppName,
+      );
     } else {
-      res = await streamApi.stopStreamApp(this.streamAppName);
+      res = await streamApi.stopStreamApp(this.streamGroup, this.streamAppName);
     }
 
     const isSuccess = get(res, 'data.isSuccess', false);
@@ -280,7 +306,10 @@ class StreamApp extends React.Component {
   handleTriggerConnectorResponse = async (action, isSuccess) => {
     if (!isSuccess) return;
 
-    const response = await streamApi.fetchProperty(this.streamAppName);
+    const response = await streamApi.fetchProperty(
+      this.streamGroup,
+      this.streamAppName,
+    );
     const state = get(response, 'data.result.state', null);
     const { graph, updateGraph } = this.props;
 

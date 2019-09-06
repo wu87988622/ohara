@@ -35,9 +35,10 @@ const getClassName = connector => {
 export const createConnector = async ({
   updateGraph,
   connector,
-  workerClusterName,
   newConnectorName,
   newStreamAppName,
+  workerClusterName,
+  group,
 }) => {
   const { typeName } = connector;
 
@@ -57,15 +58,14 @@ export const createConnector = async ({
 
     connectorName = newStreamAppName;
   } else if (typeName === 'source' || typeName === 'sink') {
-    const params = {
+    connectorName = newConnectorName;
+    const response = await connectorApi.createConnector({
       name: newConnectorName,
       'connector.class': className,
-      'connector.name': newConnectorName,
       workerClusterName,
-    };
-    connectorName = newConnectorName;
+      group,
+    });
 
-    const response = await connectorApi.createConnector(params);
     if (!response.data.isSuccess) return; // failed to create
   }
 

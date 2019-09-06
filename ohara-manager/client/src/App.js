@@ -49,7 +49,7 @@ class App extends React.Component {
               <Header />
               <Switch>
                 <Route
-                  path="/pipelines/edit/:pipelineName/:connectorKind?/:connectorName?"
+                  path="/pipelines/edit/:workspaceName/:pipelineName/:connectorKind?/:connectorName?"
                   component={PipelineEditPage}
                   data-testid="pipeline-edit-page"
                 />

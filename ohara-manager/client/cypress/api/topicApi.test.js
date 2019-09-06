@@ -23,7 +23,12 @@ const setup = () => {
   const nodeName = generate.serviceName({ prefix: 'node' });
   const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
   const brokerClusterName = generate.serviceName({ prefix: 'broker' });
+  const workerClusterName = generate.serviceName({ prefix: 'worker' });
   const topicName = generate.serviceName({ prefix: 'topic' });
+
+  // The worker is not required in the test, so we're useing `workerClusterName`
+  // as the topic group to mimic the behvior of our UI code
+  const topicGroup = `${workerClusterName}-topic`;
 
   cy.createNode({
     name: nodeName,
@@ -50,18 +55,20 @@ const setup = () => {
   cy.createTopic({
     name: topicName,
     brokerClusterName,
+    group: topicGroup,
     tags: {
       name: topicName,
     },
   }).as('createTopic');
 
-  cy.startTopic(topicName);
+  cy.startTopic(topicGroup, topicName);
 
   return {
     nodeName,
     zookeeperClusterName,
     brokerClusterName,
     topicName,
+    topicGroup,
   };
 };
 
@@ -69,7 +76,7 @@ describe('Topic API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('CreateTopic', () => {
-    const { topicName } = setup();
+    const { topicName, topicGroup } = setup();
 
     cy.get('@createTopic').then(response => {
       const {
@@ -81,6 +88,7 @@ describe('Topic API', () => {
         numberOfReplications,
         metrics,
         tags,
+        group,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -91,13 +99,14 @@ describe('Topic API', () => {
       expect(metrics).to.be.a('object');
       expect(metrics.meters).to.be.a('array');
       expect(tags.name).to.eq(topicName);
+      expect(group).to.eq(topicGroup);
     });
   });
 
   it('fetchTopic', () => {
-    const { topicName } = setup();
+    const { topicName, topicGroup } = setup();
 
-    cy.fetchTopic(topicName).then(response => {
+    cy.fetchTopic(topicGroup, topicName).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -108,6 +117,7 @@ describe('Topic API', () => {
         numberOfReplications,
         metrics,
         tags,
+        group,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -118,27 +128,30 @@ describe('Topic API', () => {
       expect(metrics).to.be.a('object');
       expect(metrics.meters).to.be.a('array');
       expect(tags.name).to.eq(topicName);
+      expect(group).to.eq(topicGroup);
     });
   });
 
   it('fetchTopics', () => {
-    const { brokerClusterName } = setup();
+    const { brokerClusterName, topicGroup } = setup();
 
     const paramsOne = {
       name: generate.serviceName({ prefix: 'topic' }),
+      group: topicGroup,
       brokerClusterName,
     };
 
     const paramsTwo = {
       name: generate.serviceName({ prefix: 'topic' }),
+      group: topicGroup,
       brokerClusterName,
     };
 
     cy.createTopic(paramsOne);
     cy.createTopic(paramsTwo);
 
-    cy.startTopic(paramsOne.name);
-    cy.startTopic(paramsTwo.name);
+    cy.startTopic(topicGroup, paramsOne.name);
+    cy.startTopic(topicGroup, paramsTwo.name);
 
     cy.fetchTopics().then(response => {
       const {
@@ -156,49 +169,49 @@ describe('Topic API', () => {
   });
 
   it('startTopic', () => {
-    const { topicName } = setup();
+    const { topicName, topicGroup } = setup();
 
-    cy.startTopic(topicName).then(response => {
+    cy.startTopic(topicGroup, topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchTopic(topicName).then(response => {
+    cy.fetchTopic(topicGroup, topicName).then(response => {
       expect(response.data.result.state).to.eq('RUNNING');
     });
   });
 
   it('stopTopic', () => {
-    const { topicName } = setup();
+    const { topicName, topicGroup } = setup();
 
-    cy.startTopic(topicName).then(response => {
+    cy.startTopic(topicGroup, topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchTopic(topicName).then(response => {
+    cy.fetchTopic(topicGroup, topicName).then(response => {
       expect(response.data.result.state).to.eq('RUNNING');
     });
 
-    cy.stopTopic(topicName).then(response => {
+    cy.stopTopic(topicGroup, topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchTopic(topicName).then(response => {
+    cy.fetchTopic(topicGroup, topicName).then(response => {
       expect(response.data.result.state).to.eq.undefined;
     });
   });
 
   it('deleteTopic', () => {
-    const { topicName } = setup();
+    const { topicName, topicGroup } = setup();
 
-    cy.fetchTopic(topicName).then(response => {
+    cy.fetchTopic(topicGroup, topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.stopTopic(topicName).then(response => {
+    cy.stopTopic(topicGroup, topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.deleteTopic(topicName).then(response => {
+    cy.deleteTopic(topicGroup, topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 

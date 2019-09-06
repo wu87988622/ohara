@@ -35,8 +35,9 @@ class PipelineNewConnector extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     activeConnector: PropTypes.object,
     updateAddBtnStatus: PropTypes.func.isRequired,
-    workerClusterName: PropTypes.string.isRequired,
     handleClose: PropTypes.func.isRequired,
+    pipelineGroup: PropTypes.string.isRequired,
+    workerClusterName: PropTypes.string.isRequired,
   };
 
   state = {
@@ -60,6 +61,7 @@ class PipelineNewConnector extends React.Component {
     const {
       updateGraph,
       activeConnector: connector,
+      pipelineGroup,
       workerClusterName,
     } = this.props;
     const { newConnectorName } = this.state;
@@ -67,8 +69,9 @@ class PipelineNewConnector extends React.Component {
     utils.createConnector({
       updateGraph,
       connector,
-      workerClusterName,
       newConnectorName,
+      workerClusterName,
+      group: pipelineGroup,
     });
 
     this.props.handleClose();

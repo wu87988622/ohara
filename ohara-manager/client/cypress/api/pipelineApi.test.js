@@ -23,6 +23,9 @@ const setup = () => {
   const workerClusterName = generate.serviceName({ prefix: 'worker' });
   const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
+  const topicGroup = `${workerClusterName}-topic`;
+  const pipelineGroup = `${workerClusterName}-${pipelineName}`;
+
   cy.createNode({
     name: nodeName,
     port: generate.port(),
@@ -53,6 +56,7 @@ const setup = () => {
 
   cy.createPipeline({
     name: pipelineName,
+    group: pipelineGroup,
     tags: {
       workerClusterName,
     },
@@ -63,6 +67,8 @@ const setup = () => {
     brokerClusterName,
     workerClusterName,
     pipelineName,
+    pipelineGroup,
+    topicGroup,
   };
 };
 
@@ -70,7 +76,7 @@ describe('Pipeline API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createPipeline', () => {
-    const { pipelineName, workerClusterName } = setup();
+    const { pipelineName, workerClusterName, pipelineGroup } = setup();
 
     cy.get('@createPipeline').then(response => {
       const {
@@ -83,13 +89,14 @@ describe('Pipeline API', () => {
       expect(result.tags.workerClusterName).to.eq(workerClusterName);
       expect(result.objects).to.be.an('array');
       expect(result.flows).to.be.an('array');
+      expect(result.group).to.eq(pipelineGroup);
     });
   });
 
   it('fetchPipeline', () => {
-    const { pipelineName, workerClusterName } = setup();
+    const { pipelineName, workerClusterName, pipelineGroup } = setup();
 
-    cy.fetchPipeline(pipelineName).then(response => {
+    cy.fetchPipeline(pipelineGroup, pipelineName).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -100,6 +107,7 @@ describe('Pipeline API', () => {
       expect(result.tags.workerClusterName).to.eq(workerClusterName);
       expect(result.objects).to.be.an('array');
       expect(result.flows).to.be.an('array');
+      expect(result.group).to.eq(pipelineGroup);
     });
   });
 
@@ -136,21 +144,29 @@ describe('Pipeline API', () => {
   });
 
   it('updatePipeline', () => {
-    const { brokerClusterName, workerClusterName, pipelineName } = setup();
+    const {
+      brokerClusterName,
+      workerClusterName,
+      pipelineName,
+      pipelineGroup,
+      topicGroup,
+    } = setup();
 
     let topicName = generate.serviceName({ prefix: 'topic' });
 
     cy.createTopic({
       name: topicName,
+      group: topicGroup,
       brokerClusterName,
     });
 
-    cy.startTopic(topicName);
+    cy.startTopic(topicGroup, topicName);
 
     const params = {
       name: pipelineName,
+      group: pipelineGroup,
       params: {
-        flows: [{ from: { group: 'default', name: topicName }, to: [] }],
+        flows: [{ from: { group: topicGroup, name: topicName }, to: [] }],
         workerClusterName,
       },
     };
@@ -173,13 +189,14 @@ describe('Pipeline API', () => {
       expect(topic.name).to.eq(topicName);
       expect(topic.metrics).to.be.an('object');
       expect(topic.metrics.meters).to.be.an('array');
+      expect(result.group).to.eq(pipelineGroup);
     });
   });
 
   it('deletePipeline', () => {
-    const { pipelineName } = setup();
+    const { pipelineName, pipelineGroup } = setup();
 
-    cy.deletePipeline(pipelineName).then(response => {
+    cy.deletePipeline(pipelineGroup, pipelineName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
   });

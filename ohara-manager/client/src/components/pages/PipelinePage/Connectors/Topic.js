@@ -37,12 +37,16 @@ class Topic extends React.Component {
     history: PropTypes.object,
     pipeline: PropTypes.shape({
       name: PropTypes.string.isRequired,
+      group: PropTypes.string.isRequired,
       flows: PropTypes.arrayOf(
         PropTypes.shape({
           from: PropTypes.object,
           to: PropTypes.arrayOf(PropTypes.object),
         }),
       ).isRequired,
+      tags: PropTypes.shape({
+        workerClusterName: PropTypes.string.isRequired,
+      }).isRequired,
     }).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
     refreshGraph: PropTypes.func.isRequired,
@@ -69,7 +73,9 @@ class Topic extends React.Component {
   }
 
   fetchTopic = async () => {
-    const res = await fetchTopic(this.topicName);
+    const { workerClusterName } = this.props.pipeline.tags;
+    const group = `${workerClusterName}-topic`;
+    const res = await fetchTopic(group, this.topicName);
     const topic = get(res, 'data.result', null);
     if (topic) {
       this.setState({ topic });
@@ -79,7 +85,7 @@ class Topic extends React.Component {
 
   deleteTopic = async () => {
     const { history, pipeline, refreshGraph } = this.props;
-    const { name: pipelineName, flows } = pipeline;
+    const { name, flows, group } = pipeline;
 
     if (this.hasConnection(flows, this.topicName)) {
       toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
@@ -91,9 +97,10 @@ class Topic extends React.Component {
     );
 
     const res = await pipelineApi.updatePipeline({
-      name: pipelineName,
+      name,
+      group,
       params: {
-        name: pipelineName,
+        name,
         flows: updatedFlows,
       },
     });
@@ -106,7 +113,9 @@ class Topic extends React.Component {
       } = this.state;
       toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicName}`);
       refreshGraph();
-      history.push(`/pipelines/edit/${pipelineName}`);
+
+      const { workspaceName, pipelineName } = this.props.match.params;
+      history.push(`/pipelines/edit/${workspaceName}/${pipelineName}`);
     }
   };
 

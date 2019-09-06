@@ -18,9 +18,11 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchPipeline = async id => {
+export const fetchPipeline = async (group, name) => {
   try {
-    const res = await axiosInstance.get(`/api/pipelines/${id}`);
+    const res = await axiosInstance.get(
+      `/api/pipelines/${name}?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -63,9 +65,12 @@ export const createPipeline = async params => {
   }
 };
 
-export const updatePipeline = async ({ name, params }) => {
+export const updatePipeline = async ({ name, group, params }) => {
   try {
-    const res = await axiosInstance.put(`/api/pipelines/${name}`, params);
+    const res = await axiosInstance.put(
+      `/api/pipelines/${name}?group=${group}`,
+      params,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -78,24 +83,11 @@ export const updatePipeline = async ({ name, params }) => {
   }
 };
 
-export const deletePipeline = async id => {
+export const deletePipeline = async (groupName, pipelineName) => {
   try {
-    const res = await axiosInstance.delete(`/api/pipelines/${id}`);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const queryRdb = async params => {
-  try {
-    const res = await axiosInstance.post('/api/query/rdb', params);
+    const res = await axiosInstance.delete(
+      `/api/pipelines/${pipelineName}?group=${groupName}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

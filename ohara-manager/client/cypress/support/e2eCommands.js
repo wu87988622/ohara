@@ -103,12 +103,8 @@ Cypress.Commands.add('addWorker', () => {
   cy.request('GET', endPoint).then(() => req(endPoint));
 });
 
-Cypress.Commands.add('addPipeline', pipeline => {
-  cy.request('POST', `/api/pipelines`, {
-    name: pipeline.name || 'Untitled pipeline',
-    workerClusterName: pipeline.workerName,
-    ...pipeline,
-  }).then(({ body }) => body);
+Cypress.Commands.add('addPipeline', params => {
+  cy.request('POST', `/api/pipelines`, params).then(({ body }) => body);
 });
 
 Cypress.Commands.add(
@@ -126,16 +122,18 @@ Cypress.Commands.add(
       })
       .as('brokerClusterName');
 
+    const group = `${Cypress.env('WORKER_NAME')}-topic`;
     cy.get('@brokerClusterName').then(brokerClusterName => {
       cy.request('POST', '/api/topics', {
         name: topicName,
         numberOfReplications: 1,
         numberOfPartitions: 1,
         brokerClusterName,
+        group,
       }).then(({ body }) => body);
     });
 
-    cy.request('PUT', `/api/topics/${topicName}/start`);
+    cy.request('PUT', `/api/topics/${topicName}/start?group=${group}`);
     Cypress.env('TOPIC_NAME', topicName);
   },
 );
@@ -190,39 +188,6 @@ Cypress.Commands.add('removeWorkers', () => {
   });
 });
 
-Cypress.Commands.add('removeTopic', topicName => {
-  cy.request('GET', 'api/topics').then(res => {
-    res.body.forEach(({ name }) => {
-      if (name === topicName) {
-        cy.request('PUT', `/api/topics/${name}/stop`);
-        cy.request('DELETE', `api/topics/${name}`);
-      }
-    });
-  });
-});
-
-Cypress.Commands.add('removePipeline', pipelineName => {
-  cy.request('GET', 'api/pipelines').then(res => {
-    res.body.forEach(({ name, id }) => {
-      if (name === pipelineName) {
-        cy.request('DELETE', `api/pipelines/${id}`);
-      }
-    });
-  });
-});
-
-Cypress.Commands.add('uploadStreamAppJar', () => {
-  cy.getByTestId('toolbar-streams')
-    .click()
-    .uploadJar(
-      'input[type=file]',
-      'streamApp/ohara-streamapp.jar',
-      'ohara-streamapp.jar',
-      'application/java-archive',
-    )
-    .wait(500);
-});
-
 Cypress.Commands.add('uploadTestStreamAppJar', workerClusterName => {
   cy.fixture(`streamApp/ohara-streamapp.jar`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
@@ -241,7 +206,7 @@ Cypress.Commands.add('uploadTestStreamAppJar', workerClusterName => {
 
       let formData = new FormData();
       formData.append('file', blob[0]);
-      formData.append('group', workerClusterName);
+      formData.append('group', `${workerClusterName}-streamjar`);
       const res = axiosInstance.post(url, formData, config);
       cy.log(res);
     });

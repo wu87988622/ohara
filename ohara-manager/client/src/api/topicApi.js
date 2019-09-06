@@ -18,9 +18,9 @@ import { toNumber, get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchTopic = async name => {
+export const fetchTopic = async (group, name) => {
   try {
-    const res = await axiosInstance.get(`/api/topics/${name}`);
+    const res = await axiosInstance.get(`/api/topics/${name}?group=${group}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -49,10 +49,11 @@ export const fetchTopics = async () => {
 };
 
 export const createTopic = async params => {
-  const { name, numberOfPartitions, numberOfReplications } = params;
+  const { name, numberOfPartitions, numberOfReplications, group } = params;
 
   try {
     const data = {
+      group,
       name,
       numberOfPartitions: toNumber(numberOfPartitions),
       brokerClusterName: params.brokerClusterName,
@@ -73,9 +74,11 @@ export const createTopic = async params => {
   }
 };
 
-export const startTopic = async name => {
+export const startTopic = async (group, name) => {
   try {
-    const res = await axiosInstance.put(`/api/topics/${name}/start`);
+    const res = await axiosInstance.put(
+      `/api/topics/${name}/start?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -88,9 +91,11 @@ export const startTopic = async name => {
   }
 };
 
-export const stopTopic = async name => {
+export const stopTopic = async (group, name) => {
   try {
-    const res = await axiosInstance.put(`/api/topics/${name}/stop`);
+    const res = await axiosInstance.put(
+      `/api/topics/${name}/stop?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -103,9 +108,11 @@ export const stopTopic = async name => {
   }
 };
 
-export const deleteTopic = async name => {
+export const deleteTopic = async (group, name) => {
   try {
-    const res = await axiosInstance.delete(`/api/topics/${name}`);
+    const res = await axiosInstance.delete(
+      `/api/topics/${name}?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

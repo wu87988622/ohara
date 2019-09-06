@@ -31,7 +31,7 @@ describe('PipelineListPage', () => {
     cy.route('DELETE', 'api/pipelines/*').as('deletePipeline');
   });
 
-  it('should display an newly created pipeline in the list', () => {
+  it('should display a newly created pipeline in the list', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
     cy.visit(URLS.PIPELINES)
@@ -55,6 +55,7 @@ describe('PipelineListPage', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
+      group: `${Cypress.env('WORKER_NAME')}-${pipelineName}`,
       tags: {
         workerClusterName: Cypress.env('WORKER_NAME'),
       },
@@ -77,6 +78,7 @@ describe('PipelineListPage', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
+      group: `${Cypress.env('WORKER_NAME')}-${pipelineName}`,
       tags: {
         workerClusterName: Cypress.env('WORKER_NAME'),
       },

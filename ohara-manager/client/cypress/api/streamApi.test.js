@@ -26,6 +26,10 @@ const setup = () => {
   const workerClusterName = generate.serviceName({ prefix: 'worker' });
   let streamName = generate.serviceName({ prefix: 'stream' });
 
+  // stream apps are not supporting `group` for now, so using a `default` as the group
+  const streamGroup = 'default';
+  const topicGroup = `${workerClusterName}-topic`;
+
   cy.createNode({
     name: nodeName,
     port: generate.port(),
@@ -80,6 +84,8 @@ const setup = () => {
     zookeeperClusterName,
     brokerClusterName,
     streamName,
+    streamGroup,
+    topicGroup,
   };
 };
 
@@ -116,9 +122,9 @@ describe('Stream property API', () => {
   });
 
   it('fetchProperty', () => {
-    const { streamName } = setup();
+    const { streamName, streamGroup } = setup();
 
-    cy.fetchProperty(streamName).then(response => {
+    cy.fetchProperty(streamGroup, streamName).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -132,11 +138,16 @@ describe('Stream property API', () => {
   });
 
   it('updateProperty', () => {
-    const { streamName } = setup();
+    const { streamName, streamGroup } = setup();
 
     const params = {
       name: streamName,
-      instances: 1,
+      group: streamGroup,
+      params: {
+        instances: 1,
+        from: [],
+        to: [],
+      },
     };
 
     cy.updateProperty(params).then(response => {
@@ -153,99 +164,111 @@ describe('Stream property API', () => {
   });
 
   it('startStreamApp', () => {
-    const { streamName, brokerClusterName } = setup();
+    const { streamName, brokerClusterName, streamGroup, topicGroup } = setup();
     const fromTopicName = generate.serviceName({ prefix: 'topic' });
     const toTopicName = generate.serviceName({ prefix: 'topic' });
 
     cy.createTopic({
       name: fromTopicName,
       brokerClusterName,
+      group: topicGroup,
     }).as('createTopic');
 
-    cy.startTopic(fromTopicName);
+    cy.startTopic(topicGroup, fromTopicName);
 
     cy.createTopic({
       name: toTopicName,
       brokerClusterName,
+      group: topicGroup,
     }).as('createTopic');
 
-    cy.startTopic(toTopicName);
+    cy.startTopic(topicGroup, toTopicName);
 
     const params = {
-      from: [{ group: 'default', name: fromTopicName }],
-      to: [{ group: 'default', name: toTopicName }],
       name: streamName,
-      instances: 1,
+      group: streamGroup,
+      params: {
+        from: [{ group: topicGroup, name: fromTopicName }],
+        to: [{ group: topicGroup, name: toTopicName }],
+        name: streamName,
+        instances: 1,
+      },
     };
 
     cy.updateProperty(params).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchProperty(streamName).then(response => {
+    cy.fetchProperty(streamGroup, streamName).then(response => {
       expect(response.state).to.be.undefined;
     });
 
-    cy.startStreamApp(streamName).then(response => {
+    cy.startStreamApp(streamGroup, streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchProperty(streamName).then(response => {
+    cy.fetchProperty(streamGroup, streamName).then(response => {
       expect(response.data.result.state).to.eq('RUNNING');
     });
   });
 
   it('stopStreamApp', () => {
-    const { streamName, brokerClusterName } = setup();
+    const { streamName, brokerClusterName, topicGroup, streamGroup } = setup();
     const fromTopicName = generate.serviceName({ prefix: 'topic' });
     const toTopicName = generate.serviceName({ prefix: 'topic' });
 
     cy.createTopic({
       name: fromTopicName,
       brokerClusterName,
+      group: topicGroup,
     }).as('createTopic');
 
-    cy.startTopic(fromTopicName);
+    cy.startTopic(topicGroup, fromTopicName);
 
     cy.createTopic({
       name: toTopicName,
       brokerClusterName,
+      group: topicGroup,
     }).as('createTopic');
 
-    cy.startTopic(toTopicName);
+    cy.startTopic(topicGroup, toTopicName);
 
     const params = {
-      from: [{ group: 'default', name: fromTopicName }],
-      to: [{ group: 'default', name: toTopicName }],
       name: streamName,
-      instances: 1,
+      group: streamGroup,
+      params: {
+        from: [{ group: topicGroup, name: fromTopicName }],
+        to: [{ group: topicGroup, name: toTopicName }],
+        name: streamName,
+        instances: 1,
+      },
     };
 
     cy.updateProperty(params).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.startStreamApp(streamName).then(response => {
+    cy.startStreamApp(streamGroup, streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchProperty(streamName).then(response => {
+    cy.fetchProperty(streamGroup, streamName).then(response => {
       expect(response.data.result.state).to.eq('RUNNING');
     });
 
-    cy.stopStreamApp(streamName).then(response => {
+    cy.stopStreamApp(streamGroup, streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchProperty(streamName).then(response => {
+    cy.fetchProperty(streamGroup, streamName).then(response => {
       expect(response.data.result.state).to.eq.undefined;
     });
   });
 
   it('deleteProperty', () => {
-    const { streamName } = setup();
+    const { streamName, streamGroup } = setup();
 
-    cy.deleteProperty(streamName).then(response => {
+    cy.deleteProperty(streamGroup, streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
   });

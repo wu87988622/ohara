@@ -22,11 +22,10 @@ import { Connector, Topic, StreamApp } from '../Connectors';
 
 const SidebarRoutes = props => {
   const { connectorProps } = props;
-  const {
-    pipeline: { name },
-  } = connectorProps;
+  const { match } = connectorProps;
+  const { workspaceName, pipelineName } = match.params;
 
-  const routeBaseUrl = `/pipelines/edit/${name}`;
+  const routeBaseUrl = `/pipelines/edit/${workspaceName}/${pipelineName}`;
 
   return (
     <div data-testid="pipeline-config-form">
@@ -47,8 +46,14 @@ const SidebarRoutes = props => {
 };
 
 SidebarRoutes.propTypes = {
-  connectorProps: PropTypes.object.isRequired,
-  connectors: PropTypes.array.isRequired,
+  connectorProps: PropTypes.shape({
+    match: PropTypes.shape({
+      params: PropTypes.shape({
+        workspaceName: PropTypes.string.isRequired,
+        pipelineName: PropTypes.string.isRequired,
+      }).isRequired,
+    }).isRequired,
+  }).isRequired,
 };
 
 export default SidebarRoutes;

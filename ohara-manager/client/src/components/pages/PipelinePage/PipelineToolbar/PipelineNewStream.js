@@ -48,9 +48,13 @@ class PipelineNewStream extends React.Component {
     isLoading: true,
     jars: [],
     activeJar: null,
+    streamGroup: '',
   };
 
   componentDidMount() {
+    const { workerClusterName } = this.props;
+    const streamGroup = `${workerClusterName}-streamjar`;
+    this.setState({ streamGroup });
     this.fetchData();
   }
 
@@ -68,18 +72,17 @@ class PipelineNewStream extends React.Component {
   };
 
   fetchJars = async () => {
-    const { workerClusterName, updateAddBtnStatus } = this.props;
-    const res = await jarApi.fetchJars(workerClusterName);
+    const response = await jarApi.fetchJars(this.state.streamGroup);
     this.setState({ isLoading: false });
 
-    const jars = get(res, 'data.result', null);
+    const jars = get(response, 'data.result', null);
     const activeJar = {
       group: get(jars, '[0].group', null),
       name: get(jars, '[0].name', null),
     };
 
     if (isNull(activeJar.group) && isNull(activeJar.name)) {
-      updateAddBtnStatus(null);
+      this.props.updateAddBtnStatus(null);
     }
 
     if (!isNull(jars)) {
@@ -119,6 +122,7 @@ class PipelineNewStream extends React.Component {
       updateGraph,
       connector,
       newStreamAppName,
+      group: this.state.streamGroup,
     });
 
     this.props.handleClose();

@@ -26,13 +26,16 @@ import { Heading3, OperateWrapper } from './styles';
 import { getConnectors } from '../pipelineUtils';
 
 const Operate = props => {
+  const { fetchPipeline, updateHasRunningServices, pipeline } = props;
+
   const {
-    workerClusterName,
-    fetchPipeline,
-    pipelineConnectors,
-    pipelineName,
-    updateHasRunningServices,
-  } = props;
+    name: pipelineName,
+    objects: pipelineConnectors,
+    group: pipelineGroup,
+    tags: { workerClusterName },
+  } = pipeline;
+
+  const streamGroup = 'default';
 
   const makeRequest = (action, connectors) => {
     const { sources, sinks, streams } = getConnectors(connectors);
@@ -43,16 +46,20 @@ const Operate = props => {
 
     if (action === 'start') {
       connectorPromises = _connectors.map(connector =>
-        connectorApi.startConnector(connector),
+        connectorApi.startConnector(pipelineGroup, connector),
       );
 
-      streamsPromises = streams.map(stream => streamApi.startStreamApp(stream));
+      streamsPromises = streams.map(stream =>
+        streamApi.startStreamApp(streamGroup, stream),
+      );
     } else {
       connectorPromises = _connectors.map(connector =>
-        connectorApi.stopConnector(connector),
+        connectorApi.stopConnector(pipelineGroup, connector),
       );
 
-      streamsPromises = streams.map(stream => streamApi.stopStreamApp(stream));
+      streamsPromises = streams.map(stream =>
+        streamApi.stopStreamApp(streamGroup, stream),
+      );
     }
 
     return Promise.all([...connectorPromises, ...streamsPromises]).then(
@@ -76,7 +83,7 @@ const Operate = props => {
 
       const hasRunningServices = action === 'start';
       updateHasRunningServices(hasRunningServices);
-      await fetchPipeline(pipelineName);
+      await fetchPipeline(pipelineGroup, pipelineName);
     }
   };
 
@@ -116,10 +123,15 @@ const Operate = props => {
 };
 
 Operate.propTypes = {
-  workerClusterName: PropTypes.string.isRequired,
   fetchPipeline: PropTypes.func.isRequired,
-  pipelineConnectors: PropTypes.arrayOf(PropTypes.object),
-  pipelineName: PropTypes.string.isRequired,
+  pipeline: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    objects: PropTypes.arrayOf(PropTypes.object),
+    group: PropTypes.string.isRequired,
+    tags: PropTypes.shape({
+      workerClusterName: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
   updateHasRunningServices: PropTypes.func.isRequired,
 };
 

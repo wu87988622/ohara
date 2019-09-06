@@ -101,18 +101,19 @@ const PipelineGraph = props => {
 
     const handleNodeClick = current => {
       const { history, graph, match, updateGraph } = props;
-      const { pipelineName } = match.params;
+      const { workspaceName, pipelineName } = match.params;
       const currentConnector = graph.find(g => g.name === current);
       const { name: connectorName, kind } = currentConnector;
+
       updateGraph({
         update: currentConnector,
         dispatcher: { name: 'GRAPH' },
       });
 
-      const baseUrl = `/pipelines/edit/${pipelineName}/${kind}`;
+      const baseUrl = `/pipelines/edit/${workspaceName}/${pipelineName}`;
 
       if (connectorName) {
-        history.push(`${baseUrl}/${connectorName}`);
+        history.push(`${baseUrl}/${kind}/${connectorName}`);
       } else {
         history.push(`${baseUrl}`);
       }

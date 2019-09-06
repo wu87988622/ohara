@@ -223,7 +223,8 @@ export const useFetchConnectors = props => {
   useEffect(() => {
     const fetchConnector = async () => {
       const { connectorName } = props.match.params;
-      const res = await connectorApi.fetchConnector(connectorName);
+      const { group } = props.pipeline;
+      const res = await connectorApi.fetchConnector(group, connectorName);
       const result = get(res, 'data.result', null);
 
       if (result) {
@@ -245,7 +246,7 @@ export const useFetchConnectors = props => {
     };
 
     fetchConnector();
-  }, [props.globalTopics, props.match.params, setConfigs, setState]);
+  }, [props.match.params, props.pipeline]);
 
   return [state, setState, configs, setConfigs];
 };
@@ -268,15 +269,18 @@ export const useTopics = props => {
 export const useTestConfig = props => {
   const [isTestingConfig, setIsTestingConfig] = useState(false);
 
+  const {
+    tags: { workerClusterName },
+  } = props.pipeline;
+
   const handleTestConfig = async (e, values) => {
     const topic = getCurrTopicId({
       originals: props.globalTopics,
       target: values.topicKeys,
     });
 
-    const topicKeys = Array.isArray(topic)
-      ? topic
-      : [{ group: 'default', name: topic }];
+    const group = `${workerClusterName}-topic`;
+    const topicKeys = Array.isArray(topic) ? topic : [{ group, name: topic }];
 
     const _values = changeToken({
       values,
@@ -356,12 +360,14 @@ export const handleStopConnector = async params => {
 };
 
 const triggerConnector = async ({ action, props, setState }) => {
+  const { group } = props.pipeline;
   const { connectorName } = props.match.params;
+
   let response;
   if (action === CONNECTOR_ACTIONS.start) {
-    response = await connectorApi.startConnector(connectorName);
+    response = await connectorApi.startConnector(group, connectorName);
   } else {
-    response = await connectorApi.stopConnector(connectorName);
+    response = await connectorApi.stopConnector(group, connectorName);
   }
 
   handleTriggerConnectorResponse({ action, response, props, setState });
@@ -393,8 +399,8 @@ const handleTriggerConnectorResponse = ({
 
 export const handleDeleteConnector = async (isRunning, props) => {
   const { refreshGraph, history, pipeline } = props;
-  const { connectorName } = props.match.params;
-  const { name: pipelineName, flows } = pipeline;
+  const { connectorName, workspaceName } = props.match.params;
+  const { name, flows, group } = pipeline;
 
   if (isRunning) {
     toastr.error(
@@ -404,16 +410,18 @@ export const handleDeleteConnector = async (isRunning, props) => {
     return;
   }
 
-  const connectorResponse = await connectorApi.deleteConnector(connectorName);
-
+  const connectorResponse = await connectorApi.deleteConnector(
+    group,
+    connectorName,
+  );
   const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
 
   const updatedFlows = flows.filter(flow => flow.from.name !== connectorName);
-
   const pipelineResponse = await pipelineApi.updatePipeline({
-    name: pipelineName,
+    name,
+    group,
     params: {
-      name: pipelineName,
+      name,
       flows: updatedFlows,
     },
   });
@@ -424,23 +432,28 @@ export const handleDeleteConnector = async (isRunning, props) => {
     toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
     await refreshGraph();
 
-    const path = `/pipelines/edit/${pipelineName}`;
+    const path = `/pipelines/edit/${workspaceName}/${name}`;
     history.push(path);
   }
 };
 
 export const useSave = async (props, values) => {
-  const { globalTopics, graph, updateGraph } = props;
+  const { globalTopics, graph, updateGraph, pipeline } = props;
   const { connectorName } = props.match.params;
+  const {
+    group: pipelineGroup,
+    tags: { workerClusterName },
+  } = pipeline;
 
   const topic = getCurrTopicId({
     originals: globalTopics,
     target: values.topicKeys,
   });
 
+  const topicGroup = `${workerClusterName}-topic`;
   const topicKeys = Array.isArray(topic)
     ? topic
-    : [{ group: 'default', name: topic }];
+    : [{ group: topicGroup, name: topic }];
 
   const _values = changeToken({
     values,
@@ -449,7 +462,11 @@ export const useSave = async (props, values) => {
   });
 
   const params = { ..._values, topicKeys, name: connectorName };
-  await connectorApi.updateConnector({ name: connectorName, params });
+  await connectorApi.updateConnector({
+    name: connectorName,
+    group: pipelineGroup,
+    params,
+  });
 
   const { sinkProps, update } = getUpdatedTopic({
     currTopicName: topic,

@@ -18,9 +18,9 @@ import { get, size } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchProperty = async name => {
+export const fetchProperty = async (group, name) => {
   try {
-    const res = await axiosInstance.get(`/api/stream/${name}`);
+    const res = await axiosInstance.get(`/api/stream/${name}?group=${group}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -48,10 +48,9 @@ export const createProperty = async params => {
   }
 };
 
-export const updateProperty = async params => {
+export const updateProperty = async ({ group, name, params }) => {
   try {
-    const propertyName = params.name;
-    const url = `/api/stream/${propertyName}`;
+    const url = `/api/stream/${name}?group=${group}`;
     const from = size(params.from) > 0 ? params.from : [];
     const to = size(params.to) > 0 ? params.to : [];
 
@@ -59,6 +58,7 @@ export const updateProperty = async params => {
       ...params,
       from,
       to,
+      jmxPort: Number(params.jmxPort),
       instances: params.instances ? Number(params.instances) : 1,
     };
     const res = await axiosInstance.put(url, data);
@@ -74,9 +74,11 @@ export const updateProperty = async params => {
   }
 };
 
-export const deleteProperty = async name => {
+export const deleteProperty = async (group, name) => {
   try {
-    const res = await axiosInstance.delete(`/api/stream/${name}`);
+    const res = await axiosInstance.delete(
+      `/api/stream/${name}?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -89,9 +91,11 @@ export const deleteProperty = async name => {
   }
 };
 
-export const startStreamApp = async name => {
+export const startStreamApp = async (group, name) => {
   try {
-    const res = await axiosInstance.put(`/api/stream/${name}/start`);
+    const res = await axiosInstance.put(
+      `/api/stream/${name}/start?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -104,9 +108,11 @@ export const startStreamApp = async name => {
   }
 };
 
-export const stopStreamApp = async name => {
+export const stopStreamApp = async (group, name) => {
   try {
-    const res = await axiosInstance.put(`/api/stream/${name}/stop`);
+    const res = await axiosInstance.put(
+      `/api/stream/${name}/stop?group=${group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

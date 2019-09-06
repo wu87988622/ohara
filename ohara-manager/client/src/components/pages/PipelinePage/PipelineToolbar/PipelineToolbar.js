@@ -37,7 +37,9 @@ const modalNames = {
 class PipelineToolbar extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      params: PropTypes.object,
+      params: PropTypes.shape({
+        pipelineName: PropTypes.string.isRequired,
+      }),
     }).isRequired,
     connectors: PropTypes.arrayOf(
       PropTypes.shape({
@@ -184,6 +186,7 @@ class PipelineToolbar extends React.Component {
       currentTopic,
       updateCurrentTopic,
       workerClusterName,
+      match,
     } = this.props;
 
     const {
@@ -193,6 +196,9 @@ class PipelineToolbar extends React.Component {
       activeConnector,
       isAddBtnDisabled,
     } = this.state;
+
+    const { pipelineName } = match.params;
+    const pipelineGroup = `${workerClusterName}-${pipelineName}`;
 
     const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
 
@@ -249,9 +255,9 @@ class PipelineToolbar extends React.Component {
             {modalName === modalNames.ADD_STREAM && (
               <PipelineNewStream
                 {...this.props}
+                ref={this.modalChild}
                 activeConnector={activeConnector}
                 updateAddBtnStatus={this.updateAddBtnStatus}
-                ref={this.modalChild}
                 handleClose={this.handleModalClose}
               />
             )}
@@ -284,6 +290,7 @@ class PipelineToolbar extends React.Component {
                 updateAddBtnStatus={this.updateAddBtnStatus}
                 workerClusterName={workerClusterName}
                 handleClose={this.handleModalClose}
+                pipelineGroup={pipelineGroup}
               />
             )}
           </div>

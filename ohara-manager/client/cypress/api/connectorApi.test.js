@@ -23,6 +23,10 @@ const setup = () => {
   const workerClusterName = generate.serviceName({ prefix: 'worker' });
   const connectorName = generate.serviceName({ prefix: 'connector' });
   const topicName = generate.serviceName({ prefix: 'topic' });
+  const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+
+  const pipelineGroup = `${workerClusterName}-${pipelineName}`;
+  const topicGroup = `${workerClusterName}-topic`;
 
   cy.createNode({
     name: nodeName,
@@ -56,17 +60,19 @@ const setup = () => {
 
   cy.createTopic({
     name: topicName,
+    group: topicGroup,
     brokerClusterName,
   });
 
-  cy.startTopic(topicName);
+  cy.startTopic(topicGroup, topicName);
 
   cy.createConnector({
     'connector.class': 'com.island.ohara.connector.ftp.FtpSource',
     'connector.name': connectorName,
     name: connectorName,
-    topicKeys: [{ group: 'default', name: topicName }],
+    topicKeys: [{ group: topicGroup, name: topicName }],
     workerClusterName,
+    group: pipelineGroup,
     tags: { name: connectorName },
   }).as('createConnector');
 
@@ -77,6 +83,8 @@ const setup = () => {
     workerClusterName,
     connectorName,
     topicName,
+    topicGroup,
+    pipelineGroup,
   };
 };
 
@@ -84,7 +92,7 @@ describe('Connector API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createConnector', () => {
-    setup();
+    const { topicGroup, pipelineGroup } = setup();
 
     cy.get('@createConnector').then(response => {
       const {
@@ -94,17 +102,18 @@ describe('Connector API', () => {
 
       expect(isSuccess).to.eq(true);
 
-      expect(settings).to.be.a('object');
+      expect(settings).to.be.an('object');
       expect(settings.tags.name).to.eq(settings.name);
 
-      expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
+      expect(settings.group).to.eq(pipelineGroup);
+      expect(settings.topicKeys).to.have.deep.property('[0].group', topicGroup);
     });
   });
 
   it('fetchConnector', () => {
-    const { connectorName, topicName } = setup();
+    const { pipelineGroup, connectorName, topicName, topicGroup } = setup();
 
-    cy.fetchConnector(connectorName).then(response => {
+    cy.fetchConnector(pipelineGroup, connectorName).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -116,17 +125,24 @@ describe('Connector API', () => {
       expect(settings).to.be.an('object');
       expect(settings.tags.name).to.eq(settings.name);
 
+      expect(settings.group).to.eq(pipelineGroup);
       expect(settings.topicKeys)
         .to.be.an('array')
         .to.have.lengthOf(1)
         .to.have.deep.property('[0].name', topicName);
 
-      expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
+      expect(settings.topicKeys).to.have.deep.property('[0].group', topicGroup);
     });
   });
 
   it('updateConnector', () => {
-    const { workerClusterName, connectorName, topicName } = setup();
+    const {
+      workerClusterName,
+      connectorName,
+      topicName,
+      topicGroup,
+      pipelineGroup,
+    } = setup();
 
     const params = {
       name: connectorName,
@@ -155,7 +171,11 @@ describe('Connector API', () => {
       },
     };
 
-    cy.updateConnector(params).then(response => {
+    cy.updateConnector({
+      name: connectorName,
+      group: pipelineGroup,
+      params,
+    }).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -166,35 +186,36 @@ describe('Connector API', () => {
       expect(settings).to.be.a('object');
       expect(settings.tags.name).to.eq(settings.name);
 
+      expect(settings.group).to.eq(pipelineGroup);
       expect(settings.topicKeys)
         .to.be.an('array')
         .to.have.lengthOf(1)
         .to.have.deep.property('[0].name', topicName);
 
-      expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
+      expect(settings.topicKeys).to.have.deep.property('[0].group', topicGroup);
     });
   });
 
   it('startConnector', () => {
-    const { connectorName } = setup();
+    const { connectorName, pipelineGroup } = setup();
 
-    cy.startConnector(connectorName).then(response => {
+    cy.startConnector(pipelineGroup, connectorName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
   });
 
   it('stopConnector', () => {
-    const { connectorName } = setup();
+    const { connectorName, pipelineGroup } = setup();
 
-    cy.stopConnector(connectorName).then(response => {
+    cy.stopConnector(pipelineGroup, connectorName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
   });
 
   it('deleteConnector', () => {
-    const { connectorName } = setup();
+    const { connectorName, pipelineGroup } = setup();
 
-    cy.deleteConnector(connectorName).then(response => {
+    cy.deleteConnector(pipelineGroup, connectorName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
   });
