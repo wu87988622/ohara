@@ -15,7 +15,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
 const axios = require('axios');
 const chalk = require('chalk');
 const { get, isNull } = require('lodash');
@@ -33,23 +32,6 @@ const randomServiceName = () => {
   }
 
   return name;
-};
-
-const writeServiceInfoToFile = (zookeeperClusterName, brokerClusterName) => {
-  const filePath = path.resolve('./client/services.json');
-
-  const data = JSON.stringify([
-    {
-      name: zookeeperClusterName,
-      serviceType: 'zookeepers',
-    },
-    {
-      name: brokerClusterName,
-      serviceType: 'brokers',
-    },
-  ]);
-
-  fs.writeFileSync(filePath, data);
 };
 
 exports.getDefaultEnv = () => {
@@ -140,7 +122,6 @@ exports.createServices = async ({
       condition: () => isServiceReady(`${brokerUrl}/${brokerClusterName}`),
     });
 
-    await writeServiceInfoToFile(zookeeperClusterName, brokerClusterName);
     console.log(chalk.green('Services created!'));
   } catch (error) {
     console.log(
@@ -158,10 +139,10 @@ const isServiceStopped = async apiUrl => {
 };
 
 const deleteServices = async (services, apiRoot) => {
-  for (let service of services) {
-    const { name: serviceName, serviceType } = service;
-    const apiUrl = `${apiRoot}/${serviceType}`;
+  const { serviceType, serviceNames } = services;
 
+  for (let serviceName of serviceNames) {
+    const apiUrl = `${apiRoot}/${serviceType}`;
     await axios.put(`${apiUrl}/${serviceName}/stop?force=true`);
     await utils.waitUntil({
       condition: () => isServiceStopped(`${apiUrl}/${serviceName}`),
@@ -172,46 +153,42 @@ const deleteServices = async (services, apiRoot) => {
 };
 
 const getByServiceType = services => {
-  let workers = [];
-  let brokers = [];
-  let zookeepers = [];
+  let workers;
+  let brokers;
+  let zookeepers;
 
   services.forEach(service => {
-    if (service.serviceType === 'workers') workers.push(service);
-    if (service.serviceType === 'brokers') brokers.push(service);
-    if (service.serviceType === 'zookeepers') zookeepers.push(service);
+    const { name, clusterNames: serviceNames } = service;
+
+    if (name === 'connect-worker') {
+      workers = { serviceType: 'workers', serviceNames };
+    }
+
+    if (name === 'broker') {
+      brokers = { serviceType: 'brokers', serviceNames };
+    }
+
+    if (name === 'zookeeper') {
+      zookeepers = {
+        serviceType: 'zookeepers',
+        serviceNames,
+      };
+    }
   });
 
   return { workers, brokers, zookeepers };
 };
 
-const getRunningWorkers = async (services, apiRoot) => {
-  const response = await axios.get(`${apiRoot}/workers`);
-  const workers = get(response, 'data', []);
-
-  const runningWorkers = workers.map(worker => worker.name);
-  const filteredServices = services.filter(
-    ({ serviceType, name }) =>
-      serviceType === 'workers' && runningWorkers.includes(name),
-  );
-
-  return filteredServices;
-};
-
 exports.cleanServices = async (apiRoot, nodeName) => {
   try {
-    const filePath = path.resolve('./client/services.json');
-    const file = fs.readFileSync(filePath);
-    const services = JSON.parse(file);
+    const response = await axios.get(`${apiRoot}/nodes/${nodeName}`);
+    const services = response.data.services;
     const { workers, brokers, zookeepers } = getByServiceType(services);
 
     // Note that the deleting order matters, it should goes like:
     // workers -> brokers -> zookeepers -> node
 
-    // The workers that are actually running/existing at the moment
-    const runningWorkers = await getRunningWorkers(workers, apiRoot);
-
-    await deleteServices(runningWorkers, apiRoot);
+    await deleteServices(workers, apiRoot);
     await deleteServices(brokers, apiRoot);
     await deleteServices(zookeepers, apiRoot);
     await axios.delete(`${apiRoot}/nodes/${nodeName}`);

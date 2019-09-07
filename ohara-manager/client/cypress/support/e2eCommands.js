@@ -15,39 +15,19 @@
  */
 
 import '@testing-library/cypress/add-commands';
-import { isEmpty, isNull } from 'lodash';
+import { isEmpty } from 'lodash';
 
 import * as utils from '../utils';
 import * as generate from '../../src/utils/generate';
 import { axiosInstance } from '../../src/api/apiUtils';
 
-// Registering service name so we can do the clean up later
-// when the tests are done
-Cypress.Commands.add('registerService', (serviceName, serviceType) => {
-  const fileName = './services.json';
-  const update = { name: serviceName, serviceType };
-
-  cy.task('readFileMaybe', fileName).then(data => {
-    // No file in the current location, let's create one!
-    if (isNull(data)) {
-      cy.writeFile(fileName, [update]);
-    } else {
-      cy.readFile(fileName).then(services => {
-        // Append the update to the existing file
-        cy.writeFile(fileName, [...services, update]);
-      });
-    }
-  });
-});
-
 Cypress.Commands.add('addWorker', () => {
   const { name: nodeName } = utils.getFakeNode();
   const workerName = generate.serviceName({ prefix: 'worker' });
 
-  // Store the worker names in a file as well as
-  // in the Cypress env as we'll be using them in the tests
+  // Store the worker name in the Cypress env
+  // as we'll be using it throughout the tests
   Cypress.env('WORKER_NAME', workerName);
-  cy.registerService(workerName, 'workers');
 
   cy.request('GET', 'api/brokers')
     .then(res => res.body[0])
@@ -139,51 +119,38 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('removeWorkers', () => {
-  const fileName = './services.json';
-  cy.task('readFileMaybe', fileName).then(services => {
-    if (!services) return; // File is not there, skip the whole process
+  cy.request('GET', `api/nodes/${Cypress.env('nodeHost')}`).then(response => {
+    const { services } = response.body;
+    const workers = services.find(service => service.name === 'connect-worker');
 
-    const workerNames = services
-      .filter(service => service.serviceType === 'workers')
-      .map(worker => worker.name);
+    if (isEmpty(workers)) return;
+    workers.clusterNames.forEach(workerName => {
+      cy.request('PUT', `api/workers/${workerName}/stop`);
 
-    cy.request('GET', 'api/workers').then(res => {
-      const targetWorkers = res.body.filter(worker =>
-        workerNames.includes(worker.name),
-      );
+      let count = 0;
+      const max = 10;
+      // Make a request to configurator see if worker cluster is ready for use
+      const req = endPoint => {
+        cy.request('GET', endPoint).then(res => {
+          // When connectors field has the right connector info
+          // this means that everything is ready to be tested
+          const workerIsReady = res.body.state === undefined;
 
-      if (targetWorkers.length > 0) {
-        targetWorkers.forEach(targetWorker => {
-          const { name } = targetWorker;
+          if (workerIsReady || count > max) return;
 
-          cy.request('PUT', `api/workers/${name}/stop`);
-
-          let count = 0;
-          const max = 10;
-          // Make a request to configurator see if worker cluster is ready for use
-          const req = endPoint => {
-            cy.request('GET', endPoint).then(res => {
-              // When connectors field has the right connector info
-              // this means that everything is ready to be tested
-              const workerIsReady = res.body.state === undefined;
-
-              if (workerIsReady || count > max) return;
-
-              // if worker is not ready yet, wait a 2 sec and make another request
-              count++;
-              cy.wait(2000);
-              req(endPoint);
-            });
-          };
-
-          const endPoint = `api/workers/${name}`;
-          cy.request('GET', endPoint).then(() => req(endPoint));
-
-          cy.request('DELETE', `api/workers/${name}`).then(() =>
-            utils.recursiveDeleteWorker('api/workers', name),
-          );
+          // if worker is not ready yet, wait a 2 sec and make another request
+          count++;
+          cy.wait(2000);
+          req(endPoint);
         });
-      }
+      };
+
+      const endPoint = `api/workers/${workerName}`;
+      cy.request('GET', endPoint).then(() => req(endPoint));
+
+      cy.request('DELETE', `api/workers/${workerName}`).then(() =>
+        utils.recursiveDeleteWorker('api/workers', workerName),
+      );
     });
   });
 });

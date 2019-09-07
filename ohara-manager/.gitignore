@@ -4,9 +4,6 @@ test-reports
 coverage
 yarn-error.log
 
-#Scripts
-services.json
-
 # Client
 /client/cypress/videos
 /client/cypress/screenshots

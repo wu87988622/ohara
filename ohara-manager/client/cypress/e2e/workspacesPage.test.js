@@ -41,8 +41,6 @@ describe('WorkspacesPage', () => {
     const nodeName = Cypress.env('nodeHost');
     const workerName = generate.serviceName({ prefix: 'worker' });
 
-    cy.registerService(workerName, 'workers');
-
     cy.visit(WORKSPACES)
       .getByText('New workspace')
       .click()
@@ -62,15 +60,7 @@ describe('WorkspacesPage', () => {
       .getByText('Add')
       .click()
       .wait('@createZookeeper')
-      .then(xhr => {
-        const { name } = xhr.response.body;
-        cy.registerService(name, 'zookeepers');
-      })
-      .wait('@createBroker')
-      .then(xhr => {
-        const { name } = xhr.response.body;
-        cy.registerService(name, 'brokers');
-      });
+      .wait('@createBroker');
 
     cy.getByText(workerName, { timeout: 40000 }).should('have.length', 1);
   });
