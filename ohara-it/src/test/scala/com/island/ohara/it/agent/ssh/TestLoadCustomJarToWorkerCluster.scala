@@ -27,13 +27,16 @@ import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.category.SshConfiguratorGroup
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
 import com.typesafe.scalalogging.Logger
+import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+@Category(Array(classOf[SshConfiguratorGroup]))
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])

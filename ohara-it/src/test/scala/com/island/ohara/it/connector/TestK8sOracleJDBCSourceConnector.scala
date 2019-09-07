@@ -16,13 +16,16 @@
 
 package com.island.ohara.it.connector
 
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.agent.k8s.K8SClient
+import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.ClusterNameHolder
+import com.island.ohara.it.category.K8sConnectorGroup
+import org.junit.experimental.categories.Category
 
+@Category(Array(classOf[K8sConnectorGroup]))
 class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"

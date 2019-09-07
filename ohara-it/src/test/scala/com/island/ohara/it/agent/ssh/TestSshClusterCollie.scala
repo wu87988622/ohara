@@ -19,9 +19,12 @@ package com.island.ohara.it.agent.ssh
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.it.agent.{BasicTests4ClusterCollie, ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.category.SshCollieGroup
+import org.junit.experimental.categories.Category
 import org.junit.{Before, Test}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+@Category(Array(classOf[SshCollieGroup]))
 class TestSshClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
   override protected val nameHolder = ClusterNameHolder(nodeCache)

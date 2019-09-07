@@ -22,10 +22,12 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
+import com.island.ohara.it.category.K8sConfiguratorGroup
 import org.junit.Before
+import org.junit.experimental.categories.Category
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
+@Category(Array(classOf[K8sConfiguratorGroup]))
 class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"

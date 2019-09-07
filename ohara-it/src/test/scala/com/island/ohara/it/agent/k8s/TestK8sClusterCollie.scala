@@ -21,7 +21,11 @@ import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.agent.{BasicTests4ClusterCollie, ClusterNameHolder}
+import com.island.ohara.it.category.K8sCollieGroup
 import org.junit.Before
+import org.junit.experimental.categories.Category
+
+@Category(Array(classOf[K8sCollieGroup]))
 class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"

@@ -108,35 +108,109 @@ task sinkJar(type: Jar, dependsOn: compileJava) {
   archiveName "ohara-it-sink.jar"
 }
 
-test {
-  def keywords = [
-    "ohara.it.docker",
-    // hostname used to expose the location of configurator
-    "ohara.it.hostname",
-    // hostname used to expose the location of configurator
-    "ohara.it.port",
-    "ohara.it.k8s",
-    "ohara.it.k8s.nodename",
-    // set the prefix to all containers
-    "ohara.it.container.prefix",
-    // set database setting
-    "ohara.it.db.url",
-    "ohara.it.db.username",
-    "ohara.it.db.password",
-    "ohara.it.jar.folder"
+/**
+ * a custom test for IT tasks. It initialize the arguments for all tasks.
+ */
+class OharaTest extends Test {
+  static def IT_ARGUMENTS = [
+          "ohara.it.docker",
+          // hostname used to expose the location of configurator
+          "ohara.it.hostname",
+          // hostname used to expose the location of configurator
+          "ohara.it.port",
+          "ohara.it.k8s",
+          "ohara.it.k8s.nodename",
+          // set the prefix to all containers
+          "ohara.it.container.prefix",
+          // set database setting
+          "ohara.it.db.url",
+          "ohara.it.db.username",
+          "ohara.it.db.password",
+          "ohara.it.jar.folder"
   ]
-  keywords.forEach {
+
+  public OharaTest() {
+    IT_ARGUMENTS.forEach {
+      keyword ->
+        if(project.hasProperty(keyword)) environment keyword, project.getProperty(keyword)
+    }
+    maxParallelForks = 1
+    forkEvery = 1
+    minHeapSize = minHeapSize
+    maxHeapSize = "4096m"
+    testLogging {
+      events "PASSED", "STARTED", "FAILED", "SKIPPED"
+    }
+    // generate the testing-purpose jars for IT
+    dependsOn 'sourceJar'
+    dependsOn 'sinkJar'
+    dependsOn 'streamAppJar'
+  }
+}
+
+/**
+ * the junit arguments to test is controlled by root/gradle so we just assign the properties.
+ */
+test {
+  OharaTest.IT_ARGUMENTS.forEach {
     keyword ->
       if(project.hasProperty(keyword)) environment keyword, project.getProperty(keyword)
   }
 }
 
-/**
- * TestLoadCustomJarToWorkerCluster needs sourceJar and sinkJar to test the upload of custom connectors.
- */
-test.dependsOn sourceJar
-test.dependsOn sinkJar
-test.dependsOn streamAppJar
+def classOfSshCollieGroup = "com.island.ohara.it.category.SshCollieGroup"
+def classOfSshConfiguratorGroup = "com.island.ohara.it.category.SshConfiguratorGroup"
+def classOfSshConnectorGroup = "com.island.ohara.it.category.SshConnectorGroup"
+def classOfK8sCollieGroup = "com.island.ohara.it.category.K8sCollieGroup"
+def classOfK8sConfiguratorGroup = "com.island.ohara.it.category.K8sConfiguratorGroup"
+def classOfK8sConnectorGroup = "com.island.ohara.it.category.K8sConnectorGroup"
+
+task sshCollie(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfSshCollieGroup
+  }
+}
+
+task sshConfigurator(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfSshConfiguratorGroup
+  }
+}
+
+task sshConnector(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfSshConnectorGroup
+  }
+}
+
+task k8sCollie(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfK8sCollieGroup
+  }
+}
+
+task k8sConfigurator(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfK8sConfiguratorGroup
+  }
+}
+
+task k8sConnector(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfK8sConnectorGroup
+  }
+}
+
+task otherIT(type: OharaTest) {
+  useJUnit {
+    excludeCategories classOfSshCollieGroup,
+            classOfSshConfiguratorGroup,
+            classOfSshConnectorGroup,
+            classOfK8sCollieGroup,
+            classOfK8sConfiguratorGroup,
+            classOfK8sConnectorGroup
+  }
+}
 
 jar.dependsOn sourceJar
 jar.dependsOn sinkJar

@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder}
+
 class TestK8SStreamApp extends BasicTests4StreamApp {
 
   private[this] val API_SERVER_URL: Option[String] = sys.env.get("ohara.it.k8s")

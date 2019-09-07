@@ -23,11 +23,14 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperA
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.category.SshConfiguratorGroup
 import com.typesafe.scalalogging.Logger
+import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+@Category(Array(classOf[SshConfiguratorGroup]))
 class TestListCluster extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestListCluster])
   private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()

@@ -20,7 +20,10 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.category.SshCollieGroup
+import org.junit.experimental.categories.Category
 
+@Category(Array(classOf[SshCollieGroup]))
 class TestSshStreamApp extends BasicTests4StreamApp {
 
   override protected def createNodes(): Seq[NodeApi.Node] = CollieTestUtils.nodeCache()

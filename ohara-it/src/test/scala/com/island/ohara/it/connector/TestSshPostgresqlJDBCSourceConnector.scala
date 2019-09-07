@@ -19,7 +19,10 @@ import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.category.SshConnectorGroup
+import org.junit.experimental.categories.Category
 
+@Category(Array(classOf[SshConnectorGroup]))
 class TestSshPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSourceConnector {
   private[this] var _clusterCollie: ClusterCollie = _
 
