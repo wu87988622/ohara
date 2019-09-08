@@ -20,8 +20,10 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import com.island.ohara.it.category.SshConnectorGroup
+import org.junit.Ignore
 import org.junit.experimental.categories.Category
 
+@Ignore("a nonexistent IT is better than chaotic IT. see https://github.com/oharastream/ohara/issues/2393")
 @Category(Array(classOf[SshConnectorGroup]))
 class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   private[this] var _clusterCollie: ClusterCollie = _

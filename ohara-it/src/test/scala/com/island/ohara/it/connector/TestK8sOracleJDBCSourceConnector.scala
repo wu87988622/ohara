@@ -23,8 +23,10 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.K8sConnectorGroup
+import org.junit.Ignore
 import org.junit.experimental.categories.Category
 
+@Ignore("a nonexistent IT is better than chaotic IT. see https://github.com/oharastream/ohara/issues/2393")
 @Category(Array(classOf[K8sConnectorGroup]))
 class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
