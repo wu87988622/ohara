@@ -58,6 +58,20 @@ class IntegrationTest extends OharaTest {
       // the collie impl throw exception if the cluster "does not" exist when calling "containers"
       case _: NoSuchClusterException => false
   })
+
+  /**
+    * Some ITs require the public hostname to expose service. If this method return none, it means the QA does not prepare
+    * the such env for IT.
+    * @return hostname or none
+    */
+  protected def publicHostname: Option[String] = sys.env.get("ohara.it.hostname")
+
+  /**
+    * Some ITs require the public port to expose service. If this method return none, it means the QA does not prepare
+    * the such env for IT.
+    * @return public port or none
+    */
+  protected def publicPort: Option[Int] = sys.env.get("ohara.it.port").map(_.toInt)
 }
 
 object IntegrationTest {

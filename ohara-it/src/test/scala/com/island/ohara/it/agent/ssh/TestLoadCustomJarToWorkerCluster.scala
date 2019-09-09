@@ -41,28 +41,18 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 
-  /**
-    * we need to export port to enable remote node download jar from this node
-    */
-  private[this] val portKey = "ohara.it.port"
-
-  /**
-    * we need to export hostname to enable remote node download jar from this node
-    */
-  private[this] val hostnameKey: String = "ohara.it.hostname"
-
   private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
 
   private[this] val invalidHostname = "unknown"
 
   private[this] val invalidPort = 0
 
-  private[this] val publicHostname: String = sys.env.getOrElse(hostnameKey, invalidHostname)
+  private[this] val hostname: String = publicHostname.getOrElse(invalidHostname)
 
-  private[this] val publicPort = sys.env.get(portKey).fold(invalidPort)(_.toInt)
+  private[this] val port = publicPort.getOrElse(invalidPort)
 
   private[this] val configurator: Configurator =
-    Configurator.builder.hostname(publicHostname).port(publicPort).build()
+    Configurator.builder.hostname(hostname).port(port).build()
 
   private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -82,9 +72,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val cleanup: Boolean = true
 
   @Before
-  def setup(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
-    skipTest(
-      s"${CollieTestUtils.key}, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
+  def setup(): Unit = if (nodeCache.isEmpty || port == invalidPort || hostname == invalidHostname)
+    skipTest("public hostname and public port must exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
   else {
 
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
