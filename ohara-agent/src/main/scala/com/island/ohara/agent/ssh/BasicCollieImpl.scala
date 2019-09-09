@@ -17,10 +17,11 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ClusterCache, ClusterState, Collie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ClusterCache, ClusterState, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -38,17 +39,6 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
       }
     )
   }
-
-  final override def cluster(name: String)(
-    implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
-    Future.successful(
-      clusterCache.snapshot
-        .filter(entry => classTag[T].runtimeClass.isInstance(entry._1))
-        .map {
-          case (cluster, containers) => cluster.asInstanceOf[T] -> containers
-        }
-        .find(_._1.name == name)
-        .getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
 
   protected def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
     dockerCache.exec(node,
@@ -90,11 +80,41 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
         true
       }
 
+  override def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    nodeCollie
+      .nodes()
+      .flatMap(
+        Future.traverse(_)(
+          // form: PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
+          dockerCache
+            .exec(_, _.containers(name => Collie.objectKeyOfContainerName(name) == key && name.contains(serviceName)))))
+      .map(_.flatten)
+      .flatMap { containers =>
+        Future
+          .sequence(containers.map { container =>
+            nodeCollie.node(container.nodeName).map { node =>
+              container -> dockerCache.exec(node,
+                                            client =>
+                                              try client.log(container.name)
+                                              catch {
+                                                case _: Throwable => s"failed to get log from ${container.name}"
+                                            })
+            }
+          })
+          .map(_.toMap)
+      }
+
+  // TODO remove in #2570
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = nodeCollie
     .nodes()
-    .flatMap(Future.traverse(_)(
-      dockerCache.exec(_, _.containers(_.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName")))))
+    .flatMap(
+      Future.traverse(_)(
+        dockerCache.exec(
+          _,
+          _.containers(name =>
+            name.contains(s"$DIVIDER$clusterName$DIVIDER$serviceName") && name.startsWith(s"$PREFIX_KEY$DIVIDER")))
+      ))
     .map(_.flatten)
     .flatMap { containers =>
       Future

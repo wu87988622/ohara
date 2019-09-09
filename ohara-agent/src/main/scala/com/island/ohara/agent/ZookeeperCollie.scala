@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{Creation, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.{JsString, JsValue}
 
@@ -48,12 +49,12 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
   override def creator: ZookeeperCollie.ClusterCreator = (executionContext, creation) => {
     implicit val exec: ExecutionContext = executionContext
     clusters().flatMap(clusters => {
-      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == creation.name))
-        Future.failed(new IllegalArgumentException(s"zookeeper cluster:${creation.name} exists!"))
+      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.key == creation.key))
+        Future.failed(new IllegalArgumentException(s"zookeeper cluster:${creation.key} exists!"))
       else
         nodeCollie
           .nodes(creation.nodeNames)
-          .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
+          .map(_.map(node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)).toMap)
           .flatMap {
             nodes =>
               // add route in order to make zk node can connect to each other.
@@ -110,8 +111,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                       // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
                       hostname = node.name
                     )
-                    doCreator(executionContext, creation.name, containerName, containerInfo, node, route).map(_ =>
-                      Some(containerInfo))
+                    doCreator(executionContext, containerName, containerInfo, node, route).map(_ => Some(containerInfo))
                 })
                 .map(_.flatten.toSeq)
                 .map {
@@ -148,7 +148,6 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
   protected def prefixKey: String
 
   protected def doCreator(executionContext: ExecutionContext,
-                          clusterName: String,
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
@@ -164,7 +163,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
         node.name -> CommonUtils.address(node.name)
     }
 
-  private[agent] def toZookeeperCluster(clusterName: String,
+  private[agent] def toZookeeperCluster(key: ObjectKey,
                                         containers: Seq[ContainerInfo]): Future[ZookeeperClusterInfo] = {
     val first = containers.head
     val creation = ZookeeperApi.access.request
@@ -232,16 +231,13 @@ object ZookeeperCollie {
 
     override def create(): Future[ZookeeperClusterInfo] = {
       // initial the basic creation required parameters (defined in ClusterInfo) for zookeeper
-      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+      // Note: We add all the fields in collie and they may not required in client api
+      // since they are required in the view of "collie"
+      val creation = request.name(clusterName).group(group).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
-    }
-
-    override protected def checkClusterName(clusterName: String): String = {
-      ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
-      clusterName
     }
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[ZookeeperClusterInfo]

@@ -64,6 +64,16 @@ class TestZookeeperCreator extends SmallTest with Matchers {
   }
 
   @Test
+  def nullGroup(): Unit = {
+    an[NullPointerException] should be thrownBy zkCreator().group(null)
+  }
+
+  @Test
+  def emptyGroup(): Unit = {
+    an[IllegalArgumentException] should be thrownBy zkCreator().group("")
+  }
+
+  @Test
   def negativeClientPort(): Unit = {
     an[IllegalArgumentException] should be thrownBy zkCreator().clientPort(-1)
   }
@@ -91,6 +101,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
   @Test
   def testNameLength(): Unit = zkCreator()
     .clusterName(CommonUtils.randomString(10))
+    .group(CommonUtils.randomString(10))
     .imageName(CommonUtils.randomString(10))
     .peerPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
@@ -100,7 +111,21 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
   @Test
   def testInvalidName(): Unit =
-    an[DeserializationException] should be thrownBy zkCreator().clusterName(CommonUtils.randomString(40))
+    an[DeserializationException] should be thrownBy zkCreator()
+      .clusterName(CommonUtils.randomString(40))
+      .group(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString())
+      .create()
+
+  @Test
+  def testInvalidGroup(): Unit =
+    an[DeserializationException] should be thrownBy zkCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(40))
+      .imageName(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString())
+      .create()
 
   @Test
   def testCopy(): Unit = {
@@ -119,6 +144,17 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     )
     Await.result(zkCreator().copy(zookeeperClusterInfo).create(), 30 seconds) shouldBe zookeeperClusterInfo
   }
+
+  @Test
+  def testMinimumCreator(): Unit = Await.result(
+    zkCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString)
+      .nodeName(CommonUtils.randomString)
+      .create(),
+    5 seconds
+  )
 
   @Test
   def testZKCreator(): Unit = {
@@ -140,6 +176,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
     val zkCreator: Future[ZookeeperClusterInfo] = zookeeperCollie.creator
       .clusterName("cluster1")
+      .group("group1")
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .clientPort(2181)
       .peerPort(2182)
@@ -149,6 +186,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
     val zookeeperClusterInfo = Await.result(zkCreator, TIMEOUT)
     zookeeperClusterInfo.name shouldBe "cluster1"
+    zookeeperClusterInfo.group shouldBe "group1"
     zookeeperClusterInfo.clientPort shouldBe 2181
     zookeeperClusterInfo.peerPort shouldBe 2182
     zookeeperClusterInfo.electionPort shouldBe 2183

@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
@@ -31,7 +32,7 @@ object ZookeeperApi {
   /**
     * The default value of group for this API.
     */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
+  val ZOOKEEPER_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
@@ -60,9 +61,13 @@ object ZookeeperApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    // the name and group fields are used to identify zookeeper cluster object
+    // we should give them default value in JsonRefiner
+    override def name: String = settings.name.get
+    override def group: String = settings.group.get
+    // helper method to get the key
+    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
-    override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
-    override def group: String = GROUP_DEFAULT
     override def imageName: String = settings.imageName.get
     override def nodeNames: Set[String] = settings.nodeNames.get
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
@@ -77,7 +82,7 @@ object ZookeeperApi {
     * exposed to configurator
     */
   private[ohara] implicit val ZOOKEEPER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, ZOOKEEPER_GROUP_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
@@ -93,6 +98,9 @@ object ZookeeperApi {
       .refine
 
   final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+    // We use the update parser to get the name and group
+    private[ZookeeperApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    private[ZookeeperApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     override def imageName: Option[String] =
       noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
     override def nodeNames: Option[Set[String]] =
@@ -138,9 +146,8 @@ object ZookeeperApi {
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
 
-    // cluster does not support to define group
-    override def group: String = GROUP_DEFAULT
     override def name: String = settings.name
+    override def group: String = settings.group
     override def kind: String = ZOOKEEPER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
     override def tags: Map[String, JsValue] = settings.tags
@@ -190,6 +197,9 @@ object ZookeeperApi {
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request =
       setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
+    @Optional("default is GROUP_DEFAULT")
+    def group(group: String): Request =
+      setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request =
       setting(IMAGE_NAME_KEY, JsString(CommonUtils.requireNonEmpty(imageName)))
@@ -243,7 +253,7 @@ object ZookeeperApi {
   }
 
   final class Access private[ZookeeperApi]
-      extends ClusterAccess[ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH, GROUP_DEFAULT) {
+      extends ClusterAccess[Creation, Update, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH, ZOOKEEPER_GROUP_DEFAULT) {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
       override def settings(settings: Map[String, JsValue]): Request = {
@@ -259,17 +269,11 @@ object ZookeeperApi {
         // auto-complete the update via our refiner
         ZOOKEEPER_UPDATE_JSON_FORMAT.read(ZOOKEEPER_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-        exec.post[Creation, ZookeeperClusterInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-        exec.put[Update, ZookeeperClusterInfo, ErrorApi.Error](
-          s"$url/${CommonUtils.requireNonEmpty(settings(NAME_KEY).convertTo[String])}",
-          update
-        )
+        // for update request, we should use default group if it was absent
+        put(key(update.group.getOrElse(ZOOKEEPER_GROUP_DEFAULT), update.name.get), update)
     }
   }
 

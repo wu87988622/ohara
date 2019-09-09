@@ -275,7 +275,7 @@ class TestStreamApi extends SmallTest with Matchers {
       |  }
       |  """.stripMargin.parseJson)
     creation.name.length shouldBe com.island.ohara.client.configurator.v0.LIMIT_OF_NAME_LENGTH
-    creation.group shouldBe StreamApi.GROUP_DEFAULT
+    creation.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jarKey shouldBe Some(fakeJar)
     creation.from shouldBe Set(from)
@@ -570,12 +570,12 @@ class TestStreamApi extends SmallTest with Matchers {
       ))
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe StreamApi.GROUP_DEFAULT
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe StreamApi.STREAM_GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(res)
     data.name shouldBe name
-    data.group shouldBe StreamApi.GROUP_DEFAULT
+    data.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
   }
 
   @Test

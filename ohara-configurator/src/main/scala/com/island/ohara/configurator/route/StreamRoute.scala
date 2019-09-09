@@ -303,7 +303,7 @@ private[configurator] object StreamRoute {
 
   private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
 
-  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _ => STREAM_GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
             nodeCollie: NodeCollie,

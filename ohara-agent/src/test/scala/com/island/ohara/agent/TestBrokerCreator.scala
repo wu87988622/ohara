@@ -119,12 +119,16 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .zookeeperClusterName("zk")
     .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
-    .nodeNames(Set("abc"))
+    .nodeName(CommonUtils.randomString)
     .create()
 
   @Test
   def testInvalidName(): Unit =
-    an[DeserializationException] should be thrownBy bkCreator().clusterName(CommonUtils.randomString(40))
+    an[DeserializationException] should be thrownBy bkCreator()
+      .clusterName(CommonUtils.randomString(40))
+      .imageName(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString)
+      .create()
 
   @Test
   def testCopy(): Unit = {

@@ -25,6 +25,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -63,7 +64,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         .flatMap(existNodes =>
           nodeCollie
             .nodes(creation.nodeNames)
-            .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
+            .map(_.map(node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)).toMap)
             .map((existNodes, _)))
         .map {
           case (existNodes, nodes) =>
@@ -241,7 +242,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }.toSeq
 
-  private[agent] def toWorkerCluster(clusterName: String, containers: Seq[ContainerInfo])(
+  private[agent] def toWorkerCluster(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
     val creation = WorkerApi.access.request
       .settings(seekSettings(containers.head.environments))
@@ -385,16 +386,13 @@ object WorkerCollie {
 
     override def create(): Future[WorkerClusterInfo] = {
       // initial the basic creation required parameters (defined in ClusterInfo) for worker
+      //TODO : it is ok that we don't add the group() since client will auto fill default value for us
+      //TODO: add group() in #2570 for worker
       val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
-    }
-
-    override protected def checkClusterName(clusterName: String): String = {
-      WorkerApi.WORKER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
-      clusterName
     }
 
     protected def doCreate(executionContext: ExecutionContext, creation: WorkerApi.Creation): Future[WorkerClusterInfo]

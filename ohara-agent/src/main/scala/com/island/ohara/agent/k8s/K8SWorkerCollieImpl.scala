@@ -20,6 +20,7 @@ import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,8 +30,8 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
 
-  override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = toWorkerCluster(clusterName, containers)
+  override protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = toWorkerCluster(key, containers)
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,

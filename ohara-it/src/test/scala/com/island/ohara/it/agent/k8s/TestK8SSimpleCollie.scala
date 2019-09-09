@@ -228,7 +228,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     // Confirm pod name is a common format
     val wkPodName = Await.result(workerCollie.cluster(workerClusterName), TIMEOUT)._2.head.name
     val wkPodNameFieldSize = wkPodName.split("-").size
-    val expectWKPodNameField = Collie.format("k8soccl", workerClusterName, "wk").split("-")
+    val expectWKPodNameField = Collie.format("k8soccl", workerClusterInfo.group, workerClusterName, "wk").split("-")
     wkPodNameFieldSize shouldBe expectWKPodNameField.size
 
   }
@@ -517,6 +517,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val info = result(
       zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+        .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
         .clusterName(clusterName)
         .clientPort(clientPort)
         .peerPort(peerPort)

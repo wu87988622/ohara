@@ -35,6 +35,7 @@ room to enable you to overwrite somethings you do care.
    - the official support fields are listed below
 
      - name (**string**) — cluster name
+     - group (**string**) — cluster group
      - imageName (**string**) — docker image
      - clientPort (**int**) — broker client port.
      - electionPort (**int**) — used to select the zk node leader
@@ -56,19 +57,21 @@ create a zookeeper properties
 
 *POST /v0/zookeepers*
 
-#. name (**string**) — cluster name
-#. imageName (**string**) — docker image
-#. clientPort (**int**) — broker client port.
-#. electionPort (**int**) — used to select the zk node leader
-#. peerPort (**int**) — port used by internal communication
+#. name (**string**) — cluster name ; default is random string
+#. group (**string**) — cluster group ; default is GROUP_DEFAULT
+#. imageName (**string**) — docker image ; default is oharastream/zookeeper:|version|
+#. clientPort (**int**) — broker client port ; default is random port
+#. electionPort (**int**) — used to select the zk node leader ; default is random port
+#. peerPort (**int**) — port used by internal communication ; default is random port
 #. nodeNames (**array(string)**) — the nodes running the zookeeper process
-#. tags (**object**) — the user defined parameters
+#. tags (**object**) — the user defined parameters ; default is empty
 
 Example Request
   .. code-block:: json
 
      {
        "name": "zk00",
+       "group": "abc",
        "imageName": "oharastream/zookeeper:$|version|",
        "clientPort": 12345,
        "peerPort": 12346,
@@ -85,6 +88,7 @@ Example Response
      {
        "settings": {
          "name": "zk00",
+         "group": "abc",
          "imageName": "oharastream/zookeeper:$|version|",
          "clientPort": 12345,
          "peerPort": 12346,
@@ -120,7 +124,8 @@ Example Response
 
      {
        "settings": {
-         "name": "zk00",
+         "name": "f6a867ae32",
+         "group": "default",
          "imageName": "oharastream/zookeeper:$|version|",
          "clientPort": 12345,
          "peerPort": 12346,
@@ -147,6 +152,7 @@ Example Response
        {
          "settings": {
            "name": "zk00",
+           "group": "default",
            "imageName": "oharastream/zookeeper:$|version|",
            "clientPort": 12345,
            "peerPort": 12346,
@@ -162,13 +168,63 @@ Example Response
        }
      ]
 
+update zookeeper cluster properties
+-----------------------------------
+
+*PUT /v0/zookeepers/$name?group=$group*
+
+.. note::
+   If the required zookeeper (group, name) was not exists, we will try to use this request as POST
+
+Example Request
+  #. imageName (**string**) — docker image ; default is oharastream/zookeeper:|version|
+  #. clientPort (**int**) — broker client port ; default is random port
+  #. electionPort (**int**) — used to select the zk node leader ; default is random port
+  #. peerPort (**int**) — port used by internal communication ; default is random port
+  #. nodeNames (**array(string)**) — the nodes running the zookeeper process
+  #. tags (**object**) — the user defined parameters ; default is empty
+
+  .. code-block:: json
+
+     {
+       "imageName": "oharastream/zookeeper:$|version|",
+       "clientPort": 12345,
+       "peerPort": 12346,
+       "electionPort": 12347,
+       "nodeNames": [
+         "node00"
+       ],
+       "tags": {}
+     }
+
+Example Response
+  .. code-block:: json
+
+     {
+       "settings": {
+         "name": "zk01",
+         "group": "default",
+         "imageName": "oharastream/zookeeper:$|version|",
+         "clientPort": 12345,
+         "peerPort": 12346,
+         "electionPort": 12347,
+         "nodeNames": [
+           "node00"
+         ],
+         "tags": {}
+       },
+       "deadNodes": [],
+       "lastModified": 1563158986411
+     }
+
 
 delete a zookeeper properties
 -----------------------------
 
-*DELETE /v0/zookeepers/$name*
+*DELETE /v0/zookeepers/$name?group=$group*
 
 You cannot delete properties of an non-stopped zookeeper cluster.
+We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -184,10 +240,11 @@ Example Response
 get a zookeeper cluster
 -----------------------
 
-*GET /v0/zookeepers/$name*
+*GET /v0/zookeepers/$name?group=$group*
 
-Get zookeeper information by name. This API could fetch all information
-of a zookeeper (include state)
+Get zookeeper information by name and group. This API could fetch all information
+of a zookeeper (include state).
+We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   .. code-block:: json
@@ -195,6 +252,7 @@ Example Response
      {
        "settings": {
          "name": "zk00",
+         "group": "default",
          "imageName": "oharastream/zookeeper:$|version|",
          "clientPort": 12345,
          "peerPort": 12346,
@@ -213,7 +271,9 @@ Example Response
 start a zookeeper cluster
 -------------------------
 
-*PUT /v0/zookeepers/$name/start*
+*PUT /v0/zookeepers/$name/start?group=$group*
+
+We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -230,7 +290,9 @@ stop a zookeeper cluster
 Gracefully stopping a running zookeeper cluster. It is disallowed to
 stop a zookeeper cluster used by a running :ref:`broker cluster <rest-brokers>`.
 
-*PUT /v0/zookeepers/$name/stop[?force=true]*
+*PUT /v0/zookeepers/$name/stop?group=$group[&force=true]*
+
+We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Query Parameters
   #. force (**boolean**) — true if you don’t want to wait the graceful shutdown

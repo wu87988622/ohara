@@ -20,6 +20,7 @@ import com.island.ohara.agent.{ClusterState, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +31,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
     extends Collie[T]
     with Releasable {
 
-  protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+  protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[T]
 
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
@@ -54,37 +55,34 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
 
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
-    k8sClient
-      .removeNode(s"$PREFIX_KEY$DIVIDER${previousCluster.name}$DIVIDER$serviceName",
-                  beRemovedContainer.nodeName,
-                  serviceName)
-      .map(_ => true)
+    k8sClient.removeNode(beRemovedContainer.name, beRemovedContainer.nodeName, serviceName).map(_ => true)
   }
 
-  override def logs(clusterName: String)(
+  override def logs(objectKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     k8sClient
       .containers()
       .flatMap(
         cs =>
           Future.sequence(
-            cs.filter(_.name.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName"))
+            cs.filter(container =>
+                Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName))
               .map(container => k8sClient.log(container.name).map(container -> _))
         ))
       .map(_.toMap)
 
-  def query(clusterName: String, serviceName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-    nodeCollie.nodes().flatMap { nodes =>
-      Future
-        .sequence(nodes.map(_ => {
-          k8sClient
-            .containers()
-            .map(cs => cs.filter(x => x.name.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName")))
-        }))
-        .map(_.flatten)
-    }
-  }
+  // TODO remove in #2570
+  override def logs(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    k8sClient
+      .containers()
+      .flatMap(cs =>
+        Future.sequence(
+          cs.filter(c =>
+              c.name.contains(s"$DIVIDER$clusterName$DIVIDER$serviceName") && c.name.startsWith(s"$PREFIX_KEY$DIVIDER"))
+            .map(container => k8sClient.log(container.name).map(container -> _))
+      ))
+      .map(_.toMap)
 
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
@@ -93,15 +91,13 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
       nodes => filterContainerService(nodes)
     )
     .map(f => {
-      f.map(container => {
-          container.name.split(DIVIDER)(1) -> container
-        })
+      f.map(container => Collie.objectKeyOfContainerName(container.name) -> container)
         .groupBy(_._1)
         .map {
-          case (clusterName, value) => clusterName -> value.map(_._2)
+          case (objectKey, value) => objectKey -> value.map(_._2)
         }
         .map {
-          case (clusterName, containers) => toClusterDescription(clusterName, containers).map(_ -> containers)
+          case (objectKey, containers) => toClusterDescription(objectKey, containers).map(_ -> containers)
         }
         .toSeq
     })
@@ -120,10 +116,10 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
           k8sClient
             .containers()
             .map(cs =>
-              cs.filter(_.name.split(DIVIDER).length >= 3) //Container name format is PREFIX-CLUSTTERNAME-SERVICENAME-XXX
+              cs.filter(_.name.split(DIVIDER).length >= 4) //Container name format is PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
                 .filter(x => {
                   x.nodeName.equals(node.name) && x.name
-                    .startsWith(PREFIX_KEY) && x.name.split(DIVIDER)(2).equals(serviceName)
+                    .startsWith(PREFIX_KEY) && x.name.split(DIVIDER)(3).equals(serviceName)
                 }))
         })
       )

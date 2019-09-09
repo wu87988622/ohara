@@ -57,8 +57,12 @@ package object v0 {
   val RESUME_COMMAND: String = "resume"
 
   /**
-    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
-    * limit the name length to one-third of 64 chars should be suitable for most cases.
+    * There is no length limit for docker container name in current support version (18.09), but the k8s
+    * docs did say that the maximum length is 253:
+    * <p>https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+    * <p>
+    * Since we are living in a complex world with a lot of unpredictable situations, the name length here
+    * is attempt to give a suitable and readable chars for most cases.
     */
   val LIMIT_OF_NAME_LENGTH: Int = 20
 
@@ -142,13 +146,22 @@ package object v0 {
     * 5) name must satisfy the regex [a-z0-9] and length <= 20
     * 6) name will use randomString if not defined.
     * 7) tags will use empty map if not defined.
+    * 8) group must satisfy the regex [a-z0-9] and length <= 20
+    * 9) group will use GROUP_DEFAULT if not defined.
     * @param defaultImage this cluster default images
+    * @param defaultGroup this cluster default group. Different type of cluster may have different default group, so
+    *                     we open a door for them
     * @tparam T type of creation
     * @return json refiner object
     */
-  private[v0] def basicRulesOfCreation[T <: ClusterCreationRequest](defaultImage: String): JsonRefiner[T] =
+  private[v0] def basicRulesOfCreation[T <: ClusterCreationRequest](defaultImage: String,
+                                                                    defaultGroup: String): JsonRefiner[T] =
     JsonRefiner[T]
+    // for each field, we should reject any empty string
       .rejectEmptyString()
+      // cluster creation should use the default image of current version
+      .nullToString(IMAGE_NAME_KEY, defaultImage)
+      //-------------------------------------- "nodeNames" rules ---------------------------------//
       .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:
       // xxx/cluster/{name}/{node}
@@ -159,14 +172,24 @@ package object v0 {
       // the node names can't be empty
       .rejectEmpty()
       .toRefiner
+      //-------------------------------------- "name" rules --------------------------------------//
+      // we random a default name for this cluster. the
+      .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH / 2))
       .stringRestriction(NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
-      .nullToString(IMAGE_NAME_KEY, defaultImage)
-      .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH / 2))
+      //-------------------------------------- "group" rules -------------------------------------//
+      .nullToString(GROUP_KEY, () => defaultGroup)
+      .stringRestriction(GROUP_KEY)
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
+      // default is empty tags
       .nullToEmptyObject(TAGS_KEY)
+      // nodeNames is the only required field in creating cluster, add the requirement for it
       .requireKey(NODE_NAMES_KEY)
 
   /**
@@ -178,7 +201,9 @@ package object v0 {
     * @return json refiner object
     */
   private[v0] def basicRulesOfUpdate[T <: ClusterUpdateRequest]: JsonRefiner[T] = JsonRefiner[T]
+  // for each field, we should reject any empty string
     .rejectEmptyString()
+    //-------------------------------------- "nodeNames" rules ---------------------------------//
     .arrayRestriction(NODE_NAMES_KEY)
     // we use the same sub-path for "node" and "actions" urls:
     // xxx/cluster/{name}/{node}

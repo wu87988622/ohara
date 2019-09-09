@@ -116,7 +116,7 @@ object BrokerRoute {
                       s"you can't remove broker cluster:${brokerClusterInfo.name} since it is used by worker cluster:${cluster.name}"))
             ))
 
-  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _ => BROKER_GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

@@ -45,6 +45,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkCollie.creator
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+      .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .peerPort(peerPort)

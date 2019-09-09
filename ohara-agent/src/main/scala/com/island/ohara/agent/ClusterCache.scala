@@ -28,6 +28,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.cache.RefreshableCache
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.collection.JavaConverters._
@@ -38,7 +39,7 @@ import scala.concurrent.duration.{Duration, _}
   * is a simple cache which storing the cluster information in local memory. The cache shines at getter method however
   * the side-effect is that the stuff from getter may be out-of-date. But, in most use cases we bear it well.
   *
-  * Noted that the comparison of key (ClusterInfo) consists of only name and service type. Adding a cluster info having different node names
+  * Noted that the comparison of key (ClusterInfo) consists of only ObjectKey and service type. Adding a cluster info having different node names
   * does not create an new key-value pair. Also, the latter key will replace the older one. For example, adding a cluster info having different
   * port. will replace the older cluster info, and then you will get the new cluster info when calling snapshot method.
   */
@@ -75,10 +76,10 @@ trait ClusterCache extends Releasable {
 
   /**
     * remove the cached cluster data
-    * @param name cluster's name
+    * @param key cluster's key
     * @param service cluster's type
     */
-  def remove(name: String, service: Service): Unit
+  def remove(key: ObjectKey, service: Service): Unit
 }
 
 object ClusterCache {
@@ -96,14 +97,14 @@ object ClusterCache {
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[agent] case class RequestKey(name: String, service: Service, createdTime: Long) {
+  private[agent] case class RequestKey(key: ObjectKey, service: Service, createdTime: Long) {
     override def equals(obj: Any): Boolean = obj match {
-      case another: RequestKey => another.name == name && another.service == service
+      case another: RequestKey => another.key == key && another.service == service
       case _                   => false
     }
-    override def hashCode(): Int = 31 * name.hashCode + service.hashCode
+    override def hashCode(): Int = 31 * key.hashCode + service.hashCode
 
-    override def toString: String = s"name:$name, service:$service"
+    override def toString: String = s"name:${ObjectKey.toJsonString(key)}, service:$service"
   }
 
   class Builder private[ClusterCache] extends com.island.ohara.common.pattern.Builder[ClusterCache] {
@@ -165,7 +166,7 @@ object ClusterCache {
         override def requestUpdate(): Unit = cache.requestUpdate()
 
         private def key(clusterInfo: ClusterInfo): RequestKey = RequestKey(
-          name = clusterInfo.name,
+          key = clusterInfo.key,
           service = clusterInfo match {
             case _: ZookeeperClusterInfo => Service.ZOOKEEPER
             case _: BrokerClusterInfo    => Service.BROKER
@@ -176,8 +177,8 @@ object ClusterCache {
           createdTime = CommonUtils.current()
         )
 
-        private[this] def key(name: String, service: Service): RequestKey = RequestKey(
-          name = name,
+        private[this] def key(objectKey: ObjectKey, service: Service): RequestKey = RequestKey(
+          key = objectKey,
           service = service,
           createdTime = CommonUtils.current()
         )
@@ -196,7 +197,7 @@ object ClusterCache {
           cache.put(k, (clusterInfo, containers))
         }
 
-        override def remove(name: String, service: Service): Unit = cache.remove(key(name, service))
+        override def remove(objectKey: ObjectKey, service: Service): Unit = cache.remove(key(objectKey, service))
 
         override def remove(clusterInfo: ClusterInfo): Unit = cache.remove(key(clusterInfo))
       }

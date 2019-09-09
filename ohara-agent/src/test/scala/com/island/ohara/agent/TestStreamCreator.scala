@@ -61,7 +61,11 @@ class TestStreamCreator extends SmallTest with Matchers {
 
   @Test
   def IllegalClusterName(): Unit = {
-    an[DeserializationException] should be thrownBy streamCreator().clusterName("!@#$-")
+    an[DeserializationException] should be thrownBy streamCreator()
+      .clusterName("!@#$-")
+      .imageName(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString(10))
+      .create()
   }
 
   @Test

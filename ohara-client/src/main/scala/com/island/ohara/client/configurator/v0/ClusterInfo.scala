@@ -31,11 +31,6 @@ import spray.json.JsValue
 trait ClusterInfo extends Data {
 
   /**
-    * @return cluster name
-    */
-  def name: String
-
-  /**
     * @return docker image name used to build container for this cluster
     */
   def imageName: String

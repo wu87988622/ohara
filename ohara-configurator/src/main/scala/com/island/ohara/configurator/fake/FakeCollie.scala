@@ -23,6 +23,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterState, Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.JavaConverters._
@@ -59,6 +60,14 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag](node
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.successful(clusterCache.remove(clusterInfo) != null)
 
+  override def logs(objectKey: ObjectKey)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    exist(objectKey).flatMap(if (_) Future.successful {
+      val containers = clusterCache.asScala.find(_._1.key == objectKey).get._2
+      containers.map(_ -> "fake log").toMap
+    } else Future.failed(new NoSuchClusterException(s"$objectKey doesn't exist")))
+
+  //TODO remove in #2570
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     exist(clusterName).flatMap(if (_) Future.successful {

@@ -20,6 +20,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
 
@@ -46,6 +47,11 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
   override protected def doRemove(clusterInfo: FakeCollieClusterInfo, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future.successful(true)
 
+  override def logs(objectKey: ObjectKey)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    Future.successful(Map.empty)
+
+  //TODO remove in #2570
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     Future.successful(Map.empty)

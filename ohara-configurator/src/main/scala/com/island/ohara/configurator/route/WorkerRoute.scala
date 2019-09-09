@@ -178,7 +178,7 @@ object WorkerRoute {
 
   private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
 
-  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _ => WORKER_GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

@@ -59,7 +59,7 @@ trait K8SClient extends Releasable {
   def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
-  def removeNode(clusterName: String, nodeName: String, serviceName: String)(
+  def removeNode(containerName: String, nodeName: String, serviceName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def log(name: String)(implicit executionContext: ExecutionContext): Future[String]
   def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
@@ -146,16 +146,17 @@ object K8SClient {
       override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
         removePod(name, false)
 
-      override def removeNode(clusterNamePrefix: String, nodeName: String, serviceName: String)(
+      override def removeNode(containerName: String, nodeName: String, serviceName: String)(
         implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
         containers()
-          .map(cs => cs.filter(c => c.name.startsWith(clusterNamePrefix) && c.nodeName.equals(nodeName)))
-          .flatMap(cs =>
-            Future.sequence(
-              cs.map(container => {
-                remove(container.name)
-              })
-          ))
+          .map(cs => cs.filter(c => c.name == containerName && c.nodeName == nodeName))
+          .flatMap(
+            cs =>
+              Future.sequence(
+                cs.map(container => {
+                  remove(container.name)
+                })
+            ))
           .map(cs => {
             cs.map(container => {
               //Kubernetes remove pod container is async to need to await container remove completely to return the
@@ -164,7 +165,7 @@ object K8SClient {
               while (!isRemovedContainer) {
                 if (!Await
                       .result(containers(), TIMEOUT)
-                      .exists(c => c.name.startsWith(clusterNamePrefix) && c.nodeName.equals(nodeName))) {
+                      .exists(c => c.name == containerName && c.nodeName == nodeName)) {
                   isRemovedContainer = true
                 }
               }

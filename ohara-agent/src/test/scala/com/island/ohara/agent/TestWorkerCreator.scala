@@ -178,7 +178,11 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
   @Test
   def testInvalidName(): Unit =
-    an[DeserializationException] should be thrownBy wkCreator().clusterName(CommonUtils.randomString(40))
+    an[DeserializationException] should be thrownBy wkCreator()
+      .clusterName(CommonUtils.randomString(40))
+      .imageName(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString())
+      .create()
 
   @Test
   def testCopy(): Unit = {

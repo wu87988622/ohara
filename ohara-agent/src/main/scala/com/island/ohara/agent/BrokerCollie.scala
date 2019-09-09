@@ -25,6 +25,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, TopicApi, ZookeeperApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
@@ -83,7 +84,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
         .flatMap(existNodes =>
           nodeCollie
             .nodes(creation.nodeNames)
-            .map(_.map(node => node -> Collie.format(prefixKey, creation.name, serviceName)).toMap)
+            .map(_.map(node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)).toMap)
             .map((existNodes, _)))
         .map {
           case (existNodes, nodes) =>
@@ -278,7 +279,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
   }.toSeq
 
-  private[agent] def toBrokerCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
+  private[agent] def toBrokerCluster(key: ObjectKey, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
     val first = containers.head
     val creation = BrokerApi.access.request
       .settings(seekSettings(first.environments))
@@ -375,16 +376,13 @@ object BrokerCollie {
 
     override def create(): Future[BrokerClusterInfo] = {
       // initial the basic creation required parameters (defined in ClusterInfo) for broker
+      //TODO : it is ok that we don't add the group() since client will auto fill default value for us
+      //TODO: add group() in #2570 for broker
       val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
-    }
-
-    override protected def checkClusterName(clusterName: String): String = {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
-      clusterName
     }
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[BrokerClusterInfo]

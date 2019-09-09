@@ -51,7 +51,6 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,

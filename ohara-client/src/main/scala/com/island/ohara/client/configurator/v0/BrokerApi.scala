@@ -32,7 +32,7 @@ object BrokerApi {
   /**
     * The default value of group for this API.
     */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
+  val BROKER_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   val BROKER_PREFIX_PATH: String = "brokers"
 
@@ -70,7 +70,7 @@ object BrokerApi {
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
 
     override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
-    override def group: String = GROUP_DEFAULT
+    override def group: String = BROKER_GROUP_DEFAULT
     override def imageName: String = settings.imageName.get
     override def nodeNames: Set[String] = settings.nodeNames.get
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
@@ -86,7 +86,7 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, BROKER_GROUP_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
@@ -144,7 +144,7 @@ object BrokerApi {
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
     // cluster does not support to define group
-    override def group: String = GROUP_DEFAULT
+    override def group: String = BROKER_GROUP_DEFAULT
     override def name: String = settings.name
     override def kind: String = BROKER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
@@ -250,7 +250,8 @@ object BrokerApi {
     private[v0] def update: Update
   }
 
-  final class Access private[BrokerApi] extends ClusterAccess[BrokerClusterInfo](BROKER_PREFIX_PATH, GROUP_DEFAULT) {
+  final class Access private[BrokerApi]
+      extends ClusterAccess[Creation, Update, BrokerClusterInfo](BROKER_PREFIX_PATH, BROKER_GROUP_DEFAULT) {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
       override def settings(settings: Map[String, JsValue]): Request = {

@@ -27,7 +27,6 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
     with ZookeeperCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,

@@ -74,8 +74,10 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
                                 peerPort: Int,
                                 nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     clusterCollie.zookeeperCollie.creator
-      .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+    // it is ok to use default group since the clusterName is random all the time
+      .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
       .clusterName(clusterName)
+      .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .clientPort(clientPort)
       .peerPort(peerPort)
       .electionPort(electionPort)

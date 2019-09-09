@@ -137,7 +137,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       |    "nodeNames": ["$nodeName"]
       |  }
       """.stripMargin.parseJson)
-    creation.group shouldBe BrokerApi.GROUP_DEFAULT
+    creation.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.zookeeperClusterName shouldBe None
@@ -164,7 +164,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       |  }
       """.stripMargin.parseJson)
     // node does support custom group
-    creation2.group shouldBe BrokerApi.GROUP_DEFAULT
+    creation2.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
     creation2.name shouldBe name
     creation2.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation2.nodeNames.size shouldBe 1
@@ -474,12 +474,12 @@ class TestBrokerApi extends SmallTest with Matchers {
       ))
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe BrokerApi.GROUP_DEFAULT
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe BrokerApi.BROKER_GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.read(res)
     data.name shouldBe name
-    data.group shouldBe BrokerApi.GROUP_DEFAULT
+    data.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
   }
 
   @Test

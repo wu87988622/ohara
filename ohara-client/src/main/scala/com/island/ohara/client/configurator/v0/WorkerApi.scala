@@ -32,7 +32,7 @@ object WorkerApi {
   /**
     * The default value of group for this API.
     */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
+  val WORKER_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val WORKER_SERVICE_NAME: String = "wk"
 
   val WORKER_PREFIX_PATH: String = "workers"
@@ -68,7 +68,7 @@ object WorkerApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(noJsNull(settings))
-    override def group: String = GROUP_DEFAULT
+    override def group: String = WORKER_GROUP_DEFAULT
     override def name: String = settings.name.get
     override def imageName: String = settings.imageName.get
     def brokerClusterName: Option[String] = settings.brokerClusterName
@@ -100,7 +100,7 @@ object WorkerApi {
     * exposed to configurator
     */
   private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, WORKER_GROUP_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def read(json: JsValue): Creation = Creation(noJsNull(json.asJsObject.fields))
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -218,7 +218,7 @@ object WorkerApi {
 
     override def ports: Set[Int] = settings.ports
 
-    override def group: String = GROUP_DEFAULT
+    override def group: String = WORKER_GROUP_DEFAULT
 
     override def kind: String = WORKER_SERVICE_NAME
 
@@ -363,7 +363,8 @@ object WorkerApi {
     private[v0] def update: Update
   }
 
-  final class Access private[WorkerApi] extends ClusterAccess[WorkerClusterInfo](WORKER_PREFIX_PATH, GROUP_DEFAULT) {
+  final class Access private[WorkerApi]
+      extends ClusterAccess[Creation, Update, WorkerClusterInfo](WORKER_PREFIX_PATH, WORKER_GROUP_DEFAULT) {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 

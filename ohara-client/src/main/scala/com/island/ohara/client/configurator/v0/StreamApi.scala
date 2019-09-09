@@ -42,7 +42,7 @@ object StreamApi {
   /**
     * The default value of group for this API.
     */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
+  val STREAM_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   /**
     * StreamApp Docker Image name
@@ -68,7 +68,7 @@ object StreamApi {
 
     override def name: String = settings.name.get
 
-    override def group: String = GROUP_DEFAULT
+    override def group: String = STREAM_GROUP_DEFAULT
 
     override def imageName: String = settings.imageName.get
 
@@ -222,7 +222,7 @@ object StreamApi {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
 
     // streamapp does not support to define group
-    override def group: String = GROUP_DEFAULT
+    override def group: String = STREAM_GROUP_DEFAULT
     override def name: String = settings.name
     override def kind: String = STREAM_SERVICE_NAME
     override def ports: Set[Int] = settings.ports
@@ -263,7 +263,7 @@ object StreamApi {
             noJsNull(
               format.write(obj).asJsObject.fields
               // TODO: remove those stale fields
-                + (GROUP_KEY -> JsString(GROUP_DEFAULT))
+                + (GROUP_KEY -> JsString(STREAM_GROUP_DEFAULT))
                 + (NAME_KEY -> JsString(obj.name))
                 + (NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector))
             ))
@@ -346,7 +346,8 @@ object StreamApi {
     private[v0] def update: Update
   }
 
-  final class Access extends ClusterAccess[StreamClusterInfo](STREAM_PREFIX_PATH, GROUP_DEFAULT) {
+  final class Access
+      extends ClusterAccess[Creation, Update, StreamClusterInfo](STREAM_PREFIX_PATH, STREAM_GROUP_DEFAULT) {
 
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()

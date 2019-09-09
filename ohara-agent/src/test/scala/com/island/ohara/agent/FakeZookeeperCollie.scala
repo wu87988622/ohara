@@ -18,12 +18,13 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.setting.ObjectKey
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
@@ -36,6 +37,11 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support remove function")
 
+  override def logs(objectKey: ObjectKey)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    throw new UnsupportedOperationException("Not support logs function")
+
+  //TODO remove in #2570
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")

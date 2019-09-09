@@ -89,16 +89,15 @@ class TestZookeeperApi extends SmallTest with Matchers {
   @Test
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
+    val group = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
     val electionPort = CommonUtils.availablePort()
     val nodeName = CommonUtils.randomString()
-    val creation = ZookeeperApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
+    val creation = access
       .name(name)
+      .group(group)
       .imageName(imageName)
       .clientPort(clientPort)
       .peerPort(peerPort)
@@ -106,6 +105,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
       .nodeName(nodeName)
       .creation
     creation.name shouldBe name
+    creation.group shouldBe group
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
     creation.peerPort shouldBe peerPort
@@ -132,7 +132,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
       |  }
       """.stripMargin.parseJson)
 
-    creation.group shouldBe ZookeeperApi.GROUP_DEFAULT
+    creation.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
@@ -142,15 +142,16 @@ class TestZookeeperApi extends SmallTest with Matchers {
     creation.peerPort should not be 0
 
     val name = CommonUtils.randomString(10)
+    val group = CommonUtils.randomString(10)
     val creation2 = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "group": "${CommonUtils.randomString()}",
+      |    "group": "$group",
       |    "name": "$name",
       |    "nodeNames": ["$nodeName"]
       |  }
       """.stripMargin.parseJson)
-    // node does support custom group
-    creation2.group shouldBe ZookeeperApi.GROUP_DEFAULT
+    // group is support in create cluster
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.nodeNames.size shouldBe 1
     creation2.nodeNames.head shouldBe nodeName
@@ -158,6 +159,35 @@ class TestZookeeperApi extends SmallTest with Matchers {
     creation2.clientPort should not be 0
     creation2.electionPort should not be 0
     creation2.peerPort should not be 0
+  }
+
+  @Test
+  def testUpdate(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val group = CommonUtils.randomString(10)
+    val imageName = CommonUtils.randomString()
+    val clientPort = CommonUtils.availablePort()
+    val nodeName = CommonUtils.randomString()
+
+    val creation = access.name(name).nodeName(nodeName).creation
+    creation.name shouldBe name
+    // use default values if absent
+    creation.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
+    creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    creation.nodeNames shouldBe Set(nodeName)
+
+    // initial a new update request
+    val updateAsCreation = ZookeeperApi.access.request
+      .name(name)
+      // the group here is not as same as creation
+      // here we use update as creation
+      .group(group)
+      .imageName(imageName)
+      .clientPort(clientPort)
+      .update
+    updateAsCreation.imageName shouldBe Some(imageName)
+    updateAsCreation.clientPort shouldBe Some(clientPort)
+    updateAsCreation.nodeNames should not be Some(Set(nodeName))
   }
 
   @Test
@@ -416,12 +446,12 @@ class TestZookeeperApi extends SmallTest with Matchers {
       ))
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ZookeeperApi.GROUP_DEFAULT
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.read(res)
     data.name shouldBe name
-    data.group shouldBe ZookeeperApi.GROUP_DEFAULT
+    data.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
   }
 
   @Test

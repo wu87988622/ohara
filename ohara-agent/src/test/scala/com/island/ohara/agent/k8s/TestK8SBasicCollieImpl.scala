@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -37,16 +38,17 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
   private[this] val tmpServiceName = "zk"
   @Test
   def testClusterName(): Unit = {
-    val cluster1ContainerName = Collie.format(PREFIX_KEY, "cluster1", tmpServiceName)
+    val group = CommonUtils.randomString(10)
+    val cluster1ContainerName = Collie.format(PREFIX_KEY, group, "cluster1", tmpServiceName)
     zookeeperClusterName(cluster1ContainerName) shouldBe "cluster1"
 
-    val cluster2ContainerName = Collie.format(PREFIX_KEY, "zk", tmpServiceName)
+    val cluster2ContainerName = Collie.format(PREFIX_KEY, group, "zk", tmpServiceName)
     zookeeperClusterName(cluster2ContainerName) shouldBe "zk"
 
-    val cluster3ContainerName = Collie.format(PREFIX_KEY, "zkzk", tmpServiceName)
+    val cluster3ContainerName = Collie.format(PREFIX_KEY, group, "zkzk", tmpServiceName)
     zookeeperClusterName(cluster3ContainerName) shouldBe "zkzk"
 
-    val cluster4ContainerName = s"$PREFIX_KEY${DIVIDER}zk$DIVIDER$tmpServiceName"
+    val cluster4ContainerName = s"$PREFIX_KEY$DIVIDER$group${DIVIDER}zk$DIVIDER$tmpServiceName"
     zookeeperClusterName(cluster4ContainerName) shouldBe "zk"
   }
 
@@ -68,12 +70,13 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
 
     val k8sBasicCollieImpl: K8SBasicCollieImpl[ZookeeperClusterInfo] =
       new K8SBasicCollieImpl[ZookeeperClusterInfo](nodeCollie, k8sClient) {
-        override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+        override protected def toClusterDescription(objectKey: ObjectKey, containers: Seq[ContainerInfo])(
           implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
           Future.successful(
             ZookeeperClusterInfo(
               settings = ZookeeperApi.access.request
-                .name(clusterName)
+                .name(objectKey.name())
+                .group(objectKey.group())
                 .imageName(containers.head.imageName)
                 .nodeNames(nodes.map(_.name).toSet)
                 .creation

@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
 
@@ -43,7 +44,11 @@ private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .containerCreator()
       .imageName(containerInfo.imageName)
       .nodeName(containerInfo.nodeName)
-      .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+      // this hostname has a length limit that <=63
+      // see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+      // we change the actual value to containerName here which is always <= 63 (prefix-group-name-service-hash)
+      // and it won't hurt the Ohara system or user since it is unused after setting...by Sam
+      .hostname(containerInfo.name)
       .name(containerInfo.name)
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
@@ -63,9 +68,9 @@ private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .map(_ => Unit)
   }
 
-  override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+  override protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-    toStreamCluster(clusterName, containers)
+    toStreamCluster(key, containers)
 
   override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =

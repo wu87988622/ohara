@@ -43,7 +43,7 @@ object ZookeeperRoute {
     executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
     (key: ObjectKey, update: Update, previousOption: Option[ZookeeperClusterInfo]) =>
       clusterCollie.zookeeperCollie.clusters().map { clusters =>
-        if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
+        if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
           throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
         else
           // use PUT as creation request
@@ -60,13 +60,14 @@ object ZookeeperRoute {
   private[this] def hookOfStart(implicit store: DataStore,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _: String, _: Map[String, String]) =>
+    (key: ObjectKey, _, _) =>
       store
         .value[ZookeeperClusterInfo](key)
         .flatMap(
           zkClusterInfo =>
             clusterCollie.zookeeperCollie.creator
               .clusterName(zkClusterInfo.name)
+              .group(zkClusterInfo.group)
               .clientPort(zkClusterInfo.clientPort)
               .electionPort(zkClusterInfo.electionPort)
               .peerPort(zkClusterInfo.peerPort)
@@ -94,7 +95,7 @@ object ZookeeperRoute {
                     s"you can't remove zookeeper cluster:${zkClusterInfo.name} since it is used by broker cluster:${cluster.name}"))
           ))
 
-  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(ZOOKEEPER_GROUP_DEFAULT)
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

@@ -23,6 +23,7 @@ import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 
 import scala.concurrent.duration.Duration
@@ -64,20 +65,20 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
       }
       .map(_.flatten))
     .flatMap { allContainers =>
-      def parse(serviceName: String,
-                f: (String, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+      def parse(
+        serviceName: String,
+        f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
         Future
           .sequence(
             allContainers
               .filter(_.name.contains(s"$DIVIDER$serviceName$DIVIDER"))
-              // form: PREFIX_KEY-CLUSTER_NAME-SERVICE-HASH
-              .map(container => container.name.split(DIVIDER)(1) -> container)
+              .map(container => Collie.objectKeyOfContainerName(container.name) -> container)
               .groupBy(_._1)
               .map {
-                case (clusterName, value) => clusterName -> value.map(_._2)
+                case (clusterKey, value) => clusterKey -> value.map(_._2)
               }
               .map {
-                case (clusterName, containers) => f(clusterName, containers).map(_ -> containers)
+                case (clusterKey, containers) => f(clusterKey, containers).map(_ -> containers)
               })
           .map(_.toMap)
 

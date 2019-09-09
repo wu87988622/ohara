@@ -23,6 +23,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.JavaConverters._
@@ -35,13 +36,19 @@ import scala.concurrent.{ExecutionContext, Future}
 trait Collie[T <: ClusterInfo] {
 
   /**
-    * remove whole cluster by specified name. The process, mostly, has a graceful shutdown
+    * remove whole cluster by specified key. The process, mostly, has a graceful shutdown
     * which can guarantee the data consistency. However, the graceful downing whole cluster may take some time...
     *
-    * @param clusterName cluster name
+    * @param key cluster key
     * @param executionContext thread pool
     * @return true if it does remove a running cluster. Otherwise, false
     */
+  final def remove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusterWithAllContainers().flatMap(_.find(_._1.key == key).fold(Future.successful(false)) {
+      case (cluster, containerInfos) => doRemove(cluster, containerInfos)
+    })
+
+  // TODO: this is a deprecated method and should be removed in #2570
   final def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
       case (cluster, containerInfos) => doRemove(cluster, containerInfos)
@@ -60,10 +67,16 @@ trait Collie[T <: ClusterInfo] {
   /**
     * This method open a door to sub class to implement a force remove which kill whole cluster without graceful shutdown.
     * NOTED: The default implementation is reference to graceful remove.
-    * @param clusterName cluster name
+    * @param key cluster key
     * @param executionContext thread pool
     * @return true if it does remove a running cluster. Otherwise, false
     */
+  final def forceRemove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusterWithAllContainers().flatMap(_.find(_._1.key == key).fold(Future.successful(false)) {
+      case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
+    })
+
+  // TODO: this is a deprecated method and should be removed in #2570
   final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
       case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
@@ -82,9 +95,12 @@ trait Collie[T <: ClusterInfo] {
   /**
     * get logs from all containers.
     * NOTED: It is ok to get logs from a "dead" cluster.
-    * @param clusterName cluster name
+    * @param key cluster key
     * @return all log content from cluster. Each container has a log.
     */
+  def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
+
+  // TODO: this is a deprecated method and should be removed in #2570
   def logs(clusterName: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
 
   /**
@@ -94,10 +110,14 @@ trait Collie[T <: ClusterInfo] {
   def creator: ClusterCreator[T]
 
   /**
-    * get the containers information from a1 cluster
-    * @param clusterName cluster name
+    * get the containers information from cluster
+    * @param key cluster key
     * @return containers information
     */
+  def containers(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    cluster(key).map(_._2)
+
+  // TODO: this is a deprecated method and should be removed in #2570
   def containers(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     cluster(clusterName).map(_._2)
 
@@ -123,33 +143,63 @@ trait Collie[T <: ClusterInfo] {
 
   /**
     * get the cluster information from a cluster
-    * @param name cluster name
+    * @param key cluster key
     * @return cluster information
     */
+  def cluster(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
+    clusters().map(
+      _.find(_._1.key == key)
+        .getOrElse(throw new NoSuchClusterException(s"cluster with objectKey [$key] is not running")))
+
+  // TODO: this is a deprecated method and should be removed in #2570
   def cluster(name: String)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
     clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name is not running")))
 
   /**
-    * @param clusterName cluster name
+    * @param key cluster key
     * @return true if the cluster exists
     */
+  def exist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusters().map(_.exists(_._1.key == key))
+
+  // TODO: this is a deprecated method and should be removed in #2570
   def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters().map(_.exists(_._1.name == clusterName))
 
   /**
-    * @param clusterName cluster name
+    * @param key cluster key
     * @return true if the cluster doesn't exist
     */
+  def nonExist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    exist(key).map(!_)
+
+  // TODO: this is a deprecated method and should be removed in #2570
   def nonExist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     exist(clusterName).map(!_)
 
   /**
     * add a node to a running cluster
     * NOTED: this is a async operation since graceful adding a node to a running service may be slow.
-    * @param clusterName cluster name
+    * @param key cluster key
     * @param nodeName node name
     * @return updated cluster
     */
+  final def addNode(key: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    cluster(key).flatMap {
+      case (cluster, containers) =>
+        if (Objects.isNull(key))
+          Future.failed(new IllegalArgumentException("clusterName can't empty"))
+        else if (CommonUtils.isEmpty(nodeName))
+          Future.failed(new IllegalArgumentException("nodeName can't empty"))
+        else if (CommonUtils.hasUpperCase(nodeName))
+          Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
+        else if (cluster.nodeNames.contains(nodeName))
+          // the new node is running so we don't need to do anything for this method
+          Future.successful(cluster)
+        else doAddNode(cluster, containers, nodeName)
+    }
+
+  // TODO: this is a deprecated method and should be removed in #2570
   final def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
     cluster(clusterName).flatMap {
       case (cluster, containers) =>
@@ -179,10 +229,33 @@ trait Collie[T <: ClusterInfo] {
   /**
     * remove a node from a running cluster.
     * NOTED: this is a async operation since graceful downing a node from a running service may be slow.
-    * @param clusterName cluster name
+    * @param key cluster key
     * @param nodeName node name
     * @return true if it does remove a node from a running cluster. Otherwise, false
     */
+  final def removeNode(key: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusters().flatMap(
+      _.find(_._1.key == key)
+        .filter(_._1.nodeNames.contains(nodeName))
+        .filter(_._2.exists(_.nodeName == nodeName))
+        .fold(Future.successful(false)) {
+          case (cluster, runningContainers) =>
+            runningContainers.size match {
+              case 1 =>
+                Future.failed(new IllegalArgumentException(
+                  s"cluster [$key] is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+              case _ =>
+                doRemoveNode(
+                  cluster,
+                  runningContainers
+                    .find(_.nodeName == nodeName)
+                    .getOrElse(throw new IllegalArgumentException(
+                      s"This should not be happen!!! $nodeName doesn't exist on cluster:$key"))
+                )
+            }
+        })
+
+  // TODO: this is a deprecated method and should be removed in #2570
   final def removeNode(clusterName: String, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[Boolean] = clusters().flatMap(
     _.find(_._1.name == clusterName)
@@ -278,19 +351,40 @@ object Collie {
   /**
     * generate unique name for the container.
     * It can be used in setting container's hostname and name
+    * @param prefixKey environment prefix key
+    * @param group cluster group
     * @param clusterName cluster name
-    * @return a formatted string. form: {clusterName}-{service}-{index}
+    * @param serviceName the service type name for current cluster
+    * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
     */
-  def format(prefixKey: String, clusterName: String, serviceName: String): String =
+  def format(prefixKey: String, group: String, clusterName: String, serviceName: String): String =
     Seq(
       prefixKey,
+      group,
       clusterName,
       serviceName,
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(DIVIDER)
 
+  /**
+    * a helper method to fetch the cluster key from container name
+    *
+    * @param containerName the container runtime name
+    */
+  private[agent] def objectKeyOfContainerName(containerName: String): ObjectKey =
+    // form: PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
+    ObjectKey.of(containerName.split(DIVIDER)(1), containerName.split(DIVIDER)(2))
+
+  /**
+    * The basic creator that for cluster creation.
+    * We define the "required" parameters for a cluster here, and you should fill in each parameter
+    * in the individual cluster creation.
+    * Note: the checking rules are moved to the api-creation level.
+    * @tparam T Cluster information type
+    */
   trait ClusterCreator[T <: ClusterInfo] extends com.island.ohara.common.pattern.Creator[Future[T]] {
     protected var imageName: String = _
+    protected var group: String = _
     protected var clusterName: String = _
     protected var nodeNames: Set[String] = Set.empty
     protected var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
@@ -301,7 +395,7 @@ object Collie {
       */
     final def copy(clusterInfo: T): ClusterCreator.this.type = {
       imageName(clusterInfo.imageName)
-      clusterName(clusterInfo.name)
+      key(clusterInfo.key)
       nodeNames(clusterInfo.nodeNames)
       doCopy(clusterInfo)
       this
@@ -325,22 +419,35 @@ object Collie {
     }
 
     /**
-      * set the cluster name. Noted: All collie impls are unsupported to use duplicate cluster name.
-      * @param clusterName cluster name
-      * @return this creator
+      * a helper method to set the cluster key
+      * @param key cluster key
+      * @return this creation
       */
-    def clusterName(clusterName: String): ClusterCreator.this.type = {
-      this.clusterName = checkClusterName(CommonUtils.requireNonEmpty(clusterName))
+    private[this] def key(key: ObjectKey): ClusterCreator.this.type = {
+      group(key.group())
+      clusterName(key.name())
       this
     }
 
     /**
-      * Apart from the basic check, the sub class may have more specific restriction to name.
-      * The sub class should throw exception if the input cluster name is illegal.
-      * @param clusterName cluster name
-      * @return origin cluster
+      * set the cluster group.
+      * @param group cluster group
+      * @return this creator
       */
-    protected def checkClusterName(clusterName: String): String = clusterName
+    def group(group: String): ClusterCreator.this.type = {
+      this.group = CommonUtils.requireNonEmpty(group)
+      this
+    }
+
+    /**
+      * set the cluster name.
+      * @param clusterName cluster name
+      * @return this creator
+      */
+    def clusterName(clusterName: String): ClusterCreator.this.type = {
+      this.clusterName = CommonUtils.requireNonEmpty(clusterName)
+      this
+    }
 
     /**
       *  create a single-node cluster.

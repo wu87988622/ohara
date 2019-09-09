@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{NodeApi, WorkerApi}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,6 +41,11 @@ class FakeWorkerCollie(nodes: Seq[Node],
                                    node: NodeApi.Node,
                                    route: Map[String, String]): Future[Unit] = Future.unit
 
+  override def logs(objectKey: ObjectKey)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    throw new UnsupportedOperationException("Not support logs function")
+
+  //TODO remove in #2570
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support logs function")

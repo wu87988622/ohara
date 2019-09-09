@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +59,11 @@ private class FakeBrokerCollie(nodes: Seq[Node],
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support remove function")
 
+  override def logs(objectKey: ObjectKey)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    throw new UnsupportedOperationException("Not support logs function")
+
+  //TODO remove in #2570
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")

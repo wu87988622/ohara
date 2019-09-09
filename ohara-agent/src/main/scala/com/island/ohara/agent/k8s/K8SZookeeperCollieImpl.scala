@@ -20,6 +20,7 @@ import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +31,6 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
   private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
@@ -57,9 +57,9 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
       .map(_ => Unit)
   }
 
-  override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+  override protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    toZookeeperCluster(clusterName, containers)
+    toZookeeperCluster(key, containers)
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =

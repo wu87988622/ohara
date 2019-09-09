@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeZookeeperCollie
@@ -56,7 +57,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def repeatedlyDelete(): Unit = {
     (0 to 10).foreach { index =>
-      result(zookeeperApi.delete(index.toString))
+      result(zookeeperApi.delete(ObjectKey.of(index.toString, index.toString)))
     }
   }
 
@@ -72,7 +73,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = zks.head
 
     // this zookeeper cluster is used by broker cluster
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.key))
 
     // remove all broker clusters
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
@@ -82,8 +83,8 @@ class TestZookeeperRoute extends MediumTest with Matchers {
           flatMap (_ => BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name))))
 
     // pass
-    result(zookeeperApi.stop(zk.name))
-    result(zookeeperApi.delete(zk.name))
+    result(zookeeperApi.stop(zk.key))
+    result(zookeeperApi.delete(zk.key))
   }
 
   @Test
@@ -92,7 +93,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
     )
 
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk.key))
   }
 
   @Test
@@ -101,8 +102,8 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name))
-    result(zookeeperApi.get(zk.name)).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    result(zookeeperApi.start(zk.key))
+    result(zookeeperApi.get(zk.key)).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
     // in fake mode only IMAGE_NAME_DEFAULT is supported
     val p = result(
@@ -112,7 +113,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create())
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.start(p.name)
+      zookeeperApi.start(p.key)
     )
   }
 
@@ -133,7 +134,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val init = result(zookeeperApi.list()).size
     val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(zookeeperApi.list()).size shouldBe init + 1
-    result(zookeeperApi.delete(cluster.name))
+    result(zookeeperApi.delete(cluster.key))
     result(zookeeperApi.list()).size shouldBe init
   }
 
@@ -141,10 +142,10 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testStop(): Unit = {
     val init = result(zookeeperApi.list()).size
     val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
-    result(zookeeperApi.start(cluster.name))
+    result(zookeeperApi.start(cluster.key))
     result(zookeeperApi.list()).size shouldBe init + 1
-    result(zookeeperApi.stop(cluster.name))
-    result(zookeeperApi.delete(cluster.name))
+    result(zookeeperApi.stop(cluster.key))
+    result(zookeeperApi.delete(cluster.key))
     result(zookeeperApi.list()).size shouldBe init
   }
 
@@ -153,11 +154,11 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
     zk.nodeNames.size shouldBe 1
     zk.nodeNames.head shouldBe nodeNames.head
     // we don't support to add zk node at runtime
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.addNode(zk.name, nodeNames.last))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.addNode(zk.key, nodeNames.last))
   }
 
   @Test
@@ -165,9 +166,9 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
     // we don't support to remove zk node at runtime
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.removeNode(zk.name, nodeNames.head))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.removeNode(zk.key, nodeNames.head))
   }
 
   @Test
@@ -194,12 +195,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
 
     val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.key))
   }
 
   @Test
@@ -208,12 +209,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
 
     val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.key))
   }
 
   @Test
@@ -222,12 +223,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
 
     val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.key))
   }
 
   @Test
@@ -236,10 +237,10 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       zookeeperApi.request.nodeNames(nodeNames).create()
     )
     result(zookeeperApi.start(zk.name))
-    val info1 = result(zookeeperApi.get(zk.name))
+    val info1 = result(zookeeperApi.get(zk.key))
     // duplicated start will return the current cluster info
     result(zookeeperApi.start(zk.name))
-    val info2 = result(zookeeperApi.get(zk.name))
+    val info2 = result(zookeeperApi.get(zk.key))
     info1.name shouldBe info2.name
     info1.imageName shouldBe info2.imageName
     info1.nodeNames shouldBe info2.nodeNames
@@ -248,14 +249,14 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     info1.electionPort shouldBe info2.electionPort
 
     // we could graceful stop zookeeper
-    result(zookeeperApi.stop(zk.name))
+    result(zookeeperApi.stop(zk.key))
     // stop should be idempotent
-    result(zookeeperApi.stop(zk.name))
+    result(zookeeperApi.stop(zk.key))
     // delete should be idempotent also
-    result(zookeeperApi.delete(zk.name))
-    result(zookeeperApi.delete(zk.name))
+    result(zookeeperApi.delete(zk.key))
+    result(zookeeperApi.delete(zk.key))
     // after delete, stop will cause NoSuchElement exception
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.key))
   }
 
   @Test
@@ -263,21 +264,21 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val initialCount = configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount
     val name = CommonUtils.randomString(10)
     // graceful stop
-    result(
+    val zk = result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(name))
-    result(zookeeperApi.stop(name))
-    result(zookeeperApi.delete(name))
+    result(zookeeperApi.start(zk.key))
+    result(zookeeperApi.stop(zk.key))
+    result(zookeeperApi.delete(zk.key))
     configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount shouldBe initialCount
 
     // force stop
-    result(
+    val zk2 = result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(name))
-    result(zookeeperApi.forceStop(name))
-    result(zookeeperApi.delete(name))
+    result(zookeeperApi.start(zk2.key))
+    result(zookeeperApi.forceStop(zk2.key))
+    result(zookeeperApi.delete(zk2.key))
     configurator.clusterCollie.zookeeperCollie
       .asInstanceOf[FakeZookeeperCollie]
       .forceRemoveCount shouldBe initialCount + 1
@@ -286,12 +287,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def failToUpdateRunningZookeeperCluster(): Unit = {
     val zk = result(zookeeperApi.request.nodeName(nodeNames.head).create())
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
     an[IllegalArgumentException] should be thrownBy result(
       zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
-    result(zookeeperApi.stop(zk.name))
+    result(zookeeperApi.stop(zk.key))
     result(zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
   }
 
   @Test
@@ -305,15 +306,38 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     zk.tags shouldBe tags
 
     // after create, tags should exist
-    result(zookeeperApi.get(zk.name)).tags shouldBe tags
+    result(zookeeperApi.get(zk.key)).tags shouldBe tags
 
     // after start, tags should still exist
-    result(zookeeperApi.start(zk.name))
-    result(zookeeperApi.get(zk.name)).tags shouldBe tags
+    result(zookeeperApi.start(zk.key))
+    result(zookeeperApi.get(zk.key)).tags shouldBe tags
 
     // after stop, tags should still exist
-    result(zookeeperApi.stop(zk.name))
-    result(zookeeperApi.get(zk.name)).tags shouldBe tags
+    result(zookeeperApi.stop(zk.key))
+    result(zookeeperApi.get(zk.key)).tags shouldBe tags
+  }
+
+  @Test
+  def testGroup(): Unit = {
+    val group = CommonUtils.randomString(10)
+    // different name but same group
+    result(zookeeperApi.request.group(group).nodeNames(nodeNames).create()).group shouldBe group
+    result(zookeeperApi.request.group(group).nodeNames(nodeNames).create()).group shouldBe group
+
+    // number of created (2) + configurator default (1)
+    result(zookeeperApi.list()).size shouldBe 3
+
+    // same name but different group
+    val name = CommonUtils.randomString(10)
+    val zk1 = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
+    zk1.name shouldBe name
+    zk1.group should not be group
+    val zk2 = result(zookeeperApi.request.name(name).group(group).nodeNames(nodeNames).create())
+    zk2.name shouldBe name
+    zk2.group shouldBe group
+
+    // number of created (4) + configurator default (1)
+    result(zookeeperApi.list()).size shouldBe 5
   }
 
   @After

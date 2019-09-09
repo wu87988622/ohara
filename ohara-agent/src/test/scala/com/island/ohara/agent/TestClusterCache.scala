@@ -24,6 +24,7 @@ import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -35,13 +36,13 @@ class TestClusterCache extends SmallTest with Matchers {
   @Test
   def testRequestKey(): Unit = {
     val key = RequestKey(
-      name = CommonUtils.randomString(),
+      key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()),
       service = Service.WORKER,
       createdTime = CommonUtils.current()
     )
 
     key shouldBe key
-    key should not be key.copy(name = CommonUtils.randomString())
+    key should not be key.copy(key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
     key should not be key.copy(service = Service.ZOOKEEPER)
   }
 

@@ -28,7 +28,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.TopicKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -58,7 +58,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
             .nodes(creation.nodeNames)
             .map(
               _.map(
-                node => node -> Collie.format(prefixKey, creation.name, serviceName)
+                node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)
               ).toMap
             )
             // the broker cluster should be defined in data creating phase already
@@ -197,7 +197,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
         None
     }
 
-  private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo])(
+  private[agent] def toStreamCluster(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
     val creation = StreamApi.access.request
@@ -336,6 +336,8 @@ object StreamCollie {
 
     override def create(): Future[StreamClusterInfo] = {
       // initial the basic creation required parameters (defined in ClusterInfo) for stream
+      //TODO : it is ok that we don't add the group() since client will auto fill default value for us
+      //TODO: add group() in #2570 for stream
       val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
 
       // TODO: the to/from topics should not be empty in building creation ... However, our stream route
@@ -348,11 +350,6 @@ object StreamCollie {
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
-    }
-
-    override protected def checkClusterName(clusterName: String): String = {
-      StreamApi.STREAM_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
-      clusterName
     }
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[StreamClusterInfo]
