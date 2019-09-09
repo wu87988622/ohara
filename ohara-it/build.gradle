@@ -156,6 +156,10 @@ test {
     keyword ->
       if(project.hasProperty(keyword)) environment keyword, project.getProperty(keyword)
   }
+  // generate the testing-purpose jars for IT
+  dependsOn 'sourceJar'
+  dependsOn 'sinkJar'
+  dependsOn 'streamAppJar'
 }
 
 def classOfSshCollieGroup = "com.island.ohara.it.category.SshCollieGroup"
