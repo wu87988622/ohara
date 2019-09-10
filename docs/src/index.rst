@@ -58,6 +58,7 @@ or build your UI interface via :ref:`Ohara REST interface <Rest>`.
    integration_test
    contributing
    contrib-docs/index
+   build_quickstart_vm
 
 
 Indices and tables
