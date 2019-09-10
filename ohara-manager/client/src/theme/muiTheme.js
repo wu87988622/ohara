@@ -20,9 +20,13 @@ import { createMuiTheme } from '@material-ui/core/styles';
 const MuiTheme = createMuiTheme({
   palette: {
     primary: {
-      main: '#4c84ff',
+      main: '#329BDD',
+      highlight: '#E3F2FB',
     },
     secondary: pink,
+    warning: {
+      main: '#ffa000',
+    },
   },
 });
 

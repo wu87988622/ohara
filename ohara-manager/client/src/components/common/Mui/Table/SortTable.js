@@ -16,6 +16,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableRow from '@material-ui/core/TableRow';
@@ -25,6 +26,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 
 import { TableLoader } from 'components/common/Mui/Loader';
+import TableToolbar from './TableToolbar';
 
 const SortTable = props => {
   const {
@@ -36,6 +38,8 @@ const SortTable = props => {
     tableName = 'sort',
     dataRowTestId = 'sort-list',
     buttonTestId = 'sort-button',
+    handleDiscard,
+    handleRestart,
   } = props;
 
   const [order, setOrder] = useState(defaultOrder);
@@ -79,16 +83,43 @@ const SortTable = props => {
 
   if (isLoading) return <TableLoader />;
 
+  let newCount = 0;
+  let deleteCount = 0;
+
+  rows.forEach(row => {
+    switch (row.type) {
+      case 'ADD': {
+        newCount++;
+        break;
+      }
+      case 'DELETE': {
+        deleteCount++;
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  });
+
   return (
     <Paper>
+      {newCount > 0 || deleteCount > 0 ? (
+        <TableToolbar
+          newCount={newCount}
+          deleteCount={deleteCount}
+          handleDiscard={handleDiscard}
+          handleRestart={handleRestart}
+        />
+      ) : (
+        <></>
+      )}
       <Table>
         <TableHead>
           <TableRow>
-            {headRows.map(row => {
+            {headRows.map((row, i, arr) => {
               const { id, label, sortable = true } = row;
-              const align =
-                id === headRows[headRows.length - 1].id ? 'right' : 'left';
-
+              const align = arr.length - 1 === i ? 'right' : 'left';
               return (
                 <React.Fragment key={id}>
                   {sortable ? (
@@ -116,20 +147,41 @@ const SortTable = props => {
         <TableBody>
           {stableSort(rows, getSorting(order, orderBy)).map(row => {
             const keys = Object.keys(row);
+
+            const StyledTableRow = styled(TableRow)`
+              background-color: ${props => {
+                switch (row.type) {
+                  case 'ADD': {
+                    // eslint-disable-next-line react/prop-types
+                    return props.theme.palette.primary.highlight;
+                  }
+                  case 'DELETE': {
+                    // eslint-disable-next-line react/prop-types
+                    return props.theme.palette.action.selected;
+                  }
+                  default: {
+                    return;
+                  }
+                }
+              }};
+            `;
+
             return (
-              <TableRow data-testid={dataRowTestId} key={row[keys[0]]}>
-                {keys.map(key => {
-                  return (
-                    <TableCell
-                      key={`${key}:${row[key]}`}
-                      align={key === keys[keys.length - 1] ? 'right' : 'left'}
-                      data-testid={`${tableName}-${key}`}
-                    >
-                      {row[key]}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
+              <StyledTableRow data-testid={dataRowTestId} key={row[keys[0]]}>
+                {keys
+                  .filter(key => key !== 'type')
+                  .map((key, i, arr) => {
+                    return (
+                      <TableCell
+                        key={`${key}:${row[key]}`}
+                        align={arr.length - 1 === i ? 'right' : 'left'}
+                        data-testid={`${tableName}-${key}`}
+                      >
+                        {row[key]}
+                      </TableCell>
+                    );
+                  })}
+              </StyledTableRow>
             );
           })}
         </TableBody>
@@ -152,6 +204,8 @@ SortTable.propTypes = {
   defaultOrderBy: PropTypes.string,
   dataRowTestId: PropTypes.string,
   buttonTestId: PropTypes.string,
+  handleDiscard: PropTypes.func,
+  handleRestart: PropTypes.func,
 };
 
 export default SortTable;
