@@ -73,6 +73,14 @@ Build the OVA file, following is an example(OHARA_VER=0.7.1):
 
 The OVA file will be output to: build/ohara-quickstart-{OHARA_VER}.ova
 
+  .. note::
+    Currently, we use Ubuntu 18.04.03 LTS as Quickstart VM's operation system.
+    Packer will try to find the ubuntu iso file in the **quickstart/.cache** folder first,
+    and then download the `Ubuntu iso file`_ from internet if the iso file not be found in the cache folder.
+
+    To save your building time, you can download the `Ubuntu iso file`_
+    manually and put into **quickstart/.cache** folder.
+
 
 Import OVA
 ----------
@@ -186,3 +194,4 @@ Following are other commands for development purpose:
 .. _Packer: https://www.packer.io/
 .. _Make: https://en.wikipedia.org/wiki/Make_(software)
 .. _VirtualBox: https://www.virtualbox.org/
+.. _Ubuntu iso file: http://cdimage.ubuntu.com/ubuntu/releases/bionic/release/ubuntu-18.04.3-server-amd64.iso
