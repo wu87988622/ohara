@@ -29,7 +29,7 @@ import * as URL from 'components/controller/url';
 
 const WorkspacesDetailPage = props => {
   const { workspaceName } = props.match.params;
-  const { data: workerRes } = useApi.useFetchApi(
+  const { data: workerRes, refetch: workerRefetch } = useApi.useFetchApi(
     `${URL.WORKER_URL}/${workspaceName}`,
   );
   const worker = get(workerRes, 'data.result', null);
@@ -44,7 +44,7 @@ const WorkspacesDetailPage = props => {
           {workspaceName}
         </PageTitle>
 
-        <Tabs {...props} worker={worker} />
+        <Tabs {...props} worker={worker} workerRefetch={workerRefetch} />
       </Container>
     </DocumentTitle>
   );

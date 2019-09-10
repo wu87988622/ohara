@@ -82,7 +82,7 @@ const MuiTabs = props => {
       />
       <Route
         path={`${baseUrl}/plugins`}
-        render={() => <Plugins workspaceName={workspaceName} />}
+        render={() => <Plugins {...props} />}
       />
     </Paper>
   );

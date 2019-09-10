@@ -42,22 +42,13 @@ const useFetchApi = url => {
   }, [showMessage, url]);
 
   useEffect(() => {
-    let didCancel = false;
-
     const fetchData = async () => {
       if (refetchState) {
         const res = await request();
-
-        if (!didCancel) {
-          setResponse(res);
-        }
+        setResponse(res);
       }
     };
     fetchData();
-
-    return () => {
-      didCancel = true;
-    };
   }, [refetchState, request]);
 
   return { data: response, isLoading, refetch };

@@ -37,6 +37,7 @@ const Progress = props => {
     createTitle = 'Creating',
     deleteTitle = 'Deleting',
     testId = 'step-testid',
+    maxWidth = 'sm',
   } = props;
 
   const [completed, setCompleted] = useState(0);
@@ -46,34 +47,35 @@ const Progress = props => {
   const [stepType, setStepType] = useState();
   const [color, setColor] = useState();
   const [title, setTitle] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const progress = useRef(() => {});
 
   useEffect(() => {
     progress.current = () => {
-      if (completed < 100) {
-        if (deleteType) {
-          if (title === createTitle) {
-            setColor('secondary');
-            setStepType('error');
-            setTitle(deleteTitle);
-            setBuffer(0);
-            setDiff(0);
-          } else {
-            setDiff(diff - 2);
-            setCompleted((100 / steps.length) * activeStep + diff);
-          }
+      if (deleteType) {
+        if (title === createTitle) {
+          setColor('secondary');
+          setStepType('error');
+          setTitle(deleteTitle);
+          setBuffer(0);
+          setDiff(0);
         } else {
-          setDiff(diff + Math.random() + 10);
-          if (activeStep > oldActiveStep) {
-            setCompleted((100 / steps.length) * activeStep);
-            setDiff(0);
-          } else {
-            setCompleted((100 / steps.length) * activeStep + diff);
-          }
-          setBuffer((100 / steps.length) * (activeStep + 1));
-          setOldActiveStep(activeStep);
+          setDiff(diff - 2);
+          setCompleted((100 / steps.length) * activeStep + diff);
         }
+      } else {
+        if (buffer > completed + diff) {
+          setDiff(diff + Math.random() + 10);
+        }
+        if (activeStep > oldActiveStep) {
+          setCompleted((100 / steps.length) * activeStep);
+          setDiff(0);
+        } else {
+          setCompleted((100 / steps.length) * activeStep + diff);
+        }
+        setBuffer((100 / steps.length) * (activeStep + 1));
+        setOldActiveStep(activeStep);
       }
     };
   });
@@ -84,23 +86,37 @@ const Progress = props => {
     };
     let timer;
     if (steps.length > activeStep && open) {
+      setIsLoading(open);
       timer = setInterval(tick, 500);
+    } else if (steps.length === activeStep && completed < 100) {
+      timer = setInterval(tick, 0);
+    } else if (completed === 100) {
+      setIsLoading(false);
     }
-    if (!open) {
+    if (!isLoading) {
       setCompleted(0);
       setColor();
       setStepType();
       setTitle(createTitle);
       setBuffer(0);
       setDiff(0);
+      clearInterval(timer);
     }
     return () => {
       clearInterval(timer);
     };
-  }, [activeStep, createTitle, open, steps.length]);
+  }, [
+    activeStep,
+    completed,
+    createTitle,
+    isLoading,
+    oldActiveStep,
+    open,
+    steps.length,
+  ]);
 
   return (
-    <Dialog open={open} fullWidth>
+    <Dialog open={isLoading} maxWidth={maxWidth} fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <Stepper activeStep={activeStep}>
         {steps.map(step => {
@@ -133,6 +149,7 @@ Progress.propTypes = {
   deleteType: PropTypes.bool,
   createTitle: PropTypes.string,
   deleteTitle: PropTypes.string,
+  maxWidth: PropTypes.string,
   testId: PropTypes.string,
 };
 
