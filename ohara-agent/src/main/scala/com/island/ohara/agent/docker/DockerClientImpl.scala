@@ -27,6 +27,8 @@ import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 private[docker] object DockerClientImpl {
   private val LOG = Logger(classOf[DockerClientImpl])
@@ -222,24 +224,25 @@ private[docker] class DockerClientImpl(nodeName: String, port: Int, user: String
       size = items(5),
       portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6)),
       environments = agent
-        .execute(s"docker inspect $id --format '{{.Config.Env}}'")
-        .map(_.replaceAll("\n", ""))
-        // form: [abc=123 aa=111]
-        .filter(_.length > 2)
-        .map(_.substring(1))
-        .map(s => s.substring(0, s.length - 1))
-        .map { s =>
-          s.split(" ")
-            .filterNot(_.isEmpty)
-            .map { line =>
+        .execute(s"docker inspect --format='{{json .Config}}' $id")
+        .map(_.parseJson.asJsObject)
+        .flatMap { jsObj =>
+          jsObj.fields
+            .get("Env")
+            .map {
+              case JsArray(array) => array.map(_.convertTo[String])
+              case JsString(s)    => Seq(s)
+              case _              => Seq.empty
+            }
+            .map(_.map { line =>
               val items = line.split("=")
               items.size match {
                 case 1 => items.head -> ""
                 case 2 => items.head -> items.last
                 case _ => throw new IllegalArgumentException(s"invalid format of environment:$line")
               }
-            }
-            .toMap
+            })
+            .map(_.toMap)
         }
         .getOrElse(Map.empty),
       // we can't cat file from a exited container

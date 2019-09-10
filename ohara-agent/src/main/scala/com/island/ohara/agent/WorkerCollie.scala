@@ -244,10 +244,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   private[agent] def toWorkerCluster(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val creation = WorkerApi.access.request
-      .settings(seekSettings(containers.head.environments))
-      .nodeNames(containers.map(_.nodeName).toSet)
-      .creation
+    val creation = WorkerApi.access.request.settings(seekSettings(containers.head.environments)).creation
     connectors(containers.map(c => s"${c.nodeName}:${creation.clientPort}").mkString(",")).map { connectors =>
       WorkerClusterInfo(
         settings = creation.settings,

@@ -15,22 +15,14 @@
  */
 
 package com.island.ohara.agent.docker
-import com.island.ohara.agent.docker.TestDockerClientWithoutDockerServer._
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.PortPair
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.testing.service.SshdServer
-import com.island.ohara.testing.service.SshdServer.CommandHandler
-import org.junit.{AfterClass, Test}
+import com.island.ohara.common.util.CommonUtils
+import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.util.Random
 class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def withoutCleanup(): Unit = DockerClientImpl
@@ -63,45 +55,6 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
       networkDriver = NetworkDriver.BRIDGE
     )
     .contains("--rm") shouldBe true
-
-  private[this] def testSpecifiedContainer(expectedState: ContainerState): Unit = {
-    val rContainers = result(CLIENT.containers).filter(_.state == expectedState.name)
-    rContainers.size shouldBe 1
-    rContainers.head shouldBe CONTAINERS.find(_.state == expectedState.name).get
-  }
-  @Test
-  def testCreatedContainers(): Unit = testSpecifiedContainer(ContainerState.CREATED)
-
-  @Test
-  def testRestartingContainers(): Unit = testSpecifiedContainer(ContainerState.RESTARTING)
-
-  @Test
-  def testRunningContainers(): Unit = testSpecifiedContainer(ContainerState.RUNNING)
-
-  @Test
-  def testRemovingContainers(): Unit = testSpecifiedContainer(ContainerState.REMOVING)
-
-  @Test
-  def testPausedContainers(): Unit = testSpecifiedContainer(ContainerState.PAUSED)
-
-  @Test
-  def testExitedContainers(): Unit = testSpecifiedContainer(ContainerState.EXITED)
-
-  @Test
-  def testDeadContainers(): Unit = testSpecifiedContainer(ContainerState.DEAD)
-
-  @Test
-  def testActiveContainers(): Unit = {
-    val rContainers = result(CLIENT.activeContainers)
-    rContainers.size shouldBe 1
-    rContainers.head shouldBe CONTAINERS.find(_.state == ContainerState.RUNNING.name).get
-  }
-
-  @Test
-  def testAllContainers(): Unit = {
-    val rContainers = result(CLIENT.containers)
-    rContainers shouldBe CONTAINERS
-  }
 
   @Test
   def testSetHostname(): Unit = {
@@ -210,81 +163,5 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
       case (p, index) =>
         ports.find(_.hostIp == ip).get.portPairs.find(_.hostPort == p).get.containerPort shouldBe containerPorts(index)
     }
-  }
-}
-
-/**
-  * SSH server and client are shared by all test cases since the cost of newing them is not cheap...
-  */
-object TestDockerClientWithoutDockerServer {
-
-  private val CONTAINERS = ContainerState.all.map(
-    s =>
-      ContainerInfo(
-        nodeName = CommonUtils.hostname(),
-        id = s"id-${s.name}",
-        imageName = s"image-${s.name}",
-        created = s"created-${s.name}",
-        state = s.name,
-        kind = "SSH",
-        name = s"name-${s.name}",
-        size = s"size-${s.name}",
-        portMappings = Seq.empty,
-        environments = Map("env0" -> "abc", "env1" -> "ccc"),
-        hostname = "localhost"
-    ))
-
-  private[this] def containerToString(container: ContainerInfo): String = Seq(
-    container.id,
-    container.imageName,
-    container.created,
-    container.state,
-    container.name,
-    container.size
-  ).mkString(DockerClientImpl.DIVIDER)
-
-  import scala.collection.JavaConverters._
-  private val SERVER = SshdServer.local(
-    0,
-    Seq(
-      // handle normal
-      new CommandHandler {
-        override def belong(command: String): Boolean =
-          command == s"docker ps -a --format ${DockerClientImpl.LIST_PROCESS_FORMAT}"
-        override def execute(command: String): java.util.List[String] = if (belong(command))
-          CONTAINERS.map(containerToString).asJava
-        else throw new IllegalArgumentException(s"$command doesn't support")
-      },
-      // handle env
-      new CommandHandler {
-        override def belong(command: String): Boolean =
-          command.contains("docker inspect") && command.contains("Config.Env")
-        override def execute(command: String): java.util.List[String] = if (belong(command))
-          Seq("[env0=abc env1=ccc]").asJava
-        else throw new IllegalArgumentException(s"$command doesn't support")
-      },
-      // handle hostname
-      new CommandHandler {
-        override def belong(command: String): Boolean =
-          command.contains("docker inspect") && command.contains("Config.Hostname")
-        override def execute(command: String): java.util.List[String] = if (belong(command)) Seq("localhost").asJava
-        else throw new IllegalArgumentException(s"$command doesn't support")
-      },
-      // final
-      new CommandHandler {
-        override def belong(command: String): Boolean = true
-        override def execute(command: String): java.util.List[String] =
-          throw new IllegalArgumentException(s"$command doesn't support")
-      }
-    ).map(_.asInstanceOf[CommandHandler]).asJava
-  )
-
-  private val CLIENT =
-    DockerClient.builder.hostname(SERVER.hostname).port(SERVER.port).user(SERVER.user).password(SERVER.password).build
-
-  @AfterClass
-  def afterAll(): Unit = {
-    Releasable.close(CLIENT)
-    Releasable.close(SERVER)
   }
 }

@@ -281,10 +281,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
   private[agent] def toBrokerCluster(key: ObjectKey, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
     val first = containers.head
-    val creation = BrokerApi.access.request
-      .settings(seekSettings(first.environments))
-      .nodeNames(containers.map(_.nodeName).toSet)
-      .creation
+    val creation = BrokerApi.access.request.settings(seekSettings(first.environments)).creation
     Future.successful(
       BrokerClusterInfo(
         settings = creation.settings,
