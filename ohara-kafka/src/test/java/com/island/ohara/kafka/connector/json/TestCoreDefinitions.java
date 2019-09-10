@@ -19,14 +19,7 @@ package com.island.ohara.kafka.connector.json;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.ConnectorVersion;
 import com.island.ohara.kafka.connector.DumbSink;
-import com.island.ohara.kafka.connector.RowSinkConnector;
-import com.island.ohara.kafka.connector.RowSinkTask;
-import com.island.ohara.kafka.connector.RowSourceConnector;
-import com.island.ohara.kafka.connector.RowSourceTask;
-import com.island.ohara.kafka.connector.TaskSetting;
-import java.util.List;
 import org.apache.kafka.common.config.ConfigDef;
 import org.junit.Assert;
 import org.junit.Test;
@@ -187,75 +180,5 @@ public class TestCoreDefinitions extends SmallTest {
   public void nullAuthorInSink() {
     new SinkWithNullableSetting(CommonUtils.randomString(), CommonUtils.randomString(), null)
         .config();
-  }
-
-  private static class SourceWithNullableSetting extends RowSourceConnector {
-    private final String version;
-    private final String revision;
-    private final String author;
-
-    SourceWithNullableSetting() {
-      this(CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString());
-    }
-
-    SourceWithNullableSetting(String version, String revision, String author) {
-      this.version = version;
-      this.revision = revision;
-      this.author = author;
-    }
-
-    @Override
-    protected Class<? extends RowSourceTask> _taskClass() {
-      return null;
-    }
-
-    @Override
-    protected List<TaskSetting> _taskSettings(int maxTasks) {
-      return null;
-    }
-
-    @Override
-    protected void _start(TaskSetting config) {}
-
-    @Override
-    protected void _stop() {}
-
-    @Override
-    protected ConnectorVersion _version() {
-      return ConnectorVersion.builder().version(version).revision(revision).author(author).build();
-    }
-  }
-
-  private static class SinkWithNullableSetting extends RowSinkConnector {
-    private final String version;
-    private final String revision;
-    private final String author;
-
-    SinkWithNullableSetting(String version, String revision, String author) {
-      this.version = version;
-      this.revision = revision;
-      this.author = author;
-    }
-
-    @Override
-    protected Class<? extends RowSinkTask> _taskClass() {
-      return null;
-    }
-
-    @Override
-    protected List<TaskSetting> _taskSettings(int maxTasks) {
-      return null;
-    }
-
-    @Override
-    protected void _start(TaskSetting config) {}
-
-    @Override
-    protected void _stop() {}
-
-    @Override
-    protected ConnectorVersion _version() {
-      return ConnectorVersion.builder().version(version).revision(revision).author(author).build();
-    }
   }
 }
