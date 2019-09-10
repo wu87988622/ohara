@@ -53,7 +53,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
     result(topicApi.start(topic.key))
     val producer = Producer
-      .builder[String, String]()
+      .builder()
       .connectionProps(testUtil().brokersConnProps())
       .keySerializer(Serializer.STRING)
       .valueSerializer(Serializer.STRING)

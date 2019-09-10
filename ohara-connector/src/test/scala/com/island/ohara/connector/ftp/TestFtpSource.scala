@@ -112,7 +112,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
                              timeout: scala.concurrent.duration.Duration = 100 seconds,
                              size: Int = data.length): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .topicName(topicKey.topicNameOnKafka)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)

@@ -300,7 +300,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // write some data into topic
     val producer = Producer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .connectionProps(brokerConnProps)
       .allAcks()
       .keySerializer(Serializer.ROW)

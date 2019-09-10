@@ -37,7 +37,7 @@ class SimpleRowSourceTask extends RowSourceTask {
   override protected def _start(settings: TaskSetting): Unit = {
     this.settings = settings
     this.consumer = Consumer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .connectionProps(settings.stringValue(BROKER))
       .groupId(settings.name)
       .topicName(settings.stringValue(INPUT))

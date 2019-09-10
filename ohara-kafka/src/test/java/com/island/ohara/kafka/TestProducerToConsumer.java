@@ -50,7 +50,7 @@ public class TestProducerToConsumer extends WithBroker {
   public void testTimestamp() {
     long timestamp = CommonUtils.current();
     try (Producer<String, String> producer =
-        Producer.<String, String>builder()
+        Producer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
@@ -75,7 +75,7 @@ public class TestProducerToConsumer extends WithBroker {
   @Test
   public void testResetConsumer() {
     try (Producer<String, String> producer =
-        Producer.<String, String>builder()
+        Producer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
@@ -105,7 +105,7 @@ public class TestProducerToConsumer extends WithBroker {
     }
 
     try (Producer<String, String> producer =
-        Producer.<String, String>builder()
+        Producer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())

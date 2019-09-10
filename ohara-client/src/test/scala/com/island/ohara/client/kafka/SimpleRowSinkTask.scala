@@ -30,8 +30,7 @@ class SimpleRowSinkTask extends RowSinkTask {
   private[this] var producer: Producer[Row, Array[Byte]] = _
   override protected def _start(settings: TaskSetting): Unit = {
     outputTopic = settings.stringValue(OUTPUT)
-    producer = Producer
-      .builder[Row, Array[Byte]]()
+    producer = Producer.builder
       .connectionProps(settings.stringValue(BROKER))
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)

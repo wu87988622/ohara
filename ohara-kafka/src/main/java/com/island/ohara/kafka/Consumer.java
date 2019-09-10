@@ -58,16 +58,7 @@ public interface Consumer<K, V> extends Releasable {
    * @return Records
    */
   default List<Record<K, V>> poll(Duration timeout, int expectedSize) {
-    return poll(timeout, expectedSize, () -> false);
-  }
-
-  default List<Record<K, V>> poll(Duration timeout, int expectedSize, Supplier<Boolean> stop) {
-    return poll(timeout, expectedSize, stop, Function.identity());
-  }
-
-  default List<Record<K, V>> poll(
-      Duration timeout, int expectedSize, Function<List<Record<K, V>>, List<Record<K, V>>> filter) {
-    return poll(timeout, expectedSize, () -> false, filter);
+    return poll(timeout, expectedSize, () -> false, Function.identity());
   }
 
   /**
@@ -119,8 +110,8 @@ public interface Consumer<K, V> extends Releasable {
   /** break the poll right now. */
   void wakeup();
 
-  static <Key, Value> Builder<Key, Value> builder() {
-    return new Builder<>();
+  static Builder<byte[], byte[]> builder() {
+    return new Builder<>().keySerializer(Serializer.BYTES).valueSerializer(Serializer.BYTES);
   }
 
   class Builder<Key, Value>
@@ -128,10 +119,10 @@ public interface Consumer<K, V> extends Releasable {
     private Map<String, String> options = Collections.emptyMap();
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private List<String> topicNames;
-    private String groupId = String.format("ohara-consumer-%s", CommonUtils.uuid());
+    private String groupId = String.format("ohara-consumer-%s", CommonUtils.randomString());
     private String connectionProps;
-    private Serializer<Key> keySerializer = null;
-    private Serializer<Value> valueSerializer = null;
+    private Serializer<?> keySerializer = null;
+    private Serializer<?> valueSerializer = null;
 
     private Builder() {
       // do nothing
@@ -193,14 +184,16 @@ public interface Consumer<K, V> extends Releasable {
       return this;
     }
 
-    public Builder<Key, Value> keySerializer(Serializer<Key> keySerializer) {
+    @SuppressWarnings("unchecked")
+    public <NewKey> Builder<NewKey, Value> keySerializer(Serializer<NewKey> keySerializer) {
       this.keySerializer = Objects.requireNonNull(keySerializer);
-      return this;
+      return (Builder<NewKey, Value>) this;
     }
 
-    public Builder<Key, Value> valueSerializer(Serializer<Value> valueSerializer) {
+    @SuppressWarnings("unchecked")
+    public <NewValue> Builder<Key, NewValue> valueSerializer(Serializer<NewValue> valueSerializer) {
       this.valueSerializer = Objects.requireNonNull(valueSerializer);
-      return this;
+      return (Builder<Key, NewValue>) this;
     }
 
     /**
@@ -240,6 +233,7 @@ public interface Consumer<K, V> extends Releasable {
       Objects.requireNonNull(valueSerializer);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Consumer<Key, Value> build() {
       checkArguments();
@@ -252,7 +246,10 @@ public interface Consumer<K, V> extends Releasable {
       props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
 
       KafkaConsumer<Key, Value> kafkaConsumer =
-          new KafkaConsumer<>(props, wrap(keySerializer), wrap(valueSerializer));
+          new KafkaConsumer<>(
+              props,
+              wrap((Serializer<Key>) keySerializer),
+              wrap((Serializer<Value>) valueSerializer));
 
       kafkaConsumer.subscribe(topicNames);
 

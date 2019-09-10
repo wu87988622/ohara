@@ -16,8 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import java.util
-
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidation,
@@ -31,13 +29,12 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.Consumer.Record
+import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsNumber, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import spray.json.DefaultJsonProtocol._
 object ValidationUtils {
   private[this] val TIMEOUT = 30 seconds
 
@@ -107,7 +104,7 @@ object ValidationUtils {
                         topicAdmin: TopicAdmin,
                         target: String,
                         settings: Map[String, String],
-                        taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Object]] = {
+                        taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Any]] = {
     val requestId: String = CommonUtils.uuid()
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
     workerClient
@@ -126,26 +123,37 @@ object ValidationUtils {
       .map { _ =>
         // TODO: receiving all messages may be expensive...by chia
         val client = Consumer
-          .builder[String, Object]()
+          .builder()
           .connectionProps(topicAdmin.connectionProps)
           .offsetFromBegin()
           .topicName(ValidationApi.INTERNAL_TOPIC_KEY.topicNameOnKafka)
           .keySerializer(Serializer.STRING)
           .valueSerializer(Serializer.OBJECT)
           .build()
-        try client
-          .poll(
-            java.time.Duration.ofNanos(TIMEOUT.toNanos),
-            taskCount,
-            new java.util.function.Function[util.List[Record[String, Object]], util.List[Record[String, Object]]] {
-              override def apply(records: util.List[Record[String, Object]]): util.List[Record[String, Object]] = {
-                records.asScala.filter(requestId == _.key.orElse(null)).asJava
-              }
+        var count = 0
+        var stop = false
+        try Iterator
+          .continually(
+            client
+              .poll(if (stop) java.time.Duration.ofMillis(0) else java.time.Duration.ofMillis(TIMEOUT.toMillis),
+                    taskCount)
+              .asScala
+              .filter(_.key().isPresent)
+              .filter(_.key().get.equals(requestId))
+              .filter(_.value().isPresent)
+              .map(_.value().get())
+              .toList)
+          .takeWhile { rs =>
+            // we can stop the loop if all messages are received. Otherwise, we will pay a "large" cost to wait nothing ...
+            if (stop) false
+            else {
+              if (count >= taskCount) stop = true
+              try rs.nonEmpty
+              finally count += rs.size
             }
-          )
-          .asScala
-          .filter(_.value().isPresent)
-          .map(_.value.get)
+          }
+          .flatten
+          .toList
         finally Releasable.close(client)
       }
       .flatMap { r =>

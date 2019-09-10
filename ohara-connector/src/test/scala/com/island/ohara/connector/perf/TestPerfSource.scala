@@ -56,7 +56,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
                              timeout: scala.concurrent.duration.Duration,
                              size: Int): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .topicName(topicKey.topicNameOnKafka)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)

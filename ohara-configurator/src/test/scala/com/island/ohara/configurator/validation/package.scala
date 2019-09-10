@@ -29,7 +29,7 @@ package object validation extends Matchers {
   def assertFailure(workerClient: WorkerClient, f: Future[Seq[ValidationReport]])(
     implicit executionContext: ExecutionContext): Unit = try {
     val reports = result(f)
-    reports.size >= NUMBER_OF_TASKS shouldBe true
+    reports.size should be >= NUMBER_OF_TASKS
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
@@ -38,7 +38,7 @@ package object validation extends Matchers {
   def assertSuccess(workerClient: WorkerClient, f: Future[Seq[ValidationReport]])(
     implicit executionContext: ExecutionContext): Unit = try {
     val reports = result(f)
-    reports.size >= NUMBER_OF_TASKS shouldBe true
+    reports.size should be >= NUMBER_OF_TASKS
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
@@ -47,7 +47,7 @@ package object validation extends Matchers {
   def assertJdbcSuccess(workerClient: WorkerClient, f: Future[Seq[RdbValidationReport]])(
     implicit executionContext: ExecutionContext): Unit = try {
     val reports = result(f)
-    reports.size >= NUMBER_OF_TASKS shouldBe true
+    reports.size should be >= NUMBER_OF_TASKS
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))

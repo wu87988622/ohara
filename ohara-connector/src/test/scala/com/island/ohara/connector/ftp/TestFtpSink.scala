@@ -60,7 +60,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
     } finally client.close()
 
     val producer = Producer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
@@ -73,7 +73,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val consumer = Consumer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .topicName(topicName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)

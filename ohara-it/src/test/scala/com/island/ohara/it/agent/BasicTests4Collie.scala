@@ -341,7 +341,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       )
       log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers ... done")
       val producer = Producer
-        .builder[String, String]()
+        .builder()
         .connectionProps(brokers)
         .allAcks()
         .keySerializer(Serializer.STRING)
@@ -356,7 +356,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       log.info(s"[BROKER] start to send data ... done")
       log.info(s"[BROKER] start to receive data")
       val consumer = Consumer
-        .builder[String, String]()
+        .builder()
         .connectionProps(brokers)
         .offsetFromBegin()
         .topicName(topicName)

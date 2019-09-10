@@ -48,8 +48,8 @@ public interface Producer<Key, Value> extends Releasable {
   /** flush all on-the-flight data. */
   void flush();
 
-  static <Key, Value> Builder<Key, Value> builder() {
-    return new Builder<>();
+  static Builder<byte[], byte[]> builder() {
+    return new Builder<>().keySerializer(Serializer.BYTES).valueSerializer(Serializer.BYTES);
   }
 
   class Builder<Key, Value>
@@ -58,8 +58,8 @@ public interface Producer<Key, Value> extends Releasable {
     private String connectionProps;
     // default number of acks is 1.
     private short numberOfAcks = 1;
-    private Serializer<Key> keySerializer = null;
-    private Serializer<Value> valueSerializer = null;
+    private Serializer<?> keySerializer = null;
+    private Serializer<?> valueSerializer = null;
 
     private Builder() {
       // no nothing
@@ -88,14 +88,16 @@ public interface Producer<Key, Value> extends Releasable {
       return this;
     }
 
-    public Builder<Key, Value> keySerializer(Serializer<Key> keySerializer) {
+    @SuppressWarnings("unchecked")
+    public <NewKey> Builder<NewKey, Value> keySerializer(Serializer<NewKey> keySerializer) {
       this.keySerializer = Objects.requireNonNull(keySerializer);
-      return this;
+      return (Builder<NewKey, Value>) this;
     }
 
-    public Builder<Key, Value> valueSerializer(Serializer<Value> valueSerializer) {
+    @SuppressWarnings("unchecked")
+    public <newValue> Builder<Key, newValue> valueSerializer(Serializer<newValue> valueSerializer) {
       this.valueSerializer = Objects.requireNonNull(valueSerializer);
-      return this;
+      return (Builder<Key, newValue>) this;
     }
 
     /**
@@ -134,9 +136,11 @@ public interface Producer<Key, Value> extends Releasable {
       Objects.requireNonNull(valueSerializer);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Producer<Key, Value> build() {
       checkArguments();
+
       return new Producer<Key, Value>() {
 
         private Properties getProducerConfig() {
@@ -148,7 +152,10 @@ public interface Producer<Key, Value> extends Releasable {
         }
 
         private final KafkaProducer<Key, Value> producer =
-            new KafkaProducer<>(getProducerConfig(), wrap(keySerializer), wrap(valueSerializer));
+            new KafkaProducer<>(
+                getProducerConfig(),
+                wrap((Serializer<Key>) keySerializer),
+                wrap((Serializer<Value>) valueSerializer));
 
         @Override
         public final Sender<Key, Value> sender() {

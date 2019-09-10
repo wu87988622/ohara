@@ -233,7 +233,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
   private[this] def checkTopicData(brokers: String, topicNameOnKafka: String): Unit = {
     val consumer =
       Consumer
-        .builder[Row, Array[Byte]]()
+        .builder()
         .topicName(topicNameOnKafka)
         .offsetFromBegin()
         .connectionProps(brokers)

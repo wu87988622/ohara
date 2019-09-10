@@ -92,7 +92,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
 
     val consumer =
       Consumer
-        .builder[Row, Array[Byte]]()
+        .builder()
         .topicName(topicKey.topicNameOnKafka)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)

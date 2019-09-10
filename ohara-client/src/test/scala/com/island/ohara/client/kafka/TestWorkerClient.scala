@@ -19,7 +19,7 @@ package com.island.ohara.client.kafka
 import java.util.Collections
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.common.data.{Row, Serializer}
+import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
@@ -87,7 +87,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       assertExist(workerClient, connectorKey)
       val consumer =
         Consumer
-          .builder[Row, Array[Byte]]()
+          .builder()
           .topicName(topicKey.topicNameOnKafka)
           .offsetFromBegin()
           .connectionProps(testUtil.brokersConnProps)

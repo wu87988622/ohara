@@ -191,8 +191,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val topicKey = TopicKey.of(GROUP, CommonUtils.randomString(10))
     result(topicAdmin.creator.topicKey(topicKey).create())
     waitAndGetTopicInfo(topicKey)
-    val producer = Producer
-      .builder[String, String]
+    val producer = Producer.builder
       .connectionProps(testUtil().brokersConnProps())
       .keySerializer(Serializer.STRING)
       .valueSerializer(Serializer.STRING)

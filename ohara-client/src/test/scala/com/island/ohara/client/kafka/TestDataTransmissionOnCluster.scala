@@ -58,8 +58,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   }
 
   private[this] def setupData(topicKey: TopicKey): Unit = {
-    val producer = Producer
-      .builder[Row, Array[Byte]]()
+    val producer = Producer.builder
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
@@ -71,7 +70,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
 
   private[this] def checkData(topicKey: TopicKey): Unit = {
     val consumer = Consumer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .topicName(topicKey.topicNameOnKafka)
@@ -113,7 +112,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   private[this] def testRowProducer2RowConsumer(topicKey: TopicKey): Unit = {
     setupData(topicKey)
     val consumer = Consumer
-      .builder[Row, Array[Byte]]()
+      .builder()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .topicName(topicKey.topicNameOnKafka)
@@ -222,8 +221,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     finally topicAdmin.close()
 
     val row = Row.of(Cell.of("c", 3), Cell.of("b", 2), Cell.of("a", 1))
-    val producer = Producer
-      .builder[Row, Array[Byte]]()
+    val producer = Producer.builder
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
@@ -235,7 +233,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
 
     val consumer =
       Consumer
-        .builder[Row, Array[Byte]]()
+        .builder()
         .connectionProps(testUtil.brokersConnProps)
         .offsetFromBegin()
         .topicName(topicName)
