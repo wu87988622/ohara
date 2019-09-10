@@ -379,7 +379,7 @@ Prepush
 Editors
 -------
 
-  We highly recommend that you use `Visual Studio Code <https://code.visualstudio.com/>`__ (or vscode for short) to edit
+  We highly recommend that you use `Visual Studio Code <https://code.visualstudio.com/>`__ (vscode for short) to edit
   and author Ohara manager code.
 
   **Recommend vscode settings**
@@ -401,8 +401,10 @@ Editors
          "**/bower_components": true,
          "**/coverage": true
        },
-       "prettier.eslintIntegration": true,
-       "javascript.updateImportsOnFileMove.enabled": "always"
+       "javascript.updateImportsOnFileMove.enabled": "always",
+       "eslint.workingDirectories": [
+          "./client",
+        ]
      }
 
   **Recommend extensions**
