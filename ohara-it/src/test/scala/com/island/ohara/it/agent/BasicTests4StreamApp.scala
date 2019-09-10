@@ -337,6 +337,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       metric.value shouldBe 1D
     }
 
+    await(() => result(topicApi.get(from)).metrics.meters.nonEmpty)
+    await(() => result(topicApi.get(to)).metrics.meters.nonEmpty)
+
     //stop streamApp
     result(access.stop(stream.name))
     waitStopFinish(stream.name)

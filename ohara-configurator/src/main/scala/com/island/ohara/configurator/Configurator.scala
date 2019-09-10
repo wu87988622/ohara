@@ -173,24 +173,29 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
           }.toList // convert to serializable collection
       }
     MeterCache.builder
-      .refresher(
-        () =>
-          // we do the sync here to simplify the interface
-          Await.result(
-            clusterCollie
-              .clusters()
-              .map(_.keys
-                .map {
-                  case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
-                  case workerClusterInfo: WorkerClusterInfo => workerClusterInfo -> workerToMeters(workerClusterInfo)
-                  case streamClusterInfo: StreamClusterInfo => streamClusterInfo -> streamAppToMeters(streamClusterInfo)
-                  case clusterInfo: ClusterInfo             => clusterInfo -> Map.empty[String, Seq[Meter]]
-                }
-                .toSeq
-                .toMap),
-            // TODO: how to set a suitable timeout ??? by chia
-            cacheTimeout * 5
-        ))
+      .refresher { () =>
+        // we do the sync here to simplify the interface
+        // TODO: how to set a suitable timeout ??? by chia
+        val clusters = Await.result(clusterCollie.clusters(), cacheTimeout * 5)
+        def swallow(f: () => Map[String, Seq[Meter]], serviceName: String): Map[String, Seq[Meter]] = try f()
+        catch {
+          case e: Throwable =>
+            log.error(s"failed to get metrics of service:$serviceName", e)
+            Map.empty[String, Seq[Meter]]
+        }
+        clusters.keys
+          .map {
+            case cluster: BrokerClusterInfo =>
+              cluster -> swallow(() => brokerToMeters(cluster), s"broker:${cluster.name}")
+            case cluster: WorkerClusterInfo =>
+              cluster -> swallow(() => workerToMeters(cluster), s"worker:${cluster.name}")
+            case cluster: StreamClusterInfo =>
+              cluster -> swallow(() => streamAppToMeters(cluster), s"streamapp:${cluster.name}")
+            case clusterInfo: ClusterInfo => clusterInfo -> Map.empty[String, Seq[Meter]]
+          }
+          .toSeq
+          .toMap
+      }
       .frequency(cacheTimeout)
       .build
   }
