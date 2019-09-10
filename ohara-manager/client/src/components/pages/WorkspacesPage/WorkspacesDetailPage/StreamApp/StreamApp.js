@@ -36,9 +36,11 @@ const StreamApp = props => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { data: jarsRes, isLoading, refetch } = useApi.useFetchApi(
-    `${URL.FILE_URL}?group=${workspaceName}-streamjar`,
+    URL.FILE_URL,
   );
-  const jars = get(jarsRes, 'data.result', []);
+  const jars = get(jarsRes, 'data.result', []).filter(
+    jar => jar.group === `${workspaceName}-streamjar`,
+  );
   const { getData: getJarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
   const { getData: getDeleteRes, deleteApi } = useApi.useDeleteApi(
     URL.FILE_URL,

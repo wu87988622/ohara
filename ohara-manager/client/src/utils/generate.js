@@ -55,6 +55,7 @@ export const connectors = () => {
 export const topics = ({
   count = 1,
   brokerClusterName = serviceName(),
+  workspaceName,
 } = {}) => {
   let topics = [];
 
@@ -68,6 +69,7 @@ export const topics = ({
       numberOfPartitions: number(),
       numberOfReplications: number(),
       brokerClusterName,
+      group: `${workspaceName}-topic`,
     };
 
     topics.push(topic);
@@ -76,14 +78,14 @@ export const topics = ({
   return topics;
 };
 
-export const streamApps = ({ count = 1 } = {}) => {
+export const streamApps = ({ count = 1, workspaceName } = {}) => {
   let streamApps = [];
 
   while (count > 0) {
     count--;
 
     const streamApp = {
-      group: word(),
+      group: `${workspaceName}-streamjar`,
       lastModified: date.past(),
       name: name(),
       size: number(),

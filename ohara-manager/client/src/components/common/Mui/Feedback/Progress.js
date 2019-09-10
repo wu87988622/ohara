@@ -61,10 +61,12 @@ const Progress = props => {
           setBuffer(0);
           setDiff(0);
         } else {
-          setDiff(diff - 2);
-          setCompleted((100 / steps.length) * activeStep + diff);
+          setCompleted((100 / steps.length) * activeStep);
         }
       } else {
+        if (steps.length === activeStep) {
+          setCompleted(100);
+        }
         if (buffer > completed + diff) {
           setDiff(diff + Math.random() + 10);
         }
@@ -89,10 +91,15 @@ const Progress = props => {
       setIsLoading(open);
       timer = setInterval(tick, 500);
     } else if (steps.length === activeStep && completed < 100) {
-      timer = setInterval(tick, 0);
+      timer = setInterval(tick, 500);
     } else if (completed === 100) {
       setIsLoading(false);
     }
+
+    if (!open) {
+      setIsLoading(false);
+    }
+
     if (!isLoading) {
       setCompleted(0);
       setColor();
