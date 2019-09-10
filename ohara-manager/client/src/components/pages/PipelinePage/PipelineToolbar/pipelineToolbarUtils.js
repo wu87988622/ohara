@@ -32,14 +32,16 @@ const getClassName = connector => {
   return className;
 };
 
-export const createConnector = async ({
-  updateGraph,
-  connector,
-  newConnectorName,
-  newStreamAppName,
-  workerClusterName,
-  group,
-}) => {
+export const createConnector = async params => {
+  const {
+    updateGraph,
+    connector,
+    newConnectorName,
+    newStreamAppName,
+    workerClusterName,
+    group,
+  } = params;
+
   const { typeName } = connector;
 
   const className = getClassName(connector);

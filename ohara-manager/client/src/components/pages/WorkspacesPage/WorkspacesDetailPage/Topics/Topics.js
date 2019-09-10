@@ -18,7 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
-import { get, isUndefined } from 'lodash';
+import { Link } from 'react-router-dom';
+import { get, isUndefined, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
@@ -39,7 +40,12 @@ const Topics = props => {
     data: topics,
     isLoading: fetchingTopics,
     refetch,
-  } = useApi.useFetchApi(`${URL.TOPIC_URL}?group=${worker.name}-topic`);
+  } = useApi.useFetchApi(`${URL.TOPIC_URL}`);
+  const {
+    data: pipelinesResponse,
+    isLoading: fetchingPipelines,
+  } = useApi.useFetchApi(`${URL.PIPELINE_URL}`);
+
   const { putApi: stopTopic } = useApi.usePutApi(`${URL.TOPIC_URL}`);
   const {
     getData: deleteTopicRes,
@@ -55,29 +61,61 @@ const Topics = props => {
     { id: 'replication', label: 'Replication factor' },
     { id: 'metrics', label: 'Metrics (BytesInPerSec)' },
     { id: 'lastModified', label: 'Last modified' },
+    { id: 'usedby', label: 'Used by pipeline' },
     { id: 'action', label: 'Action' },
   ];
 
-  const actionButton = name => {
+  const actionButton = (name, isDisabled) => {
+    const tooltipText = isDisabled
+      ? `You cannot delete a pipeline while it's used in a pipeline`
+      : `Delete ${name}`;
+
     return (
-      <Tooltip title={`Delete ${name}`} enterDelay={1000}>
-        <IconButton
-          aria-label="Edit"
-          data-testid={name}
-          onClick={() =>
-            setState({
-              isDeleteModalOpen: true,
-              topicToBeDeleted: name,
-            })
-          }
-        >
-          <ActionIcon className="fas fa-trash-alt" />
-        </IconButton>
+      <Tooltip title={tooltipText} enterDelay={1000}>
+        <div>
+          <IconButton
+            aria-label="Edit"
+            data-testid={name}
+            disabled={isDisabled}
+            onClick={() =>
+              setState({
+                isDeleteModalOpen: true,
+                topicToBeDeleted: name,
+              })
+            }
+          >
+            <ActionIcon className="fas fa-trash-alt" />
+          </IconButton>
+        </div>
       </Tooltip>
     );
   };
 
+  const getUsedByPipeline = (pipelines, topicName) => {
+    let usedByWhichPipeline = '';
+
+    if (!isEmpty(pipelines)) {
+      const targetPipeline = pipelines.find(pipeline =>
+        pipeline.objects.some(object => object.name === topicName),
+      );
+
+      if (targetPipeline) {
+        const { name } = targetPipeline;
+        usedByWhichPipeline = (
+          <Tooltip title={`Go to pipeline: ${name}`} enterDelay={1000}>
+            <Link to={`/pipelines/edit/${worker.name}/${name}`}>{name}</Link>
+          </Tooltip>
+        );
+      }
+    }
+
+    return usedByWhichPipeline;
+  };
+
   const rows = topicsUnderBrokerCluster.map(topic => {
+    const pipelines = get(pipelinesResponse, 'data.result', []);
+    const usedByWhichPipeline = getUsedByPipeline(pipelines, topic.name);
+
     const {
       name,
       numberOfPartitions,
@@ -91,7 +129,8 @@ const Topics = props => {
       replication: numberOfReplications,
       metrics: utils.getMetrics(metrics),
       lastModified: utils.getDateFromTimestamp(lastModified),
-      action: actionButton(name),
+      usedby: usedByWhichPipeline,
+      action: actionButton(name, Boolean(usedByWhichPipeline)),
     };
   });
 
@@ -148,7 +187,7 @@ const Topics = props => {
 
       <Main>
         <SortTable
-          isLoading={fetchingTopics}
+          isLoading={fetchingTopics || fetchingPipelines}
           headRows={headRows}
           rows={rows}
           tableName="topic"

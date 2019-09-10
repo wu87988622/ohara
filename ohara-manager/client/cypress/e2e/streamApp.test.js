@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import * as generate from '../../src/utils/generate';
 
-describe.only('StreamApp', () => {
+describe('StreamApp', () => {
   before(() => {
     cy.removeWorkers();
     cy.addWorker();

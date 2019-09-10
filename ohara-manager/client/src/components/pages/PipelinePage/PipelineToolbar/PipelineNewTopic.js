@@ -17,11 +17,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { isEmpty } from 'lodash';
+import { isEmpty, get } from 'lodash';
 import { Link } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
 import * as URLS from 'constants/urls';
+import * as pipelineApi from 'api/pipelineApi';
 import { Warning } from 'components/common/Messages';
 import { Select } from 'components/common/Form';
 import { createConnector } from './pipelineToolbarUtils';
@@ -38,10 +39,16 @@ class PipelineNewTopic extends React.Component {
     updateAddBtnStatus: PropTypes.func.isRequired,
     workerClusterName: PropTypes.string.isRequired,
     currentTopic: PropTypes.object,
+    pipelineName: PropTypes.string.isRequired,
+  };
+
+  state = {
+    updatedTopics: [],
   };
 
   componentDidMount() {
     this.props.updateAddBtnStatus(this.props.currentTopic);
+    this.fetchPipelines();
   }
 
   handleSelectChange = ({ target }) => {
@@ -49,8 +56,26 @@ class PipelineNewTopic extends React.Component {
     this.props.updateTopic(currentTopic);
   };
 
+  fetchPipelines = async () => {
+    const response = await pipelineApi.fetchPipelines();
+    const pipelines = get(response, 'data.result', []);
+
+    const updatedTopics = this.props.topics.map(topic => {
+      const isDisabled = pipelines.some(pipeline => {
+        return pipeline.objects.some(object => object.name === topic.name);
+      });
+
+      return {
+        ...topic,
+        disabled: isDisabled,
+      };
+    });
+
+    this.setState({ updatedTopics });
+  };
+
   update = () => {
-    const { graph, updateGraph, currentTopic } = this.props;
+    const { graph, updateGraph, currentTopic, pipelineName } = this.props;
 
     if (!currentTopic) {
       return toastr.error(MESSAGES.NO_TOPIC_IS_SUPPLIED);
@@ -65,7 +90,7 @@ class PipelineNewTopic extends React.Component {
         className: 'topic',
         typeName: 'topic',
       };
-      createConnector({ updateGraph, connector });
+      createConnector({ updateGraph, connector, pipelineName });
     }
   };
 
@@ -86,7 +111,7 @@ class PipelineNewTopic extends React.Component {
         ) : (
           <Select
             isObject
-            list={topics}
+            list={this.state.updatedTopics}
             selected={currentTopic}
             handleChange={this.handleSelectChange}
             data-testid="topic-select"

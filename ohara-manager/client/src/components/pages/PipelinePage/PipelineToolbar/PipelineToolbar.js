@@ -272,6 +272,7 @@ class PipelineToolbar extends React.Component {
                 updateTopic={updateCurrentTopic}
                 updateAddBtnStatus={this.updateAddBtnStatus}
                 workerClusterName={workerClusterName}
+                pipelineName={pipelineName}
               />
             )}
 

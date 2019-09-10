@@ -19,9 +19,10 @@ import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 import Topics from '../Topics';
 import { renderWithProvider } from 'utils/testUtils';
-import * as useApi from 'components/controller';
 
 jest.mock('components/controller');
 
@@ -31,9 +32,23 @@ describe('<Topics />', () => {
   let props;
   let brokerClusterName;
   let topics;
+  let pipelines;
+
   beforeEach(() => {
     brokerClusterName = generate.serviceName();
     topics = generate.topics({ brokerClusterName });
+    pipelines = [
+      {
+        name: generate.name(),
+        status: 'Stopped',
+        objects: [
+          { kind: 'topic', name: topics[0].name },
+          { kind: 'source', name: 'abc' },
+        ],
+        tags: {},
+      },
+    ];
+
     props = {
       match: {
         url: generate.url(),
@@ -44,15 +59,30 @@ describe('<Topics />', () => {
       },
     };
 
-    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
-      return {
-        data: {
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
+      if (url === `${URL.TOPIC_URL}`) {
+        return {
           data: {
-            result: topics,
+            data: {
+              isSuccess: true,
+              result: topics,
+            },
           },
-        },
-        isLoading: false,
-      };
+          isLoading: false,
+        };
+      }
+
+      if (url === URL.PIPELINE_URL) {
+        return {
+          data: {
+            data: {
+              isSuccess: true,
+              result: pipelines,
+            },
+          },
+          isLoading: false,
+        };
+      }
     });
 
     jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
@@ -92,11 +122,13 @@ describe('<Topics />', () => {
     const topicName = getByTestId('topic-name').textContent;
     const partitions = Number(getByTestId('topic-partitions').textContent);
     const replications = Number(getByTestId('topic-replication').textContent);
+    const usedByPipeline = getByTestId('topic-usedby').textContent;
     const lastModified = getByTestId('topic-lastModified').textContent;
 
     expect(topicName).toBe(topics[0].name);
     expect(partitions).toBe(topics[0].numberOfPartitions);
     expect(replications).toBe(topics[0].numberOfReplications);
+    expect(usedByPipeline).toBe(pipelines[0].name);
 
     // It's hard to assert the output date format since the topic last modified
     // date is generated. So we're asserting it with any given string here.
@@ -106,15 +138,30 @@ describe('<Topics />', () => {
   it('renders multiple topics', async () => {
     const topics = generate.topics({ count: 5, brokerClusterName });
 
-    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
-      return {
-        data: {
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
+      if (url === `${URL.TOPIC_URL}`) {
+        return {
           data: {
-            result: topics,
+            data: {
+              isSuccess: true,
+              result: topics,
+            },
           },
-        },
-        isLoading: false,
-      };
+          isLoading: false,
+        };
+      }
+
+      if (url === URL.PIPELINE_URL) {
+        return {
+          data: {
+            data: {
+              isSuccess: true,
+              result: pipelines,
+            },
+          },
+          isLoading: false,
+        };
+      }
     });
 
     const { getAllByTestId } = await renderWithProvider(<Topics {...props} />);
@@ -136,6 +183,51 @@ describe('<Topics />', () => {
   });
 
   it('should close the delete dialog with the cancel button', async () => {
+    pipelines = [
+      {
+        name: generate.name(),
+        status: 'Stopped',
+        objects: [],
+        tags: {},
+      },
+    ];
+
+    props = {
+      match: {
+        url: generate.url(),
+      },
+      worker: {
+        name: generate.name(),
+        brokerClusterName,
+      },
+    };
+
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
+      if (url === `${URL.TOPIC_URL}`) {
+        return {
+          data: {
+            data: {
+              isSuccess: true,
+              result: topics,
+            },
+          },
+          isLoading: false,
+        };
+      }
+
+      if (url === URL.PIPELINE_URL) {
+        return {
+          data: {
+            data: {
+              isSuccess: true,
+              result: pipelines,
+            },
+          },
+          isLoading: false,
+        };
+      }
+    });
+
     const { getByTestId, getByText } = await renderWithProvider(
       <Topics {...props} />,
     );

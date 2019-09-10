@@ -74,8 +74,9 @@ class Topic extends React.Component {
 
   fetchTopic = async () => {
     const { workerClusterName } = this.props.pipeline.tags;
-    const group = `${workerClusterName}-topic`;
-    const res = await fetchTopic(group, this.topicName);
+    this.topicGroup = `${workerClusterName}-topic`;
+
+    const res = await fetchTopic(this.topicGroup, this.topicName);
     const topic = get(res, 'data.result', null);
     if (topic) {
       this.setState({ topic });
