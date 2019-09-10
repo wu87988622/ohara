@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import java.util
 
-import com.island.ohara.client.ftp.FtpClient
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.csv.CsvSourceConnector
@@ -42,14 +42,14 @@ class FtpSource extends CsvSourceConnector {
     this.schema = settings.columns.asScala
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
-    val ftpClient =
-      FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
+    val fileSystem =
+      FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
     try {
-      if (ftpClient.nonExist(props.inputFolder))
+      if (fileSystem.nonExists(props.inputFolder))
         throw new IllegalArgumentException(s"${props.inputFolder} doesn't exist")
-      if (ftpClient.nonExist(props.errorFolder)) ftpClient.mkdir(props.errorFolder)
-      props.completedFolder.foreach(folder => if (ftpClient.nonExist(folder)) ftpClient.mkdir(folder))
-    } finally ftpClient.close()
+      if (fileSystem.nonExists(props.errorFolder)) fileSystem.mkdirs(props.errorFolder)
+      props.completedFolder.foreach(folder => if (fileSystem.nonExists(folder)) fileSystem.mkdirs(folder))
+    } finally fileSystem.close()
   }
 
   override protected def _stop(): Unit = {

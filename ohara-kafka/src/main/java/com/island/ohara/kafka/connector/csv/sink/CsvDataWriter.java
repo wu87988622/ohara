@@ -21,7 +21,7 @@ import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkContext;
 import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.TopicPartition;
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,16 +33,16 @@ public class CsvDataWriter implements DataWriter {
   private final Map<TopicPartition, TopicPartitionWriter> topicPartitionWriters;
   private RowSinkContext context;
   private CsvSinkConfig config;
-  private Storage storage;
+  private FileSystem fileSystem;
   private CsvRecordWriterProvider writerProvider;
 
-  public CsvDataWriter(CsvSinkConfig config, RowSinkContext context, Storage storage) {
+  public CsvDataWriter(CsvSinkConfig config, RowSinkContext context, FileSystem fileSystem) {
     assignment = new HashSet<>();
     topicPartitionWriters = new HashMap<>();
     this.context = context;
     this.config = config;
-    this.storage = storage;
-    this.writerProvider = new CsvRecordWriterProvider(storage);
+    this.fileSystem = fileSystem;
+    this.writerProvider = new CsvRecordWriterProvider(fileSystem);
     attach(context.assignment());
   }
 
@@ -83,7 +83,7 @@ public class CsvDataWriter implements DataWriter {
     detach(assignment);
     assignment.clear();
     topicPartitionWriters.clear();
-    Releasable.close(storage);
+    Releasable.close(fileSystem);
   }
 
   @Override

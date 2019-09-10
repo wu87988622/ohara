@@ -22,44 +22,45 @@ import com.island.ohara.kafka.connector.RowSourceRecord;
 import com.island.ohara.kafka.connector.RowSourceTask;
 import com.island.ohara.kafka.connector.TaskSetting;
 import com.island.ohara.kafka.connector.csv.source.*;
-import com.island.ohara.kafka.connector.storage.Storage;
-import java.nio.file.Path;
+import com.island.ohara.kafka.connector.storage.FileSystem;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * CsvSourceTask move files from storage to Kafka topics. The file format must be csv file, and
- * element in same line must be separated by comma. The offset is (path, line index). It means each
- * line is stored as a "message" in connector topic. For example: a file having 100 lines has 100
- * message in connector topic.
+ * CsvSourceTask moveFile files from file system to Kafka topics. The file format must be csv file,
+ * and element in same line must be separated by comma. The offset is (path, line index). It means
+ * each line is stored as a "message" in connector topic. For example: a file having 100 lines has
+ * 100 message in connector topic.
  */
 public abstract class CsvSourceTask extends RowSourceTask {
   private CsvSourceConfig config;
   private DataReader dataReader;
-  private Storage storage;
+  private FileSystem fs;
 
   /**
-   * Return the storage for this connector
+   * Return the file system for this connector
    *
    * @param config initial configuration
-   * @return a storage implementation
+   * @return a FileSystem implementation
    */
-  public abstract Storage _storage(TaskSetting config);
+  public abstract FileSystem _fileSystem(TaskSetting config);
 
   @Override
   public final void _start(TaskSetting setting) {
-    storage = _storage(setting);
+    fs = _fileSystem(setting);
     config = CsvSourceConfig.of(setting, setting.columns());
-    dataReader = CsvDataReader.of(storage, config, rowContext);
+    dataReader = CsvDataReader.of(fs, config, rowContext);
   }
 
   @Override
   public final List<RowSourceRecord> _poll() {
-    Iterator<Path> files = storage.list(config.inputFolder());
-    if (files.hasNext()) {
-      Path file = files.next();
+    Iterator<String> fileNames = fs.listFileNames(config.inputFolder());
+    if (fileNames.hasNext()) {
+      String fileName = fileNames.next();
       // Avoid more than one Task processing the same file
-      if (file.hashCode() % config.total() == config.hash()) {
-        return dataReader.read(file);
+      if (fileName.hashCode() % config.total() == config.hash()) {
+        String path = Paths.get(config.inputFolder(), fileName).toString();
+        return dataReader.read(path);
       }
     }
     return Collections.emptyList();
@@ -67,7 +68,7 @@ public abstract class CsvSourceTask extends RowSourceTask {
 
   @Override
   public final void _stop() {
-    Releasable.close(storage);
+    Releasable.close(fs);
   }
 
   @VisibleForTesting

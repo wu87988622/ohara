@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client.ftp
+package com.island.ohara.client.filesystem.ftp
 
 import java.io._
 import java.nio.charset.{Charset, StandardCharsets}
@@ -22,6 +22,7 @@ import java.nio.file.Files
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.client.filesystem.FileType
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
@@ -34,7 +35,7 @@ import scala.concurrent.duration._
   * NOTED: FtpClient doesn't extend ReleaseOnce since it is a "retryable" class which do close-and-then-reconnect
   * internally. Hence, FtpClient MAY close itself many times and re-build the connection.
   */
-trait FtpClient extends Releasable {
+private[ftp] trait FtpClient extends Releasable {
   def listFileNames(dir: String): Seq[String]
 
   /**
@@ -167,7 +168,7 @@ trait FtpClient extends Releasable {
   def workingFolder(): String
 }
 
-object FtpClient {
+private[ftp] object FtpClient {
   private[this] val LOG = Logger(classOf[FtpClient])
   def builder(): Builder = new Builder
 

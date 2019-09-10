@@ -20,7 +20,7 @@ import com.island.ohara.kafka.connector.*;
 import com.island.ohara.kafka.connector.csv.sink.CsvDataWriter;
 import com.island.ohara.kafka.connector.csv.sink.CsvSinkConfig;
 import com.island.ohara.kafka.connector.csv.sink.DataWriter;
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,22 +36,23 @@ import org.slf4j.LoggerFactory;
 public abstract class CsvSinkTask extends RowSinkTask {
   private static final Logger log = LoggerFactory.getLogger(CsvSinkTask.class);
 
-  private Storage storage;
+  private FileSystem fileSystem;
 
   private DataWriter writer;
 
   /**
-   * Returns the Storage implementation for this Task.
+   * Returns the FileSystem implementation for this Task.
    *
    * @param setting initial settings
-   * @return a Storage instance
+   * @return a FileSystem instance
    */
-  public abstract Storage _storage(TaskSetting setting);
+  public abstract FileSystem _fileSystem(TaskSetting setting);
 
   @Override
   protected void _start(TaskSetting setting) {
-    storage = Objects.requireNonNull(_storage(setting));
-    writer = new CsvDataWriter(CsvSinkConfig.of(setting, setting.columns()), rowContext, storage);
+    fileSystem = Objects.requireNonNull(_fileSystem(setting));
+    writer =
+        new CsvDataWriter(CsvSinkConfig.of(setting, setting.columns()), rowContext, fileSystem);
   }
 
   @Override

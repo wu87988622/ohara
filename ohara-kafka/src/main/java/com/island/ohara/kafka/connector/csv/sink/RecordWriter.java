@@ -19,10 +19,10 @@ package com.island.ohara.kafka.connector.csv.sink;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkRecord;
 
-/** Storage specific RecordWriter. */
+/** FileSystem specific RecordWriter. */
 public interface RecordWriter extends Releasable {
   /**
-   * Write a record to storage.
+   * Write a record to file system.
    *
    * @param record the record to persist
    */

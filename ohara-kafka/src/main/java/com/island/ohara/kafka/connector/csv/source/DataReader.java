@@ -17,7 +17,6 @@
 package com.island.ohara.kafka.connector.csv.source;
 
 import com.island.ohara.kafka.connector.RowSourceRecord;
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -45,8 +44,8 @@ public interface DataReader {
    *
    * <p>Note: after the file is read, remember to release relevant resources.
    *
-   * @param file the path of file
+   * @param path the path of file
    * @return a list of RowSourceRecord
    */
-  List<RowSourceRecord> read(Path file);
+  List<RowSourceRecord> read(String path);
 }

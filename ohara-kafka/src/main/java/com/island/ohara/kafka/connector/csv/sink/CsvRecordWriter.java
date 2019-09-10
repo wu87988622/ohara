@@ -19,7 +19,7 @@ package com.island.ohara.kafka.connector.csv.sink;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkRecord;
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class CsvRecordWriter implements RecordWriter {
   private static final Logger LOG = LoggerFactory.getLogger(CsvRecordWriter.class);
 
-  private final Storage storage;
+  private final FileSystem fileSystem;
   private final List<Column> schema;
   private final boolean needHeader;
   private final String encode;
@@ -40,8 +40,9 @@ public class CsvRecordWriter implements RecordWriter {
 
   private BufferedWriter bufferedWriter;
 
-  public CsvRecordWriter(final CsvSinkConfig config, final String filePath, final Storage storage) {
-    this.storage = storage;
+  public CsvRecordWriter(
+      final CsvSinkConfig config, final String filePath, final FileSystem fileSystem) {
+    this.fileSystem = fileSystem;
     this.schema = config.schema();
     this.needHeader = config.needHeader();
     this.encode = config.encode();
@@ -56,7 +57,7 @@ public class CsvRecordWriter implements RecordWriter {
       String line = RecordUtils.toLine(newSchema, record);
       if (RecordUtils.isNonEmpty(line)) {
         if (bufferedWriter == null) {
-          OutputStream out = storage.create(temporaryFile.toString());
+          OutputStream out = fileSystem.create(temporaryFile.toString());
           bufferedWriter = new BufferedWriter(new OutputStreamWriter(out, Charset.forName(encode)));
 
           if (needHeader) {
@@ -78,7 +79,7 @@ public class CsvRecordWriter implements RecordWriter {
     try {
       bufferedWriter.flush();
       Releasable.close(bufferedWriter);
-      storage.move(temporaryFile.toString(), committedFile.toString());
+      fileSystem.moveFile(temporaryFile.toString(), committedFile.toString());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

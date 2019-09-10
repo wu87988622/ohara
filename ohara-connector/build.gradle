@@ -32,33 +32,6 @@ dependencies {
   implementation libs.slf4jlog4j
   implementation libs.sprayJson
   implementation libs.kafkaConnectRuntime
-
-  /**
-   * Jar conflict between Hadoop & Kafka:
-   *    * Jersey: Hadoop use jersey 1.x, Kafka use jersey 2.x
-   *        * Solve running Kafka Connect mini cluster failed. OHARA-103
-   *    * Jetty: Hadoop use org.mortbay.jetty 6.1.x, Kafka use use newer version(org.eclipse.jetty)
-   *        * Exclude older release.
-   *    * Zookeeper: Hadoop use Zookeeper 3.4.6, Kafka use newer version
-   *        * Exclude older release.
-   */
-  implementation(libs.hadoopCommon) {
-    exclude group: 'com.sun.jersey', module: 'jersey-core'
-    exclude group: 'com.sun.jersey', module: 'jersey-json'
-    exclude group: 'com.sun.jersey', module: 'jersey-servlet'
-    exclude group: 'com.sun.jersey', module: 'jersey-server'
-    exclude group: 'org.mortbay.jetty', module: 'jetty'
-    exclude group: 'org.mortbay.jetty', module: 'jetty-util'
-    exclude group: 'org.apache.zookeeper', module: 'zookeeper'
-  }
-  implementation(libs.hadoopHDFS) {
-    exclude group: 'com.sun.jersey', module: 'jersey-core'
-    exclude group: 'com.sun.jersey', module: 'jersey-json'
-    exclude group: 'com.sun.jersey', module: 'jersey-servlet'
-    exclude group: 'com.sun.jersey', module: 'jersey-server'
-    exclude group: 'org.mortbay.jetty', module: 'jetty'
-    exclude group: 'org.mortbay.jetty', module: 'jetty-util'
-  }
   testImplementation project(":ohara-testing-util")
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-kafka").sourceSets.test.output

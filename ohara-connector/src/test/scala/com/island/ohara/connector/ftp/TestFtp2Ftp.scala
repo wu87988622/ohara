@@ -19,7 +19,7 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.ftp.FtpClient
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -49,8 +49,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   private[this] val header: String = row.cells().asScala.map(_.name).mkString(",")
   private[this] val data = (1 to 1000).map(_ => row.cells().asScala.map(_.value.toString).mkString(","))
 
-  private[this] val ftpClient = FtpClient
-    .builder()
+  private[this] val fileSystem = FileSystem.ftpBuilder
     .hostname(testUtil.ftpServer.hostname)
     .port(testUtil.ftpServer.port)
     .user(testUtil.ftpServer.user)
@@ -80,11 +79,11 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder.get)
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
-    TestFtp2Ftp.rebuild(ftpClient, sinkProps.topicsDir)
-    TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
+    TestFtp2Ftp.rebuild(fileSystem, sourceProps.inputFolder)
+    TestFtp2Ftp.rebuild(fileSystem, sourceProps.completedFolder.get)
+    TestFtp2Ftp.rebuild(fileSystem, sourceProps.errorFolder)
+    TestFtp2Ftp.rebuild(fileSystem, sinkProps.topicsDir)
+    TestFtp2Ftp.setupInput(fileSystem, sourceProps, header, data)
   }
 
   @Test
@@ -120,15 +119,20 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .create(),
           10 seconds
         )
-        CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
         CommonUtils
-          .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
+          .await(() => fileSystem.listFileNames(sourceProps.inputFolder).asScala.isEmpty, Duration.ofSeconds(30))
+        CommonUtils.await(() => fileSystem.listFileNames(sourceProps.completedFolder.get).asScala.size == 1,
+                          Duration.ofSeconds(30))
         val committedFolder = CommonUtils.path(sinkProps.topicsDir, topicKey.topicNameOnKafka(), "partition0")
-        CommonUtils.await(() => listCommittedFiles(committedFolder).size == 1, Duration.ofSeconds(30))
+        CommonUtils.await(() => {
+          if (fileSystem.exists(committedFolder))
+            listCommittedFiles(committedFolder).size == 1
+          else false
+        }, Duration.ofSeconds(30))
         val lines =
-          ftpClient.readLines(
+          fileSystem.readLines(
             com.island.ohara.common.util.CommonUtils
-              .path(committedFolder, ftpClient.listFileNames(committedFolder).head))
+              .path(committedFolder, fileSystem.listFileNames(committedFolder).asScala.toSeq.head))
         lines.length shouldBe data.length + 1 // header
         lines(0) shouldBe header
         lines(1) shouldBe data.head
@@ -137,12 +141,13 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     } finally workerClient.delete(sinkConnectorKey)
   }
 
-  private[this] def listCommittedFiles(folder: String): Seq[String] =
-    ftpClient.listFileNames(folder).filter(file => !file.contains("_tmp"))
+  private[this] def listCommittedFiles(dir: String): Seq[String] = {
+    fileSystem.listFileNames(dir, (fileName: String) => !fileName.contains("_tmp"))
+  }
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(ftpClient)
+    Releasable.close(fileSystem)
   }
 }
 
@@ -150,24 +155,26 @@ object TestFtp2Ftp extends Matchers {
 
   /**
     * delete all stuffs in the path and then recreate it as a folder
-    * @param ftpClient ftp client
+    * @param fileSystem ftp client
     * @param path path on ftp server
     */
-  def rebuild(ftpClient: FtpClient, path: String): Unit = {
-    if (ftpClient.exist(path)) {
-      ftpClient
+  def rebuild(fileSystem: FileSystem, path: String): Unit = {
+    if (fileSystem.exists(path)) {
+      fileSystem
         .listFileNames(path)
+        .asScala
         .map(com.island.ohara.common.util.CommonUtils.path(path, _))
-        .foreach(ftpClient.delete)
-      ftpClient.listFileNames(path).size shouldBe 0
-      ftpClient.delete(path)
+        .foreach(fileSystem.delete)
+      fileSystem.listFileNames(path).asScala.size shouldBe 0
+      fileSystem.delete(path)
     }
-    ftpClient.mkdir(path)
+    fileSystem.mkdirs(path)
   }
 
-  def setupInput(ftpClient: FtpClient, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
+  def setupInput(fileSystem: FileSystem, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
     val writer = new BufferedWriter(
-      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))))
+      new OutputStreamWriter(
+        fileSystem.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()

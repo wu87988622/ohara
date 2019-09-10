@@ -16,18 +16,18 @@
 
 package com.island.ohara.kafka.connector.csv.sink;
 
-/** Provider of a record writer for this storage. */
+/** Provider of a record writer for this file system. */
 public interface RecordWriterProvider {
 
   /**
-   * Get the file extension name for this storage.
+   * Get the file extension name for this file system.
    *
    * @return file extension name
    */
   String getExtension();
 
   /**
-   * Creates a record writer for this storage.
+   * Creates a record writer for this file system.
    *
    * @param config CSV sink configuration
    * @param filePath filePath

@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.ftp
+package com.island.ohara.client.filesystem
 
-import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.kafka.connector._
-import com.island.ohara.kafka.connector.csv.CsvSinkTask
-import com.island.ohara.kafka.connector.storage
+import com.island.ohara.client.Enum
 
-class FtpSinkTask extends CsvSinkTask {
-  override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
-    val props = FtpSinkProps(setting)
-    FileSystem.ftpBuilder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
-  }
+abstract sealed class FileType
+
+object FileType extends Enum[FileType] {
+  case object FILE extends FileType
+  case object FOLDER extends FileType
+  case object NONEXISTENT extends FileType
 }

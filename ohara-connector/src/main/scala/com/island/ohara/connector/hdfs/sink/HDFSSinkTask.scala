@@ -16,18 +16,15 @@
 
 package com.island.ohara.connector.hdfs.sink
 
-import java.net.URI
-
-import com.island.ohara.kafka.connector.TaskSetting
+import com.island.ohara.client.filesystem.FileSystem
+import com.island.ohara.kafka.connector.{TaskSetting, storage}
 import com.island.ohara.kafka.connector.csv.CsvSinkTask
-import com.island.ohara.kafka.connector.storage.Storage
-import org.apache.hadoop.fs.FileSystem
 
 class HDFSSinkTask extends CsvSinkTask {
   var hdfsSinkProps: HDFSSinkProps = _
 
-  override def _storage(setting: TaskSetting): Storage = {
+  override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
     hdfsSinkProps = HDFSSinkProps(setting)
-    new HDFSStorage(FileSystem.newInstance(URI.create(hdfsSinkProps.hdfsURL), hdfsSinkProps.hadoopConfiguration()))
+    FileSystem.hdfsBuilder().url(hdfsSinkProps.hdfsURL).build
   }
 }

@@ -22,7 +22,7 @@ import java.nio.file.{Path, Paths}
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.ftp.FtpClient
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -115,29 +115,22 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     encode = "UTF-8"
   )
 
-  private[this] val ftpClient = FtpClient
-    .builder()
+  private[this] val fileSystem = FileSystem.ftpBuilder
     .hostname(testUtil.ftpServer.hostname)
     .port(testUtil.ftpServer.port)
     .user(testUtil.ftpServer.user)
     .password(testUtil.ftpServer.password)
-    .build()
-
-  private[this] val ftpStorage = new FtpStorage(ftpClient)
+    .build
 
   @Before
   def setup(): Unit = {
-    if (ftpStorage.exists(props.topicsDir)) {
-      ftpStorage.delete(props.topicsDir, true)
-      ftpStorage.exists(props.topicsDir) shouldBe false
-    }
-    ftpStorage.mkdirs(props.topicsDir)
-    ftpStorage.exists(props.topicsDir) shouldBe true
-    ftpStorage.list(props.topicsDir).asScala.size shouldBe 0
+    fileSystem.reMkdirs(props.topicsDir)
+    fileSystem.exists(props.topicsDir) shouldBe true
+    fileSystem.listFileNames(props.topicsDir).asScala.size shouldBe 0
   }
 
   @After
-  def tearDown(): Unit = Releasable.close(ftpStorage)
+  def tearDown(): Unit = Releasable.close(fileSystem)
 
   @Test
   def testReorder(): Unit = {
@@ -326,7 +319,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       FtpUtils.checkConnector(testUtil, connectorKey)
       TimeUnit.SECONDS.sleep(5)
       val folder = getCommittedFolder()
-      ftpStorage.exists(folder.toString) shouldBe false
+      fileSystem.exists(folder.toString) shouldBe false
     } finally result(workerClient.delete(connectorKey))
   }
 
@@ -344,7 +337,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       encode = "UTF-8"
     )
     sink.start(ConnectorFormatter.of().connectorKey(connectorKey).settings(props.toMap.asJava).raw())
-    ftpStorage.exists("/output") shouldBe true
+    fileSystem.exists("/output") shouldBe true
   }
 
   @Test
@@ -386,17 +379,22 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private[this] def getCommittedFolder(): Path = Paths.get(props.topicsDir, TOPIC.topicNameOnKafka(), "partition0")
 
-  private[this] def checkCommittedFileSize(folder: Path, expectedSize: Int): Unit = {
-    CommonUtils.await(() => ftpStorage.exists(folder.toString), Duration.ofSeconds(20))
-    CommonUtils.await(() => listCommittedFiles(folder).size == expectedSize, Duration.ofSeconds(20))
+  private[this] def checkCommittedFileSize(dir: Path, expectedSize: Int): Unit = {
+    CommonUtils.await(() => fileSystem.exists(dir.toString), Duration.ofSeconds(20))
+    CommonUtils.await(() => listCommittedFiles(dir).size == expectedSize, Duration.ofSeconds(20))
   }
 
   private[this] def listCommittedFiles(folder: Path): Seq[Path] =
-    ftpStorage.list(folder.toString).asScala.filter(file => !file.toString.contains("_tmp")).toSeq
+    fileSystem
+      .listFileNames(folder.toString)
+      .asScala
+      .filter(!_.contains("_tmp"))
+      .map(Paths.get(folder.toString, _))
+      .toSeq
 
   private[this] def readLines(file: Path): Array[String] = {
     val reader = new BufferedReader(
-      new InputStreamReader(ftpStorage.open(file.toString), Charset.forName(props.encode)))
+      new InputStreamReader(fileSystem.open(file.toString), Charset.forName(props.encode)))
     try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
     finally reader.close()
   }

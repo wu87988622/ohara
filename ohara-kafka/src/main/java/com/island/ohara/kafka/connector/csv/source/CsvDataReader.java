@@ -19,10 +19,9 @@ package com.island.ohara.kafka.connector.csv.source;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.RowSourceRecord;
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -33,29 +32,28 @@ import org.slf4j.LoggerFactory;
 public class CsvDataReader implements DataReader {
   private static final Logger LOG = LoggerFactory.getLogger(CsvDataReader.class);
 
-  private final Storage storage;
+  private final FileSystem fs;
   private final CsvSourceConfig config;
   private final RowSourceContext context;
   private final CsvOffsetCache offsetCache;
 
-  public static CsvDataReader of(
-      Storage storage, CsvSourceConfig config, RowSourceContext context) {
-    return new CsvDataReader(storage, config, context);
+  public static CsvDataReader of(FileSystem fs, CsvSourceConfig config, RowSourceContext context) {
+    return new CsvDataReader(fs, config, context);
   }
 
-  public CsvDataReader(Storage storage, CsvSourceConfig config, RowSourceContext context) {
-    this.storage = storage;
+  public CsvDataReader(FileSystem fs, CsvSourceConfig config, RowSourceContext context) {
+    this.fs = fs;
     this.config = config;
     this.context = context;
     this.offsetCache = new CsvOffsetCache();
   }
 
-  public List<RowSourceRecord> read(Path file) {
+  public List<RowSourceRecord> read(String path) {
     try {
-      offsetCache.update(context, file.toString());
+      offsetCache.update(context, path);
       CsvRecordConverter converter =
           new CsvRecordConverter.Builder()
-              .path(file.toString())
+              .path(path)
               .topics(config.topics())
               .offsetCache(offsetCache)
               .schema(config.schema())
@@ -64,16 +62,15 @@ public class CsvDataReader implements DataReader {
       List<RowSourceRecord> records;
       try (BufferedReader reader =
           new BufferedReader(
-              new InputStreamReader(
-                  storage.open(file.toString()), Charset.forName(config.encode())))) {
+              new InputStreamReader(fs.open(path), Charset.forName(config.encode())))) {
         records = converter.convert(reader.lines());
       }
 
-      handleCompletedFile(file.toString());
+      handleCompletedFile(path);
       return records;
     } catch (Exception e) {
-      LOG.error("failed to handle " + file, e);
-      handleErrorFile(file.toString());
+      LOG.error("failed to handle " + path, e);
+      handleErrorFile(path);
       return Collections.emptyList();
     }
   }
@@ -89,11 +86,11 @@ public class CsvDataReader implements DataReader {
         moveToAnotherFolder(path, config.completedFolder().get());
       } catch (Exception e) {
         throw new IllegalStateException(
-            "failed to move " + path + " to " + config.completedFolder(), e);
+            "failed to moveFile " + path + " to " + config.completedFolder(), e);
       }
     } else {
       try {
-        storage.delete(path);
+        fs.delete(path);
       } catch (Exception e) {
         throw new IllegalStateException("failed to delete " + path, e);
       }
@@ -109,22 +106,22 @@ public class CsvDataReader implements DataReader {
     try {
       moveToAnotherFolder(path, config.errorFolder());
     } catch (Exception e) {
-      LOG.error("failed to move " + path + " to " + config.errorFolder(), e);
+      LOG.error("failed to moveFile " + path + " to " + config.errorFolder(), e);
     }
   }
 
   private void moveToAnotherFolder(String path, String targetFolder) {
     String fileName = Paths.get(path).getFileName().toString();
     String outputPath = Paths.get(targetFolder, fileName).toString();
-    if (storage.exists(outputPath)) {
+    if (fs.exists(outputPath)) {
       String newPath = outputPath + "." + CommonUtils.uuid();
-      if (storage.exists(newPath)) {
+      if (fs.exists(newPath)) {
         throw new IllegalStateException("duplicate file? " + path);
       } else {
-        storage.move(path, newPath);
+        fs.moveFile(path, newPath);
       }
     } else {
-      storage.move(path, outputPath);
+      fs.moveFile(path, outputPath);
     }
   }
 }

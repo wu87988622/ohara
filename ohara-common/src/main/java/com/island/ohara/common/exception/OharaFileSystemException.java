@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.ftp
+package com.island.ohara.common.exception;
 
-import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.kafka.connector._
-import com.island.ohara.kafka.connector.csv.CsvSinkTask
-import com.island.ohara.kafka.connector.storage
+public class OharaFileSystemException extends OharaException {
 
-class FtpSinkTask extends CsvSinkTask {
-  override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
-    val props = FtpSinkProps(setting)
-    FileSystem.ftpBuilder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
+  private static final long serialVersionUID = 1L;
+
+  public OharaFileSystemException() {}
+
+  public OharaFileSystemException(String message) {
+    super(message);
+  }
+
+  public OharaFileSystemException(Throwable e) {
+    super(e);
+  }
+
+  public OharaFileSystemException(String message, Throwable e) {
+    super(message, e);
   }
 }

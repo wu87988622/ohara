@@ -17,24 +17,19 @@
 package com.island.ohara.kafka.connector.csv;
 
 import com.island.ohara.common.exception.OharaException;
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.stream.Collectors;
 import org.junit.rules.TemporaryFolder;
 
 public abstract class WithMockStorage extends CsvSinkTestBase {
-  protected Storage storage;
+  protected FileSystem fs;
 
   @Override
   public void setUp() {
     super.setUp();
-    storage = new MockStorage();
+    fs = LocalFileSystem.of();
   }
 
   protected File createTemporaryFolder() {
@@ -48,106 +43,8 @@ public abstract class WithMockStorage extends CsvSinkTestBase {
   }
 
   protected Collection<String> readData(String path) {
-    InputStream in = storage.open(path);
+    InputStream in = fs.open(path);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
     return reader.lines().collect(Collectors.toList());
-  }
-
-  static class MockStorage implements Storage {
-    @Override
-    public Iterator<Path> list(String dirPath) {
-      try {
-        return Files.list(Paths.get(dirPath)).iterator();
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public OutputStream create(String filePathAndName) {
-      try {
-        Path path = Paths.get(filePathAndName);
-        Path parent = path.getParent();
-        if (!Files.exists(parent)) {
-          Files.createDirectories(parent);
-        }
-        return Files.newOutputStream(Paths.get(filePathAndName));
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public OutputStream append(String filePathAndName) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public InputStream open(String filePathAndName) {
-      try {
-        return Files.newInputStream(Paths.get(filePathAndName));
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public boolean exists(String filePath) {
-      return Files.exists(Paths.get(filePath));
-    }
-
-    public boolean copy(boolean delSrc, boolean overwrite, String sourcePath, String targetPath) {
-      try {
-        Path copied = Paths.get(targetPath);
-        Path originalPath = Paths.get(sourcePath);
-
-        if (overwrite) {
-          Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
-        } else {
-          Files.copy(originalPath, copied);
-        }
-
-        if (delSrc) {
-          Files.delete(originalPath);
-        }
-
-        return true;
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public boolean move(String sourcePath, String targetPath) {
-      try {
-        Files.move(Paths.get(sourcePath), Paths.get(targetPath));
-        return true;
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public void delete(String filePathAndName) {
-      try {
-        Files.delete(Paths.get(filePathAndName));
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public void mkdirs(String path) {
-      try {
-        Files.createDirectories(Paths.get(path));
-      } catch (IOException e) {
-        throw new OharaException(e);
-      }
-    }
-
-    @Override
-    public void close() {
-      // Do nothing
-    }
   }
 }

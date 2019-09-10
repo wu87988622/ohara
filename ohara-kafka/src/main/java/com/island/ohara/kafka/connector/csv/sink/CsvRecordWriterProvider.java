@@ -16,15 +16,15 @@
 
 package com.island.ohara.kafka.connector.csv.sink;
 
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 
 public class CsvRecordWriterProvider implements RecordWriterProvider {
   private static final String EXTENSION = ".csv";
 
-  private final Storage storage;
+  private final FileSystem fileSystem;
 
-  public CsvRecordWriterProvider(Storage storage) {
-    this.storage = storage;
+  public CsvRecordWriterProvider(FileSystem fileSystem) {
+    this.fileSystem = fileSystem;
   }
 
   public String getExtension() {
@@ -32,6 +32,6 @@ public class CsvRecordWriterProvider implements RecordWriterProvider {
   }
 
   public CsvRecordWriter getRecordWriter(CsvSinkConfig config, String filePath) {
-    return new CsvRecordWriter(config, filePath, storage);
+    return new CsvRecordWriter(config, filePath, fileSystem);
   }
 }

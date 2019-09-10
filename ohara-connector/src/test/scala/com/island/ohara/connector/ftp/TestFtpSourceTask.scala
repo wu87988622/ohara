@@ -18,8 +18,7 @@ package com.island.ohara.connector.ftp
 
 import java.util.Collections
 
-import com.island.ohara.client.ftp.FtpClient
-import com.island.ohara.common.exception.OharaException
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -27,7 +26,6 @@ import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.kafka.connector.csv.CsvConnector
 import com.island.ohara.kafka.connector.csv.source.CsvDataReader
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
-import com.island.ohara.kafka.connector.storage.Storage
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -56,22 +54,19 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    val ftpClient = createFtpClient();
+    val fileSystem = createFileSystem()
 
     try {
-      ftpClient.reMkdir(props.inputFolder)
-      ftpClient.reMkdir(props.completedFolder.get)
-      ftpClient.reMkdir(props.errorFolder)
-    } finally ftpClient.close()
+      fileSystem.reMkdirs(props.inputFolder)
+      fileSystem.reMkdirs(props.completedFolder.get)
+      fileSystem.reMkdirs(props.errorFolder)
+    } finally fileSystem.close()
   }
 
-  private[this] def createFtpClient() =
-    FtpClient.builder().hostname(props.hostname).password(props.password).port(props.port).user(props.user).build()
-
-  private[this] def createStorage(): Storage = {
+  private[this] def createFileSystem(): FileSystem = {
     val task = createTask()
     val config = TaskSetting.of(settings.asJava)
-    task._storage(config)
+    task._fileSystem(config).asInstanceOf[FileSystem]
   }
 
   private[this] def createTask() = {
@@ -114,45 +109,45 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   }
 
   @Test
-  def testStorage(): Unit = {
+  def testFileSystem(): Unit = {
     val task = createTask()
     val config = TaskSetting.of(settings.asJava)
-    task._storage(config) should not be (null)
+    task._fileSystem(config) should not be (null)
   }
 
   @Test
-  def testStorage_WithEmptyConfig(): Unit = {
+  def testFileSystem_WithEmptyConfig(): Unit = {
     val task = createTask()
     intercept[NoSuchElementException] {
-      task._storage(TaskSetting.of(Collections.emptyMap()))
+      task._fileSystem(TaskSetting.of(Collections.emptyMap()))
     }
   }
 
   @Test
   def testListNonexistentInput(): Unit = {
-    val ftpClient = createFtpClient()
-    try ftpClient.delete(props.inputFolder)
-    finally ftpClient.close()
+    val fileSystem = createFileSystem()
+    try fileSystem.delete(props.inputFolder)
+    finally fileSystem.close()
 
-    val storage = createStorage()
+    val fs = createFileSystem()
     // input folder doesn't exist should throw error
-    intercept[OharaException] {
-      storage.list(props.inputFolder).asScala.size shouldBe 0
+    intercept[IllegalArgumentException] {
+      fs.listFileNames(props.inputFolder).asScala.size shouldBe 0
     }
   }
 
   @Test
   def testListInput(): Unit = {
     val numberOfInputs = 3
-    val ftpClient = createFtpClient()
+    val fileSystem = createFileSystem()
     try {
       val data = (0 to 100).map(_.toString)
       (0 until numberOfInputs).foreach(index =>
-        ftpClient.attach(CommonUtils.path(props.inputFolder, index.toString), data))
-    } finally ftpClient.close()
+        fileSystem.attach(CommonUtils.path(props.inputFolder, index.toString), data))
+    } finally fileSystem.close()
 
-    val storage = createStorage()
-    storage.list(props.inputFolder).asScala.size shouldBe 3
+    val fs = createFileSystem()
+    fs.listFileNames(props.inputFolder).asScala.size shouldBe 3
   }
 
   @After

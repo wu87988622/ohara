@@ -20,6 +20,7 @@ import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -28,7 +29,6 @@ import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskSetting}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
-import org.apache.hadoop.fs.Path
 import org.junit.{Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
@@ -99,7 +99,7 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
     Column.builder().name("b").dataType(DataType.STRING).order(2).build()
   )
 
-  private[this] val storage = new HDFSStorage(testUtil.hdfs.fileSystem())
+  private[this] val fileSystem = FileSystem.hdfsBuilder().url(testUtil.hdfs.hdfsURL).build
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -140,25 +140,36 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
 
   // Verify the commit file is exist.
   private[this] def verifyFileExist(filePath: String): Unit = {
-    CommonUtils.await(() => storage.exists(filePath), Duration.ofSeconds(20))
+    CommonUtils.await(() => fileSystem.exists(filePath), Duration.ofSeconds(20))
   }
 
   // Verify the size of commit files in the dir.
   private[this] def verifyCommittedFileSize(dirPath: String, expectedSize: Int): Unit = {
     CommonUtils.await(
-      () => storage.list(dirPath, (path: Path) => !path.getName.contains("_tmp")).size() == expectedSize,
-      Duration.ofSeconds(20))
+      () => {
+        if (fileSystem.exists(dirPath))
+          fileSystem.listFileNames(dirPath, (fileName: String) => !fileName.contains("_tmp")).size == expectedSize
+        else false
+      },
+      Duration.ofSeconds(20)
+    )
   }
 
   // Verify the size of temp files in the dir.
   private[this] def verifyTemporaryFileSize(dirPath: String, expectedSize: Int): Unit = {
-    CommonUtils.await(() => storage.list(dirPath, (path: Path) => path.getName.contains("_tmp")).size() == expectedSize,
-                      Duration.ofSeconds(20))
+    CommonUtils.await(
+      () => {
+        if (fileSystem.exists(dirPath))
+          fileSystem.listFileNames(dirPath, (fileName: String) => fileName.contains("_tmp")).size == expectedSize
+        else false
+      },
+      Duration.ofSeconds(20)
+    )
   }
 
   //
   private[this] def verifyDataCount(filePath: String, expectedCount: Int): Unit = {
-    val file: InputStream = testUtil.hdfs.fileSystem.open(new Path(filePath))
+    val file: InputStream = fileSystem.open(filePath)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
     try {
@@ -173,7 +184,7 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
 
   //
   private[this] def verifyDataHeadLine(filePath: String, expectedString: String): Unit = {
-    val file: InputStream = testUtil.hdfs.fileSystem.open(new Path(filePath))
+    val file: InputStream = fileSystem.open(filePath)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
     try {
@@ -310,8 +321,7 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
     TimeUnit.SECONDS.sleep(10)
 
     val committedDir = commitDir(topicsDir, topicName)
-    verifyCommittedFileSize(committedDir, 0)
-    verifyTemporaryFileSize(committedDir, 0)
+    CommonUtils.await(() => fileSystem.exists(committedDir) == false, Duration.ofSeconds(20))
   }
 
   @Test

@@ -14,28 +14,33 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.hdfs.sink
+package com.island.ohara.client.filesystem.hdfs
 
-import java.io.IOException
-import java.nio.file.{Path, Paths}
+import java.io.File
 
-import com.island.ohara.kafka.connector.storage.StorageTestBase
+import com.island.ohara.client.filesystem.{FileSystem, FileSystemTestBase}
+import com.island.ohara.common.exception.OharaFileSystemException
 import com.island.ohara.common.util.CommonUtils
 import org.scalatest.Matchers
 
-class TestHDFSStorage extends StorageTestBase with Matchers {
-  override protected def createStorage() = new HDFSStorage(testUtil.hdfs.fileSystem)
+class TestHdfsFileSystem extends FileSystemTestBase with Matchers {
 
-  override protected def getRootFolder: Path =
-    Paths.get(CommonUtils.path(testUtil.hdfs.tmpDirectory, CommonUtils.randomString(10)))
+  private[this] val tempFolder: File = CommonUtils.createTempFolder("local_hdfs")
+
+  private[this] val hdfsURL: String = new File(tempFolder.getAbsolutePath).toURI.toString
+
+  override protected def setupFileSystem(): FileSystem = FileSystem.hdfsBuilder().url(hdfsURL).build
+
+  override protected def setupRootDir(): String = tempFolder.toString
 
   // override this method because the Local HDFS doesn't support append()
   override def testAppend(): Unit = {
     val file = randomFile()
-    getStorage.create(file).close()
+    fileSystem.create(file).close()
 
-    intercept[IOException] {
-      getStorage.append(file)
+    intercept[OharaFileSystemException] {
+      fileSystem.append(file)
     }.getMessage shouldBe "Not supported"
   }
+
 }

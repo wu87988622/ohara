@@ -223,7 +223,8 @@ public class TopicPartitionWriter implements Releasable {
     offsetToCommit = currentOffset + 1;
     commitFiles.clear();
     recordCount = 0;
-    LOG.info("Files committed to Storage. Target commit offset for {} is {}", tp, offsetToCommit);
+    LOG.info(
+        "Files committed to FileSystem. Target commit offset for {} is {}", tp, offsetToCommit);
   }
 
   private void commitFile(String encodedPartition) {

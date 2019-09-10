@@ -45,9 +45,9 @@ public class TestTopicPartitionWriter extends WithMockStorage {
   @Override
   public void setUp() {
     super.setUp();
-    CsvRecordWriterProvider format = new CsvRecordWriterProvider(storage);
+    CsvRecordWriterProvider format = new CsvRecordWriterProvider(fs);
     writer = new TopicPartitionWriter(TOPIC_PARTITION, format, config, context);
-    storage.delete(topicsDir.getPath());
+    fs.delete(topicsDir.getPath());
   }
 
   @Test
@@ -139,9 +139,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
     String dir = topicsDir + "/" + TOPIC_PARTITION.topicName() + "/" + encodedPartition;
 
     List<String> actualFilenames =
-        StreamUtils.iterate(storage.list(dir))
-            .map(path -> path.getFileName().toString())
-            .collect(Collectors.toList());
+        StreamUtils.iterate(fs.listFileNames(dir)).collect(Collectors.toList());
 
     for (String filename : filenames) {
       Assert.assertTrue(actualFilenames.contains(filename));

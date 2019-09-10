@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client.ftp
-import com.island.ohara.client.Enum
+package com.island.ohara.client.filesystem
 
-abstract sealed class FileType
-
-object FileType extends Enum[FileType] {
-  case object FILE extends FileType
-  case object FOLDER extends FileType
-  case object NONEXISTENT extends FileType
+trait FileFilter {
+  def accept(fileName: String): Boolean
 }

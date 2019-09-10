@@ -46,7 +46,7 @@ public class TestCsvDataReader extends WithFakeStorage {
     verifyFileSize(1, 0, 0);
 
     DataReader dataReader = createDataReader();
-    List<RowSourceRecord> records = dataReader.read(INPUT_FILE);
+    List<RowSourceRecord> records = dataReader.read(INPUT_FILE.toString());
 
     verifyRecords(records);
     verifyFileSize(0, 1, 0);
@@ -64,7 +64,7 @@ public class TestCsvDataReader extends WithFakeStorage {
             Column.builder().name("running").dataType(DataType.ROW).build());
 
     DataReader dataReader = createDataReader(newSchema);
-    List<RowSourceRecord> records = dataReader.read(INPUT_FILE);
+    List<RowSourceRecord> records = dataReader.read(INPUT_FILE.toString());
 
     Assert.assertEquals(0, records.size());
     verifyFileSize(0, 0, 1);

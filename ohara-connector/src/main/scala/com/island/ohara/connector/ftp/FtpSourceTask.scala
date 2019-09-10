@@ -16,10 +16,10 @@
 
 package com.island.ohara.connector.ftp
 
-import com.island.ohara.client.ftp.FtpClient
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.kafka.connector._
 import com.island.ohara.kafka.connector.csv.CsvSourceTask
-import com.island.ohara.kafka.connector.storage.Storage
+import com.island.ohara.kafka.connector.storage
 
 /**
   * Move files from FTP server to Kafka topics. The file format must be csv file, and element in same line must be separated
@@ -28,9 +28,8 @@ import com.island.ohara.kafka.connector.storage.Storage
   */
 class FtpSourceTask extends CsvSourceTask {
 
-  override def _storage(config: TaskSetting): Storage = {
+  override def _fileSystem(config: TaskSetting): storage.FileSystem = {
     val props: FtpSourceProps = FtpSourceProps(config)
-    new FtpStorage(
-      FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build())
+    FileSystem.ftpBuilder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
 }

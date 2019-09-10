@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client.ftp
+package com.island.ohara.client.filesystem.ftp
 
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-class TestFtpClientBuilder extends SmallTest with Matchers {
+class TestFtpFileSystemBuilder extends SmallTest with Matchers {
 
   @Test
   def ignoreHostname(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient
+    an[NullPointerException] should be thrownBy FtpFileSystem
       .builder()
       .port(123)
       .user("adasd")
@@ -37,18 +37,18 @@ class TestFtpClientBuilder extends SmallTest with Matchers {
 
   @Test
   def nullHostname(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient.builder().hostname(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder().hostname(null)
   }
 
   @Test
   def emptyHostname(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpClient.builder().hostname("")
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().hostname("")
   }
 
   @Test
   def ignorePort(): Unit = {
     // pass since ftp port has default value
-    FtpClient
+    FtpFileSystem
       .builder()
       .hostname("abc")
       .user("adasd")
@@ -60,12 +60,12 @@ class TestFtpClientBuilder extends SmallTest with Matchers {
 
   @Test
   def negativePort(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpClient.builder().port(-1)
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().port(-1)
   }
 
   @Test
   def ignoreUser(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient
+    an[NullPointerException] should be thrownBy FtpFileSystem
       .builder()
       .port(123)
       .hostname("adasd")
@@ -77,17 +77,17 @@ class TestFtpClientBuilder extends SmallTest with Matchers {
 
   @Test
   def nullUser(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient.builder().user(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder().user(null)
   }
 
   @Test
   def emptyUser(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpClient.builder().user("")
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().user("")
   }
 
   @Test
   def ignorePassword(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient
+    an[NullPointerException] should be thrownBy FtpFileSystem
       .builder()
       .port(123)
       .hostname("adasd")
@@ -99,31 +99,31 @@ class TestFtpClientBuilder extends SmallTest with Matchers {
 
   @Test
   def nullPassword(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient.builder().password(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder().password(null)
   }
 
   @Test
   def emptyPassword(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpClient.builder().password("")
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().password("")
   }
 
   @Test
   def ignoreRetryTimeout(): Unit = {
     // pass
-    FtpClient.builder().hostname("aa").port(123).password("adasd").user("asda").retryBackoff(5 seconds).build()
+    FtpFileSystem.builder().hostname("aa").port(123).password("adasd").user("asda").retryBackoff(5 seconds).build()
   }
   @Test
   def nullRetryTimeout(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient.builder().retryTimeout(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder().retryTimeout(null)
   }
 
   @Test
   def ignoreRetryBackoff(): Unit = {
     // pass
-    FtpClient.builder().hostname("aa").port(123).password("adasd").user("asda").retryTimeout(5 seconds).build()
+    FtpFileSystem.builder().hostname("aa").port(123).password("adasd").user("asda").retryTimeout(5 seconds).build()
   }
   @Test
   def nullRetryBackoff(): Unit = {
-    an[NullPointerException] should be thrownBy FtpClient.builder().retryBackoff(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder().retryBackoff(null)
   }
 }

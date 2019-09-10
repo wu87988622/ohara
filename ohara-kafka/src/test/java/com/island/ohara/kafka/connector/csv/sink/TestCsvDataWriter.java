@@ -45,7 +45,7 @@ public class TestCsvDataWriter extends WithMockStorage {
   @Override
   public void setUp() {
     super.setUp();
-    dataWriter = new CsvDataWriter(config, context, storage);
+    dataWriter = new CsvDataWriter(config, context, fs);
   }
 
   @Test

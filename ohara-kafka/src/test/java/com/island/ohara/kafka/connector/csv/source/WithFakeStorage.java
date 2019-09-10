@@ -19,8 +19,8 @@ package com.island.ohara.kafka.connector.csv.source;
 import com.google.common.collect.Iterators;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.storage.LocalStorage;
-import com.island.ohara.kafka.connector.storage.Storage;
+import com.island.ohara.kafka.connector.csv.LocalFileSystem;
+import com.island.ohara.kafka.connector.storage.FileSystem;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -41,7 +41,7 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
   protected static final Path INPUT_FILE =
       Paths.get(INPUT_FOLDER.toString(), CommonUtils.randomString(5));
 
-  protected Storage storage;
+  protected FileSystem storage;
 
   @Override
   protected Map<String, String> createProps() {
@@ -56,7 +56,7 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
   protected void setup() {
     super.setup();
 
-    storage = LocalStorage.of();
+    storage = LocalFileSystem.of();
     cleanFolders();
     setupInputFile();
   }
@@ -72,13 +72,13 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
   }
 
   protected void verifyFileSizeInFolder(int expected, Path folder) {
-    Assert.assertEquals(expected, Iterators.size(storage.list(folder.toString())));
+    Assert.assertEquals(expected, Iterators.size(storage.listFileNames(folder.toString())));
   }
 
   private void cleanFolders() {
-    storage.delete(INPUT_FOLDER.toString());
-    storage.delete(COMPLETED_FOLDER.toString());
-    storage.delete(ERROR_FOLDER.toString());
+    storage.delete(INPUT_FOLDER.toString(), true);
+    storage.delete(COMPLETED_FOLDER.toString(), true);
+    storage.delete(ERROR_FOLDER.toString(), true);
     storage.mkdirs(INPUT_FOLDER.toString());
     storage.mkdirs(COMPLETED_FOLDER.toString());
     storage.mkdirs(ERROR_FOLDER.toString());

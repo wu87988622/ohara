@@ -29,11 +29,9 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   ValidationReport
 }
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.ftp.FtpClient
+import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceRecord, SourceTask}
 import spray.json.{JsObject, JsString}
@@ -84,10 +82,8 @@ class ValidatorTask extends SourceTask {
   override def version(): String = VersionUtils.VERSION
 
   private[this] def validate(info: HdfsValidation): String = {
-    val config = new Configuration()
-    config.set("fs.defaultFS", info.uri)
-    val fs = FileSystem.get(config)
-    val home = fs.getHomeDirectory
+    val fs = FileSystem.hdfsBuilder.url(info.uri).build()
+    val home = fs.workingFolder
     s"check the hdfs:${info.uri} by getting the home:$home"
   }
 
@@ -106,9 +102,8 @@ class ValidatorTask extends SourceTask {
   }
   private[this] def validate(info: FtpValidation): String = {
     import scala.concurrent.duration._
-    val client =
-      FtpClient
-        .builder()
+    val ftp =
+      FileSystem.ftpBuilder
         .hostname(info.hostname)
         .port(info.port)
         .user(info.user)
@@ -116,8 +111,8 @@ class ValidatorTask extends SourceTask {
         .retryTimeout(5 seconds)
         .build()
     try s"succeed to establish the connection:${info.hostname}:${info.port}. test account:${info.user}" +
-      s"by getting working folder:${client.workingFolder()}"
-    finally client.close()
+      s"by getting working folder:${ftp.workingFolder()}"
+    finally ftp.close()
   }
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
