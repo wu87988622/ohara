@@ -257,26 +257,28 @@ trait Collie[T <: ClusterInfo] {
 
   // TODO: this is a deprecated method and should be removed in #2570
   final def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = clusters().flatMap(
-    _.find(_._1.name == clusterName)
-      .filter(_._1.nodeNames.contains(nodeName))
-      .filter(_._2.exists(_.nodeName == nodeName))
-      .fold(Future.successful(false)) {
-        case (cluster, runningContainers) =>
-          runningContainers.size match {
-            case 1 =>
-              Future.failed(new IllegalArgumentException(
-                s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
-            case _ =>
-              doRemoveNode(
-                cluster,
-                runningContainers
-                  .find(_.nodeName == nodeName)
-                  .getOrElse(throw new IllegalArgumentException(
-                    s"This should not be happen!!! $nodeName doesn't exist on cluster:$clusterName"))
-              )
-          }
-      })
+    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    clusters().flatMap(
+      _.find(_._1.name == clusterName)
+        .filter(_._1.nodeNames.contains(nodeName))
+        .filter(_._2.exists(_.nodeName == nodeName))
+        .fold(Future.successful(false)) {
+          case (cluster, runningContainers) =>
+            runningContainers.size match {
+              case 1 =>
+                Future.failed(new IllegalArgumentException(
+                  s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+              case _ =>
+                doRemoveNode(
+                  cluster,
+                  runningContainers
+                    .find(_.nodeName == nodeName)
+                    .getOrElse(throw new IllegalArgumentException(
+                      s"This should not be happen!!! $nodeName doesn't exist on cluster:$clusterName"))
+                )
+            }
+        })
+  }
 
   /**
     * do the remove actually. Normally, the sub-class doesn't need to check the existence of removed node.

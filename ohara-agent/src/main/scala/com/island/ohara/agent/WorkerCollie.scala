@@ -103,7 +103,9 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                       id = Collie.UNKNOWN,
                       imageName = creation.imageName,
                       created = Collie.UNKNOWN,
-                      state = Collie.UNKNOWN,
+                      // this fake container will be cached before refreshing cache so we make it running.
+                      // other, it will be filtered later ...
+                      state = ContainerState.RUNNING.name,
                       kind = Collie.UNKNOWN,
                       name = containerName,
                       size = Collie.UNKNOWN,
@@ -149,16 +151,19 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                 .map(_.flatten.toSeq)
                 .map {
                   successfulContainers =>
+                    val nodeNames = creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(
+                      _.hostname)
+                    val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
                     val clusterInfo = WorkerClusterInfo(
-                      settings = WorkerApi.access.request
-                        .settings(creation.settings)
-                        .nodeNames(
-                          creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(_.hostname))
-                        .creation
-                        .settings,
+                      settings =
+                        WorkerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
                       connectors = Seq.empty,
-                      deadNodes = newNodes.keySet.map(_.hostname) -- successfulContainers.map(_.nodeName),
-                      state = None,
+                      // no state means cluster is NOT running so we cleanup the dead nodes
+                      deadNodes = state
+                        .map(_ =>
+                          nodeNames -- successfulContainers.map(_.nodeName) -- existNodes.values.map(_.hostname))
+                        .getOrElse(Set.empty),
+                      state = state,
                       error = None,
                       lastModified = CommonUtils.current()
                     )
@@ -244,7 +249,17 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   private[agent] def toWorkerCluster(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val creation = WorkerApi.access.request.settings(seekSettings(containers.head.environments)).creation
+    val creation = WorkerApi.access.request
+      .settings(seekSettings(containers.head.environments))
+      // the nodeNames is able to updated at runtime so the first container may have out-of-date info of nodeNames
+      // we don't compare all containers. Instead, we just merge all node names from all containers. It is more simple.
+      .nodeNames(
+        containers
+          .map(_.environments)
+          .map(envs => WorkerApi.access.request.settings(seekSettings(envs)).creation)
+          .flatMap(_.nodeNames)
+          .toSet)
+      .creation
     connectors(containers.map(c => s"${c.nodeName}:${creation.clientPort}").mkString(",")).map { connectors =>
       WorkerClusterInfo(
         settings = creation.settings,

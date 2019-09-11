@@ -285,24 +285,26 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
-      // nothing happens if we add duplicate nodes
-      result(bk_addNode(previousCluster.name, previousCluster.nodeNames.head))
-      // we can't add a nonexistent node
-      // we always get IllegalArgumentException if we sent request by restful api
-      // However, if we use collie impl, an NoSuchElementException will be thrown...
-      an[Throwable] should be thrownBy result(bk_addNode(previousCluster.name, CommonUtils.randomString()))
-      val newNode = freeNodes.head.name
-      log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}")
-      val newCluster = result(bk_addNode(previousCluster.name, newNode))
-      log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}...done")
-      newCluster.name shouldBe previousCluster.name
-      newCluster.imageName shouldBe previousCluster.imageName
-      newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
-      newCluster.exporterPort shouldBe previousCluster.exporterPort
-      newCluster.clientPort shouldBe previousCluster.clientPort
-      newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
-      await(() => result(bk_cluster(newCluster.name)).nodeNames.contains(newNode))
-      newCluster
+      await { () =>
+        // nothing happens if we add duplicate nodes
+        result(bk_addNode(previousCluster.name, previousCluster.nodeNames.head))
+        // we can't add a nonexistent node
+        // we always get IllegalArgumentException if we sent request by restful api
+        // However, if we use collie impl, an NoSuchElementException will be thrown...
+        an[Throwable] should be thrownBy result(bk_addNode(previousCluster.name, CommonUtils.randomString()))
+        val newNode = freeNodes.head.name
+        log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}")
+        val newCluster = result(bk_addNode(previousCluster.name, newNode))
+        log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}...done")
+        newCluster.name shouldBe previousCluster.name
+        newCluster.imageName shouldBe previousCluster.imageName
+        newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
+        newCluster.exporterPort shouldBe previousCluster.exporterPort
+        newCluster.clientPort shouldBe previousCluster.clientPort
+        newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
+        result(bk_cluster(newCluster.name)).aliveNodes.contains(newNode)
+      }
+      result(bk_cluster(previousCluster.name))
     } else previousCluster
   }
 
@@ -379,9 +381,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     await(() => result(bk_exist(previousCluster.name)))
     if (previousCluster.nodeNames.size > 1) {
       val beRemovedNode: String = previousCluster.nodeNames.filter(_ != excludedNode).head
-      await(() => {
+      await { () =>
         log.info(
-          s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name}, nodes:${previousCluster.nodeNames
+          s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name} nodes:${previousCluster.nodeNames
             .mkString(",")}")
         result(bk_removeNode(previousCluster.name, beRemovedNode))
         log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name} ... done")
@@ -391,8 +393,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         newCluster.zookeeperClusterName == previousCluster.zookeeperClusterName &&
         newCluster.clientPort == previousCluster.clientPort &&
         previousCluster.nodeNames.size - newCluster.nodeNames.size == 1 &&
-        !result(bk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode)
-      })
+        !result(bk_cluster(newCluster.name)).aliveNodes.contains(beRemovedNode)
+      }
       result(bk_cluster(previousCluster.name))
     } else previousCluster
   }

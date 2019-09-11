@@ -122,7 +122,9 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                       id = Collie.UNKNOWN,
                       imageName = creation.imageName,
                       created = Collie.UNKNOWN,
-                      state = Collie.UNKNOWN,
+                      // this fake container will be cached before refreshing cache so we make it running.
+                      // other, it will be filtered later ...
+                      state = ContainerState.RUNNING.name,
                       kind = Collie.UNKNOWN,
                       name = containerName,
                       size = Collie.UNKNOWN,
@@ -174,16 +176,18 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
               .map(_.flatten.toSeq)
               .map {
                 successfulContainers =>
+                  val nodeNames = creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(
+                    _.hostname)
+                  val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
                   val clusterInfo = BrokerClusterInfo(
                     // combine the 1) node names from creation and 2) the running nodes
-                    settings = BrokerApi.access.request
-                      .settings(creation.settings)
-                      .nodeNames(
-                        creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(_.hostname))
-                      .creation
-                      .settings,
-                    deadNodes = newNodes.keySet.map(_.hostname) -- successfulContainers.map(_.nodeName),
-                    state = None,
+                    settings =
+                      BrokerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
+                    // no state means cluster is NOT running so we cleanup the dead nodes
+                    deadNodes = state
+                      .map(_ => nodeNames -- successfulContainers.map(_.nodeName) -- existNodes.values.map(_.hostname))
+                      .getOrElse(Set.empty),
+                    state = state,
                     error = None,
                     lastModified = CommonUtils.current(),
                     topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
@@ -280,8 +284,17 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
   }.toSeq
 
   private[agent] def toBrokerCluster(key: ObjectKey, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
-    val first = containers.head
-    val creation = BrokerApi.access.request.settings(seekSettings(first.environments)).creation
+    val creation = BrokerApi.access.request
+      .settings(seekSettings(containers.head.environments))
+      // the nodeNames is able to updated at runtime so the first container may have out-of-date info of nodeNames
+      // we don't compare all containers. Instead, we just merge all node names from all containers. It is more simple.
+      .nodeNames(
+        containers
+          .map(_.environments)
+          .map(envs => BrokerApi.access.request.settings(seekSettings(envs)).creation)
+          .flatMap(_.nodeNames)
+          .toSet)
+      .creation
     Future.successful(
       BrokerClusterInfo(
         settings = creation.settings,
@@ -328,12 +341,8 @@ object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
     private[this] val request = BrokerApi.access.request
 
-    override protected def doCopy(clusterInfo: BrokerClusterInfo): Unit = {
-      zookeeperClusterName(clusterInfo.zookeeperClusterName)
-      clientPort(clusterInfo.clientPort)
-      exporterPort(clusterInfo.exporterPort)
-      jmxPort(clusterInfo.jmxPort)
-    }
+    override protected def doCopy(clusterInfo: BrokerClusterInfo): Unit =
+      request.settings(clusterInfo.settings)
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
       request.zookeeperClusterName(zookeeperClusterName)
