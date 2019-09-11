@@ -69,6 +69,7 @@ dependencies {
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
   testImplementation project(":ohara-connector").sourceSets.main.output
+  testImplementation project(":ohara-client").sourceSets.test.output
   testImplementation libs.scalatest
   testImplementation libs.junit
   testImplementation libs.akkaStream
@@ -126,7 +127,13 @@ class OharaTest extends Test {
           "ohara.it.db.url",
           "ohara.it.db.username",
           "ohara.it.db.password",
-          "ohara.it.jar.folder"
+          "ohara.it.jar.folder",
+          // set smb setting
+          "ohara.it.smb.hostname",
+          "ohara.it.smb.port",
+          "ohara.it.smb.username",
+          "ohara.it.smb.password",
+          "ohara.it.smb.shareName"
   ]
 
   public OharaTest() {

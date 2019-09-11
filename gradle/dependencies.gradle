@@ -48,6 +48,7 @@ versions["guava"] = project.hasProperty('guava.version') ? project.properties['g
 versions["rocksdb"] = project.hasProperty('rocksdb.version') ? project.properties['rocksdb.version'] : "5.15.10"
 // jackson has been included by apache kafka so we use the identical version
 versions["jackson"] = project.hasProperty('jackson.version') ? project.properties['jackson.version'] : "2.9.8"
+versions["smbj"] = project.hasProperty('smbj.version') ? project.properties['smbj.version'] : "0.9.1"
 libs += [
   postgresql         : "postgresql:postgresql:$versions.postgresql",
   kafkaCore          : "org.apache.kafka:kafka_${versions["scalaMinor"]}:$versions.kafka",
@@ -82,5 +83,6 @@ libs += [
   commonsIo          : "commons-io:commons-io:$versions.commonsIo",
   guava              : "com.google.guava:guava:$versions.guava",
   rocksdb            : "org.rocksdb:rocksdbjni:$versions.rocksdb",
-  jacksonCore        : "com.fasterxml.jackson.core:jackson-databind:$versions.jackson"
+  jacksonCore        : "com.fasterxml.jackson.core:jackson-databind:$versions.jackson",
+  smbj               : "com.hierynomus:smbj:$versions.smbj"
 ]

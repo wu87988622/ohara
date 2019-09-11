@@ -21,6 +21,7 @@ import java.nio.charset.{Charset, StandardCharsets}
 
 import com.island.ohara.client.filesystem.ftp.FtpFileSystem
 import com.island.ohara.client.filesystem.hdfs.HdfsFileSystem
+import com.island.ohara.client.filesystem.smb.SmbFileSystem
 import com.island.ohara.common.exception.OharaFileSystemException
 
 trait FileSystem extends com.island.ohara.kafka.connector.storage.FileSystem {
@@ -105,4 +106,5 @@ trait FileSystem extends com.island.ohara.kafka.connector.storage.FileSystem {
 object FileSystem {
   def hdfsBuilder() = HdfsFileSystem.builder
   def ftpBuilder() = FtpFileSystem.builder
+  def smbBuilder() = SmbFileSystem.builder
 }

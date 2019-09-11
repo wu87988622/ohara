@@ -32,6 +32,7 @@ dependencies {
   implementation libs.kafkaClient
   implementation libs.kafkaConnectFile
   implementation libs.kafkaConnectRuntime
+  implementation libs.smbj
   /**
    * Jar conflict between Hadoop & Kafka:
    *    * Jersey: Hadoop use jersey 1.x, Kafka use jersey 2.x

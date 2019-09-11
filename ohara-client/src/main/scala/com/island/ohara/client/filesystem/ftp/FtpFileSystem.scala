@@ -152,10 +152,8 @@ private[filesystem] object FtpFileSystem {
         * @throws IllegalArgumentException if the path does not exist
         * @return the listing of the folder
         */
-      override def listFileNames(dir: String): util.Iterator[String] = wrap { () =>
-        if (nonExists(dir)) throw new IllegalArgumentException(s"The path $dir doesn't exist")
-        client.listFileNames(dir).toIterator.asJava
-      }
+      override def listFileNames(dir: String): util.Iterator[String] =
+        listFileNames(dir, FileFilter.default).toIterator.asJava
 
       /**
         * Filter files in the given path using the user-supplied path filter
@@ -227,12 +225,10 @@ private[filesystem] object FtpFileSystem {
       override def delete(path: String, recursive: Boolean): Unit = wrap { () =>
         if (exists(path)) if (recursive) {
           if (fileType(path) == FileType.FOLDER)
-            client
-              .listFileNames(path)
-              .map(fileName => {
-                val child = CommonUtils.path(path, fileName)
-                delete(child, recursive)
-              })
+            listFileNames(path, FileFilter.default).map(fileName => {
+              val child = CommonUtils.path(path, fileName)
+              delete(child, recursive)
+            })
           delete(path)
         } else delete(path)
       }

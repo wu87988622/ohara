@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client.filesystem
+package com.island.ohara.it.connector
 
-trait FileFilter {
-  def accept(fileName: String): Boolean
-}
-
-object FileFilter {
-
-  /**
-    * All pass
-    * @return a file filter
-    */
-  def default(): FileFilter = (_: String) => true
+package object smb {
+  protected[smb] val SMB_HOSTNAME_KEY: String = "ohara.it.smb.hostname"
+  protected[smb] val SMB_PORT_KEY: String = "ohara.it.smb.port"
+  protected[smb] val SMB_USERNAME_KEY: String = "ohara.it.smb.username"
+  protected[smb] val SMB_PASSWORD_KEY: String = "ohara.it.smb.password"
+  protected[smb] val SMB_SHARE_NAME_KEY: String = "ohara.it.smb.shareName"
 }
