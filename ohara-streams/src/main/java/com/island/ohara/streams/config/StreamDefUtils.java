@@ -39,7 +39,7 @@ public final class StreamDefUtils {
 
   public static final SettingDef BROKER_CLUSTER_NAME_DEFINITION =
       SettingDef.builder()
-          .key("broker.cluster.name")
+          .key("brokerClusterName")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Broker cluster name")
@@ -81,6 +81,18 @@ public final class StreamDefUtils {
           .documentation("The unique name of this streamApp")
           .valueType(Type.STRING)
           .optional()
+          .build();
+
+  public static final SettingDef GROUP_DEFINITION =
+      SettingDef.builder()
+          .key("group")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("StreamApp group")
+          .documentation("The unique group of this streamApp")
+          .valueType(Type.STRING)
+          .internal()
+          .readonly()
           .build();
 
   public static final SettingDef JAR_KEY_DEFINITION =

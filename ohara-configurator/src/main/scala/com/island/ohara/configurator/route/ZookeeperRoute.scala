@@ -48,7 +48,14 @@ object ZookeeperRoute {
         else
           // use PUT as creation request
           ZookeeperClusterInfo(
-            settings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings,
+            // 1) fill the previous settings (if exists)
+            // 2) overwrite previous settings by updated settings
+            // 3) fill the ignored settings by creation
+            settings = access.request
+              .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+              .settings(update.settings)
+              .creation
+              .settings,
             // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
             deadNodes = Set.empty,
             state = None,

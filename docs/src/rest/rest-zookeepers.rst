@@ -58,7 +58,7 @@ create a zookeeper properties
 *POST /v0/zookeepers*
 
 #. name (**string**) — cluster name ; default is random string
-#. group (**string**) — cluster group ; default is GROUP_DEFAULT
+#. group (**string**) — cluster group ; default value is "default"
 #. imageName (**string**) — docker image ; default is oharastream/zookeeper:|version|
 #. clientPort (**int**) — broker client port ; default is random port
 #. electionPort (**int**) — used to select the zk node leader ; default is random port

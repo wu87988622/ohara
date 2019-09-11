@@ -72,13 +72,13 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var brokerConnProps: String = _
   private[this] val instances = 1
 
-  private[this] def waitStopFinish(clusterName: String): Unit = {
+  private[this] def waitStopFinish(objectKey: ObjectKey): Unit = {
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
       // In collie mode: clusters() will return the "cluster list except stop one" in normal case
       // we should consider these two cases by case...
       val clusters = result(access.list())
-      !clusters.map(_.name).contains(clusterName) || clusters.find(_.name == clusterName).get.state.isEmpty
+      !clusters.map(_.key).contains(objectKey) || clusters.find(_.key == objectKey).get.state.isEmpty
     })
   }
 
@@ -141,7 +141,6 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     * I felt embarrassed about this test case as it produces a error to StreamApp via our public APIs.
     * TODO: Personally, We should protect our running cluster ... by chia
     */
-  @Test
   def testFailedClusterRemoveGracefully(): Unit = {
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
@@ -152,7 +151,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val stream = result(
       access.request
         .name(nameHolder.generateClusterName())
-        .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
+        .jarKey(jarInfo.key)
         .brokerClusterName(bkName)
         .instances(instances)
         .create())
@@ -173,8 +172,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.state shouldBe None
     properties.error shouldBe None
 
-    result(access.start(stream.name))
-    await(() => result(access.get(stream.name)).state.isDefined)
+    result(access.start(stream.key))
+    await(() => result(access.get(stream.key)).state.isDefined)
 
     // get the actually container names
     val map = nodeCache.map { node =>
@@ -195,7 +194,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // we only have one instance, container exited means cluster dead (the state here uses container state is ok
     // since we use the same name for cluster state
     await(() => {
-      val res = result(access.get(stream.name))
+      val res = result(access.get(stream.key))
       res.state.isDefined && res.state.get == ClusterState.FAILED.name &&
       // only 1 instance, dead nodes are equal to all nodes
       res.deadNodes == res.nodeNames &&
@@ -203,12 +202,12 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     })
 
     // stop and remove failed cluster gracefully
-    result(access.stop(stream.name))
-    waitStopFinish(stream.name)
+    result(access.stop(stream.key))
+    waitStopFinish(stream.key)
 
     // wait streamApp until removed actually
     await(() => {
-      val res = result(access.get(stream.name))
+      val res = result(access.get(stream.key))
       res.state.isEmpty
     })
 
@@ -239,31 +238,32 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
     // jar should be parse-able
+    log.info(s"[testRunSimpleStreamApp] get definition from $jar")
     val definition = result(configurator.clusterCollie.streamCollie.loadDefinition(jar.toURI.toURL))
     definition.isDefined shouldBe true
     definition.get.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
-
+    log.info(s"[testRunSimpleStreamApp] get definition from $jar...done")
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()),
                   () => result(containerApi.get(bkName).map(_.flatMap(_.containers))),
                   bkName)
+    log.info(s"[testRunSimpleStreamApp] broker cluster [$bkName] assert...done")
     // create topic
     val topic1 = result(topicApi.request.key(from).brokerClusterName(bkName).create())
     result(topicApi.start(topic1.key))
     val topic2 = result(topicApi.request.key(to).brokerClusterName(bkName).create())
     result(topicApi.start(topic2.key))
+    log.info(s"[testRunSimpleStreamApp] topic creation [$topic1,$topic2]...done")
 
     // upload streamApp jar
     val jarInfo = result(jarApi.request.file(jar).upload())
     jarInfo.name shouldBe "ohara-streamapp.jar"
+    log.info(s"[testRunSimpleStreamApp] upload jar [$jarInfo]...done")
 
     // create streamApp properties
     val stream = result(
-      access.request
-        .name(nameHolder.generateClusterName())
-        .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
-        .brokerClusterName(bkName)
-        .create())
+      access.request.name(nameHolder.generateClusterName()).jarKey(jarInfo.key).brokerClusterName(bkName).create())
+    log.info(s"[testRunSimpleStreamApp] stream properties creation [$stream]...done")
 
     // update streamApp properties
     val properties = result(
@@ -274,9 +274,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.nodeNames.size shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
+    log.info(s"[testRunSimpleStreamApp] stream properties update [$properties]...done")
 
     // get streamApp property (cluster not create yet, hence no state)
-    val getProperties = result(access.get(stream.name))
+    val getProperties = result(access.get(stream.key))
     getProperties.from shouldBe Set(topic1.key)
     getProperties.to shouldBe Set(topic2.key)
     getProperties.nodeNames.size shouldBe instances
@@ -284,19 +285,21 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     getProperties.error shouldBe None
 
     // start streamApp
-    result(access.start(stream.name))
+    log.info(s"[testRunSimpleStreamApp] stream start [${stream.key}]")
+    result(access.start(stream.key))
     await(() => {
-      val res = result(access.get(stream.name))
+      val res = result(access.get(stream.key))
       res.state.isDefined && res.state.get == ClusterState.RUNNING.name
     })
+    log.info(s"[testRunSimpleStreamApp] stream start [${stream.key}]...done")
 
-    val res1 = result(access.get(stream.name))
-    res1.name shouldBe stream.name
+    val res1 = result(access.get(stream.key))
+    res1.key shouldBe stream.key
     res1.error shouldBe None
 
     // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
-    await(() => result(access.get(stream.name)).metrics.meters.nonEmpty)
-    result(access.get(stream.name)).metrics.meters.size shouldBe 2
+    await(() => result(access.get(stream.key)).metrics.meters.nonEmpty)
+    result(access.get(stream.key)).metrics.meters.size shouldBe 2
 
     // write some data into topic
     val producer = Producer
@@ -328,10 +331,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     } finally producer.close()
 
     // wait until the metrics cache data update
-    await(() => result(access.get(stream.name)).metrics.meters.forall(_.value > 0))
+    await(() => result(access.get(stream.key)).metrics.meters.forall(_.value > 0))
 
     // check the metrics data again
-    val metrics = result(access.get(stream.name)).metrics.meters
+    val metrics = result(access.get(stream.key)).metrics.meters
     metrics.foreach { metric =>
       metric.document should include("the number of rows")
       metric.value shouldBe 1D
@@ -341,15 +344,14 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     await(() => result(topicApi.get(to)).metrics.meters.nonEmpty)
 
     //stop streamApp
-    result(access.stop(stream.name))
-    waitStopFinish(stream.name)
-    result(access.get(stream.name)).state.isEmpty shouldBe true
+    result(access.stop(stream.key))
+    waitStopFinish(stream.key)
+    result(access.get(stream.key)).state.isEmpty shouldBe true
 
     // after stop streamApp, property should still exist
-    result(access.get(stream.name)).name shouldBe stream.name
+    result(access.get(stream.key)).name shouldBe stream.name
   }
 
-  @Test
   def testDeadNodes(): Unit = if (nodeCache.size < 2) skipTest(s"${methodName()} requires two nodes at least")
   else {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
@@ -377,14 +379,14 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         .create())
 
     // start streamApp
-    result(access.start(stream.name))
+    result(access.start(stream.key))
     await(() => {
-      val res = result(access.get(stream.name))
+      val res = result(access.get(stream.key))
       res.state.isDefined && res.state.get == ClusterState.RUNNING.name
     })
 
-    result(access.get(stream.name)).nodeNames shouldBe nodeCache.map(_.hostname).toSet
-    result(access.get(stream.name)).deadNodes shouldBe Set.empty
+    result(access.get(stream.key)).nodeNames shouldBe nodeCache.map(_.hostname).toSet
+    result(access.get(stream.key)).deadNodes shouldBe Set.empty
 
     // remove a container directly
     val aliveNodes: Set[Node] = nodeCache.slice(1, nodeCache.size).toSet
@@ -395,10 +397,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       excludedNodes = aliveNodes.map(_.hostname)
     )
 
-    result(access.get(stream.name)).state should not be None
+    result(access.get(stream.key)).state should not be None
 
     await { () =>
-      val cluster = result(access.get(stream.name))
+      val cluster = result(access.get(stream.key))
       cluster.nodeNames == nodeCache.map(_.hostname).toSet &&
       cluster.deadNodes == deadNodes.map(_.hostname)
     }

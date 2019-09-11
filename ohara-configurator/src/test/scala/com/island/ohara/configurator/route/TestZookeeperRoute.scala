@@ -340,6 +340,23 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     result(zookeeperApi.list()).size shouldBe 5
   }
 
+  @Test
+  def testUpdateAsCreateRequest(): Unit = {
+    val info = result(zookeeperApi.request.nodeNames(nodeNames).create())
+
+    // use same name and group will cause a update request
+    result(zookeeperApi.request.name(info.name).group(info.group).clientPort(1234).update()).clientPort shouldBe 1234
+
+    // use different group will cause a create request
+    result(
+      zookeeperApi.request
+        .name(info.name)
+        .group(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .peerPort(1234)
+        .update()).peerPort should not be info.peerPort
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

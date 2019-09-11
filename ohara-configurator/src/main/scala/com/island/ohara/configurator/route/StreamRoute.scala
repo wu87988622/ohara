@@ -166,9 +166,11 @@ private[configurator] object StreamRoute {
                 case (definition, error) =>
                   StreamClusterInfo(
                     settings = {
+                      // In creation, we have to re-define the following value since they may changed:
+                      // 1) broker cluster name
+                      // 2) node name (This should be removed after #2288
                       val req = access.request.settings(creation.settings).brokerClusterName(bkName)
-                      // TODO: please reject the stupid request which does carry the node names ... by chia
-                      nodes.filter(_.nonEmpty).foreach(req.nodeNames)
+                      if (nodes.isDefined) req.nodeNames(nodes.get)
                       req.creation.settings
                     },
                     definition = definition,
@@ -191,7 +193,7 @@ private[configurator] object StreamRoute {
     (key: ObjectKey, update: Update, previousOption: Option[StreamClusterInfo]) =>
       streamCollie.clusters
         .flatMap { clusters =>
-          if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
+          if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped StreamApp cluster: $key")
           pickBrokerCluster(update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName)),
                             update.jarKey.orElse(previousOption.map(_.jarKey))).flatMap(
@@ -211,6 +213,9 @@ private[configurator] object StreamRoute {
         }
         .map { update =>
           StreamClusterInfo(
+            // 1) fill the previous settings (if exists)
+            // 2) overwrite previous settings by updated settings
+            // 3) fill the ignored settings by creation
             settings = access.request
               .settings(previousOption.map(_.settings).getOrElse(Map.empty))
               .settings(update.settings)
@@ -286,12 +291,13 @@ private[configurator] object StreamRoute {
                 // we convert all value to string for convenient
                   .settings(streamClusterInfo.settings)
                   .clusterName(streamClusterInfo.name)
-                  .imageName(IMAGE_NAME_DEFAULT)
+                  .group(streamClusterInfo.group)
+                  .imageName(streamClusterInfo.imageName)
+                  .nodeNames(streamClusterInfo.nodeNames)
                   .jarInfo(fileInfo)
                   .brokerCluster(brokerClusterInfo)
-                  // This nodeNames() should put after settings() because we decide nodeName in starting phase
-                  // TODO: the order should not be a problem and please refactor this in #2288
-                  .nodeNames(streamClusterInfo.nodeNames)
+                  // This is a temporary solution for "enable exactly once",
+                  // but we should change the behavior to not just "true or false"...by Sam
                   .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
                            JsString(streamClusterInfo.exactlyOnce.toString))
                   .threadPool(executionContext)
@@ -303,7 +309,7 @@ private[configurator] object StreamRoute {
 
   private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
 
-  private[this] def hookOfGroup: HookOfGroup = _ => STREAM_GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(STREAM_GROUP_DEFAULT)
 
   def apply(implicit store: DataStore,
             nodeCollie: NodeCollie,

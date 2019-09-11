@@ -63,6 +63,12 @@ class TestZookeeperApi extends SmallTest with Matchers {
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy access.name("")
 
   @Test
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy access.group(null)
+
+  @Test
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy access.group("")
+
+  @Test
   def nullImageName(): Unit = an[NullPointerException] should be thrownBy access.imageName(null)
 
   @Test

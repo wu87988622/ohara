@@ -546,7 +546,7 @@ package object route {
           START_COMMAND,
           (key: ObjectKey, subName: String, params: Map[String, String]) =>
             store.value[Cluster](key).flatMap { req =>
-              collie.exist(req.name).flatMap {
+              collie.exist(key).flatMap {
                 if (_) {
                   // this cluster already exists, return OK
                   Future.unit
@@ -565,9 +565,9 @@ package object route {
                 collie
                   .clusters()
                   .flatMap { clusters =>
-                    if (!clusters.map(_._1.name).exists(_ == key.name())) Future.unit
-                    else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(key.name())
-                    else collie.remove(key.name())
+                    if (!clusters.map(_._1.key).exists(_ == key)) Future.unit
+                    else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(key)
+                    else collie.remove(key)
                   }
                   .flatMap(_ => Future.unit)
           )
@@ -580,7 +580,7 @@ package object route {
             if (cluster.nodeNames.contains(nodeName)) Future.unit
             else
               collie
-                .addNode(key.name(), nodeName)
+                .addNode(key, nodeName)
                 .flatMap(_ => store.addIfPresent(cluster.clone(cluster.nodeNames + nodeName).asInstanceOf[Cluster]))
                 .flatMap(_ => Future.unit)
           }
@@ -593,7 +593,7 @@ package object route {
             .filter(_.nodeNames.contains(nodeName))
             .map { cluster =>
               collie
-                .removeNode(key.name(), nodeName)
+                .removeNode(key, nodeName)
                 .flatMap(_ => store.addIfPresent(cluster.clone(cluster.nodeNames - nodeName).asInstanceOf[Cluster]))
                 .flatMap(_ => Future.unit)
             }
@@ -653,17 +653,17 @@ package object route {
       .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
       .flatMap { clusters =>
         def serviceName(cluster: ClusterInfo): String = cluster match {
-          case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
-          case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
-          case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
-          case _: StreamClusterInfo    => s"stream cluster:${cluster.name}"
-          case _                       => s"cluster:${cluster.name}"
+          case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.key}"
+          case _: BrokerClusterInfo    => s"broker cluster:${cluster.key}"
+          case _: WorkerClusterInfo    => s"worker cluster:${cluster.key}"
+          case _: StreamClusterInfo    => s"stream cluster:${cluster.key}"
+          case _                       => s"cluster:${cluster.key}"
         }
         // check name conflict
         clusters
           .filter(c => classTag[Cluster].runtimeClass.isInstance(c))
           .map(_.asInstanceOf[Cluster])
-          .find(_.name == req.name)
+          .find(_.key == req.key)
           .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
 
         // check port conflict
@@ -689,7 +689,7 @@ package object route {
       .clusters()
       .map(
         _.keys
-          .find(_.name == cluster.name)
+          .find(_.key == cluster.key)
           .map {
             case c: ZookeeperClusterInfo =>
               c.copy(settings = cluster.settings)

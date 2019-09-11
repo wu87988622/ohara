@@ -24,7 +24,6 @@ import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,6 +51,12 @@ object StreamApi {
   final case class Creation(settings: Map[String, JsValue]) extends ClusterCreationRequest {
 
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    // the name and group fields are used to identify zookeeper cluster object
+    // we should give them default value in JsonRefiner
+    override def name: String = settings.name.get
+    override def group: String = settings.group.get
+    // helper method to get the key
+    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -65,10 +70,6 @@ object StreamApi {
     }
 
     def brokerClusterName: Option[String] = settings.brokerClusterName
-
-    override def name: String = settings.name.get
-
-    override def group: String = STREAM_GROUP_DEFAULT
 
     override def imageName: String = settings.imageName.get
 
@@ -116,6 +117,12 @@ object StreamApi {
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
+      .nullToString(GROUP_KEY, () => STREAM_GROUP_DEFAULT)
+      .stringRestriction(GROUP_KEY)
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
       .nullToString(IMAGE_NAME_KEY, IMAGE_NAME_DEFAULT)
       .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH))
       .nullToEmptyObject(TAGS_KEY)
@@ -137,8 +144,9 @@ object StreamApi {
       .refine
 
   final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
-    private[StreamApi] def name: Option[String] =
-      noJsNull(settings).get(StreamDefUtils.NAME_DEFINITION.key()).map(_.convertTo[String])
+    // We use the update parser to get the name and group
+    private[StreamApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     def brokerClusterName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key()).map(_.convertTo[String])
 
@@ -221,9 +229,8 @@ object StreamApi {
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
 
-    // streamapp does not support to define group
-    override def group: String = STREAM_GROUP_DEFAULT
     override def name: String = settings.name
+    override def group: String = settings.group
     override def kind: String = STREAM_SERVICE_NAME
     override def ports: Set[Int] = settings.ports
     override def tags: Map[String, JsValue] = settings.tags
@@ -261,11 +268,14 @@ object StreamApi {
         override def write(obj: StreamClusterInfo): JsValue =
           JsObject(
             noJsNull(
-              format.write(obj).asJsObject.fields
-              // TODO: remove those stale fields
-                + (GROUP_KEY -> JsString(STREAM_GROUP_DEFAULT))
-                + (NAME_KEY -> JsString(obj.name))
-                + (NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector))
+              format.write(obj).asJsObject.fields ++
+                // TODO: remove these stale fields
+                Map(
+                  NAME_KEY -> JsString(obj.name),
+                  GROUP_KEY -> JsString(obj.group),
+                  IMAGE_NAME_KEY -> JsString(obj.imageName),
+                  NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector)
+                )
             ))
       })
       .refine
@@ -274,7 +284,9 @@ object StreamApi {
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request =
       setting(StreamDefUtils.NAME_DEFINITION.key(), JsString(CommonUtils.requireNonEmpty(name)))
-
+    @Optional("default is GROUP_DEFAULT")
+    def group(group: String): Request =
+      setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request =
       setting(StreamDefUtils.IMAGE_NAME_DEFINITION.key(), JsString(CommonUtils.requireNonEmpty(imageName)))
@@ -300,6 +312,9 @@ object StreamApi {
     //TODO "This should be removed after #2288"
     def instances(instances: Int): Request =
       setting(StreamDefUtils.INSTANCES_DEFINITION.key(), JsNumber(CommonUtils.requirePositiveInt(instances)))
+    //TODO: add nodeNames checking in #2288...by Sam
+    @Optional("you should not set both nodeNames and instances")
+    def nodeName(nodeName: String): Request = nodeNames(Set(nodeName))
     @Optional("you should not set both nodeNames and instances")
     def nodeNames(nodeNames: Set[String]): Request =
       setting(StreamDefUtils.NODE_NAMES_DEFINITION.key(), JsArray(nodeNames.map(JsString(_)).toVector))
@@ -346,14 +361,17 @@ object StreamApi {
     private[v0] def update: Update
   }
 
-  final class Access
+  final class Access private[StreamApi]
       extends ClusterAccess[Creation, Update, StreamClusterInfo](STREAM_PREFIX_PATH, STREAM_GROUP_DEFAULT) {
 
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 
       override def settings(settings: Map[String, JsValue]): Request = {
-        this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+        // We don't have to check the settings is empty here for the following reasons:
+        // 1) we may want to use the benefit of default creation without specify settings
+        // 2) actual checking will be done in the json parser phase of creation or update
+        this.settings ++= settings
         this
       }
       override def creation: Creation =
@@ -364,19 +382,11 @@ object StreamApi {
         // auto-complete the update via our refiner
         STREAM_UPDATE_JSON_FORMAT.read(STREAM_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-        exec.post[Creation, StreamClusterInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = post(creation)
 
-      override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
-        exec.put[Update, StreamClusterInfo, ErrorApi.Error](
-          // use update to parse the name :)
-          s"$url/${update.name.get}",
-          update
-        )
-      }
+      override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
+        // for update request, we should use default group if it was absent
+        put(key(update.group.getOrElse(STREAM_GROUP_DEFAULT), update.name.get), update)
     }
   }
 

@@ -257,7 +257,10 @@ object ZookeeperApi {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
       override def settings(settings: Map[String, JsValue]): Request = {
-        this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+        // We don't have to check the settings is empty here for the following reasons:
+        // 1) we may want to use the benefit of default creation without specify settings
+        // 2) actual checking will be done in the json parser phase of creation or update
+        this.settings ++= settings
         this
       }
 

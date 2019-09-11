@@ -48,6 +48,20 @@ streamApp stored data
 
 #. settings (**object**) — custom settings. Apart from the following fields, you can add any setting if needed. Each
    setting should have it's own definition to be used in streamApp runtime.
+
+   - the official support fields are listed below
+
+     - name (**string**) — cluster name
+     - group (**string**) — cluster group
+     - jarKey (**option(object)**) — the used jar key
+     - jmxPort (**int**) — expose port for jmx
+     - from (**array(TopicKey)**) — source topic
+     - to (**array(TopicKey)**) — target topic
+     - instances (**int**) — number of running streamApp
+     - nodeNames (**array(string)**) — the nodes running the zookeeper process
+     - brokerClusterName (**array(string)**) — the broker cluser name used for streamApp running
+     - tags (**object**) — the user defined parameters
+
 #. definition (**Option(object)**) — definition for current streamApp. If there was no **jarKey** defined, this
    field will be disappeared. See :ref:`StreamApp Setting Definition <streamapp-setting-definitions>` for more details.
 
@@ -86,8 +100,10 @@ streamApp stored data
 
 #. lastModified (**long**) — last modified this jar time
 
+.. _rest-stream-create-properties:
+
 create properties of specific streamApp
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create the properties of a streamApp.
 
@@ -99,8 +115,8 @@ Example Request
      - The acceptable char is [0-9a-z]
      - The maximum length is 20 chars
 
-  #. group (**string**) — group name for current streamApp. It uses default value for current version.
-  #. imageName (**string**) — image name of streamApp used to ; default is official streamapp image of current version
+  #. group (**string**) — group name for current streamApp ; default value is "default"
+  #. imageName (**string**) — image name of streamApp used to ; default is oharastream/streamapp:|version|
   #. nodeNames (**array(string)**) — node name list of streamApp used to ; default is empty
   #. tags (**object**) — a key-value map of user defined data ; default is empty
   #. jarKey (**option(object)**) — the used jar key
@@ -137,6 +153,7 @@ Examples of create streamApp properties:
 
      {
        "name": "myapp",
+       "group": "default",
        "jarKey": {
          "group": "wk01",
          "name": "stream-app.jar"
@@ -151,7 +168,7 @@ Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
 
 All default value response
-**************************
+--------------------------
 
   .. code-block:: json
 
@@ -177,7 +194,7 @@ All default value response
     }
 
 All default value response with only supply jarKey field
-********************************************************
+--------------------------------------------------------
 
 The following request will generate definition for you:
 
@@ -357,9 +374,12 @@ And the response:
 .. _rest-stream-get-information:
 
 get information from a specific streamApp cluster
--------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*GET /v0/stream/${name}*
+*GET /v0/stream/${name}?group=$group*
+
+.. note::
+   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
@@ -407,9 +427,12 @@ Example Response
      }
 
 list information of streamApp cluster
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*GET /v0/stream*
+*GET /v0/stream?group=$group*
+
+.. note::
+   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
@@ -461,14 +484,17 @@ Example Response
 .. _rest-stream-update-information:
 
 update properties of specific streamApp
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Update the properties of a non-started streamApp.
 
-*PUT /v0/stream/${name}*
+*PUT /v0/stream/${name}?group=$group*
+
+.. note::
+   If the required streamApp (group, name) was not exists, we will try to use this request as
+   :ref:`create streamApp <rest-stream-create-properties>`
 
 Example Request
-  #. group (**string**) — group name for current streamApp. Update this field has no effect.
   #. imageName (**string**) — image name of streamApp used to.
   #. nodeNames (**array(string)**) — node name list of streamApp used to.
   #. tags (**object**) — a key-value map of user defined data.
@@ -547,12 +573,15 @@ Example Response
 
 
 delete properties of specific streamApp
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Delete the properties of a non-started streamApp. This api only remove
 the streamApp component which is stored in pipeline.
 
-*DELETE /v0/stream/${name}*
+*DELETE /v0/stream/${name}?group=$group*
+
+.. note::
+   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 **Example Response**
 
@@ -566,9 +595,12 @@ the streamApp component which is stored in pipeline.
 
 
 start a StreamApp
------------------
+~~~~~~~~~~~~~~~~~
 
-*PUT /v0/stream/${name}/start*
+*PUT /v0/stream/${name}/start?group=$group*
+
+.. note::
+   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -610,12 +642,19 @@ Example Response
 .. _rest-stop-streamapp:
 
 stop a StreamApp
-----------------
+~~~~~~~~~~~~~~~~
 
 This action will graceful stop and remove all docker containers belong
 to this streamApp. Note: successful stop streamApp will have no status.
 
-*PUT /v0/stream/${name}/stop*
+*PUT /v0/stream/${name}/stop?group=$group[&force=true]*
+
+Query Parameters
+  #. force (**boolean**) — true if you don’t want to wait the graceful shutdown
+     (it can save your time but may damage your data).
+
+.. note::
+   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -657,7 +696,7 @@ Example Response
      }
 
 get topology tree graph from specific streamApp
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [TODO] This is not implemented yet !
 

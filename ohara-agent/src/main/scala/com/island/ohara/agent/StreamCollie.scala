@@ -50,8 +50,8 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
     (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
-        if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == creation.name))
-          Future.failed(new IllegalArgumentException(s"stream cluster:${creation.name} exists!"))
+        if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.key == creation.key))
+          Future.failed(new IllegalArgumentException(s"stream cluster:${creation.key} exists!"))
         else {
           val jarInfo = creation.jarInfo.getOrElse(throw new RuntimeException("jarInfo should be defined"))
           nodeCollie
@@ -67,7 +67,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
               nodes =>
                 brokerContainers(
                   creation.brokerClusterName.getOrElse(
-                    throw new RuntimeException("broker cluser name should be defined")
+                    throw new RuntimeException("broker cluster name should be defined")
                   )
                 ).map(cs => (nodes, cs))
             )
@@ -344,11 +344,7 @@ object StreamCollie {
     }
 
     override def create(): Future[StreamClusterInfo] = {
-      // initial the basic creation required parameters (defined in ClusterInfo) for stream
-      //TODO : it is ok that we don't add the group() since client will auto fill default value for us
-      //TODO: add group() in #2570 for stream
-      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
-
+      val creation = request.name(clusterName).group(group).imageName(imageName).nodeNames(nodeNames).creation
       // TODO: the to/from topics should not be empty in building creation ... However, our stream route
       // allowed user to enter empty for both fields... With a view to keeping the compatibility
       // we have to move the check from "parsing json" to "running cluster"

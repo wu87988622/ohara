@@ -72,10 +72,13 @@ class TestStreamApi extends SmallTest with Matchers {
   def testStreamClusterInfoEquals(): Unit = {
     val fromTopicKey = topicKey()
     val toTopicKey = topicKey()
+    val name = CommonUtils.randomString(20)
+    val group = CommonUtils.randomString(20)
     val info = StreamClusterInfo(
       settings = StreamApi.access.request
-        .name("name")
+        .name(name)
         .imageName("imageName")
+        .group(group)
         .nodeNames(Set("node1"))
         .fromTopicKey(fromTopicKey)
         .toTopicKey(toTopicKey)
@@ -93,7 +96,8 @@ class TestStreamApi extends SmallTest with Matchers {
 
     info shouldBe StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(info))
 
-    info.name shouldBe "name"
+    info.name shouldBe name
+    info.group shouldBe group
     info.imageName shouldBe "imageName"
     info.nodeNames shouldBe Set("node1")
     info.jarKey shouldBe ObjectKey.of("group", "name")
@@ -107,6 +111,12 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def nameFieldCheck(): Unit = {
+    an[NullPointerException] should be thrownBy accessRequest.name(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.name("")
+  }
+
+  @Test
+  def groupFieldCheck(): Unit = {
     an[NullPointerException] should be thrownBy accessRequest.name(null)
     an[IllegalArgumentException] should be thrownBy accessRequest.name("")
   }
@@ -188,6 +198,7 @@ class TestStreamApi extends SmallTest with Matchers {
     val creationApi = accessRequest.creation
 
     creationApi.name.nonEmpty shouldBe true
+    creationApi.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
     creationApi.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationApi.jarKey shouldBe None
     creationApi.from shouldBe Set.empty
@@ -202,6 +213,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                   |  }
      """.stripMargin.parseJson)
     creationJson.name.nonEmpty shouldBe true
+    creationJson.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
     creationJson.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationJson.jmxPort should not be 0
     creationJson.instances shouldBe None
@@ -328,6 +340,16 @@ class TestStreamApi extends SmallTest with Matchers {
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"name\" can't be empty string")
+  }
+
+  @Test
+  def parseGroupField(): Unit = {
+    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "group": ""
+      |  }
+      |  """.stripMargin.parseJson)
+    thrown2.getMessage should include("the value of \"group\" can't be empty string")
   }
 
   @Test

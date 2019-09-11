@@ -17,13 +17,14 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.streams.config.StreamDefUtils
-import org.junit.{After, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
@@ -46,22 +47,30 @@ class TestStreamRoute extends SmallTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
-  private[this] def nodes: Set[String] = result(configurator.nodeCollie.nodes()).map(_.name).toSet
+
+  private[this] var nodes: Set[String] = _
+  private[this] var fileInfo: FileInfo = _
+
+  @Before
+  def setup(): Unit = {
+    val file = CommonUtils.createTempJar("empty_")
+    fileInfo = result(accessJar.request.file(file).upload())
+    nodes = result(configurator.nodeCollie.nodes()).map(_.name).toSet
+
+    file.deleteOnExit()
+  }
 
   @Test
   def testStreamAppPropertyPage(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).upload())
-
     // create default property
     val name = CommonUtils.randomString(10)
     val defaultProps = result(
-      accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create()
+      accessStream.request.name(name).jarKey(fileInfo.key).create()
     )
-    defaultProps.jarKey shouldBe jar.key
+    defaultProps.jarKey shouldBe fileInfo.key
     // same name property cannot create again
     an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, "newJar")).create())
+      accessStream.request.name(name).jarKey(ObjectKey.of(fileInfo.group, "newJar")).create())
 
     // get new streamApp property
     val res1 = result(accessStream.get(defaultProps.name))
@@ -76,7 +85,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val to = topicKey()
     val res2 = result(accessStream.request.name(defaultProps.name).toTopicKey(to).instances(nodes.size).update())
     res2.name shouldBe name
-    res2.jarKey shouldBe jar.key
+    res2.jarKey shouldBe fileInfo.key
     res2.from shouldBe Set.empty
     res2.to shouldBe Set(to)
     res2.nodeNames.forall(nodes.contains) shouldBe true
@@ -85,12 +94,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val userAppId = CommonUtils.randomString(5)
     val to2 = topicKey()
     val userProps = result(
-      accessStream.request
-        .name(userAppId)
-        .jarKey(ObjectKey.of(jar.group, jar.name))
-        .toTopicKey(to2)
-        .instances(nodes.size - 1)
-        .create())
+      accessStream.request.name(userAppId).jarKey(fileInfo.key).toTopicKey(to2).instances(nodes.size - 1).create())
     userProps.name shouldBe userAppId
     userProps.to shouldBe Set(to2)
     userProps.nodeNames.size shouldBe nodes.size - 1
@@ -115,25 +119,16 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     // delete property should not delete actual jar
     result(accessJar.list()).size shouldBe 1
-
-    file.deleteOnExit()
   }
 
   @Test
   def testStreamAppAction(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
     val streamAppName = CommonUtils.randomString(5)
-    // we should have only one worker cluster
-    val wkName = result(wkApi.list).head.name
     val from = topicKey()
     val to = topicKey()
 
-    // upload jar
-    val streamJar = result(accessJar.request.group(wkName).file(file).upload())
-
     // create property
-    val props = result(
-      accessStream.request.name(streamAppName).jarKey(ObjectKey.of(streamJar.group, streamJar.name)).create())
+    val props = result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).create())
 
     // update properties
     result(accessStream.request.name(streamAppName).fromTopicKey(from).toTopicKey(to).instances(nodes.size).update())
@@ -148,7 +143,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.name shouldBe streamAppName
     res1.from shouldBe Set(from)
     res1.to shouldBe Set(to)
-    res1.jarKey.name shouldBe streamJar.name
+    res1.jarKey.name shouldBe fileInfo.name
     res1.nodeNames.forall(nodes.contains) shouldBe true
     res1.state.get shouldBe ContainerState.RUNNING.name
 
@@ -198,28 +193,24 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     // after delete, streamApp should not exist
     an[IllegalArgumentException] should be thrownBy result(accessStream.get(props.name))
-
-    file.deleteOnExit()
   }
 
   @Test
   def testStreamAppPropertyPageFailCases(): Unit = {
-    val streamAppName = CommonUtils.requireNumberAndCharset(CommonUtils.randomString(5))
+    val streamAppName = CommonUtils.randomString(10)
     //operations on non-exists property should be fail
     an[NullPointerException] should be thrownBy result(accessStream.request.name("appId").jarKey(null).update())
     an[IllegalArgumentException] should be thrownBy result(accessStream.get("non_exist_id"))
 
-    an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(streamAppName).fromTopicKeys(Set.empty).update())
+    // we can update the topics to empty (the topic checking is moving to start phase)
+    result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).fromTopicKeys(Set.empty).update())
 
-    an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(streamAppName).toTopicKeys(Set.empty).update())
+    // we can update the topics to empty (the topic checking is moving to start phase)
+    result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).toTopicKeys(Set.empty).update())
 
-    an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(streamAppName).instances(0).update())
+    an[IllegalArgumentException] should be thrownBy result(accessStream.request.instances(0).update())
 
-    an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(streamAppName).instances(-99).update())
+    an[IllegalArgumentException] should be thrownBy result(accessStream.request.instances(-99).update())
 
     // delete non-exists object should do nothing
     result(accessStream.delete(CommonUtils.randomString(5)))
@@ -227,22 +218,12 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def testStreamAppActionPageFailCases(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
     val streamAppName = CommonUtils.randomString(5)
-    val wkName = result(wkApi.list()).head.name
     val from = topicKey()
     val to = topicKey()
 
-    // upload jar
-    val streamJar = result(accessJar.request.group(wkName).file(file).upload())
-
     // start action will check all the required parameters
-    result(
-      accessStream.request
-        .name(streamAppName)
-        .jarKey(ObjectKey.of(streamJar.group, streamJar.name))
-        .nodeNames(nodes)
-        .create())
+    result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).nodeNames(nodes).create())
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
 
     result(accessStream.request.name(streamAppName).fromTopicKey(from).update())
@@ -259,8 +240,6 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     // after all required parameters are set, it is ok to run
     result(accessStream.start(streamAppName))
-
-    file.deleteOnExit()
   }
 
   @Test
@@ -273,22 +252,14 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def updateTags(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
-
-    val jar = result(accessJar.request.file(file).upload())
-
     val tags = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
     val streamDesc = result(
-      accessStream.request
-        .name(CommonUtils.randomString(10))
-        .jarKey(ObjectKey.of(jar.group, jar.name))
-        .tags(tags)
-        .create())
+      accessStream.request.name(CommonUtils.randomString(10)).jarKey(fileInfo.key).tags(tags).create())
     streamDesc.tags shouldBe tags
-    streamDesc.jarKey shouldBe ObjectKey.of(jar.group, jar.name)
+    streamDesc.jarKey shouldBe fileInfo.key
 
     val tags2 = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
@@ -296,7 +267,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     )
     val streamDesc2 = result(accessStream.request.name(streamDesc.name).tags(tags2).update())
     streamDesc2.tags shouldBe tags2
-    streamDesc2.jarKey shouldBe ObjectKey.of(jar.group, jar.name)
+    streamDesc2.jarKey shouldBe fileInfo.key
 
     val streamDesc3 = result(accessStream.request.name(streamDesc.name).update())
     streamDesc3.tags shouldBe tags2
@@ -307,9 +278,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def testUpdateTopics(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).upload())
-    val streamDesc = result(accessStream.request.jarKey(ObjectKey.of(jar.group, jar.name)).create())
+    val streamDesc = result(accessStream.request.jarKey(fileInfo.key).create())
     streamDesc.from shouldBe Set.empty
     streamDesc.to shouldBe Set.empty
     val from = topicKey()
@@ -323,11 +292,9 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def testSettingDefault(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).upload())
     val key = CommonUtils.randomString()
     val value = JsString(CommonUtils.randomString())
-    val streamDesc = result(accessStream.request.jarKey(ObjectKey.of(jar.group, jar.name)).setting(key, value).create())
+    val streamDesc = result(accessStream.request.jarKey(fileInfo.key).setting(key, value).create())
     // the url is not illegal
     streamDesc.definition should not be None
     streamDesc.settings(key) shouldBe value
@@ -337,16 +304,15 @@ class TestStreamRoute extends SmallTest with Matchers {
   def createStream(): Unit = {
     import spray.json._
     val name = CommonUtils.randomString(5)
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).upload())
     val key = CommonUtils.randomString()
     val value = JsString(CommonUtils.randomString())
     val streamDesc = result(
       configurator.clusterCollie.streamCollie.creator
-        .jarInfo(jar)
+        .jarInfo(fileInfo)
         .nodeName(CommonUtils.randomString(5))
         .imageName(CommonUtils.randomString())
         .clusterName(name)
+        .group(CommonUtils.randomString(10))
         .brokerClusterName(CommonUtils.randomString())
         .setting(key, value)
         .setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.availablePort()))
@@ -359,12 +325,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def testOnlyAcceptOneTopic(): Unit = {
-    // we should have only one worker cluster
-    val wkName = result(wkApi.list).head.name
-
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.group(wkName).file(file).upload())
-    val streamDesc = result(accessStream.request.jarKey(ObjectKey.of(jar.group, jar.name)).create())
+    val streamDesc = result(accessStream.request.jarKey(fileInfo.key).create())
     streamDesc.from shouldBe Set.empty
     streamDesc.to shouldBe Set.empty
 
@@ -405,14 +366,11 @@ class TestStreamRoute extends SmallTest with Matchers {
     val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(to0.key))
     result(bkApi.start(bk.name))
-    val wkName = result(wkApi.list).head.name
 
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.group(wkName).file(file).upload())
     val streamDesc = result(
       accessStream.request
         .brokerClusterName(bk.name)
-        .jarKey(ObjectKey.of(jar.group, jar.name))
+        .jarKey(fileInfo.key)
         .fromTopicKey(from0.key)
         .toTopicKey(to0.key)
         .instances(1)
@@ -420,7 +378,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     streamDesc.brokerClusterName shouldBe bk.name
     result(accessStream.start(streamDesc.name))
 
-    // fail to update a running streamapp
+    // fail to update a running streamApp
     an[IllegalArgumentException] should be thrownBy result(accessStream.request.name(streamDesc.name).update())
     result(accessStream.stop(streamDesc.name))
   }
@@ -441,10 +399,7 @@ class TestStreamRoute extends SmallTest with Matchers {
   // TODO remove this test after #2288
   @Test
   def testMixNodeNameAndInstancesInUpdate(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).upload())
-
-    val info = result(accessStream.request.jarKey(jar.key).create())
+    val info = result(accessStream.request.jarKey(fileInfo.key).create())
     // default values
     info.nodeNames shouldBe Set.empty
 
@@ -468,7 +423,7 @@ class TestStreamRoute extends SmallTest with Matchers {
       result(accessStream.request.name(info.name).nodeNames(nodes).instances(2).update())
 
     // create another streamApp
-    val info2 = result(accessStream.request.jarKey(jar.key).create())
+    val info2 = result(accessStream.request.jarKey(fileInfo.key).create())
     // update instances normally
     result(accessStream.request.name(info2.name).instances(nodes.size).update()).nodeNames.size shouldBe nodes.size
     // update nodeNames normally
@@ -499,8 +454,6 @@ class TestStreamRoute extends SmallTest with Matchers {
     val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(to0.key))
     result(bkApi.start(bk.name))
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).upload())
 
     val tags = Map(
       "aa" -> JsString("bb"),
@@ -510,7 +463,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamDesc = result(
       accessStream.request
         .brokerClusterName(bk.name)
-        .jarKey(ObjectKey.of(jar.group, jar.name))
+        .jarKey(fileInfo.key)
         .tags(tags)
         .fromTopicKey(from0.key)
         .toTopicKey(to0.key)
@@ -528,6 +481,48 @@ class TestStreamRoute extends SmallTest with Matchers {
     // after stop, tags should still exist
     result(accessStream.stop(streamDesc.name))
     result(accessStream.get(streamDesc.name)).tags shouldBe tags
+  }
+
+  @Test
+  def testUpdateAsCreateRequest(): Unit = {
+    val info = result(accessStream.request.jarKey(fileInfo.key).create())
+
+    // use same name and group will cause a update request
+    result(accessStream.request.name(info.name).group(info.group).nodeNames(nodes).update()).nodeNames shouldBe nodes
+
+    // use different group will cause a create request
+    result(accessStream.request.name(info.name).group(CommonUtils.randomString(10)).update()).jmxPort should not be info.jmxPort
+  }
+
+  @Test
+  def testDuplicatedInstanceFiled(): Unit = {
+    val info = result(accessStream.request.jarKey(fileInfo.key).create())
+    // duplicated: default nodeNames is empty
+    info.nodeNames shouldBe Set.empty
+    CommonUtils.requireConnectionPort(info.jmxPort)
+
+    // update with specific instances
+    result(accessStream.request.group(info.group).name(info.name).instances(1).update()).nodeNames.size shouldBe 1
+
+    // update with specific nodeNames
+    result(accessStream.request.group(info.group).name(info.name).nodeNames(nodes).update()).nodeNames shouldBe nodes
+
+    // could not update both
+    an[IllegalArgumentException] should be thrownBy result(
+      accessStream.request.group(info.group).name(info.name).nodeName(nodes.head).instances(1).update())
+
+    // could not use instances > nodes.size
+    an[IllegalArgumentException] should be thrownBy result(
+      accessStream.request.group(info.group).name(info.name).instances(nodes.size + 1).update())
+  }
+
+  @Test
+  def testNodeNames(): Unit = {
+    val info = result(accessStream.request.jarKey(fileInfo.key).create())
+
+    // could not use non-exist nodes
+    an[IllegalArgumentException] should be thrownBy result(
+      accessStream.request.group(info.group).name(info.name).nodeName("fake").update())
   }
 
   @After

@@ -63,6 +63,7 @@ class TestStreamCreator extends SmallTest with Matchers {
   def IllegalClusterName(): Unit = {
     an[DeserializationException] should be thrownBy streamCreator()
       .clusterName("!@#$-")
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString(10))
       .create()
@@ -94,6 +95,16 @@ class TestStreamCreator extends SmallTest with Matchers {
   }
 
   @Test
+  def nullGroup(): Unit = {
+    an[NullPointerException] should be thrownBy streamCreator().group(null)
+  }
+
+  @Test
+  def emptyGroup(): Unit = {
+    an[IllegalArgumentException] should be thrownBy streamCreator().group("")
+  }
+
+  @Test
   def nullSettings(): Unit = an[NullPointerException] should be thrownBy streamCreator().settings(null)
 
   private[this] def fileInfo: FileInfo = fileInfo(new URL("http://abc/aaa.jar"))
@@ -111,6 +122,7 @@ class TestStreamCreator extends SmallTest with Matchers {
   def testNameLength(): Unit = {
     streamCreator()
       .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
       .fromTopicKey(topicKey())
@@ -120,8 +132,10 @@ class TestStreamCreator extends SmallTest with Matchers {
       .jarInfo(fileInfo)
       .create()
 
+    // name length > 20
     an[DeserializationException] should be thrownBy streamCreator()
       .clusterName(CommonUtils.randomString(50))
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
       .jarInfo(fileInfo)
@@ -131,6 +145,15 @@ class TestStreamCreator extends SmallTest with Matchers {
       .nodeName(CommonUtils.randomString())
       .create()
   }
+
+  @Test
+  def testInvalidGroup(): Unit =
+    an[DeserializationException] should be thrownBy streamCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(40))
+      .imageName(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString())
+      .create()
 
   @Test
   def testCopy(): Unit = {
@@ -168,6 +191,7 @@ class TestStreamCreator extends SmallTest with Matchers {
     result(
       streamCreator()
         .clusterName(CommonUtils.randomString(10))
+        .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
@@ -184,6 +208,7 @@ class TestStreamCreator extends SmallTest with Matchers {
     val res = result(
       streamCreator()
         .clusterName(CommonUtils.randomString(10))
+        .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
         .nodeName(CommonUtils.randomString())
@@ -200,6 +225,7 @@ class TestStreamCreator extends SmallTest with Matchers {
   def ignoreFromTopic(): Unit = an[IllegalArgumentException] should be thrownBy
     streamCreator()
       .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
       .jarInfo(fileInfo)
@@ -212,6 +238,7 @@ class TestStreamCreator extends SmallTest with Matchers {
   def ignoreToTopic(): Unit = an[IllegalArgumentException] should be thrownBy
     streamCreator()
       .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
       .jarInfo(fileInfo)
@@ -228,6 +255,7 @@ class TestStreamCreator extends SmallTest with Matchers {
     result(
       streamCreator()
         .clusterName(CommonUtils.randomString(10))
+        .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
