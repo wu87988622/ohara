@@ -30,7 +30,7 @@ const usePlugin = () => {
     URL.WORKER_URL,
   );
 
-  const getRunmingConnectors = async worker => {
+  const getRunningConnectors = async worker => {
     await getPipeline();
     const res = get(pipelineRes(), 'data.result', []);
 
@@ -167,7 +167,7 @@ const usePlugin = () => {
   };
 
   return {
-    getRunmingConnectors,
+    getRunningConnectors,
     stopConnectors,
     startConnectors,
     stopWorker,

@@ -40,6 +40,7 @@ const Plugins = props => {
   const [deleting, setDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const deleteType = useRef(false);
   const {
     data: jarsRes,
@@ -58,7 +59,7 @@ const Plugins = props => {
   );
   const { showMessage } = useSnackbar();
   const {
-    getRunmingConnectors,
+    getRunningConnectors,
     startConnectors,
     stopConnectors,
     startWorker,
@@ -119,6 +120,7 @@ const Plugins = props => {
     { id: 'name', label: 'File name' },
     { id: 'size', label: 'File size(KB)' },
     { id: 'lastModified', label: 'Last modified' },
+    { id: 'loaded', label: 'Loaded' },
     { id: 'action', label: 'Action', sortable: false },
   ];
 
@@ -186,11 +188,24 @@ const Plugins = props => {
     );
   };
 
+  const loadedButton = action => {
+    if (action) {
+      return (
+        <Tooltip title={`Is Loaded in workspace`} enterDelay={1000}>
+          <ActionIcon className="fas fa-check" />
+        </Tooltip>
+      );
+    } else {
+      return;
+    }
+  };
+
   const workerRows = workerActions.map(jar => {
     return {
       name: jar.name,
       size: floor(divide(jar.size, 1024), 1),
       lastModified: utils.getDateFromTimestamp(jar.lastModified),
+      loaded: loadedButton(true),
       action: workerActionButton(jar),
       type: jar.type,
     };
@@ -207,6 +222,7 @@ const Plugins = props => {
         name: jar.name,
         size: floor(divide(jar.size, 1024), 1),
         lastModified: utils.getDateFromTimestamp(jar.lastModified),
+        loaded: loadedButton(false),
         action: jarActionButton(jar),
         type: 'ADD',
       };
@@ -247,8 +263,6 @@ const Plugins = props => {
   };
 
   const handleDiscard = async () => {
-    resetWorkerAction();
-
     const newJar = jars
       .filter(jar => jar.group.split('-')[0] === worker.name)
       .filter(
@@ -263,6 +277,8 @@ const Plugins = props => {
     await commonUtils.sleep(500);
 
     jarRefetch(true);
+
+    resetWorkerAction();
   };
 
   const resetModal = form => {
@@ -284,7 +300,8 @@ const Plugins = props => {
     if (reverts.length > 0) {
       deleteType.current = true;
     }
-    for (var revert of reverts) {
+    /* eslint-disable no-unused-vars */
+    for (let revert of reverts) {
       switch (revert.name) {
         case 'stopConnectors':
           setActiveStep(1);
@@ -327,9 +344,10 @@ const Plugins = props => {
   };
 
   const handleRestart = async () => {
+    setIsResetModalOpen(false);
     setIsLoading(true);
 
-    connectors.current = await getRunmingConnectors(worker);
+    connectors.current = await getRunningConnectors(worker);
 
     saveJarInfos.current = worker.jarInfos;
 
@@ -424,10 +442,10 @@ const Plugins = props => {
   };
 
   const steps = [
-    'Stop Connector',
+    'Stop Pipeline',
     'Stop Workspace',
     'Update Workspace',
-    'Start Connector',
+    'Start Pipeline',
   ];
 
   return (
@@ -452,7 +470,7 @@ const Plugins = props => {
           rows={workerRows.concat(jarRows)}
           tableName="plugins"
           handleDiscard={() => handleDiscard()}
-          handleRestart={() => handleRestart()}
+          handleRestart={() => setIsResetModalOpen(true)}
         />
       </Main>
 
@@ -463,6 +481,14 @@ const Plugins = props => {
         handleClose={() => setIsModalOpen(false)}
         handleConfirm={handleDelete}
         working={deleting}
+      />
+      <DeleteDialog
+        title="Restart Workspace?"
+        content={`Are you sure you want to restart the workspace, This action cannot be undone!`}
+        open={isResetModalOpen}
+        handleClose={() => setIsResetModalOpen(false)}
+        handleConfirm={() => handleRestart()}
+        confirmText="Restart"
       />
       <Progress
         open={isLoading}

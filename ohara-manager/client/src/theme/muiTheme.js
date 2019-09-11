@@ -15,6 +15,7 @@
  */
 
 import pink from '@material-ui/core/colors/pink';
+import amber from '@material-ui/core/colors/amber';
 import { createMuiTheme } from '@material-ui/core/styles';
 
 const MuiTheme = createMuiTheme({
@@ -24,9 +25,7 @@ const MuiTheme = createMuiTheme({
       highlight: '#E3F2FB',
     },
     secondary: pink,
-    warning: {
-      main: '#ffa000',
-    },
+    warning: amber,
   },
 });
 

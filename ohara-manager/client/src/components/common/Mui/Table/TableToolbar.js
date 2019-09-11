@@ -33,7 +33,7 @@ const StyledTypography = styled(Typography)`
 `;
 
 const StyledToolbar = styled(Toolbar)`
-  background-color: ${props => props.theme.palette.warning.main};
+  background-color: ${props => props.theme.palette.warning[700]};
 `;
 
 const StyledButton = styled(Button)`
