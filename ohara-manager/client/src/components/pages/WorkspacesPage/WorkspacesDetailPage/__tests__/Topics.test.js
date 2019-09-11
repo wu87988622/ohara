@@ -35,8 +35,20 @@ describe('<Topics />', () => {
   let pipelines;
 
   beforeEach(() => {
+    props = {
+      match: {
+        url: generate.url(),
+      },
+      worker: {
+        name: generate.name(),
+        brokerClusterName,
+      },
+    };
     brokerClusterName = generate.serviceName();
-    topics = generate.topics({ brokerClusterName });
+    topics = generate.topics({
+      brokerClusterName,
+      workspaceName: props.worker.name,
+    });
     pipelines = [
       {
         name: generate.name(),
@@ -48,16 +60,6 @@ describe('<Topics />', () => {
         tags: {},
       },
     ];
-
-    props = {
-      match: {
-        url: generate.url(),
-      },
-      worker: {
-        name: generate.name(),
-        brokerClusterName,
-      },
-    };
 
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
       if (url === `${URL.TOPIC_URL}`) {
@@ -136,7 +138,11 @@ describe('<Topics />', () => {
   });
 
   it('renders multiple topics', async () => {
-    const topics = generate.topics({ count: 5, brokerClusterName });
+    const topics = generate.topics({
+      count: 5,
+      brokerClusterName,
+      workspaceName: props.worker.name,
+    });
 
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
       if (url === `${URL.TOPIC_URL}`) {
@@ -201,6 +207,11 @@ describe('<Topics />', () => {
         brokerClusterName,
       },
     };
+
+    topics = generate.topics({
+      brokerClusterName,
+      workspaceName: props.worker.name,
+    });
 
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
       if (url === `${URL.TOPIC_URL}`) {

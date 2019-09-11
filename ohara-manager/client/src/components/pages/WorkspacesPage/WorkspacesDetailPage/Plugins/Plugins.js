@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
-import { get, divide, floor, isUndefined } from 'lodash';
+import { get, divide, floor } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as commonUtils from 'utils/commonUtils';
@@ -30,6 +30,7 @@ import { SortTable } from 'components/common/Mui/Table';
 import { Main, ActionIcon, StyledInputFile, StyledLabel } from './styles';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import usePlugin from './usePlugin';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
 const Plugins = props => {
@@ -39,12 +40,16 @@ const Plugins = props => {
   const [deleting, setDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const deleteType = useRef(false);
   const {
     data: jarsRes,
     isLoading: jarIsLoading,
     refetch: jarRefetch,
   } = useApi.useFetchApi(URL.FILE_URL);
-  const jars = get(jarsRes, 'data.result', []);
+  const jars = get(jarsRes, 'data.result', []).filter(
+    jar => jar.group === `${worker.name}-plugin`,
+  );
 
   const [workerActions, setWorkerActions] = useState([]);
 
@@ -52,13 +57,18 @@ const Plugins = props => {
   const { getData: getDeleteRes, deleteApi } = useApi.useDeleteApi(
     URL.FILE_URL,
   );
-  const { getData: pipelineRes, getApi: getPipeline } = useApi.useGetApi(
-    URL.PIPELINE_URL,
-  );
-  const { putApi: putWorker } = useApi.usePutApi(URL.WORKER_URL);
-  const { putApi: putConnector } = useApi.usePutApi(URL.CONNECTOR_URL);
-  const { waitApi } = useApi.useWaitApi();
   const { showMessage } = useSnackbar();
+  const {
+    getRunningConnectors,
+    startConnectors,
+    stopConnectors,
+    startWorker,
+    stopWorker,
+    updateJarInfos,
+  } = usePlugin();
+  const [errors, setErrors] = useState([]);
+  const connectors = useRef();
+  const saveJarInfos = useRef();
 
   useEffect(() => {
     const { jarInfos } = worker;
@@ -110,6 +120,7 @@ const Plugins = props => {
     { id: 'name', label: 'File name' },
     { id: 'size', label: 'File size(KB)' },
     { id: 'lastModified', label: 'Last modified' },
+    { id: 'loaded', label: 'Loaded' },
     { id: 'action', label: 'Action', sortable: false },
   ];
 
@@ -177,11 +188,24 @@ const Plugins = props => {
     );
   };
 
+  const loadedButton = action => {
+    if (action) {
+      return (
+        <Tooltip title={`Is Loaded in workspace`} enterDelay={1000}>
+          <ActionIcon className="fas fa-check" />
+        </Tooltip>
+      );
+    } else {
+      return;
+    }
+  };
+
   const workerRows = workerActions.map(jar => {
     return {
       name: jar.name,
       size: floor(divide(jar.size, 1024), 1),
       lastModified: utils.getDateFromTimestamp(jar.lastModified),
+      loaded: loadedButton(true),
       action: workerActionButton(jar),
       type: jar.type,
     };
@@ -198,6 +222,7 @@ const Plugins = props => {
         name: jar.name,
         size: floor(divide(jar.size, 1024), 1),
         lastModified: utils.getDateFromTimestamp(jar.lastModified),
+        loaded: loadedButton(false),
         action: jarActionButton(jar),
         type: 'ADD',
       };
@@ -238,8 +263,6 @@ const Plugins = props => {
   };
 
   const handleDiscard = async () => {
-    resetWorkerAction();
-
     const newJar = jars
       .filter(jar => jar.group.split('-')[0] === worker.name)
       .filter(
@@ -254,76 +277,97 @@ const Plugins = props => {
     await commonUtils.sleep(500);
 
     jarRefetch(true);
+
+    resetWorkerAction();
+  };
+
+  const resetModal = form => {
+    deleteType.current = false;
+    setIsLoading(false);
+    setActiveStep(0);
+    connectors.current = [];
+    saveJarInfos.current = [];
+    setWorkerActions([]);
+    workerRefetch(true);
+    jarRefetch(true);
+  };
+
+  const handleError = async params => {
+    const newError = errors.push(params);
+    setErrors(newError);
+
+    const reverts = errors.filter(error => error.success === false);
+    if (reverts.length > 0) {
+      deleteType.current = true;
+    }
+    /* eslint-disable no-unused-vars */
+    for (let revert of reverts) {
+      switch (revert.name) {
+        case 'stopConnectors':
+          setActiveStep(1);
+          await startConnectors(connectors.current);
+          break;
+
+        case 'stopWorker':
+          setActiveStep(2);
+          await startWorker(worker);
+          setActiveStep(1);
+          await startConnectors(connectors.current);
+          break;
+
+        case 'startWorker':
+          setActiveStep(3);
+          await updateJarInfos({ worker, jarInfos: saveJarInfos.current });
+          setActiveStep(2);
+          await startWorker(worker);
+          setActiveStep(1);
+          await startConnectors(connectors.current);
+          break;
+
+        case 'startConnectors':
+          await stopWorker(worker);
+          setActiveStep(3);
+          await updateJarInfos({ worker, jarInfos: saveJarInfos.current });
+          setActiveStep(2);
+          await startWorker(worker);
+          setActiveStep(1);
+          await startConnectors(connectors.current);
+          break;
+
+        default:
+          break;
+      }
+    }
+    if (reverts.length > 0) {
+      resetModal();
+    }
   };
 
   const handleRestart = async () => {
+    setIsResetModalOpen(false);
     setIsLoading(true);
 
-    await getPipeline();
-    const res = get(pipelineRes(), 'data.result', []);
+    connectors.current = await getRunningConnectors(worker);
 
-    //Get the connector in execution
-    let runningConnector = [];
-    res
-      .filter(pipeline => pipeline.tags.workerClusterName === worker.name)
-      .map(pipeline => pipeline.objects)
-      .flatMap(object => object)
-      .filter(
-        object =>
-          object.state === 'RUNNING' &&
-          object.kind !== 'stream' &&
-          object.kind !== 'topic',
-      )
-      .forEach(connector => {
-        runningConnector.push(connector);
-        putConnector(`/${connector.name}/stop?group=${connector.group}`);
-      });
+    saveJarInfos.current = worker.jarInfos;
 
-    const stopConnectorCheckFn = res => {
-      return isUndefined(get(res, 'data.result.state', undefined));
-    };
+    const stopConnectorsSuccess = await stopConnectors(connectors.current);
 
-    const startConnectorCheckFn = res => {
-      return get(res, 'data.result.state', undefined) === 'RUNNING';
-    };
+    handleError({ name: 'stopConnectors', success: stopConnectorsSuccess });
 
-    //Stop all connectors
-    /* eslint-disable no-unused-vars */
-    for (let stopConnector of runningConnector) {
-      const stopConnectorParams = {
-        url: `${URL.CONNECTOR_URL}/${stopConnector.name}?group=${stopConnector.group}`,
-        checkFn: stopConnectorCheckFn,
-        sleep: 3000,
-      };
-
-      await waitApi(stopConnectorParams);
+    if (deleteType.current) {
+      return;
     }
 
     setActiveStep(1);
 
-    const stopWorkerCheckFn = res => {
-      return isUndefined(get(res, 'data.result.state', undefined));
-    };
+    const stopWorkerSuccess = await stopWorker(worker);
 
-    const startWorkerCheckFn = res => {
-      return get(res, 'data.result.connectors', []).length > 0;
-    };
+    handleError({ name: 'stopWorker', success: stopWorkerSuccess });
 
-    await putWorker(`/${worker.name}/stop`);
-
-    const stopWorkerParams = {
-      url: `${URL.WORKER_URL}/${worker.name}`,
-      checkFn: stopWorkerCheckFn,
-      sleep: 3000,
-    };
-
-    const startWorkerParams = {
-      url: `${URL.WORKER_URL}/${worker.name}`,
-      checkFn: startWorkerCheckFn,
-      sleep: 3000,
-    };
-
-    await waitApi(stopWorkerParams);
+    if (deleteType.current) {
+      return;
+    }
 
     setActiveStep(2);
 
@@ -350,7 +394,6 @@ const Plugins = props => {
 
     //Get files that users want to add in the workspace
     const addPlugin = jars
-      .filter(jar => jar.group.split('-')[0] === worker.name)
       .filter(
         jar =>
           !worker.jarInfos
@@ -365,52 +408,44 @@ const Plugins = props => {
       });
 
     //Update workspace
-    await putWorker(`/${worker.name}`, {
-      jarKeys: reservePlugin.concat(addPlugin),
-    });
+    await updateJarInfos({ worker, jarInfos: reservePlugin.concat(addPlugin) });
 
-    await putWorker(`/${worker.name}/start`);
+    const startWorkerSuccess = await startWorker(worker);
 
-    await waitApi(startWorkerParams);
+    handleError({ name: 'startWorker', success: startWorkerSuccess });
+
+    if (deleteType.current) {
+      return;
+    }
 
     setActiveStep(3);
+
+    //Waiting to loading bars and delete files
+    await commonUtils.sleep(2500);
+
+    const startConnectorsSuccess = await startConnectors(connectors.current);
+
+    handleError({ name: 'startConnectors', success: startConnectorsSuccess });
+
+    if (deleteType.current) {
+      return;
+    }
 
     //Remove files that users want to discard
     removeWorkerPlugin.forEach(jar =>
       deleteApi(`${jar.name}?group=${jar.group}`),
     );
 
-    //Waiting to loading bars and delete files
-    await commonUtils.sleep(2500);
-
-    runningConnector.forEach(connector => {
-      putConnector(`/${connector.name}/start?group=${connector.group}`);
-    });
-    /* eslint-disable no-unused-vars */
-    for (let startConnector of runningConnector) {
-      const startConnectorParams = {
-        url: `${URL.CONNECTOR_URL}/${startConnector.name}?group=${startConnector.group}`,
-        checkFn: startConnectorCheckFn,
-        sleep: 3000,
-      };
-
-      await waitApi(startConnectorParams);
-    }
-
-    setWorkerActions([]);
-
-    workerRefetch(true);
-
-    jarRefetch(true);
-
     setActiveStep(4);
+
+    resetModal();
   };
 
   const steps = [
-    'StopConnector',
-    'StopWorkspace',
-    'UpdateWorkspace',
-    'StartConnector',
+    'Stop Pipeline',
+    'Stop Workspace',
+    'Update Workspace',
+    'Start Pipeline',
   ];
 
   return (
@@ -435,7 +470,7 @@ const Plugins = props => {
           rows={workerRows.concat(jarRows)}
           tableName="plugins"
           handleDiscard={() => handleDiscard()}
-          handleRestart={() => handleRestart()}
+          handleRestart={() => setIsResetModalOpen(true)}
         />
       </Main>
 
@@ -447,10 +482,19 @@ const Plugins = props => {
         handleConfirm={handleDelete}
         working={deleting}
       />
+      <DeleteDialog
+        title="Restart Workspace?"
+        content={`Are you sure you want to restart the workspace, This action cannot be undone!`}
+        open={isResetModalOpen}
+        handleClose={() => setIsResetModalOpen(false)}
+        handleConfirm={() => handleRestart()}
+        confirmText="Restart"
+      />
       <Progress
         open={isLoading}
         steps={steps}
         activeStep={activeStep}
+        deleteType={deleteType.current}
         maxWidth="md"
         createTitle="Update Workspace..."
         deleteTitle="Failed to update workspace and revert to previous version..."

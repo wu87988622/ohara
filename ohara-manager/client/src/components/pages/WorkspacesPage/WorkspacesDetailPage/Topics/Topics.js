@@ -37,7 +37,7 @@ const Topics = props => {
 
   const { showMessage } = useSnackbar();
   const {
-    data: topics,
+    data: topicsRes,
     isLoading: fetchingTopics,
     refetch,
   } = useApi.useFetchApi(`${URL.TOPIC_URL}`);
@@ -53,7 +53,9 @@ const Topics = props => {
   } = useApi.useDeleteApi(`${URL.TOPIC_URL}`);
   const { waitApi } = useApi.useWaitApi();
 
-  const topicsUnderBrokerCluster = get(topics, 'data.result', []);
+  const topics = get(topicsRes, 'data.result', []).filter(
+    topic => topic.group === `${worker.name}-topic`,
+  );
 
   const headRows = [
     { id: 'name', label: 'Topic name' },
@@ -112,7 +114,7 @@ const Topics = props => {
     return usedByWhichPipeline;
   };
 
-  const rows = topicsUnderBrokerCluster.map(topic => {
+  const rows = topics.map(topic => {
     const pipelines = get(pipelinesResponse, 'data.result', []);
     const usedByWhichPipeline = getUsedByPipeline(pipelines, topic.name);
 

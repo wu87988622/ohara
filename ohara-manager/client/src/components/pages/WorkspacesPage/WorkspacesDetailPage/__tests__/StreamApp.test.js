@@ -31,9 +31,10 @@ afterEach(cleanup);
 const props = { workspaceName: generate.serviceName() };
 
 describe('<StreamApp />', () => {
+  const { workspaceName } = props;
   let streamApps;
   beforeEach(() => {
-    streamApps = generate.streamApps();
+    streamApps = generate.streamApps({ workspaceName });
 
     jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
       return {
@@ -81,7 +82,7 @@ describe('<StreamApp />', () => {
   });
 
   it('renders multiple streamApps', async () => {
-    const streamApps = generate.streamApps({ count: 5 });
+    const streamApps = generate.streamApps({ count: 5, workspaceName });
 
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
       return {
