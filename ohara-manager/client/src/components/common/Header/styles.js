@@ -18,13 +18,13 @@ import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
 export const StyledHeader = styled.div`
-  background-color: ${props => props.theme.white};
+  background-color: ${props => props.theme.palette.common.white};
   position: fixed;
   left: 0;
   top: 0;
   right: 0;
   height: 59px;
-  border-bottom: 1px solid ${props => props.theme.lighterGray};
+  border-bottom: 1px solid ${props => props.theme.palette.grey[200]};
   padding: 0 50px;
   z-index: 100;
 `;
@@ -44,23 +44,27 @@ HeaderWrapper.displayName = 'Header';
 
 export const Brand = styled(NavLink)`
   font-family: Merriweather, sans-serif;
-  color: ${props => props.theme.blue};
+  color: ${props => props.theme.palette.primary.main};
   font-size: 24px;
   padding: 0;
   display: block;
+
+  &:hover {
+    color: ${props => props.theme.palette.primary.light};
+  }
 `;
 
 Brand.displayName = 'Brand';
 
 export const Nav = styled.nav`
   margin-left: 54px;
-  background-color: ${props => props.theme.white};
+  background-color: ${props => props.theme.palette.common.white};
 `;
 
 Nav.displayName = 'Nav';
 
 export const Link = styled(NavLink)`
-  color: ${props => props.theme.dimBlue};
+  color: ${props => props.theme.palette.text.secondary};
   font-size: 14px;
   padding: 15px 0;
   margin: 10px 20px;
@@ -69,7 +73,7 @@ export const Link = styled(NavLink)`
 
   &:hover,
   &.active {
-    color: ${props => props.theme.blue};
+    color: ${props => props.theme.palette.primary.main};
   }
 `;
 
@@ -77,13 +81,13 @@ Link.displayName = 'Link';
 
 export const Btn = styled.button`
   border: none;
-  color: ${props => props.theme.dimBlue};
+  color: ${props => props.theme.palette.grey[400]};
   font-size: 18px;
   background-color: transparent;
 
   &:hover,
   &.active {
-    color: ${props => props.theme.blue};
+    color: ${props => props.theme.palette.primary.main};
   }
 `;
 
@@ -113,12 +117,12 @@ export const Ul = styled.ul`
   .item {
     margin-right: 10px;
     padding: 13px 15px;
-    color: ${props => props.theme.darkerBlue};
-    background-color: ${props => props.theme.whiteSmoke};
+    color: ${props => props.theme.palette.text.secondary};
+    background-color: ${props => props.theme.palette.grey[100]};
   }
 
   .content {
-    color: ${props => props.theme.lightBlue};
+    color: ${props => props.theme.palette.text.secondary};
   }
 
   .item,
