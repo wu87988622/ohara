@@ -145,7 +145,7 @@ const SortTable = props => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {stableSort(rows, getSorting(order, orderBy)).map(row => {
+          {stableSort(rows, getSorting(order, orderBy)).map((row, index) => {
             const keys = Object.keys(row);
 
             const StyledTableRow = styled(TableRow)`
@@ -165,9 +165,12 @@ const SortTable = props => {
                 }
               }};
             `;
-
             return (
-              <StyledTableRow data-testid={dataRowTestId} key={row[keys[0]]}>
+              // Using map method's index as the key since our UI
+              // allows same name item in the table, so it's not
+              // guaranteed `name` is unique and React would have
+              // problem rendering it
+              <StyledTableRow data-testid={dataRowTestId} key={index}>
                 {keys
                   .filter(key => key !== 'type')
                   .map((key, i, arr) => {
