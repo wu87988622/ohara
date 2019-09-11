@@ -36,7 +36,7 @@ object ShabondiRoute {
 
   private def addShabondi(store: DataStore)(implicit executionContext: ExecutionContext) = {
     val newShabondi =
-      ShabondiDescription(CommonUtils.uuid(), CommonUtils.current(), None, Seq.empty, -1, 1)
+      ShabondiDescription(CommonUtils.randomString(), CommonUtils.current(), None, Seq.empty, -1, 1)
 
     store.addIfAbsent[ShabondiDescription](newShabondi)
   }

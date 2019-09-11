@@ -105,7 +105,7 @@ object ValidationUtils {
                         target: String,
                         settings: Map[String, String],
                         taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Any]] = {
-    val requestId: String = CommonUtils.uuid()
+    val requestId: String = CommonUtils.randomString()
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
     workerClient
       .connectorCreator()

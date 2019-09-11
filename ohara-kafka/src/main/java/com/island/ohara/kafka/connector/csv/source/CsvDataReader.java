@@ -114,7 +114,7 @@ public class CsvDataReader implements DataReader {
     String fileName = Paths.get(path).getFileName().toString();
     String outputPath = Paths.get(targetFolder, fileName).toString();
     if (fs.exists(outputPath)) {
-      String newPath = outputPath + "." + CommonUtils.uuid();
+      String newPath = outputPath + "." + CommonUtils.randomString();
       if (fs.exists(newPath)) {
         throw new IllegalStateException("duplicate file? " + path);
       } else {

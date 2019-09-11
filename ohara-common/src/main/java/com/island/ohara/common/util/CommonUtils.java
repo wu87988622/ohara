@@ -302,21 +302,12 @@ public final class CommonUtils {
   // ---------------------------------[Primitive Type Helper]--------------------------------- //
 
   /**
-   * create a uuid. This uuid consists of "number" and [a-f]
-   *
-   * @return uuid
-   */
-  public static String uuid() {
-    return java.util.UUID.randomUUID().toString();
-  }
-
-  /**
    * a random string based on uuid without "-"
    *
    * @return random string
    */
   public static String randomString() {
-    return uuid().replaceAll("-", "");
+    return java.util.UUID.randomUUID().toString().replaceAll("-", "");
   }
 
   /**
