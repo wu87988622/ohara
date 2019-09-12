@@ -103,6 +103,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
       result(
         zookeeperCollie.creator
           .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+          .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
           .clientPort(clientPort)
           .electionPort(electionPort)
           .peerPort(peerPort)
@@ -124,6 +125,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
       result(
         brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+          .group(BrokerApi.BROKER_GROUP_DEFAULT)
           .clusterName(clusterName)
           .clientPort(clientPort)
           .exporterPort(exporterPort)

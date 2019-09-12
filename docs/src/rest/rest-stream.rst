@@ -379,7 +379,7 @@ get information from a specific streamApp cluster
 *GET /v0/stream/${name}?group=$group*
 
 .. note::
-   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+   We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
@@ -429,10 +429,7 @@ Example Response
 list information of streamApp cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*GET /v0/stream?group=$group*
-
-.. note::
-   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+*GET /v0/stream*
 
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
@@ -581,7 +578,7 @@ the streamApp component which is stored in pipeline.
 *DELETE /v0/stream/${name}?group=$group*
 
 .. note::
-   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+   We will use the default value as the query parameter "?group=" if you don't specify it.
 
 **Example Response**
 
@@ -600,7 +597,7 @@ start a StreamApp
 *PUT /v0/stream/${name}/start?group=$group*
 
 .. note::
-   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+   We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -654,7 +651,7 @@ Query Parameters
      (it can save your time but may damage your data).
 
 .. note::
-   We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+   We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::

@@ -65,6 +65,12 @@ class TestBrokerApi extends SmallTest with Matchers {
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy access.name("")
 
   @Test
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy access.group(null)
+
+  @Test
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy access.group("")
+
+  @Test
   def nullZookeeperClusterName(): Unit = an[NullPointerException] should be thrownBy access.zookeeperClusterName(null)
 
   @Test
@@ -95,6 +101,7 @@ class TestBrokerApi extends SmallTest with Matchers {
   @Test
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
+    val group = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
@@ -103,6 +110,7 @@ class TestBrokerApi extends SmallTest with Matchers {
     val nodeName = CommonUtils.randomString()
     val creation = access
       .name(name)
+      .group(group)
       .zookeeperClusterName(zookeeperClusterName)
       .imageName(imageName)
       .clientPort(clientPort)
@@ -111,6 +119,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       .nodeName(nodeName)
       .creation
     creation.name shouldBe name
+    creation.group shouldBe group
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
     creation.jmxPort shouldBe jmxPort
@@ -149,6 +158,7 @@ class TestBrokerApi extends SmallTest with Matchers {
     creation.ports.size shouldBe 3
 
     val name = CommonUtils.randomString(10)
+    val group = CommonUtils.randomString(10)
     val zookeeperClusterName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
@@ -156,6 +166,7 @@ class TestBrokerApi extends SmallTest with Matchers {
     val creation2 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name",
+      |    "group": "$group",
       |    "clientPort": $clientPort,
       |    "exporterPort": $exporterPort,
       |    "jmxPort": $jmxPort,
@@ -163,8 +174,8 @@ class TestBrokerApi extends SmallTest with Matchers {
       |    "nodeNames": ["$nodeName"]
       |  }
       """.stripMargin.parseJson)
-    // node does support custom group
-    creation2.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
+    // group is support in create cluster
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation2.nodeNames.size shouldBe 1
@@ -188,6 +199,35 @@ class TestBrokerApi extends SmallTest with Matchers {
     creation3.clientPort should not be 0
     creation3.exporterPort should not be 0
     creation3.jmxPort should not be 0
+  }
+
+  @Test
+  def testUpdate(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val group = CommonUtils.randomString(10)
+    val imageName = CommonUtils.randomString()
+    val clientPort = CommonUtils.availablePort()
+    val nodeName = CommonUtils.randomString()
+
+    val creation = access.name(name).nodeName(nodeName).creation
+    creation.name shouldBe name
+    // use default values if absent
+    creation.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
+    creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
+    creation.nodeNames shouldBe Set(nodeName)
+
+    // initial a new update request
+    val updateAsCreation = BrokerApi.access.request
+      .name(name)
+      // the group here is not as same as before
+      // here we use update as creation
+      .group(group)
+      .imageName(imageName)
+      .clientPort(clientPort)
+      .update
+    updateAsCreation.imageName shouldBe Some(imageName)
+    updateAsCreation.clientPort shouldBe Some(clientPort)
+    updateAsCreation.nodeNames should not be Some(Set(nodeName))
   }
 
   @Test
@@ -501,7 +541,7 @@ class TestBrokerApi extends SmallTest with Matchers {
   @Test
   def testAliveNodes(): Unit = {
     val cluster = BrokerClusterInfo(
-      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      settings = BrokerApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       deadNodes = Set("n0"),
       state = Some("running"),
       error = None,

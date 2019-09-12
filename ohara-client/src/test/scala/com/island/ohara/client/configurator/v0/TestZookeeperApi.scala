@@ -185,7 +185,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
     // initial a new update request
     val updateAsCreation = ZookeeperApi.access.request
       .name(name)
-      // the group here is not as same as creation
+      // the group here is not as same as before
       // here we use update as creation
       .group(group)
       .imageName(imageName)

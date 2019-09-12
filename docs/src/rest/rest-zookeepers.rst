@@ -224,7 +224,7 @@ delete a zookeeper properties
 *DELETE /v0/zookeepers/$name?group=$group*
 
 You cannot delete properties of an non-stopped zookeeper cluster.
-We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -244,7 +244,7 @@ get a zookeeper cluster
 
 Get zookeeper information by name and group. This API could fetch all information
 of a zookeeper (include state).
-We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   .. code-block:: json
@@ -273,7 +273,7 @@ start a zookeeper cluster
 
 *PUT /v0/zookeepers/$name/start?group=$group*
 
-We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -292,7 +292,7 @@ stop a zookeeper cluster used by a running :ref:`broker cluster <rest-brokers>`.
 
 *PUT /v0/zookeepers/$name/stop?group=$group[&force=true]*
 
-We will use the GROUP_DEFAULT as the query parameter "?group=" if you don't specify it.
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Query Parameters
   #. force (**boolean**) — true if you don’t want to wait the graceful shutdown

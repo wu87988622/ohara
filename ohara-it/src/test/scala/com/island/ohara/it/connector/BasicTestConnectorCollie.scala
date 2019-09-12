@@ -122,6 +122,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
                                 nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
     clusterCollie.brokerCollie.creator
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+      .group(BrokerApi.BROKER_GROUP_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .exporterPort(exporterPort)

@@ -113,7 +113,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       val zkCluster = result(
         zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
       )
-      result(zkApi.start(zkCluster.name))
+      result(zkApi.start(zkCluster.key))
       assertCluster(() => result(zkApi.list()),
                     () => result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers))),
                     zkCluster.name)
@@ -127,7 +127,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .zookeeperClusterName(zkCluster.name)
           .nodeNames(nodeCache.take(1).map(_.name).toSet)
           .create())
-      result(bkApi.start(bkCluster.name))
+      result(bkApi.start(bkCluster.key))
       assertCluster(() => result(bkApi.list()),
                     () => result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers))),
                     bkCluster.name)

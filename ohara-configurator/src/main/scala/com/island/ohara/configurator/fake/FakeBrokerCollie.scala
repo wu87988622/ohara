@@ -81,7 +81,6 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     addCluster(previousCluster.clone(previousCluster.nodeNames ++ Set(newNodeName)).asInstanceOf[BrokerClusterInfo]))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,

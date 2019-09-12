@@ -78,6 +78,16 @@ class TestBrokerCreator extends SmallTest with Matchers {
   }
 
   @Test
+  def nullGroup(): Unit = {
+    an[NullPointerException] should be thrownBy bkCreator().group(null)
+  }
+
+  @Test
+  def emptyGroup(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().group("")
+  }
+
+  @Test
   def nullZkClusterName(): Unit = {
     an[NullPointerException] should be thrownBy bkCreator().zookeeperClusterName(null)
   }
@@ -116,6 +126,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testNameLength(): Unit = bkCreator()
     .imageName(CommonUtils.randomString(10))
     .clusterName(CommonUtils.randomString(10))
+    .group(CommonUtils.randomString(10))
     .zookeeperClusterName("zk")
     .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
@@ -126,9 +137,21 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy bkCreator()
       .clusterName(CommonUtils.randomString(40))
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString)
       .create()
+
+  @Test
+  def testMinimumCreator(): Unit = Await.result(
+    bkCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString)
+      .nodeName(CommonUtils.randomString)
+      .create(),
+    5 seconds
+  )
 
   @Test
   def testCopy(): Unit = {
@@ -158,6 +181,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("cluster123")
+      .group(CommonUtils.randomString(10))
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName("zk123456")
       .clientPort(9092)
@@ -179,6 +203,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty) //Zk container set empty
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("cluster123")
+      .group(CommonUtils.randomString(10))
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
       .clientPort(9092)
@@ -234,6 +259,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .result(
         brokerCollie.creator
           .clusterName("bk1")
+          .group(CommonUtils.randomString(10))
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
           .clientPort(9092)
@@ -290,6 +316,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("bk1")
+      // In FakeBrokerCollie, we create a cluster without specified group
+      // we should use default group here to fetch the same cluster
+      .group(BrokerApi.BROKER_GROUP_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
       .clientPort(9092)
       .jmxPort(9093)
@@ -328,6 +357,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("cluster123")
+      .group(CommonUtils.randomString(10))
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
       .clientPort(9092)

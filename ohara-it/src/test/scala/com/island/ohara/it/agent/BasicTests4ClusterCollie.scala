@@ -84,6 +84,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie.creator
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+      .group(BrokerApi.BROKER_GROUP_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .exporterPort(exporterPort)

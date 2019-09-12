@@ -108,7 +108,7 @@ class TestListCluster extends IntegrationTest with Matchers {
     val zkCluster = result(
       clusterCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-        .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
+        .group(BrokerApi.BROKER_GROUP_DEFAULT)
         .clientPort(CommonUtils.availablePort())
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
@@ -133,6 +133,7 @@ class TestListCluster extends IntegrationTest with Matchers {
       try result(
         clusterCollie.brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+          .group(BrokerApi.BROKER_GROUP_DEFAULT)
           .clientPort(CommonUtils.availablePort())
           .exporterPort(CommonUtils.availablePort())
           .nodeNames(nodeCache.map(_.name).toSet)

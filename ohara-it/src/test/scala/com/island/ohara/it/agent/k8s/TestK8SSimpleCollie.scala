@@ -538,6 +538,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       brokerCollie.creator
         .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
         .clusterName(cluseterName)
+        .group(BrokerApi.BROKER_GROUP_DEFAULT)
         .clientPort(clientPort)
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)

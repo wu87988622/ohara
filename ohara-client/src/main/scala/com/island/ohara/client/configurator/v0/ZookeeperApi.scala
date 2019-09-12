@@ -275,8 +275,12 @@ object ZookeeperApi {
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-        // for update request, we should use default group if it was absent
-        put(key(update.group.getOrElse(ZOOKEEPER_GROUP_DEFAULT), update.name.get), update)
+        put(
+          // for update request, we should use default group if it was absent
+          key(update.group.getOrElse(ZOOKEEPER_GROUP_DEFAULT),
+              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          update
+        )
     }
   }
 

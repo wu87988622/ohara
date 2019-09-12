@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
@@ -68,9 +68,13 @@ object BrokerApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    // the name and group fields are used to identify zookeeper cluster object
+    // we should give them default value in JsonRefiner
+    override def name: String = settings.name.get
+    override def group: String = settings.group.get
+    // helper method to get the key
+    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
-    override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
-    override def group: String = BROKER_GROUP_DEFAULT
     override def imageName: String = settings.imageName.get
     override def nodeNames: Set[String] = settings.nodeNames.get
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
@@ -101,6 +105,9 @@ object BrokerApi {
       .refine
 
   final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+    // We use the update parser to get the name and group
+    private[BrokerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    private[BrokerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     override def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
     override def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
@@ -143,9 +150,8 @@ object BrokerApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
-    // cluster does not support to define group
-    override def group: String = BROKER_GROUP_DEFAULT
     override def name: String = settings.name
+    override def group: String = settings.group
     override def kind: String = BROKER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags
@@ -196,6 +202,9 @@ object BrokerApi {
   sealed trait Request {
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request = setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
+    @Optional("default is GROUP_DEFAULT")
+    def group(group: String): Request =
+      setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request =
       setting(IMAGE_NAME_KEY, JsString(CommonUtils.requireNonEmpty(imageName)))
@@ -255,7 +264,10 @@ object BrokerApi {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
       override def settings(settings: Map[String, JsValue]): Request = {
-        this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+        // We don't have to check the settings is empty here for the following reasons:
+        // 1) we may want to use the benefit of default creation without specify settings
+        // 2) actual checking will be done in the json parser phase of creation or update
+        this.settings ++= settings
         this
       }
 
@@ -267,15 +279,13 @@ object BrokerApi {
         // auto-complete the update via our refiner
         BROKER_UPDATE_JSON_FORMAT.read(BROKER_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-        exec.post[Creation, BrokerClusterInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-        exec.put[Update, BrokerClusterInfo, ErrorApi.Error](
-          s"$url/${CommonUtils.requireNonEmpty(settings(NAME_KEY).convertTo[String])}",
+        put(
+          // for update request, we should use default group if it was absent
+          key(update.group.getOrElse(BROKER_GROUP_DEFAULT),
+              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
           update
         )
     }

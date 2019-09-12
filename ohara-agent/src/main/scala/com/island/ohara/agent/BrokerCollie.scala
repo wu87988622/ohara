@@ -36,6 +36,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
+  override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
+
   /**
     * This is a complicated process. We must address following issues.
     * 1) check the existence of cluster
@@ -55,7 +57,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
         .map {
           case (cluster, containers) => cluster.asInstanceOf[BrokerClusterInfo] -> containers
         }
-        .find(_._1.name == creation.name)
+        .find(_._1.key == creation.key)
         .map(_._2)
         .map(containers =>
           nodeCollie
@@ -169,8 +171,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                         + toEnvString(creation.settings),
                       hostname = containerName
                     )
-                    doCreator(executionContext, creation.name, containerName, containerInfo, node, route).map(_ =>
-                      Some(containerInfo))
+                    doCreator(executionContext, containerName, containerInfo, node, route).map(_ => Some(containerInfo))
                 })
               })
               .map(_.flatten.toSeq)
@@ -211,8 +212,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
     */
   protected def prefixKey: String
 
-  override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
-
   /**
     * Please implement this function to get Zookeeper cluster information
     * @param executionContext execution context
@@ -234,14 +233,12 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
   /**
     * Please implement this function to create the container to a different platform
     * @param executionContext execution context
-    * @param clusterName cluster name
     * @param containerName container name
     * @param containerInfo container information
     * @param node node object
     * @param route ip-host mapping
     */
   protected def doCreator(executionContext: ExecutionContext,
-                          clusterName: String,
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
@@ -382,9 +379,9 @@ object BrokerCollie {
 
     override def create(): Future[BrokerClusterInfo] = {
       // initial the basic creation required parameters (defined in ClusterInfo) for broker
-      //TODO : it is ok that we don't add the group() since client will auto fill default value for us
-      //TODO: add group() in #2570 for broker
-      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+      // Note: We add all the fields in collie and they may not required in client api
+      // since they are required in the view of "collie"
+      val creation = request.name(clusterName).group(group).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation

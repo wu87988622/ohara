@@ -28,7 +28,6 @@ private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     with BrokerCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,

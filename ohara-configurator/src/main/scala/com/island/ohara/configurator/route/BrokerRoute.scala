@@ -50,7 +50,7 @@ object BrokerRoute {
       clusterCollie.brokerCollie
         .clusters()
         .flatMap { clusters =>
-          if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
+          if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
           update.zookeeperClusterName
             .orElse(previousOption.map(_.zookeeperClusterName))
@@ -58,6 +58,9 @@ object BrokerRoute {
             .getOrElse(CollieUtils.singleCluster())
         }
         .map { zkName =>
+          // 1) fill the previous settings (if exists)
+          // 2) overwrite previous settings by updated settings
+          // 3) fill the ignored settings by creation
           val newSettings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings
           BrokerClusterInfo(
             settings = BrokerApi.access.request.settings(newSettings).zookeeperClusterName(zkName).creation.settings,
@@ -72,7 +75,7 @@ object BrokerRoute {
   private[this] def hookOfStart(implicit store: DataStore,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _: String, _: Map[String, String]) =>
+    (key: ObjectKey, _, _) =>
       store
         .value[BrokerClusterInfo](key)
         .flatMap(brokerClusterInfo => clusterCollie.clusters().map(_.keys.toSeq).map(_ -> brokerClusterInfo))
@@ -87,6 +90,7 @@ object BrokerRoute {
                 s"zk cluster:${brokerClusterInfo.zookeeperClusterName} is already used by broker cluster:${sameZkNameClusters.head.name}")
             clusterCollie.brokerCollie.creator
               .clusterName(brokerClusterInfo.name)
+              .group(brokerClusterInfo.group)
               .clientPort(brokerClusterInfo.clientPort)
               .exporterPort(brokerClusterInfo.exporterPort)
               .jmxPort(brokerClusterInfo.jmxPort)
@@ -116,7 +120,7 @@ object BrokerRoute {
                       s"you can't remove broker cluster:${brokerClusterInfo.name} since it is used by worker cluster:${cluster.name}"))
             ))
 
-  private[this] def hookOfGroup: HookOfGroup = _ => BROKER_GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(BROKER_GROUP_DEFAULT)
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

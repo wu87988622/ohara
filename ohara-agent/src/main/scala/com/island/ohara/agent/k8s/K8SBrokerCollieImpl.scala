@@ -18,8 +18,9 @@ package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
 import com.typesafe.scalalogging.Logger
 
@@ -31,21 +32,20 @@ private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k
   private[this] val LOG = Logger(classOf[K8SBrokerCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
+                                   node: Node,
                                    route: Map[String, String]): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
       .imageName(containerInfo.imageName)
-      .nodeName(node.name)
-      .labelName(OHARA_LABEL)
-      .domainName(K8S_DOMAIN_NAME)
       .portMappings(
         containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+      .nodeName(containerInfo.nodeName)
       .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+      .labelName(OHARA_LABEL)
+      .domainName(K8S_DOMAIN_NAME)
       .envs(containerInfo.environments)
       .name(containerInfo.name)
       .threadPool(executionContext)

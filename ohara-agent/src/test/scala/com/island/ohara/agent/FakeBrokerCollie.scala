@@ -46,7 +46,6 @@ private class FakeBrokerCollie(nodes: Seq[Node],
   )
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerApi.ContainerInfo,
                                    node: NodeApi.Node,
