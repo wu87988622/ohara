@@ -61,11 +61,11 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     }
   }
 
-  override def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    try if (cachedConnectors.remove(connectorKey.connectorNameOnKafka()) == null)
-      Future.failed(new IllegalStateException(s"Connector:${connectorKey.connectorNameOnKafka()} doesn't exist!"))
+  override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    try if (cachedConnectors.remove(connectorName) == null)
+      Future.failed(new IllegalStateException(s"Connector:$connectorName doesn't exist!"))
     else Future.successful(())
-    finally cachedConnectorsState.remove(connectorKey.connectorNameOnKafka())
+    finally cachedConnectorsState.remove(connectorName)
   // TODO; does this work? by chia
   override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] =
     Future.successful(cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq)

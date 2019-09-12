@@ -80,6 +80,13 @@ public class RowSourceRecord {
     return Optional.ofNullable(timestamp);
   }
 
+  /**
+   * a helper method to create a record with topic and row
+   *
+   * @param topic topic name
+   * @param row row
+   * @return connect record
+   */
   public static RowSourceRecord of(String topic, Row row) {
     return builder().row(row).topicName(topic).build();
   }

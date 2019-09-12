@@ -19,6 +19,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.connector.ConnectorTestUtils
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.testing.With3Brokers3Workers
@@ -98,7 +99,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -131,7 +132,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -164,7 +165,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -197,7 +198,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -244,6 +245,6 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .columns(schema)
         .settings(Map(PERF_BATCH -> "-1"))
         .create())
-    PerfUtils.assertFailedConnector(testUtil, connectorKey)
+    ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
   }
 }

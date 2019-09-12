@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.perf
+package com.island.ohara.connector
 
 import java.time.Duration
 
@@ -25,9 +25,9 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.OharaTestUtils
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-object PerfUtils {
+import scala.concurrent.duration._
+object ConnectorTestUtils {
   private[this] val TIMEOUT = Duration.ofSeconds(60)
   def assertFailedConnector(testUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit = CommonUtils.await(
     () => {

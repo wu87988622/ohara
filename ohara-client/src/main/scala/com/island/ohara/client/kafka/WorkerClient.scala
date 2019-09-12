@@ -66,7 +66,15 @@ trait WorkerClient {
     * @param connectorKey connector's key
     * @return async future containing nothing
     */
-  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit]
+  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = delete(
+    connectorKey.connectorNameOnKafka())
+
+  /**
+    * delete a connector from worker cluster. Make sure you do know the real name!
+    * @param connectorName connector's name
+    * @return async future containing nothing
+    */
+  def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * pause a running connector
@@ -252,11 +260,9 @@ object WorkerClient {
         )
       }
 
-      override def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() =>
-                HttpExecutor.SINGLETON
-                  .delete[Error](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}"),
-              s"delete $connectorKey")
+      override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+        retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$connectorName"),
+              s"delete $connectorName")
 
       override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
