@@ -142,7 +142,13 @@ trait WorkerClient {
     */
   def statusOrNone(connectorKey: ConnectorKey)(
     implicit executionContext: ExecutionContext): Future[Option[ConnectorInfo]] =
-    exist(connectorKey).flatMap(if (_) status(connectorKey).map(Some(_)) else Future.successful(None))
+    exist(connectorKey).flatMap(
+      if (_)
+        try status(connectorKey).map(Some(_))
+        catch {
+          // even if the connector is in active list, the status of connector may be not exist
+          case _: Throwable => Future.successful(None)
+        } else Future.successful(None))
 
   /**
     * @param connectorKey connector's key

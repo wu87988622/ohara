@@ -59,14 +59,14 @@ private[configurator] object PipelineRoute {
         )
       )
       .flatMap { obj =>
-        workerClient.exist(data.key).flatMap {
-          if (_) workerClient.status(data.key).map { connectorInfo =>
+        workerClient
+          .statusOrNone(data.key)
+          .map(_.map { connectorInfo =>
             obj.copy(
               state = Some(connectorInfo.connector.state),
               error = connectorInfo.connector.trace
             )
-          } else Future.successful(obj)
-        }
+          }.getOrElse(obj))
       }
 
   private[this] def toAbstract(data: TopicInfo, clusterInfo: BrokerClusterInfo, topicAdmin: TopicAdmin)(
