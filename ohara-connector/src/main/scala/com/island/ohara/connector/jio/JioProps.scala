@@ -26,7 +26,7 @@ case class JioProps(bufferSize: Int,
                     bindingPort: Int,
                     bindingPath: String) {
   def plain: Map[String, String] = Map(
-    DATA_BUFFER_KEY -> bufferSize.toString,
+    DATA_BUFFER_SIZE_KEY -> bufferSize.toString,
     CLOSE_TIMEOUT_KEY -> java.time.Duration.ofMillis(closeTimeout.toMillis).toString,
     BINDING_TIMEOUT_KEY -> java.time.Duration.ofMillis(bindingTimeout.toMillis).toString,
     BINDING_PORT_KEY -> bindingPort.toString,
@@ -36,7 +36,7 @@ case class JioProps(bufferSize: Int,
 
 object JioProps {
   def apply(bindingPort: Int): JioProps = JioProps(
-    bufferSize = DATA_BUFFER_DEFAULT,
+    bufferSize = DATA_BUFFER_SIZE_DEFAULT,
     closeTimeout = CLOSE_TIMEOUT_DEFAULT,
     bindingTimeout = BINDING_TIMEOUT_DEFAULT,
     bindingPort = bindingPort,
@@ -44,7 +44,7 @@ object JioProps {
   )
 
   def apply(setting: TaskSetting): JioProps = JioProps(
-    bufferSize = setting.intOption(DATA_BUFFER_KEY).orElse(DATA_BUFFER_DEFAULT),
+    bufferSize = setting.intOption(DATA_BUFFER_SIZE_KEY).orElse(DATA_BUFFER_SIZE_DEFAULT),
     closeTimeout = setting
       .durationOption(CLOSE_TIMEOUT_KEY)
       .asScala

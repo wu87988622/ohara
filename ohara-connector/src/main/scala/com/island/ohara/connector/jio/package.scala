@@ -20,14 +20,14 @@ import com.island.ohara.common.setting.SettingDef
 import scala.concurrent.duration._
 package object jio {
 
-  val DATA_BUFFER_KEY: String = "jio.data.buffer"
-  val DATA_BUFFER_DEFAULT: Int = 100
-  val DATA_BUFFER_DEFINITION: SettingDef = SettingDef
+  val DATA_BUFFER_SIZE_KEY: String = "jio.data.buffer.size"
+  val DATA_BUFFER_SIZE_DEFAULT: Int = 100
+  val DATA_BUFFER_SIZE_DEFINITION: SettingDef = SettingDef
     .builder()
-    .key(DATA_BUFFER_KEY)
-    .documentation("the maximum size of buffer data. the unit is message")
+    .key(DATA_BUFFER_SIZE_KEY)
+    .documentation("the maximum number of buffer data")
     .valueType(SettingDef.Type.INT)
-    .optional(DATA_BUFFER_DEFAULT)
+    .optional(DATA_BUFFER_SIZE_DEFAULT)
     .build()
   val CLOSE_TIMEOUT_KEY: String = "jio.close.timeout"
   val CLOSE_TIMEOUT_DEFAULT: FiniteDuration = 30 seconds
@@ -69,7 +69,7 @@ package object jio {
     * the core settings for JsonIn.
     */
   val DEFINITIONS: Seq[SettingDef] = Seq(
-    DATA_BUFFER_DEFINITION,
+    DATA_BUFFER_SIZE_DEFINITION,
     CLOSE_TIMEOUT_DEFINITION,
     BINDING_TIMEOUT_DEFINITION,
     BINDING_PORT_DEFINITION,

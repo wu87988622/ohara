@@ -24,8 +24,8 @@ class TestJioSettings extends SmallTest with Matchers {
 
   @Test
   def testBufferSetting(): Unit = {
-    DATA_BUFFER_DEFINITION.key() shouldBe DATA_BUFFER_KEY
-    DATA_BUFFER_DEFINITION.defaultValue() shouldBe DATA_BUFFER_DEFAULT.toString
+    DATA_BUFFER_SIZE_DEFINITION.key() shouldBe DATA_BUFFER_SIZE_KEY
+    DATA_BUFFER_SIZE_DEFINITION.defaultValue() shouldBe DATA_BUFFER_SIZE_DEFAULT.toString
   }
 
   @Test
