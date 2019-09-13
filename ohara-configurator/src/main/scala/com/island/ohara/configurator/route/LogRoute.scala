@@ -20,13 +20,13 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.ClusterCollie
-import com.island.ohara.client.configurator.v0.BrokerApi.BROKER_PREFIX_PATH
+import com.island.ohara.client.configurator.v0.BrokerApi._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.LogApi
 import com.island.ohara.client.configurator.v0.LogApi._
-import com.island.ohara.client.configurator.v0.WorkerApi.WORKER_PREFIX_PATH
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZOOKEEPER_PREFIX_PATH
-import com.island.ohara.client.configurator.v0.StreamApi.STREAMS_PREFIX_PATH
+import com.island.ohara.client.configurator.v0.WorkerApi._
+import com.island.ohara.client.configurator.v0.ZookeeperApi._
+import com.island.ohara.client.configurator.v0.StreamApi._
+import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -59,23 +59,31 @@ object LogRoute {
     })
 
   def apply(implicit collie: ClusterCollie, executionContext: ExecutionContext): server.Route =
-    pathPrefix(LogApi.LOG_PREFIX_PATH) {
-      pathPrefix(ZOOKEEPER_PREFIX_PATH) {
-        path(Segment) { clusterName =>
-          route(clusterName, collie.zookeeperCollie.logs(clusterName))
+    pathPrefix(LOG_PREFIX_PATH / Segment / Segment) {
+      case (clusterPrefix, clusterName) =>
+        parameter(GROUP_KEY ?) { groupOption =>
+          clusterPrefix match {
+            case ZOOKEEPER_PREFIX_PATH =>
+              route(clusterName,
+                    collie.zookeeperCollie.logs(
+                      ObjectKey.of(groupOption.getOrElse(ZOOKEEPER_GROUP_DEFAULT), clusterName)
+                    ))
+            case BROKER_PREFIX_PATH =>
+              route(clusterName,
+                    collie.brokerCollie.logs(
+                      ObjectKey.of(groupOption.getOrElse(BROKER_GROUP_DEFAULT), clusterName)
+                    ))
+            case WORKER_PREFIX_PATH =>
+              route(clusterName,
+                    collie.workerCollie.logs(
+                      ObjectKey.of(groupOption.getOrElse(WORKER_GROUP_DEFAULT), clusterName)
+                    ))
+            case STREAMS_PREFIX_PATH =>
+              route(clusterName,
+                    collie.streamCollie.logs(
+                      ObjectKey.of(groupOption.getOrElse(STREAM_GROUP_DEFAULT), clusterName)
+                    ))
+          }
         }
-      } ~ pathPrefix(BROKER_PREFIX_PATH) {
-        path(Segment) { clusterName =>
-          route(clusterName, collie.brokerCollie.logs(clusterName))
-        }
-      } ~ pathPrefix(WORKER_PREFIX_PATH) {
-        path(Segment) { clusterName =>
-          route(clusterName, collie.workerCollie.logs(clusterName))
-        }
-      } ~ pathPrefix(STREAMS_PREFIX_PATH) {
-        path(Segment) { clusterName =>
-          route(clusterName, collie.streamCollie.logs(clusterName))
-        }
-      }
     }
 }

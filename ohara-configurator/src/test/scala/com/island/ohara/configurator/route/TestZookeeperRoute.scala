@@ -77,10 +77,10 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
     // remove all broker clusters
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
-      .map(_.name)
-      .foreach(name =>
-        result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(name)
-          flatMap (_ => BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name))))
+      .map(_.key)
+      .foreach(key =>
+        result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(key)
+          flatMap (_ => BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(key))))
 
     // pass
     result(zookeeperApi.stop(zk.key))
@@ -236,10 +236,10 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
     val info1 = result(zookeeperApi.get(zk.key))
     // duplicated start will return the current cluster info
-    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.start(zk.key))
     val info2 = result(zookeeperApi.get(zk.key))
     info1.name shouldBe info2.name
     info1.imageName shouldBe info2.imageName

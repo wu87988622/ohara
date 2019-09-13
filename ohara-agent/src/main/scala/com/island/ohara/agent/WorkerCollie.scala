@@ -35,6 +35,8 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
+  override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
+
   /**
     * This is a complicated process. We must address following issues.
     * 1) check the existence of cluster
@@ -54,7 +56,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         .map {
           case (cluster, containers) => cluster.asInstanceOf[WorkerClusterInfo] -> containers
         }
-        .find(_._1.name == creation.name)
+        .find(_._1.key == creation.key)
         .map(_._2)
         .map(containers =>
           nodeCollie
@@ -145,8 +147,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                         + toEnvString(creation.settings),
                       hostname = containerName
                     )
-                    doCreator(executionContext, creation.name, containerName, containerInfo, node, route).map(_ =>
-                      Some(containerInfo))
+                    doCreator(executionContext, containerName, containerInfo, node, route).map(_ => Some(containerInfo))
                 })
                 .map(_.flatten.toSeq)
                 .map {
@@ -185,8 +186,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
     */
   protected def prefixKey: String
 
-  override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
-
   /**
     * there is new route to the node. the sub class can update the running container to apply new route.
     */
@@ -196,9 +195,13 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   /**
     * Please implement this function to create the container to a different platform
+    * @param executionContext execution context
+    * @param containerName container name
+    * @param containerInfo container information
+    * @param node node object
+    * @param route ip-host mapping
     */
   protected def doCreator(executionContext: ExecutionContext,
-                          clusterName: String,
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
@@ -398,9 +401,9 @@ object WorkerCollie {
 
     override def create(): Future[WorkerClusterInfo] = {
       // initial the basic creation required parameters (defined in ClusterInfo) for worker
-      //TODO : it is ok that we don't add the group() since client will auto fill default value for us
-      //TODO: add group() in #2570 for worker
-      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+      // Note: We add all the fields in collie and they may not required in client api
+      // since they are required in the view of "collie"
+      val creation = request.name(clusterName).group(group).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation

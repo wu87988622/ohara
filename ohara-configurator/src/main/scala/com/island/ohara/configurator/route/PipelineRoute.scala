@@ -140,7 +140,7 @@ private[configurator] object PipelineRoute {
         case (cluster, admin) => toAbstract(data, cluster, admin)
       }
     case data: StreamClusterInfo =>
-      streamCollie.cluster(data.name).map(_._1).flatMap(toAbstract(data, _))
+      streamCollie.cluster(data.key).map(_._1).flatMap(toAbstract(data, _))
     case _ => toAbstract(obj, None)
   }
 

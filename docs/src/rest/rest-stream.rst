@@ -126,17 +126,21 @@ Example Request
 
   #. jmxPort (**int**) — expose port for jmx ; default is random port
   #. from (**array(TopicKey)**) — source topic ; default is empty array
-      .. note::
-       we only support one topic for current version. We will throw exception in start api if you assign
-       more than 1 topic.
 
-      [TODO] We will support multiple topics on issue :ohara-issue:`688`
+     .. note::
+        we only support one topic for current version. We will throw exception in start api if you assign
+        more than 1 topic.
+
+     [TODO] We will support multiple topics on issue :ohara-issue:`688`
+
   #. to (**array(TopicKey)**) — target topic ; default is empty array
-      .. note::
-       we only support one topic for current version. We will throw exception in start api if you assign
-       more than 1 topic.
 
-      [TODO] We will support multiple topics on issue :ohara-issue:`688`
+     .. note::
+        we only support one topic for current version. We will throw exception in start api if you assign
+        more than 1 topic.
+
+     [TODO] We will support multiple topics on issue :ohara-issue:`688`
+
   #. instances (**int**) — number of running streamApp
 
      The above fields are pre-defined and could use in request body for convenient. The option fields will have no default value,
@@ -491,30 +495,34 @@ Update the properties of a non-started streamApp.
    If the required streamApp (group, name) was not exists, we will try to use this request as
    :ref:`create streamApp <rest-stream-create-properties>`
 
+#. imageName (**option(string)**) — image name of streamApp used to.
+#. nodeNames (**option(array(string))**) — node name list of streamApp used to.
+#. tags (**option(object)**) — a key-value map of user defined data.
+#. jarKey (**option(option(object))**) — the used jar key
+
+   - group (**option(string)**) — the group name of this jar
+   - name (**option(string)**) — the name without extension of this jar
+
+#. jmxPort (**option(int)**) — expose port for jmx.
+#. from (**option(array(string))**) — source topic.
+
+   .. note::
+      we only support one topic for current version. We will throw exception in start api if you assign
+      more than 1 topic.
+
+   [TODO] We will support multiple topics on issue :ohara-issue:`688`
+
+#. to (**option(array(string))**) — target topic.
+
+   .. note::
+      we only support one topic for current version. We will throw exception in start api if you assign
+      more than 1 topic.
+
+   [TODO] We will support multiple topics on issue :ohara-issue:`688`
+
+#. instances (**option(int)**) — number of running streamApp.
+
 Example Request
-  #. imageName (**string**) — image name of streamApp used to.
-  #. nodeNames (**array(string)**) — node name list of streamApp used to.
-  #. tags (**object**) — a key-value map of user defined data.
-  #. jarKey (**option(object)**) — the used jar key
-
-     - group (**string**) — the group name of this jar
-     - name (**string**) — the name without extension of this jar
-
-  #. jmxPort (**int**) — expose port for jmx.
-  #. from (**array(string)**) — source topic.
-      .. note::
-       we only support one topic for current version. We will throw exception in start api if you assign
-       more than 1 topic.
-
-      [TODO] We will support multiple topics on issue :ohara-issue:`688`
-  #. to (**array(string)**) — target topic.
-      .. note::
-       we only support one topic for current version. We will throw exception in start api if you assign
-       more than 1 topic.
-
-      [TODO] We will support multiple topics on issue :ohara-issue:`688`
-  #. instances (**int**) — number of running streamApp.
-
   .. code-block:: json
 
      {

@@ -74,7 +74,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
         20 seconds
       )
       Await
-        .result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.name), 20 seconds)
+        .result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key), 20 seconds)
 
       val bk = Await.result(
         BrokerApi.access
@@ -87,7 +87,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .create(),
         20 seconds
       )
-      Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.name), 20 seconds)
+      Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.key), 20 seconds)
 
       Await
         .result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)

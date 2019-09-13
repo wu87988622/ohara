@@ -63,7 +63,7 @@ object WorkerRoute {
       clusterCollie.workerCollie
         .clusters()
         .flatMap { clusters =>
-          if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
+          if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped worker cluster: $key")
           update.brokerClusterName
             .orElse(previousOption.map(_.brokerClusterName))
@@ -71,50 +71,32 @@ object WorkerRoute {
             .getOrElse(CollieUtils.singleCluster())
         }
         .flatMap { bkName =>
-          previousOption.fold(
-            // use PUT as creation request
-            Future.traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo).map(_.toSeq).map { jarInfos =>
-              WorkerClusterInfo(
-                settings = WorkerApi.access.request
-                  .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-                  .settings(update.settings)
-                  .brokerClusterName(bkName)
-                  .jarInfos(jarInfos)
-                  .creation
-                  .settings,
-                connectors = Seq.empty,
-                deadNodes = Set.empty,
-                state = None,
-                error = None,
-                lastModified = CommonUtils.current()
-              )
-            }
-          ) { previous =>
-            Future
-              .traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo)
-              .map(_.toSeq)
-              .map(jarInfos =>
-                WorkerClusterInfo(
-                  settings = WorkerApi.access.request
-                    .settings(previous.settings)
-                    .settings(update.settings)
-                    .brokerClusterName(bkName)
-                    .jarInfos(jarInfos)
-                    .creation
-                    .settings,
-                  connectors = Seq.empty,
-                  deadNodes = Set.empty,
-                  state = None,
-                  error = None,
-                  lastModified = CommonUtils.current()
-              ))
+          // use PUT as creation request
+          Future.traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo).map(_.toSeq).map { jarInfos =>
+            // 1) fill the previous settings (if exists)
+            // 2) overwrite previous settings by updated settings
+            // 3) fill the ignored settings by creation
+            val newSettings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings
+            WorkerClusterInfo(
+              settings = WorkerApi.access.request
+                .settings(newSettings)
+                .brokerClusterName(bkName)
+                .jarInfos(jarInfos)
+                .creation
+                .settings,
+              connectors = Seq.empty,
+              deadNodes = Set.empty,
+              state = None,
+              error = None,
+              lastModified = CommonUtils.current()
+            )
           }
       }
 
   private[this] def hookOfStart(implicit store: DataStore,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _: String, _: Map[String, String]) =>
+    (key: ObjectKey, _, _) =>
       store
         .value[WorkerClusterInfo](key)
         .flatMap { data =>
@@ -156,6 +138,7 @@ object WorkerRoute {
 
             clusterCollie.workerCollie.creator
               .clusterName(workerClusterInfo.name)
+              .group(workerClusterInfo.group)
               .clientPort(workerClusterInfo.clientPort)
               .jmxPort(workerClusterInfo.jmxPort)
               .brokerClusterName(workerClusterInfo.brokerClusterName)
@@ -178,7 +161,7 @@ object WorkerRoute {
 
   private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
 
-  private[this] def hookOfGroup: HookOfGroup = _ => WORKER_GROUP_DEFAULT
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(WORKER_GROUP_DEFAULT)
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

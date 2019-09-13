@@ -48,12 +48,6 @@ trait Collie[T <: ClusterInfo] {
       case (cluster, containerInfos) => doRemove(cluster, containerInfos)
     })
 
-  // TODO: this is a deprecated method and should be removed in #2570
-  final def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
-      case (cluster, containerInfos) => doRemove(cluster, containerInfos)
-    })
-
   /**
     * remove whole cluster gracefully.
     * @param clusterInfo cluster info
@@ -76,12 +70,6 @@ trait Collie[T <: ClusterInfo] {
       case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
     })
 
-  // TODO: this is a deprecated method and should be removed in #2570
-  final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
-      case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
-    })
-
   /**
     * remove whole cluster forcely. the impl, by default, is similar to doRemove().
     * @param clusterInfo cluster info
@@ -100,9 +88,6 @@ trait Collie[T <: ClusterInfo] {
     */
   def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
 
-  // TODO: this is a deprecated method and should be removed in #2570
-  def logs(clusterName: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
-
   /**
     * create a cluster creator
     * @return creator of cluster
@@ -116,10 +101,6 @@ trait Collie[T <: ClusterInfo] {
     */
   def containers(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     cluster(key).map(_._2)
-
-  // TODO: this is a deprecated method and should be removed in #2570
-  def containers(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    cluster(clusterName).map(_._2)
 
   /**
     * fetch all clusters and belonging containers from cache.
@@ -151,9 +132,21 @@ trait Collie[T <: ClusterInfo] {
       _.find(_._1.key == key)
         .getOrElse(throw new NoSuchClusterException(s"cluster with objectKey [$key] is not running")))
 
-  // TODO: this is a deprecated method and should be removed in #2570
-  def cluster(name: String)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
-    clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name is not running")))
+  /**
+    * This is a helper method for those caller only knows cluster name.
+    *
+    * @param clusterName the cluster name in current type T
+    * @param executionContext execution context
+    * @return cluster information
+    */
+  def cluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
+    clusters().map(
+      clusters =>
+        // We need to filter by current type since there may have same name in different cluster type
+        clusters
+          .filter(_._1.isInstanceOf[T])
+          .find(_._1.name == clusterName)
+          .getOrElse(throw new NoSuchClusterException(s"cluster with name [$clusterName] is not running")))
 
   /**
     * @param key cluster key
@@ -162,20 +155,12 @@ trait Collie[T <: ClusterInfo] {
   def exist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters().map(_.exists(_._1.key == key))
 
-  // TODO: this is a deprecated method and should be removed in #2570
-  def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusters().map(_.exists(_._1.name == clusterName))
-
   /**
     * @param key cluster key
     * @return true if the cluster doesn't exist
     */
   def nonExist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     exist(key).map(!_)
-
-  // TODO: this is a deprecated method and should be removed in #2570
-  def nonExist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    exist(clusterName).map(!_)
 
   /**
     * add a node to a running cluster
@@ -188,22 +173,6 @@ trait Collie[T <: ClusterInfo] {
     cluster(key).flatMap {
       case (cluster, containers) =>
         if (Objects.isNull(key))
-          Future.failed(new IllegalArgumentException("clusterName can't empty"))
-        else if (CommonUtils.isEmpty(nodeName))
-          Future.failed(new IllegalArgumentException("nodeName can't empty"))
-        else if (CommonUtils.hasUpperCase(nodeName))
-          Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
-        else if (cluster.nodeNames.contains(nodeName))
-          // the new node is running so we don't need to do anything for this method
-          Future.successful(cluster)
-        else doAddNode(cluster, containers, nodeName)
-    }
-
-  // TODO: this is a deprecated method and should be removed in #2570
-  final def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    cluster(clusterName).flatMap {
-      case (cluster, containers) =>
-        if (CommonUtils.isEmpty(clusterName))
           Future.failed(new IllegalArgumentException("clusterName can't empty"))
         else if (CommonUtils.isEmpty(nodeName))
           Future.failed(new IllegalArgumentException("nodeName can't empty"))
@@ -254,31 +223,6 @@ trait Collie[T <: ClusterInfo] {
                 )
             }
         })
-
-  // TODO: this is a deprecated method and should be removed in #2570
-  final def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = {
-    clusters().flatMap(
-      _.find(_._1.name == clusterName)
-        .filter(_._1.nodeNames.contains(nodeName))
-        .filter(_._2.exists(_.nodeName == nodeName))
-        .fold(Future.successful(false)) {
-          case (cluster, runningContainers) =>
-            runningContainers.size match {
-              case 1 =>
-                Future.failed(new IllegalArgumentException(
-                  s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
-              case _ =>
-                doRemoveNode(
-                  cluster,
-                  runningContainers
-                    .find(_.nodeName == nodeName)
-                    .getOrElse(throw new IllegalArgumentException(
-                      s"This should not be happen!!! $nodeName doesn't exist on cluster:$clusterName"))
-                )
-            }
-        })
-  }
 
   /**
     * do the remove actually. Normally, the sub-class doesn't need to check the existence of removed node.

@@ -104,33 +104,6 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
           .map(_.toMap)
       }
 
-  // TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = nodeCollie
-    .nodes()
-    .flatMap(
-      Future.traverse(_)(
-        dockerCache.exec(
-          _,
-          _.containers(name =>
-            name.contains(s"$DIVIDER$clusterName$DIVIDER$serviceName") && name.startsWith(s"$PREFIX_KEY$DIVIDER")))
-      ))
-    .map(_.flatten)
-    .flatMap { containers =>
-      Future
-        .sequence(containers.map { container =>
-          nodeCollie.node(container.nodeName).map { node =>
-            container -> dockerCache.exec(node,
-                                          client =>
-                                            try client.log(container.name)
-                                            catch {
-                                              case _: Throwable => s"failed to get log from ${container.name}"
-                                          })
-          }
-        })
-        .map(_.toMap)
-    }
-
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
     nodeCollie.node(beRemovedContainer.nodeName).map { node =>

@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.{FakeWorkerClient, FakeWorkerCollie}
@@ -60,8 +61,8 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def repeatedlyDelete(): Unit = {
     (0 to 10).foreach { index =>
-      result(workerApi.delete(index.toString))
-      result(workerApi.removeNode(index.toString, index.toString))
+      result(workerApi.delete(ObjectKey.of(index.toString, index.toString)))
+      result(workerApi.removeNode(ObjectKey.of(index.toString, index.toString), index.toString))
     }
   }
 
@@ -77,7 +78,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .brokerClusterName(CommonUtils.randomString())
         .create()
-        .flatMap(wk => workerApi.start(wk.name)))
+        .flatMap(wk => workerApi.start(wk.key)))
 
   @Test
   def testAllSetting(): Unit = {
@@ -135,7 +136,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create())
     zk.name shouldBe zkClusterName
-    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.name))
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key))
     val anotherBk = result(
       BrokerApi.access
         .hostname(configurator.hostname)
@@ -145,7 +146,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .zookeeperClusterName(zkClusterName)
         .nodeNames(nodeNames)
         .create())
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(anotherBk.name))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(anotherBk.key))
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
 
     // there are two bk cluster so we have to assign the bk cluster...
@@ -169,7 +170,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .name(CommonUtils.randomString(10))
         .nodeName(CommonUtils.randomString())
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
   @Test
@@ -185,7 +186,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .imageName(CommonUtils.randomString(10))
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
   @Test
@@ -205,7 +206,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
     result(workerApi.list()).size shouldBe 1
-    result(workerApi.delete(cluster.name))
+    result(workerApi.delete(cluster.key))
     result(workerApi.list()).size shouldBe 0
   }
 
@@ -214,8 +215,8 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = result(
       workerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
-    result(workerApi.start(cluster.name))
-    result(workerApi.addNode(cluster.name, nodeNames.last).flatMap(_ => workerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames ++ Set(
+    result(workerApi.start(cluster.key))
+    result(workerApi.addNode(cluster.key, nodeNames.last).flatMap(_ => workerApi.get(cluster.key))).nodeNames shouldBe cluster.nodeNames ++ Set(
       nodeNames.last)
   }
 
@@ -224,10 +225,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = result(
       workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    result(workerApi.start(cluster.name))
+    result(workerApi.start(cluster.key))
     cluster.nodeNames shouldBe nodeNames
-    result(workerApi.removeNode(cluster.name, nodeNames.last))
-    result(workerApi.get(cluster.name)).nodeNames shouldBe nodeNames - nodeNames.last
+    result(workerApi.removeNode(cluster.key, nodeNames.last))
+    result(workerApi.get(cluster.key)).nodeNames shouldBe nodeNames - nodeNames.last
   }
 
   @Test
@@ -260,7 +261,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .clientPort(clientPort)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
     an[IllegalArgumentException] should be thrownBy result(
@@ -269,7 +270,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .clientPort(clientPort)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
 
@@ -283,7 +284,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .jmxPort(jmxPort)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
     an[IllegalArgumentException] should be thrownBy result(
@@ -292,7 +293,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .jmxPort(jmxPort)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
 
@@ -306,7 +307,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .groupId(groupId)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
     an[IllegalArgumentException] should be thrownBy result(
@@ -315,7 +316,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .groupId(groupId)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
 
@@ -329,7 +330,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .configTopicName(configTopicName)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
     an[IllegalArgumentException] should be thrownBy result(
@@ -338,7 +339,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .configTopicName(configTopicName)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
 
@@ -352,7 +353,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .offsetTopicName(offsetTopicName)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
     an[IllegalArgumentException] should be thrownBy result(
@@ -361,7 +362,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .offsetTopicName(offsetTopicName)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
 
@@ -375,7 +376,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .statusTopicName(statusTopicName)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
 
     an[IllegalArgumentException] should be thrownBy result(
@@ -384,7 +385,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .statusTopicName(statusTopicName)
         .nodeNames(nodeNames)
         .create()
-        .flatMap(wk => workerApi.start(wk.name))
+        .flatMap(wk => workerApi.start(wk.key))
     )
   }
 
@@ -396,16 +397,16 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val wk0 = result(
       workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    result(workerApi.start(wk0.name))
-    result(workerApi.stop(wk0.name))
-    result(workerApi.delete(wk0.name))
+    result(workerApi.start(wk0.key))
+    result(workerApi.stop(wk0.key))
+    result(workerApi.delete(wk0.key))
     configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
     val wk1 = result(workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
-    result(workerApi.start(wk1.name))
-    result(workerApi.forceStop(wk1.name))
-    result(workerApi.delete(wk1.name))
+    result(workerApi.start(wk1.key))
+    result(workerApi.forceStop(wk1.key))
+    result(workerApi.delete(wk1.key))
     configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
@@ -434,21 +435,42 @@ class TestWorkerRoute extends MediumTest with Matchers {
     wk.tags shouldBe tags
 
     // after create, tags should exist
-    val res = result(workerApi.get(wk.name))
+    val res = result(workerApi.get(wk.key))
     res.tags shouldBe tags
     res.connectors shouldBe Seq.empty
 
     // after start, tags should still exist
-    result(workerApi.start(wk.name))
-    val res1 = result(workerApi.get(wk.name))
+    result(workerApi.start(wk.key))
+    val res1 = result(workerApi.get(wk.key))
     res1.tags shouldBe tags
     res1.connectors should not be Seq.empty
 
     // after stop, tags should still exist
-    result(workerApi.stop(wk.name))
-    val res2 = result(workerApi.get(wk.name))
+    result(workerApi.stop(wk.key))
+    val res2 = result(workerApi.get(wk.key))
     res2.tags shouldBe tags
     res2.connectors shouldBe Seq.empty
+  }
+
+  @Test
+  def testGroup(): Unit = {
+    val group = CommonUtils.randomString(10)
+    // different name but same group
+    result(workerApi.request.group(group).nodeNames(nodeNames).create()).group shouldBe group
+    result(workerApi.request.group(group).nodeNames(nodeNames).create()).group shouldBe group
+
+    result(workerApi.list()).size shouldBe 2
+
+    // same name but different group
+    val name = CommonUtils.randomString(10)
+    val bk1 = result(workerApi.request.name(name).nodeNames(nodeNames).create())
+    bk1.name shouldBe name
+    bk1.group should not be group
+    val bk2 = result(workerApi.request.name(name).group(group).nodeNames(nodeNames).create())
+    bk2.name shouldBe name
+    bk2.group shouldBe group
+
+    result(workerApi.list()).size shouldBe 4
   }
 
   @After

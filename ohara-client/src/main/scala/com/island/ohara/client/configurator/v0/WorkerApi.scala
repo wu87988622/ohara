@@ -68,8 +68,13 @@ object WorkerApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(noJsNull(settings))
-    override def group: String = WORKER_GROUP_DEFAULT
+    // the name and group fields are used to identify zookeeper cluster object
+    // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
+    override def group: String = settings.group.get
+    // helper method to get the key
+    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
+
     override def imageName: String = settings.imageName.get
     def brokerClusterName: Option[String] = settings.brokerClusterName
     def clientPort: Int = settings.clientPort.get
@@ -126,7 +131,9 @@ object WorkerApi {
       .refine
 
   final case class Update private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+    // We use the update parser to get the name and group
     private[WorkerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    private[WorkerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     override def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
     def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
@@ -171,8 +178,8 @@ object WorkerApi {
         override def write(obj: Update): JsValue = JsObject(obj.settings)
       })
       .rejectNegativeNumber()
-      .requireBindPort("clientPort")
-      .requireBindPort("jmxPort")
+      .requireBindPort(CLIENT_PORT_KEY)
+      .requireBindPort(JMX_PORT_KEY)
       .refine
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
@@ -191,6 +198,7 @@ object WorkerApi {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
 
     override def name: String = settings.name
+    override def group: String = settings.group
     override def imageName: String = settings.imageName
     def brokerClusterName: String = settings.brokerClusterName.get
     def clientPort: Int = settings.clientPort
@@ -218,8 +226,6 @@ object WorkerApi {
 
     override def ports: Set[Int] = settings.ports
 
-    override def group: String = WORKER_GROUP_DEFAULT
-
     override def kind: String = WORKER_SERVICE_NAME
 
     // TODO: expose the metrics for wk
@@ -240,6 +246,7 @@ object WorkerApi {
               Map(
                 // TODO: remove the following stale fields ... by chia
                 NAME_KEY -> JsString(obj.name),
+                GROUP_KEY -> JsString(obj.group),
                 IMAGE_NAME_KEY -> JsString(obj.imageName),
                 BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
                 CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
@@ -270,6 +277,10 @@ object WorkerApi {
   sealed trait Request {
     @Optional("default name is a random string")
     def name(name: String): Request = setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
+
+    @Optional("default is GROUP_DEFAULT")
+    def group(group: String): Request =
+      setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
 
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request =
@@ -363,12 +374,14 @@ object WorkerApi {
     private[v0] def update: Update
   }
 
-  final class Access private[WorkerApi]
-      extends ClusterAccess[Creation, Update, WorkerClusterInfo](WORKER_PREFIX_PATH, WORKER_GROUP_DEFAULT) {
+  final class Access private[WorkerApi] extends ClusterAccess[Creation, Update, WorkerClusterInfo](WORKER_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 
       override def settings(settings: Map[String, JsValue]): Request = {
+        // We don't have to check the settings is empty here for the following reasons:
+        // 1) we may want to use the benefit of default creation without specify settings
+        // 2) actual checking will be done in the json parser phase of creation or update
         this.settings ++= settings
         this
       }
@@ -379,16 +392,13 @@ object WorkerApi {
       override private[v0] def update: Update =
         WORKER_UPDATE_JSON_FORMAT.read(WORKER_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-        exec.post[Creation, WorkerClusterInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-        exec.put[Update, WorkerClusterInfo, ErrorApi.Error](
-          // use update to parse the name :)
-          s"$url/${update.name.get}",
+        put(
+          // for update request, we should use default group if it was absent
+          key(update.group.getOrElse(WORKER_GROUP_DEFAULT),
+              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
           update
         )
     }

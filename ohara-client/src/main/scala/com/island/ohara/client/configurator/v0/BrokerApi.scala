@@ -259,8 +259,7 @@ object BrokerApi {
     private[v0] def update: Update
   }
 
-  final class Access private[BrokerApi]
-      extends ClusterAccess[Creation, Update, BrokerClusterInfo](BROKER_PREFIX_PATH, BROKER_GROUP_DEFAULT) {
+  final class Access private[BrokerApi] extends ClusterAccess[Creation, Update, BrokerClusterInfo](BROKER_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
       override def settings(settings: Map[String, JsValue]): Request = {

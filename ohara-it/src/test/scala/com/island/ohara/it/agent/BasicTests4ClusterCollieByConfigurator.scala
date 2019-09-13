@@ -17,7 +17,8 @@
 package com.island.ohara.it.agent
 
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.After
 
@@ -41,6 +42,11 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   private[this] def containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  /** to simplify test, we use the same group for ALL collie test
+    * It is ok to use same group since we will use different cluster name
+    */
+  private[this] final val group: String = CommonUtils.randomString(10)
+
   //--------------------------------------------------[zk operations]--------------------------------------------------//
   override protected def zk_exist(clusterName: String): Future[Boolean] =
     zkApi.list().map(_.exists(_.name == clusterName))
@@ -52,15 +58,17 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkApi.request
       .name(clusterName)
+      .group(group)
       .clientPort(clientPort)
       .electionPort(electionPort)
       .peerPort(peerPort)
       .nodeNames(nodeNames)
       .create()
 
-  override protected def zk_start(clusterName: String): Future[Unit] = zkApi.start(clusterName)
+  override protected def zk_start(clusterName: String): Future[Unit] = zkApi.start(ObjectKey.of(group, clusterName))
 
-  override protected def zk_stop(clusterName: String): Future[Unit] = zkApi.forceStop(clusterName).map(_ => Unit)
+  override protected def zk_stop(clusterName: String): Future[Unit] =
+    zkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list()
 
@@ -70,7 +78,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterName).map(_.flatMap(_.containers))
 
-  override protected def zk_delete(clusterName: String): Future[Unit] = zkApi.delete(clusterName)
+  override protected def zk_delete(clusterName: String): Future[Unit] = zkApi.delete(ObjectKey.of(group, clusterName))
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   override protected def bk_exist(clusterName: String): Future[Boolean] =
@@ -83,6 +91,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    zkClusterName: String,
                                    nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi.request
     .name(clusterName)
+    .group(group)
     .clientPort(clientPort)
     .exporterPort(exporterPort)
     .jmxPort(jmxPort)
@@ -90,9 +99,10 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
     .nodeNames(nodeNames)
     .create()
 
-  override protected def bk_start(clusterName: String): Future[Unit] = bkApi.start(clusterName)
+  override protected def bk_start(clusterName: String): Future[Unit] = bkApi.start(ObjectKey.of(group, clusterName))
 
-  override protected def bk_stop(clusterName: String): Future[Unit] = bkApi.forceStop(clusterName).map(_ => Unit)
+  override protected def bk_stop(clusterName: String): Future[Unit] =
+    bkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
 
@@ -102,13 +112,13 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterName).map(_.flatMap(_.containers))
 
-  override protected def bk_delete(clusterName: String): Future[Unit] = bkApi.delete(clusterName)
+  override protected def bk_delete(clusterName: String): Future[Unit] = bkApi.delete(ObjectKey.of(group, clusterName))
 
   override protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkApi.addNode(clusterName, nodeName).flatMap(_ => bkApi.get(clusterName))
+    bkApi.addNode(ObjectKey.of(group, clusterName), nodeName).flatMap(_ => bkApi.get(ObjectKey.of(group, clusterName)))
 
   override protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
-    bkApi.removeNode(clusterName, nodeName)
+    bkApi.removeNode(ObjectKey.of(group, clusterName), nodeName)
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
   override protected def wk_exist(clusterName: String): Future[Boolean] =
@@ -121,6 +131,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkApi.request
       .name(clusterName)
+      .group(group)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .brokerClusterName(bkClusterName)
@@ -138,6 +149,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkApi.request
       .name(clusterName)
+      .group(group)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .brokerClusterName(bkClusterName)
@@ -148,9 +160,10 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
       .offsetTopicName(offsetTopicName)
       .create()
 
-  override protected def wk_start(clusterName: String): Future[Unit] = wkApi.start(clusterName)
+  override protected def wk_start(clusterName: String): Future[Unit] = wkApi.start(ObjectKey.of(group, clusterName))
 
-  override protected def wk_stop(clusterName: String): Future[Unit] = wkApi.forceStop(clusterName).map(_ => Unit)
+  override protected def wk_stop(clusterName: String): Future[Unit] =
+    wkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
 
@@ -160,13 +173,13 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterName).map(_.flatMap(_.containers))
 
-  override protected def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(clusterName)
+  override protected def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(ObjectKey.of(group, clusterName))
 
   override protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi.addNode(clusterName, nodeName).flatMap(_ => wkApi.get(clusterName))
+    wkApi.addNode(ObjectKey.of(group, clusterName), nodeName).flatMap(_ => wkApi.get(ObjectKey.of(group, clusterName)))
 
   override protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
-    wkApi.removeNode(clusterName, nodeName)
+    wkApi.removeNode(ObjectKey.of(group, clusterName), nodeName)
 
   @After
   final def tearDown(): Unit = Releasable.close(configurator)

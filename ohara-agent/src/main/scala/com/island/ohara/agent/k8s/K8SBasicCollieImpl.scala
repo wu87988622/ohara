@@ -59,30 +59,19 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
   }
 
   override def logs(objectKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    k8sClient
-      .containers()
-      .flatMap(
-        cs =>
-          Future.sequence(
-            cs.filter(container =>
-                Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName))
-              .map(container => k8sClient.log(container.name).map(container -> _))
-        ))
-      .map(_.toMap)
-
-  // TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    k8sClient
-      .containers()
-      .flatMap(cs =>
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = nodeCollie
+    .nodes()
+    .flatMap(
+      nodes => filterContainerService(nodes)
+    )
+    .flatMap(
+      cs =>
         Future.sequence(
-          cs.filter(c =>
-              c.name.contains(s"$DIVIDER$clusterName$DIVIDER$serviceName") && c.name.startsWith(s"$PREFIX_KEY$DIVIDER"))
+          cs.filter(container =>
+              Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName))
             .map(container => k8sClient.log(container.name).map(container -> _))
       ))
-      .map(_.toMap)
+    .map(_.toMap)
 
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie

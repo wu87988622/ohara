@@ -35,7 +35,6 @@ class FakeWorkerCollie(nodes: Seq[Node],
       brokerClusters.getOrElse(clusterName, throw new NoSuchClusterException(s"$clusterName does not exist")))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
@@ -44,11 +43,6 @@ class FakeWorkerCollie(nodes: Seq[Node],
   override def logs(objectKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")
-
-  //TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support logs function")
 
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Seq[ContainerInfo]]] =

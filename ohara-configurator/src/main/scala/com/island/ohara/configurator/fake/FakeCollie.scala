@@ -53,8 +53,8 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag](node
     clusterCache.put(cluster, genContainers(cluster))
     cluster
   }
-  override def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    Future.successful(clusterCache.keySet.asScala.exists(_.name == clusterName))
+  override def exist(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.successful(clusterCache.keySet.asScala.exists(_.key == objectKey))
 
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] =
@@ -67,17 +67,9 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag](node
       containers.map(_ -> "fake log").toMap
     } else Future.failed(new NoSuchClusterException(s"$objectKey doesn't exist")))
 
-  //TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    exist(clusterName).flatMap(if (_) Future.successful {
-      val containers = clusterCache.asScala.find(_._1.name == clusterName).get._2
-      containers.map(_ -> "fake log").toMap
-    } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
-
-  override def containers(clusterName: String)(
+  override def containers(objectKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    exist(clusterName).map(if (_) clusterCache.asScala.find(_._1.name == clusterName).get._2 else Seq.empty)
+    exist(objectKey).map(if (_) clusterCache.asScala.find(_._1.key == objectKey).get._2 else Seq.empty)
 
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =

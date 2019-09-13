@@ -67,6 +67,16 @@ class TestWorkerCreator extends SmallTest with Matchers {
   }
 
   @Test
+  def nullGroup(): Unit = {
+    an[NullPointerException] should be thrownBy wkCreator().group(null)
+  }
+
+  @Test
+  def emptyGroup(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().group("")
+  }
+
+  @Test
   def negativeClientPort(): Unit = {
     an[IllegalArgumentException] should be thrownBy wkCreator().clientPort(-1)
   }
@@ -161,6 +171,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
   def testNameLength(): Unit = wkCreator()
     .imageName(CommonUtils.randomString(10))
     .clusterName(CommonUtils.randomString(10))
+    .group(CommonUtils.randomString(10))
     .brokerClusterName("bk")
     .clientPort(CommonUtils.availablePort())
     .jmxPort(8084)
@@ -180,9 +191,21 @@ class TestWorkerCreator extends SmallTest with Matchers {
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy wkCreator()
       .clusterName(CommonUtils.randomString(40))
+      .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()
+
+  @Test
+  def testMinimumCreator(): Unit = Await.result(
+    wkCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString)
+      .nodeName(CommonUtils.randomString)
+      .create(),
+    5 seconds
+  )
 
   @Test
   def testCopy(): Unit = {
@@ -247,6 +270,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName("wk1")
+      .group(CommonUtils.randomString(10))
       .clientPort(8083)
       .jmxPort(8084)
       .brokerClusterName(bkName)
@@ -304,6 +328,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
         fakeWorkerCollie.creator
           .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
           .clusterName(wkName)
+          .group(CommonUtils.randomString(10))
           .clientPort(8083)
           .jmxPort(8084)
           .brokerClusterName("bk1")
@@ -373,6 +398,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       fakeWorkerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
         .clusterName("wk1")
+        .group(CommonUtils.randomString(10))
         .clientPort(8083)
         .jmxPort(8084)
         .brokerClusterName(bkName)
@@ -394,6 +420,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       fakeWorkerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
         .clusterName("wk1")
+        .group(CommonUtils.randomString(10))
         .clientPort(8083)
         .jmxPort(8084)
         .brokerClusterName(CommonUtils.randomString()) // bk2 not exists

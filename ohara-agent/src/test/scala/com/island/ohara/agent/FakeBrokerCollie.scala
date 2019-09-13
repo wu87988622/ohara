@@ -62,11 +62,6 @@ private class FakeBrokerCollie(nodes: Seq[Node],
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")
 
-  //TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    throw new UnsupportedOperationException("Not support logs function")
-
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(

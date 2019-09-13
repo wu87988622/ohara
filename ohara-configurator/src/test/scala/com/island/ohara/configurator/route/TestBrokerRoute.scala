@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeBrokerCollie
@@ -53,7 +54,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(nodeAccess.list()).size shouldBe nodeNames.size
 
     // create zookeeper props
-    result(
+    val zk = result(
       ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
@@ -61,19 +62,20 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .name(zkClusterName)
         .nodeNames(nodeNames)
         .create()
-    ).name shouldBe zkClusterName
+    )
+    zk.name shouldBe zkClusterName
 
     // start zookeeper
     result(
-      ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zkClusterName)
+      ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key)
     )
   }
 
   @Test
   def repeatedlyDelete(): Unit = {
     (0 to 10).foreach { index =>
-      result(brokerApi.delete(index.toString))
-      result(brokerApi.removeNode(index.toString, index.toString))
+      result(brokerApi.delete(ObjectKey.of(index.toString, index.toString)))
+      result(brokerApi.removeNode(ObjectKey.of(index.toString, index.toString), index.toString))
     }
   }
 
@@ -118,16 +120,17 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testDefaultZkInMultiZkCluster(): Unit = {
-    val anotherZk = CommonUtils.randomString(10)
-    result(
+    val anotherZkName = CommonUtils.randomString(10)
+    val zk = result(
       ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(anotherZk)
+        .name(anotherZkName)
         .nodeNames(nodeNames)
-        .create()).name shouldBe anotherZk
-    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(anotherZk))
+        .create())
+    zk.name shouldBe anotherZkName
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key))
 
     try {
       result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
@@ -140,16 +143,16 @@ class TestBrokerRoute extends MediumTest with Matchers {
       val updated = result(
         brokerApi.request
           .name(CommonUtils.randomString(10))
-          .zookeeperClusterName(anotherZk)
+          .zookeeperClusterName(anotherZkName)
           .nodeNames(nodeNames)
           .update())
-      updated.zookeeperClusterName shouldBe anotherZk
+      updated.zookeeperClusterName shouldBe anotherZkName
       // after assigned, start is ok
       result(brokerApi.start(updated.key))
       result(brokerApi.stop(updated.key))
     } finally {
-      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).stop(anotherZk))
-      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
+      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).stop(zk.key))
+      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(zk.key))
     }
   }
 

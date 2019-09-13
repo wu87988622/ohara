@@ -27,6 +27,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.CollieTestUtils
@@ -65,13 +66,13 @@ class TestPrometheus extends IntegrationTest with Matchers {
   def testExporter(): Unit = {
     startZK(zkDesc => {
       assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq,
-                    () => result(clusterCollie.zookeeperCollie.containers(zkDesc.name)),
+                    () => result(clusterCollie.zookeeperCollie.containers(zkDesc.key)),
                     zkDesc.name)
       startBroker(
         zkDesc.name,
         (exporterPort, bkCluster) => {
           assertCluster(() => result(clusterCollie.brokerCollie.clusters()).keys.toSeq,
-                        () => result(clusterCollie.brokerCollie.containers(zkDesc.name)),
+                        () => result(clusterCollie.brokerCollie.containers(zkDesc.key)),
                         bkCluster.name)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
@@ -111,7 +112,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .nodeName(result(nodeCollie.nodes()).head.name)
           .create()
       ))
-    finally result(zookeeperCollie.remove(clusterName))
+    finally result(zookeeperCollie.remove(ObjectKey.of(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT, clusterName)))
   }
 
   def startBroker(zkClusterName: String, f: (Int, BrokerClusterInfo) => Unit): Unit = {
@@ -134,7 +135,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .create()
       )
     )
-    finally result(brokerCollie.remove(clusterName))
+    finally result(brokerCollie.remove(ObjectKey.of(BrokerApi.BROKER_GROUP_DEFAULT, clusterName)))
   }
 
   private val fakeUrl = "128.128.128.128"

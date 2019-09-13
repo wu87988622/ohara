@@ -109,7 +109,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     connector.workerClusterName shouldBe defaultWk.name
-    result(configurator.clusterCollie.workerCollie.remove(connector.workerClusterName))
+    result(configurator.clusterCollie.workerCollie.remove(defaultWk.key))
 
     result(connectorApi.delete(connector.key))
 
@@ -151,7 +151,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .brokerClusterName(bk.name)
         .nodeNames(bk.nodeNames)
         .create())
-    result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.name))
+    result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.key))
 
     // there are two worker cluster so it fails to match worker cluster
     an[IllegalArgumentException] should be thrownBy result(
@@ -271,7 +271,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .brokerClusterName(bk.name)
         .nodeNames(bk.nodeNames)
         .create())
-    result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.name))
+    result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.key))
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val response = result(

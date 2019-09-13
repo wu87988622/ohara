@@ -18,6 +18,7 @@ package com.island.ohara.it.agent
 
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.After
 
@@ -35,8 +36,14 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
   private[this] def bkCollie = clusterCollie.brokerCollie
   private[this] def wkCollie = clusterCollie.workerCollie
 
+  /** to simplify test, we use the same group for ALL collie test
+    * It is ok to use same group since we will use different cluster name
+    */
+  private[this] final val group: String = CommonUtils.randomString(10)
+
   //--------------------------------------------------[zk operations]--------------------------------------------------//
-  override protected def zk_exist(clusterName: String): Future[Boolean] = zkCollie.exist(clusterName)
+  override protected def zk_exist(clusterName: String): Future[Boolean] =
+    zkCollie.exist(ObjectKey.of(group, clusterName))
 
   override protected def zk_create(clusterName: String,
                                    clientPort: Int,
@@ -45,7 +52,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkCollie.creator
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-      .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
+      .group(group)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .peerPort(peerPort)
@@ -58,23 +65,24 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     Future.successful(Unit)
 
   override protected def zk_stop(clusterName: String): Future[Unit] =
-    zkCollie.forceRemove(clusterName).map(_ => Unit)
+    zkCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
     zkCollie.clusters().map(_.keys.toSeq)
 
   override protected def zk_logs(clusterName: String): Future[Seq[String]] =
-    zkCollie.logs(clusterName).map(_.values.toSeq)
+    zkCollie.logs(ObjectKey.of(group, clusterName)).map(_.values.toSeq)
 
   override protected def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    zkCollie.containers(clusterName)
+    zkCollie.containers(ObjectKey.of(group, clusterName))
 
   override protected def zk_delete(clusterName: String): Future[Unit] =
     // We don't need to remove data stored in configurator in collie since there is nothing to do
     Future.successful(Unit)
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
-  override protected def bk_exist(clusterName: String): Future[Boolean] = bkCollie.exist(clusterName)
+  override protected def bk_exist(clusterName: String): Future[Boolean] =
+    bkCollie.exist(ObjectKey.of(group, clusterName))
 
   override protected def bk_create(clusterName: String,
                                    clientPort: Int,
@@ -84,7 +92,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie.creator
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-      .group(BrokerApi.BROKER_GROUP_DEFAULT)
+      .group(group)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .exporterPort(exporterPort)
@@ -98,28 +106,29 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     Future.successful(Unit)
 
   override protected def bk_stop(clusterName: String): Future[Unit] =
-    bkCollie.forceRemove(clusterName).map(_ => Unit)
+    bkCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters().map(_.keys.toSeq)
 
   override protected def bk_logs(clusterName: String): Future[Seq[String]] =
-    bkCollie.logs(clusterName).map(_.values.toSeq)
+    bkCollie.logs(ObjectKey.of(group, clusterName)).map(_.values.toSeq)
 
   override protected def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    bkCollie.containers(clusterName)
+    bkCollie.containers(ObjectKey.of(group, clusterName))
 
   override protected def bk_delete(clusterName: String): Future[Unit] =
     // We don't need to remove data stored in configurator in collie since there is nothing to do
     Future.successful(Unit)
 
   override protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkCollie.addNode(clusterName, nodeName).flatMap(bk => bk_cluster(bk.name))
+    bkCollie.addNode(ObjectKey.of(group, clusterName), nodeName).flatMap(bk => bk_cluster(bk.name))
 
   override protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
-    bkCollie.removeNode(clusterName, nodeName).map(_ => Unit)
+    bkCollie.removeNode(ObjectKey.of(group, clusterName), nodeName).map(_ => Unit)
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
-  override protected def wk_exist(clusterName: String): Future[Boolean] = wkCollie.exist(clusterName)
+  override protected def wk_exist(clusterName: String): Future[Boolean] =
+    wkCollie.exist(ObjectKey.of(group, clusterName))
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
@@ -129,6 +138,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     wkCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
+      .group(group)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .brokerClusterName(bkClusterName)
@@ -156,6 +166,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     wkCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
+      .group(group)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .brokerClusterName(bkClusterName)
@@ -176,25 +187,25 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     Future.successful(Unit)
 
   override protected def wk_stop(clusterName: String): Future[Unit] =
-    wkCollie.forceRemove(clusterName).map(_ => Unit)
+    wkCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters().map(_.keys.toSeq)
 
   override protected def wk_logs(clusterName: String): Future[Seq[String]] =
-    wkCollie.logs(clusterName).map(_.values.toSeq)
+    wkCollie.logs(ObjectKey.of(group, clusterName)).map(_.values.toSeq)
 
   override protected def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    wkCollie.containers(clusterName)
+    wkCollie.containers(ObjectKey.of(group, clusterName))
 
   override protected def wk_delete(clusterName: String): Future[Unit] =
     // We don't need to remove data stored in configurator in collie since there is nothing to do
     Future.successful(Unit)
 
   override protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie.addNode(clusterName, nodeName).flatMap(wk => wk_cluster(wk.name))
+    wkCollie.addNode(ObjectKey.of(group, clusterName), nodeName).flatMap(wk => wk_cluster(wk.name))
 
   override protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
-    wkCollie.removeNode(clusterName, nodeName).map(_ => Unit)
+    wkCollie.removeNode(ObjectKey.of(group, clusterName), nodeName).map(_ => Unit)
 
   @After
   final def tearDown(): Unit = Releasable.close(clusterCollie)

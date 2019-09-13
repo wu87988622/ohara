@@ -361,8 +361,7 @@ object StreamApi {
     private[v0] def update: Update
   }
 
-  final class Access private[StreamApi]
-      extends ClusterAccess[Creation, Update, StreamClusterInfo](STREAM_PREFIX_PATH, STREAM_GROUP_DEFAULT) {
+  final class Access private[StreamApi] extends ClusterAccess[Creation, Update, StreamClusterInfo](STREAM_PREFIX_PATH) {
 
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()

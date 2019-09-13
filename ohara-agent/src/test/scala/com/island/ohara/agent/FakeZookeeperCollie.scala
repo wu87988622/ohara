@@ -41,11 +41,6 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")
 
-  //TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    throw new UnsupportedOperationException("Not support logs function")
-
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(Map.empty)

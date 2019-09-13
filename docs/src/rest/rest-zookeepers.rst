@@ -176,14 +176,14 @@ update zookeeper cluster properties
 .. note::
    If the required zookeeper (group, name) was not exists, we will try to use this request as POST
 
-Example Request
-  #. imageName (**string**) — docker image ; default is oharastream/zookeeper:|version|
-  #. clientPort (**int**) — broker client port ; default is random port
-  #. electionPort (**int**) — used to select the zk node leader ; default is random port
-  #. peerPort (**int**) — port used by internal communication ; default is random port
-  #. nodeNames (**array(string)**) — the nodes running the zookeeper process
-  #. tags (**object**) — the user defined parameters ; default is empty
+#. imageName (**option(string)**) — docker image
+#. clientPort (**option(int)**) — broker client port
+#. electionPort (**option(int)**) — used to select the zk node leader
+#. peerPort (**option(int)**) — port used by internal communication
+#. nodeNames (**option(array(string))**) — the nodes running the zookeeper process
+#. tags (**option(object)**) — the user defined parameters
 
+Example Request
   .. code-block:: json
 
      {

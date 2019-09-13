@@ -84,7 +84,7 @@ class TestLogRoute extends SmallTest with Matchers {
         .toTopicKey(toTopic.key)
         .jarKey(file.key)
         .create())
-    result(streamApi.start(cluster.name))
+    result(streamApi.start(cluster.key))
     val clusterLogs = result(logApi.log4StreamCluster(cluster.name))
     clusterLogs.name shouldBe cluster.name
     clusterLogs.logs.isEmpty shouldBe false

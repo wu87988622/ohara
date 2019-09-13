@@ -39,6 +39,7 @@ The properties which can be set by user are shown below.
 #. settings (**objects**) — cluster settings passed by user
 
    - name (**string**) — cluster name
+   - group (**string**) — cluster group
    - imageName (**string**) — docker image
    - brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
    - clientPort (**int**) — worker client port
@@ -150,10 +151,11 @@ create a worker properties
 
 *POST /v0/workers*
 
-#. name (**string**) — cluster name
-#. imageName (**string**) — docker image
-#. clientPort (**int**) — worker client port.
-#. jmxPort (**int**) — worker jmx port.
+#. name (**string**) — cluster name ; default is random string
+#. group (**string**) — cluster group ; default value is "default"
+#. imageName (**string**) — docker image ; default is oharastream/connect-worker:|version|
+#. clientPort (**int**) — worker client port ; default is random port
+#. jmxPort (**int**) — worker jmx port ; default is random port
 #. brokerClusterName (**string**) — broker cluster used to host topics
    for this worker cluster
 #. jarKeys (**array(object)**) — the “primary key” object list of jar
@@ -162,22 +164,24 @@ create a worker properties
    - jarKeys[i].group (**string**) — the group name of jar
    - jarKeys[i].name (**string**) — the name of jar
 
-#. groupId (**string**) — the id of worker stored in broker cluster
-#. configTopicName (**string**) — a internal topic used to store connector configuration
-#. configTopicReplications (**int**) — number of replications for config topic
-#. offsetTopicName (**string**) — a internal topic used to store connector offset
-#. offsetTopicReplications (**int**) — number of replications for offset topic
-#. offsetTopicPartitions (**int**) — number of partitions for offset topic
-#. statusTopicName (**string**) — a internal topic used to store connector status
-#. statusTopicReplications (**int**) — number of replications for status topic
-#. statusTopicPartitions (**int**) — number of partitions for status topic
+#. groupId (**string**) — the id of worker stored in broker cluster ; default is random string
+#. configTopicName (**string**) — a internal topic used to store connector configuration ; default is random string
+#. configTopicReplications (**int**) — number of replications for config topic ; default is 1
+#. offsetTopicName (**string**) — a internal topic used to store connector offset ; default is random string
+#. offsetTopicReplications (**int**) — number of replications for offset topic ; default is 1
+#. offsetTopicPartitions (**int**) — number of partitions for offset topic ; default is 1
+#. statusTopicName (**string**) — a internal topic used to store connector status ; default is random string
+#. statusTopicReplications (**int**) — number of replications for status topic ; default is 1
+#. statusTopicPartitions (**int**) — number of partitions for status topic ; default is 1
 #. nodeNames (**array(string)**) — the nodes running the worker process
+#. tags(**object**) — the user defined parameters ; default is empty
 
 Example Request
   .. code-block:: json
 
     {
       "name": "wk00",
+      "group": "default",
       "clientPort": 12345,
       "jmxPort": 12346,
       "freePorts": [],
@@ -206,6 +210,7 @@ Example Response
       "settings": {
         "statusTopicName": "statusTopic",
         "name": "wk00",
+        "group": "default",
         "offsetTopicPartitions": 1,
         "brokerClusterName": "preCreatedBkCluster",
         "tags": {},
@@ -229,13 +234,12 @@ Example Response
     }
 
   As mentioned before, ohara provides default to most settings. You can
-  just input name, nodeNames and jars to run a worker cluster.
+  just input nodeNames to run a worker cluster.
 
 Example Request
   .. code-block:: json
 
     {
-      "name": "wk",
       "nodeNames": [
         "node10"
       ]
@@ -260,6 +264,7 @@ Example Response
       "settings": {
         "statusTopicName": "a6c5018531",
         "name": "wk",
+        "group": "default",
         "offsetTopicPartitions": 1,
         "brokerClusterName": "bk",
         "tags": {},
@@ -323,13 +328,100 @@ Example Response
       }
     ]
 
+update broker cluster properties
+--------------------------------
+
+*PUT /v0/workers/$name?group=$group*
+
+.. note::
+   If the required worker (group, name) was not exists, we will try to use this request as POST
+
+
+#. imageName (**option(string)**) — docker image
+#. clientPort (**option(int)**) — worker client port
+#. jmxPort (**option(int)**) — worker jmx port
+#. brokerClusterName (**option(string)**) — broker cluster used to host topics
+   for this worker cluster
+#. jarKeys (**option(array(object))**) — the “primary key” object list of jar
+   that will be loaded by worker cluster
+
+   - jarKeys[i].group (**option(string)**) — the group name of jar
+   - jarKeys[i].name (**option(string)**) — the name of jar
+
+#. groupId (**option(string)**) — the id of worker stored in broker cluster
+#. configTopicName (**option(string)**) — a internal topic used to store connector configuration
+#. configTopicReplications (**option(int)**) — number of replications for config topic
+#. offsetTopicName (**option(string)**) — a internal topic used to store connector offset
+#. offsetTopicReplications (**option(int)**) — number of replications for offset topic
+#. offsetTopicPartitions (**option(int)**) — number of partitions for offset topic
+#. statusTopicName (**option(string)**) — a internal topic used to store connector status
+#. statusTopicReplications (**option(int)**) — number of replications for status topic
+#. statusTopicPartitions (**option(int)**) — number of partitions for status topic
+#. nodeNames (**option(array(string))**) — the nodes running the worker process
+#. tags(**option(object)**) — the user defined parameters
+
+Example Request
+  .. code-block:: json
+
+    {
+      "clientPort": 12345,
+      "jmxPort": 12346,
+      "freePorts": [],
+      "brokerClusterName": "preCreatedBkCluster",
+      "groupId": "abcdefg",
+      "configTopicName": "configTopic",
+      "configTopicReplications": 1,
+      "offsetTopicName": "offsetTopic",
+      "offsetTopicReplications": 1,
+      "offsetTopicPartitions": 1,
+      "statusTopicName": "statusTopic",
+      "statusTopicReplications": 1,
+      "statusTopicPartitions": 1,
+      "nodeNames": [
+        "node00"
+      ]
+    }
+
+Example Response
+  .. code-block:: json
+
+    {
+      "lastModified": 1567177024356,
+      "connectors": [],
+      "deadNodes": [],
+      "settings": {
+        "statusTopicName": "statusTopic",
+        "name": "wk00",
+        "group": "default",
+        "offsetTopicPartitions": 1,
+        "brokerClusterName": "preCreatedBkCluster",
+        "tags": {},
+        "jarInfos": [],
+        "offsetTopicName": "offsetTopic",
+        "imageName": "oharastream/connect-worker:0.8.0-SNAPSHOT",
+        "groupId": "abcdefg",
+        "statusTopicReplications": 1,
+        "offsetTopicReplications": 1,
+        "configTopicReplications": 1,
+        "statusTopicPartitions": 1,
+        "configTopicName": "configTopic",
+        "jmxPort": 12346,
+        "clientPort": 12345,
+        "freePorts": [],
+        "jarKeys": [],
+        "nodeNames": [
+          "node00"
+        ]
+      }
+    }
 
 delete a worker properties
 --------------------------
 
-*DELETE /v0/workers/$name*
+*DELETE /v0/workers/$name?group=$group*
 
 You cannot delete properties of an non-stopped worker cluster.
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -345,7 +437,9 @@ Example Response
 get a worker cluster
 --------------------
 
-*GET /v0/workers/$name*
+*GET /v0/workers/$name?group=$group*
+
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   .. code-block:: json
@@ -639,6 +733,7 @@ Example Response
          "settings":{
             "statusTopicName":"d28ca7c875",
             "name":"wk",
+            "group": "default",
             "offsetTopicPartitions":1,
             "brokerClusterName":"bk",
             "tags":{
@@ -667,7 +762,9 @@ Example Response
 start a worker cluster
 ----------------------
 
-*PUT /v0/workers/$name/start*
+*PUT /v0/workers/$name/start?group=$group*
+
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
   ::
@@ -682,7 +779,9 @@ stop a worker cluster
 
 Gracefully stopping a running worker cluster.
 
-*PUT /v0/workers/$name/stop[?force=true]*
+*PUT /v0/workers/$name/stop?group=$group[&force=true]*
+
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Query Parameters
   #. force (**boolean**) — true if you don’t want to wait the graceful shutdown
@@ -700,7 +799,9 @@ Example Response
 add a new node to a running worker cluster
 ------------------------------------------
 
-*PUT /v0/workers/$name/$nodeName*
+*PUT /v0/workers/$name/$nodeName?group=$group*
+
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 If you want to extend a running worker cluster, you can add a node to
 share the heavy loading of a running worker cluster. However, the
@@ -711,7 +812,9 @@ lower throughput when balancer is running.
 remove a node from a running worker cluster
 -------------------------------------------
 
-*DELETE /v0/workers/$name/$nodeName*
+*DELETE /v0/workers/$name/$nodeName?group=$group*
+
+We will use the default value as the query parameter "?group=" if you don't specify it.
 
 If your budget is limited, you can decrease the number of nodes running
 worker cluster. BUT, removing a node from a running worker cluster

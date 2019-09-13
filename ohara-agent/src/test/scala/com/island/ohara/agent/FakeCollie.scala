@@ -42,7 +42,7 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
     previousCluster: FakeCollieClusterInfo,
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[FakeCollieClusterInfo] =
-    Future.successful(FakeCollieClusterInfo(previousCluster.name, previousCluster.nodeNames ++ Seq(newNodeName), None))
+    Future.successful(FakeCollieClusterInfo(previousCluster.key, previousCluster.nodeNames ++ Seq(newNodeName), None))
 
   override protected def doRemove(clusterInfo: FakeCollieClusterInfo, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future.successful(true)
@@ -51,21 +51,16 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     Future.successful(Map.empty)
 
-  //TODO remove in #2570
-  override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    Future.successful(Map.empty)
-
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[FakeCollieClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(
       Map(
-        FakeCollieClusterInfo(FakeCollie.clusterName,
+        FakeCollieClusterInfo(FakeCollie.key,
                               containers.map(c => c.nodeName).toSet,
                               toClusterState(containers).map(_.name)) -> containers))
 
   override def creator: FakeCollie.FakeClusterCreator =
-    () => Future.successful(FakeCollieClusterInfo(FakeCollie.clusterName, Set.empty, None))
+    () => Future.successful(FakeCollieClusterInfo(FakeCollie.key, Set.empty, None))
 
   override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
     if (containers.isEmpty) None
@@ -86,14 +81,17 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
   override def serviceName: String = "fake"
 }
 
-case class FakeCollieClusterInfo(name: String, nodeNames: Set[String], state: Option[String]) extends ClusterInfo {
+case class FakeCollieClusterInfo(objectKey: ObjectKey, nodeNames: Set[String], state: Option[String])
+    extends ClusterInfo {
+  override def name: String = objectKey.name()
+
+  override def group: String = objectKey.group()
+
   override def imageName: String = "I DON'T CARE"
 
   override def deadNodes: Set[String] = Set.empty
 
   override def ports: Set[Int] = Set.empty
-
-  override def group: String = "fake_group"
 
   override def lastModified: Long = CommonUtils.current()
 
@@ -109,7 +107,9 @@ case class FakeCollieClusterInfo(name: String, nodeNames: Set[String], state: Op
 }
 
 object FakeCollie {
-  protected[agent] val clusterName: String = "fakecluster1"
+  private[this] val clusterName: String = "fakecluster1"
+  private[this] val group: String = "fakegroup"
+  protected[agent] val key: ObjectKey = ObjectKey.of(group, clusterName)
   val FAKE_SERVICE_NAME: String = "fake"
   trait FakeClusterCreator extends Collie.ClusterCreator[FakeCollieClusterInfo] {
     override protected def doCopy(clusterInfo: FakeCollieClusterInfo): Unit = {

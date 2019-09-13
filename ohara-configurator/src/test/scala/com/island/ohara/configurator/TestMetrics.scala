@@ -222,13 +222,13 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     pipeline.objects.filter(_.name == stream.name).head.metrics.meters.size shouldBe 0
 
-    result(streamApi.start(stream.name))
+    result(streamApi.start(stream.key))
     // the streamApp is running so we should "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == stream.name).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
-    result(streamApi.stop(stream.name))
+    result(streamApi.stop(stream.key))
     // the stream is stopped so we should NOT "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == stream.name).head.metrics.meters.isEmpty,

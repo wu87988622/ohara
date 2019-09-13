@@ -253,7 +253,7 @@ object ZookeeperApi {
   }
 
   final class Access private[ZookeeperApi]
-      extends ClusterAccess[Creation, Update, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH, ZOOKEEPER_GROUP_DEFAULT) {
+      extends ClusterAccess[Creation, Update, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
       override def settings(settings: Map[String, JsValue]): Request = {

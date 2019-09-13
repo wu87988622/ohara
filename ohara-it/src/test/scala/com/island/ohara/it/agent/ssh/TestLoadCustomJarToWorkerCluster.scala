@@ -102,7 +102,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .name(nameHolder.generateClusterName())
         .nodeNames(nodeCache.map(_.name).toSet)
         .create()
-        .flatMap(info => zkApi.start(info.name).flatMap(_ => zkApi.get(info.name))))
+        .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key))))
     assertCluster(() => result(zkApi.list()),
                   () => result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers))),
                   zkCluster.name)
@@ -113,7 +113,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .zookeeperClusterName(zkCluster.name)
         .nodeNames(nodeCache.map(_.name).toSet)
         .create()
-        .flatMap(info => bkApi.start(info.name).flatMap(_ => bkApi.get(info.name))))
+        .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key))))
     assertCluster(() => result(bkApi.list()),
                   () => result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers))),
                   bkCluster.name)
@@ -125,13 +125,13 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .jarKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
         .nodeName(nodeCache.head.name)
         .create())
-    result(wkApi.start(wkCluster.name))
+    result(wkApi.start(wkCluster.key))
     assertCluster(() => result(wkApi.list()),
                   () => result(containerApi.get(wkCluster.name).map(_.flatMap(_.containers))),
                   wkCluster.name)
     // add all remaining node to the running worker cluster
     nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
-      result(wkApi.addNode(wkCluster.name, n.name))
+      result(wkApi.addNode(wkCluster.key, n.name))
     }
     // make sure all workers have loaded the test-purposed connector.
     result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
@@ -146,7 +146,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       )
     }
     await(() => {
-      val connectors = result(wkApi.get(wkCluster.name)).connectors
+      val connectors = result(wkApi.get(wkCluster.key)).connectors
       connectors.map(_.className).contains(classOf[DumbSinkConnector].getName) &&
       connectors.map(_.className).contains(classOf[DumbSourceConnector].getName)
     })

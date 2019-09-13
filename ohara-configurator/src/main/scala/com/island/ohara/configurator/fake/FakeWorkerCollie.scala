@@ -81,7 +81,6 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
       addCluster(previousCluster.clone(previousCluster.nodeNames ++ Set(newNodeName)).asInstanceOf[WorkerClusterInfo]))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,

@@ -73,7 +73,7 @@ class TestStreamRoute extends SmallTest with Matchers {
       accessStream.request.name(name).jarKey(ObjectKey.of(fileInfo.group, "newJar")).create())
 
     // get new streamApp property
-    val res1 = result(accessStream.get(defaultProps.name))
+    val res1 = result(accessStream.get(defaultProps.key))
     // check initial values
     res1.name shouldBe defaultProps.name
     res1.name shouldBe name
@@ -112,10 +112,10 @@ class TestStreamRoute extends SmallTest with Matchers {
     res3.nodeNames.size shouldBe nodes.size - 1
 
     // delete properties
-    result(accessStream.delete(defaultProps.name))
+    result(accessStream.delete(defaultProps.key))
 
     // after delete, the streamApp should not exist
-    an[IllegalArgumentException] should be thrownBy result(accessStream.get(defaultProps.name))
+    an[IllegalArgumentException] should be thrownBy result(accessStream.get(defaultProps.key))
 
     // delete property should not delete actual jar
     result(accessJar.list()).size shouldBe 1
@@ -137,8 +137,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
     result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
 
-    result(accessStream.start(props.name))
-    val res1 = result(accessStream.get(props.name))
+    result(accessStream.start(props.key))
+    val res1 = result(accessStream.get(props.key))
     res1.name shouldBe props.name
     res1.name shouldBe streamAppName
     res1.from shouldBe Set(from)
@@ -148,7 +148,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.state.get shouldBe ContainerState.RUNNING.name
 
     // get again
-    val running = result(accessStream.get(props.name))
+    val running = result(accessStream.get(props.key))
     running.state.get shouldBe ContainerState.RUNNING.name
     running.error.isEmpty shouldBe true
 
@@ -159,8 +159,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     cluster.head._1.jmxPort should not be 0
 
     // start the same streamApp cluster will get the previous stream cluster
-    result(accessStream.start(props.name))
-    val prevRes = result(accessStream.get(props.name))
+    result(accessStream.start(props.key))
+    val prevRes = result(accessStream.get(props.key))
     prevRes.name shouldBe props.name
     prevRes.name shouldBe streamAppName
     prevRes.state.get shouldBe ContainerState.RUNNING.name
@@ -170,29 +170,29 @@ class TestStreamRoute extends SmallTest with Matchers {
     an[RuntimeException] should be thrownBy result(accessStream.request.name(streamAppName).instances(10).update())
 
     // running streamApp cannot delete
-    an[RuntimeException] should be thrownBy result(accessStream.delete(props.name))
+    an[RuntimeException] should be thrownBy result(accessStream.delete(props.key))
 
-    result(accessStream.get(props.name)).state should not be None
-    result(accessStream.stop(props.name))
-    result(accessStream.get(props.name)).state shouldBe None
+    result(accessStream.get(props.key)).state should not be None
+    result(accessStream.stop(props.key))
+    result(accessStream.get(props.key)).state shouldBe None
 
     // get the stream clusters information again, should be zero
     result(configurator.clusterCollie.streamCollie.clusters()).size shouldBe 0
 
     // stop the same streamApp cluster will only return the previous object
-    result(accessStream.stop(props.name))
-    result(accessStream.get(props.name)).state shouldBe None
+    result(accessStream.stop(props.key))
+    result(accessStream.get(props.key)).state shouldBe None
 
     // get property will get the latest state (streamApp not exist)
-    val latest = result(accessStream.get(props.name))
+    val latest = result(accessStream.get(props.key))
     latest.state shouldBe None
     latest.error.isDefined shouldBe false
 
     // after stop, streamApp can be deleted
-    result(accessStream.delete(props.name))
+    result(accessStream.delete(props.key))
 
     // after delete, streamApp should not exist
-    an[IllegalArgumentException] should be thrownBy result(accessStream.get(props.name))
+    an[IllegalArgumentException] should be thrownBy result(accessStream.get(props.key))
   }
 
   @Test
@@ -200,7 +200,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamAppName = CommonUtils.randomString(10)
     //operations on non-exists property should be fail
     an[NullPointerException] should be thrownBy result(accessStream.request.name("appId").jarKey(null).update())
-    an[IllegalArgumentException] should be thrownBy result(accessStream.get("non_exist_id"))
+    an[IllegalArgumentException] should be thrownBy result(
+      accessStream.get(ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))))
 
     // we can update the topics to empty (the topic checking is moving to start phase)
     result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).fromTopicKeys(Set.empty).update())
@@ -213,7 +214,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(accessStream.request.instances(-99).update())
 
     // delete non-exists object should do nothing
-    result(accessStream.delete(CommonUtils.randomString(5)))
+    result(accessStream.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
   }
 
   @Test
@@ -223,32 +224,32 @@ class TestStreamRoute extends SmallTest with Matchers {
     val to = topicKey()
 
     // start action will check all the required parameters
-    result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).nodeNames(nodes).create())
-    an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
+    val stream = result(accessStream.request.name(streamAppName).jarKey(fileInfo.key).nodeNames(nodes).create())
+    an[IllegalArgumentException] should be thrownBy result(accessStream.start(stream.key))
 
     result(accessStream.request.name(streamAppName).fromTopicKey(from).update())
-    an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
+    an[IllegalArgumentException] should be thrownBy result(accessStream.start(stream.key))
 
     result(accessStream.request.name(streamAppName).toTopicKey(to).update())
 
     // non-exist topics in broker will cause running fail
-    an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
+    an[IllegalArgumentException] should be thrownBy result(accessStream.start(stream.key))
 
     // run topics
     result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
     result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
 
     // after all required parameters are set, it is ok to run
-    result(accessStream.start(streamAppName))
+    result(accessStream.start(stream.key))
   }
 
   @Test
   def duplicateStopStream(): Unit =
-    (0 to 10).foreach(_ => result(accessStream.stop(CommonUtils.randomString())))
+    (0 to 10).foreach(index => result(accessStream.stop(ObjectKey.of(index.toString, index.toString))))
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =
-    (0 to 10).foreach(_ => result(accessStream.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(index => result(accessStream.delete(ObjectKey.of(index.toString, index.toString))))
 
   @Test
   def updateTags(): Unit = {
@@ -287,7 +288,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     // update from topic to empty
     result(accessStream.request.name(streamDesc.name).fromTopicKeys(Set.empty).update()).from shouldBe Set.empty
     // to topic should still be empty
-    result(accessStream.get(streamDesc.name)).to shouldBe Set.empty
+    result(accessStream.get(streamDesc.key)).to shouldBe Set.empty
   }
 
   @Test
@@ -330,7 +331,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     streamDesc.to shouldBe Set.empty
 
     // Empty topic is not allow
-    an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamDesc.name))
+    an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamDesc.key))
 
     // multiple topics are not allow by now
     val from = topicKey()
@@ -344,7 +345,7 @@ class TestStreamRoute extends SmallTest with Matchers {
         .fromTopicKey(from)
         .toTopicKeys(Set(from, to))
         .update()
-        .flatMap(info => accessStream.start(info.name)))
+        .flatMap(info => accessStream.start(info.key)))
     // "to" field is used multiple topics which is not allow for current version
     thrown1.getMessage should include("We don't allow multiple topics of to field")
   }
@@ -360,12 +361,12 @@ class TestStreamRoute extends SmallTest with Matchers {
     val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
     val bk = result(
       bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterName(zk.name).create())
-    result(bkApi.start(bk.name))
+    result(bkApi.start(bk.key))
     val from0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(from0.key))
     val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(to0.key))
-    result(bkApi.start(bk.name))
+    result(bkApi.start(bk.key))
 
     val streamDesc = result(
       accessStream.request
@@ -376,11 +377,11 @@ class TestStreamRoute extends SmallTest with Matchers {
         .instances(1)
         .create())
     streamDesc.brokerClusterName shouldBe bk.name
-    result(accessStream.start(streamDesc.name))
+    result(accessStream.start(streamDesc.key))
 
     // fail to update a running streamApp
     an[IllegalArgumentException] should be thrownBy result(accessStream.request.name(streamDesc.name).update())
-    result(accessStream.stop(streamDesc.name))
+    result(accessStream.stop(streamDesc.key))
   }
 
   // TODO remove this test after #2288
@@ -433,13 +434,13 @@ class TestStreamRoute extends SmallTest with Matchers {
   // TODO: this is for deprecated APIs ... fix it by https://github.com/oharastream/ohara/issues/2151
   @Test
   def testWorkerClusterNameInJarGroup(): Unit = {
-    val wkName = result(wkApi.list()).head.name
+    val wk = result(wkApi.list()).head
     val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).group(wkName).upload())
+    val jar = result(accessJar.request.file(file).group(wk.group).upload())
     val name = CommonUtils.randomString(10)
     val defaultProps = result(accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create())
     defaultProps.jarKey shouldBe jar.key
-    defaultProps.brokerClusterName shouldBe result(wkApi.get(wkName)).brokerClusterName
+    defaultProps.brokerClusterName shouldBe result(wkApi.get(wk.key)).brokerClusterName
   }
 
   @Test
@@ -448,12 +449,12 @@ class TestStreamRoute extends SmallTest with Matchers {
     val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
     val bk = result(
       bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterName(zk.name).create())
-    result(bkApi.start(bk.name))
+    result(bkApi.start(bk.key))
     val from0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(from0.key))
     val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(to0.key))
-    result(bkApi.start(bk.name))
+    result(bkApi.start(bk.key))
 
     val tags = Map(
       "aa" -> JsString("bb"),
@@ -472,15 +473,15 @@ class TestStreamRoute extends SmallTest with Matchers {
     streamDesc.tags shouldBe tags
 
     // after create, tags should exist
-    result(accessStream.get(streamDesc.name)).tags shouldBe tags
+    result(accessStream.get(streamDesc.key)).tags shouldBe tags
 
     // after start, tags should still exist
-    result(accessStream.start(streamDesc.name))
-    result(accessStream.get(streamDesc.name)).tags shouldBe tags
+    result(accessStream.start(streamDesc.key))
+    result(accessStream.get(streamDesc.key)).tags shouldBe tags
 
     // after stop, tags should still exist
-    result(accessStream.stop(streamDesc.name))
-    result(accessStream.get(streamDesc.name)).tags shouldBe tags
+    result(accessStream.stop(streamDesc.key))
+    result(accessStream.get(streamDesc.key)).tags shouldBe tags
   }
 
   @Test

@@ -34,7 +34,6 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = toWorkerCluster(key, containers)
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,

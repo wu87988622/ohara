@@ -79,6 +79,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def removeTopicFromNonexistentBrokerCluster(): Unit = {
     val name = methodName()
+    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
     result(
       topicApi.request
         .name(name)
@@ -87,7 +88,7 @@ class TestTopicRoute extends SmallTest with Matchers {
           BrokerApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .stop(topicInfo.brokerClusterName)
+            .stop(bk.key)
             .flatMap(_ => topicApi.delete(topicInfo.key))
         }
         .flatMap(_ => topicApi.list())
@@ -115,7 +116,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .nodeNames(zk.nodeNames)
         .create()
     )
-    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.key))
 
     val bk2 = result(
       BrokerApi.access
@@ -126,7 +127,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .zookeeperClusterName(zk2.name)
         .nodeNames(zk2.nodeNames)
         .create())
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk2.name))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk2.key))
 
     an[IllegalArgumentException] should be thrownBy result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
@@ -146,7 +147,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .nodeNames(zk.nodeNames)
         .create()
     )
-    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.key))
 
     val bk = result(
       BrokerApi.access
@@ -157,7 +158,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .zookeeperClusterName(zk2.name)
         .nodeNames(zk2.nodeNames)
         .create())
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.name))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.key))
 
     val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
     bks.size shouldBe 2
@@ -372,10 +373,11 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def stopTopicFromStoppingBrokerCluster(): Unit = {
     val topic = result(topicApi.request.create())
+    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(topic.brokerClusterName))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(bk.key))
     result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
   }
@@ -383,11 +385,12 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def stopTopicFromNonexistentBrokerCluster(): Unit = {
     val topic = result(topicApi.request.create())
+    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(topic.brokerClusterName))
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(topic.brokerClusterName))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(bk.key))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(bk.key))
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 0
     result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
@@ -396,10 +399,11 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def deleteTopicFromNonexistentBrokerCluster(): Unit = {
     val topic = result(topicApi.request.create())
+    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(topic.brokerClusterName))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(bk.key))
     result(topicApi.delete(topic.key))
   }
 
@@ -418,8 +422,8 @@ class TestTopicRoute extends SmallTest with Matchers {
   def checkDefaultConfigs(): Unit = {
     val topic = result(topicApi.request.create())
     TopicRoute.TOPIC_CUSTOM_CONFIGS.foreach {
-      case (key, value) =>
-        topic.settings(key) shouldBe value
+      case (k, v) =>
+        topic.settings(k) shouldBe v
     }
   }
 

@@ -87,7 +87,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipelines.head.objects.size shouldBe 1
 
     // remove worker cluster
-    val wk = result(workerApi.list()).head.name
+    val wk = result(workerApi.list()).head.key
     result(workerApi.stop(wk))
     result(workerApi.delete(wk))
 
@@ -129,10 +129,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
     // we cannot parse class name from empty jar
     pipeline.objects.head.className should not be None
 
-    // streamapp is not running so the objects have error
+    // streamApp is not running so the objects have error
     result(pipelineApi.get(pipeline.key)).objects.head.error should not be None
 
-    result(streamApi.start(streamApp.name))
+    result(streamApi.start(streamApp.key))
     result(pipelineApi.get(pipeline.key)).objects.head.error shouldBe None
   }
 

@@ -120,13 +120,13 @@ class TestListCluster extends IntegrationTest with Matchers {
     log.info("[TestListCluster] before create bk cluster")
     try {
       assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq,
-                    () => result(clusterCollie.zookeeperCollie.containers(zkCluster.name)),
+                    () => result(clusterCollie.zookeeperCollie.containers(zkCluster.key)),
                     zkCluster.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
       // It is ok to filter container via RUNNING state.
       await(() => {
-        val containers = result(clusterCollie.zookeeperCollie.containers(zkCluster.name))
+        val containers = result(clusterCollie.zookeeperCollie.containers(zkCluster.key))
         containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
       })
       val name = nameHolder.generateClusterName()
@@ -164,7 +164,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
       log.info("[TestListCluster] before check bk clusters still can be fetch")
       await(() => result(clusterCollie.brokerCollie.clusters()).exists(_._1.name == name))
-    } finally if (cleanup) result(clusterCollie.zookeeperCollie.remove(zkCluster.name))
+    } finally if (cleanup) result(clusterCollie.zookeeperCollie.remove(zkCluster.key))
   }
 
   @After
