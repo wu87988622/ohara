@@ -349,8 +349,8 @@ object StreamCollie {
       // allowed user to enter empty for both fields... With a view to keeping the compatibility
       // we have to move the check from "parsing json" to "running cluster"
       // I'd say it is inconsistent to our cluster route ... by chia
-      CommonUtils.requireNonEmpty(creation.from.asJava)
-      CommonUtils.requireNonEmpty(creation.to.asJava)
+      CommonUtils.requireNonEmpty(creation.fromTopicKeys.asJava)
+      CommonUtils.requireNonEmpty(creation.toTopicKeys.asJava)
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation

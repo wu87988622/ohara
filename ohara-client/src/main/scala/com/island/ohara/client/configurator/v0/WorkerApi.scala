@@ -60,14 +60,14 @@ object WorkerApi {
   private[this] val TAGS_KEY = "tags"
   private[this] val FREE_PORTS_KEY = "freePorts"
 
-  final case class Creation private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterCreationRequest {
 
     /**
       * reuse the parser from Update.
       * @param settings settings
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(noJsNull(settings))
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -107,7 +107,7 @@ object WorkerApi {
   private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, WORKER_GROUP_DEFAULT)
       .format(new RootJsonFormat[Creation] {
-        override def read(json: JsValue): Creation = Creation(noJsNull(json.asJsObject.fields))
+        override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
       })
       .rejectNegativeNumber()
@@ -130,7 +130,7 @@ object WorkerApi {
       .nullToEmptyArray(FREE_PORTS_KEY)
       .refine
 
-  final case class Update private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Update private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
     // We use the update parser to get the name and group
     private[WorkerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[WorkerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -174,7 +174,7 @@ object WorkerApi {
   implicit val WORKER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
     basicRulesOfUpdate[Update]
       .format(new RootJsonFormat[Update] {
-        override def read(json: JsValue): Update = Update(noJsNull(json.asJsObject.fields))
+        override def read(json: JsValue): Update = new Update(noJsNull(json.asJsObject.fields))
         override def write(obj: Update): JsValue = JsObject(obj.settings)
       })
       .rejectNegativeNumber()
@@ -195,7 +195,7 @@ object WorkerApi {
       * @param settings settings
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
 
     override def name: String = settings.name
     override def group: String = settings.group
@@ -387,10 +387,10 @@ object WorkerApi {
       }
 
       override def creation: Creation =
-        WORKER_CREATION_JSON_FORMAT.read(WORKER_CREATION_JSON_FORMAT.write(Creation(noJsNull(settings.toMap))))
+        WORKER_CREATION_JSON_FORMAT.read(WORKER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
       override private[v0] def update: Update =
-        WORKER_UPDATE_JSON_FORMAT.read(WORKER_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
+        WORKER_UPDATE_JSON_FORMAT.read(WORKER_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)
 

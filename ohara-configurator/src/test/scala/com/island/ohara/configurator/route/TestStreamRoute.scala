@@ -77,8 +77,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     // check initial values
     res1.name shouldBe defaultProps.name
     res1.name shouldBe name
-    res1.from shouldBe Set.empty
-    res1.to shouldBe Set.empty
+    res1.fromTopicKeys shouldBe Set.empty
+    res1.toTopicKeys shouldBe Set.empty
     res1.nodeNames.isEmpty shouldBe true
 
     // update partial properties
@@ -86,8 +86,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val res2 = result(accessStream.request.name(defaultProps.name).toTopicKey(to).instances(nodes.size).update())
     res2.name shouldBe name
     res2.jarKey shouldBe fileInfo.key
-    res2.from shouldBe Set.empty
-    res2.to shouldBe Set(to)
+    res2.fromTopicKeys shouldBe Set.empty
+    res2.toTopicKeys shouldBe Set(to)
     res2.nodeNames.forall(nodes.contains) shouldBe true
 
     // create property with some user defined properties
@@ -96,7 +96,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val userProps = result(
       accessStream.request.name(userAppId).jarKey(fileInfo.key).toTopicKey(to2).instances(nodes.size - 1).create())
     userProps.name shouldBe userAppId
-    userProps.to shouldBe Set(to2)
+    userProps.toTopicKeys shouldBe Set(to2)
     userProps.nodeNames.size shouldBe nodes.size - 1
 
     // we create two properties, the list size should be 2
@@ -107,8 +107,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val to3 = topicKey()
     val res3 = result(accessStream.request.name(userAppId).fromTopicKey(from3).toTopicKey(to3).update())
     res3.name shouldBe userAppId
-    res3.from shouldBe Set(from3)
-    res3.to shouldBe Set(to3)
+    res3.fromTopicKeys shouldBe Set(from3)
+    res3.toTopicKeys shouldBe Set(to3)
     res3.nodeNames.size shouldBe nodes.size - 1
 
     // delete properties
@@ -141,8 +141,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val res1 = result(accessStream.get(props.key))
     res1.name shouldBe props.name
     res1.name shouldBe streamAppName
-    res1.from shouldBe Set(from)
-    res1.to shouldBe Set(to)
+    res1.fromTopicKeys shouldBe Set(from)
+    res1.toTopicKeys shouldBe Set(to)
     res1.jarKey.name shouldBe fileInfo.name
     res1.nodeNames.forall(nodes.contains) shouldBe true
     res1.state.get shouldBe ContainerState.RUNNING.name
@@ -280,15 +280,15 @@ class TestStreamRoute extends SmallTest with Matchers {
   @Test
   def testUpdateTopics(): Unit = {
     val streamDesc = result(accessStream.request.jarKey(fileInfo.key).create())
-    streamDesc.from shouldBe Set.empty
-    streamDesc.to shouldBe Set.empty
+    streamDesc.fromTopicKeys shouldBe Set.empty
+    streamDesc.toTopicKeys shouldBe Set.empty
     val from = topicKey()
     // update from topic
-    result(accessStream.request.name(streamDesc.name).fromTopicKey(from).update()).from shouldBe Set(from)
+    result(accessStream.request.name(streamDesc.name).fromTopicKey(from).update()).fromTopicKeys shouldBe Set(from)
     // update from topic to empty
-    result(accessStream.request.name(streamDesc.name).fromTopicKeys(Set.empty).update()).from shouldBe Set.empty
+    result(accessStream.request.name(streamDesc.name).fromTopicKeys(Set.empty).update()).fromTopicKeys shouldBe Set.empty
     // to topic should still be empty
-    result(accessStream.get(streamDesc.key)).to shouldBe Set.empty
+    result(accessStream.get(streamDesc.key)).toTopicKeys shouldBe Set.empty
   }
 
   @Test
@@ -327,8 +327,8 @@ class TestStreamRoute extends SmallTest with Matchers {
   @Test
   def testOnlyAcceptOneTopic(): Unit = {
     val streamDesc = result(accessStream.request.jarKey(fileInfo.key).create())
-    streamDesc.from shouldBe Set.empty
-    streamDesc.to shouldBe Set.empty
+    streamDesc.fromTopicKeys shouldBe Set.empty
+    streamDesc.toTopicKeys shouldBe Set.empty
 
     // Empty topic is not allow
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamDesc.key))

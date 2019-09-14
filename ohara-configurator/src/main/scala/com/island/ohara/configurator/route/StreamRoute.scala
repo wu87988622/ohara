@@ -69,8 +69,8 @@ private[configurator] object StreamRoute {
       if (stoppedFromTopics.nonEmpty)
         throw new NoSuchElementException(s"topics:${stoppedFromTopics.mkString(",")} is not running")
     }
-    checkStoppedTopics(streamClusterInfo.from, "from")
-    checkStoppedTopics(streamClusterInfo.to, "to")
+    checkStoppedTopics(streamClusterInfo.fromTopicKeys, "from")
+    checkStoppedTopics(streamClusterInfo.toTopicKeys, "to")
     assertParameters(streamClusterInfo)
   }
 
@@ -205,9 +205,7 @@ private[configurator] object StreamRoute {
                 if (nodes.isDefined)
                   extra_settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
                     nodes.get.map(JsString(_)).toVector)
-                update.copy(
-                  settings = update.settings ++ extra_settings
-                )
+                new Update(update.settings ++ extra_settings)
             }
           )
         }

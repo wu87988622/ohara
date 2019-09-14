@@ -60,14 +60,14 @@ object BrokerApi {
     */
   private[ohara] val ZOOKEEPER_CLUSTER_NAME_KEY: String = "zookeeperClusterName"
 
-  final case class Creation(settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreationRequest {
 
     /**
       * reuse the parser from Update.
       * @param settings settings
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(settings)
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -93,7 +93,7 @@ object BrokerApi {
     basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, BROKER_GROUP_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
       .nullToRandomPort(CLIENT_PORT_KEY)
       .requireBindPort(CLIENT_PORT_KEY)
@@ -104,7 +104,7 @@ object BrokerApi {
       .rejectEmptyString(ZOOKEEPER_CLUSTER_NAME_KEY)
       .refine
 
-  final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Update(val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
     // We use the update parser to get the name and group
     private[BrokerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[BrokerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -128,7 +128,7 @@ object BrokerApi {
     basicRulesOfUpdate[Update]
       .format(new RootJsonFormat[Update] {
         override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+        override def read(json: JsValue): Update = new Update(json.asJsObject.fields)
       })
       .requireBindPort(CLIENT_PORT_KEY)
       .requireBindPort(EXPORTER_PORT_KEY)
@@ -149,7 +149,7 @@ object BrokerApi {
       * @param settings settings
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
     override def name: String = settings.name
     override def group: String = settings.group
     override def kind: String = BROKER_SERVICE_NAME
@@ -272,11 +272,11 @@ object BrokerApi {
 
       override def creation: Creation =
         // auto-complete the creation via our refiner
-        BROKER_CREATION_JSON_FORMAT.read(BROKER_CREATION_JSON_FORMAT.write(Creation(settings.toMap)))
+        BROKER_CREATION_JSON_FORMAT.read(BROKER_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
 
       override private[v0] def update: Update =
         // auto-complete the update via our refiner
-        BROKER_UPDATE_JSON_FORMAT.read(BROKER_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
+        BROKER_UPDATE_JSON_FORMAT.read(BROKER_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)
 

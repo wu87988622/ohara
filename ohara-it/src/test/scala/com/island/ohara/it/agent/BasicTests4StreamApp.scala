@@ -166,8 +166,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val properties = result(
       access.request.name(stream.name).fromTopicKey(topic1.key).toTopicKey(topic2.key).update()
     )
-    properties.from shouldBe Set(topic1.key)
-    properties.to shouldBe Set(topic2.key)
+    properties.fromTopicKeys shouldBe Set(topic1.key)
+    properties.toTopicKeys shouldBe Set(topic2.key)
     properties.nodeNames.size shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
@@ -269,8 +269,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val properties = result(
       access.request.name(stream.name).fromTopicKey(topic1.key).toTopicKey(topic2.key).instances(instances).update()
     )
-    properties.from shouldBe Set(topic1.key)
-    properties.to shouldBe Set(topic2.key)
+    properties.fromTopicKeys shouldBe Set(topic1.key)
+    properties.toTopicKeys shouldBe Set(topic2.key)
     properties.nodeNames.size shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
@@ -278,8 +278,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // get streamApp property (cluster not create yet, hence no state)
     val getProperties = result(access.get(stream.key))
-    getProperties.from shouldBe Set(topic1.key)
-    getProperties.to shouldBe Set(topic2.key)
+    getProperties.fromTopicKeys shouldBe Set(topic1.key)
+    getProperties.toTopicKeys shouldBe Set(topic2.key)
     getProperties.nodeNames.size shouldBe instances
     getProperties.state shouldBe None
     getProperties.error shouldBe None

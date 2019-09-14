@@ -48,9 +48,9 @@ object StreamApi {
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
-  final case class Creation(settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreationRequest {
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(settings)
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -91,9 +91,8 @@ object StreamApi {
 
     def jmxPort: Int = settings.jmxPort.get
 
-    def from: Set[TopicKey] = settings.from.get
-    // TODO: the name "to" collides the collection.to method...maybe we should change the nameing?
-    def to: Set[TopicKey] = Update(settings).to.get
+    def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
+    def toTopicKeys: Set[TopicKey] = settings.toTopicKeys.get
 
     //TODO remove this field after #2288
     def instances: Option[Int] = settings.instances
@@ -129,7 +128,7 @@ object StreamApi {
       //----------------------------------------//
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
       .nullToRandomPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
       //TODO remove this default value after #2288
@@ -143,7 +142,7 @@ object StreamApi {
       .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
       .refine
 
-  final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Update(val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
     // We use the update parser to get the name and group
     private[StreamApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -170,10 +169,10 @@ object StreamApi {
 
     def jmxPort: Option[Int] = noJsNull(settings).get(StreamDefUtils.JMX_PORT_DEFINITION.key()).map(_.convertTo[Int])
 
-    def from: Option[Set[TopicKey]] =
+    def fromTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
-    def to: Option[Set[TopicKey]] =
+    def toTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
     override def nodeNames: Option[Set[String]] =
@@ -194,7 +193,7 @@ object StreamApi {
     basicRulesOfUpdate[Update]
       .format(new RootJsonFormat[Update] {
         override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+        override def read(json: JsValue): Update = new Update(json.asJsObject.fields)
       })
       .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
       .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
@@ -227,7 +226,7 @@ object StreamApi {
       * @param settings settings
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
 
     override def name: String = settings.name
     override def group: String = settings.group
@@ -249,8 +248,8 @@ object StreamApi {
     def jarInfo: FileInfo = settings.jarInfo.get
 
     def brokerClusterName: String = settings.brokerClusterName.get
-    def from: Set[TopicKey] = settings.from
-    def to: Set[TopicKey] = Creation(settings).to
+    def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
+    def toTopicKeys: Set[TopicKey] = settings.toTopicKeys
     def jmxPort: Int = settings.jmxPort
     // TODO remove this default value after we could handle from UI
     def exactlyOnce: Boolean = false
@@ -375,11 +374,11 @@ object StreamApi {
       }
       override def creation: Creation =
         // auto-complete the creation via our refiner
-        STREAM_CREATION_JSON_FORMAT.read(STREAM_CREATION_JSON_FORMAT.write(Creation(settings.toMap)))
+        STREAM_CREATION_JSON_FORMAT.read(STREAM_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
 
       override private[v0] def update: Update =
         // auto-complete the update via our refiner
-        STREAM_UPDATE_JSON_FORMAT.read(STREAM_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
+        STREAM_UPDATE_JSON_FORMAT.read(STREAM_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = post(creation)
 

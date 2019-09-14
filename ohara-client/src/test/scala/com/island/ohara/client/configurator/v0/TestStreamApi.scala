@@ -101,8 +101,8 @@ class TestStreamApi extends SmallTest with Matchers {
     info.imageName shouldBe "imageName"
     info.nodeNames shouldBe Set("node1")
     info.jarKey shouldBe ObjectKey.of("group", "name")
-    info.from shouldBe Set(fromTopicKey)
-    info.to shouldBe Set(toTopicKey)
+    info.fromTopicKeys shouldBe Set(fromTopicKey)
+    info.toTopicKeys shouldBe Set(toTopicKey)
     info.definition.isDefined && info.definition.get.definitions.size == 1 shouldBe true
     info.tags.keys.size shouldBe 2
     // we initial exactlyOnce to be false
@@ -145,7 +145,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy accessRequest.fromTopicKeys(null)
 
     // default from field will be empty
-    accessRequest.name(CommonUtils.randomString(5)).creation.from shouldBe Set.empty
+    accessRequest.name(CommonUtils.randomString(5)).creation.fromTopicKeys shouldBe Set.empty
   }
 
   @Test
@@ -153,7 +153,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy accessRequest.toTopicKeys(null)
 
     // default to field will be empty
-    accessRequest.name(CommonUtils.randomString(5)).creation.to shouldBe Set.empty
+    accessRequest.name(CommonUtils.randomString(5)).creation.toTopicKeys shouldBe Set.empty
   }
 
   @Test
@@ -201,8 +201,8 @@ class TestStreamApi extends SmallTest with Matchers {
     creationApi.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
     creationApi.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationApi.jarKey shouldBe None
-    creationApi.from shouldBe Set.empty
-    creationApi.to shouldBe Set.empty
+    creationApi.fromTopicKeys shouldBe Set.empty
+    creationApi.toTopicKeys shouldBe Set.empty
     creationApi.jmxPort should not be 0
     creationApi.instances shouldBe None
     creationApi.nodeNames shouldBe Set.empty
@@ -246,8 +246,8 @@ class TestStreamApi extends SmallTest with Matchers {
     creation.name shouldBe name
     creation.imageName shouldBe imageName
     creation.jarKey shouldBe Some(fakeJar)
-    creation.from shouldBe Set(from)
-    creation.to shouldBe Set(to)
+    creation.fromTopicKeys shouldBe Set(from)
+    creation.toTopicKeys shouldBe Set(to)
     creation.jmxPort shouldBe jmxPort
     creation.instances shouldBe Some(instances)
     creation.nodeNames shouldBe nodeNames
@@ -290,8 +290,8 @@ class TestStreamApi extends SmallTest with Matchers {
     creation.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jarKey shouldBe Some(fakeJar)
-    creation.from shouldBe Set(from)
-    creation.to shouldBe Set(to)
+    creation.fromTopicKeys shouldBe Set(from)
+    creation.toTopicKeys shouldBe Set(to)
     creation.jmxPort should not be 0
     creation.instances shouldBe None
     creation.nodeNames shouldBe Set(nodeName)
@@ -319,8 +319,8 @@ class TestStreamApi extends SmallTest with Matchers {
     creation2.name shouldBe name
     creation2.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation2.jarKey shouldBe Some(fakeJar)
-    creation.from shouldBe Set(from)
-    creation.to shouldBe Set(to)
+    creation.fromTopicKeys shouldBe Set(from)
+    creation.toTopicKeys shouldBe Set(to)
     creation2.jmxPort should not be 0
     creation2.instances shouldBe None
     creation.nodeNames shouldBe Set(nodeName)
@@ -617,8 +617,8 @@ class TestStreamApi extends SmallTest with Matchers {
       .settings(Map("name" -> JsString("fake")))
       .creation
 
-    r1.to shouldBe r2.to
-    r1.from shouldBe r2.from
+    r1.toTopicKeys shouldBe r2.toTopicKeys
+    r1.fromTopicKeys shouldBe r2.fromTopicKeys
     // settings will overwrite default value
     r1.name should not be r2.name
   }
