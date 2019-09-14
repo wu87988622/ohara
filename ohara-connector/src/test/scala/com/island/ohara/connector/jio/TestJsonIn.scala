@@ -77,7 +77,9 @@ class TestJsonIn extends WithBrokerWorker with Matchers {
     finally consumer.close()
   }
 
-  private[this] def setupConnector(): TopicKey = {
+  private[this] def setupConnector(): TopicKey = setupConnector(props)
+
+  private[this] def setupConnector(props: JioProps): TopicKey = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
@@ -122,6 +124,27 @@ class TestJsonIn extends WithBrokerWorker with Matchers {
     // array is not supported
     val unsupportedData = JsObject("a" -> JsArray(Vector(JsString(CommonUtils.randomString()))))
     pushRawData(Seq(unsupportedData)).foreach(_.isSuccess() shouldBe false)
+  }
+
+  @Test
+  def testBufferSize(): Unit = {
+    val bufferSize = 3
+    val dataSize = bufferSize * 5
+    val topicKey = setupConnector(props.copy(bufferSize = bufferSize))
+    val data = (0 until dataSize).map(
+      _ =>
+        JioData(
+          Map(
+            CommonUtils.randomString() -> JsString(CommonUtils.randomString())
+          )))
+    // the size of data is larger than buffer size so some data must be discard
+    val result = pushData(data)
+    result.forall(_.isSuccess()) shouldBe false
+    result.forall(_.isFailure()) shouldBe false
+    val receivedData = pollData(topicKey, 20 seconds, dataSize)
+    receivedData.size should not be 0
+    // the size of data is larger than buffer size so some data must be discard
+    receivedData.size should be <= dataSize
   }
 
   @After

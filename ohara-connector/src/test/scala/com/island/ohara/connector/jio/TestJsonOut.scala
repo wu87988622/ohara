@@ -71,7 +71,9 @@ class TestJsonOut extends WithBrokerWorker with Matchers {
     finally Releasable.close(() => Await.result(actorSystem.terminate(), props.closeTimeout))
   }
 
-  private[this] def setupConnector(): TopicKey = {
+  private[this] def setupConnector(): TopicKey = setupConnector(props)
+
+  private[this] def setupConnector(props: JioProps): TopicKey = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
@@ -123,6 +125,24 @@ class TestJsonOut extends WithBrokerWorker with Matchers {
     TimeUnit.SECONDS.sleep(5)
     // sleep to make sure there is no data :)
     pollData(topicKey) shouldBe Seq.empty
+  }
+  @Test
+  def testBufferSize(): Unit = {
+    val bufferSize = 3
+    val dataSize = bufferSize * 5
+    val topicKey = setupConnector(props.copy(bufferSize = bufferSize))
+    val data = (0 until dataSize).map(
+      _ =>
+        JioData(
+          Map(
+            CommonUtils.randomString() -> JsString(CommonUtils.randomString())
+          )))
+    pushData(data, topicKey)
+    // connector is running in async mode so we have to wait data is pushed to connector
+    CommonUtils.await(() => pollData(topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
+    val receivedData = pollData(topicKey)
+    // the size of data is larger than buffer size so some data must be discard
+    receivedData.size shouldBe bufferSize
   }
 
   @After
