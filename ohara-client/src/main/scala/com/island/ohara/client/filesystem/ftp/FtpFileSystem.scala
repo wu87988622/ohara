@@ -33,7 +33,7 @@ private[filesystem] trait FtpFileSystem extends FileSystem
 
 private[filesystem] object FtpFileSystem {
   private[this] lazy val LOG = Logger(getClass.getName)
-  def builder(): Builder = new Builder
+  def builder: Builder = new Builder
 
   class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FtpFileSystem] {
     // private[this] val LOG = Logger(classOf[Ftp])

@@ -27,8 +27,8 @@ class TestFtpFileSystem extends FileSystemTestBase with Matchers {
   private[this] val user = ftpServer.user
   private[this] val password = ftpServer.password
 
-  override protected def setupFileSystem(): FileSystem =
-    FileSystem.ftpBuilder().hostname(hostname).port(port).user(user).password(password).build
+  override protected val fileSystem: FileSystem =
+    FileSystem.ftpBuilder.hostname(hostname).port(port).user(user).password(password).build
 
-  override protected def setupRootDir(): String = "/root"
+  override protected val rootDir: String = "/root"
 }

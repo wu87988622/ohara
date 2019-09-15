@@ -99,7 +99,7 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
     Column.builder().name("b").dataType(DataType.STRING).order(2).build()
   )
 
-  private[this] val fileSystem = FileSystem.hdfsBuilder().url(testUtil.hdfs.hdfsURL).build
+  private[this] val fileSystem = FileSystem.hdfsBuilder.url(testUtil.hdfs.hdfsURL).build
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

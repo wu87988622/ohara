@@ -29,9 +29,9 @@ class TestHdfsFileSystem extends FileSystemTestBase with Matchers {
 
   private[this] val hdfsURL: String = new File(tempFolder.getAbsolutePath).toURI.toString
 
-  override protected def setupFileSystem(): FileSystem = FileSystem.hdfsBuilder().url(hdfsURL).build
+  override protected val fileSystem: FileSystem = FileSystem.hdfsBuilder.url(hdfsURL).build
 
-  override protected def setupRootDir(): String = tempFolder.toString
+  override protected val rootDir: String = tempFolder.toString
 
   // override this method because the Local HDFS doesn't support append()
   override def testAppend(): Unit = {

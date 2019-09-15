@@ -30,6 +30,6 @@ class FtpSourceTask extends CsvSourceTask {
 
   override def _fileSystem(config: TaskSetting): storage.FileSystem = {
     val props: FtpSourceProps = FtpSourceProps(config)
-    FileSystem.ftpBuilder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
+    FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
 }

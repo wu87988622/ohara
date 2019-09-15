@@ -17,14 +17,16 @@
 package com.island.ohara.connector.hdfs.sink
 
 import com.island.ohara.client.filesystem.FileSystem
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.kafka.connector.{TaskSetting, storage}
 import com.island.ohara.kafka.connector.csv.CsvSinkTask
 
 class HDFSSinkTask extends CsvSinkTask {
-  var hdfsSinkProps: HDFSSinkProps = _
+  @VisibleForTesting
+  private[sink] var hdfsSinkProps: HDFSSinkProps = _
 
   override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
     hdfsSinkProps = HDFSSinkProps(setting)
-    FileSystem.hdfsBuilder().url(hdfsSinkProps.hdfsURL).build
+    FileSystem.hdfsBuilder.url(hdfsSinkProps.hdfsURL).build
   }
 }

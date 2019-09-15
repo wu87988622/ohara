@@ -21,16 +21,16 @@ import com.island.ohara.common.util.CommonUtils
 
 class TestSmbFileSystem extends FileSystemTestBase {
 
-  private[this] def hostname(): Option[String] = sys.env.get(SMB_HOSTNAME_KEY)
-  private[this] def port(): Option[String] = sys.env.get(SMB_PORT_KEY)
-  private[this] def user(): Option[String] = sys.env.get(SMB_USERNAME_KEY)
-  private[this] def password(): Option[String] = sys.env.get(SMB_PASSWORD_KEY)
-  private[this] def shareName(): Option[String] = sys.env.get(SMB_SHARE_NAME_KEY)
+  private[this] val hostname: Option[String] = sys.env.get(SMB_HOSTNAME_KEY)
+  private[this] val port: Option[String] = sys.env.get(SMB_PORT_KEY)
+  private[this] val user: Option[String] = sys.env.get(SMB_USERNAME_KEY)
+  private[this] val password: Option[String] = sys.env.get(SMB_PASSWORD_KEY)
+  private[this] val shareName: Option[String] = sys.env.get(SMB_SHARE_NAME_KEY)
 
   private[this] val TEMP_DIR = CommonUtils.randomString(10)
 
-  override protected def setupFileSystem(): FileSystem = {
-    checkSmbProperties
+  override protected val fileSystem: FileSystem = {
+    checkSmbProperties()
     FileSystem.smbBuilder
       .hostname(hostname.get)
       .port(Integer.parseInt(port.get))
@@ -40,11 +40,10 @@ class TestSmbFileSystem extends FileSystemTestBase {
       .build
   }
 
-  override protected def setupRootDir(): String = TEMP_DIR
+  override protected val rootDir: String = TEMP_DIR
 
-  private[this] def checkSmbProperties(): Unit = {
+  private[this] def checkSmbProperties(): Unit =
     if (hostname.isEmpty || port.isEmpty || user.isEmpty || password.isEmpty || shareName.isEmpty)
       skipTest(
         s"skip SmbFileSystem test, Please setting $SMB_HOSTNAME_KEY, $SMB_PORT_KEY, $SMB_USERNAME_KEY, $SMB_PASSWORD_KEY and $SMB_SHARE_NAME_KEY properties")
-  }
 }

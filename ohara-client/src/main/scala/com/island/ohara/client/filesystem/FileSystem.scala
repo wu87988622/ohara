@@ -104,7 +104,7 @@ trait FileSystem extends com.island.ohara.kafka.connector.storage.FileSystem {
 }
 
 object FileSystem {
-  def hdfsBuilder() = HdfsFileSystem.builder
-  def ftpBuilder() = FtpFileSystem.builder
-  def smbBuilder() = SmbFileSystem.builder
+  def hdfsBuilder: HdfsFileSystem.Builder = HdfsFileSystem.builder
+  def ftpBuilder: FtpFileSystem.Builder = FtpFileSystem.builder
+  def smbBuilder: SmbFileSystem.Builder = SmbFileSystem.builder
 }

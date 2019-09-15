@@ -25,8 +25,7 @@ class TestFtpFileSystemBuilder extends SmallTest with Matchers {
 
   @Test
   def ignoreHostname(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem
-      .builder()
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder
       .port(123)
       .user("adasd")
       .password("asda")
@@ -37,19 +36,18 @@ class TestFtpFileSystemBuilder extends SmallTest with Matchers {
 
   @Test
   def nullHostname(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem.builder().hostname(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder.hostname(null)
   }
 
   @Test
   def emptyHostname(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().hostname("")
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder.hostname("")
   }
 
   @Test
   def ignorePort(): Unit = {
     // pass since ftp port has default value
-    FtpFileSystem
-      .builder()
+    FtpFileSystem.builder
       .hostname("abc")
       .user("adasd")
       .password("asda")
@@ -60,13 +58,12 @@ class TestFtpFileSystemBuilder extends SmallTest with Matchers {
 
   @Test
   def negativePort(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().port(-1)
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder.port(-1)
   }
 
   @Test
   def ignoreUser(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem
-      .builder()
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder
       .port(123)
       .hostname("adasd")
       .password("asda")
@@ -77,18 +74,17 @@ class TestFtpFileSystemBuilder extends SmallTest with Matchers {
 
   @Test
   def nullUser(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem.builder().user(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder.user(null)
   }
 
   @Test
   def emptyUser(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().user("")
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder.user("")
   }
 
   @Test
   def ignorePassword(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem
-      .builder()
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder
       .port(123)
       .hostname("adasd")
       .user("asda")
@@ -99,31 +95,31 @@ class TestFtpFileSystemBuilder extends SmallTest with Matchers {
 
   @Test
   def nullPassword(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem.builder().password(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder.password(null)
   }
 
   @Test
   def emptyPassword(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder().password("")
+    an[IllegalArgumentException] should be thrownBy FtpFileSystem.builder.password("")
   }
 
   @Test
   def ignoreRetryTimeout(): Unit = {
     // pass
-    FtpFileSystem.builder().hostname("aa").port(123).password("adasd").user("asda").retryBackoff(5 seconds).build()
+    FtpFileSystem.builder.hostname("aa").port(123).password("adasd").user("asda").retryBackoff(5 seconds).build()
   }
   @Test
   def nullRetryTimeout(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem.builder().retryTimeout(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder.retryTimeout(null)
   }
 
   @Test
   def ignoreRetryBackoff(): Unit = {
     // pass
-    FtpFileSystem.builder().hostname("aa").port(123).password("adasd").user("asda").retryTimeout(5 seconds).build()
+    FtpFileSystem.builder.hostname("aa").port(123).password("adasd").user("asda").retryTimeout(5 seconds).build()
   }
   @Test
   def nullRetryBackoff(): Unit = {
-    an[NullPointerException] should be thrownBy FtpFileSystem.builder().retryBackoff(null)
+    an[NullPointerException] should be thrownBy FtpFileSystem.builder.retryBackoff(null)
   }
 }

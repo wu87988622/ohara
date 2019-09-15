@@ -27,9 +27,8 @@ class TestIllegalFtpFileSystem extends MediumTest with Matchers {
   private[this] val server = FtpServer.local()
 
   private[this] val fileSystem =
-    FtpFileSystem
-      .builder()
-      // login ftp server with an invalid account and then see what happens :)
+    FtpFileSystem.builder
+    // login ftp server with an invalid account and then see what happens :)
       .user(CommonUtils.randomString(10))
       .password(server.password)
       .hostname(server.hostname)

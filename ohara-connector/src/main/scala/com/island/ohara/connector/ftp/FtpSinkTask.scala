@@ -24,6 +24,6 @@ import com.island.ohara.kafka.connector.storage
 class FtpSinkTask extends CsvSinkTask {
   override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
     val props = FtpSinkProps(setting)
-    FileSystem.ftpBuilder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
+    FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
 }

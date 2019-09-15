@@ -26,13 +26,9 @@ import scala.collection.JavaConverters._
 
 abstract class FileSystemTestBase extends SmallTest with Matchers {
 
-  protected var fileSystem: FileSystem = _
+  protected val fileSystem: FileSystem
 
-  protected var rootDir: String = _
-
-  protected def setupFileSystem(): FileSystem
-
-  protected def setupRootDir(): String
+  protected val rootDir: String
 
   protected def randomDir(parent: String): String = CommonUtils.path(parent, CommonUtils.randomString(10))
 
@@ -46,30 +42,27 @@ abstract class FileSystemTestBase extends SmallTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    fileSystem = setupFileSystem
-    rootDir = setupRootDir
-    println(s"rootDir = ${rootDir}")
+    println(s"rootDir = $rootDir")
     if (!fileSystem.exists(rootDir)) fileSystem.mkdirs(rootDir)
   }
 
-  @After def cleanup(): Unit = {
-    Releasable.close(fileSystem)
-  }
+  @After
+  def cleanup(): Unit = Releasable.close(fileSystem)
 
   @Test
   def testNormal(): Unit = {
     fileSystem.listFileNames(rootDir).asScala.size shouldBe 0
 
     // create a folder
-    val dir = randomDir
+    val dir = randomDir()
     fileSystem.exists(dir) shouldBe false
     fileSystem.mkdirs(dir)
     fileSystem.exists(dir) shouldBe true
     fileSystem.listFileNames(rootDir).asScala.size shouldBe 1
 
     // create a file
-    val file = randomFile
-    fileSystem.create(file).close
+    val file = randomFile()
+    fileSystem.create(file).close()
     fileSystem.listFileNames(rootDir).asScala.size shouldBe 2
 
     // delete a file
@@ -80,16 +73,13 @@ abstract class FileSystemTestBase extends SmallTest with Matchers {
   @Test def testList(): Unit = fileSystem.listFileNames(rootDir).asScala.size shouldBe 0
 
   @Test
-  def testListWithNonExistedPath(): Unit = {
-    intercept[IllegalArgumentException] {
-      fileSystem.listFileNames(randomDir)
-    }
-  }
+  def testListWithNonExistedPath(): Unit =
+    an[IllegalArgumentException] should be thrownBy fileSystem.listFileNames(randomDir())
 
   @Test
   def testCreate(): Unit = {
-    val file = randomFile
-    val text = randomText
+    val file = randomFile()
+    val text = randomText()
     val outputStream = fileSystem.create(file)
     outputStream.write(text.getBytes)
     outputStream.close()
@@ -98,41 +88,36 @@ abstract class FileSystemTestBase extends SmallTest with Matchers {
 
   @Test
   def testCreateWithExistedPath(): Unit = {
-    val file = randomFile
-    fileSystem.create(file).close
+    val file = randomFile()
+    fileSystem.create(file).close()
 
     // create file with the same path
-    intercept[IllegalArgumentException] {
-      fileSystem.create(file)
-    }
+    an[IllegalArgumentException] should be thrownBy fileSystem.create(file)
   }
 
   @Test
   def testAppend(): Unit = {
-    val file = randomFile
-    val text = randomText
+    val file = randomFile()
+    val text = randomText()
 
     // create file
-    fileSystem.create(file).close
+    fileSystem.create(file).close()
 
     // append file
     val stream = fileSystem.append(file)
     stream.write(text.getBytes)
-    stream.close
+    stream.close()
     fileSystem.readLines(file) shouldBe Array(text)
   }
 
   @Test
-  def testAppendWithNonExistedPath(): Unit = {
-    intercept[IllegalArgumentException] {
-      fileSystem.append(randomFile)
-    }
-  }
+  def testAppendWithNonExistedPath(): Unit =
+    an[IllegalArgumentException] should be thrownBy fileSystem.append(randomFile())
 
   @Test
   def testDelete(): Unit = {
-    val file = randomFile
-    fileSystem.create(file).close
+    val file = randomFile()
+    fileSystem.create(file).close()
     fileSystem.listFileNames(rootDir).asScala.size shouldBe 1
 
     // delete file
@@ -145,7 +130,7 @@ abstract class FileSystemTestBase extends SmallTest with Matchers {
 
   @Test
   def testDeleteWithRecursive(): Unit = {
-    val dir = randomDir
+    val dir = randomDir()
     val file1 = randomFile(dir)
     val file2 = randomFile(dir)
 
@@ -165,21 +150,19 @@ abstract class FileSystemTestBase extends SmallTest with Matchers {
 
   @Test
   def testDeleteFolderWithContainingFiles(): Unit = {
-    val dir = randomDir
+    val dir = randomDir()
     val file = randomFile(dir)
     fileSystem.mkdirs(dir)
-    fileSystem.create(file).close
+    fileSystem.create(file).close()
     fileSystem.listFileNames(dir).asScala.size shouldBe 1
 
-    intercept[OharaFileSystemException] {
-      fileSystem.delete(dir)
-    }
+    an[OharaFileSystemException] should be thrownBy fileSystem.delete(dir)
   }
 
   @Test
   def testMoveFile(): Unit = {
-    val file1 = randomFile
-    val file2 = randomFile
+    val file1 = randomFile()
+    val file2 = randomFile()
     fileSystem.create(file1).close()
     fileSystem.exists(file1) shouldBe true
     fileSystem.exists(file2) shouldBe false

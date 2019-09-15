@@ -41,7 +41,7 @@ import scala.collection.JavaConverters._
 private[filesystem] trait SmbFileSystem extends FileSystem
 
 private[filesystem] object SmbFileSystem {
-  def builder(): Builder = new Builder
+  def builder: Builder = new Builder
 
   class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[SmbFileSystem] {
     private[this] var hostname: String = _
