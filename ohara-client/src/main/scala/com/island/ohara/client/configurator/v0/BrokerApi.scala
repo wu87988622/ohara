@@ -23,8 +23,6 @@ import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object BrokerApi {
@@ -199,15 +197,7 @@ object BrokerApi {
   /**
     * used to generate the payload and url for POST/PUT request.
     */
-  sealed trait Request {
-    @Optional("default name is a random string. But it is required in updating")
-    def name(name: String): Request = setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
-    @Optional("default is GROUP_DEFAULT")
-    def group(group: String): Request =
-      setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
-    @Optional("the default image is IMAGE_NAME_DEFAULT")
-    def imageName(imageName: String): Request =
-      setting(IMAGE_NAME_KEY, JsString(CommonUtils.requireNonEmpty(imageName)))
+  sealed trait Request extends ClusterRequest[BrokerClusterInfo] {
     @Optional("Ignoring zookeeper cluster name enable server to match a zk for you")
     def zookeeperClusterName(zookeeperClusterName: String): Request =
       setting(ZOOKEEPER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(zookeeperClusterName)))
@@ -219,30 +209,8 @@ object BrokerApi {
       setting(EXPORTER_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(exporterPort)))
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request = setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
-    def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
-    def nodeNames(nodeNames: Set[String]): Request =
-      setting(NODE_NAMES_KEY, JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request = setting(TAGS_KEY, JsObject(tags))
-
-    @Optional("extra settings is empty by default")
-    def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
-    @Optional("extra settings is empty by default")
-    def settings(settings: Map[String, JsValue]): Request
-
-    /**
-      * generate the POST request
-      * @param executionContext thread pool
-      * @return created data
-      */
-    def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
-
-    /**
-      * generate the PUT request
-      * @param executionContext execution context
-      * @return updated/created data
-      */
-    def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
 
     /**
       * broker information creation.
@@ -261,14 +229,6 @@ object BrokerApi {
 
   final class Access private[BrokerApi] extends ClusterAccess[Creation, Update, BrokerClusterInfo](BROKER_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
-      override def settings(settings: Map[String, JsValue]): Request = {
-        // We don't have to check the settings is empty here for the following reasons:
-        // 1) we may want to use the benefit of default creation without specify settings
-        // 2) actual checking will be done in the json parser phase of creation or update
-        this.settings ++= settings
-        this
-      }
 
       override def creation: Creation =
         // auto-complete the creation via our refiner

@@ -170,7 +170,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       lastModified = 0,
       topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
     )
-    Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
+    Await.result(bkCreator().settings(brokerClusterInfo.settings).create(), 30 seconds) shouldBe brokerClusterInfo
   }
 
   @Test

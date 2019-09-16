@@ -219,7 +219,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       error = None,
       lastModified = 0
     )
-    Await.result(wkCreator().copy(workerClusterInfo).create(), 30 seconds) shouldBe workerClusterInfo
+    Await.result(wkCreator().settings(workerClusterInfo.settings).create(), 30 seconds) shouldBe workerClusterInfo
   }
 
   @Test

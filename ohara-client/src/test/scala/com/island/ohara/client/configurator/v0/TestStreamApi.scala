@@ -430,7 +430,7 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def requireFieldOnPropertyUpdate(): Unit = {
     // name is required
-    an[NoSuchElementException] should be thrownBy result(accessRequest.jarKey(ObjectKey.of("group", "name")).update())
+    an[IllegalArgumentException] should be thrownBy result(accessRequest.jarKey(ObjectKey.of("group", "name")).update())
 
     // no jar is ok
     accessRequest.name(CommonUtils.randomString(5)).update

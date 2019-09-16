@@ -271,7 +271,28 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
     private[this] val request = StreamApi.access.request
-    override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = request.settings(clusterInfo.settings)
+
+    override def clusterName(clusterName: String): ClusterCreator.this.type = {
+      request.name(clusterName)
+      this
+    }
+    override def group(group: String): ClusterCreator.this.type = {
+      request.group(group)
+      this
+    }
+    override def imageName(imageName: String): ClusterCreator.this.type = {
+      request.imageName(imageName)
+      this
+    }
+    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
+      request.nodeNames(nodeNames)
+      this
+    }
+    @Optional("default is empty map")
+    def settings(settings: Map[String, JsValue]): ClusterCreator.this.type = {
+      request.settings(settings)
+      this
+    }
 
     /**
       * set the jar url for the streamApp running
@@ -281,31 +302,6 @@ object StreamCollie {
       */
     def jarInfo(jarInfo: FileInfo): ClusterCreator = {
       request.jarInfo(jarInfo)
-      this
-    }
-
-    /**
-      * add a key-value data map for container
-      *
-      * @param key data key
-      * @param value data value
-      * @return this creator
-      */
-    @Optional("default is empty map")
-    def setting(key: String, value: JsValue): ClusterCreator = {
-      request.setting(key, value)
-      this
-    }
-
-    /**
-      * add the key-value data map for container
-      *
-      * @param settings data settings
-      * @return this creator
-      */
-    @Optional("default is empty map")
-    def settings(settings: Map[String, JsValue]): ClusterCreator = {
-      request.settings(settings)
       this
     }
 
@@ -344,16 +340,15 @@ object StreamCollie {
     }
 
     override def create(): Future[StreamClusterInfo] = {
-      val creation = request.name(clusterName).group(group).imageName(imageName).nodeNames(nodeNames).creation
       // TODO: the to/from topics should not be empty in building creation ... However, our stream route
       // allowed user to enter empty for both fields... With a view to keeping the compatibility
       // we have to move the check from "parsing json" to "running cluster"
       // I'd say it is inconsistent to our cluster route ... by chia
-      CommonUtils.requireNonEmpty(creation.fromTopicKeys.asJava)
-      CommonUtils.requireNonEmpty(creation.toTopicKeys.asJava)
+      CommonUtils.requireNonEmpty(request.creation.fromTopicKeys.asJava)
+      CommonUtils.requireNonEmpty(request.creation.toTopicKeys.asJava)
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = creation
+        creation = request.creation
       )
     }
 

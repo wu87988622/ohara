@@ -279,6 +279,7 @@ object StreamApi {
       })
       .refine
 
+  //TODO We should extends this class from ClusterRequest after #2288
   sealed trait Request {
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request =
@@ -383,8 +384,12 @@ object StreamApi {
       override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-        // for update request, we should use default group if it was absent
-        put(key(update.group.getOrElse(STREAM_GROUP_DEFAULT), update.name.get), update)
+        put(
+          // for update request, we should use default group if it was absent
+          key(update.group.getOrElse(STREAM_GROUP_DEFAULT),
+              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          update
+        )
     }
   }
 

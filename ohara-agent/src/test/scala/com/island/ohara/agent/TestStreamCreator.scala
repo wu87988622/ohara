@@ -76,7 +76,8 @@ class TestStreamCreator extends SmallTest with Matchers {
 
   @Test
   def emptyNodeName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().nodeNames(Set.empty)
+    //TODO We should reject empty nodeNames after #2288
+    streamCreator().nodeNames(Set.empty)
   }
 
   @Test
@@ -182,7 +183,7 @@ class TestStreamCreator extends SmallTest with Matchers {
     )
 
     // pass
-    result(streamCreator().copy(info).create())
+    result(streamCreator().settings(info.settings).create())
   }
 
   @Test

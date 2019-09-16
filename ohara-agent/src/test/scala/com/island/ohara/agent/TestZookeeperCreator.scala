@@ -142,7 +142,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
       error = None,
       lastModified = 0
     )
-    Await.result(zkCreator().copy(zookeeperClusterInfo).create(), 30 seconds) shouldBe zookeeperClusterInfo
+    Await.result(zkCreator().settings(zookeeperClusterInfo.settings).create(), 30 seconds) shouldBe zookeeperClusterInfo
   }
 
   @Test

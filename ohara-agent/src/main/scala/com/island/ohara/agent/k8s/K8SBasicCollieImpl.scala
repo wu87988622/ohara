@@ -38,7 +38,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
     implicit executionContext: ExecutionContext): Future[T] =
     // create the cluster with more nodes again. the creation progress handles the "add" than "creation" by default
     creator
-      .copy(previousCluster)
+      .settings(previousCluster.settings)
       .nodeNames(previousCluster.nodeNames + newNodeName)
       .threadPool(executionContext)
       .create()

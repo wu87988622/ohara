@@ -310,7 +310,27 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
     private[this] val request = WorkerApi.access.request
-    override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = request.settings(clusterInfo.settings)
+
+    override def clusterName(clusterName: String): ClusterCreator.this.type = {
+      request.name(clusterName)
+      this
+    }
+    override def group(group: String): ClusterCreator.this.type = {
+      request.group(group)
+      this
+    }
+    override def imageName(imageName: String): ClusterCreator.this.type = {
+      request.imageName(imageName)
+      this
+    }
+    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
+      request.nodeNames(nodeNames)
+      this
+    }
+    override def settings(settings: Map[String, JsValue]): ClusterCreator.this.type = {
+      request.settings(settings)
+      this
+    }
 
     def brokerClusterName(name: String): ClusterCreator = {
       request.brokerClusterName(name)
@@ -386,27 +406,10 @@ object WorkerCollie {
       this
     }
 
-    /**
-      * add a key-value data map for container
-      *
-      * @param key data key
-      * @param value data value
-      * @return this creator
-      */
-    @Optional("default is empty map")
-    def setting(key: String, value: JsValue): ClusterCreator = {
-      request.setting(key, value)
-      this
-    }
-
     override def create(): Future[WorkerClusterInfo] = {
-      // initial the basic creation required parameters (defined in ClusterInfo) for worker
-      // Note: We add all the fields in collie and they may not required in client api
-      // since they are required in the view of "collie"
-      val creation = request.name(clusterName).group(group).imageName(imageName).nodeNames(nodeNames).creation
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = creation
+        creation = request.creation
       )
     }
 
