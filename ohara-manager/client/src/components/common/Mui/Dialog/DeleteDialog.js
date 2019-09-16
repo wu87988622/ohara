@@ -85,6 +85,7 @@ const AlertDialog = props => {
               onClick={handleConfirm}
               color="primary"
               autoFocus
+              data-testid={'confirm-button-' + confirmText}
             >
               {confirmText}
             </ConfirmButton>
