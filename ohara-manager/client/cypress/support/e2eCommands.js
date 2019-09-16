@@ -245,8 +245,8 @@ Cypress.Commands.add('uploadTestPlugin', params => {
 });
 
 Cypress.Commands.add('deleteTestPlugin', params => {
-  const { fileName, workerName } = params;
-  cy.request('DELETE', `api/files/${fileName}?group=${workerName}-plugin`);
+  const { jarName, workerName } = params;
+  cy.request('DELETE', `api/files/${jarName}?group=${workerName}-plugin`);
 });
 
 Cypress.Commands.add('uploadJar', (selector, fixturePath, name, type) => {
