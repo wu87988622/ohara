@@ -62,17 +62,13 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   private[this] val brokerClient = BrokerClient.of(testUtil.brokersConnProps())
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
-  protected var fileSystem: FileSystem = _
+  protected val fileSystem: FileSystem
+
+  protected val connectorClass: Class[_ <: CsvSourceConnector]
+
+  protected val setupProps: Map[String, String]
 
   protected var props: Map[String, String] = _
-
-  protected var connectorClass: Class[_] = _
-
-  protected def setupFileSystem(): FileSystem
-
-  protected def setupConnectorClass(): Class[_ <: CsvSourceConnector]
-
-  protected def setupProps(): Map[String, String]
 
   protected def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -82,11 +78,20 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   protected def errorDir(): String = props.getOrElse(ERROR_FOLDER_CONFIG, "")
 
-  protected def createConnector(props: Map[String, String], schema: Seq[Column]): Pair[TopicKey, ConnectorKey] =
+  protected def setupConnector(props: Map[String, String], schema: Seq[Column]): (TopicKey, ConnectorKey) =
+    setupConnector(props, Some(schema))
+
+  protected def setupConnector(props: Map[String, String], schema: Option[Seq[Column]]): (TopicKey, ConnectorKey) = {
+    // create a connector and check its state is running
+    val (topicKey, connectorKey) = createConnector(props, schema)
+    ConnectorTestUtils.checkConnector(testUtil, connectorKey)
+    (topicKey, connectorKey)
+  }
+
+  protected def createConnector(props: Map[String, String], schema: Seq[Column]): (TopicKey, ConnectorKey) =
     createConnector(props, Some(schema))
 
-  protected def createConnector(props: Map[String, String],
-                                schema: Option[Seq[Column]]): Pair[TopicKey, ConnectorKey] = {
+  protected def createConnector(props: Map[String, String], schema: Option[Seq[Column]]): (TopicKey, ConnectorKey) = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
@@ -99,7 +104,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
       if (!schema.isEmpty) creator.columns(schema.get)
       creator.create()
     })
-    Pair.of(topicKey, connectorKey)
+    (topicKey, connectorKey)
   }
 
   private[this] def setupInput(): Unit = {
@@ -142,9 +147,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    props = defaultProps ++ setupProps()
-    fileSystem = setupFileSystem()
-    connectorClass = setupConnectorClass()
+    props = defaultProps ++ setupProps
 
     // cleanup all files in order to avoid corrupted files
     fileSystem.reMkdirs(inputDir)
@@ -165,13 +168,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val keys = createConnector(props, schema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, schema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
-
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicKey)
@@ -191,14 +190,11 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Test
   def testDuplicateInput(): Unit = {
-    val keys = createConnector(props, schema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, schema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
-
       checkFileCount(0, 1, 0)
+
       var records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
@@ -228,12 +224,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
       Column.builder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
       Column.builder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
     )
-    val keys = createConnector(props, newSchema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicKey)
@@ -264,12 +257,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
       Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
       Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
     )
-    val keys = createConnector(props, newSchema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicKey)
@@ -290,12 +280,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
-    val keys = createConnector(props, None)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, None)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicKey)
@@ -319,12 +306,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   def testNormalCaseWithoutEncode(): Unit = {
     // will use default UTF-8
     val newProps = props - FILE_ENCODE_CONFIG
-    val keys = createConnector(newProps, schema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicKey)
@@ -347,12 +331,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   def testPartialColumns(): Unit = {
     // skip last column
     val newSchema = schema.slice(0, schema.length - 1)
-    val keys = createConnector(props, newSchema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicKey)
@@ -372,12 +353,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   def testUnmatchedSchema(): Unit = {
     // the name can't be casted to int
     val newSchema = Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build())
-    val keys = createConnector(props, newSchema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       checkFileCount(0, 0, 1)
 
       val records = pollData(topicKey, 10 second)
@@ -392,8 +370,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   @Test
   def testInvalidInput(): Unit = {
     val newProps = props ++ Map(INPUT_FOLDER_CONFIG -> "/abc")
-    val keys = createConnector(newProps, schema)
-    val connectorKey = keys.right
+    val (_, connectorKey) = createConnector(newProps, schema)
 
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
   }
@@ -406,8 +383,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
       Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
       Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
     )
-    val keys = createConnector(props, newSchema)
-    val connectorKey = keys.right
+    val (_, connectorKey) = createConnector(props, newSchema)
 
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
   }
@@ -415,12 +391,9 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   @Test
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
     val newProps = props - COMPLETED_FOLDER_CONFIG
-    val keys = createConnector(newProps, schema)
-    val topicKey = keys.left
-    val connectorKey = keys.right
+    val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
-      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(
         () => {
           fileSystem.listFileNames(inputDir).asScala.size == 0

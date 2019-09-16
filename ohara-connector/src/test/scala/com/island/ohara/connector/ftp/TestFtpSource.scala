@@ -23,7 +23,7 @@ import com.island.ohara.kafka.connector.csv.CsvSourceConnector
 class TestFtpSource extends CsvSourceTestBase {
   private[this] val ftpServer = testUtil.ftpServer
 
-  override def setupFileSystem(): FileSystem =
+  override val fileSystem: FileSystem =
     FileSystem.ftpBuilder
       .hostname(ftpServer.hostname)
       .port(ftpServer.port)
@@ -31,9 +31,9 @@ class TestFtpSource extends CsvSourceTestBase {
       .password(ftpServer.password)
       .build
 
-  override protected def setupConnectorClass(): Class[_ <: CsvSourceConnector] = classOf[FtpSource]
+  override val connectorClass: Class[_ <: CsvSourceConnector] = classOf[FtpSource]
 
-  override protected def setupProps(): Map[String, String] =
+  override val setupProps: Map[String, String] =
     Map(FTP_HOSTNAME -> ftpServer.hostname,
         FTP_PORT -> ftpServer.port.toString,
         FTP_USER_NAME -> ftpServer.user,
