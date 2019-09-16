@@ -27,6 +27,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.connector.ConnectorTestUtils
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
@@ -143,7 +144,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, newSchema, props.toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -163,7 +164,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, schema, props.copy(needHeader = true).toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -184,7 +185,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, props.copy(needHeader = true).toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -210,7 +211,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, newSchema, props.copy(needHeader = true).toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -231,7 +232,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, schema, props.toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -251,7 +252,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, props.toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -273,7 +274,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, schema, settings)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -295,7 +296,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, newSchema, props.toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       val committedFolder = getCommittedFolder()
       checkCommittedFileSize(committedFolder, 1)
       val committedFile = listCommittedFiles(committedFolder).head
@@ -316,7 +317,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     createConnector(connectorKey, newSchema, props.toMap)
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorKey)
+      ConnectorTestUtils.checkConnector(testUtil, connectorKey)
       TimeUnit.SECONDS.sleep(5)
       val folder = getCommittedFolder()
       fileSystem.exists(folder.toString) shouldBe false
