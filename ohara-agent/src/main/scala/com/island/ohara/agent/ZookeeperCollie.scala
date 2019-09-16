@@ -112,6 +112,9 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                         // from envs since there are many system-defined settings in container envs.
                           + toEnvString(creation.settings),
                         // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                        // Note: We should assign "node" name to the container hostname directly here to avoid some
+                        // dns problem. For example, we may want to connect to zk to dig something issue and assign
+                        // node name here can save our life to solve the connection problem...
                         hostname = node.name
                       )
                       doCreator(executionContext, containerName, containerInfo, node, route).map(_ =>

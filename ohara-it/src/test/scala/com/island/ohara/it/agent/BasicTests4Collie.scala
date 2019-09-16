@@ -171,6 +171,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     log.info(s"get containers from zk:$clusterName... done")
     container.nodeName shouldBe nodeName
     container.name.contains(clusterName) shouldBe true
+    // In ZookeeperCollie, we assign node name to "hostname" field to avoid dns problem
     container.hostname.contains(nodeName) shouldBe true
     container.portMappings.head.portPairs.size shouldBe 3
     container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true

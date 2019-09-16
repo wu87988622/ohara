@@ -42,7 +42,13 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
       .portMappings(
         containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
       .nodeName(containerInfo.nodeName)
-      .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+      // this hostname has a length limit that <=63
+      // see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+      // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+      // Note: We should assign "node" name to the container hostname directly here to avoid some
+      // dns problem. For example, we may want to connect to zk to dig something issue and assign
+      // node name here can save our life to solve the connection problem...
+      .hostname(node.name)
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
       .envs(containerInfo.environments)

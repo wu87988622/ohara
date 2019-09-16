@@ -44,7 +44,11 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .imageName(containerInfo.imageName)
       .portMappings(
         containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
-      .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+      // this hostname has a length limit that <=63
+      // see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+      // we change the actual value to containerName here which is always <= 63 (prefix-group-name-service-hash)
+      // and it won't hurt the Ohara system or user since it is unused after setting...by Sam
+      .hostname(containerInfo.name)
       .nodeName(node.name)
       .envs(containerInfo.environments)
       .labelName(OHARA_LABEL)

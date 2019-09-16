@@ -50,6 +50,15 @@ trait ClusterNameHolder extends Releasable {
     name
   }
 
+  /**
+    * Add a cluster name to this ClusterNameHolder for managing.
+    *
+    * @param clusterName cluster name
+    */
+  def addClusterName(clusterName: String): Unit = {
+    usedClusterNames += clusterName
+  }
+
   override def close(): Unit = release(
     clusterNames = usedClusterNames.toSet,
     excludedNodes = Set.empty,

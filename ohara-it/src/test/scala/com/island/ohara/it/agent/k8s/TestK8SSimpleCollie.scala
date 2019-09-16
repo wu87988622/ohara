@@ -388,13 +388,15 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = nameHolder.generateClusterName()
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
-    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 0
+    // for zookeeper, we assign node name to "hostname" field
+    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(firstNode)) shouldBe 0
     val zkClientPort1: Int = CommonUtils.availablePort()
     val zkPeerPort1: Int = CommonUtils.availablePort()
     val zkElectionPort1: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName1, firstNode, zkClientPort1, zkPeerPort1, zkElectionPort1)
-    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 1
+    // for zookeeper, we assign node name to "hostname" field
+    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(firstNode)) shouldBe 1
 
   }
 
@@ -468,8 +470,52 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     unknowNode.isFailure shouldBe true
   }
 
+  @Test
+  def testNameAndGroupLimitInZookeeper(): Unit = {
+    // generate the max length name and group
+    val clusterName: String = CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_NAME_LENGTH)
+    val group: String = CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_NAME_LENGTH)
+    nameHolder.addClusterName(clusterName)
+
+    val firstNode: String = nodeNames.head
+    val secondNode: String = nodeNames.last
+    firstNode should not be secondNode
+
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val clientPort: Int = CommonUtils.availablePort()
+    val peerPort: Int = CommonUtils.availablePort()
+    val electionPort: Int = CommonUtils.availablePort()
+
+    val zookeeperClusterInfo =
+      createZookeeperCollie(zookeeperCollie, clusterName, group, nodeNames.head, clientPort, peerPort, electionPort)
+
+    // create zookeeper should be ok
+    zookeeperClusterInfo.name shouldBe clusterName
+    zookeeperClusterInfo.group shouldBe group
+    zookeeperClusterInfo.nodeNames.size shouldBe 1
+    zookeeperClusterInfo.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    zookeeperClusterInfo.clientPort shouldBe clientPort
+    zookeeperClusterInfo.peerPort shouldBe peerPort
+    zookeeperClusterInfo.electionPort shouldBe electionPort
+  }
+
   private[this] def createZookeeperCollie(zookeeperCollie: ZookeeperCollie,
                                           clusterName: String,
+                                          nodeName: String,
+                                          clientPort: Int,
+                                          peerPort: Int,
+                                          electionPort: Int): ZookeeperClusterInfo =
+    createZookeeperCollie(zookeeperCollie,
+                          clusterName,
+                          ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT,
+                          nodeName,
+                          clientPort,
+                          peerPort,
+                          electionPort)
+
+  private[this] def createZookeeperCollie(zookeeperCollie: ZookeeperCollie,
+                                          clusterName: String,
+                                          group: String,
                                           nodeName: String,
                                           clientPort: Int,
                                           peerPort: Int,
@@ -477,7 +523,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val info = result(
       zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-        .group(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT)
+        .group(group)
         .clusterName(clusterName)
         .clientPort(clientPort)
         .peerPort(peerPort)
