@@ -19,7 +19,8 @@ package com.island.ohara.it.agent.ssh
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.EnvTestingUtils
+import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
 import com.island.ohara.it.category.SshConfiguratorGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
@@ -27,23 +28,22 @@ import org.junit.experimental.categories.Category
 import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[SshConfiguratorGroup]))
 class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
-  override protected val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
-  override protected val nameHolder = ClusterNameHolder(nodeCache)
+  override protected val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  override protected val nameHolder = ClusterNameHolder(nodes)
   override protected def configurator: Configurator = _configurator
 
   private[this] var _configurator: Configurator = _
 
   @Before
-  final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
+  final def setup(): Unit = if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
   else {
     _configurator = Configurator.builder.build()
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodeCache.foreach { node =>
+    nodes.foreach { node =>
       result(
         nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
     }
-    val nodes = result(nodeApi.list())
-    nodes.size shouldBe nodeCache.size
-    nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
+    result(nodeApi.list()).size shouldBe nodes.size
+    result(nodeApi.list()).foreach(node => nodes.exists(_.name == node.name) shouldBe true)
   }
 }

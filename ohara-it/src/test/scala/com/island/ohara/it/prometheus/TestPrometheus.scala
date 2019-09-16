@@ -29,8 +29,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.CollieTestUtils
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import com.island.ohara.it.prometheus.PrometheusJson.{Health, Targets}
 import org.junit.Assume._
 import org.junit.{Before, Ignore, Test}
@@ -41,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContextExecutor
 class TestPrometheus extends IntegrationTest with Matchers {
 
-  private[this] val nodes: Seq[Node] = CollieTestUtils.nodeCache()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   private[this] var node: Node = _
   private[this] var nodeCollie: NodeCollie = _
   private[this] var clusterCollie: ClusterCollie = _

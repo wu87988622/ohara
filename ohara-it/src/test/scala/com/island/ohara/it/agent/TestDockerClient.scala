@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.ContainerApi.PortPair
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -42,7 +42,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Before
   def setup(): Unit =
-    CollieTestUtils.nodeCache().headOption.foreach { node =>
+    EnvTestingUtils.sshNodes().headOption.foreach { node =>
       client =
         DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       remoteHostname = node.hostname

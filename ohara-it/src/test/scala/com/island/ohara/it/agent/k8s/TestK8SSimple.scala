@@ -29,7 +29,7 @@ import com.island.ohara.agent.k8s.{K8SClient, K8SStatusInfo, K8sContainerState}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.{IntegrationTest, EnvTestingUtils}
 import com.typesafe.scalalogging.Logger
 import org.junit._
 import org.scalatest.Matchers
@@ -48,13 +48,13 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Before
   def testBefore(): Unit = {
-    val message = s"The k8s is skip test, Please setting ${TestK8SSimple.K8S_API_SERVER_URL_KEY} properties"
-    if (TestK8SSimple.API_SERVER_URL.isEmpty || TestK8SSimple.NODE_SERVER_NAME.isEmpty) {
+    val message = s"The k8s is skip test, Please setting ${EnvTestingUtils.K8S_MASTER_KEY} properties"
+    if (TestK8SSimple.API_SERVER_URL.isEmpty) {
       log.info(message)
       skipTest(message)
     }
     k8sApiServerURL = TestK8SSimple.API_SERVER_URL.get
-    nodeServerNames = TestK8SSimple.NODE_SERVER_NAME.get.split(",").toSeq
+    nodeServerNames = EnvTestingUtils.k8sNodes().map(_.hostname)
 
     val uuid: String = TestK8SSimple.uuid
 
@@ -189,14 +189,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   }
 
   @Test
-  def testK8SNodeInfo(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
-    val nodes = result(k8sClient.nodeNameIPInfo())
-    nodes.nonEmpty shouldBe true
-    nodes.map(x => x.hostnames.head).mkString(",").contains(TestK8SSimple.NODE_SERVER_NAME.get) shouldBe true
-  }
-
-  @Test
   def testK8SImages(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
     val images: Seq[String] = result(k8sClient.images(nodeServerNames.last)).map(x => x.split(":").head)
@@ -235,11 +227,7 @@ object TestK8SSimple {
   implicit val actorSystem: ActorSystem = ActorSystem("TestK8SServer")
   implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-  val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
-  val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
-
-  val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
-  val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
+  val API_SERVER_URL: Option[String] = sys.env.get(EnvTestingUtils.K8S_MASTER_KEY)
 
   val uuid: String = UUID.randomUUID().toString
 

@@ -45,19 +45,15 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] val hostname: String = publicHostname.getOrElse(invalidHostname)
   private[this] val port = publicPort.getOrElse(invalidPort)
 
-  private[this] var nodeCache: Seq[Node] = _
-  private[this] var nameHolder: ClusterNameHolder = _
+  protected val nodes: Seq[Node]
+  protected val nameHolder: ClusterNameHolder
 
   /**
     * useful to debug. setting it to false to keep all testing containers.
     */
   private[this] val cleanup: Boolean = true
 
-  protected def createNodes(): Seq[Node]
-
-  protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder
-
-  protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator
+  protected def createConfigurator(hostname: String, port: Int): Configurator
 
   private[this] var configurator: Configurator = _
 
@@ -84,13 +80,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    nodeCache = createNodes()
-    if (nodeCache.isEmpty || port == invalidPort || hostname == invalidHostname) {
+    if (nodes.isEmpty || port == invalidPort || hostname == invalidHostname) {
       skipTest("public hostname and public port must exist so all tests in BasicTests4StreamApp are ignored")
     } else {
-      nameHolder = createNameHolder(nodeCache)
       bkName = nameHolder.generateClusterName()
-      configurator = createConfigurator(nodeCache, hostname, port)
+      configurator = createConfigurator(hostname, port)
       zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -99,19 +93,18 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       access = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       // add all available nodes
-      nodeCache.foreach { node =>
+      nodes.foreach { node =>
         result(
           nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
         )
       }
-      val nodes = result(nodeApi.list())
-      nodes.size shouldBe nodeCache.size
-      nodeCache.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
+      nodes.size shouldBe nodes.size
+      nodes.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
 
       // create zookeeper cluster
       log.info("create zkCluster...start")
       val zkCluster = result(
-        zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
+        zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodes.take(1).map(_.name).toSet).create()
       )
       result(zkApi.start(zkCluster.key))
       assertCluster(() => result(zkApi.list()),
@@ -125,7 +118,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         bkApi.request
           .name(bkName)
           .zookeeperClusterName(zkCluster.name)
-          .nodeNames(nodeCache.take(1).map(_.name).toSet)
+          .nodeNames(nodes.take(1).map(_.name).toSet)
           .create())
       result(bkApi.start(bkCluster.key))
       assertCluster(() => result(bkApi.list()),
@@ -176,7 +169,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     await(() => result(access.get(stream.key)).state.isDefined)
 
     // get the actually container names
-    val map = nodeCache.map { node =>
+    val map = nodes.map { node =>
       if (configurator.k8sClient.isDefined) {
         val client = configurator.k8sClient.get
         node -> result(client.containers()).map(_.name).filter(name => name.contains(properties.name))
@@ -352,7 +345,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     result(access.get(stream.key)).name shouldBe stream.name
   }
 
-  def testDeadNodes(): Unit = if (nodeCache.size < 2) skipTest(s"${methodName()} requires two nodes at least")
+  def testDeadNodes(): Unit = if (nodes.size < 2) skipTest(s"${methodName()} requires two nodes at least")
   else {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
     val to = TopicKey.of("default", CommonUtils.randomString(5))
@@ -373,7 +366,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         .name(nameHolder.generateClusterName())
         .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
         .brokerClusterName(bkName)
-        .nodeNames(nodeCache.map(_.hostname).toSet)
+        .nodeNames(nodes.map(_.hostname).toSet)
         .fromTopicKey(topic1.key)
         .toTopicKey(topic2.key)
         .create())
@@ -385,12 +378,12 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       res.state.isDefined && res.state.get == ClusterState.RUNNING.name
     })
 
-    result(access.get(stream.key)).nodeNames shouldBe nodeCache.map(_.hostname).toSet
+    result(access.get(stream.key)).nodeNames shouldBe nodes.map(_.hostname).toSet
     result(access.get(stream.key)).deadNodes shouldBe Set.empty
 
     // remove a container directly
-    val aliveNodes: Set[Node] = nodeCache.slice(1, nodeCache.size).toSet
-    val deadNodes = nodeCache.toSet -- aliveNodes
+    val aliveNodes: Set[Node] = nodes.slice(1, nodes.size).toSet
+    val deadNodes = nodes.toSet -- aliveNodes
     nameHolder.release(
       clusterNames = Set(stream.name),
       // remove the container from first node
@@ -401,7 +394,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     await { () =>
       val cluster = result(access.get(stream.key))
-      cluster.nodeNames == nodeCache.map(_.hostname).toSet &&
+      cluster.nodeNames == nodes.map(_.hostname).toSet &&
       cluster.deadNodes == deadNodes.map(_.hostname)
     }
   }

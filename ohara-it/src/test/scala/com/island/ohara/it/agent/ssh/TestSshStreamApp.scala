@@ -16,18 +16,19 @@
 
 package com.island.ohara.it.agent.ssh
 
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.EnvTestingUtils
+import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder}
 import com.island.ohara.it.category.SshCollieGroup
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[SshCollieGroup]))
 class TestSshStreamApp extends BasicTests4StreamApp {
+  override protected val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 
-  override protected def createNodes(): Seq[NodeApi.Node] = CollieTestUtils.nodeCache()
-  override protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator =
+  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
+
+  override protected def createConfigurator(hostname: String, port: Int): Configurator =
     Configurator.builder.hostname(hostname).port(port).build()
-  override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = ClusterNameHolder(nodeCache)
 }

@@ -18,7 +18,8 @@ package com.island.ohara.it.connector
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.EnvTestingUtils
+import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConnectorGroup
 import org.junit.Ignore
 import org.junit.experimental.categories.Category
@@ -28,16 +29,16 @@ import org.junit.experimental.categories.Category
 class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   private[this] var _clusterCollie: ClusterCollie = _
 
-  override protected val nodeCache: Seq[NodeApi.Node] = CollieTestUtils.nodeCache()
+  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.sshNodes()
 
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodeCache)
+  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 
   override protected def clusterCollie(): ClusterCollie = _clusterCollie
 
-  override protected def createConfigurator(nodeCache: Seq[NodeApi.Node], hostname: String, port: Int): Configurator =
+  override protected def createConfigurator(hostname: String, port: Int): Configurator =
     Configurator.builder.hostname(hostname).port(port).build()
 
   override protected def checkClusterInfo(): Unit =
-    if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
-    else _clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(nodeCache)).build()
+    if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
+    else _clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(nodes)).build()
 }

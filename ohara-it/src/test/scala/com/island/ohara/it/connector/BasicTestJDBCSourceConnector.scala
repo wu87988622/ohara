@@ -22,7 +22,6 @@ import java.sql.{Statement, Timestamp}
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
@@ -35,9 +34,9 @@ import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.connector.TaskSetting
 import com.typesafe.scalalogging.Logger
+import org.junit.{After, Before, Test}
 
 import scala.collection.JavaConverters._
-import org.junit.{After, Before, Test}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
@@ -72,7 +71,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
   protected def insertTableSQL(tableName: String, columns: Seq[String], value: Int): String
   protected def checkClusterInfo(): Unit
 
-  protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator
+  protected def createConfigurator(hostname: String, port: Int): Configurator
 
   /**
     * This function for setting database JDBC jar file name.
@@ -128,7 +127,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       ))
     result(zk_start(zkCluster.name))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
@@ -146,7 +145,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
         exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zkClusterName = zkCluster.name,
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       ))
     result(bk_start(bkCluster.name))
     assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
@@ -158,7 +157,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
       containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
     })
     log.info("[WORKER] start to test worker")
-    val nodeName = nodeCache.head.name
+    val nodeName = nodes.head.name
     val clusterName = generateClusterName()
     result(wk_exist(clusterName)) shouldBe false
     log.info("[WORKER] verify:nonExists done")
@@ -269,7 +268,7 @@ abstract class BasicTestJDBCSourceConnector extends BasicTestConnectorCollie {
   }
 
   private[this] def runConfiguratorServer(): Unit = {
-    configurator = createConfigurator(nodeCache, publicHostname, publicPort)
+    configurator = createConfigurator(publicHostname, publicPort)
     val jarApi: FileInfoApi.Access = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val jar = new File(CommonUtils.path(jarFolderPath, jdbcDriverJarFileName))
     jdbcJarFileInfo = result(jarApi.request.file(jar).upload())

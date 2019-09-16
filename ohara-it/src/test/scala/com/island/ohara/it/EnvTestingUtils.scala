@@ -14,21 +14,51 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
-import com.island.ohara.agent.docker.DockerClient
+package com.island.ohara.it
+
+import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
-private[it] object CollieTestUtils {
+import org.junit.AssumptionViolatedException
+
+/**
+  * includes helper methods to fetch important information from env variables. This class reduce the duplicate codes
+  * from each ITs.
+  */
+object EnvTestingUtils {
+
+  val K8S_MASTER_KEY: String = "ohara.it.k8s"
+  private[this] val K8S_NODES_KEY: String = "ohara.it.k8s.nodename"
+
+  def k8sClient(): K8SClient = K8SClient(
+    sys.env.getOrElse(K8S_MASTER_KEY, throw new AssumptionViolatedException(s"$K8S_MASTER_KEY does not exists!!!")))
+
+  def k8sNodes(): Seq[Node] = sys.env
+    .get(K8S_NODES_KEY)
+    .map(
+      _.split(",")
+        .map(node =>
+          Node(
+            hostname = node,
+            port = Some(22),
+            user = Some("fake"),
+            password = Some("fake"),
+            services = Seq.empty,
+            lastModified = CommonUtils.current(),
+            validationReport = None,
+            tags = Map.empty
+        ))
+        .toSeq)
+    .getOrElse(throw new AssumptionViolatedException(s"$K8S_NODES_KEY does not exists!!!"))
 
   /**
     * form: user:password@hostname:port.
     * NOTED: this key need to be matched with another key value in ohara-it/build.gradle
     */
-  val key = "ohara.it.docker"
+  private[this] val SSH_NODES_KEY = "ohara.it.docker"
 
-  def nodeCache(): Seq[Node] = sys.env
-    .get(key)
+  def sshNodes(): Seq[Node] = sys.env
+    .get(SSH_NODES_KEY)
     .map(_.split(",").map { nodeInfo =>
       val user = nodeInfo.split(":").head
       val password = nodeInfo.split("@").head.split(":").last
@@ -45,31 +75,5 @@ private[it] object CollieTestUtils {
         tags = Map.empty
       )
     }.toSeq)
-    .getOrElse(Seq.empty)
-    .map { node =>
-      assertImages(
-        node,
-        Seq(
-          "centos:7",
-          ZookeeperApi.IMAGE_NAME_DEFAULT,
-          BrokerApi.IMAGE_NAME_DEFAULT,
-          WorkerApi.IMAGE_NAME_DEFAULT,
-          StreamApi.IMAGE_NAME_DEFAULT
-        )
-      )
-      node
-    }
-
-  private[this] def assertImages(node: Node, imageNames: Seq[String]): Unit = {
-    val client =
-      DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-    try {
-      imageNames.foreach { image =>
-        import org.scalatest.Matchers._
-        val images = client.imageNames()
-        withClue(s"The images in ${node.name} are ${images.mkString(",")}. Required:$image")(
-          client.imageNames().contains(image) shouldBe true)
-      }
-    } finally client.close()
-  }
+    .getOrElse(throw new AssumptionViolatedException(s"$SSH_NODES_KEY does not exists!!!"))
 }

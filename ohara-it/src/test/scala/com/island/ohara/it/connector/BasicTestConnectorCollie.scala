@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
 
-  protected val nodeCache: Seq[Node]
+  protected val nodes: Seq[Node]
 
   protected def clusterCollie(): ClusterCollie
 
@@ -58,13 +58,13 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   }
 
   protected[this] def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
-    clusterCollie.zookeeperCollie.clusters().map(_.keys.toSeq)
+    clusterCollie().zookeeperCollie.clusters().map(_.keys.toSeq)
 
   protected[this] def zk_stop(clusterName: String): Future[Unit] =
-    clusterCollie.zookeeperCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
+    clusterCollie().zookeeperCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   protected[this] def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    clusterCollie.zookeeperCollie.containers(ObjectKey.of(group, clusterName))
+    clusterCollie().zookeeperCollie.containers(ObjectKey.of(group, clusterName))
 
   protected[this] def zk_start(clusterName: String): Future[Unit] =
     // We don't need to start a cluster in collie since we already start a cluster by create method
@@ -79,7 +79,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
                                 electionPort: Int,
                                 peerPort: Int,
                                 nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    clusterCollie.zookeeperCollie.creator
+    clusterCollie().zookeeperCollie.creator
       .group(group)
       .clusterName(clusterName)
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
@@ -107,13 +107,13 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     Future.successful(Unit)
 
   protected[this] def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] =
-    clusterCollie.brokerCollie.clusters().map(_.keys.toSeq)
+    clusterCollie().brokerCollie.clusters().map(_.keys.toSeq)
 
   protected[this] def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    clusterCollie.brokerCollie.containers(ObjectKey.of(group, clusterName))
+    clusterCollie().brokerCollie.containers(ObjectKey.of(group, clusterName))
 
   protected[this] def bk_stop(clusterName: String): Future[Unit] =
-    clusterCollie.brokerCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
+    clusterCollie().brokerCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   protected[this] def bk_delete(clusterName: String): Future[Unit] =
     // We don't need to remove data stored in configurator in collie since there is nothing to do
@@ -125,7 +125,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
                                 jmxPort: Int,
                                 zkClusterName: String,
                                 nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
-    clusterCollie.brokerCollie.creator
+    clusterCollie().brokerCollie.creator
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .group(group)
       .clusterName(clusterName)
@@ -137,19 +137,19 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
       .create()
 
   protected[this] def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    clusterCollie.workerCollie.containers(ObjectKey.of(group, clusterName))
+    clusterCollie().workerCollie.containers(ObjectKey.of(group, clusterName))
 
   protected[this] def wk_exist(clusterName: String): Future[Boolean] =
-    clusterCollie.workerCollie.exist(ObjectKey.of(group, clusterName))
+    clusterCollie().workerCollie.exist(ObjectKey.of(group, clusterName))
 
   protected[this] def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] =
-    clusterCollie.workerCollie.clusters().map(_.keys.toSeq)
+    clusterCollie().workerCollie.clusters().map(_.keys.toSeq)
 
   protected def wk_stop(clusterName: String): Future[Unit] =
-    clusterCollie.workerCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
+    clusterCollie().workerCollie.forceRemove(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   protected[this] def wk_logs(clusterName: String): Future[Seq[String]] =
-    clusterCollie.workerCollie.logs(ObjectKey.of(group, clusterName)).map(_.values.toSeq)
+    clusterCollie().workerCollie.logs(ObjectKey.of(group, clusterName)).map(_.values.toSeq)
 
   protected[this] def wk_delete(clusterName: String): Future[Unit] =
     // We don't need to remove data stored in configurator in collie since there is nothing to do
@@ -160,7 +160,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
                                 jmxPort: Int,
                                 bkClusterName: String,
                                 nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
-    clusterCollie.workerCollie.creator
+    clusterCollie().workerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .group(group)

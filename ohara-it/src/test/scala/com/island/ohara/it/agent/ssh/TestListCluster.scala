@@ -21,8 +21,8 @@ import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
+import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConfiguratorGroup
 import com.typesafe.scalalogging.Logger
 import org.junit.experimental.categories.Category
@@ -33,10 +33,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[SshConfiguratorGroup]))
 class TestListCluster extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestListCluster])
-  private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
-  private[this] val nameHolder = ClusterNameHolder(nodeCache)
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  private[this] val nameHolder = ClusterNameHolder(nodes)
 
-  private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
+  private[this] val nodeCollie: NodeCollie = NodeCollie(nodes)
 
   private[this] val clusterCollie: ClusterCollie =
     ClusterCollie.builderOfSsh.nodeCollie(nodeCollie).build()
@@ -44,22 +44,18 @@ class TestListCluster extends IntegrationTest with Matchers {
   private[this] val cleanup: Boolean = true
 
   @Before
-  def setup(): Unit = if (nodeCache.isEmpty)
-    skipTest(
-      s"${CollieTestUtils.key} don't exist so all tests in ${classOf[TestListCluster].getSimpleName} are ignored")
-  else
-    nodeCache.foreach { node =>
-      val dockerClient =
-        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-      try {
-        withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
-      } finally dockerClient.close()
-    }
+  def setup(): Unit = nodes.foreach { node =>
+    val dockerClient =
+      DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+    try {
+      withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
+        dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
+      withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
+        dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+      withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
+        dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+    } finally dockerClient.close()
+  }
 
   @Test
   def deadZookeeperClusterShouldNotDisappear(): Unit = {
@@ -73,7 +69,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .clientPort(CommonUtils.availablePort())
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
-        .nodeNames(nodeCache.map(_.name).toSet)
+        .nodeNames(nodes.map(_.name).toSet)
         .clusterName(name)
         .create()
     )
@@ -91,7 +87,7 @@ class TestListCluster extends IntegrationTest with Matchers {
     )
 
     log.info("[TestListCluster] before check zk containers")
-    nodeCache.foreach { node =>
+    nodes.foreach { node =>
       val dockerClient =
         DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       try await(() => result(dockerClient.activeContainers(_.contains(name))).isEmpty)
@@ -112,7 +108,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .clientPort(CommonUtils.availablePort())
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
-        .nodeNames(nodeCache.map(_.name).toSet)
+        .nodeNames(nodes.map(_.name).toSet)
         .clusterName(nameHolder.generateClusterName())
         .create()
     )
@@ -136,7 +132,7 @@ class TestListCluster extends IntegrationTest with Matchers {
           .group(BrokerApi.BROKER_GROUP_DEFAULT)
           .clientPort(CommonUtils.availablePort())
           .exporterPort(CommonUtils.availablePort())
-          .nodeNames(nodeCache.map(_.name).toSet)
+          .nodeNames(nodes.map(_.name).toSet)
           .clusterName(name)
           .zookeeperClusterName(zkCluster.name)
           .create()
@@ -155,7 +151,7 @@ class TestListCluster extends IntegrationTest with Matchers {
       )
 
       log.info("[TestListCluster] before check bk containers")
-      nodeCache.foreach { node =>
+      nodes.foreach { node =>
         val dockerClient =
           DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
         try await(() => result(dockerClient.activeContainers(_.contains(name))).isEmpty)

@@ -21,8 +21,8 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
+import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConfiguratorGroup
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
@@ -33,16 +33,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[SshConfiguratorGroup]))
 class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
 
-  private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 
-  private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodeCache)
+  private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 
   private[this] val configurator: Configurator = Configurator.builder.build()
 
   @Before
-  def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtils.key} is required")
-  else {
-    nodeCache.foreach { node =>
+  def setup(): Unit = {
+    nodes.foreach { node =>
       val dockerClient =
         DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       try {
@@ -50,7 +49,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
           dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
-    nodeCache.foreach { node =>
+    nodes.foreach { node =>
       result(
         NodeApi.access
           .hostname(configurator.hostname)
@@ -72,7 +71,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .port(configurator.port)
         .request
         .name(nameHolder.generateClusterName())
-        .nodeNames(nodeCache.map(_.name).toSet)
+        .nodeNames(nodes.map(_.name).toSet)
         .create()
         .flatMap(
           info =>
@@ -92,9 +91,8 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
             .map(_.flatMap(_.containers))),
       cluster.name
     )
-    val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list())
-    nodes.isEmpty shouldBe false
-    nodes.foreach { node =>
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).isEmpty shouldBe false
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).foreach { node =>
       node.services.isEmpty shouldBe false
       withClue(s"${node.services}")(node.services.map(_.clusterNames.size).sum > 0 shouldBe true)
     }

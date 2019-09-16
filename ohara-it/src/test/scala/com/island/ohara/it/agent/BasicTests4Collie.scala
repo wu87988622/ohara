@@ -52,7 +52,7 @@ import scala.concurrent.Future
 abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTests4Collie])
   private[this] val numberOfClusters = 2
-  protected val nodeCache: Seq[Node]
+  protected val nodes: Seq[Node]
 
   //--------------------------------------------------[zk operations]--------------------------------------------------//
   protected def zk_exist(clusterName: String): Future[Boolean]
@@ -127,7 +127,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   @Test
   def testZk(): Unit = {
     log.info("start to run zookeeper cluster")
-    val nodeName: String = nodeCache.head.name
+    val nodeName: String = nodes.head.name
     val clusterName = generateClusterName()
     result(zk_exist(clusterName)) shouldBe false
     val clientPort = CommonUtils.availablePort()
@@ -199,7 +199,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       ))
     result(zk_start(zkCluster.name))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
@@ -207,7 +207,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val clusterName = generateClusterName()
     result(bk_exist(clusterName)) shouldBe false
     log.info(s"[BROKER] verify existence of broker cluster:$clusterName...done")
-    val nodeName: String = nodeCache.head.name
+    val nodeName: String = nodes.head.name
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
@@ -280,10 +280,10 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
     await(() => result(bk_exist(previousCluster.name)))
-    log.info(s"[BROKER] nodeCache:$nodeCache previous:${previousCluster.nodeNames}")
+    log.info(s"[BROKER] nodes:$nodes previous:${previousCluster.nodeNames}")
     an[IllegalArgumentException] should be thrownBy result(
       bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
-    val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
+    val freeNodes = nodes.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
       await { () =>
         // nothing happens if we add duplicate nodes
@@ -407,7 +407,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       ))
     result(zk_start(zkCluster.name))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
@@ -418,12 +418,12 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zkClusterName = zkCluster.name,
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       ))
     result(bk_start(bkCluster.name))
     assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
     log.info("[WORKER] start to test worker")
-    val nodeName = nodeCache.head.name
+    val nodeName = nodes.head.name
     val clusterName = generateClusterName()
     result(wk_exist(clusterName)) shouldBe false
     log.info("[WORKER] verify:nonExists done")
@@ -547,7 +547,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     await(() => result(wk_exist(previousCluster.name)))
     an[IllegalArgumentException] should be thrownBy result(
       wk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
-    val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
+    val freeNodes = nodes.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
       val newNode = freeNodes.head.name
       // it is ok to add duplicate nodes
@@ -598,7 +598,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiZkClustersOnSingleNode(): Unit = {
-    if (nodeCache.size < 2) skipTest("the size of nodes must be bigger than 1")
+    if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
     val names = (0 until numberOfClusters).map(_ => generateClusterName())
     val zkClusters = names.map { name =>
       result(
@@ -607,7 +607,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
-          nodeNames = nodeCache.map(_.name).toSet
+          nodeNames = nodes.map(_.name).toSet
         ).flatMap(info => zk_start(info.name).flatMap(_ => zk_cluster(info.name))))
     }
     // add a bit wait to make sure the cluster is up
@@ -626,7 +626,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       result(zk_logs(c.name)).foreach { log =>
         // If we start a single-node zk cluster, zk print a "error" warning to us to say that you are using a single-node,
         // and we won't see the connection exception since there is only a node.
-        if (nodeCache.size == 1) withClue(log)(log.toLowerCase.contains("exception") shouldBe false)
+        if (nodes.size == 1) withClue(log)(log.toLowerCase.contains("exception") shouldBe false)
         // By contrast, if we start a true zk cluster, the exception ensues since the connections between nodes fail in beginning.
         else withClue(log)(log.toLowerCase.contains("- ERROR") shouldBe false)
         log.isEmpty shouldBe false
@@ -636,7 +636,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiBkClustersOnSingleNode(): Unit = {
-    if (nodeCache.size < 2) skipTest("the size of nodes must be bigger than 1")
+    if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
     val zkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     val bkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     // NOTED: It is illegal to run multi bk clusters on same zk cluster so we have got to instantiate multi zk clusters first.
@@ -647,7 +647,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
-          nodeNames = Set(nodeCache.head.name)
+          nodeNames = Set(nodes.head.name)
         ).flatMap(info => zk_start(info.name).flatMap(_ => zk_cluster(info.name))))
     }
     zkClusters.foreach(zkCluster =>
@@ -661,7 +661,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             exporterPort = CommonUtils.availablePort(),
             jmxPort = CommonUtils.availablePort(),
             zkClusterName = zk.name,
-            nodeNames = Set(nodeCache.head.name)
+            nodeNames = Set(nodes.head.name)
           ))
         result(bk_start(bkCluster.name))
         testTopic(bkCluster)
@@ -670,7 +670,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiWkClustersOnSingleNode(): Unit = {
-    if (nodeCache.size < 2) skipTest("the size of nodes must be bigger than 1")
+    if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
     val zkName = generateClusterName()
     val bkName = generateClusterName()
     val wkNames = (0 until numberOfClusters).map(_ => generateClusterName())
@@ -685,7 +685,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       )
     )
     result(zk_start(zkCluster.name))
@@ -698,7 +698,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zkClusterName = zkCluster.name,
-        nodeNames = Set(nodeCache.head.name)
+        nodeNames = Set(nodes.head.name)
       ))
     result(bk_start(bkCluster.name))
     assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
@@ -715,7 +715,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             configTopicName = configTopicNames(index),
             offsetTopicName = offsetTopicNames(index),
             statusTopicName = statusTopicNames(index),
-            nodeNames = nodeCache.map(_.name).toSet
+            nodeNames = nodes.map(_.name).toSet
           ))
     }
     wkClusters.foreach(wk => result(wk_start(wk.name)))

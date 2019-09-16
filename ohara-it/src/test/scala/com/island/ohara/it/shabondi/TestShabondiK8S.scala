@@ -20,21 +20,18 @@ import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.ContainerApi._
 import com.island.ohara.client.configurator.v0.ShabondiApi
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.{IntegrationTest, EnvTestingUtils}
 import org.junit.{After, Before, Ignore, Test}
 import org.scalatest.{Inside, Matchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Random
 
 // TODO: https://github.com/oharastream/ohara/issues/1008
 @Ignore
 class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
 
-  private val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
-  private val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
   private val podLabelName = "shabondi"
   private val domainName = "default"
   private val hostname = "shabondi-host"
@@ -46,10 +43,12 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
   private def awaitResult[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
   @Before
-  def setup(): Unit = if (sys.env.contains(K8S_API_SERVER_URL_KEY) && sys.env.contains(K8S_API_NODE_NAME_KEY)) {
-    k8sClient = K8SClient(sys.env(K8S_API_SERVER_URL_KEY))
-    nodeName = Random.shuffle(sys.env(K8S_API_NODE_NAME_KEY).split(',').toList).head
-  } else skipTest("Skip shabondi IT before k8s environment fix.")
+  def setup(): Unit = {
+    k8sClient = EnvTestingUtils.k8sClient()
+    val nodes = EnvTestingUtils.k8sNodes()
+    if (nodes.isEmpty) skipTest("Skip shabondi IT before k8s environment fix.")
+    else nodeName = nodes.head.hostname
+  }
 
   @Test
   def testCreatAndRemovePod(): Unit = {

@@ -25,8 +25,8 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
+import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConfiguratorGroup
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
 import com.typesafe.scalalogging.Logger
@@ -41,7 +41,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 
-  private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 
   private[this] val invalidHostname = "unknown"
 
@@ -64,7 +64,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val nameHolder = ClusterNameHolder(nodeCache)
+  private[this] val nameHolder = ClusterNameHolder(nodes)
 
   /**
     * used to debug. setting false to disable cleanup of containers after testing.
@@ -72,12 +72,12 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val cleanup: Boolean = true
 
   @Before
-  def setup(): Unit = if (nodeCache.isEmpty || port == invalidPort || hostname == invalidHostname)
+  def setup(): Unit = if (nodes.isEmpty || port == invalidPort || hostname == invalidHostname)
     skipTest("public hostname and public port must exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
   else {
 
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodeCache.foreach { node =>
+    nodes.foreach { node =>
       result(
         nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
     }
@@ -100,7 +100,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     val zkCluster = result(
       zkApi.request
         .name(nameHolder.generateClusterName())
-        .nodeNames(nodeCache.map(_.name).toSet)
+        .nodeNames(nodes.map(_.name).toSet)
         .create()
         .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key))))
     assertCluster(() => result(zkApi.list()),
@@ -111,7 +111,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       bkApi.request
         .name(nameHolder.generateClusterName())
         .zookeeperClusterName(zkCluster.name)
-        .nodeNames(nodeCache.map(_.name).toSet)
+        .nodeNames(nodes.map(_.name).toSet)
         .create()
         .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key))))
     assertCluster(() => result(bkApi.list()),
@@ -123,14 +123,14 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .name(nameHolder.generateClusterName())
         .brokerClusterName(bkCluster.name)
         .jarKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
-        .nodeName(nodeCache.head.name)
+        .nodeName(nodes.head.name)
         .create())
     result(wkApi.start(wkCluster.key))
     assertCluster(() => result(wkApi.list()),
                   () => result(containerApi.get(wkCluster.name).map(_.flatMap(_.containers))),
                   wkCluster.name)
     // add all remaining node to the running worker cluster
-    nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
+    nodes.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
       result(wkApi.addNode(wkCluster.key, n.name))
     }
     // make sure all workers have loaded the test-purposed connector.

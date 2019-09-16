@@ -29,48 +29,31 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.ClusterNameHolder
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.it.{IntegrationTest, EnvTestingUtils}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Try
 
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
-  private[this] val log = Logger(classOf[TestK8SSimpleCollie])
-  private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
-  private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
-
-  private[this] val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
-  private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
-
   private[this] val RANDOM_LEN: Int = 7
 
-  private[this] val nodeCache = new ArrayBuffer[Node]()
-  private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
+  private[this] val nodeNames: Set[String] = nodes.map(_.hostname).toSet
+  private[this] val nodeCollie: NodeCollie = NodeCollie(nodes)
   private[this] var nameHolder: ClusterNameHolder = _
   private[this] var clusterCollie: ClusterCollie = _
-  private[this] var nodeNames: Set[String] = _
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   @Before
   def testBefore(): Unit = {
-    val message = s"The k8s is skip test, Please setting $K8S_API_SERVER_URL_KEY and $K8S_API_NODE_NAME_KEY properties"
-    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) {
-      log.info(message)
-      skipTest(message)
-    }
-    log.info(s"Test K8S API Server is: ${API_SERVER_URL.get}, NodeName is: ${NODE_SERVER_NAME.get}")
-
-    clusterCollie = ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(K8SClient(API_SERVER_URL.get)).build()
-    nodeNames = NODE_SERVER_NAME.get.split(",").toSet
-    if (nodeNames.size < 2) skipTest("TestK8SSimpleCollie requires two nodes at least")
-    nameHolder = ClusterNameHolder(nodeCache, K8SClient(API_SERVER_URL.get))
+    clusterCollie = ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(EnvTestingUtils.k8sClient()).build()
+    if (nodes.size < 2) skipTest("TestK8SSimpleCollie requires two nodes at least")
+    nameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
   }
 
   private[this] def waitZookeeperCluster(objectKey: ObjectKey): Unit = {
@@ -123,9 +106,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
     val secondNode: String = nodeNames.last
     firstNode should not be secondNode
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
-    nodeCache.append(node(secondNode))
 
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
 
@@ -152,8 +132,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testBrokerCollie(): Unit = {
     val firstNode: String = nodeNames.head
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
@@ -188,8 +166,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testWorkerCollie(): Unit = {
     val firstNode: String = nodeNames.head
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
@@ -239,10 +215,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
     val secondNode: String = nodeNames.last
 
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
-    nodeCache.append(node(secondNode))
-
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
@@ -285,10 +257,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testAddWorkerNode(): Unit = {
     val firstNode: String = nodeNames.head
     val secondNode: String = nodeNames.last
-
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
-    nodeCache.append(node(secondNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
@@ -334,9 +302,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
     val secondNode: String = nodeNames.last
 
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
-    nodeCache.append(node(secondNode))
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
@@ -365,7 +330,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(brokerCollie.removeNode(brokerClusterInfo.key, firstNode))
     waitBrokerCluster(brokerClusterInfo.key)
 
-    val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
+    val k8sClient: K8SClient = EnvTestingUtils.k8sClient()
     await(() => !Await.result(k8sClient.containers(), TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
     result(brokerCollie.cluster(brokerClusterName))._2.size shouldBe 1
   }
@@ -374,10 +339,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testRemoveWorkerNode(): Unit = {
     val firstNode: String = nodeNames.head
     val secondNode: String = nodeNames.last
-
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
-    nodeCache.append(node(secondNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
@@ -415,7 +376,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(workerCollie.removeNode(workerClusterInfo.key, firstNode))
     waitWorkerCluster(workerClusterInfo.key)
 
-    val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
+    val k8sClient: K8SClient = EnvTestingUtils.k8sClient()
     await(() => !Await.result(k8sClient.containers(), TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
     result(workerCollie.cluster(workerClusterName))._2.size shouldBe 1
   }
@@ -423,8 +384,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testClusters(): Unit = {
     val firstNode: String = nodeNames.head
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = nameHolder.generateClusterName()
@@ -442,8 +401,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testLog(): Unit = {
     val firstNode: String = nodeNames.head
-    nodeCache.clear()
-    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = nameHolder.generateClusterName()
@@ -478,7 +435,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     waitWorkerCluster(workerClusterInfo.key)
     val workerContainerHostName: String = result(workerCollie.cluster(workerClusterName))._2.head.hostname
 
-    val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
+    val k8sClient: K8SClient = EnvTestingUtils.k8sClient()
     await(
       () =>
         Await
