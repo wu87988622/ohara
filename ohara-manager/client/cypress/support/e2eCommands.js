@@ -23,7 +23,11 @@ import { axiosInstance } from '../../src/api/apiUtils';
 
 Cypress.Commands.add('addWorker', () => {
   const { name: nodeName } = utils.getFakeNode();
-  const workerName = generate.serviceName({ prefix: 'worker' });
+  const prefix = Cypress.env('servicePrefix');
+  const workerName = generate.serviceName({
+    prefix: `${prefix}wk`,
+    length: 5,
+  });
 
   // Store the worker name in the Cypress env
   // as we'll be using it throughout the tests
@@ -72,7 +76,7 @@ Cypress.Commands.add('addWorker', () => {
 
       if (workerIsReady || count > max) return;
 
-      // if worker is not ready yet, wait a 2 sec and make another request
+      // if worker is not ready yet, wait for 2 sec and make another request
       count++;
       cy.wait(2000);
       req(endPoint);
@@ -98,6 +102,7 @@ Cypress.Commands.add(
         const worker = workers.find(
           worker => worker.name === currentWorkerName,
         );
+
         return worker.brokerClusterName;
       })
       .as('brokerClusterName');
@@ -119,37 +124,46 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('removeWorkers', () => {
-  cy.request('GET', `api/nodes/${Cypress.env('nodeHost')}`).then(response => {
-    const { services } = response.body;
-    const workers = services.find(service => service.name === 'connect-worker');
+  // Get workers that are started by this test run
+  // via the `servicePrefix`
+  cy.request('GET', 'api/workers').then(response => {
+    const servicePrefix = Cypress.env('servicePrefix');
+    const workers = response.body.filter(worker =>
+      worker.name.includes(servicePrefix),
+    );
 
     if (isEmpty(workers)) return;
-    workers.clusterNames.forEach(workerName => {
-      cy.request('PUT', `api/workers/${workerName}/stop`);
+    workers.forEach(worker => {
+      const { name } = worker;
+
+      // Make a request to stop the worker and wait until the
+      // worker is stopped
+      cy.request('PUT', `api/workers/${name}/stop`);
 
       let count = 0;
       const max = 10;
-      // Make a request to configurator see if worker cluster is ready for use
       const req = endPoint => {
         cy.request('GET', endPoint).then(res => {
-          // When connectors field has the right connector info
-          // this means that everything is ready to be tested
-          const workerIsReady = res.body.state === undefined;
+          // If the `state` is not present, then the worker
+          // is safe to be deleted
+          const workerIsStopped = res.body.state === undefined;
 
-          if (workerIsReady || count > max) return;
+          if (workerIsStopped || count > max) return;
 
-          // if worker is not ready yet, wait a 2 sec and make another request
+          // Wait a bit longer and see if worker is stopped
           count++;
           cy.wait(2000);
           req(endPoint);
         });
       };
 
-      const endPoint = `api/workers/${workerName}`;
+      const endPoint = `api/workers/${name}`;
       cy.request('GET', endPoint).then(() => req(endPoint));
 
-      cy.request('DELETE', `api/workers/${workerName}`).then(() =>
-        utils.recursiveDeleteWorker('api/workers', workerName),
+      // Since the worker is stopped at this point, we can safely
+      // delete the service
+      cy.request('DELETE', `api/workers/${name}`).then(() =>
+        utils.recursiveDeleteWorker('api/workers', name),
       );
     });
   });

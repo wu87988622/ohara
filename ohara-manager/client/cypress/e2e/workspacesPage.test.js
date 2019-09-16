@@ -39,7 +39,11 @@ describe('WorkspacesPage', () => {
 
   it('creates a workspace', () => {
     const nodeName = Cypress.env('nodeHost');
-    const workerName = generate.serviceName({ prefix: 'worker' });
+    const prefix = Cypress.env('servicePrefix');
+    const workerName = generate.serviceName({
+      prefix: `${prefix}wk`,
+      length: 5,
+    });
 
     cy.visit(WORKSPACES)
       .getByText('New workspace')

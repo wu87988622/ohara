@@ -21,9 +21,9 @@ describe('Log API', () => {
 
   it('fetchLogs', () => {
     const nodeName = generate.serviceName({ prefix: 'node' });
-    const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
-    const brokerClusterName = generate.serviceName({ prefix: 'broker' });
-    const workerClusterName = generate.serviceName({ prefix: 'worker' });
+    const zookeeperClusterName = generate.serviceName({ prefix: 'zk' });
+    const brokerClusterName = generate.serviceName({ prefix: 'bk' });
+    const workerClusterName = generate.serviceName({ prefix: 'wk' });
 
     cy.createNode({
       name: nodeName,

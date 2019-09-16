@@ -21,5 +21,5 @@ const integrationFolderName = Cypress.config('integrationFolder')
 // Enable cypress to retry on fail end-to-end test
 if (integrationFolderName === 'e2e') {
   require('cypress-plugin-retries');
-  Cypress.env('RETRIES', 5);
+  Cypress.env('RETRIES', 3);
 }

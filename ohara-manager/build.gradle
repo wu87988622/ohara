@@ -109,8 +109,11 @@ task e2e {
 
         if(!project.hasProperty('ohara.manager.e2e.nodePass')) throw new IllegalArgumentException("ohara.manager.e2e.nodePass is required")
         String nodePass = project.getProperty('ohara.manager.e2e.nodePass')
+
+        if(!project.hasProperty('ohara.it.container.prefix')) throw new IllegalArgumentException("ohara.it.container.prefix is required")
+        String prefix = project.getProperty('ohara.it.container.prefix')
                
-        commandLine 'yarn', 'test:e2e:ci', '--port', 0, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass    
+        commandLine 'yarn', 'test:e2e:ci', '--port', 0, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass, '--servicePrefix', prefix
       }
     }
   }

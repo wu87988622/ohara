@@ -21,7 +21,7 @@ import * as generate from '../../src/utils/generate';
 
 const setup = () => {
   const nodeName = generate.serviceName({ prefix: 'node' });
-  const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
+  const zookeeperClusterName = generate.serviceName({ prefix: 'zk' });
 
   cy.createNode({
     name: nodeName,

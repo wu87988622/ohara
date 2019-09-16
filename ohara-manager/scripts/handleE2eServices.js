@@ -19,19 +19,18 @@ const axios = require('axios');
 const chalk = require('chalk');
 const { get, isNull } = require('lodash');
 
-const commonUtils = require('../utils/commonUtils');
 const utils = require('./scriptsUtils');
 
 /* eslint-disable no-console */
-const randomServiceName = () => {
+const randomServiceName = ({ length = 5, prefix }) => {
   const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let name = '';
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < length; i++) {
     name += possible.charAt(Math.floor(Math.random() * possible.length));
   }
 
-  return name;
+  return `${prefix}${name}`;
 };
 
 exports.getDefaultEnv = () => {
@@ -80,22 +79,28 @@ exports.createServices = async ({
   nodePort,
   nodeUser,
   nodePass,
+  servicePrefix,
 }) => {
   console.log(chalk.blue('Creating services for this test run'));
 
-  const zookeeperClusterName = 'zookeeper' + randomServiceName();
-  const brokerClusterName = 'broker' + randomServiceName();
+  const zookeeperClusterName = `${servicePrefix}${randomServiceName({
+    prefix: 'zk',
+  })}`;
+  const brokerClusterName = `${servicePrefix}${randomServiceName({
+    prefix: 'bk',
+  })}`;
+  const workerClusterName = `${servicePrefix}${randomServiceName({
+    prefix: 'wk',
+  })}`;
 
   try {
     await createNode({ apiRoot, nodeHost, nodePort, nodeUser, nodePass });
 
     const zookeeperUrl = `${apiRoot}/zookeepers`;
     const brokerUrl = `${apiRoot}/brokers`;
+    const workerUrl = `${apiRoot}/workers`;
 
     await axios.post(zookeeperUrl, {
-      clientPort: commonUtils.randomPort(),
-      electionPort: commonUtils.randomPort(),
-      peerPort: commonUtils.randomPort(),
       name: zookeeperClusterName,
       nodeNames: [nodeHost],
     });
@@ -108,11 +113,8 @@ exports.createServices = async ({
     });
 
     await axios.post(brokerUrl, {
-      clientPort: commonUtils.randomPort(),
-      exporterPort: commonUtils.randomPort(),
-      jmxPort: commonUtils.randomPort(),
-      zookeeperClusterName: zookeeperClusterName,
       name: brokerClusterName,
+      zookeeperClusterName,
       nodeNames: [nodeHost],
     });
 
@@ -120,6 +122,26 @@ exports.createServices = async ({
 
     await utils.waitUntil({
       condition: () => isServiceReady(`${brokerUrl}/${brokerClusterName}`),
+    });
+
+    await axios.post(workerUrl, {
+      name: workerClusterName,
+      brokerClusterName,
+      nodeNames: [nodeHost],
+      tags: {
+        broker: {
+          name: brokerClusterName,
+        },
+        zookeeper: {
+          name: zookeeperClusterName,
+        },
+      },
+    });
+
+    await axios.put(`${workerUrl}/${workerClusterName}/start`);
+
+    await utils.waitUntil({
+      condition: () => isServiceReady(`${workerUrl}/${workerClusterName}`),
     });
 
     console.log(chalk.green('Services created!'));
@@ -144,6 +166,7 @@ const deleteServices = async (services, apiRoot) => {
   for (let serviceName of serviceNames) {
     const apiUrl = `${apiRoot}/${serviceType}`;
     await axios.put(`${apiUrl}/${serviceName}/stop?force=true`);
+
     await utils.waitUntil({
       condition: () => isServiceStopped(`${apiUrl}/${serviceName}`),
     });
@@ -152,38 +175,36 @@ const deleteServices = async (services, apiRoot) => {
   }
 };
 
-const getByServiceType = services => {
-  let workers;
-  let brokers;
-  let zookeepers;
+const getByServiceType = (services, servicePrefix) => {
+  let workers = { serviceType: 'workers', serviceNames: [] };
+  let brokers = { serviceType: 'brokers', serviceNames: [] };
+  let zookeepers = { serviceType: 'zookeepers', serviceNames: [] };
 
   services.forEach(service => {
-    const { name, clusterNames: serviceNames } = service;
-
-    if (name === 'connect-worker') {
-      workers = { serviceType: 'workers', serviceNames };
+    if (service.name.includes(servicePrefix)) {
+      workers.serviceNames.push(service.name);
     }
 
-    if (name === 'broker') {
-      brokers = { serviceType: 'brokers', serviceNames };
+    if (service.tags.broker) {
+      brokers.serviceNames.push(service.tags.broker.name);
     }
 
-    if (name === 'zookeeper') {
-      zookeepers = {
-        serviceType: 'zookeepers',
-        serviceNames,
-      };
+    if (service.tags.zookeeper) {
+      zookeepers.serviceNames.push(service.tags.zookeeper.name);
     }
   });
 
   return { workers, brokers, zookeepers };
 };
 
-exports.cleanServices = async (apiRoot, nodeName) => {
+exports.cleanServices = async (apiRoot, nodeName, servicePrefix) => {
   try {
-    const response = await axios.get(`${apiRoot}/nodes/${nodeName}`);
-    const services = response.data.services;
-    const { workers, brokers, zookeepers } = getByServiceType(services);
+    const response = await axios.get(`${apiRoot}/workers`);
+    const services = response.data;
+    const { workers, brokers, zookeepers } = getByServiceType(
+      services,
+      servicePrefix,
+    );
 
     // Note that the deleting order matters, it should goes like:
     // workers -> brokers -> zookeepers -> node

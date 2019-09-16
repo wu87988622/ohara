@@ -21,9 +21,9 @@ import * as generate from '../../src/utils/generate';
 
 const setup = () => {
   const nodeName = generate.serviceName({ prefix: 'node' });
-  const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
-  const brokerClusterName = generate.serviceName({ prefix: 'broker' });
-  const workerClusterName = generate.serviceName({ prefix: 'worker' });
+  const zookeeperClusterName = generate.serviceName({ prefix: 'zk' });
+  const brokerClusterName = generate.serviceName({ prefix: 'bk' });
+  const workerClusterName = generate.serviceName({ prefix: 'wk' });
   const topicName = generate.serviceName({ prefix: 'topic' });
 
   // The worker is not required in the test, so we're useing `workerClusterName`

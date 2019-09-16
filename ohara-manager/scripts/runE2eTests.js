@@ -26,7 +26,14 @@ const commonUtils = require('../utils/commonUtils');
 const { getConfig } = require('../utils/configHelpers');
 
 const { configurator, port } = getConfig();
-const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
+const {
+  prod = false,
+  nodeHost,
+  nodePort,
+  nodeUser,
+  nodePass,
+  servicePrefix,
+} = yargs.argv;
 
 /* eslint-disable no-process-exit, no-console */
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
@@ -40,6 +47,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   const envNodePort = nodePort ? nodePort : defaultEnv.nodePort;
   const envNodeUser = nodeUser ? nodeUser : defaultEnv.nodeUser;
   const envNodePass = nodePass ? nodePass : defaultEnv.nodePass;
+  const prefix = servicePrefix ? servicePrefix : defaultEnv.servicePrefix;
 
   try {
     await services.createServices({
@@ -48,6 +56,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
       nodePort: envNodePort,
       nodeUser: envNodeUser,
       nodePass: envNodePass,
+      servicePrefix: prefix,
     });
   } catch (error) {
     // Ignore the error, it's handle in the createServices function
@@ -120,6 +129,9 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     if (nodePass) {
       env.push(`nodePass=${nodePass}`);
     }
+    if (prefix) {
+      env.push(`servicePrefix=${prefix}`);
+    }
 
     return env.join(',');
   };
@@ -163,7 +175,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     );
 
     killSubProcess();
-    await services.cleanServices(configurator, envNodeHost);
+    await services.cleanServices(configurator, envNodeHost, prefix);
 
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);
