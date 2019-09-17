@@ -471,6 +471,7 @@ describe('plugin', () => {
         ],
       },
     });
+    cy.wait(5000);
     cy.putConnector({
       url: `/${perfName}/start?group=${workerName}-${pipelineName}`,
     });
