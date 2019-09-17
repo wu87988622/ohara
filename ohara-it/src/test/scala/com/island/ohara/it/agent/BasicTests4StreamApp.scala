@@ -134,6 +134,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     * I felt embarrassed about this test case as it produces a error to StreamApp via our public APIs.
     * TODO: Personally, We should protect our running cluster ... by chia
     */
+  @Test
   def testFailedClusterRemoveGracefully(): Unit = {
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
@@ -345,6 +346,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     result(access.get(stream.key)).name shouldBe stream.name
   }
 
+  @Test
   def testDeadNodes(): Unit = if (nodes.size < 2) skipTest(s"${methodName()} requires two nodes at least")
   else {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
