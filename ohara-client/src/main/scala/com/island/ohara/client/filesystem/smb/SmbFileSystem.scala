@@ -38,12 +38,10 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.collection.JavaConverters._
 
-private[filesystem] trait SmbFileSystem extends FileSystem
-
 private[filesystem] object SmbFileSystem {
   def builder: Builder = new Builder
 
-  class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[SmbFileSystem] {
+  class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FileSystem] {
     private[this] var hostname: String = _
     private[this] var port: Int = 445
     private[this] var user: String = _
@@ -92,17 +90,21 @@ private[filesystem] object SmbFileSystem {
       this
     }
 
-    override def build: SmbFileSystem = {
+    override def build: FileSystem = {
       CommonUtils.requireNonEmpty(hostname, () => "hostname can't be null or empty")
       CommonUtils.requireConnectionPort(port)
       CommonUtils.requireNonEmpty(user, () => "user can't be null or empty")
       CommonUtils.requireNonEmpty(password, () => "password can't be null or empty")
       CommonUtils.requireNonEmpty(shareName, () => "shareName can't be null or empty")
-      new SmbImpl(hostname, port, user, password, shareName)
+      new SmbFileSystemImpl(hostname, port, user, password, shareName)
     }
 
-    private[this] class SmbImpl(hostname: String, port: Int, user: String, password: String, shareName: String)
-        extends SmbFileSystem {
+    private[this] class SmbFileSystemImpl(hostname: String,
+                                          port: Int,
+                                          user: String,
+                                          password: String,
+                                          shareName: String)
+        extends FileSystem {
       private[this] val config: SmbConfig = SmbConfig
         .builder()
         .withTimeout(120, TimeUnit.SECONDS) // Timeout sets Read, Write, and Transact timeouts (default is 60 seconds)

@@ -28,13 +28,11 @@ import org.apache.hadoop.fs.{Path, RemoteIterator}
 
 import scala.collection.JavaConverters._
 
-private[filesystem] trait HdfsFileSystem extends FileSystem
-
 private[filesystem] object HdfsFileSystem {
   def builder(): Builder = new Builder
 
-  class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[HdfsFileSystem] {
-    private[this] val LOG = Logger(classOf[HdfsFileSystem])
+  class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FileSystem] {
+    private[this] val LOG = Logger(classOf[FileSystem])
     private[this] var url: String = _
 
     def url(value: String): Builder = {
@@ -42,13 +40,13 @@ private[filesystem] object HdfsFileSystem {
       this
     }
 
-    override def build: HdfsFileSystem = {
+    override def build: FileSystem = {
       val config = new Configuration()
       config.set("fs.defaultFS", url)
-      new HdfsImpl(org.apache.hadoop.fs.FileSystem.get(config))
+      new HdfsFileSystemImpl(org.apache.hadoop.fs.FileSystem.get(config))
     }
 
-    private[this] class HdfsImpl(hadoopFS: org.apache.hadoop.fs.FileSystem) extends HdfsFileSystem {
+    private[this] class HdfsFileSystemImpl(hadoopFS: org.apache.hadoop.fs.FileSystem) extends FileSystem {
 
       /**
         * Returns whether a file or folder exists

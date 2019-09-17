@@ -29,13 +29,11 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 
-private[filesystem] trait FtpFileSystem extends FileSystem
-
 private[filesystem] object FtpFileSystem {
   private[this] lazy val LOG = Logger(getClass.getName)
   def builder: Builder = new Builder
 
-  class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FtpFileSystem] {
+  class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FileSystem] {
     // private[this] val LOG = Logger(classOf[Ftp])
     private[this] var hostname: String = _
 
@@ -113,7 +111,7 @@ private[filesystem] object FtpFileSystem {
       this
     }
 
-    override def build: FtpFileSystem = {
+    override def build: FileSystem = {
       val hostname = CommonUtils.requireNonEmpty(Builder.this.hostname, () => "hostname can't be null or empty")
       val port = CommonUtils.requireConnectionPort(Builder.this.port)
       val user = CommonUtils.requireNonEmpty(Builder.this.user, () => "user can't be null or empty")
@@ -121,7 +119,7 @@ private[filesystem] object FtpFileSystem {
       val retryTimeout = Objects.requireNonNull(Builder.this.retryTimeout)
       val retryBackoff = Objects.requireNonNull(Builder.this.retryBackoff)
 
-      new FtpImpl(
+      new FtpFileSystemImpl(
         FtpClient
           .builder()
           .hostname(hostname)
@@ -133,7 +131,7 @@ private[filesystem] object FtpFileSystem {
           .build)
     }
 
-    private[this] class FtpImpl(client: FtpClient) extends FtpFileSystem {
+    private[this] class FtpFileSystemImpl(client: FtpClient) extends FileSystem {
 
       /**
         * Returns whether a file or folder exists
