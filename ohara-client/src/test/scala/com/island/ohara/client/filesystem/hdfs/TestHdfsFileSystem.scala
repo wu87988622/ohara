@@ -21,6 +21,7 @@ import java.io.File
 import com.island.ohara.client.filesystem.{FileSystem, FileSystemTestBase}
 import com.island.ohara.common.exception.OharaFileSystemException
 import com.island.ohara.common.util.CommonUtils
+import org.junit.Test
 import org.scalatest.Matchers
 
 class TestHdfsFileSystem extends FileSystemTestBase with Matchers {
@@ -34,6 +35,7 @@ class TestHdfsFileSystem extends FileSystemTestBase with Matchers {
   override protected val rootDir: String = tempFolder.toString
 
   // override this method because the Local HDFS doesn't support append()
+  @Test
   override def testAppend(): Unit = {
     val file = randomFile()
     fileSystem.create(file).close()

@@ -50,7 +50,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   @Before
-  def testBefore(): Unit = {
+  def before(): Unit = {
     clusterCollie = ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(EnvTestingUtils.k8sClient()).build()
     if (nodes.size < 2) skipTest("TestK8SSimpleCollie requires two nodes at least")
     nameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())

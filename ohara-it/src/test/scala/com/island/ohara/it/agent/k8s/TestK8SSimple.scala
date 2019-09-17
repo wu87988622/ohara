@@ -47,7 +47,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   private[this] var nodeServerNames: Seq[String] = _
 
   @Before
-  def testBefore(): Unit = {
+  def before(): Unit = {
     val message = s"The k8s is skip test, Please setting ${EnvTestingUtils.K8S_MASTER_KEY} properties"
     if (TestK8SSimple.API_SERVER_URL.isEmpty) {
       log.info(message)

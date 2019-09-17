@@ -16,8 +16,11 @@
 
 package com.island.ohara.assembly
 
+import java.lang.reflect.Method
+
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.shabondi.TestWebServer
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -92,5 +95,33 @@ class TestTestCases extends MediumTest with Matchers {
       throw new IllegalArgumentException(
         s"those classes:${invalidClasses.map(_.getName).mkString(",")} extend one of ${validTestGroups.mkString(",")} but they are not abstract class, " +
           "and their name don't start with \"Test\"")
+  }
+
+  @Test
+  def testCaseShouldHaveAnnotation(): Unit = {
+    val ignoredClasses: Set[Class[_]] = Set(classOf[TestWebServer])
+    val illegalCases: Map[Class[_], Set[Method]] = testClasses()
+      .filter(clz => clz.getMethods != null)
+      .filterNot(ignoredClasses.contains)
+      .map(
+        clz =>
+          clz -> clz.getMethods
+            .filter(_.getName.toLowerCase.startsWith("test"))
+            .filter { m =>
+              val annotations = m.getAnnotations
+              if (annotations == null || annotations.isEmpty) true
+              else !annotations.exists(_.annotationType() == classOf[Test])
+            }
+            .toSet)
+      .filter(_._2.nonEmpty)
+      .toMap
+    if (illegalCases.nonEmpty) {
+      val sum = illegalCases
+        .map {
+          case (clz, methods) => methods.map(m => s"${clz.getName}.${m.getName}").mkString(",")
+        }
+        .mkString("|")
+      throw new AssertionError(s"we neglected to add @Test to following test cases $sum")
+    }
   }
 }
