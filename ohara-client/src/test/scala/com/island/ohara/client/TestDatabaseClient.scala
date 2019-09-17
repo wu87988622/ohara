@@ -19,7 +19,7 @@ package com.island.ohara.client
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -38,7 +38,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
   @Test
   def testList(): Unit = {
     val before = client.tables().size
-    val tableName = methodName
+    val tableName = CommonUtils.randomString(10)
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     val cf2 = RdbColumn("cf2", "INTEGER", false)
@@ -52,7 +52,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
   @Test
   def testCreate(): Unit = {
     // postgresql use lower case...
-    val tableName = methodName
+    val tableName = CommonUtils.randomString(10)
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", true)
     val cf2 = RdbColumn("cf2", "INTEGER", false)
@@ -70,7 +70,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
 
   @Test
   def testDrop(): Unit = {
-    val tableName = methodName
+    val tableName = CommonUtils.randomString(10)
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     client.createTable(tableName, Seq(cf0, cf1))

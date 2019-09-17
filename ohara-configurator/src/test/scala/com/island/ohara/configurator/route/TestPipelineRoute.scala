@@ -280,7 +280,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(pipelineApi.request.name(methodName()).flow(topic.key, connector.key).create())
+    val pipeline = result(
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, connector.key).create())
     pipeline.flows.size shouldBe 1
     pipeline.objects.size shouldBe 2
   }

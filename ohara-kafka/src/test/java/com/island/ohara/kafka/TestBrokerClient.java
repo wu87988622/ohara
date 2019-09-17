@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.exception.OharaExecutionException;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.testing.With3Brokers;
 import java.util.Collections;
@@ -38,7 +39,7 @@ public class TestBrokerClient extends With3Brokers {
 
   @Test
   public void testAddPartitions() {
-    String topicName = methodName();
+    String topicName = CommonUtils.randomString(10);
     client
         .topicCreator()
         .numberOfPartitions(1)
@@ -58,7 +59,7 @@ public class TestBrokerClient extends With3Brokers {
 
   @Test
   public void testCreate() {
-    String topicName = methodName();
+    String topicName = CommonUtils.randomString(10);
     int numberOfPartitions = 2;
     short numberOfReplications = (short) 2;
     client
@@ -87,7 +88,7 @@ public class TestBrokerClient extends With3Brokers {
 
   @Test
   public void testTopicOptions() {
-    String topicName = methodName();
+    String topicName = CommonUtils.randomString(10);
     int numberOfPartitions = 2;
     short numberOfReplications = (short) 2;
     Map<String, String> options =
@@ -127,7 +128,7 @@ public class TestBrokerClient extends With3Brokers {
           // enable kafka save the latest message for each key
           .deleted()
           .timeout(java.time.Duration.ofSeconds(30))
-          .topicName(methodName())
+          .topicName(CommonUtils.randomString(10))
           .create();
 
       client
@@ -137,7 +138,7 @@ public class TestBrokerClient extends With3Brokers {
           // enable kafka save the latest message for each key
           .deleted()
           .timeout(java.time.Duration.ofSeconds(30))
-          .topicName(methodName())
+          .topicName(CommonUtils.randomString(10))
           .create();
     } catch (OharaExecutionException e) {
       assertTrue(e.getCause() instanceof TopicExistsException);

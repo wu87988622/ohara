@@ -347,7 +347,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   }
 
   @Test
-  def testDeadNodes(): Unit = if (nodes.size < 2) skipTest(s"${methodName()} requires two nodes at least")
+  def testDeadNodes(): Unit = if (nodes.size < 2) skipTest(s"requires two nodes at least")
   else {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
     val to = TopicKey.of("default", CommonUtils.randomString(5))

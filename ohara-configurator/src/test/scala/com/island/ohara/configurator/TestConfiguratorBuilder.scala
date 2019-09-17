@@ -40,11 +40,11 @@ class TestConfiguratorBuilder extends MediumTest with Matchers {
 
   @Test
   def fileToHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder.homeFolder(
-    CommonUtils.createTempJar(methodName()).getCanonicalPath)
+    CommonUtils.createTempJar(CommonUtils.randomString(10)).getCanonicalPath)
 
   @Test
   def autoMkdirForHomeFolder(): Unit = {
-    val folder = CommonUtils.createTempFolder(methodName())
+    val folder = CommonUtils.createTempFolder(CommonUtils.randomString(10))
     folder.delete() shouldBe true
     folder.exists() shouldBe false
     Configurator.builder.homeFolder(folder.getCanonicalPath)
@@ -125,8 +125,8 @@ class TestConfiguratorBuilder extends MediumTest with Matchers {
 
   @Test
   def reassignHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
-    .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
+    .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
+    .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
     .build()
 
   @Test
@@ -134,7 +134,7 @@ class TestConfiguratorBuilder extends MediumTest with Matchers {
   // in fake mode, we have created a store
     .fake(1, 1)
     // you can't change the folder of store now
-    .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
+    .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
     .build()
 
   @Test

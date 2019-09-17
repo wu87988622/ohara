@@ -390,20 +390,20 @@ public class TestCommonUtils extends SmallTest {
 
   @Test
   public void testTemporaryFile() {
-    File f = CommonUtils.createTempJar(methodName());
+    File f = CommonUtils.createTempJar(CommonUtils.randomString(10));
     Assert.assertTrue(f.exists());
   }
 
   @Test
   public void testTemporaryFolder() {
-    File f = CommonUtils.createTempFolder(methodName());
+    File f = CommonUtils.createTempFolder(CommonUtils.randomString(10));
     Assert.assertTrue(f.exists());
     CommonUtils.requireFolder(f);
   }
 
   @Test
   public void testExist() {
-    File file = CommonUtils.createTempJar(methodName());
+    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
     Assert.assertTrue(file.delete());
     assertException(IllegalArgumentException.class, () -> CommonUtils.requireExist(file));
   }
@@ -411,7 +411,7 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testNotExist() throws IOException {
     int data = 10;
-    File file = CommonUtils.createTempJar(methodName());
+    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(data);
     }
@@ -421,11 +421,11 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testCopyFile() throws IOException {
     int data = 10;
-    File file = CommonUtils.createTempJar(methodName());
+    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(data);
     }
-    File newFile = CommonUtils.createTempJar(methodName());
+    File newFile = CommonUtils.createTempJar(CommonUtils.randomString(10));
     Assert.assertTrue(newFile.delete());
     assertException(NullPointerException.class, () -> CommonUtils.copyFile(null, newFile));
     assertException(NullPointerException.class, () -> CommonUtils.copyFile(file, null));
@@ -439,11 +439,11 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testMoveFile() throws IOException {
     int data = 10;
-    File file = CommonUtils.createTempJar(methodName());
+    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(data);
     }
-    File newFile = CommonUtils.createTempJar(methodName());
+    File newFile = CommonUtils.createTempJar(CommonUtils.randomString(10));
     Assert.assertTrue(newFile.delete());
     assertException(NullPointerException.class, () -> CommonUtils.moveFile(null, newFile));
     assertException(NullPointerException.class, () -> CommonUtils.moveFile(file, null));

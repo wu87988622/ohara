@@ -71,7 +71,7 @@ class TestLogRoute extends SmallTest with Matchers {
 
   @Test
   def fetchLogFromStream(): Unit = {
-    val file = result(fileApi.request.file(CommonUtils.createTempJar(methodName())).upload())
+    val file = result(fileApi.request.file(CommonUtils.createTempJar(CommonUtils.randomString(10))).upload())
     val fromTopic = result(topicApi.request.create())
     result(topicApi.start(fromTopic.key))
     val toTopic = result(topicApi.request.create())

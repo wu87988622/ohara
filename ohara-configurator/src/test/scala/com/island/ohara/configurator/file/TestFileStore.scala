@@ -141,7 +141,7 @@ class TestFileStore extends SmallTest with Matchers {
 
   @Test
   def testReopen(): Unit = {
-    val folder = CommonUtils.createTempFolder(methodName())
+    val folder = CommonUtils.createTempFolder(CommonUtils.randomString(10))
     val port = CommonUtils.availablePort()
     val store0 =
       FileStore.builder.homeFolder(folder.getCanonicalPath).hostname(CommonUtils.anyLocalAddress()).port(port).build()
@@ -174,7 +174,7 @@ class TestFileStore extends SmallTest with Matchers {
     val url = fileInfo.url
     url.getProtocol shouldBe "http"
     val input = url.openStream()
-    val tempFile = CommonUtils.createTempJar(methodName())
+    val tempFile = CommonUtils.createTempJar(CommonUtils.randomString(10))
     if (tempFile.exists()) tempFile.delete() shouldBe true
     try Files.copy(input, tempFile.toPath)
     finally input.close()
@@ -187,7 +187,7 @@ class TestFileStore extends SmallTest with Matchers {
     val hostname = CommonUtils.randomString(10)
     val port = CommonUtils.availablePort()
     val store = FileStore.builder
-      .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
+      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
       .hostname(hostname)
       .port(port)
       .build
@@ -205,7 +205,7 @@ class TestFileStore extends SmallTest with Matchers {
     val store = FileStore.builder
       .hostname(CommonUtils.hostname())
       .port(22)
-      .homeFolder(CommonUtils.createTempFolder(methodName()).getAbsolutePath)
+      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getAbsolutePath)
       .acceptedExtensions(extensions)
       .build
     try {

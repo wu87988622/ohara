@@ -19,6 +19,7 @@ package com.island.ohara.agent.fake
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{PortMapping, PortPair}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
@@ -27,9 +28,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestFakeDockerClient extends SmallTest with Matchers {
 
-  val fake = new FakeDockerClient("fake_node")
+  private[this] val fake = new FakeDockerClient("fake_node")
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  private[this] val containerName: String = CommonUtils.randomString(10)
+
   @Before
   def setup(): Unit = {
     // create a fake container
@@ -37,7 +41,7 @@ class TestFakeDockerClient extends SmallTest with Matchers {
       .containerCreator()
       .imageName("fake_image")
       .hostname("localhost")
-      .name(methodName())
+      .name(containerName)
       .envs(Map("bar" -> "foo"))
       .portMappings(Map(1234 -> 5678))
       .create()
@@ -48,19 +52,19 @@ class TestFakeDockerClient extends SmallTest with Matchers {
 
     fake.imageNames().head shouldBe "fake_image"
 
-    result(fake.containers(_ == methodName())).size shouldBe 1
-    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.RUNNING.name
-    result(fake.containers(_ == methodName())).head.id shouldBe methodName()
-    result(fake.containers(_ == methodName())).head.nodeName shouldBe "fake_node"
-    result(fake.containers(_ == methodName())).head.hostname shouldBe "localhost"
-    result(fake.containers(_ == methodName())).head.environments shouldBe Map("bar" -> "foo")
-    result(fake.containers(_ == methodName())).head.portMappings.head shouldBe PortMapping("localhost",
-                                                                                           Seq(PortPair(1234, 5678)))
+    result(fake.containers(_ == containerName)).size shouldBe 1
+    result(fake.containers(_ == containerName)).head.state shouldBe ContainerState.RUNNING.name
+    result(fake.containers(_ == containerName)).head.id shouldBe containerName
+    result(fake.containers(_ == containerName)).head.nodeName shouldBe "fake_node"
+    result(fake.containers(_ == containerName)).head.hostname shouldBe "localhost"
+    result(fake.containers(_ == containerName)).head.environments shouldBe Map("bar" -> "foo")
+    result(fake.containers(_ == containerName)).head.portMappings.head shouldBe PortMapping("localhost",
+                                                                                            Seq(PortPair(1234, 5678)))
 
-    fake.stop(methodName())
-    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.EXITED.name
+    fake.stop(containerName)
+    result(fake.containers(_ == containerName)).head.state shouldBe ContainerState.EXITED.name
 
-    fake.remove(methodName())
+    fake.remove(containerName)
 
     result(fake.containers).size shouldBe 0
   }

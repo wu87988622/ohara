@@ -33,7 +33,7 @@ class TestFakeWorkerClient extends SmallTest with Matchers {
   def testControlConnector(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val className = methodName
+    val className = CommonUtils.randomString(10)
     val fake = new FakeWorkerClient()
     result(
       fake

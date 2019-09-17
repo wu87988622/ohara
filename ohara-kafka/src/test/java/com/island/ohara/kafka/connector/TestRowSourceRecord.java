@@ -32,7 +32,7 @@ public class TestRowSourceRecord extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void requireTopic() {
-    RowSourceRecord.builder().row(Row.of(Cell.of(methodName(), 123))).build();
+    RowSourceRecord.builder().row(Row.of(Cell.of(CommonUtils.randomString(10), 123))).build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -62,8 +62,8 @@ public class TestRowSourceRecord extends SmallTest {
 
   @Test
   public void testBuilderWithDefaultValue() {
-    Row row = Row.of(Cell.of(methodName(), 123));
-    String topic = methodName();
+    Row row = Row.of(Cell.of(CommonUtils.randomString(10), 123));
+    String topic = CommonUtils.randomString(10);
 
     RowSourceRecord r = RowSourceRecord.builder().topicName(topic).row(row).build();
     assertEquals(topic, r.topicName());
@@ -76,8 +76,8 @@ public class TestRowSourceRecord extends SmallTest {
 
   @Test
   public void testBuilder() {
-    Row row = Row.of(Cell.of(methodName(), 123));
-    String topic = methodName();
+    Row row = Row.of(Cell.of(CommonUtils.randomString(10), 123));
+    String topic = CommonUtils.randomString(10);
     long ts = CommonUtils.current();
     int partition = 123;
     Map<String, String> sourceOffset = Collections.singletonMap("abc", "ddd");
@@ -103,8 +103,8 @@ public class TestRowSourceRecord extends SmallTest {
   @Test(expected = UnsupportedOperationException.class)
   public void failedToModifySourcePartition() {
     RowSourceRecord.builder()
-        .topicName(methodName())
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .topicName(CommonUtils.randomString(10))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .build()
         .sourceOffset()
         .remove("a");
@@ -113,8 +113,8 @@ public class TestRowSourceRecord extends SmallTest {
   @Test(expected = UnsupportedOperationException.class)
   public void failedToModifySourceOffset() {
     RowSourceRecord.builder()
-        .topicName(methodName())
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .topicName(CommonUtils.randomString(10))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .build()
         .sourceOffset()
         .remove("a");

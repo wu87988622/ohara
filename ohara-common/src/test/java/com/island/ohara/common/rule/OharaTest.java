@@ -17,8 +17,6 @@
 package com.island.ohara.common.rule;
 
 import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.rules.TestName;
 
 /** import or extends to simplify test */
 public abstract class OharaTest {
@@ -42,12 +40,6 @@ public abstract class OharaTest {
             e);
     }
     throw new AssertionError("Assert ERROR: No exception throws");
-  }
-
-  @Rule public final TestName _testName = new TestName();
-
-  protected String methodName() {
-    return _testName.getMethodName();
   }
 
   /**

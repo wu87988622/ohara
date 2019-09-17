@@ -118,7 +118,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testPipeline(): Unit = {
-    val topicName = methodName
+    val topicName = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(topicName).create())
     result(topicApi.start(topic.key))
 

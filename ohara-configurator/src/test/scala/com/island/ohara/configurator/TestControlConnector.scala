@@ -89,7 +89,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def testUpdateRunningConnector(): Unit = {
-    val topicName = methodName
+    val topicName = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(topicName).create())
     val sink = result(
       connectorApi.request
@@ -128,7 +128,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def deleteRunningConnector(): Unit = {
-    val topicName = methodName
+    val topicName = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(topicName).create())
     val sink = result(
       connectorApi.request

@@ -43,7 +43,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
   @Test
   def testReopen(): Unit = {
-    val folder = CommonUtils.createTempFolder(methodName())
+    val folder = CommonUtils.createTempFolder(CommonUtils.randomString(10))
 
     val value0 = createData()
     val value1 = createData()

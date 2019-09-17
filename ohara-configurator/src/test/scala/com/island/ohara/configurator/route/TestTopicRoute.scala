@@ -78,7 +78,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def removeTopicFromNonexistentBrokerCluster(): Unit = {
-    val name = methodName()
+    val name = CommonUtils.randomString(10)
     val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
     result(
       topicApi.request
@@ -259,7 +259,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def deleteAnTopicRemovedFromKafka(): Unit = {
-    val topicName = methodName
+    val topicName = CommonUtils.randomString(10)
 
     val topic = result(topicApi.request.name(topicName).create())
 

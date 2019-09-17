@@ -20,6 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.config.StreamDefUtils;
@@ -51,7 +52,7 @@ public class TestWordCountExample extends WithBroker {
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
     settings.putIfAbsent(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), methodName());
+    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(10));
     settings.putIfAbsent(
         StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
         "[" + TopicKey.toJsonString(fromTopic) + "]");

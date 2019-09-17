@@ -45,7 +45,7 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requireTopic() {
     RowSinkRecord.builder()
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
@@ -68,7 +68,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireTimestamp() {
     RowSinkRecord.builder()
         .topicName("asdasd")
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .partition(123)
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
@@ -79,7 +79,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void requirePartition() {
     RowSinkRecord.builder()
         .topicName("asdasd")
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
@@ -90,7 +90,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireTimestampType() {
     RowSinkRecord.builder()
         .topicName("asdasd")
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
         .offset(123)
@@ -101,7 +101,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireOffset() {
     RowSinkRecord.builder()
         .topicName("asdasd")
-        .row(Row.of(Cell.of(methodName(), 123)))
+        .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
@@ -110,8 +110,8 @@ public class TestRowSinkRecord extends SmallTest {
 
   @Test
   public void testBuilder() {
-    Row row = Row.of(Cell.of(methodName(), 123));
-    String topic = methodName();
+    Row row = Row.of(Cell.of(CommonUtils.randomString(10), 123));
+    String topic = CommonUtils.randomString(10);
     long ts = CommonUtils.current();
     int partition = 123;
     long offset = 12345;

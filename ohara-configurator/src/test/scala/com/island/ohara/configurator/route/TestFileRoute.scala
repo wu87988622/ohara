@@ -39,7 +39,7 @@ class TestFileRoute extends SmallTest with Matchers {
     FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def tmpFile(bytes: Array[Byte]): File = {
-    val f = CommonUtils.createTempJar(methodName())
+    val f = CommonUtils.createTempJar(CommonUtils.randomString(10))
     val output = new FileOutputStream(f)
     try output.write(bytes)
     finally output.close()
@@ -50,7 +50,7 @@ class TestFileRoute extends SmallTest with Matchers {
   @Test
   def testUpload(): Unit = {
     // upload jar to random group
-    val data = methodName().getBytes
+    val data = CommonUtils.randomString(10).getBytes
     val f = tmpFile(data)
     val jar = result(fileApi.request.file(f).upload())
     jar.size shouldBe f.length()
@@ -85,7 +85,7 @@ class TestFileRoute extends SmallTest with Matchers {
       Map("a" -> JsString("b")),
       Map("b" -> JsNumber(123)),
     )
-    val file = tmpFile(methodName().getBytes)
+    val file = tmpFile(CommonUtils.randomString(10).getBytes)
     tagsList.foreach { tags =>
       result(fileApi.request.file(file).tags(tags).upload())
     }
@@ -99,7 +99,7 @@ class TestFileRoute extends SmallTest with Matchers {
 
   @Test
   def testDelete(): Unit = {
-    val data = methodName().getBytes
+    val data = CommonUtils.randomString(10).getBytes
     val f = tmpFile(data)
     val jar = result(fileApi.request.file(f).upload())
     jar.size shouldBe f.length()
@@ -114,7 +114,7 @@ class TestFileRoute extends SmallTest with Matchers {
 
   @Test
   def testDeleteJarUsedInStreamApp(): Unit = {
-    val data = methodName().getBytes
+    val data = CommonUtils.randomString(10).getBytes
     val name = CommonUtils.randomString(10)
     val f = tmpFile(data)
     // upload jar
@@ -156,7 +156,7 @@ class TestFileRoute extends SmallTest with Matchers {
 
   @Test
   def failToRemoveFileUsedByWorkerCluster(): Unit = {
-    val data = methodName().getBytes
+    val data = CommonUtils.randomString(10).getBytes
     val f = tmpFile(data)
     val jar = result(fileApi.request.file(f).upload())
 

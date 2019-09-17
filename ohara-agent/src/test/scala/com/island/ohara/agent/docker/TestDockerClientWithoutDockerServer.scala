@@ -58,7 +58,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
 
   @Test
   def testSetHostname(): Unit = {
-    val hostname = methodName()
+    val hostname = CommonUtils.randomString(10)
     DockerClientImpl
       .toSshCommand(
         hostname = hostname,
@@ -77,8 +77,8 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
 
   @Test
   def testSetEnvs(): Unit = {
-    val key = s"key-${methodName()}"
-    val value = s"value-${methodName()}"
+    val key = s"key-${CommonUtils.randomString(10)}"
+    val value = s"value-${CommonUtils.randomString(10)}"
     DockerClientImpl
       .toSshCommand(
         hostname = CommonUtils.randomString(5),
