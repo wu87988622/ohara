@@ -90,8 +90,14 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                 .mkString(",")
 
               val route = resolveHostNames(
-                (existNodes.keys.map(_.hostname) ++ newNodes.keys.map(_.hostname) ++ brokerContainers
-                  .map(_.nodeName)).toSet)
+                (existNodes.keys.map(_.hostname)
+                  ++ newNodes.keys.map(_.hostname)
+                  ++ brokerContainers.map(_.nodeName)).toSet
+                // make sure the worker can connect to configurator for downloading jars
+                // Normally, the jar host name should be resolvable by worker since
+                // we should add the "hostname" to configurator for most cases...
+                // This is for those configurators that have no hostname (for example, temp configurator)
+                  ++ creation.jarInfos.map(_.url.getHost).toSet)
               existNodes.foreach {
                 case (node, container) => hookOfNewRoute(node, container, route)
               }
