@@ -336,8 +336,7 @@ describe('WorkspacesPage', () => {
 describe('plugin', () => {
   let workerName;
   const jarName = 'ohara-it-sink.jar';
-
-  beforeEach(() => {
+  before(() => {
     const prefix = Cypress.env('servicePrefix');
     workerName = generate.serviceName({
       prefix: `${prefix}wk`,
@@ -346,7 +345,9 @@ describe('plugin', () => {
     cy.deleteTestPlugin({ jarName, workerName });
     cy.removeWorkers();
     cy.addWorker({ jarName, workerName });
+  });
 
+  beforeEach(() => {
     cy.server();
     cy.route('GET', 'api/workers').as('getWorkers');
     cy.route('GET', 'api/workers/*').as('getWorker');

@@ -199,10 +199,10 @@ const getByServiceType = (services, servicePrefix) => {
 
 exports.cleanServices = async (apiRoot, nodeName, servicePrefix) => {
   try {
-    const response = await axios.get(`${apiRoot}/workers`);
-    const services = response.data;
+    const workersRes = await axios.get(`${apiRoot}/workers`);
+
     const { workers, brokers, zookeepers } = getByServiceType(
-      services,
+      workersRes.data,
       servicePrefix,
     );
 
@@ -212,6 +212,21 @@ exports.cleanServices = async (apiRoot, nodeName, servicePrefix) => {
     await deleteServices(workers, apiRoot);
     await deleteServices(brokers, apiRoot);
     await deleteServices(zookeepers, apiRoot);
+
+    //get last broker and zookeepers
+    const brokersRes = await axios.get(`${apiRoot}/brokers`);
+    const zookeepersRes = await axios.get(`${apiRoot}/zookeepers`);
+    const lastBrokers = {
+      serviceType: 'brokers',
+      serviceNames: brokersRes.data.map(bk => bk.name),
+    };
+    const lastZookeepers = {
+      serviceType: 'zookeepers',
+      serviceNames: zookeepersRes.data.map(zk => zk.name),
+    };
+    await deleteServices(lastBrokers, apiRoot);
+    await deleteServices(lastZookeepers, apiRoot);
+
     await axios.delete(`${apiRoot}/nodes/${nodeName}`);
   } catch (error) {
     console.log(
