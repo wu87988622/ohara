@@ -9,7 +9,8 @@
     "setup": "yarn && yarn build",
     "start": "react-scripts start",
     "build": "CI=true react-scripts build",
-    "lint": "CI=true eslint --max-warnings 0 src cypress",
+    "lint": "eslint --max-warnings 0 src cypress",
+    "lint:ci": "CI=true eslint --max-warnings 0 src cypress",
     "vet": "yarn audit",
     "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
@@ -54,6 +55,9 @@
       "react-app",
       "eslint:recommended"
     ],
+    "plugins": [
+      "jest"
+    ],
     "globals": {
       "cy": false,
       "Cypress": false,
@@ -68,6 +72,9 @@
       "expect": false
     },
     "rules": {
+      "jest/no-focused-tests": "warn",
+      "jest/valid-describe": "warn",
+      "jest/no-identical-title": "warn",
       "no-alert": "warn",
       "no-template-curly-in-string": "warn",
       "array-callback-return": "warn",

@@ -124,7 +124,7 @@ describe('<Overview />', () => {
     }
   });
 
-  fit('renders the page', async () => {
+  it('renders the page', async () => {
     await waitForElement(() => renderWithProvider(<Overview {...props} />));
   });
 
@@ -132,7 +132,7 @@ describe('<Overview />', () => {
   // since these tests require a LOT of mocking, it's probably to
   // test them in the end-to-end for now
 
-  fit('renders the correct paper titles', async () => {
+  it('renders the correct paper titles', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
 
     getByText('Basic info');
@@ -142,7 +142,7 @@ describe('<Overview />', () => {
     getByText('Stream Jars');
   });
 
-  fit('renders the correct basic info content', async () => {
+  it('renders the correct basic info content', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
 
     getByText('Worker Image: ' + props.worker.imageName);
@@ -150,7 +150,7 @@ describe('<Overview />', () => {
     getByText('Zookeeper Image: ' + props.worker.tags.zookeeper.imageName);
   });
 
-  fit('renders the correct nodes headers', async () => {
+  it('renders the correct nodes headers', async () => {
     const { getByText, getAllByText } = await renderWithProvider(
       <Overview {...props} />,
     );
@@ -160,7 +160,7 @@ describe('<Overview />', () => {
     getAllByText('More info');
   });
 
-  fit('renders the correct nodes content', async () => {
+  it('renders the correct nodes content', async () => {
     const { getByText, getAllByText } = await renderWithProvider(
       <Overview {...props} />,
     );
@@ -169,7 +169,7 @@ describe('<Overview />', () => {
     getAllByText(props.worker.nodeNames[0] + ':' + props.worker.clientPort);
   });
 
-  fit('renders the correct topics headers', async () => {
+  it('renders the correct topics headers', async () => {
     const { getByText, getAllByText } = await renderWithProvider(
       <Overview {...props} />,
     );
@@ -179,7 +179,7 @@ describe('<Overview />', () => {
     getByText('Replication factor');
   });
 
-  fit('renders the correct topics content', async () => {
+  it('renders the correct topics content', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
 
     getByText(topics[0].name);
@@ -189,14 +189,14 @@ describe('<Overview />', () => {
     getByText(replicaValue.toString());
   });
 
-  fit('renders the correct connectors headers ', async () => {
+  it('renders the correct connectors headers ', async () => {
     const { getAllByText } = await renderWithProvider(<Overview {...props} />);
 
     getAllByText('Name');
     getAllByText('More info');
   });
 
-  fit('renders the correct connectors content', async () => {
+  it('renders the correct connectors content', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
 
     getByText('ConsoleSink');
@@ -206,14 +206,14 @@ describe('<Overview />', () => {
     getByText('JDBCSourceConnector');
   });
 
-  fit('renders the correct stream jars headers', async () => {
+  it('renders the correct stream jars headers', async () => {
     const { getAllByText } = await renderWithProvider(<Overview {...props} />);
 
     getAllByText('Jar name');
     getAllByText('File size(KB)');
   });
 
-  fit('renders the correct stream jars content', async () => {
+  it('renders the correct stream jars content', async () => {
     const { getAllByText } = await renderWithProvider(<Overview {...props} />);
 
     getAllByText(jars.name);

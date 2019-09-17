@@ -130,21 +130,6 @@ describe('getEditable()', () => {
   });
 });
 
-describe('getDisplayValue()', () => {
-  it('uses defaultValue if configValue is not given', () => {
-    const defaultValue = generate.id();
-    expect(utils.getDisplayValue({ defaultValue })).toBe(defaultValue);
-  });
-
-  it(`uses configValue instead of defaultValue if these is one`, () => {
-    const configValue = generate.id();
-    const defaultValue = generate.id();
-    expect(utils.getDisplayValue({ configValue, defaultValue })).toBe(
-      configValue,
-    );
-  });
-});
-
 describe('changeKeySeparator()', () => {
   it('change key separator from `.` to `_`', () => {
     const key = 'abc.efg';

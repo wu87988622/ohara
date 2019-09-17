@@ -57,15 +57,6 @@ describe('<InputField />', () => {
     expect(input).toHaveProperty('value', props.input.value);
   });
 
-  it('renders input field text value', () => {
-    const props = setup();
-    const { getByTestId } = render(<InputField {...props} />);
-    const input = getByTestId('input-field').querySelector(
-      'input[type="text"]',
-    );
-    expect(input).toHaveProperty('value', props.input.value);
-  });
-
   it('handles input field text value changed', () => {
     const props = setup();
     const { getByTestId } = render(<InputField {...props} />);
