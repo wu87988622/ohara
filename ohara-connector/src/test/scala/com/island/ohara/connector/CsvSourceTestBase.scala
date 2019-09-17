@@ -24,7 +24,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.{BrokerClient, Consumer}
+import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.connector.csv.CsvConnector._
 import com.island.ohara.kafka.connector.csv.CsvSourceConnector
@@ -59,24 +59,23 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
     row.cells().asScala.map(_.value.toString).mkString(",")
   })
 
-  private[this] val brokerClient = BrokerClient.of(testUtil.brokersConnProps())
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   protected val fileSystem: FileSystem
 
   protected val connectorClass: Class[_ <: CsvSourceConnector]
 
-  protected val setupProps: Map[String, String]
+  protected def setupProps: Map[String, String]
 
-  protected var props: Map[String, String] = _
+  protected def props: Map[String, String] = defaultProps ++ setupProps
 
   protected def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  protected def inputDir(): String = props.getOrElse(INPUT_FOLDER_CONFIG, "")
+  protected def inputDir: String = props(INPUT_FOLDER_CONFIG)
 
-  protected def completedDir(): String = props.getOrElse(COMPLETED_FOLDER_CONFIG, "")
+  protected def completedDir: String = props(COMPLETED_FOLDER_CONFIG)
 
-  protected def errorDir(): String = props.getOrElse(ERROR_FOLDER_CONFIG, "")
+  protected def errorDir: String = props(ERROR_FOLDER_CONFIG)
 
   protected def setupConnector(props: Map[String, String], schema: Seq[Column]): (TopicKey, ConnectorKey) =
     setupConnector(props, Some(schema))
@@ -95,13 +94,14 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
-      val creator = workerClient.connectorCreator
+      val creator = workerClient
+        .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(connectorClass)
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .settings(props)
-      if (!schema.isEmpty) creator.columns(schema.get)
+      if (schema.isDefined) creator.columns(schema.get)
       creator.create()
     })
     (topicKey, connectorKey)
@@ -147,8 +147,6 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    props = defaultProps ++ setupProps
-
     // cleanup all files in order to avoid corrupted files
     fileSystem.reMkdirs(inputDir)
     fileSystem.reMkdirs(completedDir)
@@ -156,14 +154,8 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
     fileSystem.listFileNames(inputDir).asScala.size shouldBe 0
     fileSystem.listFileNames(completedDir).asScala.size shouldBe 0
     fileSystem.listFileNames(errorDir).asScala.size shouldBe 0
-
     setupInput()
-
     fileSystem.listFileNames(inputDir).asScala.isEmpty shouldBe false
-    brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(methodName()).create()
-    val topicInfo = brokerClient.topicDescription(methodName())
-    topicInfo.numberOfPartitions() shouldBe 1
-    topicInfo.numberOfReplications() shouldBe 1
   }
 
   @Test
@@ -396,7 +388,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
     try {
       CommonUtils.await(
         () => {
-          fileSystem.listFileNames(inputDir).asScala.size == 0
+          fileSystem.listFileNames(inputDir).asScala.isEmpty
         },
         Duration.ofSeconds(20)
       )
