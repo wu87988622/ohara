@@ -244,7 +244,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val brokerClusterInfo2: BrokerClusterInfo = result(brokerCollie.addNode(brokerClusterInfo1.key, secondNode))
 
     brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
-    brokerClusterInfo2.connectionProps shouldBe s"$secondNode:$brokerClientPort,$firstNode:$brokerClientPort"
+    brokerClusterInfo2.connectionProps should include(s"$secondNode:$brokerClientPort")
+    brokerClusterInfo2.connectionProps should include(s"$firstNode:$brokerClientPort")
 
     brokerClusterInfo1.zookeeperClusterName shouldBe zkClusterName
     brokerClusterInfo2.zookeeperClusterName shouldBe zkClusterName
@@ -293,8 +294,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val workerClusterInfo2: WorkerClusterInfo = result(workerCollie.addNode(workerClusterInfo1.key, secondNode))
     brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
     workerClusterInfo1.connectionProps shouldBe s"$firstNode:$workerClientPort"
-    workerClusterInfo2.connectionProps.contains(s"$secondNode:$workerClientPort,$firstNode:$workerClientPort") shouldBe true
-
+    workerClusterInfo2.connectionProps should include(s"$secondNode:$workerClientPort")
+    workerClusterInfo2.connectionProps should include(s"$firstNode:$workerClientPort")
   }
 
   @Test
