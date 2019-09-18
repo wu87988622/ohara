@@ -493,7 +493,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     curCluster = testAddNodeToRunningWorkerCluster(curCluster)
     testConnectors(curCluster)
     testJmx(curCluster)
-    curCluster = testRemoveNodeToRunningWorkerCluster(curCluster)
+    // The issue of inconsistent settings after adding/removing nodes.
+    // This issue is going to resolve in #2677.
+    curCluster = testRemoveNodeToRunningWorkerCluster(curCluster, nodeName)
     testConnectors(curCluster)
     testJmx(curCluster)
     result(wk_stop(clusterName))
@@ -573,10 +575,11 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     } else previousCluster
   }
 
-  private[this] def testRemoveNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
+  private[this] def testRemoveNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo,
+                                                         excludedNode: String): WorkerClusterInfo = {
     await(() => result(wk_exist(previousCluster.name)))
     if (previousCluster.nodeNames.size > 1) {
-      val beRemovedNode = previousCluster.nodeNames.head
+      val beRemovedNode = previousCluster.nodeNames.filter(_ != excludedNode).head
       await(() => {
         log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.name}")
         result(wk_removeNode(previousCluster.name, beRemovedNode))

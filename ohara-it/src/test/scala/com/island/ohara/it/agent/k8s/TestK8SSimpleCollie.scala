@@ -390,14 +390,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val zkClusterName1: String = nameHolder.generateClusterName()
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
     // for zookeeper, we assign node name to "hostname" field
-    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(firstNode)) shouldBe 0
+    result(zookeeperCollie.clusters())
+      .flatMap(x => x._2)
+      .count(x => x.name.contains(zkClusterName1) && x.hostname.contains(firstNode)) shouldBe 0
+
     val zkClientPort1: Int = CommonUtils.availablePort()
     val zkPeerPort1: Int = CommonUtils.availablePort()
     val zkElectionPort1: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName1, firstNode, zkClientPort1, zkPeerPort1, zkElectionPort1)
     // for zookeeper, we assign node name to "hostname" field
-    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(firstNode)) shouldBe 1
+    result(zookeeperCollie.clusters())
+      .flatMap(x => x._2)
+      .count(x => x.name.contains(zkClusterName1) && x.hostname.contains(firstNode)) shouldBe 1
 
   }
 
