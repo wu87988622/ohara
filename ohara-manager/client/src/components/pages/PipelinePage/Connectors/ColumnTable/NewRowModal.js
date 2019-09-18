@@ -29,21 +29,28 @@ const NewRowModal = props => {
     <Form
       onSubmit={handleConfirmClick}
       initialValues={{ types: 'STRING' }}
-      render={({ handleSubmit }) => {
+      render={({ handleSubmit, form }) => {
         return (
           <Modal
             isActive={isActive}
             title="New row"
             width="290px"
             confirmBtnText="Create"
-            handleConfirm={handleSubmit}
-            handleCancel={handleModalClose}
+            handleConfirm={values => {
+              handleSubmit(values);
+              form.reset();
+            }}
+            handleCancel={() => {
+              form.reset();
+              handleModalClose();
+            }}
           >
             <form>
               <FormInner>
                 <FormGroup>
                   <Label>Column name</Label>
                   <Field
+                    type="text"
                     name="columnName"
                     width="100%"
                     placeholder="Column name"
@@ -53,6 +60,7 @@ const NewRowModal = props => {
                 <FormGroup>
                   <Label>New column name</Label>
                   <Field
+                    type="text"
                     name="newColumnName"
                     width="100%"
                     placeholder="New column name"
@@ -79,11 +87,7 @@ const NewRowModal = props => {
 
 NewRowModal.propTypes = {
   isActive: PropTypes.bool.isRequired,
-  columnName: PropTypes.string.isRequired,
-  newColumnName: PropTypes.string.isRequired,
   dataTypes: PropTypes.array.isRequired,
-  currDataType: PropTypes.string.isRequired,
-  handleChange: PropTypes.func.isRequired,
   handleConfirmClick: PropTypes.func.isRequired,
   handleModalClose: PropTypes.func.isRequired,
 };

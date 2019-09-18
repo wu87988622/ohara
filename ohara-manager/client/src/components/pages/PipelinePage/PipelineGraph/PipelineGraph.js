@@ -32,6 +32,9 @@ const PipelineGraph = props => {
       } = pipeline;
       const dagreGraph = new dagreD3.graphlib.Graph().setGraph({});
 
+      // Invalid graph data, don't break the page
+      if (!graph) return;
+
       graph.forEach(g => {
         const { name, className, kind, to, state, metrics, isActive } = g;
 
@@ -67,7 +70,6 @@ const PipelineGraph = props => {
               // The pipeline API now requires the `to` key to be an array of object
               // but the connector topic is still an array containing string...
               const topicName = typeof t === 'object' ? t.name : t;
-
               dagreGraph.setEdge(name, topicName, {});
             });
             return;

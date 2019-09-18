@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { get } from 'lodash';
 
 import * as URLS from 'constants/urls';
 import { ListLoader } from 'components/common/Loader';
-import { fetchInfo } from 'api/infoApi';
+import * as infoApi from 'api/infoApi';
 import { Dialog } from 'components/common/Mui/Dialog';
 import {
   StyledHeader,
@@ -35,128 +35,110 @@ import {
   LoaderWrapper,
 } from './styles';
 
-class Header extends React.Component {
-  static propTypes = {
-    versionInfo: PropTypes.object,
-  };
+const Header = () => {
+  const [isVersionModalActive, setIsVersionModalActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [info, setInfo] = useState({});
 
-  state = {
-    isVersionModalActive: false,
-    isLoading: true,
-  };
+  useEffect(() => {
+    const fetchInfo = async () => {
+      const res = await infoApi.fetchInfo();
+      setIsLoading(false);
+      const info = get(res, 'data.result', null);
 
-  componentDidMount() {
-    this.fetchInfo();
-  }
+      if (info) setInfo(info);
+    };
 
-  fetchInfo = async () => {
-    const res = await fetchInfo();
-    this.setState({ isLoading: false });
-    const info = get(res, 'data.result', null);
+    fetchInfo();
+  }, []);
 
-    if (info) {
-      this.setState({ info });
-    }
-  };
+  const { versionInfo = {}, mode = '' } = info;
+  const { version, revision, date } = versionInfo;
 
-  handleVersionModalOpen = () => {
-    this.setState({ isVersionModalActive: true });
-  };
+  return (
+    <StyledHeader>
+      <Dialog
+        title="Ohara version"
+        open={isVersionModalActive}
+        handleClose={() => setIsVersionModalActive(false)}
+        showActions={false}
+        testId="info-modal"
+      >
+        {isLoading ? (
+          <LoaderWrapper>
+            <ListLoader />
+          </LoaderWrapper>
+        ) : (
+          <Ul data-testid="info-list">
+            <li>
+              <span className="item">Mode:</span>
+              <span className="content">{mode}</span>
+            </li>
+            <li>
+              <span className="item">Version:</span>
+              <span className="content">{version}</span>
+            </li>
+            <li>
+              <span className="item">Revision:</span>
+              <span className="content">{revision}</span>
+            </li>
+            <li>
+              <span className="item">Build date:</span>
+              <span className="content">{date}</span>
+            </li>
+          </Ul>
+        )}
+      </Dialog>
+      <HeaderWrapper>
+        <Brand to={URLS.HOME}>Ohara Stream</Brand>
+        <Nav>
+          <Link
+            activeClassName="active"
+            data-testid="pipelines-link"
+            to={URLS.PIPELINES}
+          >
+            <Icon className="fas fa-code-branch" data-testid="pipelines-icon" />
+            <span>Pipelines</span>
+          </Link>
 
-  handleVersionModalClose = () => {
-    this.setState({ isVersionModalActive: false });
-  };
+          <Link
+            activeClassName="active"
+            data-testid="nodes-link"
+            to={URLS.NODES}
+          >
+            <Icon className="fas fa-sitemap" data-testid="nodes-icon" />
+            <span>Nodes</span>
+          </Link>
 
-  render() {
-    const { isVersionModalActive, info = {}, isLoading } = this.state;
+          <Link
+            activeClassName="active"
+            data-testid="workspaces-link"
+            to={URLS.WORKSPACES}
+          >
+            <Icon
+              className="fas fa-project-diagram"
+              data-testid="workspaces-icon"
+            />
+            <span>Workspaces</span>
+          </Link>
+        </Nav>
 
-    const { versionInfo = {}, mode = '' } = info;
-    const { version, revision, date } = versionInfo;
+        <RightCol>
+          <Btn
+            data-tip="View ohara version"
+            data-testid="version-btn"
+            onClick={() => setIsVersionModalActive(true)}
+          >
+            <i className="fas fa-info-circle" />
+          </Btn>
+        </RightCol>
+      </HeaderWrapper>
+    </StyledHeader>
+  );
+};
 
-    return (
-      <StyledHeader>
-        <Dialog
-          title="Ohara version"
-          open={isVersionModalActive}
-          handleClose={this.handleVersionModalClose}
-          showActions={false}
-          testId="info-modal"
-        >
-          {isLoading ? (
-            <LoaderWrapper>
-              <ListLoader />
-            </LoaderWrapper>
-          ) : (
-            <Ul data-testid="info-list">
-              <li>
-                <span className="item">Mode:</span>
-                <span className="content">{mode}</span>
-              </li>
-              <li>
-                <span className="item">Version:</span>
-                <span className="content">{version}</span>
-              </li>
-              <li>
-                <span className="item">Revision:</span>
-                <span className="content">{revision}</span>
-              </li>
-              <li>
-                <span className="item">Build date:</span>
-                <span className="content">{date}</span>
-              </li>
-            </Ul>
-          )}
-        </Dialog>
-        <HeaderWrapper>
-          <Brand to={URLS.HOME}>Ohara Stream</Brand>
-          <Nav>
-            <Link
-              activeClassName="active"
-              data-testid="pipelines-link"
-              to={URLS.PIPELINES}
-            >
-              <Icon
-                className="fas fa-code-branch"
-                data-testid="pipelines-icon"
-              />
-              <span>Pipelines</span>
-            </Link>
-
-            <Link
-              activeClassName="active"
-              data-testid="nodes-link"
-              to={URLS.NODES}
-            >
-              <Icon className="fas fa-sitemap" data-testid="nodes-icon" />
-              <span>Nodes</span>
-            </Link>
-
-            <Link
-              activeClassName="active"
-              data-testid="workspaces-link"
-              to={URLS.WORKSPACES}
-            >
-              <Icon
-                className="fas fa-project-diagram"
-                data-testid="workspaces-icon"
-              />
-              <span>Workspaces</span>
-            </Link>
-          </Nav>
-
-          <RightCol>
-            <Btn
-              data-tip="View ohara version"
-              data-testid="version-btn"
-              onClick={this.handleVersionModalOpen}
-            >
-              <i className="fas fa-info-circle" />
-            </Btn>
-          </RightCol>
-        </HeaderWrapper>
-      </StyledHeader>
-    );
-  }
-}
+Header.propTypes = {
+  versionInfo: PropTypes.object,
+};
 
 export default Header;

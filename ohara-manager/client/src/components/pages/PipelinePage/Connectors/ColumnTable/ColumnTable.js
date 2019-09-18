@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import NewRowModal from './NewRowModal';
@@ -22,154 +22,124 @@ import Table from './Table';
 import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { NewRowBtn } from './styles';
 
-class ColumnTable extends React.Component {
-  static propTypes = {
-    headers: PropTypes.array.isRequired,
-    data: PropTypes.arrayOf(
-      PropTypes.shape({
-        order: PropTypes.number.isRequired,
-        dataType: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        newName: PropTypes.string.isRequired,
-      }),
-    ),
-    dataTypes: PropTypes.array.isRequired,
-    handleTypeChange: PropTypes.func,
-    handleUp: PropTypes.func,
-    handleDown: PropTypes.func,
-    handleColumnChange: PropTypes.func.isRequired,
-    handleColumnRowDelete: PropTypes.func.isRequired,
-    handleColumnRowUp: PropTypes.func.isRequired,
-    handleColumnRowDown: PropTypes.func.isRequired,
-    parentValues: PropTypes.object,
-  };
+const ColumnTable = props => {
+  const [isNewRowModalActive, setIsNewRowModalActive] = useState(false);
+  const [isDeleteRowModalActive, setIsDeleteRowModalActive] = useState(false);
+  const [rowNameToBeDeleted, setRowNameToBeDeleted] = useState('');
+  const [currRow, setCurrRow] = useState(0);
 
-  initialState = {
-    isNewRowModalActive: false,
-    isDeleteRowModalActive: false,
-    columnName: '',
-    newColumnName: '',
-    currType: '',
-    currRow: 0,
-  };
+  const {
+    headers,
+    data,
+    handleUp,
+    handleDown,
+    dataTypes,
+    handleColumnRowUp,
+    handleColumnRowDown,
+    parentValues,
+    handleTypeChange,
+  } = props;
 
-  state = this.initialState;
-
-  componentDidMount() {
-    this.setState({ currType: this.props.dataTypes[0] });
-  }
-
-  handleChange = ({ target }) => {
-    const { name, value } = target;
-    this.setState({ [name]: value });
-  };
-
-  handleNewRowModalOpen = e => {
+  const handleNewRowModalOpen = e => {
     e.preventDefault();
-    this.setState({ isNewRowModalActive: true });
+    setIsNewRowModalActive(true);
   };
 
-  handleNewRowModalClose = () => {
-    this.setState(this.initialState);
+  const handleNewRowModalClose = () => {
+    setIsNewRowModalActive(false);
   };
 
-  handleNewRow = values => {
-    const { handleColumnChange, parentValues } = this.props;
+  const handleNewRow = values => {
+    const { handleColumnChange, parentValues } = props;
     const { columnName, newColumnName, types: currType } = values;
-    this.setState({ columnName, newColumnName, currType });
+
     handleColumnChange({ parentValues, columnName, newColumnName, currType });
-    this.handleNewRowModalClose();
+    handleNewRowModalClose();
   };
 
-  handleDeleteRow = () => {
-    this.props.handleColumnRowDelete({
-      currRow: this.state.currRow,
-      parentValues: this.props.parentValues,
+  const handleDeleteRow = () => {
+    props.handleColumnRowDelete({
+      currRow,
+      parentValues: props.parentValues,
     });
 
-    this.handleDeleteRowModalClose();
+    handleDeleteRowModalClose();
   };
 
-  handleDeleteRowModalOpen = (e, order) => {
+  const handleDeleteRowModalOpen = (e, order) => {
     e.preventDefault();
-    const row = this.props.data.find(d => d.order === order);
 
-    this.setState({
-      isDeleteRowModalActive: true,
-      currRow: order,
-      rowNameToBeDeleted: row.name,
-    });
+    const row = props.data.find(d => d.order === order);
+    setIsDeleteRowModalActive(true);
+    setCurrRow(order);
+
+    setRowNameToBeDeleted(row.name);
   };
 
-  handleDeleteRowModalClose = () => {
-    this.setState({ isDeleteRowModalActive: false, currRow: 0 });
+  const handleDeleteRowModalClose = () => {
+    setIsDeleteRowModalActive(false);
+    setCurrRow(0);
   };
 
-  render() {
-    const {
-      headers,
-      data,
-      handleUp,
-      handleDown,
-      dataTypes,
-      handleColumnRowUp,
-      handleColumnRowDown,
-      parentValues,
-    } = this.props;
+  return (
+    <>
+      <NewRowBtn
+        text="New row"
+        size="small"
+        data-testid="new-row-btn"
+        onClick={handleNewRowModalOpen}
+      />
 
-    const {
-      isNewRowModalActive,
-      columnName,
-      newColumnName,
-      handleTypeChange,
-      currType,
-      isDeleteRowModalActive,
-      rowNameToBeDeleted,
-    } = this.state;
+      <NewRowModal
+        isActive={isNewRowModalActive}
+        dataTypes={dataTypes}
+        handleConfirmClick={handleNewRow}
+        handleModalClose={handleNewRowModalClose}
+      />
 
-    return (
-      <>
-        <NewRowBtn
-          text="New row"
-          size="small"
-          data-testid="new-row-btn"
-          onClick={this.handleNewRowModalOpen}
-        />
+      <DeleteDialog
+        title="Delete row?"
+        content={`Are you sure you want to delete the row: ${rowNameToBeDeleted}? This action cannot be undone!`}
+        open={isDeleteRowModalActive}
+        handleClose={handleDeleteRowModalClose}
+        handleConfirm={handleDeleteRow}
+      />
 
-        <NewRowModal
-          isActive={isNewRowModalActive}
-          columnName={columnName}
-          newColumnName={newColumnName}
-          dataTypes={dataTypes}
-          currDataType={currType}
-          handleChange={this.handleChange}
-          handleConfirmClick={this.handleNewRow}
-          handleModalClose={this.handleNewRowModalClose}
-        />
+      <Table
+        headers={headers}
+        data={data}
+        dataTypes={dataTypes}
+        handleUp={handleUp}
+        handleDown={handleDown}
+        handleTypeChange={handleTypeChange}
+        handleDeleteRowModalOpen={handleDeleteRowModalOpen}
+        handleColumnRowUp={handleColumnRowUp}
+        handleColumnRowDown={handleColumnRowDown}
+        parentValues={parentValues}
+      />
+    </>
+  );
+};
 
-        <DeleteDialog
-          title="Delete row?"
-          content={`Are you sure you want to delete the row: ${rowNameToBeDeleted}? This action cannot be undone!`}
-          open={isDeleteRowModalActive}
-          handleClose={this.handleDeleteRowModalClose}
-          handleConfirm={this.handleDeleteRow}
-        />
-
-        <Table
-          headers={headers}
-          data={data}
-          dataTypes={dataTypes}
-          handleUp={handleUp}
-          handleDown={handleDown}
-          handleTypeChange={handleTypeChange}
-          handleDeleteRowModalOpen={this.handleDeleteRowModalOpen}
-          handleColumnRowUp={handleColumnRowUp}
-          handleColumnRowDown={handleColumnRowDown}
-          parentValues={parentValues}
-        />
-      </>
-    );
-  }
-}
+ColumnTable.propTypes = {
+  headers: PropTypes.array.isRequired,
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      order: PropTypes.number.isRequired,
+      dataType: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      newName: PropTypes.string.isRequired,
+    }),
+  ),
+  dataTypes: PropTypes.array.isRequired,
+  handleTypeChange: PropTypes.func,
+  handleUp: PropTypes.func,
+  handleDown: PropTypes.func,
+  handleColumnChange: PropTypes.func.isRequired,
+  handleColumnRowDelete: PropTypes.func.isRequired,
+  handleColumnRowUp: PropTypes.func.isRequired,
+  handleColumnRowDown: PropTypes.func.isRequired,
+  parentValues: PropTypes.object,
+};
 
 export default ColumnTable;

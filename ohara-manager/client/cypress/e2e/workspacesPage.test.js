@@ -42,7 +42,7 @@ describe('WorkspacesPage', () => {
     const prefix = Cypress.env('servicePrefix');
     const workerName = generate.serviceName({
       prefix: `${prefix}wk`,
-      length: 5,
+      length: 3,
     });
 
     cy.visit(WORKSPACES)
@@ -69,7 +69,7 @@ describe('WorkspacesPage', () => {
     cy.getByText(workerName, { timeout: 40000 }).should('have.length', 1);
   });
 
-  it('adds a new topic', () => {
+  it('adds and removes a topic', () => {
     const topicName = generate.serviceName({ prefix: 'topic' });
 
     cy.visit(WORKSPACES)
@@ -93,30 +93,16 @@ describe('WorkspacesPage', () => {
       .wait('@getTopics')
       .getByText(topicName)
       .should('have.length', 1);
-  });
 
-  it('deletes a topic', () => {
-    cy.addTopic();
-
-    cy.visit(WORKSPACES)
-      .wait('@getWorkers')
-      .getByTestId(Cypress.env('WORKER_NAME'))
-      .click()
-      .getByTestId('workspace-tab')
-      .within(() => {
-        cy.getByText('Topics').click();
-      })
-      .wait('@getTopics');
-
-    cy.getByTestId(Cypress.env('TOPIC_NAME'))
+    cy.getByTestId(topicName)
       .click({ force: true })
       .getByText('DELETE')
       .click()
-      .getByText(`Successfully deleted the topic: ${Cypress.env('TOPIC_NAME')}`)
+      .getByText(`Successfully deleted the topic: ${topicName}`)
       .should('have.length', 1);
   });
 
-  it('adds and removes a new streamApp', () => {
+  it('adds and removes a streamApp', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))

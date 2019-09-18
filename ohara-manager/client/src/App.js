@@ -38,60 +38,58 @@ const jss = create({
   insertionPoint: document.getElementById('jss-insertion-point'),
 });
 
-class App extends React.Component {
-  render() {
-    return (
-      <StylesProvider jss={jss}>
-        <SnackbarProvider>
-          <Router>
-            <React.Fragment>
-              <GlobalStyle />
-              <Header />
-              <Switch>
-                <Route
-                  path="/pipelines/edit/:workspaceName/:pipelineName/:connectorKind?/:connectorName?"
-                  component={PipelineEditPage}
-                  data-testid="pipeline-edit-page"
-                />
-                <Route
-                  path="/pipelines"
-                  component={PipelinePage}
-                  data-testid="pipeline-page"
-                />
-                <Route
-                  path="/nodes"
-                  component={NodesPage}
-                  data-testid="nodes-page"
-                />
-                <Route
-                  path="/workspaces/:workspaceName/:serviceName?"
-                  component={WorkspacesDetailPage}
-                  data-testid="workspace-page"
-                />
-                <Route
-                  path="/workspaces"
-                  component={WorkspacesPage}
-                  data-testid="workspaces-page"
-                />
-                <Route
-                  path="/logs/:serviceName/:clusterName"
-                  component={LogsPage}
-                  data-testid="logs-page"
-                />
-                <Route
-                  exact
-                  path="/"
-                  data-testid="home-page"
-                  component={HomePage}
-                />
-                <Route component={NotFoundPage} data-testid="not-found-page" />
-              </Switch>
-            </React.Fragment>
-          </Router>
-        </SnackbarProvider>
-      </StylesProvider>
-    );
-  }
-}
+const App = () => {
+  return (
+    <StylesProvider jss={jss}>
+      <SnackbarProvider>
+        <Router>
+          <React.Fragment>
+            <GlobalStyle />
+            <Header />
+            <Switch>
+              <Route
+                path="/pipelines/edit/:workspaceName/:pipelineName/:connectorKind?/:connectorName?"
+                component={PipelineEditPage}
+                data-testid="pipeline-edit-page"
+              />
+              <Route
+                path="/pipelines"
+                component={PipelinePage}
+                data-testid="pipeline-page"
+              />
+              <Route
+                path="/nodes"
+                component={NodesPage}
+                data-testid="nodes-page"
+              />
+              <Route
+                path="/workspaces/:workspaceName/:serviceName?"
+                component={WorkspacesDetailPage}
+                data-testid="workspace-page"
+              />
+              <Route
+                path="/workspaces"
+                component={WorkspacesPage}
+                data-testid="workspaces-page"
+              />
+              <Route
+                path="/logs/:serviceName/:clusterName"
+                component={LogsPage}
+                data-testid="logs-page"
+              />
+              <Route
+                exact
+                path="/"
+                data-testid="home-page"
+                component={HomePage}
+              />
+              <Route component={NotFoundPage} data-testid="not-found-page" />
+            </Switch>
+          </React.Fragment>
+        </Router>
+      </SnackbarProvider>
+    </StylesProvider>
+  );
+};
 
 export default App;

@@ -34,7 +34,7 @@ describe('PipelineEditPage', () => {
     cy.route('GET', '/api/connectors/*').as('getConnector');
     cy.route('PUT', '/api/connectors/*').as('putConnector');
 
-    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+    const pipelineName = generate.serviceName({ prefix: 'pi', length: 3 });
 
     cy.addTopic();
     cy.visit(URLS.PIPELINES)

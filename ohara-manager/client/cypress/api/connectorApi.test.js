@@ -23,7 +23,7 @@ const setup = () => {
   const workerClusterName = generate.serviceName({ prefix: 'wk' });
   const connectorName = generate.serviceName({ prefix: 'connector' });
   const topicName = generate.serviceName({ prefix: 'topic' });
-  const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+  const pipelineName = generate.serviceName({ prefix: 'pi' });
 
   const pipelineGroup = `${workerClusterName}-${pipelineName}`;
   const topicGroup = `${workerClusterName}-topic`;

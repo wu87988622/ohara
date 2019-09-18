@@ -92,7 +92,7 @@ const PipelineListPage = props => {
 
     const params = {
       name: values.name,
-      group: `${workerClusterName}-${pipelineName}`,
+      group: `${workerClusterName}${pipelineName}`,
       tags: {
         workerClusterName,
       },

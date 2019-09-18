@@ -39,6 +39,7 @@ export const updateFlows = ({
 }) => {
   let {
     flows,
+    name: pipelineName,
     group: pipelineGroup,
     tags: { workerClusterName },
   } = pipeline;
@@ -58,10 +59,7 @@ export const updateFlows = ({
   if (kind === 'topic') {
     group = `${workerClusterName}-topic`;
   } else if (kind === 'stream') {
-    // The group support hasn't added to stream apps yet. See the issue below:
-    // https://github.com/oharastream/ohara/issues/2563
-    // after #2563 is done, the proper group name should be `workerClusterName-pipelineName`
-    group = 'default';
+    group = `${workerClusterName}${pipelineName}`;
   } else {
     group = pipelineGroup;
   }
@@ -76,13 +74,18 @@ export const updateFlows = ({
     updatedFlows = flows.map(flow => {
       if (flow.from.name === connectorName) {
         const newTo = to.map(t => {
+          const updateGroup =
+            dispatcher.name === 'STREAM_APP'
+              ? `${workerClusterName}${pipelineName}`
+              : group;
+
           // If the to is a string, let's wrap it with an object
-          if (isString(t)) return { group, name: t };
+          if (isString(t)) return { group: updateGroup, name: t };
           return t;
         });
 
         // 1. reset the `to` to an empty array which means there's no
-        // topic connect to this connector
+        // topic connected to this connector
         // 2. use the new to
         const updatedTo = isEmpty(to) ? [] : [...newTo];
 
@@ -93,11 +96,9 @@ export const updateFlows = ({
 
         return update;
       }
-
       return flow;
     });
   }
-
   // If there's no update in flows, return the original flows
   return isNull(updatedFlows) ? flows : updatedFlows;
 };
@@ -175,6 +176,11 @@ export const loadGraph = (pipeline, currentConnectorName) => {
 
   const graph = flows.map((flow, index) => {
     const target = objects.find(object => object.name === flow.from.name);
+
+    // Target object is not found, return a `null` value so
+    // it can be fitler out later
+    if (!target) return null;
+
     const { kind } = target;
     const isActive = flow.from.name === currentConnectorName;
 
@@ -194,5 +200,7 @@ export const loadGraph = (pipeline, currentConnectorName) => {
     return { ...props };
   });
 
-  return graph;
+  // Filter out `null` values since they're not valid to be rendered later in
+  // the graph
+  return graph.filter(Boolean);
 };

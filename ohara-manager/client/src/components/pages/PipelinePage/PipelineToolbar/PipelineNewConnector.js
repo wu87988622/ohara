@@ -14,57 +14,48 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import { isNull } from 'lodash';
 
 import * as utils from './pipelineToolbarUtils';
 import { Modal } from 'components/common/Modal';
 import { ListLoader } from 'components/common/Loader';
-import { TableWrapper, Table } from './styles';
+import { TableWrapper, Table, Inner } from './styles';
 import { Input, FormGroup } from 'components/common/Form';
 
-const Inner = styled.div`
-  padding: 30px 20px;
-`;
+const PipelineNewConnector = forwardRef((props, ref) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newConnectorName, setNewConnectorName] = useState('');
 
-class PipelineNewConnector extends React.Component {
-  static propTypes = {
-    connectors: PropTypes.array.isRequired,
-    onSelect: PropTypes.func.isRequired,
-    updateGraph: PropTypes.func.isRequired,
-    activeConnector: PropTypes.object,
-    updateAddBtnStatus: PropTypes.func.isRequired,
-    handleClose: PropTypes.func.isRequired,
-    pipelineGroup: PropTypes.string.isRequired,
-    workerClusterName: PropTypes.string.isRequired,
+  const { activeConnector, connectors, enableAddButton } = props;
+
+  useEffect(() => {
+    enableAddButton(isNull(activeConnector));
+  }, [activeConnector, enableAddButton]);
+
+  useImperativeHandle(ref, () => ({
+    update() {
+      setIsModalOpen(true);
+    },
+  }));
+
+  const handleChange = ({ target: { value } }) => {
+    setNewConnectorName(value);
   };
 
-  state = {
-    isModalOpen: false,
-    newConnectorName: '',
-  };
-
-  componentDidMount() {
-    this.props.updateAddBtnStatus(this.props.activeConnector);
-  }
-
-  update = () => {
-    this.setState({ isModalOpen: true });
-  };
-
-  handleChange = ({ target: { value } }) => {
-    this.setState({ newConnectorName: value });
-  };
-
-  handleConfirm = () => {
+  const handleConfirm = () => {
     const {
       updateGraph,
       activeConnector: connector,
       pipelineGroup,
       workerClusterName,
-    } = this.props;
-    const { newConnectorName } = this.state;
+    } = props;
 
     utils.createConnector({
       updateGraph,
@@ -74,65 +65,67 @@ class PipelineNewConnector extends React.Component {
       group: pipelineGroup,
     });
 
-    this.props.handleClose();
+    props.handleClose();
   };
 
-  handleClose = () => {
-    this.setState({ isModalOpen: false });
-  };
+  return (
+    <TableWrapper>
+      {!activeConnector ? (
+        <ListLoader />
+      ) : (
+        <Table headers={['connector name', 'version', 'revision']}>
+          {connectors.map(({ className: name, version, revision }) => {
+            const isActive =
+              name === activeConnector.className ? 'is-active' : '';
+            return (
+              <tr
+                className={isActive}
+                key={name}
+                onClick={() => props.onSelect(name)}
+                data-testid="connector-list"
+              >
+                <td>{name}</td>
+                <td>{version}</td>
+                <td>{utils.trimString(revision)}</td>
+              </tr>
+            );
+          })}
+        </Table>
+      )}
+      <Modal
+        isActive={isModalOpen}
+        title="New Connector Name"
+        width="370px"
+        confirmBtnText="Add"
+        handleConfirm={handleConfirm}
+        handleCancel={() => setIsModalOpen(false)}
+      >
+        <Inner>
+          <FormGroup data-testid="name">
+            <Input
+              name="name"
+              width="100%"
+              placeholder="Connector name"
+              data-testid="name-input"
+              value={newConnectorName}
+              handleChange={handleChange}
+            />
+          </FormGroup>
+        </Inner>
+      </Modal>
+    </TableWrapper>
+  );
+});
 
-  render() {
-    const { connectors, activeConnector, onSelect } = this.props;
-    const { isModalOpen, newConnectorName } = this.state;
-
-    return (
-      <TableWrapper>
-        {!activeConnector ? (
-          <ListLoader />
-        ) : (
-          <Table headers={['connector name', 'version', 'revision']}>
-            {connectors.map(({ className: name, version, revision }) => {
-              const isActive =
-                name === activeConnector.className ? 'is-active' : '';
-              return (
-                <tr
-                  className={isActive}
-                  key={name}
-                  onClick={() => onSelect(name)}
-                  data-testid="connector-list"
-                >
-                  <td>{name}</td>
-                  <td>{version}</td>
-                  <td>{utils.trimString(revision)}</td>
-                </tr>
-              );
-            })}
-          </Table>
-        )}
-        <Modal
-          isActive={isModalOpen}
-          title="New Connector Name"
-          width="370px"
-          confirmBtnText="Add"
-          handleConfirm={this.handleConfirm}
-          handleCancel={this.handleClose}
-        >
-          <Inner>
-            <FormGroup data-testid="name">
-              <Input
-                name="name"
-                width="100%"
-                placeholder="Connector name"
-                data-testid="name-input"
-                value={newConnectorName}
-                handleChange={this.handleChange}
-              />
-            </FormGroup>
-          </Inner>
-        </Modal>
-      </TableWrapper>
-    );
-  }
-}
+PipelineNewConnector.propTypes = {
+  connectors: PropTypes.array.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  updateGraph: PropTypes.func.isRequired,
+  enableAddButton: PropTypes.func.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  pipelineGroup: PropTypes.string.isRequired,
+  workerClusterName: PropTypes.string.isRequired,
+  activeConnector: PropTypes.object,
+};
 
 export default PipelineNewConnector;

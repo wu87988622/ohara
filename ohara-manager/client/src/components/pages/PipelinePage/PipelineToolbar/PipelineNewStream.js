@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { get, isNull, truncate, isEmpty } from 'lodash';
+import { get, truncate, isEmpty } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import * as URLS from 'constants/urls';
@@ -29,87 +34,57 @@ import { Wrapper, Inner, LoaderWrapper } from './styles';
 import { Input, FormGroup } from 'components/common/Form';
 import { Warning } from 'components/common/Messages';
 
-class PipelineNewStream extends React.Component {
-  static propTypes = {
-    match: PropTypes.shape({
-      params: PropTypes.object.isRequired,
-    }).isRequired,
-    activeConnector: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
-    updateGraph: PropTypes.func.isRequired,
-    updateAddBtnStatus: PropTypes.func.isRequired,
-    workerClusterName: PropTypes.string.isRequired,
-    handleClose: PropTypes.func.isRequired,
-  };
+const PipelineNewStream = forwardRef((props, ref) => {
+  const [newStreamAppName, setNewStreamAppName] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [jars, setJars] = useState([]);
+  const [activeJar, setActiveJar] = useState({});
 
-  state = {
-    newStreamAppName: '',
-    isModalOpen: false,
-    pipelineId: null,
-    isLoading: true,
-    jars: [],
-    activeJar: null,
-    streamGroup: '',
-  };
+  const {
+    workerClusterName,
+    enableAddButton,
+    updateGraph,
+    pipelineGroup,
+  } = props;
+  const jarGroup = `${workerClusterName}-streamjar`;
 
-  componentDidMount() {
-    const { workerClusterName } = this.props;
-    const streamGroup = `${workerClusterName}-streamjar`;
-    this.setState({ streamGroup });
-    this.fetchData();
-  }
+  useEffect(() => {
+    const fetchJars = async () => {
+      const response = await jarApi.fetchJars(jarGroup);
+      setIsLoading(false);
 
-  fetchData = async () => {
-    const { match } = this.props;
-    const pipelineId = get(match, 'params.pipelineId', null);
-    this.setState({ pipelineId }, () => {
-      this.fetchJars();
-    });
-  };
+      const jars = get(response, 'data.result', null);
+      const activeJar = {
+        group: get(jars, '[0].group', null),
+        name: get(jars, '[0].name', null),
+      };
 
-  handleSelectChange = ({ target }) => {
-    const activeJar = { name: target.value };
-    this.setState({ activeJar });
-  };
-
-  fetchJars = async () => {
-    const response = await jarApi.fetchJars(this.state.streamGroup);
-    this.setState({ isLoading: false });
-
-    const jars = get(response, 'data.result', null);
-    const activeJar = {
-      group: get(jars, '[0].group', null),
-      name: get(jars, '[0].name', null),
+      if (!isEmpty(jars)) {
+        setJars(jars);
+        setActiveJar(activeJar);
+        enableAddButton(false);
+      }
     };
 
-    if (isNull(activeJar.group) && isNull(activeJar.name)) {
-      this.props.updateAddBtnStatus(null);
-    }
+    fetchJars();
+  }, [jarGroup, enableAddButton]);
 
-    if (!isNull(jars)) {
-      this.setState({ jars, activeJar });
-    }
-  };
+  useImperativeHandle(ref, () => ({
+    update() {
+      setIsModalOpen(true);
+    },
+  }));
 
-  update = async () => {
-    this.setState({ isModalOpen: true });
-  };
-
-  handleChange = ({ target: { value } }) => {
-    const test = truncate(value.replace(/[^0-9a-z]/g, ''), {
+  const handleChange = ({ target: { value } }) => {
+    const newStreamAppName = truncate(value.replace(/[^0-9a-z]/g, ''), {
       length: 20,
       omission: '',
     });
-    this.setState({ newStreamAppName: test });
+    setNewStreamAppName(newStreamAppName);
   };
 
-  handleClose = () => {
-    this.setState({ isModalOpen: false });
-  };
-
-  handleConfirm = () => {
-    const { updateGraph } = this.props;
-    const { newStreamAppName, jars, activeJar } = this.state;
-
+  const handleConfirm = () => {
     const { group, name } = jars.filter(jar => jar.name === activeJar.name)[0];
 
     const connector = {
@@ -122,79 +97,81 @@ class PipelineNewStream extends React.Component {
       updateGraph,
       connector,
       newStreamAppName,
-      group: this.state.streamGroup,
+      group: pipelineGroup,
     });
 
-    this.props.handleClose();
+    props.handleClose();
   };
 
-  render() {
-    const { workerClusterName: workspace } = this.props;
+  return (
+    <div>
+      {isLoading ? (
+        <LoaderWrapper>
+          <ListLoader />
+        </LoaderWrapper>
+      ) : (
+        <Wrapper>
+          {isEmpty(jars) ? (
+            <Warning
+              text={
+                <>
+                  {`You don't have any stream jars available in this workspace yet. But you can create one in `}
+                  <Link
+                    to={`${URLS.WORKSPACES}/${workerClusterName}/streamapps`}
+                  >
+                    here
+                  </Link>
+                </>
+              }
+            />
+          ) : (
+            <Select
+              isObject
+              list={jars}
+              selected={activeJar}
+              handleChange={event => setActiveJar(event.target.value)}
+              data-testid="streamapp-select"
+            />
+          )}
+        </Wrapper>
+      )}
 
-    const {
-      isModalOpen,
-      isLoading,
-      jars,
-      activeJar,
-      newStreamAppName,
-    } = this.state;
+      <Modal
+        isActive={isModalOpen}
+        title="New StreamApp Name"
+        width="370px"
+        data-testid="addStreamApp"
+        confirmBtnText="Add"
+        handleConfirm={handleConfirm}
+        handleCancel={() => setIsModalOpen(false)}
+      >
+        <Inner>
+          <FormGroup data-testid="name">
+            <Input
+              name="name"
+              width="100%"
+              placeholder="StreamApp name"
+              data-testid="name-input"
+              value={newStreamAppName}
+              handleChange={handleChange}
+            />
+          </FormGroup>
+        </Inner>
+      </Modal>
+    </div>
+  );
+});
 
-    return (
-      <div>
-        {isLoading ? (
-          <LoaderWrapper>
-            <ListLoader />
-          </LoaderWrapper>
-        ) : (
-          <Wrapper>
-            {isEmpty(jars) ? (
-              <Warning
-                text={
-                  <>
-                    {`You don't have any stream jars available in this workspace yet. But you can create one in `}
-                    <Link to={`${URLS.WORKSPACES}/${workspace}/streamapps`}>
-                      here
-                    </Link>
-                  </>
-                }
-              />
-            ) : (
-              <Select
-                isObject
-                list={jars}
-                selected={activeJar}
-                handleChange={this.handleSelectChange}
-                data-testid="streamapp-select"
-              />
-            )}
-          </Wrapper>
-        )}
-
-        <Modal
-          isActive={isModalOpen}
-          title="New StreamApp Name"
-          width="370px"
-          data-testid="addStreamApp"
-          confirmBtnText="Add"
-          handleConfirm={this.handleConfirm}
-          handleCancel={this.handleClose}
-        >
-          <Inner>
-            <FormGroup data-testid="name">
-              <Input
-                name="name"
-                width="100%"
-                placeholder="StreamApp name"
-                data-testid="name-input"
-                value={newStreamAppName}
-                handleChange={this.handleChange}
-              />
-            </FormGroup>
-          </Inner>
-        </Modal>
-      </div>
-    );
-  }
-}
+PipelineNewStream.propTypes = {
+  match: PropTypes.shape({
+    params: PropTypes.object.isRequired,
+  }).isRequired,
+  activeConnector: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+  updateGraph: PropTypes.func.isRequired,
+  enableAddButton: PropTypes.func.isRequired,
+  workerClusterName: PropTypes.string.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  pipelineGroup: PropTypes.string.isRequired,
+};
 
 export default PipelineNewStream;

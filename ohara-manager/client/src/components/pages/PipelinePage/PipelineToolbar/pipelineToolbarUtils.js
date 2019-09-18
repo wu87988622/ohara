@@ -54,6 +54,7 @@ export const createConnector = async params => {
     const response = await createProperty({
       jarKey: connector.jarKey,
       name: newStreamAppName,
+      group,
     });
 
     if (!response.data.isSuccess) return; // failed to create

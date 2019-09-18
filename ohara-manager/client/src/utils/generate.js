@@ -78,7 +78,10 @@ export const topics = ({
   return topics;
 };
 
-export const streamApps = ({ count = 1, workspaceName } = {}) => {
+export const streamApps = ({
+  count = 1,
+  workspaceName = serviceName(),
+} = {}) => {
   let streamApps = [];
 
   while (count > 0) {
@@ -87,7 +90,7 @@ export const streamApps = ({ count = 1, workspaceName } = {}) => {
     const streamApp = {
       group: `${workspaceName}-streamjar`,
       lastModified: date.past(),
-      name: name(),
+      name: serviceName(),
       size: number(),
       url: url(),
     };

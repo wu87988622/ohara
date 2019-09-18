@@ -33,7 +33,10 @@ describe('StreamApp', () => {
   it('starts a stream app', () => {
     const fromTopicName = generate.serviceName({ prefix: 'topic' });
     const toTopicName = generate.serviceName({ prefix: 'topic' });
-    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+    const pipelineName = generate.serviceName({
+      prefix: 'pi',
+      length: 3,
+    });
     const streamAppName = generate.serviceName({ prefix: 'stream' });
 
     cy.addTopic(fromTopicName);

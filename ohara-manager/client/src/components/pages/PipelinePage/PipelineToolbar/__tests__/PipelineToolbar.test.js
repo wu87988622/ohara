@@ -236,7 +236,10 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('toggles new stream app modal', async () => {
-    const streamApps = generate.streamApps({ count: 2 });
+    const streamApps = generate.streamApps({
+      count: 2,
+      workspaceName: props.workerClusterName,
+    });
 
     const res = {
       data: {
@@ -263,21 +266,35 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('renders new stream app modal title', async () => {
+    const streamApps = generate.streamApps({
+      count: 3,
+      workspaceName: props.workerClusterName,
+    });
+
+    const res = {
+      data: {
+        result: streamApps,
+      },
+    };
+
+    fetchJars.mockImplementation(() => Promise.resolve(res));
+
     const { getByText, getByTestId } = await waitForElement(() =>
       renderWithProvider(<PipelineToolbar {...props} />),
     );
 
     fireEvent.click(getByTestId('toolbar-streams'));
-
-    getByText('Add a new stream app');
+    await waitForElement(() => getByText('Add a new stream app'));
 
     fireEvent.click(getByText('Add'));
-
-    getByText('New StreamApp Name');
+    await waitForElement(() => getByText('New StreamApp Name'));
   });
 
   it('renders new stream app modal stream app list', async () => {
-    const streamApps = generate.streamApps({ count: 3 });
+    const streamApps = generate.streamApps({
+      count: 3,
+      workspaceName: props.workerClusterName,
+    });
     const res = {
       data: {
         result: streamApps,
@@ -336,7 +353,10 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('changes selected stream app at new stream modal', async () => {
-    const streamApps = generate.streamApps({ count: 3 });
+    const streamApps = generate.streamApps({
+      count: 3,
+      workspaceName: props.workerClusterName,
+    });
     const res = {
       data: {
         result: streamApps,

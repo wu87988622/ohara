@@ -26,7 +26,7 @@ Cypress.Commands.add('addWorker', () => {
   const prefix = Cypress.env('servicePrefix');
   const workerName = generate.serviceName({
     prefix: `${prefix}wk`,
-    length: 5,
+    length: 3,
   });
 
   // Store the worker name in the Cypress env

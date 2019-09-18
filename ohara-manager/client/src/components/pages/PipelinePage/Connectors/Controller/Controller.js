@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
 import { noop, includes } from 'lodash';
@@ -26,98 +26,93 @@ const START = 'start';
 const STOP = 'stop';
 const DELETE = 'delete';
 
-class Controller extends React.Component {
-  static propTypes = {
-    kind: PropTypes.string.isRequired,
-    connectorName: PropTypes.string.isRequired,
-    onStart: PropTypes.func,
-    onStop: PropTypes.func,
-    onDelete: PropTypes.func,
-    show: PropTypes.arrayOf(PropTypes.oneOf([START, STOP, DELETE])),
-    disable: PropTypes.arrayOf(PropTypes.oneOf([START, STOP, DELETE])),
-  };
+const Controller = props => {
+  const [isDeleteModalActive, setIsDeleteModalActive] = useState(false);
 
-  static defaultProps = {
-    onStart: noop,
-    onStop: noop,
-    onDelete: noop,
-    show: [START, STOP, DELETE],
-    disable: [],
-  };
+  const {
+    onStart = noop,
+    onStop = noop,
+    onDelete = noop,
+    show = [START, STOP, DELETE],
+    disable = [],
+    kind,
+    connectorName,
+  } = props;
 
-  state = {
-    isDeleteModalActive: false,
-  };
-
-  handleDeleteModalOpen = e => {
+  const handleDeleteModalOpen = e => {
     e.preventDefault();
-    this.setState({ isDeleteModalActive: true });
+    setIsDeleteModalActive(true);
   };
 
-  handleDeleteModalClose = () => {
-    this.setState({ isDeleteModalActive: false });
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalActive(false);
   };
 
-  handleDeleteClick = e => {
+  const handleDeleteClick = e => {
     e.preventDefault();
-    this.props.onDelete();
-    this.handleDeleteModalClose();
+    onDelete();
+    handleDeleteModalClose();
   };
 
-  render() {
-    const { kind, onStart, onStop, show, disable, connectorName } = this.props;
-    const { isDeleteModalActive } = this.state;
+  return (
+    <s.Controller>
+      {includes(show, START) && (
+        <Tooltip title={`Start ${kind}`} enterDelay={1000}>
+          <s.ControlButton
+            onClick={onStart}
+            data-testid="start-button"
+            disabled={includes(disable, START)}
+          >
+            <i className="far fa-play-circle" />
+          </s.ControlButton>
+        </Tooltip>
+      )}
+      {includes(show, STOP) && (
+        <Tooltip title={`Stop ${kind}`} enterDelay={1000}>
+          <s.ControlButton
+            onClick={onStop}
+            data-testid="stop-button"
+            disabled={includes(disable, STOP)}
+            isDanger
+          >
+            <i className="far fa-stop-circle" />
+          </s.ControlButton>
+        </Tooltip>
+      )}
+      {includes(show, DELETE) && (
+        <Tooltip title={`Delete ${kind}`} enterDelay={1000}>
+          <s.ControlButton
+            onClick={e => {
+              handleDeleteModalOpen(e);
+            }}
+            data-testid="delete-button"
+            disabled={includes(disable, DELETE)}
+            isDanger
+          >
+            <i className="far fa-trash-alt" />
+          </s.ControlButton>
+        </Tooltip>
+      )}
 
-    return (
-      <s.Controller>
-        {includes(show, START) && (
-          <Tooltip title={`Start ${kind}`} enterDelay={1000}>
-            <s.ControlButton
-              onClick={onStart}
-              data-testid="start-button"
-              disabled={includes(disable, START)}
-            >
-              <i className="far fa-play-circle" />
-            </s.ControlButton>
-          </Tooltip>
-        )}
-        {includes(show, STOP) && (
-          <Tooltip title={`Stop ${kind}`} enterDelay={1000}>
-            <s.ControlButton
-              onClick={onStop}
-              data-testid="stop-button"
-              disabled={includes(disable, STOP)}
-              isDanger
-            >
-              <i className="far fa-stop-circle" />
-            </s.ControlButton>
-          </Tooltip>
-        )}
-        {includes(show, DELETE) && (
-          <Tooltip title={`Delete ${kind}`} enterDelay={1000}>
-            <s.ControlButton
-              onClick={e => {
-                this.handleDeleteModalOpen(e);
-              }}
-              data-testid="delete-button"
-              disabled={includes(disable, DELETE)}
-              isDanger
-            >
-              <i className="far fa-trash-alt" />
-            </s.ControlButton>
-          </Tooltip>
-        )}
+      <DeleteDialog
+        title={`Remove ${kind}?`}
+        content={`Are you sure you want to remove the ${kind}: ${connectorName} from the pipeline graph? This action cannot be undone!`}
+        open={isDeleteModalActive}
+        handleConfirm={handleDeleteClick}
+        handleClose={handleDeleteModalClose}
+      />
+    </s.Controller>
+  );
+};
 
-        <DeleteDialog
-          title={`Remove ${kind}?`}
-          content={`Are you sure you want to remove the ${kind}: ${connectorName} from the pipeline graph? This action cannot be undone!`}
-          open={isDeleteModalActive}
-          handleConfirm={this.handleDeleteClick}
-          handleClose={this.handleDeleteModalClose}
-        />
-      </s.Controller>
-    );
-  }
-}
+Controller.propTypes = {
+  kind: PropTypes.string.isRequired,
+  connectorName: PropTypes.string.isRequired,
+  onStart: PropTypes.func,
+  onStop: PropTypes.func,
+  onDelete: PropTypes.func,
+  show: PropTypes.arrayOf(PropTypes.oneOf([START, STOP, DELETE])),
+  disable: PropTypes.arrayOf(PropTypes.oneOf([START, STOP, DELETE])),
+};
 
 export default Controller;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import styled from 'styled-components';
@@ -46,73 +46,73 @@ const Line = styled.div`
   font-size: 13px;
 `;
 
-class LogsPage extends React.Component {
-  static propTypes = {
-    match: PropTypes.shape({
-      params: PropTypes.object.isRequired,
-    }).isRequired,
-  };
+const LogsPage = props => {
+  const [serviceName, setServiceName] = useState('');
+  const [clusterName, setClusterName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [logs, setLogs] = useState([]);
 
-  state = {
-    serviceName: null,
-    clusterName: null,
-    isLoading: true,
-    logs: [],
-  };
-
-  componentDidMount() {
-    const { serviceName, clusterName } = this.props.match.params;
-    if (this.isValidService(serviceName)) {
-      this.setState({ serviceName, clusterName }, () => {
-        this.fetchData();
-      });
+  useEffect(() => {
+    const { serviceName, clusterName } = props.match.params;
+    if (isValidService(serviceName)) {
+      setServiceName(serviceName);
+      setClusterName(clusterName);
     }
-  }
+  }, [props.match.params]);
 
-  isValidService = serviceName =>
+  useEffect(() => {
+    if (isEmpty(serviceName) || isEmpty(clusterName)) return;
+
+    const fetchData = async () => {
+      const res = await logApi.fetchLogs(serviceName, clusterName);
+      const logs = get(res, 'data.result.logs', []);
+      if (!isEmpty(logs)) setLogs(logs);
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [clusterName, serviceName]);
+
+  const isValidService = serviceName =>
     includes(['zookeepers', 'brokers', 'workers'], serviceName);
 
-  fetchData = async () => {
-    const { serviceName, clusterName } = this.state;
-    const res = await logApi.fetchLogs(serviceName, clusterName);
-    const logs = get(res, 'data.result.logs', []);
-    if (!isEmpty(logs)) {
-      this.setState({ logs });
-    }
-    this.setState({ isLoading: false });
-  };
-
-  render() {
-    const { serviceName, clusterName, isLoading, logs } = this.state;
-    if (!this.isValidService(serviceName)) {
-      return <NotFoundPage />;
-    }
-
-    const logContext = get(logs, '[0].value', '');
-    const logLines = split(logContext, `\n`);
-    return (
-      <DocumentTitle title={LOGS}>
-        <>
-          <Wrapper>
-            <TopWrapper>
-              <H2>Error log of cluster {clusterName}</H2>
-            </TopWrapper>
-            <Box>
-              {isLoading ? (
-                <TableLoader />
-              ) : (
-                <>
-                  {map(logLines, (logLine, i) => (
-                    <Line key={i}>{logLine}</Line>
-                  ))}
-                </>
-              )}
-            </Box>
-          </Wrapper>
-        </>
-      </DocumentTitle>
-    );
+  if (!isValidService(serviceName)) {
+    return <NotFoundPage />;
   }
-}
+
+  const logContext = get(logs, '[0].value', '');
+  const logLines = split(logContext, `\n`);
+  return (
+    <DocumentTitle title={LOGS}>
+      <>
+        <Wrapper>
+          <TopWrapper>
+            <H2>Error log of cluster {clusterName}</H2>
+          </TopWrapper>
+          <Box>
+            {isLoading ? (
+              <TableLoader />
+            ) : (
+              <>
+                {map(logLines, (logLine, i) => (
+                  <Line key={i}>{logLine}</Line>
+                ))}
+              </>
+            )}
+          </Box>
+        </Wrapper>
+      </>
+    </DocumentTitle>
+  );
+};
+
+LogsPage.propTypes = {
+  match: PropTypes.shape({
+    params: PropTypes.shape({
+      serviceName: PropTypes.string.isRequired,
+      clusterName: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
 
 export default LogsPage;

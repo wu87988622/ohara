@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { isEmpty, get } from 'lodash';
+import { isEmpty, get, isNull } from 'lodash';
 import { Link } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
@@ -30,96 +35,97 @@ import { findByGraphName } from '../pipelineUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import { Wrapper } from './styles';
 
-class PipelineNewTopic extends React.Component {
-  static propTypes = {
-    graph: PropTypes.arrayOf(graphPropType).isRequired,
-    updateGraph: PropTypes.func.isRequired,
-    topics: PropTypes.array.isRequired,
-    updateTopic: PropTypes.func.isRequired,
-    updateAddBtnStatus: PropTypes.func.isRequired,
-    workerClusterName: PropTypes.string.isRequired,
-    currentTopic: PropTypes.object,
-    pipelineName: PropTypes.string.isRequired,
-  };
+const PipelineNewTopic = forwardRef((props, ref) => {
+  const [updatedTopics, setUpdateTopics] = useState([]);
 
-  state = {
-    updatedTopics: [],
-  };
+  const { enableAddButton, currentTopic, topics, workerClusterName } = props;
 
-  componentDidMount() {
-    this.props.updateAddBtnStatus(this.props.currentTopic);
-    this.fetchPipelines();
-  }
+  useEffect(() => {
+    enableAddButton(isNull(currentTopic));
 
-  handleSelectChange = ({ target }) => {
-    const currentTopic = { name: target.value };
-    this.props.updateTopic(currentTopic);
-  };
+    const fetchPipelines = async () => {
+      const response = await pipelineApi.fetchPipelines();
+      const pipelines = get(response, 'data.result', []);
 
-  fetchPipelines = async () => {
-    const response = await pipelineApi.fetchPipelines();
-    const pipelines = get(response, 'data.result', []);
+      const updatedTopics = topics.map(topic => {
+        const isDisabled = pipelines.some(pipeline => {
+          return pipeline.objects.some(object => object.name === topic.name);
+        });
 
-    const updatedTopics = this.props.topics.map(topic => {
-      const isDisabled = pipelines.some(pipeline => {
-        return pipeline.objects.some(object => object.name === topic.name);
+        return {
+          ...topic,
+          disabled: isDisabled,
+        };
       });
 
-      return {
-        ...topic,
-        disabled: isDisabled,
-      };
-    });
+      setUpdateTopics(updatedTopics);
+    };
 
-    this.setState({ updatedTopics });
+    fetchPipelines();
+  }, [currentTopic, topics, enableAddButton]);
+
+  const handleSelectChange = ({ target }) => {
+    const currentTopic = { name: target.value };
+    props.updateTopic(currentTopic);
   };
 
-  update = () => {
-    const { graph, updateGraph, currentTopic, pipelineName } = this.props;
+  useImperativeHandle(ref, () => ({
+    update() {
+      const { graph, updateGraph, currentTopic, pipelineName } = props;
 
-    if (!currentTopic) {
-      return toastr.error(MESSAGES.NO_TOPIC_IS_SUPPLIED);
-    }
+      if (!currentTopic) {
+        return toastr.error(MESSAGES.NO_TOPIC_IS_SUPPLIED);
+      }
 
-    // Don't add a topic if it's already existed in the pipeline graph
-    const isTopicExist = findByGraphName(graph, currentTopic.name);
+      // Don't add a topic if it's already existed in the pipeline graph
+      const isTopicExist = findByGraphName(graph, currentTopic.name);
 
-    if (!isTopicExist) {
-      const connector = {
-        ...currentTopic,
-        className: 'topic',
-        typeName: 'topic',
-      };
-      createConnector({ updateGraph, connector, pipelineName });
-    }
-  };
+      if (!isTopicExist) {
+        const connector = {
+          ...currentTopic,
+          className: 'topic',
+          typeName: 'topic',
+        };
+        createConnector({ updateGraph, connector, pipelineName });
+      }
+    },
+  }));
 
-  render() {
-    const { topics, currentTopic, workerClusterName: workspace } = this.props;
+  return (
+    <Wrapper>
+      {isEmpty(topics) ? (
+        <Warning
+          text={
+            <>
+              {`You don't have any topics available in this workspace yet. But you can create one in `}
+              <Link to={`${URLS.WORKSPACES}/${workerClusterName}/topics`}>
+                here
+              </Link>
+            </>
+          }
+        />
+      ) : (
+        <Select
+          isObject
+          list={updatedTopics}
+          selected={currentTopic}
+          handleChange={handleSelectChange}
+          data-testid="topic-select"
+        />
+      )}
+    </Wrapper>
+  );
+});
 
-    return (
-      <Wrapper>
-        {isEmpty(topics) ? (
-          <Warning
-            text={
-              <>
-                {`You don't have any topics available in this workspace yet. But you can create one in `}
-                <Link to={`${URLS.WORKSPACES}/${workspace}/topics`}>here</Link>
-              </>
-            }
-          />
-        ) : (
-          <Select
-            isObject
-            list={this.state.updatedTopics}
-            selected={currentTopic}
-            handleChange={this.handleSelectChange}
-            data-testid="topic-select"
-          />
-        )}
-      </Wrapper>
-    );
-  }
-}
+PipelineNewTopic.propTypes = {
+  graph: PropTypes.arrayOf(graphPropType).isRequired,
+  updateGraph: PropTypes.func.isRequired,
+  topics: PropTypes.array.isRequired,
+  updateTopic: PropTypes.func.isRequired,
+  enableAddButton: PropTypes.func.isRequired,
+  workerClusterName: PropTypes.string.isRequired,
+  currentTopic: PropTypes.object,
+  pipelineName: PropTypes.string.isRequired,
+};
 
 export default PipelineNewTopic;

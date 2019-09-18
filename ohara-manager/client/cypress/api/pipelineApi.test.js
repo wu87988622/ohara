@@ -21,7 +21,7 @@ const setup = () => {
   const zookeeperClusterName = generate.serviceName({ prefix: 'zk' });
   const brokerClusterName = generate.serviceName({ prefix: 'bk' });
   const workerClusterName = generate.serviceName({ prefix: 'wk' });
-  const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+  const pipelineName = generate.serviceName({ prefix: 'pi' });
 
   const topicGroup = `${workerClusterName}-topic`;
   const pipelineGroup = `${workerClusterName}-${pipelineName}`;
@@ -115,12 +115,12 @@ describe('Pipeline API', () => {
     const { workerClusterName } = setup();
 
     const paramsOne = {
-      name: generate.serviceName({ prefix: 'pipeline' }),
+      name: generate.serviceName({ prefix: 'pi' }),
       workerClusterName,
     };
 
     const paramsTwo = {
-      name: generate.serviceName({ prefix: 'pipeline' }),
+      name: generate.serviceName({ prefix: 'pi' }),
       workerClusterName,
     };
 
