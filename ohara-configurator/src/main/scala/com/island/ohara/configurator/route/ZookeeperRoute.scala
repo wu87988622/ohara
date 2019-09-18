@@ -73,6 +73,7 @@ object ZookeeperRoute {
         .flatMap(
           zkClusterInfo =>
             clusterCollie.zookeeperCollie.creator
+              .settings(zkClusterInfo.settings)
               .clusterName(zkClusterInfo.name)
               .group(zkClusterInfo.group)
               .clientPort(zkClusterInfo.clientPort)
