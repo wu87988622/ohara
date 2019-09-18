@@ -15,19 +15,30 @@
  */
 
 import '@testing-library/cypress/add-commands';
-import { isEmpty } from 'lodash';
+import { isEmpty, get } from 'lodash';
 
 import * as utils from '../utils';
 import * as generate from '../../src/utils/generate';
 import { axiosInstance } from '../../src/api/apiUtils';
 
-Cypress.Commands.add('addWorker', () => {
+Cypress.Commands.add('addWorker', params => {
+  const jarName = get(params, 'jarName', undefined);
+  let jarKeys;
   const { name: nodeName } = utils.getFakeNode();
   const prefix = Cypress.env('servicePrefix');
-  const workerName = generate.serviceName({
-    prefix: `${prefix}wk`,
-    length: 3,
-  });
+  const workerName = get(
+    params,
+    'workerName',
+    generate.serviceName({
+      prefix: `${prefix}wk`,
+      length: 3,
+    }),
+  );
+
+  if (jarName !== undefined) {
+    cy.uploadTestPlugin({ jarName, workerClusterName: workerName });
+    jarKeys = [{ name: jarName, group: `${workerName}-plugin` }];
+  }
 
   // Store the worker name in the Cypress env
   // as we'll be using it throughout the tests
@@ -48,7 +59,7 @@ Cypress.Commands.add('addWorker', () => {
       cy.request('POST', 'api/workers', {
         name: workerName,
         brokerClusterName: broker.name,
-        jarKeys: [],
+        jarKeys,
         groupId: generate.id(),
         nodeNames: [nodeName],
         tags: {
@@ -91,14 +102,31 @@ Cypress.Commands.add('addPipeline', params => {
   cy.request('POST', `/api/pipelines`, params).then(({ body }) => body);
 });
 
+Cypress.Commands.add('putPipeline', params => {
+  const { url, param } = params;
+  cy.request('PUT', `/api/pipelines${url}`, param).then(({ body }) => body);
+});
+
+Cypress.Commands.add('addConnector', params => {
+  cy.request('POST', `/api/connectors`, params).then(({ body }) => body);
+});
+
+Cypress.Commands.add('putConnector', params => {
+  const { url, param } = params;
+  cy.request('PUT', `/api/connectors${url}`, param).then(({ body }) => body);
+});
+
 Cypress.Commands.add(
   'addTopic',
-  (topicName = generate.serviceName({ prefix: 'topic' })) => {
+  (
+    topicName = generate.serviceName({ prefix: 'topic' }),
+    workerName = Cypress.env('WORKER_NAME'),
+  ) => {
     cy.request('GET', 'api/workers')
       .then(res => {
         // Make sure we're getting the right broker cluster name here
         const workers = res.body;
-        const currentWorkerName = Cypress.env('WORKER_NAME');
+        const currentWorkerName = workerName;
         const worker = workers.find(
           worker => worker.name === currentWorkerName,
         );
@@ -191,6 +219,34 @@ Cypress.Commands.add('uploadTestStreamAppJar', workerClusterName => {
       const res = axiosInstance.post(url, formData, config);
       cy.log(res);
     });
+});
+
+Cypress.Commands.add('uploadTestPlugin', params => {
+  const { jarName, workerClusterName } = params;
+  cy.fixture(`plugin/${jarName}`, 'base64')
+    .then(Cypress.Blob.base64StringToBlob)
+    .then(blob => {
+      const type = 'application/java-archive';
+      const url = '/api/files';
+      const config = {
+        headers: {
+          'content-type': 'multipart/form-data',
+        },
+      };
+      const testFile = new File([blob], jarName, { type });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      blob = dataTransfer.files;
+      let formData = new FormData();
+      formData.append('file', blob[0]);
+      formData.append('group', `${workerClusterName}-plugin`);
+      axiosInstance.post(url, formData, config);
+    });
+});
+
+Cypress.Commands.add('deleteTestPlugin', params => {
+  const { jarName, workerName } = params;
+  cy.request('DELETE', `api/files/${jarName}?group=${workerName}-plugin`);
 });
 
 Cypress.Commands.add('uploadJar', (selector, fixturePath, name, type) => {

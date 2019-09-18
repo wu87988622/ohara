@@ -45,7 +45,12 @@ const InputField = props => {
     ...rest
   } = props;
 
-  const error = meta.error && meta.touched;
+  let error = false;
+  if (meta.error && meta.touched) {
+    error = true;
+  } else if (meta.error && meta.dirty) {
+    error = true;
+  }
 
   return (
     <InputWrap>
@@ -77,6 +82,7 @@ InputField.propTypes = {
     ]).isRequired,
   }).isRequired,
   meta: PropTypes.shape({
+    dirty: PropTypes.bool,
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,

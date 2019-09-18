@@ -488,7 +488,7 @@ const Plugins = props => {
         open={isResetModalOpen}
         handleClose={() => setIsResetModalOpen(false)}
         handleConfirm={() => handleRestart()}
-        confirmText="Restart"
+        confirmText="RESTART"
       />
       <Progress
         open={isLoading}

@@ -21,10 +21,9 @@ const validate = values => {
     errors.name = 'Required field';
   } else if (values.name.match(/[^0-9a-z]/g)) {
     errors.name = 'You only can use lower case letters and numbers';
-  } else if (values.name.length > 30) {
-    errors.name = 'Must be between 1 and 30 characters long';
+  } else if (values.name.length > 20) {
+    errors.name = 'Must be between 1 and 20 characters long';
   }
-
   return errors;
 };
 

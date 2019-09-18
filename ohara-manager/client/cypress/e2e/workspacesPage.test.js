@@ -32,7 +32,10 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/brokers/*').as('getBroker');
     cy.route('GET', 'api/zookeepers/*').as('getZookeeper');
     cy.route('GET', 'api/topics?*').as('getTopics');
-    cy.route('GET', 'api/files?*').as('getFiles');
+    cy.route('GET', 'api/pipelines').as('getPipelines');
+    cy.route('PUT', 'api/workers/*/stop').as('stopWorker');
+    cy.route('PUT', 'api/workers/*/start').as('startWorker');
+    cy.route('GET', 'api/files*').as('getFiles');
     cy.route('POST', 'api/zookeepers').as('createZookeeper');
     cy.route('POST', 'api/brokers').as('createBroker');
   });
@@ -327,5 +330,183 @@ describe('WorkspacesPage', () => {
             .should('have.length', 1);
         });
       });
+  });
+});
+
+describe('plugin', () => {
+  let workerName;
+  const jarName = 'ohara-it-sink.jar';
+  before(() => {
+    const prefix = Cypress.env('servicePrefix');
+    workerName = generate.serviceName({
+      prefix: `${prefix}wk`,
+      length: 5,
+    });
+    cy.deleteTestPlugin({ jarName, workerName });
+    cy.removeWorkers();
+    cy.addWorker({ jarName, workerName });
+  });
+
+  beforeEach(() => {
+    cy.server();
+    cy.route('GET', 'api/workers').as('getWorkers');
+    cy.route('GET', 'api/workers/*').as('getWorker');
+    cy.route('GET', 'api/brokers/*').as('getBroker');
+    cy.route('GET', 'api/zookeepers/*').as('getZookeeper');
+    cy.route('GET', 'api/topics?*').as('getTopics');
+    cy.route('GET', 'api/pipelines').as('getPipelines');
+    cy.route('GET', 'api/connectors/*').as('getConnectors');
+    cy.route('PUT', 'api/workers/*/stop').as('stopWorker');
+    cy.route('PUT', 'api/workers/*/start').as('startWorker');
+    cy.route('PUT', 'api/workers/*').as('putWorker');
+    cy.route('PUT', 'api/connectors/*/start?*').as('startConnector');
+    cy.route('PUT', 'api/connectors/*/stop?*').as('stopConnector');
+    cy.route('GET', 'api/files').as('getFiles');
+  });
+
+  it('update workespace with add new plugin', () => {
+    cy.visit(WORKSPACES)
+      .wait('@getWorkers')
+      .getByTestId(workerName)
+      .click()
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Plugins').click();
+      })
+      .wait('@getFiles')
+      .uploadJar(
+        'input[type=file]',
+        'plugin/ohara-it-source.jar',
+        'ohara-it-source.jar',
+        'application/java-archive',
+      )
+      .wait('@getFiles')
+      .getByText('Plugin successfully uploaded!')
+      .should('have.length', 1)
+      .queryAllByText('ohara-it-source.jar')
+      .should('have.length', 1)
+      .getByText(
+        'You’ve made some changes to the plugins: 1 added. Please restart for these settings to take effect!!',
+      )
+      .should('have.length', 1)
+      .getByText('RESTART')
+      .click()
+      .getByTestId('confirm-button-RESTART')
+      .click()
+      .wait('@getPipelines', { timeout: 60000 })
+      .wait('@stopWorker', { timeout: 60000 })
+      .wait('@startWorker', { timeout: 60000 })
+      .wait('@getFiles', { timeout: 60000 })
+      .getByTestId('plugins-loaded', { timeout: 60000 })
+      .should('have.length', 1);
+  });
+
+  it('faild update workespace with remove plugin', () => {
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+    const perfName = generate.serviceName({ prefix: 'perf' });
+    const topicName = generate.serviceName({ prefix: 'topic' });
+    const dumbsinkName = generate.serviceName({ prefix: 'dumbsink' });
+    cy.addPipeline({
+      name: pipelineName,
+      group: `${workerName}-${pipelineName}`,
+      tags: {
+        workerClusterName: workerName,
+      },
+    });
+    cy.addTopic(topicName, workerName);
+    cy.addConnector({
+      'connector.class': 'com.island.ohara.connector.perf.PerfSource',
+      group: `${workerName}-${pipelineName}`,
+      name: perfName,
+      workerClusterName: workerName,
+    });
+    cy.putConnector({
+      url: `/${perfName}?group=${workerName}-${pipelineName}`,
+      param: {
+        topicKeys: [{ group: `${workerName}-topic`, name: topicName }],
+      },
+    });
+    cy.addConnector({
+      'connector.class': 'com.island.ohara.it.connector.DumbSinkConnector',
+      group: `${workerName}-${pipelineName}`,
+      name: dumbsinkName,
+      workerClusterName: workerName,
+    });
+    cy.putConnector({
+      url: `/${dumbsinkName}?group=${workerName}-${pipelineName}`,
+      param: {
+        topicKeys: [{ group: `${workerName}-topic`, name: topicName }],
+      },
+    });
+    cy.putPipeline({
+      url: `/${pipelineName}?group=${workerName}-${pipelineName}`,
+      param: {
+        flows: [
+          {
+            from: {
+              group: `${workerName}-${pipelineName}`,
+              name: perfName,
+            },
+            to: [
+              {
+                group: `${workerName}-${pipelineName}`,
+                name: topicName,
+              },
+            ],
+          },
+          {
+            from: {
+              group: `${workerName}-${pipelineName}`,
+              name: dumbsinkName,
+            },
+            to: [],
+          },
+          {
+            from: {
+              group: `${workerName}-topic`,
+              name: topicName,
+            },
+            to: [{ group: `${workerName}-topic`, name: dumbsinkName }],
+          },
+        ],
+      },
+    });
+    cy.putConnector({
+      url: `/${perfName}/start?group=${workerName}-${pipelineName}`,
+    });
+    cy.putConnector({
+      url: `/${dumbsinkName}/start?group=${workerName}-${pipelineName}`,
+    });
+    cy.visit(WORKSPACES)
+      .wait('@getWorkers')
+      .getByTestId(workerName)
+      .click()
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Plugins').click();
+      })
+      .wait('@getFiles')
+      .getByTestId('ohara-it-sink.jar')
+      .click()
+      .getByText('RESTART')
+      .click()
+      .getByTestId('confirm-button-RESTART')
+      .click()
+      .wait('@getPipelines', { timeout: 60000 })
+      .wait('@stopConnector', { timeout: 60000 })
+      .wait('@stopConnector', { timeout: 60000 })
+      .wait('@getConnectors', { timeout: 60000 })
+      .wait('@stopWorker', { timeout: 60000 })
+      .wait('@startWorker', { timeout: 60000 })
+      .wait('@startConnector', { timeout: 60000 })
+      .wait('@startConnector', { timeout: 60000 })
+      .wait('@stopWorker', { timeout: 60000 })
+      .wait('@putWorker', { timeout: 60000 })
+      .wait('@startWorker', { timeout: 60000 })
+      .wait('@startConnector', { timeout: 60000 })
+      .wait('@startConnector', { timeout: 60000 })
+      .wait('@getFiles', { timeout: 60000 })
+      .getByTestId('ohara-it-sink.jar', { timeout: 60000 })
+      .should('have.length', 1);
   });
 });

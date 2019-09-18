@@ -38,7 +38,7 @@ const usePlugin = () => {
     const runningConnector = res
       .filter(pipeline => pipeline.tags.workerClusterName === worker.name)
       .map(pipeline => pipeline.objects)
-      .flatMap(object => object)
+      .reduce((start, next) => start.concat(next), [])
       .filter(
         object =>
           object.state === 'RUNNING' &&
