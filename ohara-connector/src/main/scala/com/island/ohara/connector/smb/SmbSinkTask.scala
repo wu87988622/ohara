@@ -16,21 +16,21 @@
 
 package com.island.ohara.connector.smb
 
-import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.csv.CsvSourceTask
-import com.island.ohara.kafka.connector.storage.FileSystem
 import com.island.ohara.client.filesystem
+import com.island.ohara.kafka.connector.TaskSetting
+import com.island.ohara.kafka.connector.csv.CsvSinkTask
+import com.island.ohara.kafka.connector.storage.FileSystem
 
-class SmbSourceTask extends CsvSourceTask {
+class SmbSinkTask extends CsvSinkTask {
 
   /**
-    * Return the client of SMB for this connector
+    * Returns the FileSystem implementation for this Task.
     *
-    * @param config initial configuration
-    * @return the SMB client
+    * @param settings initial settings
+    * @return a FileSystem instance
     */
-  override def _fileSystem(config: TaskSetting): FileSystem = {
-    val props = SmbProps(config)
+  override def _fileSystem(settings: TaskSetting): FileSystem = {
+    val props = SmbProps(settings)
     filesystem.FileSystem.smbBuilder
       .hostname(props.hostname)
       .port(props.port)

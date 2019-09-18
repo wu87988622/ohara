@@ -19,12 +19,12 @@ package com.island.ohara.connector
 import com.island.ohara.common.setting.SettingDef
 
 package object smb {
-
   val SMB_HOSTNAME_KEY: String = "smb.hostname"
   val SMB_HOSTNAME_DEFINITION: SettingDef = SettingDef
     .builder()
     .key(SMB_HOSTNAME_KEY)
-    .documentation("The hostname of SMB server")
+    .displayName("Hostname")
+    .documentation("the hostname of SMB server")
     .valueType(SettingDef.Type.STRING)
     .build()
 
@@ -32,7 +32,8 @@ package object smb {
   val SMB_PORT_DEFINITION: SettingDef = SettingDef
     .builder()
     .key(SMB_PORT_KEY)
-    .documentation("The port of SMB server")
+    .displayName("Port")
+    .documentation("the port of SMB server")
     .valueType(SettingDef.Type.PORT)
     .build()
 
@@ -40,8 +41,9 @@ package object smb {
   val SMB_USER_DEFINITION: SettingDef = SettingDef
     .builder()
     .key(SMB_USER_KEY)
+    .displayName("Username")
     .documentation(
-      "The username of SMB server. This account must have read/delete permission of input folder and error folder")
+      "the username of SMB server. This account must have read/delete permission of input folder and error folder")
     .valueType(SettingDef.Type.STRING)
     .build()
 
@@ -49,7 +51,8 @@ package object smb {
   val SMB_PASSWORD_DEFINITION: SettingDef = SettingDef
     .builder()
     .key(SMB_PASSWORD_KEY)
-    .documentation("The password of SMB server.")
+    .displayName("Password")
+    .documentation("the password of SMB server")
     .valueType(SettingDef.Type.STRING)
     .build()
 
@@ -57,12 +60,13 @@ package object smb {
   val SMB_SHARE_NAME_DEFINITION: SettingDef = SettingDef
     .builder()
     .key(SMB_SHARE_NAME_KEY)
-    .documentation("The share name of SMB server.")
+    .displayName("Share Name")
+    .documentation("the share name of SMB server")
     .valueType(SettingDef.Type.STRING)
     .build()
 
   /**
-    * the core settings for SmbSource.
+    * the settings for smb connectors.
     */
   val DEFINITIONS: Seq[SettingDef] = Seq(
     SMB_HOSTNAME_DEFINITION,

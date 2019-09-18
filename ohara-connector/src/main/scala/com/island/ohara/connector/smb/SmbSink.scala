@@ -19,27 +19,24 @@ package com.island.ohara.connector.smb
 import java.util
 
 import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.{RowSourceTask, TaskSetting}
-import com.island.ohara.kafka.connector.csv.CsvSourceConnector
-import com.island.ohara.kafka.connector.csv.source.CsvSourceConfig
+import com.island.ohara.kafka.connector.csv.sink.CsvSinkConfig
+import com.island.ohara.kafka.connector.csv.CsvSinkConnector
+import com.island.ohara.kafka.connector.{RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
-class SmbSource extends CsvSourceConnector {
+class SmbSink extends CsvSinkConnector {
   private[this] var settings: TaskSetting = _
-  private[this] var props: SmbProps = _
-  private[this] var schema: Seq[Column] = _
 
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[SmbSourceTask]
+  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[SmbSinkTask]
 
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
 
   override protected[smb] def _start(settings: TaskSetting): Unit = {
     this.settings = settings
-    this.props = SmbProps(settings)
-    this.schema = settings.columns.asScala
+    val props = SmbProps(settings)
+    val schema = settings.columns.asScala
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val fileSystem =
@@ -52,29 +49,15 @@ class SmbSource extends CsvSourceConnector {
         .build()
 
     try {
-      val csvSourceConfig = CsvSourceConfig.of(settings)
-
-      val inputFolder = csvSourceConfig.inputFolder()
-      verifyFolder(inputFolder)
-      if (fileSystem.nonExists(inputFolder))
-        throw new IllegalArgumentException(s"${inputFolder} doesn't exist")
-
-      val completedFolder = csvSourceConfig.completedFolder()
-      if (completedFolder.isPresent) {
-        verifyFolder(completedFolder.get())
-        if (fileSystem.nonExists(completedFolder.get())) fileSystem.mkdirs(completedFolder.get())
+      val csvSinkConfig = CsvSinkConfig.of(settings, settings.columns)
+      val topicsDir = csvSinkConfig.topicsDir()
+      if (topicsDir.startsWith("/")) {
+        throw new IllegalArgumentException(s"The $topicsDir is invalid, we don't allow paths beginning with a slash.")
       }
-
-      val errorFolder = csvSourceConfig.errorFolder()
-      verifyFolder(errorFolder)
-      if (fileSystem.nonExists(errorFolder)) fileSystem.mkdirs(errorFolder)
+      if (fileSystem.nonExists(topicsDir)) {
+        throw new IllegalArgumentException(s"${topicsDir} doesn't exist")
+      }
     } finally fileSystem.close()
-  }
-
-  private[this] def verifyFolder(dir: String): Unit = {
-    if (dir.startsWith("/")) {
-      throw new IllegalArgumentException(s"The $dir is invalid, we don't allow paths beginning with a slash.")
-    }
   }
 
   override protected def _stop(): Unit = {

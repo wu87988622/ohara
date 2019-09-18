@@ -18,7 +18,7 @@ package com.island.ohara.connector.smb
 
 import com.island.ohara.kafka.connector.TaskSetting
 
-case class SmbSourceProps(hostname: String, port: Int, user: String, password: String, shareName: String) {
+case class SmbProps(hostname: String, port: Int, user: String, password: String, shareName: String) {
   def plain: Map[String, String] = Map(
     SMB_HOSTNAME_KEY -> hostname,
     SMB_PORT_KEY -> port.toString,
@@ -28,12 +28,12 @@ case class SmbSourceProps(hostname: String, port: Int, user: String, password: S
   )
 }
 
-object SmbSourceProps {
-  def apply(setting: TaskSetting): SmbSourceProps = SmbSourceProps(
-    hostname = setting.stringValue(SMB_HOSTNAME_KEY),
-    port = setting.intValue(SMB_PORT_KEY),
-    user = setting.stringValue(SMB_USER_KEY),
-    password = setting.stringValue(SMB_PASSWORD_KEY),
-    shareName = setting.stringValue(SMB_SHARE_NAME_KEY)
+object SmbProps {
+  def apply(settings: TaskSetting): SmbProps = SmbProps(
+    hostname = settings.stringValue(SMB_HOSTNAME_KEY),
+    port = settings.intValue(SMB_PORT_KEY),
+    user = settings.stringValue(SMB_USER_KEY),
+    password = settings.stringValue(SMB_PASSWORD_KEY),
+    shareName = settings.stringValue(SMB_SHARE_NAME_KEY)
   )
 }
