@@ -157,7 +157,7 @@ OverviewNodes.propTypes = {
       nodeNames: PropTypes.arrayOf(PropTypes.string).isRequired,
       clientPort: PropTypes.number.isRequired,
       jmxPort: PropTypes.number.isRequired,
-    }),
+    }).isRequired,
   }),
   broker: PropTypes.object,
   zookeeper: PropTypes.object,
