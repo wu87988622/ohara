@@ -187,7 +187,30 @@ private[filesystem] object SmbFileSystem {
         val accessMask = util.EnumSet.of(AccessMask.GENERIC_WRITE)
         val createDisposition = SMB2CreateDisposition.FILE_CREATE
         val smbFile = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
-        smbFile.getOutputStream()
+        val os = smbFile.getOutputStream()
+
+        // wrap OutputStream. upon a close, also close the File object and Share object.
+        new OutputStream {
+          override def close(): Unit = {
+            Releasable.close(os)
+            Releasable.close(smbFile)
+            Releasable.close(shareRoot)
+          }
+
+          override def write(b: Int): Unit = os.write(b)
+
+          override def flush(): Unit = os.flush()
+
+          override def write(b: Array[Byte]): Unit = os.write(b)
+
+          override def write(b: Array[Byte], off: Int, len: Int): Unit = os.write(b, off, len)
+
+          override def equals(obj: scala.Any): Boolean = os.equals(obj)
+
+          override def hashCode(): Int = os.hashCode()
+
+          override def toString: String = os.toString
+        }
       }
 
       /**
@@ -200,9 +223,32 @@ private[filesystem] object SmbFileSystem {
       override def append(path: String): OutputStream = connectShare { shareRoot =>
         if (nonExists(path)) throw new IllegalArgumentException(s"$path doesn't exist")
         val accessMask: util.Set[AccessMask] = util.EnumSet.of(AccessMask.GENERIC_WRITE)
-        val createDisposition: SMB2CreateDisposition = SMB2CreateDisposition.FILE_OPEN_IF
+        val createDisposition: SMB2CreateDisposition = SMB2CreateDisposition.FILE_OPEN
         val smbFile = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
-        smbFile.getOutputStream(true)
+        val os = smbFile.getOutputStream(true)
+
+        // wrap OutputStream. upon a close, also close the File object and Share object.
+        new OutputStream {
+          override def close(): Unit = {
+            Releasable.close(os)
+            Releasable.close(smbFile)
+            Releasable.close(shareRoot)
+          }
+
+          override def write(b: Int): Unit = os.write(b)
+
+          override def flush(): Unit = os.flush()
+
+          override def write(b: Array[Byte]): Unit = os.write(b)
+
+          override def write(b: Array[Byte], off: Int, len: Int): Unit = os.write(b, off, len)
+
+          override def equals(obj: scala.Any): Boolean = os.equals(obj)
+
+          override def hashCode(): Int = os.hashCode()
+
+          override def toString: String = os.toString
+        }
       }
 
       /**
@@ -217,7 +263,38 @@ private[filesystem] object SmbFileSystem {
         val accessMask: util.Set[AccessMask] = util.EnumSet.of(AccessMask.GENERIC_READ)
         val createDisposition: SMB2CreateDisposition = SMB2CreateDisposition.FILE_OPEN
         val smbFile = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
-        smbFile.getInputStream
+        val is = smbFile.getInputStream()
+
+        // wrap InputStream. upon a close, also close the File object and Share object.
+        new InputStream {
+          override def close(): Unit = {
+            Releasable.close(is)
+            Releasable.close(smbFile)
+            Releasable.close(shareRoot)
+          }
+
+          override def read(): Int = is.read()
+
+          override def available(): Int = is.available()
+
+          override def mark(readlimit: Int): Unit = is.mark(readlimit)
+
+          override def markSupported(): Boolean = is.markSupported()
+
+          override def read(b: Array[Byte]): Int = is.read(b)
+
+          override def read(b: Array[Byte], off: Int, len: Int): Int = is.read(b, off, len)
+
+          override def reset(): Unit = is.reset()
+
+          override def skip(n: Long): Long = is.skip(n)
+
+          override def equals(obj: scala.Any): Boolean = is.equals(obj)
+
+          override def hashCode(): Int = is.hashCode()
+
+          override def toString: String = is.toString
+        }
       }
 
       /**
@@ -297,7 +374,7 @@ private[filesystem] object SmbFileSystem {
         if (exists(path)) {
           val fi = shareRoot.getFileInformation(path)
           val isFolder =
-            EnumWithValue.EnumUtils.isSet(fi.getBasicInformation.getFileAttributes, FILE_ATTRIBUTE_DIRECTORY);
+            EnumWithValue.EnumUtils.isSet(fi.getBasicInformation.getFileAttributes, FILE_ATTRIBUTE_DIRECTORY)
           if (isFolder) FileType.FOLDER else FileType.FILE
         } else FileType.NONEXISTENT
       }

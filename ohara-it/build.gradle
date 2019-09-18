@@ -69,6 +69,7 @@ dependencies {
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
   testImplementation project(":ohara-connector").sourceSets.main.output
+  testImplementation project(":ohara-connector").sourceSets.test.output
   testImplementation project(":ohara-client").sourceSets.test.output
   testImplementation libs.scalatest
   testImplementation libs.junit

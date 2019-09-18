@@ -16,16 +16,19 @@
 
 package com.island.ohara.it.connector.smb
 
-import com.island.ohara.client.filesystem.{FileSystem, FileSystemTestBase}
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.client.filesystem.FileSystem
+import com.island.ohara.connector.CsvSourceTestBase
+import com.island.ohara.connector.smb._
+import com.island.ohara.kafka.connector.csv.CsvConnector._
+import com.island.ohara.kafka.connector.csv.CsvSourceConnector
 import org.junit.AssumptionViolatedException
 
-class TestSmbFileSystem extends FileSystemTestBase {
+class TestSmbSource extends CsvSourceTestBase {
 
   private[this] val itProps: ITSmbProps = try ITSmbProps(sys.env)
   catch {
     case e: IllegalArgumentException =>
-      throw new AssumptionViolatedException(s"skip TestSmbFileSystem test, ${e.getMessage}")
+      throw new AssumptionViolatedException(s"skip TestSmbSource test, ${e.getMessage}")
   }
 
   override protected val fileSystem: FileSystem = FileSystem.smbBuilder
@@ -36,5 +39,18 @@ class TestSmbFileSystem extends FileSystemTestBase {
     .shareName(itProps.shareName)
     .build()
 
-  override protected val rootDir: String = CommonUtils.randomString(10)
+  override protected val connectorClass: Class[_ <: CsvSourceConnector] = classOf[SmbSource]
+
+  override protected val setupProps: Map[String, String] = Map(
+    SMB_HOSTNAME_KEY -> itProps.hostname,
+    SMB_PORT_KEY -> itProps.port.toString,
+    SMB_USER_KEY -> itProps.username,
+    SMB_PASSWORD_KEY -> itProps.password,
+    SMB_SHARE_NAME_KEY -> itProps.shareName,
+    INPUT_FOLDER_CONFIG -> "input",
+    COMPLETED_FOLDER_CONFIG -> "completed",
+    ERROR_FOLDER_CONFIG -> "error",
+    TASK_TOTAL_CONFIG -> "1",
+    TASK_HASH_CONFIG -> "0"
+  )
 }

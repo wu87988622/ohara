@@ -171,4 +171,24 @@ abstract class FileSystemTestBase extends SmallTest with Matchers {
     fileSystem.exists(file1) shouldBe false
     fileSystem.exists(file2) shouldBe true
   }
+
+  @Test
+  def testReMkdirs(): Unit = {
+    val dir = "input"
+    fileSystem.reMkdirs(dir)
+    fileSystem.listFileNames(dir, FileFilter.default()).size shouldBe 0
+  }
+
+  @Test
+  def testDeleteFileThatHaveBeenRead(): Unit = {
+    val file = randomFile(rootDir)
+    fileSystem.create(file).close()
+    fileSystem.exists(file) shouldBe true
+    val data = Seq("123", "456")
+    fileSystem.attach(file, data)
+    fileSystem.readLines(file) shouldBe data
+    fileSystem.delete(file)
+    fileSystem.exists(file) shouldBe false
+    fileSystem.listFileNames(rootDir, FileFilter.default).size shouldBe 0
+  }
 }

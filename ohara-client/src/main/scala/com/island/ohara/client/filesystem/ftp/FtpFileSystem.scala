@@ -162,7 +162,7 @@ private[filesystem] object FtpFileSystem {
         */
       override def listFileNames(dir: String, filter: FileFilter): Seq[String] = wrap { () =>
         if (nonExists(dir)) throw new IllegalArgumentException(s"The path $dir doesn't exist")
-        client.listFileNames(dir).filter(filter.accept(_))
+        client.listFileNames(dir).filter(filter.accept)
       }
 
       /**
