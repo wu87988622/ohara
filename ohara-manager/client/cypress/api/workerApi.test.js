@@ -88,18 +88,18 @@ describe('Worker API', () => {
 
       expect(isSuccess).to.eq(true);
 
-      expect(result.name).to.eq(workerClusterName);
-      expect(result.clientPort).to.be.a('number');
-      expect(result.nodeNames)
+      expect(result.settings.name).to.eq(workerClusterName);
+      expect(result.settings.clientPort).to.be.a('number');
+      expect(result.settings.nodeNames)
         .to.be.a('array')
         .that.have.lengthOf(1);
       expect(result.connectors).to.be.a('array');
-      expect(result.jarInfos).to.be.a('array');
-      expect(result.configTopicName).to.be.a('string');
-      expect(result.offsetTopicName).to.be.a('string');
+      expect(result.settings.jarInfos).to.be.a('array');
+      expect(result.settings.configTopicName).to.be.a('string');
+      expect(result.settings.offsetTopicName).to.be.a('string');
       expect(result.statusTopicName).to.be.a('string');
-      expect(result.imageName).to.be.a('string');
-      expect(result.tags.name).to.eq(workerClusterName);
+      expect(result.settings.imageName).to.be.a('string');
+      expect(result.settings.tags.name).to.eq(workerClusterName);
     });
   });
 
@@ -113,13 +113,13 @@ describe('Worker API', () => {
 
       expect(isSuccess).to.eq(true);
 
-      expect(result.name).to.eq(workerClusterName);
-      expect(result.clientPort).to.be.a('number');
-      expect(result.nodeNames).to.be.a('array');
+      expect(result.settings.name).to.eq(workerClusterName);
+      expect(result.settings.clientPort).to.be.a('number');
+      expect(result.settings.nodeNames).to.be.a('array');
       expect(result.connectors).to.be.a('array');
-      expect(result.jarInfos).to.be.a('array');
-      expect(result.imageName).to.be.a('string');
-      expect(result.tags.name).to.eq(workerClusterName);
+      expect(result.settings.jarInfos).to.be.a('array');
+      expect(result.settings.imageName).to.be.a('string');
+      expect(result.settings.tags.name).to.eq(workerClusterName);
     });
   });
 
@@ -150,7 +150,8 @@ describe('Worker API', () => {
 
       const workers = result.filter(
         worker =>
-          worker.name === paramsOne.name || worker.name === paramsTwo.name,
+          worker.settings.name === paramsOne.name ||
+          worker.settings.name === paramsTwo.name,
       );
 
       expect(workers.length).to.eq(2);

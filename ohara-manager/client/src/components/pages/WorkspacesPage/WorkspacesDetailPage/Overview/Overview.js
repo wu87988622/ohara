@@ -37,12 +37,13 @@ import * as URL from 'components/controller/url';
 
 const Overview = props => {
   const { worker } = props;
+  const { connectors } = worker;
+
   const {
     imageName: workerImageName,
     name: workerName,
-    connectors,
     tags,
-  } = worker;
+  } = worker.settings;
 
   const {
     name: zookeeperClusterName,
@@ -92,7 +93,10 @@ const Overview = props => {
         </Box>
 
         <Box>
-          <OverviewTopics handleRedirect={handleRedirect} worker={worker} />
+          <OverviewTopics
+            handleRedirect={handleRedirect}
+            workerName={workerName}
+          />
         </Box>
       </LeftColumn>
 
@@ -124,11 +128,13 @@ Overview.propTypes = {
     push: PropTypes.func.isRequired,
   }).isRequired,
   worker: PropTypes.shape({
-    imageName: PropTypes.string.isRequired,
-    brokerClusterName: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
+    settings: PropTypes.shape({
+      imageName: PropTypes.string.isRequired,
+      brokerClusterName: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      tags: PropTypes.object,
+    }),
     connectors: PropTypes.array.isRequired,
-    tags: PropTypes.object,
   }).isRequired,
 };
 

@@ -61,8 +61,10 @@ describe('<WorkspacesPage />', () => {
           data: {
             result: [
               {
-                name: workspaceName,
-                nodeNames: [generate.name()],
+                settings: {
+                  name: workspaceName,
+                  nodeNames: [generate.name()],
+                },
               },
             ],
           },

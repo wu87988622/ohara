@@ -31,9 +31,9 @@ import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 
 const OverviewTopics = props => {
-  const { handleRedirect, worker } = props;
+  const { handleRedirect, workerName } = props;
   const { data: topicsRes, isLoading: fetchingTopics } = useApi.useFetchApi(
-    `${URL.TOPIC_URL}?group=${worker.name}-topic`,
+    `${URL.TOPIC_URL}?group=${workerName}-topic`,
   );
 
   const topics = get(topicsRes, 'data.result', []);
@@ -83,9 +83,7 @@ const OverviewTopics = props => {
 
 OverviewTopics.propTypes = {
   handleRedirect: PropTypes.func.isRequired,
-  worker: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-  }).isRequired,
+  workerName: PropTypes.string.isRequired,
 };
 
 export default OverviewTopics;

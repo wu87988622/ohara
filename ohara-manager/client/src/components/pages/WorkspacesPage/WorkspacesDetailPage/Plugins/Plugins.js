@@ -48,7 +48,7 @@ const Plugins = props => {
     refetch: jarRefetch,
   } = useApi.useFetchApi(URL.FILE_URL);
   const jars = get(jarsRes, 'data.result', []).filter(
-    jar => jar.group === `${worker.name}-plugin`,
+    jar => jar.group === `${worker.settings.name}-plugin`,
   );
 
   const [workerActions, setWorkerActions] = useState([]);
@@ -71,7 +71,7 @@ const Plugins = props => {
   const saveJarInfos = useRef();
 
   useEffect(() => {
-    const { jarInfos } = worker;
+    const { jarInfos } = worker.settings;
     const defaultAction = jarInfos.map(jarInfo => {
       return {
         name: jarInfo.name,
@@ -88,7 +88,7 @@ const Plugins = props => {
   const uploadJar = async file => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('group', `${worker.name}-plugin`);
+    formData.append('group', `${worker.settings.name}-plugin`);
     await uploadApi(formData);
 
     const isSuccess = get(getJarRes(), 'data.isSuccess', false);
@@ -103,7 +103,7 @@ const Plugins = props => {
 
     const isDuplicate = () =>
       jars
-        .filter(jar => jar.group.split('-')[0] === worker.name)
+        .filter(jar => jar.group.split('-')[0] === worker.settings.name)
         .some(jar => jar.name === file.name);
 
     if (isDuplicate()) {
@@ -212,10 +212,12 @@ const Plugins = props => {
   });
 
   const jarRows = jars
-    .filter(jar => jar.group.split('-')[0] === worker.name)
+    .filter(jar => jar.group.split('-')[0] === worker.settings.name)
     .filter(
       jar =>
-        !worker.jarInfos.map(workerJars => workerJars.name).includes(jar.name),
+        !worker.settings.jarInfos
+          .map(workerJars => workerJars.name)
+          .includes(jar.name),
     )
     .map(jar => {
       return {
@@ -230,7 +232,9 @@ const Plugins = props => {
 
   const handleDelete = async () => {
     if (jarNameToBeDeleted) {
-      await deleteApi(`${jarNameToBeDeleted}?group=${worker.name}-plugin`);
+      await deleteApi(
+        `${jarNameToBeDeleted}?group=${worker.settings.name}-plugin`,
+      );
       const isSuccess = get(getDeleteRes(), 'data.isSuccess', false);
       setDeleting(false);
 
@@ -264,15 +268,17 @@ const Plugins = props => {
 
   const handleDiscard = async () => {
     const newJar = jars
-      .filter(jar => jar.group.split('-')[0] === worker.name)
+      .filter(jar => jar.group.split('-')[0] === worker.settings.name)
       .filter(
         jar =>
-          !worker.jarInfos
+          !worker.settings.jarInfos
             .map(workerJars => workerJars.name)
             .includes(jar.name),
       );
 
-    newJar.forEach(jar => deleteApi(`${jar.name}?group=${worker.name}-plugin`));
+    newJar.forEach(jar =>
+      deleteApi(`${jar.name}?group=${worker.settings.name}-plugin`),
+    );
 
     await commonUtils.sleep(500);
 
@@ -349,7 +355,7 @@ const Plugins = props => {
 
     connectors.current = await getRunningConnectors(worker);
 
-    saveJarInfos.current = worker.jarInfos;
+    saveJarInfos.current = worker.settings.jarInfos;
 
     const stopConnectorsSuccess = await stopConnectors(connectors.current);
 
@@ -396,7 +402,7 @@ const Plugins = props => {
     const addPlugin = jars
       .filter(
         jar =>
-          !worker.jarInfos
+          !worker.settings.jarInfos
             .map(workerJars => workerJars.name)
             .includes(jar.name),
       )
@@ -505,8 +511,10 @@ const Plugins = props => {
 
 Plugins.propTypes = {
   worker: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    jarInfos: PropTypes.array.isRequired,
+    settings: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      jarInfos: PropTypes.array.isRequired,
+    }),
   }).isRequired,
   workerRefetch: PropTypes.func.isRequired,
 };

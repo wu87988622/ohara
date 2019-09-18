@@ -117,14 +117,14 @@ const usePlugin = () => {
       return isUndefined(get(res, 'data.result.state', undefined));
     };
 
-    await putWorker(`/${worker.name}/stop`);
+    await putWorker(`/${worker.settings.name}/stop`);
     const stopIsSuccess = get(getWorker(), 'data.isSuccess', false);
     if (!stopIsSuccess) {
       return stopIsSuccess;
     }
 
     const stopWorkerParams = {
-      url: `${URL.WORKER_URL}/${worker.name}`,
+      url: `${URL.WORKER_URL}/${worker.settings.name}`,
       checkFn: stopWorkerCheckFn,
       sleep: 3000,
     };
@@ -139,7 +139,7 @@ const usePlugin = () => {
       return get(res, 'data.result.connectors', []).length > 0;
     };
 
-    await putWorker(`/${worker.name}/start`);
+    await putWorker(`/${worker.settings.name}/start`);
 
     const startIsSuccess = get(getWorker(), 'data.isSuccess', false);
     if (!startIsSuccess) {
@@ -147,7 +147,7 @@ const usePlugin = () => {
     }
 
     const startWorkerParams = {
-      url: `${URL.WORKER_URL}/${worker.name}`,
+      url: `${URL.WORKER_URL}/${worker.settings.name}`,
       checkFn: startWorkerCheckFn,
       sleep: 3000,
     };
@@ -159,7 +159,7 @@ const usePlugin = () => {
 
   const updateJarInfos = async props => {
     const { worker, jarInfos } = props;
-    await putWorker(`/${worker.name}`, {
+    await putWorker(`/${worker.settings.name}`, {
       jarKeys: jarInfos.map(jarInfo => {
         return { name: jarInfo.name, group: jarInfo.group };
       }),

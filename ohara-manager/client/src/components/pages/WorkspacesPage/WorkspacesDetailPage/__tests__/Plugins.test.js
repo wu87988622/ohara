@@ -38,8 +38,10 @@ const file = {
 
 const props = {
   worker: {
-    name: workerName,
-    jarInfos: [file],
+    settings: {
+      name: workerName,
+      jarInfos: [file],
+    },
   },
   workerRefetch: jest.fn(),
 };

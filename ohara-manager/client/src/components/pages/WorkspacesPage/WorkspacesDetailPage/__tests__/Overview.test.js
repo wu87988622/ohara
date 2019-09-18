@@ -49,28 +49,30 @@ describe('<Overview />', () => {
       push: jest.fn(),
     },
     worker: {
-      name: generate.name(),
-      clientPort: generate.port(),
-      jmxPort: generate.port(),
-      connectors,
-      nodeNames: [generate.serviceName()],
-      brokerClusterName,
-      imageName: generate.name(),
-      tags: {
-        broker: {
-          name: brokerClusterName,
-          imageName: generate.name(),
-        },
-        zookeeper: {
-          name: generate.name(),
-          imageName: generate.name(),
+      settings: {
+        name: generate.name(),
+        clientPort: generate.port(),
+        jmxPort: generate.port(),
+        nodeNames: [generate.serviceName()],
+        brokerClusterName,
+        imageName: generate.name(),
+        tags: {
+          broker: {
+            name: brokerClusterName,
+            imageName: generate.name(),
+          },
+          zookeeper: {
+            name: generate.name(),
+            imageName: generate.name(),
+          },
         },
       },
+      connectors,
     },
   };
 
   jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
-    if (url === `${URL.TOPIC_URL}?group=${props.worker.name}-topic`) {
+    if (url === `${URL.TOPIC_URL}?group=${props.worker.settings.name}-topic`) {
       return {
         data: {
           data: {
@@ -145,9 +147,11 @@ describe('<Overview />', () => {
   it('renders the correct basic info content', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
 
-    getByText('Worker Image: ' + props.worker.imageName);
-    getByText('Broker Image: ' + props.worker.tags.broker.imageName);
-    getByText('Zookeeper Image: ' + props.worker.tags.zookeeper.imageName);
+    getByText('Worker Image: ' + props.worker.settings.imageName);
+    getByText('Broker Image: ' + props.worker.settings.tags.broker.imageName);
+    getByText(
+      'Zookeeper Image: ' + props.worker.settings.tags.zookeeper.imageName,
+    );
   });
 
   it('renders the correct nodes headers', async () => {
@@ -166,7 +170,11 @@ describe('<Overview />', () => {
     );
 
     getByText('Worker');
-    getAllByText(props.worker.nodeNames[0] + ':' + props.worker.clientPort);
+    getAllByText(
+      props.worker.settings.nodeNames[0] +
+        ':' +
+        props.worker.settings.clientPort,
+    );
   });
 
   it('renders the correct topics headers', async () => {

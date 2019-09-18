@@ -63,7 +63,7 @@ describe('Zookeeper API', () => {
         state,
         imageName,
         tags,
-      } = result;
+      } = result.settings;
 
       expect(isSuccess).to.eq(true);
 
@@ -96,7 +96,7 @@ describe('Zookeeper API', () => {
         state,
         imageName,
         tags,
-      } = result;
+      } = result.settings;
 
       expect(isSuccess).to.eq(true);
 
@@ -138,8 +138,8 @@ describe('Zookeeper API', () => {
 
       const zookeepers = result.filter(
         zookeeper =>
-          zookeeper.name === paramsOne.name ||
-          zookeeper.name === paramsTwo.name,
+          zookeeper.settings.name === paramsOne.name ||
+          zookeeper.settings.name === paramsTwo.name,
       );
 
       expect(zookeepers.length).to.eq(2);
@@ -227,7 +227,7 @@ describe('Zookeeper API', () => {
 
     cy.fetchZookeepers().then(response => {
       const targetZookeeper = response.data.result.find(
-        zookeeper => zookeeper.name === zookeeperClusterName,
+        zookeeper => zookeeper.settings.name === zookeeperClusterName,
       );
 
       expect(targetZookeeper).to.be.undefined;
