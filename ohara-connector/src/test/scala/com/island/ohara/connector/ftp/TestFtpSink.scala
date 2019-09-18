@@ -270,7 +270,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   def testNormalCaseWithoutEncode(): Unit = {
     val connectorKey = randomConnectorKey()
     //will use default UTF-8
-    val settings = props.toMap - FILE_ENCODE_CONFIG
+    val settings = props.toMap - FILE_ENCODE_KEY
     createConnector(connectorKey, schema, settings)
 
     try {

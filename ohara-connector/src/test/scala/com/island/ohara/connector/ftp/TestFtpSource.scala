@@ -34,8 +34,8 @@ class TestFtpSource extends CsvSourceTestBase {
   override val connectorClass: Class[_ <: CsvSourceConnector] = classOf[FtpSource]
 
   override val setupProps: Map[String, String] =
-    Map(FTP_HOSTNAME -> ftpServer.hostname,
-        FTP_PORT -> ftpServer.port.toString,
-        FTP_USER_NAME -> ftpServer.user,
-        FTP_PASSWORD -> ftpServer.password)
+    Map(FTP_HOSTNAME_KEY -> ftpServer.hostname,
+        FTP_PORT_KEY -> ftpServer.port.toString,
+        FTP_USER_NAME_KEY -> ftpServer.user,
+        FTP_PASSWORD_KEY -> ftpServer.password)
 }

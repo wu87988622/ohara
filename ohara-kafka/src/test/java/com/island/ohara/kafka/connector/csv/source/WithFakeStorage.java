@@ -46,9 +46,9 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvSourceConfig.INPUT_FOLDER_CONFIG, INPUT_FOLDER.toString());
-    props.put(CsvSourceConfig.COMPLETED_FOLDER_CONFIG, COMPLETED_FOLDER.toString());
-    props.put(CsvSourceConfig.ERROR_FOLDER_CONFIG, ERROR_FOLDER.toString());
+    props.put(CsvSourceConfig.INPUT_FOLDER_KEY, INPUT_FOLDER.toString());
+    props.put(CsvSourceConfig.COMPLETED_FOLDER_KEY, COMPLETED_FOLDER.toString());
+    props.put(CsvSourceConfig.ERROR_FOLDER_KEY, ERROR_FOLDER.toString());
     return props;
   }
 

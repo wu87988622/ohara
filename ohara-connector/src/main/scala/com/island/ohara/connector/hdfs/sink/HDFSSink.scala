@@ -47,13 +47,5 @@ class HDFSSink extends CsvSinkConnector {
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
-  override protected def _definitions(): util.List[SettingDef] = Seq(
-    SettingDef
-      .builder()
-      .displayName("HDFS URL")
-      .documentation("Input HDFS namenode location")
-      .valueType(SettingDef.Type.STRING)
-      .key(HDFS_URL_CONFIG)
-      .build()
-  ).asJava
+  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
 }

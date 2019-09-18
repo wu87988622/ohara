@@ -49,8 +49,8 @@ public abstract class CsvSourceTestBase extends SmallTest {
 
   protected Map<String, String> createProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(CsvConnector.TASK_TOTAL_CONFIG, String.valueOf(TASK_TOTAL));
-    props.put(CsvConnector.TASK_HASH_CONFIG, String.valueOf(TASK_HASH));
+    props.put(CsvConnector.TASK_TOTAL_KEY, String.valueOf(TASK_TOTAL));
+    props.put(CsvConnector.TASK_HASH_KEY, String.valueOf(TASK_HASH));
     props.put("topics", TOPIC);
     return props;
   }

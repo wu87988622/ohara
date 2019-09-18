@@ -85,27 +85,27 @@ public class CsvSinkConfig implements CsvConnector {
   public static CsvSinkConfig of(TaskSetting setting, List<Column> schema) {
     Builder builder = new Builder();
 
-    Optional<String> topicDir = setting.stringOption(TOPICS_DIR_CONFIG);
+    Optional<String> topicDir = setting.stringOption(TOPICS_DIR_KEY);
     if (topicDir.isPresent()) {
       builder.topicsDir(topicDir.get());
     }
 
-    Optional<Integer> flushSize = setting.intOption(FLUSH_SIZE_CONFIG);
+    Optional<Integer> flushSize = setting.intOption(FLUSH_SIZE_KEY);
     if (flushSize.isPresent()) {
       builder.flushSize(flushSize.get());
     }
 
-    Optional<Long> rotateIntervalMs = setting.longOption(ROTATE_INTERVAL_MS_CONFIG);
+    Optional<Long> rotateIntervalMs = setting.longOption(ROTATE_INTERVAL_MS_KEY);
     if (rotateIntervalMs.isPresent()) {
       builder.rotateIntervalMs(rotateIntervalMs.get());
     }
 
-    Optional<Boolean> needHeader = setting.booleanOption(FILE_NEED_HEADER_CONFIG);
+    Optional<Boolean> needHeader = setting.booleanOption(FILE_NEED_HEADER_KEY);
     if (needHeader.isPresent()) {
       builder.needHeader(needHeader.get());
     }
 
-    Optional<String> encode = setting.stringOption(FILE_ENCODE_CONFIG);
+    Optional<String> encode = setting.stringOption(FILE_ENCODE_KEY);
     if (encode.isPresent()) {
       builder.encode(encode.get());
     }
@@ -175,11 +175,11 @@ public class CsvSinkConfig implements CsvConnector {
   @VisibleForTesting
   public Map<String, String> toProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(TOPICS_DIR_CONFIG, topicsDir);
-    props.put(FLUSH_SIZE_CONFIG, String.valueOf(flushSize));
-    props.put(ROTATE_INTERVAL_MS_CONFIG, String.valueOf(rotateIntervalMs));
-    props.put(FILE_NEED_HEADER_CONFIG, String.valueOf(needHeader));
-    props.put(FILE_ENCODE_CONFIG, encode);
+    props.put(TOPICS_DIR_KEY, topicsDir);
+    props.put(FLUSH_SIZE_KEY, String.valueOf(flushSize));
+    props.put(ROTATE_INTERVAL_MS_KEY, String.valueOf(rotateIntervalMs));
+    props.put(FILE_NEED_HEADER_KEY, String.valueOf(needHeader));
+    props.put(FILE_ENCODE_KEY, encode);
     return props;
   }
 }

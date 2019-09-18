@@ -41,12 +41,12 @@ class TestFtpSinkProps extends SmallTest with Matchers {
       encode = encode
     ).toMap
 
-    props(TOPICS_DIR_CONFIG) shouldBe topicsDir
-    props(FILE_NEED_HEADER_CONFIG).toBoolean shouldBe needHeader
-    props(FILE_ENCODE_CONFIG) shouldBe encode
-    props(FTP_HOSTNAME) shouldBe hostname
-    props(FTP_PORT).toInt shouldBe port
-    props(FTP_USER_NAME) shouldBe user
-    props(FTP_PASSWORD) shouldBe password
+    props(TOPICS_DIR_KEY) shouldBe topicsDir
+    props(FILE_NEED_HEADER_KEY).toBoolean shouldBe needHeader
+    props(FILE_ENCODE_KEY) shouldBe encode
+    props(FTP_HOSTNAME_KEY) shouldBe hostname
+    props(FTP_PORT_KEY).toInt shouldBe port
+    props(FTP_USER_NAME_KEY) shouldBe user
+    props(FTP_PASSWORD_KEY) shouldBe password
   }
 }

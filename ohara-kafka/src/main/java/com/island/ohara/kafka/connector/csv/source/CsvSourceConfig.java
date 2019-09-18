@@ -165,22 +165,22 @@ public class CsvSourceConfig implements CsvConnector {
   public static CsvSourceConfig of(TaskSetting setting, List<Column> schema) {
     CsvSourceConfig.Builder builder = new CsvSourceConfig.Builder();
 
-    builder.total(setting.intValue(TASK_TOTAL_CONFIG));
-    builder.hash(setting.intValue(TASK_HASH_CONFIG));
+    builder.total(setting.intValue(TASK_TOTAL_KEY));
+    builder.hash(setting.intValue(TASK_HASH_KEY));
 
-    Optional<String> inputFolder = setting.stringOption(INPUT_FOLDER_CONFIG);
+    Optional<String> inputFolder = setting.stringOption(INPUT_FOLDER_KEY);
     if (inputFolder.isPresent()) {
       builder.inputFolder(inputFolder.get());
     }
 
-    builder.completedFolder(setting.stringOption(COMPLETED_FOLDER_CONFIG));
+    builder.completedFolder(setting.stringOption(COMPLETED_FOLDER_KEY));
 
-    Optional<String> errorFolder = setting.stringOption(ERROR_FOLDER_CONFIG);
+    Optional<String> errorFolder = setting.stringOption(ERROR_FOLDER_KEY);
     if (errorFolder.isPresent()) {
       builder.errorFolder(errorFolder.get());
     }
 
-    Optional<String> encode = setting.stringOption(FILE_ENCODE_CONFIG);
+    Optional<String> encode = setting.stringOption(FILE_ENCODE_KEY);
     if (encode.isPresent()) {
       builder.encode(encode.get());
     }

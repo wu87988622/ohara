@@ -43,14 +43,14 @@ class TestFtpSourceProps extends SmallTest with Matchers {
       errorFolder = errorFolder,
       encode = encode
     ).toMap
-    props(FTP_HOSTNAME) shouldBe hostname
-    props(FTP_PORT).toInt shouldBe port
-    props(FTP_USER_NAME) shouldBe user
-    props(FTP_PASSWORD) shouldBe password
-    props(INPUT_FOLDER_CONFIG) shouldBe inputFolder
-    props(COMPLETED_FOLDER_CONFIG) shouldBe completedFolder
-    props(ERROR_FOLDER_CONFIG) shouldBe errorFolder
-    props(FILE_ENCODE_CONFIG) shouldBe encode
+    props(FTP_HOSTNAME_KEY) shouldBe hostname
+    props(FTP_PORT_KEY).toInt shouldBe port
+    props(FTP_USER_NAME_KEY) shouldBe user
+    props(FTP_PASSWORD_KEY) shouldBe password
+    props(INPUT_FOLDER_KEY) shouldBe inputFolder
+    props(COMPLETED_FOLDER_KEY) shouldBe completedFolder
+    props(ERROR_FOLDER_KEY) shouldBe errorFolder
+    props(FILE_ENCODE_KEY) shouldBe encode
   }
 
 }

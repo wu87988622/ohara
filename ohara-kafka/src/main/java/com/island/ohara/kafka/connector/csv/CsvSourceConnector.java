@@ -44,8 +44,8 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
         .mapToObj(
             index -> {
               Map<String, String> taskConfig = new HashMap<>(taskConfigs.get(index));
-              taskConfig.put(CsvConnector.TASK_TOTAL_CONFIG, String.valueOf(maxTasks));
-              taskConfig.put(CsvConnector.TASK_HASH_CONFIG, String.valueOf(index));
+              taskConfig.put(CsvConnector.TASK_TOTAL_KEY, String.valueOf(maxTasks));
+              taskConfig.put(CsvConnector.TASK_HASH_KEY, String.valueOf(index));
               return taskConfig;
             })
         .collect(Collectors.toList());
@@ -53,7 +53,7 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
 
   @Override
   public List<SettingDef> definitions() {
-    return Stream.of(CsvConnector.SOURCE_DEFINITIONS_DEFAULT, super.definitions())
+    return Stream.of(CsvConnector.CSV_SOURCE_DEFINITIONS, super.definitions())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

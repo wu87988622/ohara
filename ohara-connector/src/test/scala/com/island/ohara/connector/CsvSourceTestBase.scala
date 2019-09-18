@@ -39,11 +39,11 @@ import scala.concurrent.{Await, Future}
 
 abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   private[this] val defaultProps: Map[String, String] = Map(
-    INPUT_FOLDER_CONFIG -> "/input",
-    COMPLETED_FOLDER_CONFIG -> "/completed",
-    ERROR_FOLDER_CONFIG -> "/error",
-    FILE_NEED_HEADER_CONFIG -> "false",
-    FILE_ENCODE_CONFIG -> "UTF-8"
+    INPUT_FOLDER_KEY -> "/input",
+    COMPLETED_FOLDER_KEY -> "/completed",
+    ERROR_FOLDER_KEY -> "/error",
+    FILE_NEED_HEADER_KEY -> "false",
+    FILE_ENCODE_KEY -> "UTF-8"
   )
   private[this] val schema: Seq[Column] = Seq(
     Column.builder().name("name").dataType(DataType.STRING).order(1).build(),
@@ -71,11 +71,11 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   protected def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  protected def inputDir: String = props(INPUT_FOLDER_CONFIG)
+  protected def inputDir: String = props(INPUT_FOLDER_KEY)
 
-  protected def completedDir: String = props(COMPLETED_FOLDER_CONFIG)
+  protected def completedDir: String = props(COMPLETED_FOLDER_KEY)
 
-  protected def errorDir: String = props(ERROR_FOLDER_CONFIG)
+  protected def errorDir: String = props(ERROR_FOLDER_KEY)
 
   protected def setupConnector(props: Map[String, String], schema: Seq[Column]): (TopicKey, ConnectorKey) =
     setupConnector(props, Some(schema))
@@ -297,7 +297,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
   @Test
   def testNormalCaseWithoutEncode(): Unit = {
     // will use default UTF-8
-    val newProps = props - FILE_ENCODE_CONFIG
+    val newProps = props - FILE_ENCODE_KEY
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
@@ -361,7 +361,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Test
   def testInvalidInput(): Unit = {
-    val newProps = props ++ Map(INPUT_FOLDER_CONFIG -> "/abc")
+    val newProps = props ++ Map(INPUT_FOLDER_KEY -> "/abc")
     val (_, connectorKey) = createConnector(newProps, schema)
 
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
@@ -382,7 +382,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers with Matchers {
 
   @Test
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
-    val newProps = props - COMPLETED_FOLDER_CONFIG
+    val newProps = props - COMPLETED_FOLDER_KEY
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {

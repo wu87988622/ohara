@@ -58,37 +58,7 @@ class FtpSource extends CsvSourceConnector {
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
-  override protected def _definitions(): util.List[SettingDef] = Seq(
-    SettingDef
-      .builder()
-      .displayName("Hostname")
-      .documentation("Hostname of FTP server")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_HOSTNAME)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Port")
-      .documentation("Port of FTP server")
-      .valueType(SettingDef.Type.PORT)
-      .key(FTP_PORT)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("User")
-      .documentation(
-        "User of FTP server. This account must have read/delete permission of input folder and error folder")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_USER_NAME)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Password")
-      .documentation("Password of FTP server")
-      .valueType(SettingDef.Type.PASSWORD)
-      .key(FTP_PASSWORD)
-      .build(),
-  ).asJava
+  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
 }
 
 object FtpSource {

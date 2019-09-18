@@ -28,26 +28,26 @@ case class FtpSourceProps(inputFolder: String,
                           user: String,
                           password: String) {
   def toMap: Map[String, String] = Map(
-    INPUT_FOLDER_CONFIG -> inputFolder,
-    COMPLETED_FOLDER_CONFIG -> completedFolder.getOrElse(""),
-    ERROR_FOLDER_CONFIG -> errorFolder,
-    FILE_ENCODE_CONFIG -> encode,
-    FTP_HOSTNAME -> hostname,
-    FTP_PORT -> port.toString,
-    FTP_USER_NAME -> user,
-    FTP_PASSWORD -> password,
+    INPUT_FOLDER_KEY -> inputFolder,
+    COMPLETED_FOLDER_KEY -> completedFolder.getOrElse(""),
+    ERROR_FOLDER_KEY -> errorFolder,
+    FILE_ENCODE_KEY -> encode,
+    FTP_HOSTNAME_KEY -> hostname,
+    FTP_PORT_KEY -> port.toString,
+    FTP_USER_NAME_KEY -> user,
+    FTP_PASSWORD_KEY -> password,
   ).filter(_._2.nonEmpty)
 }
 
 object FtpSourceProps {
   def apply(settings: TaskSetting): FtpSourceProps = FtpSourceProps(
-    inputFolder = settings.stringValue(INPUT_FOLDER_CONFIG),
-    completedFolder = Option(settings.stringOption(COMPLETED_FOLDER_CONFIG).orElse(null)).filterNot(CommonUtils.isEmpty),
-    errorFolder = settings.stringValue(ERROR_FOLDER_CONFIG),
-    encode = settings.stringOption(FILE_ENCODE_CONFIG).orElse(FILE_ENCODE_DEFAULT),
-    hostname = settings.stringValue(FTP_HOSTNAME),
-    port = settings.intValue(FTP_PORT),
-    user = settings.stringValue(FTP_USER_NAME),
-    password = settings.stringValue(FTP_PASSWORD)
+    inputFolder = settings.stringValue(INPUT_FOLDER_KEY),
+    completedFolder = Option(settings.stringOption(COMPLETED_FOLDER_KEY).orElse(null)).filterNot(CommonUtils.isEmpty),
+    errorFolder = settings.stringValue(ERROR_FOLDER_KEY),
+    encode = settings.stringOption(FILE_ENCODE_KEY).orElse(FILE_ENCODE_DEFAULT),
+    hostname = settings.stringValue(FTP_HOSTNAME_KEY),
+    port = settings.intValue(FTP_PORT_KEY),
+    user = settings.stringValue(FTP_USER_NAME_KEY),
+    password = settings.stringValue(FTP_PASSWORD_KEY)
   )
 }

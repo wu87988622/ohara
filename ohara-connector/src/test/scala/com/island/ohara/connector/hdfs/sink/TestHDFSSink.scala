@@ -128,11 +128,11 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(Map(
-          HDFS_URL_CONFIG -> localHdfsURL,
-          TOPICS_DIR_CONFIG -> topicsDir,
-          FLUSH_SIZE_CONFIG -> flushCount.toString,
-          ROTATE_INTERVAL_MS_CONFIG -> rotateIntervalMs.toString,
-          FILE_NEED_HEADER_CONFIG -> needHeader.toString
+          HDFS_URL_KEY -> localHdfsURL,
+          TOPICS_DIR_KEY -> topicsDir,
+          FLUSH_SIZE_KEY -> flushCount.toString,
+          ROTATE_INTERVAL_MS_KEY -> rotateIntervalMs.toString,
+          FILE_NEED_HEADER_KEY -> needHeader.toString
         ))
         .columns(schema)
         .create)
@@ -213,17 +213,17 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
       ConnectorFormatter
         .of()
         .topicKey(topicKey)
-        .setting(HDFS_URL_CONFIG, hdfsURL)
-        .setting(TOPICS_DIR_CONFIG, topicsDir)
-        .setting(FLUSH_SIZE_CONFIG, flushCount.toString)
+        .setting(HDFS_URL_KEY, hdfsURL)
+        .setting(TOPICS_DIR_KEY, topicsDir)
+        .setting(FLUSH_SIZE_KEY, flushCount.toString)
         .raw())
     val result = hdfsSink._taskSettings(maxTasks)
 
     result.size shouldBe maxTasks
     result.asScala.foreach(r => {
-      r.stringValue(HDFS_URL_CONFIG) shouldBe hdfsURL
-      r.stringValue(TOPICS_DIR_CONFIG) shouldBe topicsDir
-      r.intValue(FLUSH_SIZE_CONFIG) shouldBe flushCount
+      r.stringValue(HDFS_URL_KEY) shouldBe hdfsURL
+      r.stringValue(TOPICS_DIR_KEY) shouldBe topicsDir
+      r.intValue(FLUSH_SIZE_KEY) shouldBe flushCount
     })
   }
 
@@ -342,25 +342,23 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(Map(
-          HDFS_URL_CONFIG -> localHdfsURL,
-          TOPICS_DIR_CONFIG -> topicsDir,
-          FLUSH_SIZE_CONFIG -> flushCount.toString,
-          ROTATE_INTERVAL_MS_CONFIG -> rotateIntervalMs.toString,
-          FILE_NEED_HEADER_CONFIG -> needHeader.toString
+          HDFS_URL_KEY -> localHdfsURL,
+          TOPICS_DIR_KEY -> topicsDir,
+          FLUSH_SIZE_KEY -> flushCount.toString,
+          ROTATE_INTERVAL_MS_KEY -> rotateIntervalMs.toString,
+          FILE_NEED_HEADER_KEY -> needHeader.toString
         ))
         .create)
 
     CommonUtils
       .await(() => SimpleHDFSSinkTask.setting != null && SimpleHDFSSinkTask.props != null, Duration.ofSeconds(20))
-    CommonUtils
-      .await(() => SimpleHDFSSinkTask.setting.stringValue(TOPICS_DIR_CONFIG) == topicsDir, Duration.ofSeconds(20))
-    CommonUtils
-      .await(() => SimpleHDFSSinkTask.setting.intValue(FLUSH_SIZE_CONFIG) == flushCount, Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.setting.longValue(ROTATE_INTERVAL_MS_CONFIG) == rotateIntervalMs,
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.stringValue(TOPICS_DIR_KEY) == topicsDir, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.intValue(FLUSH_SIZE_KEY) == flushCount, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.longValue(ROTATE_INTERVAL_MS_KEY) == rotateIntervalMs,
                       Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.setting.booleanValue(FILE_NEED_HEADER_CONFIG) == needHeader,
-                      Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.setting.stringValue(FILE_ENCODE_CONFIG) == FILE_ENCODE_DEFAULT,
+    CommonUtils
+      .await(() => SimpleHDFSSinkTask.setting.booleanValue(FILE_NEED_HEADER_KEY) == needHeader, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.stringValue(FILE_ENCODE_KEY) == FILE_ENCODE_DEFAULT,
                       Duration.ofSeconds(20))
     CommonUtils.await(() => SimpleHDFSSinkTask.props.hdfsURL == localHdfsURL, Duration.ofSeconds(20))
   }

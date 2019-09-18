@@ -28,7 +28,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
   private[this] val ftpSource = new FtpSource
   @Test
   def checkInputFolder(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == INPUT_FOLDER_CONFIG).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == INPUT_FOLDER_KEY).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -39,7 +39,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkCompletedFolder(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == COMPLETED_FOLDER_CONFIG).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == COMPLETED_FOLDER_KEY).get
     definition.required() shouldBe false
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -50,7 +50,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkErrorFolder(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == ERROR_FOLDER_CONFIG).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == ERROR_FOLDER_KEY).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -61,7 +61,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkEncode(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == FILE_ENCODE_CONFIG).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
     definition.required() shouldBe false
     definition.defaultValue() shouldBe "UTF-8"
     definition.editable() shouldBe true
@@ -72,7 +72,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkHostname(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_HOSTNAME).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_HOSTNAME_KEY).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -83,7 +83,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkPort(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_PORT).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_PORT_KEY).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -94,7 +94,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkUser(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_USER_NAME).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_USER_NAME_KEY).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -105,7 +105,7 @@ class TestFtpSourceDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkPassword(): Unit = {
-    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_PASSWORD).get
+    val definition = ftpSource.definitions().asScala.find(_.key() == FTP_PASSWORD_KEY).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true

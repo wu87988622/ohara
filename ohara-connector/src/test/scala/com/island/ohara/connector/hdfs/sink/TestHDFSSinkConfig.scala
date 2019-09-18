@@ -31,7 +31,7 @@ class TestHDFSSinkConfig extends SmallTest with Matchers {
 
   @Test
   def testGetDataDir(): Unit = {
-    val hdfsSinkConfig: HDFSSinkProps = hdfsConfig(Map(HDFS_URL_CONFIG -> HDFS_URL_VALUE))
+    val hdfsSinkConfig: HDFSSinkProps = hdfsConfig(Map(HDFS_URL_KEY -> HDFS_URL_VALUE))
 
     hdfsSinkConfig.hdfsURL shouldBe HDFS_URL_VALUE
   }

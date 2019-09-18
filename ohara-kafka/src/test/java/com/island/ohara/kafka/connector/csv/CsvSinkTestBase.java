@@ -41,7 +41,7 @@ public abstract class CsvSinkTestBase extends SmallTest {
 
   protected Map<String, String> createProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(CsvConnector.FLUSH_SIZE_CONFIG, "3");
+    props.put(CsvConnector.FLUSH_SIZE_KEY, "3");
     return props;
   }
 

@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 public abstract class CsvSinkConnector extends RowSinkConnector {
   @Override
   public List<SettingDef> definitions() {
-    return Stream.of(CsvConnector.SINK_DEFINITIONS_DEFAULT, super.definitions())
+    return Stream.of(CsvConnector.CSV_SINK_DEFINITIONS, super.definitions())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

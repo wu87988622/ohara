@@ -45,35 +45,5 @@ class FtpSink extends CsvSinkConnector {
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
-  override protected def _definitions(): util.List[SettingDef] = Seq(
-    SettingDef
-      .builder()
-      .displayName("Hostname of FTP Server")
-      .documentation("hostname of ftp server")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_HOSTNAME)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Port of FTP Server")
-      .documentation("port of ftp server")
-      .valueType(SettingDef.Type.PORT)
-      .key(FTP_PORT)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("User of FTP Server")
-      .documentation(
-        "user of ftp server. This account must have read/delete permission of input folder and error folder")
-      .valueType(SettingDef.Type.STRING)
-      .key(FTP_USER_NAME)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Password of FTP Server")
-      .documentation("password of ftp server")
-      .valueType(SettingDef.Type.PASSWORD)
-      .key(FTP_PASSWORD)
-      .build(),
-  ).asJava
+  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
 }

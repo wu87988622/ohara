@@ -48,8 +48,8 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   )
 
   private[this] val settings = props.toMap ++ Map(
-    CsvConnector.TASK_TOTAL_CONFIG -> "1",
-    CsvConnector.TASK_HASH_CONFIG -> "0"
+    CsvConnector.TASK_TOTAL_KEY -> "1",
+    CsvConnector.TASK_HASH_KEY -> "0"
   )
 
   @Before
