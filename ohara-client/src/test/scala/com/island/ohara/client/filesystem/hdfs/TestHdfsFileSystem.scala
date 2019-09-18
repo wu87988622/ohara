@@ -47,6 +47,7 @@ class TestHdfsFileSystem extends FileSystemTestBase with Matchers {
   }
 
   // override this method because the Local HDFS doesn't support append()
+  @Test
   override def testDeleteFileThatHaveBeenRead(): Unit = {
     val file = randomFile(rootDir)
     val data: Seq[String] = Seq("123", "456")
