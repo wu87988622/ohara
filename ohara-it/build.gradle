@@ -125,9 +125,12 @@ class OharaTest extends Test {
           // set the prefix to all containers
           "ohara.it.container.prefix",
           // set database setting
-          "ohara.it.db.url",
-          "ohara.it.db.username",
-          "ohara.it.db.password",
+          "ohara.it.oracle.db.url",
+          "ohara.it.oracle.db.username",
+          "ohara.it.oracle.db.password",
+          "ohara.it.postgresql.db.url",
+          "ohara.it.postgresql.db.username",
+          "ohara.it.postgresql.db.password",
           "ohara.it.jar.folder",
           // set smb setting
           "ohara.it.smb.hostname",

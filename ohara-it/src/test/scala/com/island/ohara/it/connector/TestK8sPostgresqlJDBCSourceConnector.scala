@@ -16,36 +16,32 @@
 
 package com.island.ohara.it.connector
 
-import com.island.ohara.agent._
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.K8sConnectorGroup
-import org.junit.Ignore
 import org.junit.experimental.categories.Category
+import scala.concurrent.ExecutionContext.Implicits.global
 
-@Ignore("a nonexistent IT is better than chaotic IT. see https://github.com/oharastream/ohara/issues/2393")
 @Category(Array(classOf[K8sConnectorGroup]))
 class TestK8sPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSourceConnector {
-
-  private[this] var _clusterCollie: ClusterCollie = _
-
-  private[this] var _nameHolder: ClusterNameHolder = _
+  override val configurator: Configurator = Configurator.builder
+    .hostname(EnvTestingUtils.configuratorHostName())
+    .port(EnvTestingUtils.configuratorHostPort)
+    .k8sClient(EnvTestingUtils.k8sClient())
+    .build()
 
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
 
-  override protected def checkClusterInfo(): Unit = {
-    _clusterCollie =
-      ClusterCollie.builderOfK8s().nodeCollie(NodeCollie(nodes)).k8sClient(EnvTestingUtils.k8sClient()).build()
+  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
 
-    _nameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+  override protected def createor(): Unit = {
+    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    nodes.foreach { node =>
+      result(
+        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+    }
   }
-
-  override protected def clusterCollie: ClusterCollie = _clusterCollie
-
-  override protected def nameHolder: ClusterNameHolder = _nameHolder
-
-  override protected def createConfigurator(hostname: String, port: Int): Configurator =
-    Configurator.builder.hostname(hostname).port(port).k8sClient(EnvTestingUtils.k8sClient()).build()
 }

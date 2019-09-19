@@ -32,6 +32,7 @@ import scala.concurrent.duration._
   *
   */
 trait ClusterNameHolder extends Releasable {
+  private[this] val log = Logger(classOf[ClusterNameHolder])
 
   /**
     * store the name used to create cluster. We can remove all created cluster in the "after" phase.
@@ -46,6 +47,7 @@ trait ClusterNameHolder extends Releasable {
 
   def generateClusterName(): String = {
     val name = prefix + CommonUtils.randomString(7)
+    log.info(s"cluster name is ${name}")
     usedClusterNames += name
     name
   }

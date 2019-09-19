@@ -30,6 +30,18 @@ object EnvTestingUtils {
   val K8S_MASTER_KEY: String = "ohara.it.k8s"
   private[this] val K8S_NODES_KEY: String = "ohara.it.k8s.nodename"
 
+  private[this] val CONFIGURATOR_HOSTNAME_KEY: String = "ohara.it.hostname"
+  private[this] val CONFIGURATOR_HOSTPORT_KEY: String = "ohara.it.port"
+
+  def configuratorHostName(): String = sys.env.getOrElse(
+    CONFIGURATOR_HOSTNAME_KEY,
+    throw new AssumptionViolatedException(s"$CONFIGURATOR_HOSTNAME_KEY does not exists!!!"))
+
+  def configuratorHostPort(): Int = sys.env
+    .getOrElse(CONFIGURATOR_HOSTPORT_KEY,
+               throw new AssumptionViolatedException(s"$CONFIGURATOR_HOSTPORT_KEY does not exists!!!"))
+    .toInt
+
   def k8sClient(): K8SClient = K8SClient(
     sys.env.getOrElse(K8S_MASTER_KEY, throw new AssumptionViolatedException(s"$K8S_MASTER_KEY does not exists!!!")))
 

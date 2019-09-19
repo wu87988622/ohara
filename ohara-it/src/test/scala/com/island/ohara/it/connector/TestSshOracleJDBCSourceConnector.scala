@@ -15,30 +15,30 @@
  */
 
 package com.island.ohara.it.connector
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConnectorGroup
-import org.junit.Ignore
 import org.junit.experimental.categories.Category
+import scala.concurrent.ExecutionContext.Implicits.global
 
-@Ignore("a nonexistent IT is better than chaotic IT. see https://github.com/oharastream/ohara/issues/2393")
 @Category(Array(classOf[SshConnectorGroup]))
 class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
-  private[this] var _clusterCollie: ClusterCollie = _
+  override val configurator: Configurator = Configurator.builder
+    .hostname(EnvTestingUtils.configuratorHostName())
+    .port(EnvTestingUtils.configuratorHostPort())
+    .build()
 
   override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.sshNodes()
 
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 
-  override protected def clusterCollie(): ClusterCollie = _clusterCollie
-
-  override protected def createConfigurator(hostname: String, port: Int): Configurator =
-    Configurator.builder.hostname(hostname).port(port).build()
-
-  override protected def checkClusterInfo(): Unit =
-    if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
-    else _clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(nodes)).build()
+  override protected def createor(): Unit = {
+    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    nodes.foreach { node =>
+      result(
+        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+    }
+  }
 }

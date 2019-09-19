@@ -16,7 +16,12 @@
 
 package com.island.ohara.it.connector
 
-abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestJDBCSourceConnector {
+import com.island.ohara.common.util.CommonUtils
+
+abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestConnectorCollie {
+  private[this] val DB_URL_KEY: String = "ohara.it.postgresql.db.url"
+  private[this] val DB_USER_NAME_KEY: String = "ohara.it.postgresql.db.username"
+  private[this] val DB_PASSWORD_KEY: String = "ohara.it.postgresql.db.password"
 
   override protected def dbUrl(): Option[String] = sys.env.get(DB_URL_KEY)
 
@@ -28,7 +33,10 @@ abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestJDBCSourc
 
   override protected def jdbcDriverJarFileName(): String = "postgresql-42.2.6.jar"
 
+  override protected val tableName: String = s"table${CommonUtils.randomString(5)}"
+
+  override protected val columnPrefixName: String = "column"
+
   override protected def insertTableSQL(tableName: String, columns: Seq[String], value: Int): String =
     s"INSERT INTO $tableName(${columns(0)}, ${columns(1)}, ${columns(2)}) VALUES('2018-09-01 00:00:00', 'a${value}', ${value})"
-
 }
