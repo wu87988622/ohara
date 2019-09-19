@@ -286,7 +286,7 @@ class TestStreamApi extends OharaTest with Matchers {
       |    "jarKey": ${fakeJar.toJson}
       |  }
       |  """.stripMargin.parseJson)
-    creation.name.length shouldBe com.island.ohara.client.configurator.v0.LIMIT_OF_NAME_LENGTH
+    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jarKey shouldBe Some(fakeJar)

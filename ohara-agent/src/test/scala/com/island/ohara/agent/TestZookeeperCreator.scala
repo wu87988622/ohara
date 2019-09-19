@@ -112,7 +112,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
   @Test
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy zkCreator()
-      .clusterName(CommonUtils.randomString(40))
+      .clusterName(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
@@ -122,7 +122,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
   def testInvalidGroup(): Unit =
     an[DeserializationException] should be thrownBy zkCreator()
       .clusterName(CommonUtils.randomString(10))
-      .group(CommonUtils.randomString(40))
+      .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()

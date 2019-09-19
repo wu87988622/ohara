@@ -101,7 +101,7 @@ object StreamApi {
     // TODO: reuse the global checks for streamapp ...
     // the following checkers is a part of global cluster checks.
     // We don't reuse the global checks since streamapp accept empty/null nodeNames ... by chia
-    JsonRefiner[Creation]
+    basicRulesOfKey[Creation](STREAM_GROUP_DEFAULT)
       .rejectEmptyString()
       .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:
@@ -111,19 +111,7 @@ object StreamApi {
       .rejectKeyword(START_COMMAND)
       .rejectKeyword(STOP_COMMAND)
       .toRefiner
-      .stringRestriction(NAME_KEY)
-      .withNumber()
-      .withLowerCase()
-      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
-      .toRefiner
-      .nullToString(GROUP_KEY, () => STREAM_GROUP_DEFAULT)
-      .stringRestriction(GROUP_KEY)
-      .withNumber()
-      .withLowerCase()
-      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
-      .toRefiner
       .nullToString(IMAGE_NAME_KEY, IMAGE_NAME_DEFAULT)
-      .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH))
       .nullToEmptyObject(TAGS_KEY)
       //----------------------------------------//
       .format(new RootJsonFormat[Creation] {

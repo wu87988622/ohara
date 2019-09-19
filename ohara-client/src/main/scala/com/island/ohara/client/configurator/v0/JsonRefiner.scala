@@ -124,6 +124,28 @@ trait JsonRefiner[T] {
   }
 
   /**
+    * require the sum length of passing keys' values should fit the length limit.
+    * The required keys should exist in request data.
+    * Note: We only accept string type.
+    *
+    * @param keys to be checked keys
+    * @param sumLengthLimit sum length limit
+    * @return this refiner
+    */
+  def stringSumLengthLimit(keys: Set[String], sumLengthLimit: Int): JsonRefiner[T] =
+    // check the keys should exist in request
+    requireKeys(keys).allValuesChecker(
+      keys, { values =>
+        val sum = values.map {
+          case s: JsString => s.value.length
+          case _           => throw DeserializationException(s"we only support length checking for string value")
+        }.sum
+        if (sum > sumLengthLimit)
+          throw DeserializationException(s"the length of $sum exceeds $sumLengthLimit", fieldNames = keys.toList)
+      }
+    )
+
+  /**
     * check whether target port is legal to connect. The legal range is (0, 65535].
     * @param key key
     * @return this refiner
@@ -301,6 +323,17 @@ trait JsonRefiner[T] {
   def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
 
   /**
+    * add your custom check for a set of keys' values.
+    * Noted: We don't guarantee the order of each (key, value) pair since this method is intend
+    * to do an "aggregation" check, like sum or length check.
+    *
+    * @param keys keys
+    * @param checkers checkers
+    * @return this refiner
+    */
+  def allValuesChecker(keys: Set[String], checkers: Seq[JsValue] => Unit): JsonRefiner[T]
+
+  /**
     * add your custom check for all keys
     * @param checker checker
     * @return this refiner
@@ -455,6 +488,7 @@ object JsonRefiner {
     private[this] var format: RootJsonFormat[T] = _
     private[this] var valueConverters: Map[String, JsValue => JsValue] = Map.empty
     private[this] var valueCheckers: Map[String, JsValue => Unit] = Map.empty
+    private[this] var allvaluesCheckers: Map[Set[String], Seq[JsValue] => Unit] = Map.empty
     private[this] var keyCheckers: Seq[Set[String] => Unit] = Seq.empty
     private[this] var nullToJsValue: Map[String, () => JsValue] = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
@@ -476,6 +510,11 @@ object JsonRefiner {
       if (valueCheckers.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" already has checker""")
       this.valueCheckers = this.valueCheckers ++ Map(key -> Objects.requireNonNull(checker))
+      this
+    }
+
+    override def allValuesChecker(keys: Set[String], checkers: Seq[JsValue] => Unit): JsonRefiner[T] = {
+      this.allvaluesCheckers = this.allvaluesCheckers ++ Map(keys -> Objects.requireNonNull(checkers))
       this
     }
 
@@ -614,6 +653,11 @@ object JsonRefiner {
 
           // 5) check the keys
           keyCheckers.foreach(_(fields.keySet))
+
+          // 6) check the values of specific keys
+          allvaluesCheckers.foreach {
+            case (keys, f) => f(fields.filter(field => keys.contains(field._1)).values.toSeq)
+          }
 
           format.read(JsObject(fields))
         }

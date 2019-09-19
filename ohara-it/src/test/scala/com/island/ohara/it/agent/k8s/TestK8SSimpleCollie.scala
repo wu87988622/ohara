@@ -478,9 +478,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   @Test
   def testNameAndGroupLimitInZookeeper(): Unit = {
-    // generate the max length name and group
-    val clusterName: String = CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_NAME_LENGTH)
-    val group: String = CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_NAME_LENGTH)
+    // generate the max length name and group (the sum of length is equal to LIMIT_OF_KEY_LENGTH)
+    val clusterName: String = CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH / 2)
+    val group: String = CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH / 2)
     nameHolder.addClusterName(clusterName)
 
     val firstNode: String = nodeNames.head

@@ -61,10 +61,12 @@ package object v0 {
     * docs did say that the maximum length is 253:
     * <p>https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
     * <p>
-    * Since we are living in a complex world with a lot of unpredictable situations, the name length here
-    * is attempt to give a suitable and readable chars for most cases.
+    * We prefer to limit the sum of length with group and name since it will give us more flexibility.
+    * It is worth to note that although we only restrict the "sum length", name and group fields should not
+    * be empty since we forbid the empty string.
+    * The length set to 100 here is enough for most case to set their group and name (each could has most 50 chars)
     */
-  val LIMIT_OF_NAME_LENGTH: Int = 20
+  val LIMIT_OF_KEY_LENGTH: Int = 100
 
   /**
     * In this APIs we have to integrate json format between scala (spray-json) and java (jackson).
@@ -138,16 +140,37 @@ package object v0 {
     }
 
   /**
+    * use basic check rules of object key for json refiner.
+    * 1) name and group must satisfy the regex [a-z0-9]
+    * 2) name will use randomString if not defined.
+    * 3) group will use defaultGroup if not defined.
+    * 4) name length + group length <= LIMIT_OF_KEY_LENGTH
+    *
+    * @param defaultGroup this object default group
+    * @tparam T type of object
+    * @return json refiner object
+    */
+  private[v0] def basicRulesOfKey[T](defaultGroup: String): JsonRefiner[T] =
+    JsonRefiner[T]
+    //------------------------------ "name" and "group" rules ----------------------------------//
+    // we random a default name for this object
+      .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_KEY_LENGTH / 2))
+      .nullToString(GROUP_KEY, () => defaultGroup)
+      .stringRestriction(Set(NAME_KEY, GROUP_KEY))
+      .withNumber()
+      .withLowerCase()
+      .toRefiner
+      //-------------------------------------- restrict rules -------------------------------------//
+      // the sum of length: name + group <= LIMIT_OF_KEY_LENGTH
+      .stringSumLengthLimit(Set(NAME_KEY, GROUP_KEY), LIMIT_OF_KEY_LENGTH)
+
+  /**
     * use basic check rules of creation request for json refiner.
     * 1) reject any empty string.
     * 2) nodeName cannot use "start" and "stop" keywords.
     * 3) nodeName cannot be empty array.
     * 4) imageName will use {defaultImage} if not defined.
-    * 5) name must satisfy the regex [a-z0-9] and length <= 20
-    * 6) name will use randomString if not defined.
-    * 7) tags will use empty map if not defined.
-    * 8) group must satisfy the regex [a-z0-9] and length <= 20
-    * 9) group will use GROUP_DEFAULT if not defined.
+    * 5) tags will use empty map if not defined.
     * @param defaultImage this cluster default images
     * @param defaultGroup this cluster default group. Different type of cluster may have different default group, so
     *                     we open a door for them
@@ -156,7 +179,7 @@ package object v0 {
     */
   private[v0] def basicRulesOfCreation[T <: ClusterCreationRequest](defaultImage: String,
                                                                     defaultGroup: String): JsonRefiner[T] =
-    JsonRefiner[T]
+    basicRulesOfKey[T](defaultGroup)
     // for each field, we should reject any empty string
       .rejectEmptyString()
       // cluster creation should use the default image of current version
@@ -171,21 +194,6 @@ package object v0 {
       .rejectKeyword(STOP_COMMAND)
       // the node names can't be empty
       .rejectEmpty()
-      .toRefiner
-      //-------------------------------------- "name" rules --------------------------------------//
-      // we random a default name for this cluster. the
-      .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH / 2))
-      .stringRestriction(NAME_KEY)
-      .withNumber()
-      .withLowerCase()
-      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
-      .toRefiner
-      //-------------------------------------- "group" rules -------------------------------------//
-      .nullToString(GROUP_KEY, () => defaultGroup)
-      .stringRestriction(GROUP_KEY)
-      .withNumber()
-      .withLowerCase()
-      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
       // default is empty tags
       .nullToEmptyObject(TAGS_KEY)

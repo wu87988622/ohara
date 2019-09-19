@@ -212,7 +212,7 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": ["$nodeName"]
       |  }
       |  """.stripMargin.parseJson)
-    creation.name.length shouldBe 10
+    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
     creation.brokerClusterName shouldBe None
     creation.configTopicReplications shouldBe 1

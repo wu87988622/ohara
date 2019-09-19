@@ -133,9 +133,9 @@ class TestStreamCreator extends OharaTest with Matchers {
       .jarInfo(fileInfo)
       .create()
 
-    // name length > 20
+    // name + group length > 100
     an[DeserializationException] should be thrownBy streamCreator()
-      .clusterName(CommonUtils.randomString(50))
+      .clusterName(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
@@ -151,7 +151,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   def testInvalidGroup(): Unit =
     an[DeserializationException] should be thrownBy streamCreator()
       .clusterName(CommonUtils.randomString(10))
-      .group(CommonUtils.randomString(40))
+      .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()

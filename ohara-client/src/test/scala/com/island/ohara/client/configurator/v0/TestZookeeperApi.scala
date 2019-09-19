@@ -139,7 +139,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
       """.stripMargin.parseJson)
 
     creation.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
-    creation.name.length shouldBe 10
+    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
     creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT

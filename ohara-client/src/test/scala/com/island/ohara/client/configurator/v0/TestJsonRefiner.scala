@@ -24,7 +24,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import spray.json._
 class TestJsonRefiner extends OharaTest with Matchers {
-  private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat5(SimpleData)
+  private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat6(SimpleData)
   private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
 
   @Test
@@ -116,6 +116,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).refine.read("""
             |{
             | "stringValue": "",
+            | "group": "default",
             | "bindPort": 123,
             | "connectionPort": 12345,
             | "stringArray": ["aa"],
@@ -128,6 +129,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).requireConnectionPort("connectionPort").refine.read("""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 77,
               | "stringArray": ["aa"],
@@ -193,6 +195,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).refine.read("""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": -1,
               | "stringArray": ["aa"],
@@ -205,6 +208,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
           |{
           | "stringValue": "abc",
+          | "group": "default",
           | "bindPort": 11111,
           | "connectionPort": 77,
           | "stringArray": ["aa"],
@@ -217,6 +221,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
         |{
         | "stringValue": "abc",
+        | "group": "default",
         | "bindPort": null,
         | "connectionPort": 77,
         | "stringArray": ["aa"],
@@ -229,6 +234,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
       |{
       | "stringValue": "abc",
+      | "group": "default",
       | "connectionPort": 77,
       | "stringArray": ["aa"],
       | "objects":{}
@@ -264,6 +270,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).refine.read("""
                      |{
                      | "stringValue": "abc",
+                     | "group": "default",
                      | "bindPort": -1,
                      | "connectionPort": 123,
                      | "stringArray": ["aa"],
@@ -276,6 +283,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).nullToRandomString("stringValue").refine.read("""
                                                          |{
                                                          | "bindPort": -1,
+                                                         | "group": "default",
                                                          | "connectionPort": 123,
                                                          | "stringArray": ["aa"],
                                                          | "objects":{}
@@ -287,6 +295,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).nullToEmptyArray("stringArray").refine.read("""
              |{
              | "stringValue": "abc",
+             | "group": "default",
              | "bindPort": -1,
              | "connectionPort": 123,
              | "objects":{}
@@ -298,6 +307,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).nullToInt("bindPort", 777).refine.read("""
          |{
          | "stringValue": "abc",
+         | "group": "default",
          | "connectionPort": 123,
          | "stringArray": [],
          | "objects":{}
@@ -329,6 +339,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read("""
         |{
         | "stringValue": "abc",
+        | "group": "default",
         | "connectionPort": 123,
         | "stringArray": [],
         | "objects":{}
@@ -363,6 +374,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read("""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": 9999,
               | "connectionPort": 123,
               | "stringArray": [],
@@ -392,6 +404,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
             |{
             |  "data": {
             |    "stringValue": "abc",
+            |    "group": "default",
             |    "bindPort": 22,
             |    "connectionPort": 123,
             |    "stringArray": [],
@@ -400,6 +413,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
             |  "data2": [
             |    {
             |      "stringValue": "abc",
+            |      "group": "default",
             |      "bindPort": 22,
             |      "connectionPort": 123,
             |      "stringArray": [],
@@ -420,6 +434,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
             |{
             |  "data": {
             |    "stringValue": "",
+            |    "group": "default",
             |    "bindPort": 22,
             |    "connectionPort": 123,
             |    "stringArray": [],
@@ -601,6 +616,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read(s"""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": "$bindPort",
               | "connectionPort": "$connectionPort",
               | "stringArray": [],
@@ -667,6 +683,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read("""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "ttt": ["abc"],
@@ -685,6 +702,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read("""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "objects":{}
@@ -700,6 +718,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -710,6 +729,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
               |{
               | "stringValue": "123",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -726,6 +746,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "abc1",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -736,6 +757,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
               |{
               | "stringValue": "aaa",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -752,6 +774,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "Abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -762,6 +785,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "abc2",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -772,6 +796,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
               |{
               | "stringValue": "aaa",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -788,6 +813,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "Abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -798,6 +824,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
               |{
               | "stringValue": "-",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -814,6 +841,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "Abc",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -824,6 +852,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
               |{
               | "stringValue": ".",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -840,6 +869,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "aaa",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -850,6 +880,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
               |{
               | "stringValue": "_",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -871,6 +902,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
               |{
               | "stringValue": "ABC11",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -881,6 +913,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy refinedFormat.read("""
                                                                   |{
                                                                   | "stringValue": "abc111-",
+                                                                  | "group": "default",
                                                                   | "bindPort": 123,
                                                                   | "connectionPort": 111,
                                                                   | "stringArray": [],
@@ -891,6 +924,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
                   |{
                   | "stringValue": "abc111",
+                  | "group": "default",
                   | "bindPort": 123,
                   | "connectionPort": 111,
                   | "stringArray": [],
@@ -901,6 +935,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     refinedFormat.read("""
                   |{
                   | "stringValue": "777abc111",
+                  | "group": "default",
                   | "bindPort": 123,
                   | "connectionPort": 111,
                   | "stringArray": [],
@@ -920,6 +955,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read("""
               |{
               | "stringValue": "777abc111",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -937,6 +973,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read("""
               |{
               | "stringValue": "777abc111",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 111,
               | "stringArray": [],
@@ -981,6 +1018,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     JsonRefiner[SimpleData].format(format).rejectEmptyString("aa").refine.read(s"""
                       |{
                       | "stringValue": "",
+                      | "group": "default",
                       | "bindPort": 123,
                       | "connectionPort": 111,
                       | "stringArray": [],
@@ -995,6 +1033,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read(s"""
                       |{
                       | "stringValue": "",
+                      | "group": "default",
                       | "bindPort": 123,
                       | "connectionPort": 111,
                       | "stringArray": [],
@@ -1007,6 +1046,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
   def nullToEmptyObject(): Unit = JsonRefiner[SimpleData].format(format).nullToEmptyObject("objects").refine.read(s"""
              |{
              | "stringValue": "111",
+             | "group": "default",
              | "bindPort": 123,
              | "connectionPort": 111,
              | "stringArray": []
@@ -1017,6 +1057,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
   def testObjects(): Unit = JsonRefiner[SimpleData].format(format).refine.read(s"""
        |{
        | "stringValue": "111",
+       | "group": "default",
        | "bindPort": 123,
        | "connectionPort": 111,
        | "stringArray": [],
@@ -1033,6 +1074,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     f.read(s"""
          |{
          | "stringValue": "111",
+         | "group": "default",
          | "bindPort": 123,
          | "connectionPort": -1,
          | "stringArray": [],
@@ -1062,6 +1104,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
     f.read(s"""
               |{
               | "stringValue": "111",
+              | "group": "default",
               | "bindPort": 123,
               | "connectionPort": 100,
               | "stringArray": [],
@@ -1113,6 +1156,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .read(s"""
                     |{
                     | "stringValue": "",
+                    | "group": "default",
                     | "bindPort": 123,
                     | "connectionPort": 111,
                     | "stringArray": ["ss", "tt"],
@@ -1175,6 +1219,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
   def testRequireKeys(): Unit = {
     val data = SimpleData(
       stringValue = CommonUtils.randomString(),
+      group = CommonUtils.randomString(),
       bindPort = CommonUtils.availablePort(),
       connectionPort = CommonUtils.availablePort(),
       stringArray = Seq.empty,
@@ -1196,5 +1241,83 @@ class TestJsonRefiner extends OharaTest with Matchers {
       JsObject(
         format.write(data).asJsObject.fields + ("a" -> JsString("bb")) + ("b" -> JsString("bb"))
       ))
+  }
+
+  @Test
+  def testAllValuesCheck(): Unit = {
+    val data = SimpleData(
+      stringValue = CommonUtils.randomString(5),
+      group = CommonUtils.randomString(10),
+      bindPort = CommonUtils.availablePort(),
+      connectionPort = CommonUtils.availablePort(),
+      stringArray = Seq.empty,
+      objects = Map.empty
+    )
+
+    val f = JsonRefiner[SimpleData].format(format).stringSumLengthLimit(Set("stringValue", "group"), 100).refine
+
+    // pass
+    f.read(format.write(data))
+    // pass (only check the sum length of stringValue)
+    JsonRefiner[SimpleData].format(format).stringSumLengthLimit(Set("stringValue"), 5).refine.read(format.write(data))
+    // we don't support other types length checking
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .stringSumLengthLimit(Set("group", "bindPort"), 5)
+      .refine
+      .read(format.write(data))
+
+    // the sum length (stringValue, group) is bigger than 100
+    an[DeserializationException] should be thrownBy f.read(
+      format.write(data.copy(stringValue = CommonUtils.randomString(100))))
+
+    // duplicate values should not be distinct
+    val str = CommonUtils.randomString(100)
+    an[DeserializationException] should be thrownBy f.read(format.write(data.copy(stringValue = str, group = str)))
+  }
+
+  @Test
+  def testAllValuesCheckWithoutRequiredKeys(): Unit = {
+    val data = SimpleData(
+      stringValue = CommonUtils.randomString(5),
+      group = CommonUtils.randomString(10),
+      bindPort = CommonUtils.availablePort(),
+      connectionPort = CommonUtils.availablePort(),
+      stringArray = Seq.empty,
+      objects = Map.empty
+    )
+
+    val f = JsonRefiner[SimpleData].format(format).stringSumLengthLimit(Set("abc"), 100).refine
+
+    // the required keys should exist in data
+    an[DeserializationException] should be thrownBy f.read(format.write(data))
+  }
+
+  @Test
+  def testAllValuesCheckWithOtherCheckers(): Unit = {
+    val data = SimpleData(
+      stringValue = CommonUtils.randomString(5),
+      group = CommonUtils.randomString(10),
+      bindPort = CommonUtils.availablePort(),
+      connectionPort = CommonUtils.availablePort(),
+      stringArray = Seq.empty,
+      objects = Map.empty
+    )
+
+    val f = JsonRefiner[SimpleData]
+      .format(format)
+      .rejectEmptyString("stringValue")
+      .stringSumLengthLimit(Set("stringValue", "group"), 100)
+      .refine
+
+    // pass
+    f.read(format.write(data))
+    // stringValue could not be empty
+    an[DeserializationException] should be thrownBy f.read(format.write(data.copy(stringValue = "")))
+    // pass
+    f.read(format.write(data.copy(group = "", stringValue = CommonUtils.randomString(100))))
+    // the length of stringValue + group is bigger than 100
+    an[DeserializationException] should be thrownBy f.read(
+      format.write(data.copy(group = "aa", stringValue = CommonUtils.randomString(100))))
   }
 }

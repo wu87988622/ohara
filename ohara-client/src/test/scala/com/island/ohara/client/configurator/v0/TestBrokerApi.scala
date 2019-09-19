@@ -147,7 +147,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       |  }
       """.stripMargin.parseJson)
     creation.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
-    creation.name.length shouldBe 10
+    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.zookeeperClusterName shouldBe None
     creation.nodeNames.size shouldBe 1

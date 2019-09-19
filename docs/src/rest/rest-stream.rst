@@ -111,10 +111,6 @@ Create the properties of a streamApp.
 
 Example Request
   #. name (**string**) — new streamApp name. This is the object unique name ; default is random string.
-
-     - The acceptable char is [0-9a-z]
-     - The maximum length is 20 chars
-
   #. group (**string**) — group name for current streamApp ; default value is "default"
   #. imageName (**string**) — image name of streamApp used to ; default is oharastream/streamapp:|version|
   #. nodeNames (**array(string)**) — node name list of streamApp used to ; default is empty

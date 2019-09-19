@@ -20,6 +20,7 @@ import spray.json.JsValue
 
 /**
   * this is a basic interface of request to create a normal object resource.
+  * We separate this interface with basic Data since request payload does not mean to be a "store-able" data
   */
 trait CreationRequest {
 
