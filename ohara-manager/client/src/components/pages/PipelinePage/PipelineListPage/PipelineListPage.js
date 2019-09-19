@@ -127,7 +127,7 @@ const PipelineListPage = props => {
       object => object.kind !== 'topic' && Boolean(object.state),
     );
 
-    // If there's no running objects,
+    // If there's no running objects, don't use steps
     if (!isEmpty(runningObjects)) {
       setSteps([...objects.map(object => object.name)]);
     }
@@ -180,7 +180,7 @@ const PipelineListPage = props => {
     await deleteObjects(group, objects);
 
     // Second, update pipeline flows, so everthing is relased from this pipeline
-    pipelineApi.updatePipeline({
+    await pipelineApi.updatePipeline({
       name,
       group,
       params: {
