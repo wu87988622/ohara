@@ -335,7 +335,7 @@ const PipelineListPage = props => {
                             inputProps={{
                               'data-testid': 'workspace-name-select',
                             }}
-                            list={workers.map(worker => worker.name)}
+                            list={workers.map(worker => worker.settings.name)}
                             component={Select}
                             required
                           />

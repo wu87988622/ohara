@@ -98,7 +98,7 @@ const PipelineEditPage = props => {
 
       if (worker) {
         setConnectors(worker.connectors);
-        setBrokerClusterName(worker.brokerClusterName);
+        setBrokerClusterName(worker.settings.brokerClusterName);
       }
     };
 
