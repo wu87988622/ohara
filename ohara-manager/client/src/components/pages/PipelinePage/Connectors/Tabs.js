@@ -35,6 +35,7 @@ const MuiTab = ({
   groupedDefs,
   parentValues,
   renderer,
+  freePorts,
 }) => {
   const [activeIdx, setActiveIdx] = React.useState(0);
 
@@ -50,6 +51,7 @@ const MuiTab = ({
     handleColumnRowUp,
     handleColumnRowDown,
     parentValues,
+    freePorts,
   };
 
   return (
@@ -76,6 +78,7 @@ MuiTab.propTypes = {
   groupedDefs: PropTypes.array.isRequired,
   renderer: PropTypes.func.isRequired,
   topics: PropTypes.array,
+  freePorts: PropTypes.array,
   handleChange: PropTypes.func,
   handleColumnChange: PropTypes.func,
   handleColumnRowDelete: PropTypes.func,

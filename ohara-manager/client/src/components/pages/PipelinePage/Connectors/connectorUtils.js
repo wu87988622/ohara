@@ -596,8 +596,8 @@ export const renderer = props => {
     handleColumnRowUp,
     handleColumnRowDown,
     parentValues,
+    freePorts,
   } = props;
-
   const dataType = ['String'];
   const tableActions = ['Up', 'Down', 'Delete'];
 
@@ -694,6 +694,22 @@ export const renderer = props => {
               handleColumnRowDelete={handleColumnRowDelete}
               handleColumnRowUp={handleColumnRowUp}
               handleColumnRowDown={handleColumnRowDown}
+            />
+          </FormGroup>
+        );
+      case 'BINDING_PORT':
+        return (
+          <FormGroup key={key}>
+            <Field
+              label={displayName}
+              id={displayName}
+              list={freePorts}
+              component={Select}
+              name={key}
+              width="100%"
+              required={required}
+              disabled={isRunning}
+              inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
         );

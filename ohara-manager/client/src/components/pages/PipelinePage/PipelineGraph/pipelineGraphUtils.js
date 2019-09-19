@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
+import { isEmpty, isNull } from 'lodash';
 
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import { isEmptyStr } from 'utils/commonUtils';
@@ -69,8 +69,8 @@ export const createHtml = params => {
     className = 'streamApp', // temp fix for now
     isActive,
     metrics = {},
+    nodeNames,
   } = params;
-
   // The metrics data are not ready yet, add default value so
   // it won't break our app
   const { meters = [] } = metrics;
@@ -89,6 +89,8 @@ export const createHtml = params => {
   const icon = getIcon(kind);
   const statusIcon = getStatusIcon(connectorState);
   const displayKind = className.split('.').pop();
+  const displayNodeName =
+    displayKind === 'JsonIn' || displayKind === 'JsonOut' ? nodeNames : null;
   const metricsHtml = createMetricsHtml(meters);
 
   const html = `<div class="node-graph ${topicClass} ${stateClass} ${activeClass}" data-testid="${kind}-${name}">
@@ -97,6 +99,15 @@ export const createHtml = params => {
           <div class="node-text-wrapper">
             <span class="node-name">${name}</span>
             <span class="node-status">Status: ${status}</span>
+            ${
+              !isNull(displayNodeName)
+                ? displayNodeName
+                    .map(element => {
+                      return `<span class="node-status">Node: ${element}</span>`;
+                    })
+                    .join('')
+                : ''
+            }
             <span class="node-type">${displayKind}</span>
           </div>
         </div>

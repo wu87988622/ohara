@@ -45,6 +45,8 @@ const PipelineEditPage = props => {
   const [pipeline, setPipeline] = useState({});
   const [pipelineTopics, setPipelineTopics] = useState([]);
   const [connectors, setConnectors] = useState([]);
+  const [freePorts, setFreePorts] = useState([]);
+  const [nodeNames, setNodeNames] = useState([]);
   const [brokerClusterName, setBrokerClusterName] = useState('');
 
   const { workspaceName, pipelineName, connectorName } = props.match.params;
@@ -97,6 +99,12 @@ const PipelineEditPage = props => {
       const worker = get(res, 'data.result', null);
 
       if (worker) {
+        setFreePorts(
+          get(worker, 'settings.freePorts', []).map(freePort =>
+            freePort.toString(),
+          ),
+        );
+        setNodeNames(get(worker, 'settings.nodeNames', []));
         setConnectors(worker.connectors);
         setBrokerClusterName(worker.brokerClusterName);
       }
@@ -233,6 +241,7 @@ const PipelineEditPage = props => {
     hasChanges,
     graph,
     connectors,
+    freePorts,
   };
 
   return (
@@ -268,6 +277,7 @@ const PipelineEditPage = props => {
               pipeline={pipeline}
               updateGraph={updateGraph}
               resetGraph={resetGraph}
+              nodeNames={nodeNames}
             />
 
             <Sidebar>
