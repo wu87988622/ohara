@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 abstract class IntegrationTest {
-  @Rule val timeout: Timeout = Timeout.seconds(720)
+  @Rule def timeout: Timeout = Timeout.seconds(720)
 
   /**
     * Skip all remaining test cases after calling this method.
