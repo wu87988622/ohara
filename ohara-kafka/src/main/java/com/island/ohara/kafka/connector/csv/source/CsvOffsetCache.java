@@ -24,10 +24,17 @@ import java.util.Map;
 public class CsvOffsetCache implements OffsetCache {
   private final Map<String, Integer> cache = new HashMap<>();
 
-  public void update(RowSourceContext context, String path) {
-    Map<String, Object> offset =
-        context.offset(Collections.singletonMap(CsvRecordConverter.CSV_PARTITION_KEY, path));
-    if (!offset.isEmpty()) update(path, getOffsetValue(offset));
+  public void loadIfNeed(RowSourceContext context, String path) {
+    /**
+     * RowSourceContext is based on kafka context, and the Getter methods is based on kafka topic.
+     * It means touching the method may be a high latency operation since it produces network
+     * traffics. Therefore, we SHOULD avoid triggering the method frequently.
+     */
+    if (!cache.containsKey(path)) {
+      Map<String, Object> offset =
+          context.offset(Collections.singletonMap(CsvRecordConverter.CSV_PARTITION_KEY, path));
+      if (!offset.isEmpty()) update(path, getOffsetValue(offset));
+    }
   }
 
   public void update(String path, int index) {

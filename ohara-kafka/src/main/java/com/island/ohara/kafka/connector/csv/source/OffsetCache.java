@@ -22,12 +22,12 @@ import com.island.ohara.kafka.connector.RowSourceContext;
 public interface OffsetCache {
 
   /**
-   * lode the latest offset from RowSourceContext
+   * if offset doesn't exist, lode the latest offset from RowSourceContext
    *
    * @param context kafka's cache
    * @param path file path
    */
-  void update(RowSourceContext context, String path);
+  void loadIfNeed(RowSourceContext context, String path);
 
   /**
    * add (index, path) to the cache

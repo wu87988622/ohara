@@ -50,7 +50,7 @@ public class CsvDataReader implements DataReader {
 
   public List<RowSourceRecord> read(String path) {
     try {
-      offsetCache.update(context, path);
+      offsetCache.loadIfNeed(context, path);
       CsvRecordConverter converter =
           new CsvRecordConverter.Builder()
               .path(path)

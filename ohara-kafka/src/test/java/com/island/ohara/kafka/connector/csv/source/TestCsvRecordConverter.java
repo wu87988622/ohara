@@ -262,7 +262,7 @@ public class TestCsvRecordConverter extends SmallTest {
             .offsetCache(
                 new OffsetCache() {
                   @Override
-                  public void update(RowSourceContext context, String path) {}
+                  public void loadIfNeed(RowSourceContext context, String path) {}
 
                   @Override
                   public void update(String path, int index) {}
@@ -299,7 +299,7 @@ public class TestCsvRecordConverter extends SmallTest {
 
   class FakeOffsetCache implements OffsetCache {
     @Override
-    public void update(RowSourceContext context, String path) {
+    public void loadIfNeed(RowSourceContext context, String path) {
       // DO NOTHING
     }
 
