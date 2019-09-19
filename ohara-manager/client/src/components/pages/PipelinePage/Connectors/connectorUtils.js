@@ -15,7 +15,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import toastr from 'toastr';
 import { isEmpty, isUndefined, isNull, get } from 'lodash';
 import { Field } from 'react-final-form';
 
@@ -24,6 +23,7 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
 import ColumnTable from './ColumnTable';
 import Tabs from './Tabs';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { validateConnector } from 'api/validateApi';
 import { FormGroup } from 'components/common/Form';
@@ -268,6 +268,7 @@ export const useTopics = props => {
 
 export const useTestConfig = props => {
   const [isTestingConfig, setIsTestingConfig] = useState(false);
+  const { showMessage } = useSnackbar();
 
   const {
     tags: { workerClusterName },
@@ -290,12 +291,16 @@ export const useTestConfig = props => {
 
     const params = { ..._values, topicKeys };
     setIsTestingConfig(true);
-    const res = await validateConnector(params);
-    setIsTestingConfig(false);
-    const isSuccess = get(res, 'data.isSuccess', false);
+    try {
+      const res = await validateConnector(params);
+      setIsTestingConfig(false);
+      const isSuccess = get(res, 'data.isSuccess', false);
 
-    if (isSuccess) {
-      toastr.success(MESSAGES.TEST_SUCCESS);
+      if (isSuccess) {
+        showMessage(MESSAGES.TEST_SUCCESS);
+      }
+    } catch (error) {
+      showMessage(error.message);
     }
   };
 
@@ -359,18 +364,32 @@ export const handleStopConnector = async params => {
   await triggerConnector(params);
 };
 
-const triggerConnector = async ({ action, props, setState }) => {
+const triggerConnector = async ({ action, props, setState, showMessage }) => {
   const { group } = props.pipeline;
   const { connectorName } = props.match.params;
 
   let response;
   if (action === CONNECTOR_ACTIONS.start) {
-    response = await connectorApi.startConnector(group, connectorName);
+    try {
+      response = await connectorApi.startConnector(group, connectorName);
+    } catch (error) {
+      showMessage(error.message);
+    }
   } else {
-    response = await connectorApi.stopConnector(group, connectorName);
+    try {
+      response = await connectorApi.stopConnector(group, connectorName);
+    } catch (error) {
+      showMessage(error.message);
+    }
   }
 
-  handleTriggerConnectorResponse({ action, response, props, setState });
+  handleTriggerConnectorResponse({
+    action,
+    response,
+    props,
+    setState,
+    showMessage,
+  });
 };
 
 const handleTriggerConnectorResponse = ({
@@ -378,6 +397,7 @@ const handleTriggerConnectorResponse = ({
   response,
   props,
   setState,
+  showMessage,
 }) => {
   const isSuccess = get(response, 'data.isSuccess', false);
   if (!isSuccess) return;
@@ -392,48 +412,52 @@ const handleTriggerConnectorResponse = ({
 
   if (action === CONNECTOR_ACTIONS.start) {
     if (!isNull(state)) {
-      toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      showMessage(MESSAGES.START_CONNECTOR_SUCCESS);
     }
   }
 };
 
-export const handleDeleteConnector = async (isRunning, props) => {
+export const handleDeleteConnector = async (isRunning, props, showMessage) => {
   const { refreshGraph, history, pipeline } = props;
   const { connectorName, workspaceName } = props.match.params;
   const { name, flows, group } = pipeline;
 
   if (isRunning) {
-    toastr.error(
+    showMessage(
       `The connector is running! Please stop the connector first before deleting`,
     );
 
     return;
   }
 
-  const connectorResponse = await connectorApi.deleteConnector(
-    group,
-    connectorName,
-  );
-  const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
+  try {
+    const connectorResponse = await connectorApi.deleteConnector(
+      group,
+      connectorName,
+    );
+    const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
 
-  const updatedFlows = flows.filter(flow => flow.from.name !== connectorName);
-  const pipelineResponse = await pipelineApi.updatePipeline({
-    name,
-    group,
-    params: {
+    const updatedFlows = flows.filter(flow => flow.from.name !== connectorName);
+    const pipelineResponse = await pipelineApi.updatePipeline({
       name,
-      flows: updatedFlows,
-    },
-  });
+      group,
+      params: {
+        name,
+        flows: updatedFlows,
+      },
+    });
 
-  const pipelineHasUpdated = get(pipelineResponse, 'data.isSuccess', false);
+    const pipelineHasUpdated = get(pipelineResponse, 'data.isSuccess', false);
 
-  if (connectorHasDeleted && pipelineHasUpdated) {
-    toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
-    await refreshGraph();
+    if (connectorHasDeleted && pipelineHasUpdated) {
+      showMessage(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      await refreshGraph();
 
-    const path = `/pipelines/edit/${workspaceName}/${name}`;
-    history.push(path);
+      const path = `/pipelines/edit/${workspaceName}/${name}`;
+      history.push(path);
+    }
+  } catch (error) {
+    showMessage(error.message);
   }
 };
 

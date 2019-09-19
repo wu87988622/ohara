@@ -20,16 +20,11 @@ import { createGlobalStyle } from 'styled-components';
 import {
   blue,
   blueHover,
-  red,
-  orange,
-  green,
   lightGray,
   whiteSmoke,
   darkerBlue,
   durationNormal,
 } from './variables';
-
-import '../../node_modules/toastr/build/toastr.css';
 
 // Global styles for ReactModal
 // TODO: use styled-component to style ReactModal
@@ -83,43 +78,5 @@ export default createGlobalStyle`
 
   button {
     cursor: pointer;
-  }
-
-  /* toastr */
-  #toast-container > div.toast {
-    opacity: 0.98;
-    padding: 20px 25px;
-    box-shadow: none;
-    width: auto;
-    max-width: 300px;
-    background-image: none !important;
-    box-shadow: 2px 3px 27px rgba(0, 0, 0, .2);
-
-    &.toast-success {
-        background-color: ${green}
-    }
-
-    &.toast-info {
-      background-color: ${blue};
-    }
-
-    &.toast-warning {
-      background-color: ${orange};
-    }
-
-    &.toast-error {
-      background-color: ${red};
-    }
-
-    .toast-title, toast-message {
-      font-size: 14px;
-      font-weight: normal;
-      word-break: break-word;
-      line-height: 1.6;
-    }
-
-    &:hover {
-      box-shadow: 2px 3px 27px rgba(0, 0, 0, .2);
-    }
   }
 `;

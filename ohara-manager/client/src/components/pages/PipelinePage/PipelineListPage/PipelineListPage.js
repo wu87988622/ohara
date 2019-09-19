@@ -56,19 +56,22 @@ const PipelineListPage = props => {
   const [activeStep, setActiveStep] = useState(0);
   const [pipelines, setPipelines] = useState([]);
   const [workers, setWorkers] = useState([]);
-  const [isFetchingPipeline, setIsFetchingPipeline] = useState(false);
-  const [isFetchingWorker, setIsFetchingWorker] = useState(false);
+  const [isFetchingPipeline, setIsFetchingPipeline] = useState(true);
+  const [isFetchingWorker, setIsFetchingWorker] = useState(true);
 
   const { showMessage } = useSnackbar();
   const { waitApi } = useApi.useWaitApi();
 
   const fetchPipelines = useCallback(async () => {
-    setIsFetchingPipeline(true);
-    const response = await pipelineApi.fetchPipelines();
-    const pipelines = get(response, 'data.result', []);
+    try {
+      const response = await pipelineApi.fetchPipelines();
+      const pipelines = get(response, 'data.result', []);
+      setPipelines(pipelines);
+    } catch (error) {
+      showMessage(error.message);
+    }
     setIsFetchingPipeline(false);
-    setPipelines(pipelines);
-  }, []);
+  }, [showMessage]);
 
   useEffect(() => {
     fetchPipelines();
@@ -76,15 +79,18 @@ const PipelineListPage = props => {
 
   useEffect(() => {
     const fetchWorkers = async () => {
-      setIsFetchingWorker(true);
-      const response = await workerApi.fetchWorkers();
-      const workers = get(response, 'data.result', []);
+      try {
+        const response = await workerApi.fetchWorkers();
+        const workers = get(response, 'data.result', []);
+        setWorkers(workers);
+      } catch (error) {
+        showMessage(error.message);
+      }
       setIsFetchingWorker(false);
-      setWorkers(workers);
     };
 
     fetchWorkers();
-  }, []);
+  }, [showMessage]);
 
   const handleNewModalSubmit = async values => {
     const { history, match } = props;
@@ -99,16 +105,19 @@ const PipelineListPage = props => {
     };
 
     setIsNewModalWorking(true);
-    const response = await pipelineApi.createPipeline(params);
-    const updatedPipelineName = get(response, 'data.result.name', null);
-    setIsNewModalWorking(false);
-
-    if (updatedPipelineName) {
-      setIsNewModalOpen(false);
-      showMessage(MESSAGES.PIPELINE_CREATION_SUCCESS);
-      history.push(
-        `${match.url}/edit/${workerClusterName}/${updatedPipelineName}`,
-      );
+    try {
+      const response = await pipelineApi.createPipeline(params);
+      const updatedPipelineName = get(response, 'data.result.name', null);
+      setIsNewModalWorking(false);
+      if (updatedPipelineName) {
+        setIsNewModalOpen(false);
+        showMessage(MESSAGES.PIPELINE_CREATION_SUCCESS);
+        history.push(
+          `${match.url}/edit/${workerClusterName}/${updatedPipelineName}`,
+        );
+      }
+    } catch (error) {
+      showMessage(error.message);
     }
   };
 
@@ -196,13 +205,16 @@ const PipelineListPage = props => {
 
     if (isSuccess) {
       setIsDeleteModalOpen(false);
-      const response = await pipelineApi.fetchPipelines();
-      const pipelines = get(response, 'data.result', []);
-      setPipelines(pipelines);
-
-      showMessage(
-        `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
-      );
+      try {
+        const response = await pipelineApi.fetchPipelines();
+        const pipelines = get(response, 'data.result', []);
+        setPipelines(pipelines);
+        showMessage(
+          `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
+        );
+      } catch (error) {
+        showMessage(error.message);
+      }
     }
   };
 

@@ -22,6 +22,7 @@ import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
 import TestConfigBtn from './TestConfigBtn';
 import AutoSave from './AutoSave';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { TitleWrapper, H5Wrapper } from './styles';
 import { Box } from 'components/common/Layout';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
@@ -35,6 +36,8 @@ const Connector = props => {
   const topics = utils.useTopics(props);
 
   const { connectorName } = props.match.params;
+
+  const { showMessage } = useSnackbar();
 
   if (!configs) return null;
 
@@ -74,6 +77,7 @@ const Connector = props => {
   const controllerParams = {
     props,
     setState,
+    showMessage,
   };
 
   return (
@@ -95,7 +99,9 @@ const Connector = props => {
               ...controllerParams,
             })
           }
-          onDelete={() => utils.handleDeleteConnector(state, props)}
+          onDelete={() =>
+            utils.handleDeleteConnector(state, props, showMessage)
+          }
         />
       </TitleWrapper>
       <Form

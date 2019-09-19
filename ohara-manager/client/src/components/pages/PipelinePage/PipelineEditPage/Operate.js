@@ -17,16 +17,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
-import toastr from 'toastr';
 
 import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamApi';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { Box } from 'components/common/Layout';
 import { Heading3, OperateWrapper } from './styles';
 import { getConnectors } from '../pipelineUtils';
 
 const Operate = props => {
   const { fetchPipeline, updateHasRunningServices, pipeline } = props;
+  const { showMessage } = useSnackbar();
 
   const {
     name: pipelineName,
@@ -71,19 +72,29 @@ const Operate = props => {
     let responses = null;
 
     if (action === 'start') {
-      responses = await makeRequest(action, pipelineConnectors);
+      try {
+        responses = await makeRequest(action, pipelineConnectors);
+      } catch (error) {
+        showMessage(error.message);
+      }
     } else {
-      responses = await makeRequest(action, pipelineConnectors);
+      try {
+        responses = await makeRequest(action, pipelineConnectors);
+      } catch (error) {
+        showMessage(error.message);
+      }
     }
 
-    const hasError = responses.some(response => !response.data.isSuccess);
+    if (responses) {
+      const hasError = responses.some(response => !response.data.isSuccess);
 
-    if (!hasError) {
-      toastr.success(`Pipeline has been successfully ${action}!`);
+      if (!hasError) {
+        showMessage(`Pipeline has been successfully ${action}!`);
 
-      const hasRunningServices = action === 'start';
-      updateHasRunningServices(hasRunningServices);
-      await fetchPipeline(pipelineGroup, pipelineName);
+        const hasRunningServices = action === 'start';
+        updateHasRunningServices(hasRunningServices);
+        await fetchPipeline(pipelineGroup, pipelineName);
+      }
     }
   };
 

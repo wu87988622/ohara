@@ -16,7 +16,6 @@
 
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import toastr from 'toastr';
 import { Form } from 'react-final-form';
 import { get, isString, isNull, isEmpty } from 'lodash';
 
@@ -26,6 +25,7 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as utils from './connectorUtils';
 import Controller from './Controller';
 import AutoSave from './AutoSave';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
 import { STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { ListLoader } from 'components/common/Loader';
@@ -42,6 +42,8 @@ const StreamApp = props => {
   const [configs, setConfigs] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [defs, setDefs] = useState(null);
+
+  const { showMessage } = useSnackbar();
 
   const { match, pipeline } = props;
 
@@ -202,7 +204,7 @@ const StreamApp = props => {
     } = pipeline;
 
     if (state) {
-      toastr.error(
+      showMessage(
         `The connector is running! Please stop the connector first before deleting`,
       );
 
@@ -230,7 +232,7 @@ const StreamApp = props => {
     const pipelineHasUpdated = get(pipelineResponse, 'data.isSuccess', false);
 
     if (connectorHasDeleted && pipelineHasUpdated) {
-      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${streamAppName}`);
+      showMessage(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${streamAppName}`);
       await refreshGraph();
 
       const path = `/pipelines/edit/${workerClusterName}/${pipelineName}`;
@@ -263,7 +265,7 @@ const StreamApp = props => {
     updateGraph({ update, dispatcher: { name: 'STREAM_APP' } });
 
     if (action === STREAM_APP_ACTIONS.start) {
-      if (!isNull(state)) toastr.success(MESSAGES.STREAM_APP_START_SUCCESS);
+      if (!isNull(state)) showMessage(MESSAGES.STREAM_APP_START_SUCCESS);
     }
   };
 

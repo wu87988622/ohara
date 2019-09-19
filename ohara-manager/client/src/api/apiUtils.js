@@ -15,7 +15,6 @@
  */
 
 import axios from 'axios';
-import toastr from 'toastr';
 import { isString, get, has, isEmpty, isUndefined } from 'lodash';
 
 export const handleError = error => {
@@ -23,15 +22,15 @@ export const handleError = error => {
 
   const message = get(error, 'data.errorMessage.message', null);
   if (isString(message)) {
-    return toastr.error(message);
+    throw new Error(message);
   }
 
   const errorMessage = get(error, 'data.errorMessage', null);
   if (isString(errorMessage)) {
-    return toastr.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
-  toastr.error(error || 'Internal Server Error');
+  throw new Error(error || 'Internal Server Error');
 };
 
 export const handleConnectorValidationError = error => {
@@ -47,21 +46,19 @@ export const handleConnectorValidationError = error => {
 
   // There could be multiple validation errors, so we need to loop thru them and
   // display respectively
-  errors.forEach(error =>
-    toastr.error(
-      `<b>${error.fieldName.toUpperCase()}</b><br /> ${error.errorMessage}`,
-    ),
+  const result = errors.map(
+    error => `${error.fieldName.toUpperCase()}: ${error.errorMessage}`,
   );
+
+  return result;
 };
 
 export const handleNodeValidationError = error => {
-  error.forEach(node => {
-    if (!node.pass) {
-      toastr.error(
-        `<b>${node.hostname.toUpperCase()}</b><br /> ${node.message}`,
-      );
-    }
-  });
+  const result = error
+    .filter(node => node.pass === false)
+    .map(node => `${node.hostname.toUpperCase()}: ${node.message}`);
+
+  return result;
 };
 
 const createAxios = () => {

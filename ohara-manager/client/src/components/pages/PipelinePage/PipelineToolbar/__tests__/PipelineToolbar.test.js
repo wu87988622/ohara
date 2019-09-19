@@ -149,7 +149,7 @@ describe('<PipelineToolbar />', () => {
 
   it('toggles new topic modal', async () => {
     const { getByTestId, queryByTestId } = await waitForElement(() =>
-      render(<PipelineToolbar {...props} />),
+      renderWithProvider(<PipelineToolbar {...props} />),
     );
 
     expect(queryByTestId('topic-modal')).toBeNull();
@@ -166,7 +166,7 @@ describe('<PipelineToolbar />', () => {
 
   it('renders new topic modal title', async () => {
     const { getByText, getByTestId } = await waitForElement(() =>
-      render(<PipelineToolbar {...props} />),
+      renderWithProvider(<PipelineToolbar {...props} />),
     );
 
     fireEvent.click(getByTestId('toolbar-topics'));
@@ -175,7 +175,7 @@ describe('<PipelineToolbar />', () => {
 
   it('renders new topic modal topic list', async () => {
     const { getByTestId } = await waitForElement(() =>
-      render(<PipelineToolbar {...props} />),
+      renderWithProvider(<PipelineToolbar {...props} />),
     );
 
     fireEvent.click(getByTestId('toolbar-topics'));
@@ -212,7 +212,7 @@ describe('<PipelineToolbar />', () => {
 
   it('should change the selected topic ', async () => {
     const { getByText, getByTestId, queryByTestId } = await waitForElement(() =>
-      render(<PipelineToolbar {...props} />),
+      renderWithProvider(<PipelineToolbar {...props} />),
     );
 
     fireEvent.click(getByTestId('toolbar-topics'));

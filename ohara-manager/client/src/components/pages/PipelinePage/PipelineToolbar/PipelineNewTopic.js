@@ -21,13 +21,13 @@ import React, {
   forwardRef,
 } from 'react';
 import PropTypes from 'prop-types';
-import toastr from 'toastr';
 import { isEmpty, get, isNull } from 'lodash';
 import { Link } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
 import * as URLS from 'constants/urls';
 import * as pipelineApi from 'api/pipelineApi';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { Warning } from 'components/common/Messages';
 import { Select } from 'components/common/Form';
 import { createConnector } from './pipelineToolbarUtils';
@@ -37,6 +37,7 @@ import { Wrapper } from './styles';
 
 const PipelineNewTopic = forwardRef((props, ref) => {
   const [updatedTopics, setUpdateTopics] = useState([]);
+  const { showMessage } = useSnackbar();
 
   const { enableAddButton, currentTopic, topics, workerClusterName } = props;
 
@@ -74,7 +75,7 @@ const PipelineNewTopic = forwardRef((props, ref) => {
       const { graph, updateGraph, currentTopic, pipelineName } = props;
 
       if (!currentTopic) {
-        return toastr.error(MESSAGES.NO_TOPIC_IS_SUPPLIED);
+        return showMessage(MESSAGES.NO_TOPIC_IS_SUPPLIED);
       }
 
       // Don't add a topic if it's already existed in the pipeline graph

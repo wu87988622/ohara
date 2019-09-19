@@ -16,7 +16,6 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import toastr from 'toastr';
 import { get, isEmpty } from 'lodash';
 
 import * as pipelineApi from 'api/pipelineApi';
@@ -24,6 +23,7 @@ import * as MESSAGES from 'constants/messages';
 import * as topicApi from 'api/topicApi';
 import * as s from './styles';
 import Controller from './Controller';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { ListLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
 import { FormGroup, Label, Input } from 'components/common/Form';
@@ -32,6 +32,7 @@ import { graph as graphPropType } from 'propTypes/pipeline';
 const Topic = props => {
   const [topic, setTopic] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { showMessage } = useSnackbar();
 
   const topicName = props.match.params.connectorName;
   const { workerClusterName } = props.pipeline.tags;
@@ -39,15 +40,18 @@ const Topic = props => {
 
   useEffect(() => {
     const fetchTopic = async () => {
-      const res = await topicApi.fetchTopic(topicGroup, topicName);
-      const topic = get(res, 'data.result', null);
-
-      if (topic) setTopic(topic);
+      try {
+        const res = await topicApi.fetchTopic(topicGroup, topicName);
+        const topic = get(res, 'data.result', null);
+        if (topic) setTopic(topic);
+      } catch (error) {
+        showMessage(error.message);
+      }
       setIsLoading(false);
     };
 
     fetchTopic();
-  }, [topicGroup, topicName]);
+  }, [showMessage, topicGroup, topicName]);
 
   const hasConnection = (flows, topicName) => {
     const hasToConnections = flows.some(flow => {
@@ -70,35 +74,39 @@ const Topic = props => {
     const { name, flows, group } = pipeline;
 
     if (hasConnection(flows, topicName)) {
-      toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
+      showMessage(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
       return;
     }
 
     const updatedFlows = flows.filter(flow => flow.from.name !== topicName);
 
-    const res = await pipelineApi.updatePipeline({
-      name,
-      group,
-      params: {
+    try {
+      const res = await pipelineApi.updatePipeline({
         name,
-        flows: updatedFlows,
-      },
-    });
+        group,
+        params: {
+          name,
+          flows: updatedFlows,
+        },
+      });
 
-    const isSuccess = get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
 
-    if (isSuccess) {
-      const { name: topicName } = topic;
-      toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicName}`);
-      refreshGraph();
+      if (isSuccess) {
+        const { name: topicName } = topic;
+        showMessage(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicName}`);
+        refreshGraph();
 
-      const { workspaceName, pipelineName } = props.match.params;
-      history.push(`/pipelines/edit/${workspaceName}/${pipelineName}`);
+        const { workspaceName, pipelineName } = props.match.params;
+        history.push(`/pipelines/edit/${workspaceName}/${pipelineName}`);
+      }
+    } catch (error) {
+      showMessage(error.message);
     }
   };
 
   return (
-    <React.Fragment>
+    <>
       {isLoading ? (
         <Box>
           <ListLoader />
@@ -120,7 +128,7 @@ const Topic = props => {
           </FormGroup>
         </Box>
       )}
-    </React.Fragment>
+    </>
   );
 };
 

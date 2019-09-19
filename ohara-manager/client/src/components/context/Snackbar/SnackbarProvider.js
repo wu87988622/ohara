@@ -28,7 +28,7 @@ const StyledCloseIcon = styled(Icon)`
 `;
 
 const SnackbarProvider = props => {
-  const [isOpen, setOpen] = useState();
+  const [isOpen, setOpen] = useState(false);
   const [message, setMessage] = useState();
   const { autoClose = 5000, children } = props;
 

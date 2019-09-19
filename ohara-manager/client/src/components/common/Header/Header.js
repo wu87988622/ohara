@@ -22,6 +22,7 @@ import * as URLS from 'constants/urls';
 import { ListLoader } from 'components/common/Loader';
 import * as infoApi from 'api/infoApi';
 import { Dialog } from 'components/common/Mui/Dialog';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import {
   StyledHeader,
   HeaderWrapper,
@@ -40,17 +41,23 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [info, setInfo] = useState({});
 
+  const { showMessage } = useSnackbar();
+
   useEffect(() => {
     const fetchInfo = async () => {
-      const res = await infoApi.fetchInfo();
-      setIsLoading(false);
-      const info = get(res, 'data.result', null);
+      try {
+        const res = await infoApi.fetchInfo();
+        const info = get(res, 'data.result', null);
+        if (info) setInfo(info);
+      } catch (error) {
+        showMessage(error.message);
+      }
 
-      if (info) setInfo(info);
+      setIsLoading(false);
     };
 
     fetchInfo();
-  }, []);
+  }, [showMessage]);
 
   const { versionInfo = {}, mode = '' } = info;
   const { version, revision, date } = versionInfo;
