@@ -58,14 +58,14 @@ object BrokerApi {
     */
   private[ohara] val ZOOKEEPER_CLUSTER_NAME_KEY: String = "zookeeperClusterName"
 
-  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 
     /**
       * reuse the parser from Update.
       * @param settings settings
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -102,7 +102,7 @@ object BrokerApi {
       .rejectEmptyString(ZOOKEEPER_CLUSTER_NAME_KEY)
       .refine
 
-  final class Update(val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
     private[BrokerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[BrokerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -122,11 +122,11 @@ object BrokerApi {
       noJsNull(settings).get(ZOOKEEPER_CLUSTER_NAME_KEY).map(_.convertTo[String])
   }
 
-  implicit val BROKER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    basicRulesOfUpdate[Update]
-      .format(new RootJsonFormat[Update] {
-        override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Update = new Update(json.asJsObject.fields)
+  implicit val BROKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+    basicRulesOfUpdating[Updating]
+      .format(new RootJsonFormat[Updating] {
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       })
       .requireBindPort(CLIENT_PORT_KEY)
       .requireBindPort(EXPORTER_PORT_KEY)
@@ -218,34 +218,31 @@ object BrokerApi {
       *
       * @return the payload of creation
       */
-    def creation: Creation
+    final def creation: Creation =
+      // auto-complete the creation via our refiner
+      BROKER_CREATION_JSON_FORMAT.read(BROKER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
       * @return the payload of update
       */
-    private[v0] def update: Update
+    private[v0] final def updating: Updating =
+      // auto-complete the update via our refiner
+      BROKER_UPDATING_JSON_FORMAT.read(BROKER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
-  final class Access private[BrokerApi] extends ClusterAccess[Creation, Update, BrokerClusterInfo](BROKER_PREFIX_PATH) {
+  final class Access private[BrokerApi]
+      extends ClusterAccess[Creation, Updating, BrokerClusterInfo](BROKER_PREFIX_PATH) {
     def request: Request = new Request {
-
-      override def creation: Creation =
-        // auto-complete the creation via our refiner
-        BROKER_CREATION_JSON_FORMAT.read(BROKER_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
-
-      override private[v0] def update: Update =
-        // auto-complete the update via our refiner
-        BROKER_UPDATE_JSON_FORMAT.read(BROKER_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(update.group.getOrElse(BROKER_GROUP_DEFAULT),
-              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
-          update
+          key(updating.group.getOrElse(BROKER_GROUP_DEFAULT),
+              updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          updating
         )
     }
   }

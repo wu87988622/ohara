@@ -33,13 +33,13 @@ object HdfsInfoApi {
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val HDFS_PREFIX_PATH: String = "hdfs"
-  final case class Update(uri: Option[String], tags: Option[Map[String, JsValue]])
+  final case class Updating(uri: Option[String], tags: Option[Map[String, JsValue]])
 
-  implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat2(Update)).rejectEmptyString().refine
+  implicit val HDFS_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+    JsonRefiner[Updating].format(jsonFormat2(Updating)).rejectEmptyString().refine
 
   final case class Creation(group: String, name: String, uri: String, tags: Map[String, JsValue])
-      extends CreationRequest
+      extends com.island.ohara.client.configurator.v0.BasicCreation
   implicit val HDFS_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat4(Creation))
@@ -91,7 +91,7 @@ object HdfsInfoApi {
 
     private[v0] def creation: Creation
 
-    private[v0] def update: Update
+    private[v0] def updating: Updating
 
     /**
       * generate the POST request
@@ -142,7 +142,7 @@ object HdfsInfoApi {
         tags = if (tags == null) Map.empty else tags
       )
 
-      override private[v0] def update: Update = Update(
+      override private[v0] def updating: Updating = Updating(
         uri = Option(uri).map(CommonUtils.requireNonEmpty),
         tags = Option(tags)
       )
@@ -153,7 +153,7 @@ object HdfsInfoApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.put[Update, HdfsInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), update)
+        exec.put[Updating, HdfsInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), updating)
     }
   }
   def access: Access = new Access

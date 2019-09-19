@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * A minimum request must set the nodeName.
   */
 trait ClusterRequest[T <: ClusterInfo] {
-  protected val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
+  protected val settings: mutable.Map[String, JsValue] = mutable.Map()
 
   @Optional("default name is a random string. But it is required in updating")
   def name(name: String): ClusterRequest.this.type =

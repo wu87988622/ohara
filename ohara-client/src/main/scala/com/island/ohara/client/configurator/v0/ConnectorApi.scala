@@ -72,9 +72,10 @@ object ConnectorApi {
         State.forName(json.convertTo[String])
     }
 
-  final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
+  final case class Creation(settings: Map[String, JsValue])
+      extends com.island.ohara.client.configurator.v0.BasicCreation {
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = Updating(noJsNull(settings))
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -152,7 +153,7 @@ object ConnectorApi {
     )
     .refine
 
-  final case class Update(settings: Map[String, JsValue]) {
+  final case class Updating(settings: Map[String, JsValue]) {
     private[ConnectorApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     private[ConnectorApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
@@ -168,10 +169,10 @@ object ConnectorApi {
     def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
   }
 
-  implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
-    .format(new RootJsonFormat[Update] {
-      override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+  implicit val CONNECTOR_UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner[Updating]
+    .format(new RootJsonFormat[Updating] {
+      override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+      override def read(json: JsValue): Updating = Updating(json.asJsObject.fields)
     })
     // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
     // to users to save their life :)
@@ -247,7 +248,7 @@ object ConnectorApi {
     * We use private[v0] instead of "sealed" since it is extendable to ValidationApi.
     */
   abstract class BasicRequest private[v0] {
-    protected[this] var settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
+    protected[this] val settings: mutable.Map[String, JsValue] = mutable.Map()
 
     def key(key: ConnectorKey): BasicRequest.this.type = {
       group(key.group())
@@ -303,7 +304,11 @@ object ConnectorApi {
       * Noted, it throw unchecked exception if you haven't filled all required fields
       * @return creation object
       */
-    def creation: Creation = CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(Creation(settings.toMap)))
+    final def creation: Creation =
+      CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(Creation(settings.toMap)))
+
+    private[v0] final def updating: Updating =
+      CONNECTOR_UPDATING_FORMAT.read(CONNECTOR_UPDATING_FORMAT.write(Updating(noJsNull(settings.toMap))))
   }
 
   /**
@@ -362,16 +367,13 @@ object ConnectorApi {
     def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, RESUME_COMMAND)
 
     def request: Request = new Request {
-      private[v0] def update: Update =
-        CONNECTOR_UPDATE_FORMAT.read(CONNECTOR_UPDATE_FORMAT.write(Update(settings.toMap)))
-
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
         exec.post[Creation, ConnectorDescription, ErrorApi.Error](url, creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] = {
-        exec.put[Update, ConnectorDescription, ErrorApi.Error](
-          url(ObjectKey.of(update.group.getOrElse(GROUP_DEFAULT), update.name.get)),
-          update)
+        exec.put[Updating, ConnectorDescription, ErrorApi.Error](
+          url(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get)),
+          updating)
       }
     }
   }

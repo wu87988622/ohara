@@ -25,7 +25,7 @@ import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json._
@@ -184,13 +184,13 @@ private[configurator] object StreamRoute {
               .map(assertParameters))
     }
 
-  private[this] def hookOfUpdate(
+  private[this] def HookOfUpdating(
     implicit nodeCollie: NodeCollie,
     workerCollie: WorkerCollie,
     brokerCollie: BrokerCollie,
     streamCollie: StreamCollie,
-    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, StreamClusterInfo] =
-    (key: ObjectKey, update: Update, previousOption: Option[StreamClusterInfo]) =>
+    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, StreamClusterInfo] =
+    (key: ObjectKey, update: Updating, previousOption: Option[StreamClusterInfo]) =>
       streamCollie.clusters
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
@@ -205,7 +205,7 @@ private[configurator] object StreamRoute {
                 if (nodes.isDefined)
                   extra_settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
                     nodes.get.map(JsString(_)).toVector)
-                new Update(update.settings ++ extra_settings)
+                new Updating(update.settings ++ extra_settings)
             }
           )
         }
@@ -323,7 +323,7 @@ private[configurator] object StreamRoute {
       metricsKey = Some(STREAM_APP_GROUP),
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

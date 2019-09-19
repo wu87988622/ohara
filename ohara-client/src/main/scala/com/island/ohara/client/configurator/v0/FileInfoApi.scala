@@ -57,8 +57,8 @@ object FileInfoApi {
     override def write(obj: URL): JsValue = JsString(obj.toString)
   }
 
-  case class Update(tags: Option[Map[String, JsValue]])
-  final implicit val FILE_UPDATE_FORMAT: RootJsonFormat[Update] = jsonFormat1(Update)
+  case class Updating(tags: Option[Map[String, JsValue]])
+  final implicit val FILE_UPDATING_FORMAT: RootJsonFormat[Updating] = jsonFormat1(Updating)
 
   /**
     * file information
@@ -120,13 +120,13 @@ object FileInfoApi {
     def update()(implicit executionContext: ExecutionContext): Future[FileInfo] = doUpdate(
       group = CommonUtils.requireNonEmpty(group),
       name = CommonUtils.requireNonEmpty(name),
-      update = Update(tags = Option(tags))
+      update = Updating(tags = Option(tags))
     )
 
     protected def doUpload(group: String, name: String, file: File, tags: Map[String, JsValue])(
       implicit executionContext: ExecutionContext): Future[FileInfo]
 
-    protected def doUpdate(group: String, name: String, update: Update)(
+    protected def doUpdate(group: String, name: String, update: Updating)(
       implicit executionContext: ExecutionContext): Future[FileInfo]
   }
 
@@ -175,9 +175,9 @@ object FileInfoApi {
           .map(e => HttpRequest(HttpMethods.POST, uri = url, entity = e))
           .flatMap(exec.request[FileInfo, ErrorApi.Error])
 
-      override protected def doUpdate(group: String, name: String, update: Update)(
+      override protected def doUpdate(group: String, name: String, update: Updating)(
         implicit executionContext: ExecutionContext): Future[FileInfo] =
-        exec.put[Update, FileInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), update)
+        exec.put[Updating, FileInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), update)
     }
   }
 

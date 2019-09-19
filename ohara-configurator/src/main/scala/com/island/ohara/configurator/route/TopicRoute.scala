@@ -30,7 +30,7 @@ import com.island.ohara.configurator.route.hook.{
   HookOfGet,
   HookOfGroup,
   HookOfList,
-  HookOfUpdate
+  HookOfUpdating
 }
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
@@ -140,10 +140,10 @@ private[configurator] object TopicRoute {
         )
     }
 
-  private[this] def hookOfUpdate(implicit adminCleaner: AdminCleaner,
-                                 brokerCollie: BrokerCollie,
-                                 executionContext: ExecutionContext): HookOfUpdate[Creation, Update, TopicInfo] =
-    (key: ObjectKey, update: Update, previous: Option[TopicInfo]) =>
+  private[this] def HookOfUpdating(implicit adminCleaner: AdminCleaner,
+                                   brokerCollie: BrokerCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, TopicInfo] =
+    (key: ObjectKey, update: Updating, previous: Option[TopicInfo]) =>
       previous
         .map(_.brokerClusterName)
         .orElse(update.brokerClusterName)
@@ -251,11 +251,11 @@ private[configurator] object TopicRoute {
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
             executionContext: ExecutionContext): server.Route =
-    route[Creation, Update, TopicInfo](
+    route[Creation, Updating, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
       hookBeforeDelete = hookBeforeDelete,

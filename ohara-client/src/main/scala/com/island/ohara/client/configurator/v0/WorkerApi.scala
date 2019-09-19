@@ -58,14 +58,14 @@ object WorkerApi {
   private[this] val TAGS_KEY = "tags"
   private[this] val FREE_PORTS_KEY = "freePorts"
 
-  final class Creation private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterCreation {
 
     /**
       * reuse the parser from Update.
       * @param settings settings
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(noJsNull(settings))
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -128,7 +128,7 @@ object WorkerApi {
       .nullToEmptyArray(FREE_PORTS_KEY)
       .refine
 
-  final class Update private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Updating private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
     private[WorkerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[WorkerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -169,11 +169,11 @@ object WorkerApi {
     override def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
   }
-  implicit val WORKER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    basicRulesOfUpdate[Update]
-      .format(new RootJsonFormat[Update] {
-        override def read(json: JsValue): Update = new Update(noJsNull(json.asJsObject.fields))
-        override def write(obj: Update): JsValue = JsObject(obj.settings)
+  implicit val WORKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+    basicRulesOfUpdating[Updating]
+      .format(new RootJsonFormat[Updating] {
+        override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
+        override def write(obj: Updating): JsValue = JsObject(obj.settings)
       })
       .rejectNegativeNumber()
       .requireBindPort(CLIENT_PORT_KEY)
@@ -332,31 +332,29 @@ object WorkerApi {
       * those convenient parsers.
       * @return the payload of creation
       */
-    def creation: Creation
+    final def creation: Creation =
+      WORKER_CREATION_JSON_FORMAT.read(WORKER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
       * @return the payload of update
       */
-    private[v0] def update: Update
+    private[v0] final def updating: Updating =
+      WORKER_UPDATING_JSON_FORMAT.read(WORKER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
-  final class Access private[WorkerApi] extends ClusterAccess[Creation, Update, WorkerClusterInfo](WORKER_PREFIX_PATH) {
+  final class Access private[WorkerApi]
+      extends ClusterAccess[Creation, Updating, WorkerClusterInfo](WORKER_PREFIX_PATH) {
     def request: Request = new Request {
-      override def creation: Creation =
-        WORKER_CREATION_JSON_FORMAT.read(WORKER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
-
-      override private[v0] def update: Update =
-        WORKER_UPDATE_JSON_FORMAT.read(WORKER_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(update.group.getOrElse(WORKER_GROUP_DEFAULT),
-              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
-          update
+          key(updating.group.getOrElse(WORKER_GROUP_DEFAULT),
+              updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          updating
         )
     }
   }

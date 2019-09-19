@@ -242,7 +242,7 @@ object TopicApi {
     */
   val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
 
-  case class Update private[TopicApi] (settings: Map[String, JsValue]) {
+  case class Updating private[TopicApi] (settings: Map[String, JsValue]) {
     def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
 
     private[TopicApi] def numberOfPartitions: Option[Int] =
@@ -258,18 +258,19 @@ object TopicApi {
     private[TopicApi] def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
   }
 
-  implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update]
-      .format(new RootJsonFormat[Update] {
-        override def read(json: JsValue): Update = Update(noJsNull(json.asJsObject.fields))
-        override def write(obj: Update): JsValue = JsObject(obj.settings)
+  implicit val TOPIC_UPDATING_FORMAT: RootJsonFormat[Updating] =
+    JsonRefiner[Updating]
+      .format(new RootJsonFormat[Updating] {
+        override def read(json: JsValue): Updating = Updating(noJsNull(json.asJsObject.fields))
+        override def write(obj: Updating): JsValue = JsObject(obj.settings)
       })
       .rejectEmptyString()
       .refine
 
-  case class Creation private[TopicApi] (settings: Map[String, JsValue]) extends CreationRequest {
+  case class Creation private[TopicApi] (settings: Map[String, JsValue])
+      extends com.island.ohara.client.configurator.v0.BasicCreation {
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = Updating(noJsNull(settings))
 
     def key: TopicKey = TopicKey.of(group, name)
 
@@ -384,6 +385,7 @@ object TopicApi {
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map()
 
     /**
       * set the group and name via key
@@ -428,16 +430,25 @@ object TopicApi {
 
     def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
 
-    def settings(settings: Map[String, JsValue]): Request
+    def settings(settings: Map[String, JsValue]): Request = {
+      this.settings ++= settings
+      this
+    }
 
     /**
       * Creation instance includes many useful parsers for custom settings so we open it to code with a view to reusing
       * those convenient parsers.
       * @return the payload of creation
       */
-    def creation: Creation
+    final def creation: Creation =
+      // rewrite the creation via format since the format will auto-complete the creation
+      // this make the creaion is consistent to creation sent to server
+      TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(Creation(settings.toMap)))
 
-    private[v0] def update: Update
+    private[v0] final def updating: Updating =
+      // rewrite the update via format since the format will auto-complete the creation
+      // this make the update is consistent to creation sent to server
+      TOPIC_UPDATING_FORMAT.read(TOPIC_UPDATING_FORMAT.write(Updating(noJsNull(settings.toMap))))
 
     /**
       * generate the POST request
@@ -458,24 +469,6 @@ object TopicApi {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
     def request: Request = new Request {
-      // add the default value to group
-      private[this] var settings: mutable.Map[String, JsValue] = new mutable.HashMap() + (GROUP_KEY -> JsString(
-        GROUP_DEFAULT))
-
-      override def settings(settings: Map[String, JsValue]): Request = {
-        this.settings ++= settings
-        this
-      }
-
-      override def creation: Creation =
-        // rewrite the creation via format since the format will auto-complete the creation
-        // this make the creaion is consistent to creation sent to server
-        TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(Creation(settings.toMap)))
-
-      override private[v0] def update: Update =
-        // rewrite the update via format since the format will auto-complete the creation
-        // this make the update is consistent to creation sent to server
-        TOPIC_UPDATE_FORMAT.read(TOPIC_UPDATE_FORMAT.write(Update(settings.toMap)))
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
@@ -483,9 +476,9 @@ object TopicApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-        exec.put[Update, TopicInfo, ErrorApi.Error](
-          url(TopicKey.of(update.group.getOrElse(GROUP_DEFAULT), update.name.get)),
-          update
+        exec.put[Updating, TopicInfo, ErrorApi.Error](
+          url(TopicKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get)),
+          updating
         )
     }
   }

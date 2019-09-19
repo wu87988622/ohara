@@ -204,14 +204,14 @@ private[configurator] object PipelineRoute {
           tags = creation.tags
         ))
 
-  private[this] def hookOfUpdate(implicit brokerCollie: BrokerCollie,
-                                 workerCollie: WorkerCollie,
-                                 streamCollie: StreamCollie,
-                                 adminCleaner: AdminCleaner,
-                                 store: DataStore,
-                                 executionContext: ExecutionContext,
-                                 meterCache: MeterCache): HookOfUpdate[Creation, Update, Pipeline] =
-    (key: ObjectKey, update: Update, previous: Option[Pipeline]) =>
+  private[this] def HookOfUpdating(implicit brokerCollie: BrokerCollie,
+                                   workerCollie: WorkerCollie,
+                                   streamCollie: StreamCollie,
+                                   adminCleaner: AdminCleaner,
+                                   store: DataStore,
+                                   executionContext: ExecutionContext,
+                                   meterCache: MeterCache): HookOfUpdating[Creation, Updating, Pipeline] =
+    (key: ObjectKey, update: Updating, previous: Option[Pipeline]) =>
       updateObjects(
         Pipeline(
           group = key.group,
@@ -257,11 +257,11 @@ private[configurator] object PipelineRoute {
             store: DataStore,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    route[Creation, Update, Pipeline](
+    route[Creation, Updating, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
       hookBeforeDelete = hookBeforeDelete,

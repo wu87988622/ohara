@@ -160,21 +160,22 @@ class TestFtpInfoApi extends OharaTest with Matchers {
     val user = CommonUtils.randomString(10)
     val password = CommonUtils.randomString(10)
 
-    val update = FtpInfoApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).update
+    val update =
+      FtpInfoApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).updating
     update.hostname.get shouldBe hostname
     update.port.get shouldBe port
     update.user.get shouldBe user
     update.password.get shouldBe password
 
-    FtpInfoApi.access.request.update.hostname shouldBe None
-    FtpInfoApi.access.request.update.port shouldBe None
-    FtpInfoApi.access.request.update.user shouldBe None
-    FtpInfoApi.access.request.update.password shouldBe None
+    FtpInfoApi.access.request.updating.hostname shouldBe None
+    FtpInfoApi.access.request.updating.port shouldBe None
+    FtpInfoApi.access.request.updating.user shouldBe None
+    FtpInfoApi.access.request.updating.password shouldBe None
   }
 
   @Test
   def testEmptyHostnameInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATING_JSON_FORMAT.read("""
          |{
          | "hostname": ""
          |}
@@ -182,7 +183,7 @@ class TestFtpInfoApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyUserInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATING_JSON_FORMAT.read("""
              |{
              | "user": ""
              |}
@@ -190,7 +191,7 @@ class TestFtpInfoApi extends OharaTest with Matchers {
 
   @Test
   def testNegativePortInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATING_JSON_FORMAT.read("""
                                                                                          |{
                                                                                          | "port": -1
                                                                                          |}
@@ -198,7 +199,7 @@ class TestFtpInfoApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyPasswordInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATING_JSON_FORMAT.read("""
                                |{
                                | "password": ""
                                |}
@@ -210,7 +211,7 @@ class TestFtpInfoApi extends OharaTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val update = FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read(s"""
+    val update = FtpInfoApi.FTP_UPDATING_JSON_FORMAT.read(s"""
                                          |{
                                          | "hostname": "$hostname",
                                          | "port": $port,

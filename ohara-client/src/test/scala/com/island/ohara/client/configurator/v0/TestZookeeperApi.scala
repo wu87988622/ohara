@@ -190,7 +190,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
       .group(group)
       .imageName(imageName)
       .clientPort(clientPort)
-      .update
+      .updating
     updateAsCreation.imageName shouldBe Some(imageName)
     updateAsCreation.clientPort shouldBe Some(clientPort)
     updateAsCreation.nodeNames should not be Some(Set(nodeName))
@@ -225,7 +225,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
 
   @Test
   def parseImageNameOnUpdate(): Unit = {
-    val thrown = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
           |  {
           |    "imageName": ""
           |  }
@@ -244,7 +244,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
 
   @Test
   def parseNodeNamesOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "nodeNames": ""
            |  }
@@ -284,21 +284,21 @@ class TestZookeeperApi extends OharaTest with Matchers {
 
   @Test
   def parseClientPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "clientPort": 0
            |  }
            """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "clientPort": -9
            |  }
            """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "clientPort": 99999
            |  }
@@ -338,21 +338,21 @@ class TestZookeeperApi extends OharaTest with Matchers {
 
   @Test
   def parseElectionPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "electionPort": 0
            |  }
            """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "electionPort": -9
            |  }
            """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "electionPort": 99999
            |  }
@@ -392,21 +392,21 @@ class TestZookeeperApi extends OharaTest with Matchers {
 
   @Test
   def parsePeerPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "peerPort": 0
            |  }
            """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "peerPort": -9
            |  }
            """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "peerPort": 99999
            |  }
@@ -418,8 +418,8 @@ class TestZookeeperApi extends OharaTest with Matchers {
   def testInvalidNodeNames(): Unit = {
     an[DeserializationException] should be thrownBy access.nodeName("start").creation
     an[DeserializationException] should be thrownBy access.nodeName("stop").creation
-    an[DeserializationException] should be thrownBy access.nodeName("start").update
-    an[DeserializationException] should be thrownBy access.nodeName("stop").update
+    an[DeserializationException] should be thrownBy access.nodeName("start").updating
+    an[DeserializationException] should be thrownBy access.nodeName("stop").updating
 
     an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
       |  {
@@ -431,7 +431,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
   @Test
   def testDefaultUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
-    val data = access.name(name).update
+    val data = access.name(name).updating
     data.imageName.isEmpty shouldBe true
     data.peerPort.isEmpty shouldBe true
     data.electionPort.isEmpty shouldBe true
@@ -461,7 +461,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testTagsOnUpdate(): Unit = access.update.tags shouldBe None
+  def testTagsOnUpdate(): Unit = access.updating.tags shouldBe None
 
   @Test
   def testOverwriteSettings(): Unit = {

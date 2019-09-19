@@ -20,7 +20,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.JdbcInfoApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,8 +39,8 @@ private[configurator] object JdbcInfoRoute {
         tags = creation.tags
       ))
 
-  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, JdbcInfo] =
-    (key: ObjectKey, update: Update, previous: Option[JdbcInfo]) =>
+  private[this] def HookOfUpdating: HookOfUpdating[Creation, Updating, JdbcInfo] =
+    (key: ObjectKey, update: Updating, previous: Option[JdbcInfo]) =>
       Future.successful {
         previous.fold {
           JdbcInfo(
@@ -68,10 +68,10 @@ private[configurator] object JdbcInfoRoute {
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    route[Creation, Update, JdbcInfo](
+    route[Creation, Updating, JdbcInfo](
       root = JDBC_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate
+      HookOfUpdating = HookOfUpdating
     )
 }

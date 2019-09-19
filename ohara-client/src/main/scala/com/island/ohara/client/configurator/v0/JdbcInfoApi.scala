@@ -33,12 +33,12 @@ object JdbcInfoApi {
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val JDBC_PREFIX_PATH: String = "jdbc"
-  final case class Update(url: Option[String],
-                          user: Option[String],
-                          password: Option[String],
-                          tags: Option[Map[String, JsValue]])
-  implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
+  final case class Updating(url: Option[String],
+                            user: Option[String],
+                            password: Option[String],
+                            tags: Option[Map[String, JsValue]])
+  implicit val JDBC_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+    JsonRefiner[Updating].format(jsonFormat4(Updating)).rejectEmptyString().refine
 
   final case class Creation(group: String,
                             name: String,
@@ -46,7 +46,7 @@ object JdbcInfoApi {
                             user: String,
                             password: String,
                             tags: Map[String, JsValue])
-      extends CreationRequest
+      extends com.island.ohara.client.configurator.v0.BasicCreation
   implicit val JDBC_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat6(Creation))
@@ -106,7 +106,7 @@ object JdbcInfoApi {
 
     private[v0] def creation: Creation
 
-    private[v0] def update: Update
+    private[v0] def updating: Updating
 
     /**
       * generate the POST request
@@ -171,7 +171,7 @@ object JdbcInfoApi {
         tags = if (tags == null) Map.empty else tags
       )
 
-      override private[v0] def update: Update = Update(
+      override private[v0] def updating: Updating = Updating(
         url = Option(jdbcUrl).map(CommonUtils.requireNonEmpty),
         user = Option(user).map(CommonUtils.requireNonEmpty),
         password = Option(password).map(CommonUtils.requireNonEmpty),
@@ -184,9 +184,9 @@ object JdbcInfoApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
-        exec.put[Update, JdbcInfo, ErrorApi.Error](
+        exec.put[Updating, JdbcInfo, ErrorApi.Error](
           url(ObjectKey.of(group, name)),
-          update
+          updating
         )
     }
   }

@@ -83,7 +83,7 @@ private[configurator] object FileRoute {
               .map(_ => StatusCodes.NoContent))
           ) ~ put {
             // update the tags for an existent file
-            entity(as[Update]) { update =>
+            entity(as[Updating]) { update =>
               val fileInfo: Future[FileInfo] =
                 update.tags.map(fileStore.updateTags(key, _)).getOrElse(fileStore.fileInfo(key))
               complete(fileInfo)

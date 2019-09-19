@@ -47,13 +47,13 @@ object PipelineApi {
     * @param flows  this filed is declared as option type since ohara supports partial update. Empty array means you want to **cleanup** this
     *               field. And none means you don't want to change any bit of this field.
     */
-  final case class Update(flows: Option[Seq[Flow]], tags: Option[Map[String, JsValue]])
+  final case class Updating(flows: Option[Seq[Flow]], tags: Option[Map[String, JsValue]])
 
-  implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat2(Update)).rejectEmptyString().refine
+  implicit val PIPELINE_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+    JsonRefiner[Updating].format(jsonFormat2(Updating)).rejectEmptyString().refine
 
   final case class Creation(group: String, name: String, flows: Seq[Flow], tags: Map[String, JsValue])
-      extends CreationRequest
+      extends com.island.ohara.client.configurator.v0.BasicCreation
 
   implicit val PIPELINE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(jsonFormat4(Creation))
@@ -135,7 +135,7 @@ object PipelineApi {
 
     private[v0] def creation: Creation
 
-    private[v0] def update: Update
+    private[v0] def updating: Updating
 
     /**
       * generate the POST request
@@ -189,7 +189,7 @@ object PipelineApi {
         tags = if (tags == null) Map.empty else tags
       )
 
-      override private[v0] def update: Update = Update(
+      override private[v0] def updating: Updating = Updating(
         flows = Option(flows),
         tags = Option(tags)
       )
@@ -200,9 +200,9 @@ object PipelineApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =
-        exec.put[Update, Pipeline, ErrorApi.Error](
+        exec.put[Updating, Pipeline, ErrorApi.Error](
           url(ObjectKey.of(group, name)),
-          update
+          updating
         )
     }
   }

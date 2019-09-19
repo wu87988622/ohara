@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,12 +54,12 @@ object WorkerRoute {
           ))
     }
 
-  private[this] def hookOfUpdate(
+  private[this] def HookOfUpdating(
     implicit fileStore: FileStore,
     clusterCollie: ClusterCollie,
     brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, WorkerClusterInfo] =
-    (key: ObjectKey, update: Update, previousOption: Option[WorkerClusterInfo]) =>
+    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, WorkerClusterInfo] =
+    (key: ObjectKey, update: Updating, previousOption: Option[WorkerClusterInfo]) =>
       clusterCollie.workerCollie
         .clusters()
         .flatMap { clusters =>
@@ -177,7 +177,7 @@ object WorkerRoute {
       metricsKey = None,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

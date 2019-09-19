@@ -47,19 +47,19 @@ object NodeApi {
   val BROKER_SERVICE_NAME: String = "broker"
   val WORKER_SERVICE_NAME: String = "connect-worker"
 
-  case class Update(port: Option[Int],
-                    user: Option[String],
-                    password: Option[String],
-                    tags: Option[Map[String, JsValue]])
-  implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
+  case class Updating(port: Option[Int],
+                      user: Option[String],
+                      password: Option[String],
+                      tags: Option[Map[String, JsValue]])
+  implicit val NODE_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+    JsonRefiner[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().refine
 
   case class Creation(hostname: String,
                       port: Option[Int],
                       user: Option[String],
                       password: Option[String],
                       tags: Map[String, JsValue])
-      extends CreationRequest {
+      extends com.island.ohara.client.configurator.v0.BasicCreation {
     override def group: String = GROUP_DEFAULT
     override def name: String = hostname
   }
@@ -146,7 +146,7 @@ object NodeApi {
       * @return the payload of creation
       */
     @VisibleForTesting
-    private[v0] def update: Update
+    private[v0] def updating: Updating
 
     /**
       * generate the POST request
@@ -200,7 +200,7 @@ object NodeApi {
         tags = if (tags == null) Map.empty else tags
       )
 
-      override private[v0] def update: Update = Update(
+      override private[v0] def updating: Updating = Updating(
         port = port.map(CommonUtils.requireConnectionPort),
         user = user.map(CommonUtils.requireNonEmpty),
         password = password.map(CommonUtils.requireNonEmpty),
@@ -213,9 +213,9 @@ object NodeApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =
-        exec.put[Update, Node, ErrorApi.Error](
+        exec.put[Updating, Node, ErrorApi.Error](
           s"${url}/${CommonUtils.requireNonEmpty(hostname)}",
-          update
+          updating
         )
     }
   }

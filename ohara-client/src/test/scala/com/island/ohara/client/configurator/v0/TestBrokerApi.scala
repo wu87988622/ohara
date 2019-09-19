@@ -224,7 +224,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       .group(group)
       .imageName(imageName)
       .clientPort(clientPort)
-      .update
+      .updating
     updateAsCreation.imageName shouldBe Some(imageName)
     updateAsCreation.clientPort shouldBe Some(clientPort)
     updateAsCreation.nodeNames should not be Some(Set(nodeName))
@@ -259,7 +259,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
   @Test
   def parseImageNameOnUpdate(): Unit = {
-    val thrown = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "imageName": ""
       |  }
@@ -278,7 +278,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
   @Test
   def parseNodeNamesOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "nodeNames": ""
       |  }
@@ -452,8 +452,8 @@ class TestBrokerApi extends OharaTest with Matchers {
   def testInvalidNodeNames(): Unit = {
     an[DeserializationException] should be thrownBy access.nodeName("start").creation
     an[DeserializationException] should be thrownBy access.nodeName("stop").creation
-    an[DeserializationException] should be thrownBy access.nodeName("start").update
-    an[DeserializationException] should be thrownBy access.nodeName("stop").update
+    an[DeserializationException] should be thrownBy access.nodeName("start").updating
+    an[DeserializationException] should be thrownBy access.nodeName("stop").updating
 
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
@@ -464,7 +464,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
   @Test
   def testDefaultUpdate(): Unit = {
-    val data = access.name(CommonUtils.randomString(10)).update
+    val data = access.name(CommonUtils.randomString(10)).updating
     data.imageName.isEmpty shouldBe true
     data.zookeeperClusterName.isEmpty shouldBe true
     data.exporterPort.isEmpty shouldBe true
@@ -523,7 +523,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testTagsOnUpdate(): Unit = access.update.tags shouldBe None
+  def testTagsOnUpdate(): Unit = access.updating.tags shouldBe None
 
   @Test
   def testOverwriteSettings(): Unit = {

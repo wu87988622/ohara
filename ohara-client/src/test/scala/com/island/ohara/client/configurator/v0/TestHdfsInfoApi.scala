@@ -35,7 +35,7 @@ class TestHdfsInfoApi extends OharaTest with Matchers {
 
   @Test
   def testNullUriInUpdate(): Unit = {
-    val update = HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read("""
+    val update = HdfsInfoApi.HDFS_UPDATING_JSON_FORMAT.read("""
         |{
         | "uri": null
         |}
@@ -45,7 +45,7 @@ class TestHdfsInfoApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyUriInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy HdfsInfoApi.HDFS_UPDATING_JSON_FORMAT.read("""
         |{
         | "uri": ""
         |}
@@ -86,7 +86,7 @@ class TestHdfsInfoApi extends OharaTest with Matchers {
   @Test
   def testParserUpdate(): Unit = {
     val uri = s"file:///tmp/${CommonUtils.randomString()}"
-    val update = HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read(s"""
+    val update = HdfsInfoApi.HDFS_UPDATING_JSON_FORMAT.read(s"""
          |{
          | "uri": "${uri}"
          |}

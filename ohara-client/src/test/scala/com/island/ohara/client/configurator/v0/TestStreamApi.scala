@@ -433,13 +433,13 @@ class TestStreamApi extends OharaTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(accessRequest.jarKey(ObjectKey.of("group", "name")).update())
 
     // no jar is ok
-    accessRequest.name(CommonUtils.randomString(5)).update
+    accessRequest.name(CommonUtils.randomString(5)).updating
   }
 
   @Test
   def testDefaultUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
-    val data = accessRequest.name(name).update
+    val data = accessRequest.name(name).updating
     data.settings.contains(StreamDefUtils.IMAGE_NAME_DEFINITION.key()) shouldBe false
     data.settings.contains(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()) shouldBe false
     data.settings.contains(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()) shouldBe false
@@ -450,7 +450,7 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseImageNameFieldOnUpdate(): Unit = {
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "imageName": ""
       |  }
@@ -470,7 +470,7 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseFromFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "from": [""]
       |  }
@@ -490,7 +490,7 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseToFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "to": [""]
       |  }
@@ -500,21 +500,21 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseJmxPortFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "jmxPort": 0
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "jmxPort": -9
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-9\"")
 
-    val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "jmxPort": 99999
       |  }
@@ -524,13 +524,13 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseInstancesFieldOnUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "instances": 0
       |  }
       |  """.stripMargin.parseJson)
 
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "instances": -9
       |  }
@@ -558,14 +558,14 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseNodeNamesFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "nodeNames": ""
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
 
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
       |    "nodeNames": []
       |  }
@@ -601,7 +601,7 @@ class TestStreamApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testTagsOnUpdate(): Unit = accessRequest.update.tags shouldBe None
+  def testTagsOnUpdate(): Unit = accessRequest.updating.tags shouldBe None
 
   @Test
   def testOverwriteSettings(): Unit = {

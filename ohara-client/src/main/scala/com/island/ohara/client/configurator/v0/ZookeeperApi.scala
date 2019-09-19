@@ -51,14 +51,14 @@ object ZookeeperApi {
   private[ohara] val SERVERS_KEY = "servers"
   private[ohara] val DATA_DIR_KEY = "dataDir"
 
-  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 
     /**
       * reuse the parser from Update.
       * @param settings settings
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -95,7 +95,7 @@ object ZookeeperApi {
       .requireBindPort(ELECTION_PORT_KEY)
       .refine
 
-  final class Update(val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
     private[ZookeeperApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[ZookeeperApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -118,11 +118,11 @@ object ZookeeperApi {
       noJsNull(settings).get(ELECTION_PORT_KEY).map(_.convertTo[Int])
   }
 
-  implicit val ZOOKEEPER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    basicRulesOfUpdate[Update]
-      .format(new RootJsonFormat[Update] {
-        override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Update = new Update(json.asJsObject.fields)
+  implicit val ZOOKEEPER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+    basicRulesOfUpdating[Updating]
+      .format(new RootJsonFormat[Updating] {
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       })
       // restrict rules
       .requireBindPort(CLIENT_PORT_KEY)
@@ -193,16 +193,16 @@ object ZookeeperApi {
     */
   sealed trait Request extends ClusterRequest[ZookeeperClusterInfo] {
     @Optional("the default port is random")
-    def clientPort(clientPort: Int): Request =
+    def clientPort(clientPort: Int): Request.this.type =
       setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
     @Optional("the default port is random")
-    def peerPort(peerPort: Int): Request =
+    def peerPort(peerPort: Int): Request.this.type =
       setting(PEER_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(peerPort)))
     @Optional("the default port is random")
-    def electionPort(electionPort: Int): Request =
+    def electionPort(electionPort: Int): Request.this.type =
       setting(ELECTION_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(electionPort)))
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Map[String, JsValue]): Request = setting(TAGS_KEY, JsObject(tags))
+    def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))
 
     /**
       * zookeeper information creation.
@@ -210,35 +210,31 @@ object ZookeeperApi {
       *
       * @return the payload of create
       */
-    def creation: Creation
+    final def creation: Creation =
+      // auto-complete the creation via our refiner
+      ZOOKEEPER_CREATION_JSON_FORMAT.read(ZOOKEEPER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
       * @return the payload of update
       */
-    private[v0] def update: Update
+    private[v0] final def updating: Updating =
+      // auto-complete the update via our refiner
+      ZOOKEEPER_UPDATING_JSON_FORMAT.read(ZOOKEEPER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   final class Access private[ZookeeperApi]
-      extends ClusterAccess[Creation, Update, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
+      extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
     def request: Request = new Request {
-
-      override def creation: Creation =
-        // auto-complete the creation via our refiner
-        ZOOKEEPER_CREATION_JSON_FORMAT.read(ZOOKEEPER_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
-
-      override private[v0] def update: Update =
-        // auto-complete the update via our refiner
-        ZOOKEEPER_UPDATE_JSON_FORMAT.read(ZOOKEEPER_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(update.group.getOrElse(ZOOKEEPER_GROUP_DEFAULT),
-              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
-          update
+          key(updating.group.getOrElse(ZOOKEEPER_GROUP_DEFAULT),
+              updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          updating
         )
     }
   }

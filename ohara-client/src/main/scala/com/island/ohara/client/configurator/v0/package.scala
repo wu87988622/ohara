@@ -177,8 +177,8 @@ package object v0 {
     * @tparam T type of creation
     * @return json refiner object
     */
-  private[v0] def basicRulesOfCreation[T <: ClusterCreationRequest](defaultImage: String,
-                                                                    defaultGroup: String): JsonRefiner[T] =
+  private[v0] def basicRulesOfCreation[T <: ClusterCreation](defaultImage: String,
+                                                             defaultGroup: String): JsonRefiner[T] =
     basicRulesOfKey[T](defaultGroup)
     // for each field, we should reject any empty string
       .rejectEmptyString()
@@ -208,7 +208,7 @@ package object v0 {
     * @tparam T type of update
     * @return json refiner object
     */
-  private[v0] def basicRulesOfUpdate[T <: ClusterUpdateRequest]: JsonRefiner[T] = JsonRefiner[T]
+  private[v0] def basicRulesOfUpdating[T <: ClusterUpdating]: JsonRefiner[T] = JsonRefiner[T]
   // for each field, we should reject any empty string
     .rejectEmptyString()
     //-------------------------------------- "nodeNames" rules ---------------------------------//

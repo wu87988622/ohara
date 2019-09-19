@@ -118,19 +118,19 @@ class TestNodeApi extends OharaTest with Matchers {
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     val port = CommonUtils.availablePort()
-    val update = NodeApi.access.request.user(user).password(password).port(port).update
+    val update = NodeApi.access.request.user(user).password(password).port(port).updating
     update.user.get shouldBe user
     update.password.get shouldBe password
     update.port.get shouldBe port
 
-    NodeApi.access.request.update.port shouldBe None
-    NodeApi.access.request.update.user shouldBe None
-    NodeApi.access.request.update.password shouldBe None
+    NodeApi.access.request.updating.port shouldBe None
+    NodeApi.access.request.updating.user shouldBe None
+    NodeApi.access.request.updating.password shouldBe None
   }
 
   @Test
   def testNegativePortInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATING_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "port": -1
                                                                                            |}
@@ -138,7 +138,7 @@ class TestNodeApi extends OharaTest with Matchers {
 
   @Test
   def testZeroPortInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATING_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "port": 0
                                                                                            |}
@@ -146,7 +146,7 @@ class TestNodeApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyUserInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATING_JSON_FORMAT.read("""
                                                                                          |{
                                                                                          | "user": ""
                                                                                          |}
@@ -154,7 +154,7 @@ class TestNodeApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyPasswordInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.NODE_UPDATING_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "password": ""
                                                                                            |}
@@ -165,7 +165,7 @@ class TestNodeApi extends OharaTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val update = NodeApi.NODE_UPDATE_JSON_FORMAT.read(s"""
+    val update = NodeApi.NODE_UPDATING_JSON_FORMAT.read(s"""
                                                        |{
                                                        | "port": $port,
                                                        | "user": "$user",

@@ -32,13 +32,13 @@ object FtpInfoApi {
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val FTP_PREFIX_PATH: String = "ftp"
-  final case class Update(hostname: Option[String],
-                          port: Option[Int],
-                          user: Option[String],
-                          password: Option[String],
-                          tags: Option[Map[String, JsValue]])
-  implicit val FTP_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat5(Update)).requireConnectionPort("port").rejectEmptyString().refine
+  final case class Updating(hostname: Option[String],
+                            port: Option[Int],
+                            user: Option[String],
+                            password: Option[String],
+                            tags: Option[Map[String, JsValue]])
+  implicit val FTP_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+    JsonRefiner[Updating].format(jsonFormat5(Updating)).requireConnectionPort("port").rejectEmptyString().refine
 
   final case class Creation(group: String,
                             name: String,
@@ -47,7 +47,7 @@ object FtpInfoApi {
                             user: String,
                             password: String,
                             tags: Map[String, JsValue])
-      extends CreationRequest
+      extends com.island.ohara.client.configurator.v0.BasicCreation
   implicit val FTP_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat7(Creation))
@@ -125,7 +125,7 @@ object FtpInfoApi {
       * @return the payload of update
       */
     @VisibleForTesting
-    private[v0] def update: Update
+    private[v0] def updating: Updating
 
     /**
       * generate the POST request
@@ -197,7 +197,7 @@ object FtpInfoApi {
         tags = if (tags == null) Map.empty else tags
       )
 
-      override private[v0] def update: Update = Update(
+      override private[v0] def updating: Updating = Updating(
         hostname = Option(hostname).map(CommonUtils.requireNonEmpty),
         port = port.map(CommonUtils.requireConnectionPort),
         user = Option(user).map(CommonUtils.requireNonEmpty),
@@ -211,9 +211,9 @@ object FtpInfoApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
-        exec.put[Update, FtpInfo, ErrorApi.Error](
+        exec.put[Updating, FtpInfo, ErrorApi.Error](
           url(ObjectKey.of(group, name)),
-          update
+          updating
         )
     }
   }

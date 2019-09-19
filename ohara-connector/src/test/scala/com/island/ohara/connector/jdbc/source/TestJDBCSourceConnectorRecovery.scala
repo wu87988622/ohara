@@ -51,7 +51,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
     val column3 = RdbColumn("column3", "VARCHAR(45)", false)
     val column4 = RdbColumn("column4", "integer", true)
     TopicApi.access.request.numberOfPartitions(1)
-    TopicApi.Update
+    TopicApi.Updating
 
     client.createTable(tableName, Seq(column1, column2, column3, column4))
     val statement: Statement = db.connection.createStatement()
@@ -164,7 +164,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
 
       //Test repartition topic
       TopicApi.access.request.numberOfPartitions(1)
-      TopicApi.Update
+      TopicApi.Updating
 
       consumer.seekToBeginning() //Reset consumer
       val poll6 = consumer.poll(java.time.Duration.ofSeconds(30), 1002).asScala

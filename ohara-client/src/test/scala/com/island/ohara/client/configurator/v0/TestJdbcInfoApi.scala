@@ -35,7 +35,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
 
   @Test
   def testNullUrlInUpdate(): Unit = {
-    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    val update = JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read("""
         |{
         | "url": null
         |}
@@ -45,7 +45,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
 
   @Test
   def testNullUserInUpdate(): Unit = {
-    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    val update = JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read("""
         |{
         | "user": null
         |}
@@ -55,7 +55,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
 
   @Test
   def testNullPasswordInUpdate(): Unit = {
-    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    val update = JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read("""
         |{
         | "password": null
         |}
@@ -65,7 +65,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyUrlInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read("""
         |{
         | "url": ""
         |}
@@ -74,7 +74,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyUserInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read("""
         |{
         | "user": ""
         |}
@@ -83,7 +83,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
 
   @Test
   def testEmptyPasswordInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read("""
         |{
         | "password": ""
         |}
@@ -149,7 +149,7 @@ class TestJdbcInfoApi extends OharaTest with Matchers {
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read(s"""
+    val update = JdbcInfoApi.JDBC_UPDATING_JSON_FORMAT.read(s"""
          |{
          | "url": "$url",
          | "user": "$user",

@@ -48,9 +48,9 @@ object StreamApi {
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
-  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreationRequest {
+  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Update = new Update(settings)
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
     override def name: String = settings.name.get
@@ -130,7 +130,7 @@ object StreamApi {
       .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
       .refine
 
-  final class Update(val settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+  final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
     private[StreamApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -177,11 +177,11 @@ object StreamApi {
           throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
       }
   }
-  implicit val STREAM_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    basicRulesOfUpdate[Update]
-      .format(new RootJsonFormat[Update] {
-        override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Update = new Update(json.asJsObject.fields)
+  implicit val STREAM_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+    basicRulesOfUpdating[Updating]
+      .format(new RootJsonFormat[Updating] {
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       })
       .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
       .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
@@ -269,6 +269,8 @@ object StreamApi {
 
   //TODO We should extends this class from ClusterRequest after #2288
   sealed trait Request {
+    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map()
+
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request =
       setting(StreamDefUtils.NAME_DEFINITION.key(), JsString(CommonUtils.requireNonEmpty(name)))
@@ -316,7 +318,13 @@ object StreamApi {
     @Optional("extra settings is empty by default")
     def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
     @Optional("extra settings is empty by default")
-    def settings(settings: Map[String, JsValue]): Request
+    def settings(settings: Map[String, JsValue]): Request = {
+      // We don't have to check the settings is empty here for the following reasons:
+      // 1) we may want to use the benefit of default creation without specify settings
+      // 2) actual checking will be done in the json parser phase of creation or update
+      this.settings ++= settings
+      this
+    }
 
     /**
       * generate POST request
@@ -339,44 +347,33 @@ object StreamApi {
       * those convenient parsers.
       * @return the payload of creation
       */
-    def creation: Creation
+    final def creation: Creation =
+      // auto-complete the creation via our refiner
+      STREAM_CREATION_JSON_FORMAT.read(STREAM_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
       * @return the payload of update
       */
     @VisibleForTesting
-    private[v0] def update: Update
+    private[v0] final def updating: Updating =
+      // auto-complete the update via our refiner
+      STREAM_UPDATING_JSON_FORMAT.read(STREAM_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
-  final class Access private[StreamApi] extends ClusterAccess[Creation, Update, StreamClusterInfo](STREAM_PREFIX_PATH) {
+  final class Access private[StreamApi]
+      extends ClusterAccess[Creation, Updating, StreamClusterInfo](STREAM_PREFIX_PATH) {
 
     def request: Request = new Request {
-      private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
-
-      override def settings(settings: Map[String, JsValue]): Request = {
-        // We don't have to check the settings is empty here for the following reasons:
-        // 1) we may want to use the benefit of default creation without specify settings
-        // 2) actual checking will be done in the json parser phase of creation or update
-        this.settings ++= settings
-        this
-      }
-      override def creation: Creation =
-        // auto-complete the creation via our refiner
-        STREAM_CREATION_JSON_FORMAT.read(STREAM_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
-
-      override private[v0] def update: Update =
-        // auto-complete the update via our refiner
-        STREAM_UPDATE_JSON_FORMAT.read(STREAM_UPDATE_JSON_FORMAT.write(new Update(noJsNull(settings.toMap))))
 
       override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(update.group.getOrElse(STREAM_GROUP_DEFAULT),
-              update.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
-          update
+          key(updating.group.getOrElse(STREAM_GROUP_DEFAULT),
+              updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          updating
         )
     }
   }

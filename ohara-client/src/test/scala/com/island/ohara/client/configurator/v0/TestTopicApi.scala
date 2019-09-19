@@ -120,7 +120,7 @@ class TestTopicApi extends OharaTest with Matchers {
     val brokerClusterName = CommonUtils.randomString()
     val numberOfPartitions = 100
     val numberOfReplications = 10
-    val update = TopicApi.TOPIC_UPDATE_FORMAT.read(s"""
+    val update = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
                                                                   |{
                                                                   | "$NAME_KEY": "$name",
                                                                   | "$BROKER_CLUSTER_NAME_KEY": "$brokerClusterName",
@@ -133,7 +133,7 @@ class TestTopicApi extends OharaTest with Matchers {
     update.settings(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
     update.settings(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
 
-    val update2 = TopicApi.TOPIC_UPDATE_FORMAT.read(s"""
+    val update2 = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
          |{
          |}
        """.stripMargin.parseJson)

@@ -24,12 +24,8 @@ import scala.concurrent.{ExecutionContext, Future}
   * the cluster-related data is different from normal data so we need another type of access.
   * @param prefixPath path to remote resource
   */
-private[v0] abstract class ClusterAccess[Creation <: ClusterCreationRequest,
-                                         Update <: ClusterUpdateRequest,
-                                         Res <: ClusterInfo](prefixPath: String)(
-  implicit rm1: OharaJsonFormat[Creation],
-  rm2: OharaJsonFormat[Update],
-  rm3: OharaJsonFormat[Res])
+private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Update <: ClusterUpdating, Res <: ClusterInfo](
+  prefixPath: String)(implicit rm1: OharaJsonFormat[Creation], rm2: OharaJsonFormat[Update], rm3: OharaJsonFormat[Res])
     extends BasicAccess(prefixPath) {
 
   /**

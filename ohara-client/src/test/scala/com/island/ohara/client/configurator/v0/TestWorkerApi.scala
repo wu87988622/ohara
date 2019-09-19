@@ -271,7 +271,7 @@ class TestWorkerApi extends OharaTest with Matchers {
       .group(group)
       .imageName(imageName)
       .clientPort(clientPort)
-      .update
+      .updating
     updateAsCreation.imageName shouldBe Some(imageName)
     updateAsCreation.clientPort shouldBe Some(clientPort)
     updateAsCreation.nodeNames should not be Some(Set(nodeName))

@@ -20,7 +20,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.FtpInfoApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,8 +40,8 @@ private[configurator] object FtpInfoRoute {
         tags = creation.tags
       ))
 
-  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, FtpInfo] =
-    (key: ObjectKey, update: Update, previous: Option[FtpInfo]) =>
+  private[this] def HookOfUpdating: HookOfUpdating[Creation, Updating, FtpInfo] =
+    (key: ObjectKey, update: Updating, previous: Option[FtpInfo]) =>
       Future.successful(previous.fold {
         FtpInfo(
           group = key.group,
@@ -69,10 +69,10 @@ private[configurator] object FtpInfoRoute {
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    route[Creation, Update, FtpInfo](
+    route[Creation, Updating, FtpInfo](
       root = FTP_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate
+      HookOfUpdating = HookOfUpdating
     )
 }

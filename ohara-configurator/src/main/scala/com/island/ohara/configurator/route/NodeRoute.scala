@@ -27,7 +27,7 @@ import com.island.ohara.configurator.route.hook.{
   HookOfGet,
   HookOfGroup,
   HookOfList,
-  HookOfUpdate
+  HookOfUpdating
 }
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
@@ -70,9 +70,9 @@ object NodeRoute {
           tags = creation.tags
         ))
 
-  private[this] def hookOfUpdate(implicit clusterCollie: ClusterCollie,
-                                 executionContext: ExecutionContext): HookOfUpdate[Creation, Update, Node] =
-    (key: ObjectKey, update: Update, previous: Option[Node]) =>
+  private[this] def HookOfUpdating(implicit clusterCollie: ClusterCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, Node] =
+    (key: ObjectKey, update: Updating, previous: Option[Node]) =>
       updateServices(
         Node(
           hostname = key.name,
@@ -104,11 +104,11 @@ object NodeRoute {
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
-    route[Creation, Update, Node](
+    route[Creation, Updating, Node](
       root = NODES_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
       hookBeforeDelete = hookBeforeDelete

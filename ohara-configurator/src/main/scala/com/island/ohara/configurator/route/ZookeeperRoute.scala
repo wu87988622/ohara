@@ -21,7 +21,7 @@ import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,10 +38,10 @@ object ZookeeperRoute {
         lastModified = CommonUtils.current()
       ))
 
-  private[this] def hookOfUpdate(
+  private[this] def HookOfUpdating(
     implicit clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
-    (key: ObjectKey, update: Update, previousOption: Option[ZookeeperClusterInfo]) =>
+    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, ZookeeperClusterInfo] =
+    (key: ObjectKey, update: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
       clusterCollie.zookeeperCollie.clusters().map { clusters =>
         if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
           throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
@@ -116,7 +116,7 @@ object ZookeeperRoute {
       metricsKey = None,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

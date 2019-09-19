@@ -19,7 +19,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.HdfsInfoApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,8 +34,8 @@ private[configurator] object HdfsInfoRoute {
                lastModified = CommonUtils.current(),
                tags = creation.tags))
 
-  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, HdfsInfo] =
-    (key: ObjectKey, update: Update, previous: Option[HdfsInfo]) =>
+  private[this] def HookOfUpdating: HookOfUpdating[Creation, Updating, HdfsInfo] =
+    (key: ObjectKey, update: Updating, previous: Option[HdfsInfo]) =>
       Future.successful {
         previous.fold {
           if (update.uri.isEmpty) throw new IllegalArgumentException(errorMessage(key, "uri"))
@@ -60,10 +60,10 @@ private[configurator] object HdfsInfoRoute {
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    route[Creation, Update, HdfsInfo](
+    route[Creation, Updating, HdfsInfo](
       root = HDFS_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate
+      HookOfUpdating = HookOfUpdating
     )
 }

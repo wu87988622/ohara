@@ -28,10 +28,10 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{
-  ClusterCreationRequest,
+  ClusterCreation,
   ClusterInfo,
-  ClusterUpdateRequest,
-  CreationRequest,
+  ClusterUpdating,
+  BasicCreation,
   ErrorApi,
   OharaJsonFormat
 }
@@ -81,7 +81,7 @@ package object route {
     * @param root the prefix of URL
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation custom action for CREATION. the name is either user-defined request or random string
-    * @param hookOfUpdate custom action for UPDATE. the name from URL is must equal to name in payload
+    * @param HookOfUpdating custom action for UPDATE. the name from URL is must equal to name in payload
     * @param store data store
     * @param rm used to marshal request
     * @param rm2 used to marshal response
@@ -90,23 +90,23 @@ package object route {
     * @tparam Res response type
     * @return route
     */
-  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res])(implicit store: DataStore,
-                                                       // normally, update request does not carry the name field,
-                                                       // Hence, the check of name have to be executed by format of creation
-                                                       // since it must have name field.
-                                                       rm: OharaJsonFormat[Creation],
-                                                       rm1: RootJsonFormat[Update],
-                                                       rm2: RootJsonFormat[Res],
-                                                       executionContext: ExecutionContext): server.Route =
+    HookOfUpdating: HookOfUpdating[Creation, Update, Res])(implicit store: DataStore,
+                                                           // normally, update request does not carry the name field,
+                                                           // Hence, the check of name have to be executed by format of creation
+                                                           // since it must have name field.
+                                                           rm: OharaJsonFormat[Creation],
+                                                           rm1: RootJsonFormat[Update],
+                                                           rm2: RootJsonFormat[Res],
+                                                           executionContext: ExecutionContext): server.Route =
     route(
       root = root,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfGet = (res: Res) => Future.successful(res),
       hookOfList = (res: Seq[Res]) => Future.successful(res),
       hookBeforeDelete = (_: ObjectKey) => Future.successful(Unit)
@@ -118,7 +118,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
@@ -132,11 +132,11 @@ package object route {
     * @tparam Res response
     * @return route
     */
-  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete)(implicit store: DataStore,
@@ -167,7 +167,7 @@ package object route {
                   complete(
                     store
                       .get[Res](key)
-                      .flatMap(previous => hookOfUpdate(key = key, update = update, previous = previous))
+                      .flatMap(previous => HookOfUpdating(key = key, update = update, previous = previous))
                       .flatMap(store.add))))
         }
       }
@@ -186,7 +186,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
@@ -202,11 +202,11 @@ package object route {
     * @tparam Res response
     * @return route
     */
-  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete,
@@ -222,7 +222,7 @@ package object route {
     root = root,
     hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
-    hookOfUpdate = hookOfUpdate,
+    HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete,
@@ -247,7 +247,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
@@ -265,11 +265,11 @@ package object route {
     * @tparam Res response
     * @return route
     */
-  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete,
@@ -287,7 +287,7 @@ package object route {
     root = root,
     hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
-    hookOfUpdate = hookOfUpdate,
+    HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete,
@@ -311,7 +311,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
@@ -326,11 +326,11 @@ package object route {
     * @tparam Res response
     * @return route
     */
-  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete,
@@ -345,7 +345,7 @@ package object route {
     root = root,
     hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
-    hookOfUpdate = hookOfUpdate,
+    HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete,
@@ -366,7 +366,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
@@ -382,11 +382,11 @@ package object route {
     * @tparam Res response
     * @return route
     */
-  private[this] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[this] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete,
@@ -402,7 +402,7 @@ package object route {
     root = root,
     hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
-    hookOfUpdate = hookOfUpdate,
+    HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete
@@ -441,7 +441,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfStart used to handle start command
     * @param hookBeforeStop used to perform checks before stopping cluster
     * @param store data store
@@ -455,14 +455,14 @@ package object route {
     * @return route
     */
   private[route] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
-                                  Creation <: ClusterCreationRequest,
-                                  Update <: ClusterUpdateRequest](root: String,
-                                                                  metricsKey: Option[String],
-                                                                  hookOfGroup: HookOfGroup,
-                                                                  hookOfCreation: HookOfCreation[Creation, Cluster],
-                                                                  hookOfUpdate: HookOfUpdate[Creation, Update, Cluster],
-                                                                  hookOfStart: HookOfAction,
-                                                                  hookBeforeStop: HookOfAction)(
+                                  Creation <: ClusterCreation,
+                                  Update <: ClusterUpdating](root: String,
+                                                             metricsKey: Option[String],
+                                                             hookOfGroup: HookOfGroup,
+                                                             hookOfCreation: HookOfCreation[Creation, Cluster],
+                                                             HookOfUpdating: HookOfUpdating[Creation, Update, Cluster],
+                                                             hookOfStart: HookOfAction,
+                                                             hookBeforeStop: HookOfAction)(
     implicit store: DataStore,
     meterCache: MeterCache,
     collie: Collie[Cluster],
@@ -476,7 +476,7 @@ package object route {
       root = root,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfGet = updateState[Cluster](_, metricsKey),
       hookOfList = (clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState(_, metricsKey)),
       hookBeforeDelete = hookBeforeDelete[Cluster](metricsKey),
@@ -497,7 +497,7 @@ package object route {
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
+    * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
@@ -514,16 +514,16 @@ package object route {
     * @return route
     */
   private[this] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
-                                 Creation <: ClusterCreationRequest,
-                                 Update <: ClusterUpdateRequest](root: String,
-                                                                 hookOfGroup: HookOfGroup,
-                                                                 hookOfCreation: HookOfCreation[Creation, Cluster],
-                                                                 hookOfUpdate: HookOfUpdate[Creation, Update, Cluster],
-                                                                 hookOfGet: HookOfGet[Cluster],
-                                                                 hookOfList: HookOfList[Cluster],
-                                                                 hookBeforeDelete: HookBeforeDelete,
-                                                                 hookOfStart: HookOfAction,
-                                                                 hookBeforeStop: HookOfAction)(
+                                 Creation <: ClusterCreation,
+                                 Update <: ClusterUpdating](root: String,
+                                                            hookOfGroup: HookOfGroup,
+                                                            hookOfCreation: HookOfCreation[Creation, Cluster],
+                                                            HookOfUpdating: HookOfUpdating[Creation, Update, Cluster],
+                                                            hookOfGet: HookOfGet[Cluster],
+                                                            hookOfList: HookOfList[Cluster],
+                                                            hookBeforeDelete: HookBeforeDelete,
+                                                            hookOfStart: HookOfAction,
+                                                            hookBeforeStop: HookOfAction)(
     implicit store: DataStore,
     collie: Collie[Cluster],
     clusterCollie: ClusterCollie,
@@ -536,7 +536,7 @@ package object route {
       root = root,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfList = hookOfList,
       hookOfGet = hookOfGet,
       hookBeforeDelete = hookBeforeDelete,

@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route.hook
 
 import com.island.ohara.client.configurator.Data
-import com.island.ohara.client.configurator.v0.CreationRequest
+import com.island.ohara.client.configurator.v0.BasicCreation
 
 import scala.concurrent.Future
 
@@ -27,6 +27,6 @@ import scala.concurrent.Future
   * @tparam Creation creation object
   * @tparam Res result to response
   */
-private[route] trait HookOfCreation[Creation <: CreationRequest, Res <: Data] {
+private[route] trait HookOfCreation[Creation <: BasicCreation, Res <: Data] {
   def apply(creation: Creation): Future[Res]
 }

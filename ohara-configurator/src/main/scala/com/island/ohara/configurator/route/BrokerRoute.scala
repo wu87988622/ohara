@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,11 +42,11 @@ object BrokerRoute {
         )
     }
 
-  private[this] def hookOfUpdate(
+  private[this] def HookOfUpdating(
     implicit zookeeperCollie: ZookeeperCollie,
     clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, BrokerClusterInfo] =
-    (key: ObjectKey, update: Update, previousOption: Option[BrokerClusterInfo]) =>
+    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, BrokerClusterInfo] =
+    (key: ObjectKey, update: Updating, previousOption: Option[BrokerClusterInfo]) =>
       clusterCollie.brokerCollie
         .clusters()
         .flatMap { clusters =>
@@ -135,7 +135,7 @@ object BrokerRoute {
       metricsKey = None,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

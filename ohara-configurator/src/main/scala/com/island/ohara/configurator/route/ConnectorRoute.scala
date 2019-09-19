@@ -101,10 +101,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             settings = access.request.settings(creation.settings).workerClusterName(clusterName).creation.settings))
     }
 
-  private[this] def hookOfUpdate(implicit workerCollie: WorkerCollie,
-                                 executionContext: ExecutionContext,
-                                 meterCache: MeterCache): HookOfUpdate[Creation, Update, ConnectorDescription] =
-    (key: ObjectKey, update: Update, previous: Option[ConnectorDescription]) =>
+  private[this] def HookOfUpdating(implicit workerCollie: WorkerCollie,
+                                   executionContext: ExecutionContext,
+                                   meterCache: MeterCache): HookOfUpdating[Creation, Updating, ConnectorDescription] =
+    (key: ObjectKey, update: Updating, previous: Option[ConnectorDescription]) =>
       // 1) find the connector (the connector may be nonexistent)
       previous
         .map { desc =>
@@ -248,11 +248,11 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    route[Creation, Update, ConnectorDescription](
+    route[Creation, Updating, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
-      hookOfUpdate = hookOfUpdate,
+      HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
       hookBeforeDelete = hookBeforeDelete,

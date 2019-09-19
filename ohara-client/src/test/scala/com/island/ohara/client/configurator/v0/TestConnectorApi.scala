@@ -116,7 +116,7 @@ class TestConnectorApi extends OharaTest with Matchers {
         "bbb" -> JsArray(JsString("Asdasdasd"), JsString("aaa")),
         "ddd" -> JsObject("asdasd" -> JsString("Asdasdasd"))
       ))
-    request shouldBe Serializer.OBJECT.from(Serializer.OBJECT.to(request)).asInstanceOf[Creation]
+    request shouldBe Serializer.OBJECT.from(Serializer.OBJECT.to(request)).asInstanceOf[BasicCreation]
   }
 
   @Test
@@ -479,7 +479,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def emptyNameForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                         |  {
                                                                                                         |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                         |    "$COLUMNS_KEY": [
@@ -494,7 +494,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def emptyNewNameForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                    |  {
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
@@ -510,7 +510,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def negativeOrderForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                  |  {
                                                                                                  |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                  |    "$COLUMNS_KEY": [
@@ -526,7 +526,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def duplicateOrderForUpdatingColumns(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                    |  {
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
