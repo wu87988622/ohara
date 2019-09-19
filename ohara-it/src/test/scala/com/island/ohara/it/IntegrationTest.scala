@@ -17,22 +17,27 @@
 package com.island.ohara.it
 
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.NoSuchClusterException
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Rule
 import org.junit.rules.Timeout
+import org.junit.{AssumptionViolatedException, Rule}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class IntegrationTest extends OharaTest {
-  @Rule def globalTimeout: Timeout = new Timeout(12, TimeUnit.MINUTES)
+abstract class IntegrationTest {
+  @Rule val timeout: Timeout = Timeout.seconds(720)
+
+  /**
+    * Skip all remaining test cases after calling this method.
+    *
+    * @param message why you want to skip all test cases?
+    */
+  protected def skipTest(message: String): Unit = throw new AssumptionViolatedException(message)
 
   protected def result[T](f: Future[T]): T = IntegrationTest.result(f)
 

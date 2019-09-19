@@ -18,7 +18,7 @@ package com.island.ohara.connector.perf
 import java.util.Collections
 
 import com.island.ohara.common.data.{Column, DataType}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.TaskSetting
@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
-class TestPerfSourceProps extends SmallTest with Matchers {
+class TestPerfSourceProps extends OharaTest with Matchers {
   private[this] val props = PerfSourceProps(10, 10 seconds)
   private[this] val topicKeys = Set(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
   private[this] val schema = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())

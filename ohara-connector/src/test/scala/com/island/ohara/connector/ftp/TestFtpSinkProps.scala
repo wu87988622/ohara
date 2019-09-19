@@ -15,12 +15,12 @@
  */
 
 package com.island.ohara.connector.ftp
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestFtpSinkProps extends SmallTest with Matchers {
+class TestFtpSinkProps extends OharaTest with Matchers {
 
   @Test
   def testGetter(): Unit = {

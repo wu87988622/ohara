@@ -19,7 +19,7 @@ package com.island.ohara.common.setting;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestPropGroups extends SmallTest {
+public class TestPropGroups extends OharaTest {
   @Test
   public void testToPropGroups() {
     PropGroups propGroups =

@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.common.rule.LargeTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator.Mode
 import org.junit.{After, Test}
@@ -25,7 +25,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TestConfiguratorMain extends LargeTest with Matchers {
+class TestConfiguratorMain extends OharaTest with Matchers {
 
   @Test
   def emptyK8sArgument(): Unit =

@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -29,7 +29,7 @@ import spray.json.DeserializationException
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestBrokerCreator extends SmallTest with Matchers {
+class TestBrokerCreator extends OharaTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] def node(hostname: String): Node = Node(

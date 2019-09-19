@@ -23,7 +23,7 @@ import akka.http.scaladsl.model.{HttpMethod, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.configurator.v0.ErrorApi
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestResponseFromUnsupportedApis extends SmallTest with Matchers {
+class TestResponseFromUnsupportedApis extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestResponseFromUnsupportedApis")

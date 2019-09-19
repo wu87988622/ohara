@@ -21,7 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.File;
 import java.util.Collections;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Test;
 
-public class TestFtpServer extends MediumTest {
+public class TestFtpServer extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullUser() {

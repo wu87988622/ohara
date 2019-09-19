@@ -16,13 +16,13 @@
 
 package com.island.ohara.agent.docker
 import com.island.ohara.client.configurator.v0.ContainerApi.PortPair
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.util.Random
-class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
+class TestDockerClientWithoutDockerServer extends OharaTest with Matchers {
 
   @Test
   def withoutCleanup(): Unit = DockerClientImpl

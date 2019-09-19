@@ -16,11 +16,11 @@
 
 package com.island.ohara.configurator.file
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestFileStoreBuilder extends SmallTest with Matchers {
+class TestFileStoreBuilder extends OharaTest with Matchers {
 
   @Test
   def nullHomeFolder(): Unit = an[NullPointerException] should be thrownBy FileStore.builder.homeFolder(null)

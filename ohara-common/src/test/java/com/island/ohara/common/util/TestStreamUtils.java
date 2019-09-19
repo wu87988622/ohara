@@ -17,7 +17,7 @@
 package com.island.ohara.common.util;
 
 import com.island.ohara.common.data.Pair;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamUtils extends SmallTest {
+public class TestStreamUtils extends OharaTest {
 
   private final List<String> names = Arrays.asList("a", "b", "c");
 

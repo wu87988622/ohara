@@ -16,7 +16,7 @@
 
 package com.island.ohara.metrics.basic;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.BeanChannel;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCounter extends SmallTest {
+public class TestCounter extends OharaTest {
 
   @Test
   public void testIncrementAndGet() {

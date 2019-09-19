@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class TestContainerRoute extends MediumTest with Matchers {
+class TestContainerRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)

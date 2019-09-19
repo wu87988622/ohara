@@ -16,14 +16,14 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.service.SshdServer
 import com.island.ohara.testing.service.SshdServer.CommandHandler
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-class TestAgent extends SmallTest with Matchers {
+class TestAgent extends OharaTest with Matchers {
 
   private[this] val customCommands = Map(
     "hello" -> Seq("world"),

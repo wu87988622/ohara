@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector.csv;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.kafka.TimestampType;
 import com.island.ohara.kafka.connector.RowSinkContext;
 import com.island.ohara.kafka.connector.RowSinkRecord;
@@ -26,7 +26,7 @@ import com.island.ohara.kafka.connector.TopicPartition;
 import com.island.ohara.kafka.connector.csv.sink.CsvSinkConfig;
 import java.util.*;
 
-public abstract class CsvSinkTestBase extends SmallTest {
+public abstract class CsvSinkTestBase extends OharaTest {
   protected static final String TOPIC = "test-topic";
   protected static final int PARTITION = 12;
   protected static final int PARTITION2 = 13;

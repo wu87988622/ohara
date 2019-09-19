@@ -22,7 +22,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.kafka.WorkerJson.{ConnectorCreationResponse, ConnectorTaskId, _}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.Creation
@@ -37,7 +37,7 @@ import scala.concurrent.duration._
 /**
   * https://github.com/oharastream/ohara/issues/873.
   */
-class Test873 extends SmallTest with Matchers {
+class Test873 extends OharaTest with Matchers {
 
   @Test
   def testCreateConnector(): Unit = {

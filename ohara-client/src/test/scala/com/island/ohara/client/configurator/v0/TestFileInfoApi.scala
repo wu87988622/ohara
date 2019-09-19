@@ -18,13 +18,13 @@ package com.island.ohara.client.configurator.v0
 
 import java.io.File
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestFileInfoApi extends SmallTest with Matchers {
+class TestFileInfoApi extends OharaTest with Matchers {
 
   private[this] def access: FileInfoApi.Access = FileInfoApi.access.hostname(CommonUtils.hostname()).port(22)
 

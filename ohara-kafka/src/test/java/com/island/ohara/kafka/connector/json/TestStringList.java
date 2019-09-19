@@ -16,13 +16,13 @@
 
 package com.island.ohara.kafka.connector.json;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStringList extends SmallTest {
+public class TestStringList extends OharaTest {
 
   @Test
   public void testToKafkaString() {

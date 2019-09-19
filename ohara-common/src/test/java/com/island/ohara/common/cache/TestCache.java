@@ -17,7 +17,7 @@
 package com.island.ohara.common.cache;
 
 import com.google.common.collect.ImmutableBiMap;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCache extends SmallTest {
+public class TestCache extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void nullTimeout() {
     Cache.<String, String>builder().timeout(null);

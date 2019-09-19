@@ -19,13 +19,13 @@ package com.island.ohara.configurator.route
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.client.kafka.TopicAdmin
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.mockito.Mockito._
 import org.scalatest.Matchers
 import scala.concurrent.duration._
-class TestAdminCleaner extends SmallTest with Matchers {
+class TestAdminCleaner extends OharaTest with Matchers {
 
   @Test
   def testTimeout(): Unit = {

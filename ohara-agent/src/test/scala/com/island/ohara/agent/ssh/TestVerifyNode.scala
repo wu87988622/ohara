@@ -20,7 +20,7 @@ import java.util
 
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.SshdServer
 import com.island.ohara.testing.service.SshdServer.CommandHandler
@@ -41,7 +41,7 @@ import scala.util.{Failure, Success}
   * 4) remove hello-world container
   * this test injects command handler for above actions that return correct response or throw exception.
   */
-class TestVerifyNode extends SmallTest with Matchers {
+class TestVerifyNode extends OharaTest with Matchers {
   private[this] var messageWhenFailToRun: String = _
   private[this] var messageWhenFailToListImages: String = _
   private[this] var messageWhenFailToPs: String = _

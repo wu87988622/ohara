@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing;
 
-import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.Releasable;
 import java.util.NoSuchElementException;
 import org.junit.AfterClass;
@@ -26,7 +26,7 @@ import org.junit.BeforeClass;
  * Creating a test util without embedded services. If you want to use "micro" services only, you can
  * apply this class and then instantiate service manually.
  */
-public abstract class WithTestUtils extends MediumTest {
+public abstract class WithTestUtils extends OharaTest {
   protected static OharaTestUtils util;
 
   @BeforeClass

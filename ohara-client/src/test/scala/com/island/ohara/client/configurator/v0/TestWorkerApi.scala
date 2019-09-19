@@ -17,13 +17,13 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.WorkerApi._
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, _}
 
-class TestWorkerApi extends SmallTest with Matchers {
+class TestWorkerApi extends OharaTest with Matchers {
 
   private[this] final val accessApi =
     WorkerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request

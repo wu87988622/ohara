@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.ShabondiApi
 import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiProperty
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class TestShabondiRoute extends SmallTest with Matchers {
+class TestShabondiRoute extends OharaTest with Matchers {
 
   private val configurator = Configurator.builder.fake().build()
   private val access = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)

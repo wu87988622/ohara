@@ -15,13 +15,13 @@
  */
 
 package com.island.ohara.connector.jdbc.source
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.kafka.connector.TaskSetting
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
+class TestJDBCSourceConnectorConfig extends OharaTest with Matchers {
 
   private[this] def jdbcConfig(settings: Map[String, String]): JDBCSourceConnectorConfig =
     JDBCSourceConnectorConfig(TaskSetting.of(settings.asJava))

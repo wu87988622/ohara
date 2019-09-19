@@ -20,7 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.RowSourceRecord;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Assert;
 
-public abstract class CsvSourceTestBase extends SmallTest {
+public abstract class CsvSourceTestBase extends OharaTest {
   protected static final String TOPIC = "test-topic";
   protected static final int TASK_TOTAL = 1;
   protected static final int TASK_HASH = 0;

@@ -16,11 +16,11 @@
 
 package com.island.ohara.kafka.connector.csv.source;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCsvOffsetCache extends SmallTest {
+public class TestCsvOffsetCache extends OharaTest {
   private final String path = getClass().getName();
 
   @Test

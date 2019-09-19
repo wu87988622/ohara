@@ -18,13 +18,13 @@ package com.island.ohara.testing;
 
 import static org.junit.Assert.assertEquals;
 
-import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.testing.service.Database;
 import com.island.ohara.testing.service.FtpServer;
 import com.island.ohara.testing.service.Hdfs;
 import org.junit.Test;
 
-public class TestOharaTestUtils extends MediumTest {
+public class TestOharaTestUtils extends OharaTest {
 
   @Test
   public void getBrokerFromEmptyOharaTestUtil() {

@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public class TestOharaTest extends SmallTest {
+public class TestOharaTest extends OharaTest {
 
   @Test
   public void TestException() {

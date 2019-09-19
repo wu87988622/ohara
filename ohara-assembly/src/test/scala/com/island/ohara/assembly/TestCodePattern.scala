@@ -17,7 +17,7 @@
 package com.island.ohara.assembly
 
 import com.island.ohara.common.pattern.{Builder, Creator}
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -26,7 +26,7 @@ import org.scalatest.Matchers
   * Builder/Creator pattern is across whole ohara project, and we try to make all impls
   * have similar form of method signature.
   */
-class TestCodePattern extends MediumTest with Matchers {
+class TestCodePattern extends OharaTest with Matchers {
 
   @Test
   def testBuilder(): Unit =

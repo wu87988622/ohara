@@ -16,10 +16,10 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import org.junit.Test;
 
-public class TestProducerBuilder extends SmallTest {
+public class TestProducerBuilder extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyConnectionProps() {

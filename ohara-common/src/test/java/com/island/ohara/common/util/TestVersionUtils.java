@@ -16,11 +16,11 @@
 
 package com.island.ohara.common.util;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestVersionUtils extends SmallTest {
+public class TestVersionUtils extends OharaTest {
 
   @Test
   public void allMembersShouldExist() {

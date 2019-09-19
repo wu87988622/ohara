@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStreamApi extends SmallTest with Matchers {
+class TestStreamApi extends OharaTest with Matchers {
 
   private[this] final val accessRequest =
     StreamApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request

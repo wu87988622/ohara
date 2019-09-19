@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.FtpInfoApi
 import com.island.ohara.client.configurator.v0.FtpInfoApi.{FtpInfo, Request}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,7 +29,7 @@ import spray.json.{JsNumber, JsString}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
-class TestFtpInfoRoute extends SmallTest with Matchers {
+class TestFtpInfoRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val ftpApi = FtpInfoApi.access.hostname(configurator.hostname).port(configurator.port)

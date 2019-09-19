@@ -16,7 +16,7 @@
 
 package com.island.ohara.assembly
 
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -26,7 +26,7 @@ import org.scalatest.Matchers
   * 2) list full name of all test class (see displayAllCases_
   * Normally, this class should not fail.
   */
-class ListTestCases extends MediumTest with Matchers {
+class ListTestCases extends OharaTest with Matchers {
 
   /**
     * DON'T change the output message since our QA will parse the output log to find the count of test cases.

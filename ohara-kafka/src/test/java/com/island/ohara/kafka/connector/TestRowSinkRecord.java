@@ -20,12 +20,12 @@ import static org.junit.Assert.assertEquals;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.TimestampType;
 import org.junit.Test;
 
-public class TestRowSinkRecord extends SmallTest {
+public class TestRowSinkRecord extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullTopic() {

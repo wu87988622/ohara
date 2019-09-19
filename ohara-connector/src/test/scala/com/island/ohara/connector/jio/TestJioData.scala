@@ -17,13 +17,13 @@
 package com.island.ohara.connector.jio
 
 import com.island.ohara.common.data.{Cell, Row}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsString}
 
-class TestJioData extends SmallTest with Matchers {
+class TestJioData extends OharaTest with Matchers {
 
   @Test
   def rowToJioData(): Unit = {

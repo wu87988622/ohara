@@ -18,11 +18,11 @@ package com.island.ohara.connector.jdbc.util
 
 import java.sql.Timestamp
 
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestDateTimeUtils extends MediumTest with Matchers {
+class TestDateTimeUtils extends OharaTest with Matchers {
   @Test
   def testTaipeiTimeZone(): Unit = {
     val timestamp: Timestamp = new Timestamp(0)

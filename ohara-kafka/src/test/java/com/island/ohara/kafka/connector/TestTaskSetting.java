@@ -17,7 +17,7 @@
 package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.PropGroups;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
@@ -30,7 +30,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestTaskSetting extends SmallTest {
+public class TestTaskSetting extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullInput() {

@@ -18,14 +18,14 @@ package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.io.Serializable;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestObjectKey extends SmallTest {
+public class TestObjectKey extends OharaTest {
 
   @Test
   public void testEqual() throws IOException {

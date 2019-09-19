@@ -19,7 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.OharaException;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamApp extends SmallTest {
+public class TestStreamApp extends OharaTest {
 
   @Test
   public void testCanFindCustomClassEntryFromInnerClass() {

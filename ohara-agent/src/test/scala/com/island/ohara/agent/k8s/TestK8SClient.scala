@@ -22,7 +22,7 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
 import com.island.ohara.agent.k8s.K8SJson._
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -35,7 +35,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestK8SClient extends SmallTest with Matchers {
+class TestK8SClient extends OharaTest with Matchers {
 
   @Test
   def testCreatorEnumator(): Unit = {

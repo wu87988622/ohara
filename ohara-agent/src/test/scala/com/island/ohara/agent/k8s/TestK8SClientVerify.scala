@@ -19,7 +19,7 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent.fake.FakeK8SClient
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class TestK8SClientVerify extends SmallTest with Matchers {
+class TestK8SClientVerify extends OharaTest with Matchers {
   private[this] val nodeCache = new ArrayBuffer[Node]()
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 

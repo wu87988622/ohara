@@ -16,11 +16,11 @@
 
 package com.island.ohara.streams.ostream;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import org.junit.Test;
 
-public class TestOStreamBuilder extends SmallTest {
+public class TestOStreamBuilder extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullBootstrapServers() {

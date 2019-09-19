@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.State._
 import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{PropGroups, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -29,7 +29,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestConnectorApi extends SmallTest with Matchers {
+class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def nullKeyInGet(): Unit =

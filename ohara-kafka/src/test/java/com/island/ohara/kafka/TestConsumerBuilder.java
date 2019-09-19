@@ -16,11 +16,11 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Collections;
 import org.junit.Test;
 
-public class TestConsumerBuilder extends MediumTest {
+public class TestConsumerBuilder extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullGroupId() {

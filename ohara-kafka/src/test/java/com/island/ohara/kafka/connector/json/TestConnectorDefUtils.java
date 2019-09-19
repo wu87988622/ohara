@@ -19,7 +19,7 @@ package com.island.ohara.kafka.connector.json;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.PropGroups;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
@@ -35,7 +35,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestConnectorDefUtils extends SmallTest {
+public class TestConnectorDefUtils extends OharaTest {
 
   @Test(expected = NoSuchElementException.class)
   public void noVersion() {

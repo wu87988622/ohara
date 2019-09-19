@@ -19,10 +19,10 @@ package com.island.ohara.common.data;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import org.junit.Test;
 
-public class TestBasicObject extends SmallTest {
+public class TestBasicObject extends OharaTest {
 
   private static class MyBasicObject extends BasicObject {
     private final int a;

@@ -19,11 +19,11 @@ package com.island.ohara.testing.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import org.junit.Test;
 
-public class TestBrokers extends MediumTest {
+public class TestBrokers extends OharaTest {
 
   @Test
   public void testSpecificPort() {

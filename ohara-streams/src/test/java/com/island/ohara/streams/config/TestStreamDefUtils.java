@@ -16,7 +16,7 @@
 
 package com.island.ohara.streams.config;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamDefUtils extends SmallTest {
+public class TestStreamDefUtils extends OharaTest {
 
   @Test
   public void testConfigJson() {

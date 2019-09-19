@@ -20,7 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import java.io.*;
@@ -35,7 +35,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestCsvRecordConverter extends SmallTest {
+public class TestCsvRecordConverter extends OharaTest {
   private final List<String> topicNames = Arrays.asList("T1", "T2");
   private final List<Column> schema =
       Arrays.asList(

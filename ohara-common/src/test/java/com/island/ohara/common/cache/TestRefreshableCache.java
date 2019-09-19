@@ -17,7 +17,7 @@
 package com.island.ohara.common.cache;
 
 import com.google.common.collect.ImmutableMap;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
 import java.util.Collections;
@@ -31,7 +31,7 @@ import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestRefreshableCache extends SmallTest {
+public class TestRefreshableCache extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullFrequency() {

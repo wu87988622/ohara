@@ -16,7 +16,7 @@
 
 package com.island.ohara.kafka.connector.json;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.NoSuchElementException;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestValidation extends SmallTest {
+public class TestValidation extends OharaTest {
 
   @Test(expected = NoSuchElementException.class)
   public void ignoreClassName() {

@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStreamRoute extends SmallTest with Matchers {
+class TestStreamRoute extends OharaTest with Matchers {
 
   // create all fake cluster
   private[this] val configurator = Configurator.builder.fake().build()

@@ -16,12 +16,12 @@
 
 package com.island.ohara.metrics.basic;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCounterBuilder extends SmallTest {
+public class TestCounterBuilder extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullId() {

@@ -19,7 +19,7 @@ package com.island.ohara.connector.ftp
 import java.util.Collections
 
 import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.TaskSetting
@@ -32,7 +32,7 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 
-class TestFtpSourceTask extends SmallTest with Matchers {
+class TestFtpSourceTask extends OharaTest with Matchers {
 
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
 

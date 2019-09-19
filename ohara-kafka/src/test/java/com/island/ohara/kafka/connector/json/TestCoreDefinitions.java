@@ -16,7 +16,7 @@
 
 package com.island.ohara.kafka.connector.json;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.DumbSink;
@@ -24,7 +24,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCoreDefinitions extends SmallTest {
+public class TestCoreDefinitions extends OharaTest {
 
   @Test
   public void testClassNameDefinition() {

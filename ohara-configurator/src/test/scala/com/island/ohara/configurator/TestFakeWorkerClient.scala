@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestFakeWorkerClient extends SmallTest with Matchers {
+class TestFakeWorkerClient extends OharaTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test

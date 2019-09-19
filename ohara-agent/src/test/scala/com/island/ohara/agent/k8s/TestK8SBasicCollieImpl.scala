@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class TestK8SBasicCollieImpl extends SmallTest with Matchers {
+class TestK8SBasicCollieImpl extends OharaTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] val tmpServiceName = "zk"

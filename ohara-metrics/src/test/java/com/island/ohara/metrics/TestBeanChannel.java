@@ -16,7 +16,7 @@
 
 package com.island.ohara.metrics;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.Map;
@@ -24,7 +24,7 @@ import java.util.Objects;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestBeanChannel extends SmallTest {
+public class TestBeanChannel extends OharaTest {
 
   @Test
   public void testLocalFlag() {

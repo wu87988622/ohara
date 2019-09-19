@@ -16,12 +16,12 @@
 
 package com.island.ohara.client.filesystem.ftp
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-class TestFtpFileSystemBuilder extends SmallTest with Matchers {
+class TestFtpFileSystemBuilder extends OharaTest with Matchers {
 
   @Test
   def ignoreHostname(): Unit = {

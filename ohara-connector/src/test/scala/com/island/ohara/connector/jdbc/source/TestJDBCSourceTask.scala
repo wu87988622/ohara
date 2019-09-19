@@ -21,7 +21,7 @@ import java.sql.{Statement, Timestamp}
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.data.{Column, DataType, Row}
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector.{RowSourceRecord, TaskSetting}
@@ -35,7 +35,7 @@ import org.scalatest.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
 
-class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
+class TestJDBCSourceTask extends OharaTest with Matchers with MockitoSugar {
   private[this] val db = Database.local()
   private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName = "TABLE1"

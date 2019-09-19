@@ -16,13 +16,13 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.basic.Counter;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCounterBuilder extends SmallTest {
+public class TestCounterBuilder extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullGroup() {

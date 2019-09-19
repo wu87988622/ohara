@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing;
 
-import com.island.ohara.common.rule.LargeTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.Releasable;
 import java.util.NoSuchElementException;
 import org.junit.AfterClass;
@@ -30,7 +30,7 @@ import org.junit.BeforeClass;
  * run each test on "different" jvm. The "same" static member won't cause trouble in testing.
  * However, you should move the static "util" into your test if you don't depend on junit...by chia
  */
-public abstract class With3Brokers extends LargeTest {
+public abstract class With3Brokers extends OharaTest {
   protected static OharaTestUtils util;
 
   @BeforeClass

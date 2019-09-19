@@ -16,12 +16,12 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{JsArray, JsNumber, JsObject, JsString}
 
-class TestEnvConversion extends SmallTest with Matchers {
+class TestEnvConversion extends OharaTest with Matchers {
 
   @Test
   def testConversion(): Unit = {

@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.HdfsInfoApi
 import com.island.ohara.client.configurator.v0.HdfsInfoApi.{HdfsInfo, Request}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class TestHdfsInfoRoute extends SmallTest with Matchers {
+class TestHdfsInfoRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val hdfsApi = HdfsInfoApi.access.hostname(configurator.hostname).port(configurator.port)

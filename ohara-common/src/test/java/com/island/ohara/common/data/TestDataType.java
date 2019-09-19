@@ -16,13 +16,13 @@
 
 package com.island.ohara.common.data;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.sql.Time;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestDataType extends SmallTest {
+public class TestDataType extends OharaTest {
 
   @Test
   public void testAll() {

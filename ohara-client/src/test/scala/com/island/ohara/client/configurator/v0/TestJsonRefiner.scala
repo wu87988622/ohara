@@ -16,14 +16,14 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import spray.json._
-class TestJsonRefiner extends SmallTest with Matchers {
+class TestJsonRefiner extends OharaTest with Matchers {
   private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat5(SimpleData)
   private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
 

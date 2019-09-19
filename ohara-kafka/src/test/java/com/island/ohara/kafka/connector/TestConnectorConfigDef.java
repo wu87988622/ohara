@@ -16,7 +16,7 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConnectorConfigDef extends SmallTest {
+public class TestConnectorConfigDef extends OharaTest {
 
   @Test
   public void testVersion() {

@@ -19,13 +19,13 @@ package com.island.ohara.client.kafka
 import java.util.Collections
 
 import com.island.ohara.client.kafka.WorkerJson._
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{Creation, Validation}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
-class TestWorkerJson extends SmallTest with Matchers {
+class TestWorkerJson extends OharaTest with Matchers {
 
   @Test
   def testValidatedValue(): Unit = {

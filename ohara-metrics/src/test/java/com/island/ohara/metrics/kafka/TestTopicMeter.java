@@ -16,13 +16,13 @@
 
 package com.island.ohara.metrics.kafka;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestTopicMeter extends SmallTest {
+public class TestTopicMeter extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullTopicName() {

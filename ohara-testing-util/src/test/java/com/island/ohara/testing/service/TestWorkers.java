@@ -16,12 +16,12 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestWorkers extends MediumTest {
+public class TestWorkers extends OharaTest {
 
   @Test
   public void testSpecificPort() {

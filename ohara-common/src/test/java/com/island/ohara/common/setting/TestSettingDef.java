@@ -19,7 +19,7 @@ package com.island.ohara.common.setting;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.json.JsonUtils;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSettingDef extends SmallTest {
+public class TestSettingDef extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullKey() {

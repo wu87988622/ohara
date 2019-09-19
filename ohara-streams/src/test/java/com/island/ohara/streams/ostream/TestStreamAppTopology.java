@@ -18,7 +18,7 @@ package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamAppTopology extends SmallTest {
+public class TestStreamAppTopology extends OharaTest {
 
   private static String appId = CommonUtils.randomString(5);
   private static TopicKey fromKey =

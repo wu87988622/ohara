@@ -16,12 +16,12 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
-class TestQueryApi extends SmallTest with Matchers {
+class TestQueryApi extends OharaTest with Matchers {
 
   @Test
   def testBasicQueryObject(): Unit = {

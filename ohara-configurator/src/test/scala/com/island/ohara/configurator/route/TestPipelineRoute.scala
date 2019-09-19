@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
@@ -31,7 +31,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
 // there are too many test cases in this file so we promote  it from small test to medium test
-class TestPipelineRoute extends MediumTest with Matchers {
+class TestPipelineRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)

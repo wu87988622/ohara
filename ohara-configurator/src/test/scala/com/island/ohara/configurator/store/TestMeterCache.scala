@@ -19,14 +19,14 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.MeterCache.RequestKey
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-class TestMeterCache extends SmallTest with Matchers {
+class TestMeterCache extends OharaTest with Matchers {
 
   @Test
   def testRequestKey(): Unit = {

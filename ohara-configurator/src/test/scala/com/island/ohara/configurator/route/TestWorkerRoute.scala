@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,7 +29,7 @@ import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-class TestWorkerRoute extends MediumTest with Matchers {
+class TestWorkerRoute extends OharaTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
 

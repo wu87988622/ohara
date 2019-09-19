@@ -16,13 +16,13 @@
 
 package com.island.ohara.client.filesystem.ftp
 
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-class TestIllegalFtpFileSystem extends MediumTest with Matchers {
+class TestIllegalFtpFileSystem extends OharaTest with Matchers {
 
   private[this] val server = FtpServer.local()
 

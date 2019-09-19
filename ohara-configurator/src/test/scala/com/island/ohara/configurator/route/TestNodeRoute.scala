@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Request}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,7 +29,7 @@ import spray.json.{JsNumber, JsString}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
-class TestNodeRoute extends SmallTest with Matchers {
+class TestNodeRoute extends OharaTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, numberOfCluster).build()
 

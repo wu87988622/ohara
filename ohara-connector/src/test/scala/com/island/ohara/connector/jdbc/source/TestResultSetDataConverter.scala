@@ -19,7 +19,7 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.{ResultSet, Time, Timestamp}
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import org.junit.Test
@@ -27,7 +27,7 @@ import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSugar {
+class TestResultSetDataConverter extends OharaTest with Matchers with MockitoSugar {
 
   @Test
   def testConverterRecord(): Unit = {

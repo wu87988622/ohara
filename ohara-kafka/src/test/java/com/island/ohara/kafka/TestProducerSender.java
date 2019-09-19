@@ -16,12 +16,12 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Collections;
 import java.util.concurrent.Future;
 import org.junit.Test;
 
-public class TestProducerSender extends SmallTest {
+public class TestProducerSender extends OharaTest {
 
   private static class FakeSender<K, V> extends Producer.Sender<K, V> {
     @Override

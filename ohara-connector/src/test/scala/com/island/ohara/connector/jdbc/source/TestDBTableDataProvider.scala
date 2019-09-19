@@ -20,7 +20,7 @@ import java.sql.{Statement, Timestamp}
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.kafka.connector.TaskSetting
@@ -30,7 +30,7 @@ import org.scalatest.Matchers
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 
-class TestDBTableDataProvider extends MediumTest with Matchers {
+class TestDBTableDataProvider extends OharaTest with Matchers {
 
   private[this] val db = Database.local()
   private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build

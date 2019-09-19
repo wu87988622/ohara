@@ -16,12 +16,12 @@
 
 package com.island.ohara.common.data;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestPair extends SmallTest {
+public class TestPair extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void testNULLElementsShouldThrowException() {

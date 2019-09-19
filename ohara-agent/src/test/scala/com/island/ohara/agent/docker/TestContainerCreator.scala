@@ -18,12 +18,12 @@ package com.island.ohara.agent.docker
 
 import java.util.Objects
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestContainerCreator extends SmallTest with Matchers {
+class TestContainerCreator extends OharaTest with Matchers {
 
   private[this] def fake(): ContainerCreator = (hostname: String,
                                                 imageName: String,

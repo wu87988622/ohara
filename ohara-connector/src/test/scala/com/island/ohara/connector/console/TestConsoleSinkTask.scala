@@ -19,7 +19,7 @@ package com.island.ohara.connector.console
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.common.data.Row
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.apache.kafka.connect.sink.SinkRecord
 import org.junit.Test
@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
-class TestConsoleSinkTask extends SmallTest with Matchers {
+class TestConsoleSinkTask extends OharaTest with Matchers {
 
   private[this] def configs(key: String, value: String): java.util.Map[String, String] = Map(
     "name" -> CommonUtils.randomString(),

@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +27,7 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConnectorProps extends SmallTest {
+public class TestConnectorProps extends OharaTest {
 
   @Test
   public void emptyInStartingSource() {

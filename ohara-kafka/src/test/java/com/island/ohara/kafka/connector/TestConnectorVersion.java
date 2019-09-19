@@ -16,12 +16,12 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConnectorVersion extends SmallTest {
+public class TestConnectorVersion extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void testNullVersion() {
     ConnectorVersion.builder().version(null);

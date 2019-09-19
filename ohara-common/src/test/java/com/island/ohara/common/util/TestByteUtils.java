@@ -16,7 +16,7 @@
 
 package com.island.ohara.common.util;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestByteUtils extends SmallTest {
+public class TestByteUtils extends OharaTest {
 
   @Test
   public void testBoolean() {

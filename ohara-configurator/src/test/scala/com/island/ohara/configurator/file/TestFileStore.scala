@@ -20,7 +20,7 @@ import java.io.File
 import java.nio.file.Files
 
 import com.island.ohara.client.configurator.v0.FileInfoApi
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestFileStore extends SmallTest with Matchers {
+class TestFileStore extends OharaTest with Matchers {
 
   private[this] val configurator = Configurator.builder.fake().build()
   private[this] val fileStore = configurator.fileStore

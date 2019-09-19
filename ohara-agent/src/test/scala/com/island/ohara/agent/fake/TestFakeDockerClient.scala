@@ -18,7 +18,7 @@ package com.island.ohara.agent.fake
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{PortMapping, PortPair}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestFakeDockerClient extends SmallTest with Matchers {
+class TestFakeDockerClient extends OharaTest with Matchers {
 
   private[this] val fake = new FakeDockerClient("fake_node")
 

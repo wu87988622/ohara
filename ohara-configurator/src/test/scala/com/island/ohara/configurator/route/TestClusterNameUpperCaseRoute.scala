@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
+class TestClusterNameUpperCaseRoute extends OharaTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
     Configurator.builder.fake(numberOfCluster, numberOfCluster, "zk").build()

@@ -18,14 +18,14 @@ package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSettingValue extends SmallTest {
+public class TestSettingValue extends OharaTest {
   @Test
   public void testEqual() throws IOException {
     SettingValue value =

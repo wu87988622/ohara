@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.common.data.{Column, DataType}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -30,7 +30,7 @@ import spray.json.{JsNumber, JsString}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-class TestConnectorRoute extends SmallTest with Matchers {
+class TestConnectorRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)

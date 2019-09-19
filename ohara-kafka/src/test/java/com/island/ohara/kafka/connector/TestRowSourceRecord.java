@@ -22,13 +22,13 @@ import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.Map;
 import org.junit.Test;
 
-public class TestRowSourceRecord extends SmallTest {
+public class TestRowSourceRecord extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void requireTopic() {

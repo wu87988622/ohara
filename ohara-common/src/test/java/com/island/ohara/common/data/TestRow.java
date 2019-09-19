@@ -16,13 +16,13 @@
 
 package com.island.ohara.common.data;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestRow extends SmallTest {
+public class TestRow extends OharaTest {
 
   @Test
   public void testEmpty() {

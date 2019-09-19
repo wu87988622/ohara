@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.google.common.collect.Sets;
 import com.island.ohara.common.json.JsonUtils;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.ConnectorKey;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConnectorFormatter extends SmallTest {
+public class TestConnectorFormatter extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullColumn() {

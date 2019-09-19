@@ -17,13 +17,13 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
 import spray.json._
-class TestZookeeperApi extends SmallTest with Matchers {
+class TestZookeeperApi extends OharaTest with Matchers {
 
   private[this] final val access =
     ZookeeperApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request

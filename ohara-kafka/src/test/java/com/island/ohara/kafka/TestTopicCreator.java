@@ -16,11 +16,11 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.util.Collections;
 import org.junit.Test;
 
-public class TestTopicCreator extends SmallTest {
+public class TestTopicCreator extends OharaTest {
 
   private static class FakeTopicCreator extends TopicCreator {
     @Override

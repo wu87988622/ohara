@@ -16,12 +16,12 @@
 
 package com.island.ohara.metrics;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import org.junit.Test;
 
-public class TestBeanObject extends SmallTest {
+public class TestBeanObject extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullDomain() {

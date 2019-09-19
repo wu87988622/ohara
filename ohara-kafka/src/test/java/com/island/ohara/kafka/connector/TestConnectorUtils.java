@@ -18,14 +18,14 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.ByteUtils;
 import org.apache.kafka.connect.connector.ConnectRecord;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestConnectorUtils extends SmallTest {
+public class TestConnectorUtils extends OharaTest {
   @Test
   public void testSizeOfBytes() {
     Assert.assertNotEquals(ConnectorUtils.sizeOf(new byte[10]), 0);

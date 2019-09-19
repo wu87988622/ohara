@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.InfoApi
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.Configurator.Mode
@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
-class TestInfoRoute extends SmallTest with Matchers {
+class TestInfoRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))

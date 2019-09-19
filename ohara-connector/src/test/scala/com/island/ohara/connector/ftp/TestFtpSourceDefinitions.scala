@@ -16,14 +16,14 @@
 
 package com.island.ohara.connector.ftp
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.Reference
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-class TestFtpSourceDefinitions extends SmallTest with Matchers {
+class TestFtpSourceDefinitions extends OharaTest with Matchers {
 
   private[this] val ftpSource = new FtpSource
   @Test

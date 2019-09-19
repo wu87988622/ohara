@@ -16,11 +16,11 @@
 
 package com.island.ohara.connector.console
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 import scala.collection.JavaConverters._
-class TestConsoleSink extends SmallTest with Matchers {
+class TestConsoleSink extends OharaTest with Matchers {
 
   @Test
   def testFrequenceDefinitions(): Unit = {

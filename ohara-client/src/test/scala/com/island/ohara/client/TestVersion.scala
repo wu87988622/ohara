@@ -17,12 +17,12 @@
 package com.island.ohara.client
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.VersionUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestVersion extends SmallTest with Matchers {
+class TestVersion extends OharaTest with Matchers {
 
   @Test
   def testZookeeper(): Unit = {

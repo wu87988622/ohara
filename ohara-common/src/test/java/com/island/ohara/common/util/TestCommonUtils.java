@@ -16,7 +16,7 @@
 
 package com.island.ohara.common.util;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCommonUtils extends SmallTest {
+public class TestCommonUtils extends OharaTest {
 
   private String DRIVE = System.getenv("SystemDrive");
 

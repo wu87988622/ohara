@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestSettingInfo extends SmallTest {
+public class TestSettingInfo extends OharaTest {
   @Test
   public void testEqual() throws IOException {
     SettingInfo settingInfo =

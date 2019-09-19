@@ -16,11 +16,11 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestConnectorCreator extends SmallTest with Matchers {
+class TestConnectorCreator extends OharaTest with Matchers {
 
   private[this] val notWorkingClient = WorkerClient("localhost:2222")
 

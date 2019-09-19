@@ -18,13 +18,13 @@ package com.island.ohara.client
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-class TestDatabaseClient extends MediumTest with Matchers {
+class TestDatabaseClient extends OharaTest with Matchers {
 
   private[this] val db = Database.local()
 

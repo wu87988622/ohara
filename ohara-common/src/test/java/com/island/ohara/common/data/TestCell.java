@@ -16,11 +16,11 @@
 
 package com.island.ohara.common.data;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCell extends SmallTest {
+public class TestCell extends OharaTest {
 
   @Test
   public void testEquals() {

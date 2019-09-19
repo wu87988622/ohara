@@ -16,11 +16,11 @@
 
 package com.island.ohara.connector.jio
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestJioSettings extends SmallTest with Matchers {
+class TestJioSettings extends OharaTest with Matchers {
 
   @Test
   def testBufferSetting(): Unit = {

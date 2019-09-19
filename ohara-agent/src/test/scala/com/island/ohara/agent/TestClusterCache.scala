@@ -23,7 +23,7 @@ import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -31,7 +31,7 @@ import org.scalatest.Matchers
 import spray.json.JsValue
 
 import scala.concurrent.duration._
-class TestClusterCache extends SmallTest with Matchers {
+class TestClusterCache extends OharaTest with Matchers {
 
   @Test
   def testRequestKey(): Unit = {

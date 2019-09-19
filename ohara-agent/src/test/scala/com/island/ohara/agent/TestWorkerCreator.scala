@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -28,7 +28,7 @@ import spray.json.DeserializationException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestWorkerCreator extends SmallTest with Matchers {
+class TestWorkerCreator extends OharaTest with Matchers {
 
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 

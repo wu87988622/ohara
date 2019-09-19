@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -30,7 +30,7 @@ import spray.json.{JsNumber, JsString}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-class TestTopicRoute extends SmallTest with Matchers {
+class TestTopicRoute extends OharaTest with Matchers {
 
   private[this] val configurator = Configurator.builder.fake(1, 0).build()
 

@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -27,7 +27,7 @@ import spray.json.DeserializationException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestZookeeperCreator extends SmallTest with Matchers {
+class TestZookeeperCreator extends OharaTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] def zkCreator(): ZookeeperCollie.ClusterCreator =

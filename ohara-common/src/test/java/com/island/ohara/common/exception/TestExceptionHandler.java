@@ -16,11 +16,11 @@
 
 package com.island.ohara.common.exception;
 
-import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.rule.OharaTest;
 import java.io.IOException;
 import org.junit.Test;
 
-public class TestExceptionHandler extends SmallTest {
+public class TestExceptionHandler extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void addDuplicateFunction() {

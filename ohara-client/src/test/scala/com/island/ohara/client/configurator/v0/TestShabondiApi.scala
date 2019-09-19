@@ -17,11 +17,11 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ShabondiApi._
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestShabondiApi extends SmallTest with Matchers {
+class TestShabondiApi extends OharaTest with Matchers {
 
   @Test
   def testJsonConversion(): Unit = {

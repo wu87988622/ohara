@@ -18,21 +18,19 @@ package com.island.ohara.assembly
 
 import java.lang.reflect.Method
 
-import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.shabondi.TestWebServer
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestTestCases extends MediumTest with Matchers {
+class TestTestCases extends OharaTest with Matchers {
 
   /**
     * those classes don't have to extend correct super class.
     */
   private[this] val validTestGroups: Seq[Class[_]] = Seq(
-    classOf[SmallTest],
-    classOf[MediumTest],
-    classOf[LargeTest],
+    classOf[OharaTest],
     classOf[IntegrationTest]
   )
 

@@ -16,11 +16,11 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestConnectorValidator extends SmallTest with Matchers {
+class TestConnectorValidator extends OharaTest with Matchers {
 
   /**
     * we won't make connection in this test

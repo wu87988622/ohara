@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ValidationApi
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.service.SshdServer
 import org.junit.{After, Test}
@@ -25,7 +25,7 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-class TestNodeValidation extends SmallTest with Matchers {
+class TestNodeValidation extends OharaTest with Matchers {
 
   private[this] val configurator = Configurator.builder.fake().build()
   private[this] val sshd = SshdServer.local()
