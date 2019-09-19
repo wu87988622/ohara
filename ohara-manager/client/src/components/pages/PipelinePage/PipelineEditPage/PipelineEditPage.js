@@ -267,6 +267,7 @@ const PipelineEditPage = props => {
             resetCurrentTopic={() => setCurrentTopic(topics[0])}
             updateCurrentTopic={currentTopic => setCurrentTopic(currentTopic)}
             workerClusterName={workerClusterName}
+            brokerClusterName={brokerClusterName}
             connectors={connectors}
           />
 

@@ -309,6 +309,7 @@ PipelineToolbar.propTypes = {
   resetCurrentTopic: PropTypes.func.isRequired,
   currentTopic: PropTypes.object,
   workerClusterName: PropTypes.string.isRequired,
+  brokerClusterName: PropTypes.string.isRequired,
 };
 
 export default PipelineToolbar;

@@ -46,6 +46,7 @@ const PipelineNewStream = forwardRef((props, ref) => {
     enableAddButton,
     updateGraph,
     pipelineGroup,
+    brokerClusterName,
   } = props;
   const jarGroup = `${workerClusterName}-streamjar`;
 
@@ -97,6 +98,7 @@ const PipelineNewStream = forwardRef((props, ref) => {
       updateGraph,
       connector,
       newStreamAppName,
+      brokerClusterName,
       group: pipelineGroup,
     });
 
@@ -172,6 +174,7 @@ PipelineNewStream.propTypes = {
   workerClusterName: PropTypes.string.isRequired,
   handleClose: PropTypes.func.isRequired,
   pipelineGroup: PropTypes.string.isRequired,
+  brokerClusterName: PropTypes.string.isRequired,
 };
 
 export default PipelineNewStream;

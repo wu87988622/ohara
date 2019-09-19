@@ -39,6 +39,7 @@ export const createConnector = async params => {
     newConnectorName,
     newStreamAppName,
     workerClusterName,
+    brokerClusterName,
     group,
   } = params;
 
@@ -54,6 +55,7 @@ export const createConnector = async params => {
     const response = await createProperty({
       jarKey: connector.jarKey,
       name: newStreamAppName,
+      brokerClusterName,
       group,
     });
 
