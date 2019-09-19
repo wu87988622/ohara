@@ -19,7 +19,7 @@ package com.island.ohara.connector.console
 import java.util
 
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
+import com.island.ohara.kafka.connector.{ConnectorVersion, RowSinkConnector, RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
@@ -34,6 +34,8 @@ class ConsoleSink extends RowSinkConnector {
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[ConsoleSinkTask]
 
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(config).asJava
+
+  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
   override protected def _definitions(): util.List[SettingDef] = Seq(
     SettingDef
