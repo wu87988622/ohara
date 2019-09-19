@@ -325,6 +325,13 @@ const WorkerNewModal = props => {
       configTopicName: generate.serviceName(),
       offsetTopicName: generate.serviceName(),
       statusTopicName: generate.serviceName(),
+      freePorts: [
+        generate.port(),
+        generate.port(),
+        generate.port(),
+        generate.port(),
+        generate.port(),
+      ],
       tags: {
         broker: {
           name: getBrokerRes().data.result.name,

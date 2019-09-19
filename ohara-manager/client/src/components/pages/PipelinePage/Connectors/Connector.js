@@ -27,7 +27,7 @@ import { Box } from 'components/common/Layout';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 const Connector = props => {
-  const { updateHasChanges, connectors } = props;
+  const { updateHasChanges, connectors, freePorts } = props;
   const [state, setState, configs, setConfigs] = utils.useFetchConnectors(
     props,
   );
@@ -65,6 +65,7 @@ const Connector = props => {
   const formProps = {
     formData,
     topics,
+    freePorts,
     handleColumnChange: utils.handleColumnChange(columnHandlerParams),
     handleColumnRowDelete: utils.handleColumnRowDelete(columnHandlerParams),
     handleColumnRowUp: utils.handleColumnRowUp(columnHandlerParams),
