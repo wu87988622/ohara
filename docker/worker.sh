@@ -128,8 +128,8 @@ if [[ ! -z "$WORKER_JAR_URLS" ]] && [[ -z "$jarInfos" ]]; then
   exit 2
 fi
 
-if [[ -z "$WORKER_JAR_URLS" ]] && [[ ! -z "$jarInfos" ]] && [[ "$jarInfos" != "[]" ]]; then
-  echo "WORKER_JAR_URLS is required since you have set the jarInfos:\"$jarInfos\""
+if [[ -z "$WORKER_JAR_URLS" ]] && [[ ! -z "$jarInfos" ]]; then
+  echo "WORKER_JAR_URLS is required since you have set the jarInfos:$jarInfos"
   exit 2
 fi
 

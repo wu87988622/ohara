@@ -137,7 +137,6 @@ object WorkerRoute {
             }
 
             clusterCollie.workerCollie.creator
-              .settings(workerClusterInfo.settings)
               .clusterName(workerClusterInfo.name)
               .group(workerClusterInfo.group)
               .clientPort(workerClusterInfo.clientPort)

@@ -89,7 +89,6 @@ object BrokerRoute {
               throw new IllegalArgumentException(
                 s"zk cluster:${brokerClusterInfo.zookeeperClusterName} is already used by broker cluster:${sameZkNameClusters.head.name}")
             clusterCollie.brokerCollie.creator
-              .settings(brokerClusterInfo.settings)
               .clusterName(brokerClusterInfo.name)
               .group(brokerClusterInfo.group)
               .clientPort(brokerClusterInfo.clientPort)
