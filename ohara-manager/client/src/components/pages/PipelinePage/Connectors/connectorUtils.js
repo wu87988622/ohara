@@ -532,6 +532,13 @@ export const getDisplayValue = ({
     return configValue ? configValue : false;
   }
 
+  // We only want to display key `name` for users
+  const keyTypes = ['JAR_KEY', 'CONNECTOR_KEY'];
+
+  if (keyTypes.includes(valueType)) {
+    return configValue.name;
+  }
+
   // handle other types normally here
   return configValue ? configValue : defaultValue;
 };
