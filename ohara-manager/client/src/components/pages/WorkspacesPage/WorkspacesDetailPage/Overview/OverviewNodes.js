@@ -35,7 +35,7 @@ const OverviewNodes = props => {
   const [nodes, setNodes] = useState([]);
 
   useEffect(() => {
-    const { nodeNames, clientPort, jmxPort } = worker;
+    const { nodeNames, clientPort, jmxPort } = worker.settings;
     const workerNodes = nodeNames.map((nodeName, idx) => {
       return {
         clusterType: 'Worker',
@@ -52,7 +52,7 @@ const OverviewNodes = props => {
     const fetchBroker = async () => {
       if (!broker) return;
 
-      const { nodeNames, clientPort, exporterPort, jmxPort } = broker;
+      const { nodeNames, clientPort, exporterPort, jmxPort } = broker.settings;
       const brokerNodes = nodeNames.map((nodeName, idx) => {
         return {
           clusterType: 'Broker',
@@ -76,7 +76,12 @@ const OverviewNodes = props => {
   useEffect(() => {
     setIsFetchingZookeeper(false);
     if (!zookeeper || Array.isArray(zookeeper)) return;
-    const { nodeNames, clientPort, electionPort, peerPort } = zookeeper;
+    const {
+      nodeNames,
+      clientPort,
+      electionPort,
+      peerPort,
+    } = zookeeper.settings;
     const zookeeperNodes = nodeNames.map((nodeName, idx) => {
       return {
         clusterType: 'Zookeeper',
@@ -148,9 +153,11 @@ const OverviewNodes = props => {
 OverviewNodes.propTypes = {
   handleRedirect: PropTypes.func.isRequired,
   worker: PropTypes.shape({
-    nodeNames: PropTypes.arrayOf(PropTypes.string).isRequired,
-    clientPort: PropTypes.number.isRequired,
-    jmxPort: PropTypes.number.isRequired,
+    settings: PropTypes.shape({
+      nodeNames: PropTypes.arrayOf(PropTypes.string).isRequired,
+      clientPort: PropTypes.number.isRequired,
+      jmxPort: PropTypes.number.isRequired,
+    }).isRequired,
   }),
   broker: PropTypes.object,
   zookeeper: PropTypes.object,

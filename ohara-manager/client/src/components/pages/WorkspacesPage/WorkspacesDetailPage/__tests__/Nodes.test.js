@@ -53,7 +53,9 @@ describe('<Nodes />', () => {
           data: {
             data: {
               result: {
-                nodeNames,
+                settings: {
+                  nodeNames,
+                },
               },
             },
           },
@@ -108,7 +110,9 @@ describe('<Nodes />', () => {
           data: {
             data: {
               result: {
-                nodeNames,
+                settings: {
+                  nodeNames,
+                },
               },
             },
           },

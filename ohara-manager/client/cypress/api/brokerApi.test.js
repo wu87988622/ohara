@@ -76,7 +76,7 @@ describe('Broker API', () => {
         state,
         imageName,
         tags,
-      } = result;
+      } = result.settings;
 
       expect(isSuccess).to.eq(true);
 
@@ -109,7 +109,7 @@ describe('Broker API', () => {
         state,
         imageName,
         tags,
-      } = result;
+      } = result.settings;
 
       expect(isSuccess).to.eq(true);
       expect(name).to.eq(brokerClusterName);
@@ -152,7 +152,8 @@ describe('Broker API', () => {
 
       const brokers = result.filter(
         broker =>
-          broker.name === paramsOne.name || broker.name === paramsTwo.name,
+          broker.settings.name === paramsOne.name ||
+          broker.settings.name === paramsTwo.name,
       );
 
       expect(brokers.length).to.eq(2);
@@ -243,7 +244,7 @@ describe('Broker API', () => {
 
     cy.fetchBrokers().then(response => {
       const targetBroker = response.data.result.find(
-        broker => broker.name === brokerClusterName,
+        broker => broker.settings.name === brokerClusterName,
       );
 
       expect(targetBroker).to.be.undefined;

@@ -131,13 +131,15 @@ export const broker = ({ nodeCount = 1, overrides = {} } = {}) => {
     nodeNames.push(nodeName);
   }
   const broker = {
-    clientPort: port(),
-    imageName: name(),
-    jmxPort: port(),
-    name: serviceName(),
-    nodeNames,
-    zookeeperClusterName: serviceName(),
-    ...overrides,
+    settings: {
+      clientPort: port(),
+      imageName: name(),
+      jmxPort: port(),
+      name: serviceName(),
+      nodeNames,
+      zookeeperClusterName: serviceName(),
+      ...overrides,
+    },
   };
 
   return broker;
@@ -153,11 +155,13 @@ export const zookeeper = ({ nodeCount = 1, overrides = {} } = {}) => {
     nodeNames.push(nodeName);
   }
   const zookeeper = {
-    clientPort: port(),
-    imageName: name(),
-    name: serviceName(),
-    nodeNames,
-    ...overrides,
+    settings: {
+      clientPort: port(),
+      imageName: name(),
+      name: serviceName(),
+      nodeNames,
+      ...overrides,
+    },
   };
 
   return zookeeper;
@@ -170,8 +174,10 @@ export const workers = ({ count = 1, overrides } = {}) => {
     count--;
 
     const worker = {
-      nodeNames: [name(), name()],
-      name: name(),
+      settings: {
+        nodeNames: [name(), name()],
+        name: name(),
+      },
     };
 
     workers.push(worker);

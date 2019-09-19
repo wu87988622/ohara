@@ -106,7 +106,7 @@ const PipelineEditPage = props => {
         );
         setNodeNames(get(worker, 'settings.nodeNames', []));
         setConnectors(worker.connectors);
-        setBrokerClusterName(worker.brokerClusterName);
+        setBrokerClusterName(worker.settings.brokerClusterName);
       }
     };
 

@@ -56,11 +56,12 @@ const WorkspacesPage = props => {
     );
   };
 
-  const rows = workers.map(d => {
+  const rows = workers.map(worker => {
+    const { settings } = worker;
     return {
-      name: d.name,
-      nodes: d.nodeNames.join(','),
-      action: actionButton(d),
+      name: settings.name,
+      nodes: settings.nodeNames.join(','),
+      action: actionButton(settings),
     };
   });
 

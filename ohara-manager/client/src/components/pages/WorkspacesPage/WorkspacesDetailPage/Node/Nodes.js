@@ -46,8 +46,8 @@ const Nodes = props => {
     `${URL.WORKER_URL}/${workspaceName}`,
   );
   const { data: nodeRes } = useApi.useFetchApi(URL.NODE_URL);
-  const workerNodes = get(workerRes, 'data.result.nodeNames', []);
-  const broker = get(workerRes, 'data.result.brokerClusterName', null);
+  const workerNodes = get(workerRes, 'data.result.settings.nodeNames', []);
+  const broker = get(workerRes, 'data.result.settings.brokerClusterName', null);
   const nodes = get(nodeRes, 'data.result', []);
   const nodeNames = nodes.map(node => node.name);
   const workerNodeNames = nodeNames.filter(nodeName =>
