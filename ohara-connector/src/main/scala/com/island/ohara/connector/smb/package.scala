@@ -53,7 +53,7 @@ package object smb {
     .key(SMB_PASSWORD_KEY)
     .displayName("Password")
     .documentation("the password of SMB server")
-    .valueType(SettingDef.Type.STRING)
+    .valueType(SettingDef.Type.PASSWORD)
     .build()
 
   val SMB_SHARE_NAME_KEY: String = "smb.shareName"
