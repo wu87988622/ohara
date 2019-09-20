@@ -24,12 +24,11 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, TopicApi, ZookeeperApi}
 import com.island.ohara.client.kafka.TopicAdmin
-import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
-import spray.json.{JsString, JsValue}
+import spray.json.JsString
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -335,59 +334,12 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
 object BrokerCollie {
 
-  trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
-    private[this] val request = BrokerApi.access.request
-
-    override def clusterName(clusterName: String): ClusterCreator.this.type = {
-      request.name(clusterName)
-      this
-    }
-    override def group(group: String): ClusterCreator.this.type = {
-      request.group(group)
-      this
-    }
-    override def imageName(imageName: String): ClusterCreator.this.type = {
-      request.imageName(imageName)
-      this
-    }
-    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
-      request.nodeNames(nodeNames)
-      this
-    }
-    override def settings(settings: Map[String, JsValue]): ClusterCreator.this.type = {
-      request.settings(settings)
-      this
-    }
-
-    def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
-      request.zookeeperClusterName(zookeeperClusterName)
-      this
-    }
-
-    @Optional("default is random port")
-    def clientPort(clientPort: Int): ClusterCreator = {
-      request.clientPort(clientPort)
-      this
-    }
-
-    @Optional("default is random port")
-    def exporterPort(exporterPort: Int): ClusterCreator = {
-      request.exporterPort(exporterPort)
-      this
-    }
-
-    @Optional("default is random port")
-    def jmxPort(jmxPort: Int): ClusterCreator = {
-      request.jmxPort(jmxPort)
-      this
-    }
-
-    override def create(): Future[BrokerClusterInfo] = {
+  trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] with BrokerApi.Request {
+    override def create(): Future[BrokerClusterInfo] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = request.creation
+        creation = creation
       )
-    }
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[BrokerClusterInfo]
   }

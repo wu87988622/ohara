@@ -107,7 +107,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .clientPort(clientPort)
           .electionPort(electionPort)
           .peerPort(peerPort)
-          .clusterName(clusterName)
+          .name(clusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
           .create()
       ))
@@ -126,7 +126,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
         brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .group(BrokerApi.BROKER_GROUP_DEFAULT)
-          .clusterName(clusterName)
+          .name(clusterName)
           .clientPort(clientPort)
           .exporterPort(exporterPort)
           .zookeeperClusterName(zkClusterName)

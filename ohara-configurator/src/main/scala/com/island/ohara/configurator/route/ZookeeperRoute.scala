@@ -74,7 +74,7 @@ object ZookeeperRoute {
           zkClusterInfo =>
             clusterCollie.zookeeperCollie.creator
               .settings(zkClusterInfo.settings)
-              .clusterName(zkClusterInfo.name)
+              .name(zkClusterInfo.name)
               .group(zkClusterInfo.group)
               .clientPort(zkClusterInfo.clientPort)
               .electionPort(zkClusterInfo.electionPort)

@@ -112,15 +112,11 @@ object FakeCollie {
   protected[agent] val key: ObjectKey = ObjectKey.of(group, clusterName)
   val FAKE_SERVICE_NAME: String = "fake"
   trait FakeClusterCreator extends Collie.ClusterCreator[FakeCollieClusterInfo] {
-    override def clusterName(clusterName: String): FakeClusterCreator.this.type =
-      throw new UnsupportedOperationException
     override def group(group: String): FakeClusterCreator.this.type =
       throw new UnsupportedOperationException
     override def imageName(imageName: String): FakeClusterCreator.this.type =
       throw new UnsupportedOperationException
     override def nodeNames(nodeNames: Set[String]): FakeClusterCreator.this.type =
-      throw new UnsupportedOperationException
-    def settings(settings: Map[String, JsValue]): FakeClusterCreator.this.type =
       throw new UnsupportedOperationException
   }
 }

@@ -58,12 +58,12 @@ class TestWorkerCreator extends OharaTest with Matchers {
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator().clusterName(null)
+    an[NullPointerException] should be thrownBy wkCreator().name(null)
   }
 
   @Test
   def emptyClusterName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy wkCreator().clusterName("")
+    an[IllegalArgumentException] should be thrownBy wkCreator().name("")
   }
 
   @Test
@@ -170,7 +170,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
   @Test
   def testNameLength(): Unit = wkCreator()
     .imageName(CommonUtils.randomString(10))
-    .clusterName(CommonUtils.randomString(10))
+    .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
     .brokerClusterName("bk")
     .clientPort(CommonUtils.availablePort())
@@ -190,7 +190,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
   @Test
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy wkCreator()
-      .clusterName(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
@@ -199,7 +199,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
   @Test
   def testMinimumCreator(): Unit = Await.result(
     wkCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
@@ -269,7 +269,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     )
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-      .clusterName("wk1")
+      .name("wk1")
       .group(CommonUtils.randomString(10))
       .clientPort(8083)
       .jmxPort(8084)
@@ -327,7 +327,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
       .result(
         fakeWorkerCollie.creator
           .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-          .clusterName(wkName)
+          .name(wkName)
           .group(CommonUtils.randomString(10))
           .clientPort(8083)
           .jmxPort(8084)
@@ -397,7 +397,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     Await.result(
       fakeWorkerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-        .clusterName("wk1")
+        .name("wk1")
         .group(CommonUtils.randomString(10))
         .clientPort(8083)
         .jmxPort(8084)
@@ -419,7 +419,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     an[NoSuchClusterException] should be thrownBy Await.result(
       fakeWorkerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-        .clusterName("wk1")
+        .name("wk1")
         .group(CommonUtils.randomString(10))
         .clientPort(8083)
         .jmxPort(8084)

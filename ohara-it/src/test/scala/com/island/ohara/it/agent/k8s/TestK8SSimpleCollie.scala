@@ -530,7 +530,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .group(group)
-        .clusterName(clusterName)
+        .name(clusterName)
         .clientPort(clientPort)
         .peerPort(peerPort)
         .electionPort(electionPort)
@@ -549,7 +549,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(
       brokerCollie.creator
         .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-        .clusterName(cluseterName)
+        .name(cluseterName)
         .group(BrokerApi.BROKER_GROUP_DEFAULT)
         .clientPort(clientPort)
         .exporterPort(exporterPort)
@@ -567,7 +567,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(
       workerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-        .clusterName(clusterName)
+        .name(clusterName)
         .group(WorkerApi.WORKER_GROUP_DEFAULT)
         .clientPort(clientPort)
         .brokerClusterName(brokerClusterName)

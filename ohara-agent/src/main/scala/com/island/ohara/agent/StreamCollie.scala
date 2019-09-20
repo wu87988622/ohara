@@ -20,15 +20,13 @@ import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
-import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -269,88 +267,18 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
 }
 
 object StreamCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
-    private[this] val request = StreamApi.access.request
-
-    override def clusterName(clusterName: String): ClusterCreator.this.type = {
-      request.name(clusterName)
-      this
-    }
-    override def group(group: String): ClusterCreator.this.type = {
-      request.group(group)
-      this
-    }
-    override def imageName(imageName: String): ClusterCreator.this.type = {
-      request.imageName(imageName)
-      this
-    }
-    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
-      request.nodeNames(nodeNames)
-      this
-    }
-    @Optional("default is empty map")
-    def settings(settings: Map[String, JsValue]): ClusterCreator.this.type = {
-      request.settings(settings)
-      this
-    }
-
-    /**
-      * set the jar url for the streamApp running
-      *
-      * @param jarInfo jar info
-      * @return this creator
-      */
-    def jarInfo(jarInfo: FileInfo): ClusterCreator = {
-      request.jarInfo(jarInfo)
-      // Since the jarKey is required in API, we fill the "required" field by jarInfo
-      request.jarKey(jarInfo.key)
-      this
-    }
-
-    def brokerCluster(cluster: BrokerClusterInfo): ClusterCreator = {
-      brokerClusterName(cluster.name)
-      connectionProps(cluster.connectionProps)
-    }
-
-    def brokerClusterName(brokerClusterName: String): ClusterCreator = {
-      request.brokerClusterName(brokerClusterName)
-      this
-    }
-
-    def connectionProps(connectionProps: String): ClusterCreator = {
-      request.connectionProps(connectionProps)
-      this
-    }
-
-    def jmxPort(jmxPort: Int): ClusterCreator = {
-      request.jmxPort(jmxPort)
-      this
-    }
-
-    def fromTopicKey(fromTopicKey: TopicKey): ClusterCreator = fromTopicKeys(Set(fromTopicKey))
-
-    def fromTopicKeys(fromTopicKeys: Set[TopicKey]): ClusterCreator = {
-      request.fromTopicKeys(fromTopicKeys)
-      this
-    }
-
-    def toTopicKey(toTopicKey: TopicKey): ClusterCreator = toTopicKeys(Set(toTopicKey))
-
-    def toTopicKeys(toTopicKeys: Set[TopicKey]): ClusterCreator = {
-      request.toTopicKeys(toTopicKeys)
-      this
-    }
-
+  trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] with StreamApi.Request {
     override def create(): Future[StreamClusterInfo] = {
+      val request = creation
       // TODO: the to/from topics should not be empty in building creation ... However, our stream route
       // allowed user to enter empty for both fields... With a view to keeping the compatibility
       // we have to move the check from "parsing json" to "running cluster"
       // I'd say it is inconsistent to our cluster route ... by chia
-      CommonUtils.requireNonEmpty(request.creation.fromTopicKeys.asJava)
-      CommonUtils.requireNonEmpty(request.creation.toTopicKeys.asJava)
+      CommonUtils.requireNonEmpty(request.fromTopicKeys.asJava)
+      CommonUtils.requireNonEmpty(request.toTopicKeys.asJava)
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = request.creation
+        creation = request
       )
     }
 

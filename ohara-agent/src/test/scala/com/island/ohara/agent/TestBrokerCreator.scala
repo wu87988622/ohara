@@ -69,12 +69,12 @@ class TestBrokerCreator extends OharaTest with Matchers {
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator().clusterName(null)
+    an[NullPointerException] should be thrownBy bkCreator().name(null)
   }
 
   @Test
   def emptyClusterName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy bkCreator().clusterName("")
+    an[IllegalArgumentException] should be thrownBy bkCreator().name("")
   }
 
   @Test
@@ -125,7 +125,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
   @Test
   def testNameLength(): Unit = bkCreator()
     .imageName(CommonUtils.randomString(10))
-    .clusterName(CommonUtils.randomString(10))
+    .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
     .zookeeperClusterName("zk")
     .exporterPort(CommonUtils.availablePort())
@@ -136,7 +136,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
   @Test
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy bkCreator()
-      .clusterName(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString)
@@ -145,7 +145,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
   @Test
   def testMinimumCreator(): Unit = Await.result(
     bkCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
@@ -180,7 +180,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
     val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty)
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .clusterName("cluster123")
+      .name("cluster123")
       .group(CommonUtils.randomString(10))
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName("zk123456")
@@ -202,7 +202,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
 
     val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty) //Zk container set empty
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .clusterName("cluster123")
+      .name("cluster123")
       .group(CommonUtils.randomString(10))
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
@@ -258,7 +258,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
     Await
       .result(
         brokerCollie.creator
-          .clusterName("bk1")
+          .name("bk1")
           .group(CommonUtils.randomString(10))
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
@@ -315,7 +315,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
     val brokerCollie = new FakeBrokerCollie(Seq(node1, node2), zkContainers, bkContainers)
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .clusterName("bk1")
+      .name("bk1")
       // In FakeBrokerCollie, we create a cluster without specified group
       // we should use default group here to fetch the same cluster
       .group(BrokerApi.BROKER_GROUP_DEFAULT)
@@ -356,7 +356,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
     val brokerCollie = new FakeBrokerCollie(Seq(node1, node2), containers, Seq.empty)
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .clusterName("cluster123")
+      .name("cluster123")
       .group(CommonUtils.randomString(10))
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)

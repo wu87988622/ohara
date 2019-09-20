@@ -20,12 +20,11 @@ import java.util.Objects
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import spray.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -328,66 +327,11 @@ object Collie {
     * Note: the checking rules are moved to the api-creation level.
     * @tparam T Cluster information type
     */
-  trait ClusterCreator[T <: ClusterInfo] extends com.island.ohara.common.pattern.Creator[Future[T]] {
+  trait ClusterCreator[T <: ClusterInfo]
+      extends com.island.ohara.common.pattern.Creator[Future[T]]
+      with ClusterRequest {
 
     protected var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-
-    /**
-      * set the cluster group
-      *
-      * @param group cluster group
-      * @return this creator
-      */
-    def group(group: String): ClusterCreator.this.type
-
-    /**
-      * set the cluster name
-      *
-      * @param clusterName cluster name
-      * @return this creator
-      */
-    def clusterName(clusterName: String): ClusterCreator.this.type
-
-    /**
-      * set the image name used to create cluster's container
-      *
-      * @param imageName image name
-      * @return this creator
-      */
-    def imageName(imageName: String): ClusterCreator.this.type
-
-    /**
-      *  set the node name
-      *
-      * @param nodeName node name
-      * @return this creator
-      */
-    def nodeName(nodeName: String): ClusterCreator.this.type = nodeNames(Set(nodeName))
-
-    /**
-      * set the node names
-      *
-      * @param nodeNames node name list
-      * @return this creator
-      */
-    def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type
-
-    /**
-      * add a key-value data map for container
-      *
-      * @param key data key
-      * @param value data value
-      * @return this creator
-      */
-    def setting(key: String, value: JsValue): ClusterCreator.this.type = settings(Map(key -> value))
-
-    /**
-      * add settings data for container
-      *
-      * @param settings data settings
-      * @return this creator
-      */
-    def settings(settings: Map[String, JsValue]): ClusterCreator.this.type
 
     /**
       * set the thread pool used to create cluster by async call

@@ -70,7 +70,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
         .nodeNames(nodes.map(_.name).toSet)
-        .clusterName(name)
+        .name(name)
         .create()
     )
     catch {
@@ -109,7 +109,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
         .nodeNames(nodes.map(_.name).toSet)
-        .clusterName(nameHolder.generateClusterName())
+        .name(nameHolder.generateClusterName())
         .create()
     )
 
@@ -133,7 +133,7 @@ class TestListCluster extends IntegrationTest with Matchers {
           .clientPort(CommonUtils.availablePort())
           .exporterPort(CommonUtils.availablePort())
           .nodeNames(nodes.map(_.name).toSet)
-          .clusterName(name)
+          .name(name)
           .zookeeperClusterName(zkCluster.name)
           .create()
       )

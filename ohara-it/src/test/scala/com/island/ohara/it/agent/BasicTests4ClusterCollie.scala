@@ -53,7 +53,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     zkCollie.creator
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .group(group)
-      .clusterName(clusterName)
+      .name(clusterName)
       .clientPort(clientPort)
       .peerPort(peerPort)
       .electionPort(electionPort)
@@ -93,7 +93,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     bkCollie.creator
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .group(group)
-      .clusterName(clusterName)
+      .name(clusterName)
       .clientPort(clientPort)
       .exporterPort(exporterPort)
       .jmxPort(jmxPort)
@@ -137,7 +137,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-      .clusterName(clusterName)
+      .name(clusterName)
       .group(group)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
@@ -165,7 +165,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-      .clusterName(clusterName)
+      .name(clusterName)
       .group(group)
       .clientPort(clientPort)
       .jmxPort(jmxPort)

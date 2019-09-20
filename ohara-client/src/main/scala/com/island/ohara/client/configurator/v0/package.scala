@@ -47,6 +47,10 @@ package object v0 {
     */
   val TAGS_KEY: String = "tags"
 
+  /**
+    * Noted: there are other two definition having "nodeNames""
+    * 1) StreamDefinitions.NODE_NAMES_DEFINITION
+    */
   val NODE_NAMES_KEY: String = "nodeNames"
   val IMAGE_NAME_KEY: String = "imageName"
   val CLUSTER_KEY: String = "cluster"

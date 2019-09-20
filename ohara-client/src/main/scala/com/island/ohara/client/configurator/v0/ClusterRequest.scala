@@ -21,13 +21,12 @@ import spray.json.{JsArray, JsString, JsValue}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * This is the basic cluster api request object.
   * A minimum request must set the nodeName.
   */
-trait ClusterRequest[T <: ClusterInfo] {
+trait ClusterRequest {
   protected val settings: mutable.Map[String, JsValue] = mutable.Map()
 
   @Optional("default name is a random string. But it is required in updating")
@@ -54,18 +53,4 @@ trait ClusterRequest[T <: ClusterInfo] {
     this.settings ++= settings
     this
   }
-
-  /**
-    * generate the POST request
-    * @param executionContext thread pool
-    * @return created data
-    */
-  def create()(implicit executionContext: ExecutionContext): Future[T]
-
-  /**
-    * generate the PUT request
-    * @param executionContext execution context
-    * @return updated/created data
-    */
-  def update()(implicit executionContext: ExecutionContext): Future[T]
 }

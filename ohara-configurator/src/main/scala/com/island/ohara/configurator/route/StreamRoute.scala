@@ -294,12 +294,13 @@ private[configurator] object StreamRoute {
                 // these settings will send to container environment
                 // we convert all value to string for convenient
                   .settings(streamClusterInfo.settings)
-                  .clusterName(streamClusterInfo.name)
+                  .name(streamClusterInfo.name)
                   .group(streamClusterInfo.group)
                   .imageName(streamClusterInfo.imageName)
                   .nodeNames(streamClusterInfo.nodeNames)
                   .jarInfo(fileInfo)
-                  .brokerCluster(brokerClusterInfo)
+                  .brokerClusterName(brokerClusterInfo.name)
+                  .connectionProps(brokerClusterInfo.connectionProps)
                   // This is a temporary solution for "enable exactly once",
                   // but we should change the behavior to not just "true or false"...by Sam
                   .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),

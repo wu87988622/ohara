@@ -137,6 +137,7 @@ if [[ ! -z "$WORKER_JAR_URLS" ]]; then
   IFS=','
   read -ra ADDR <<< "$WORKER_JAR_URLS"
   for i in "${ADDR[@]}"; do
+    echo "start to download jar:$i"
     wget $i -P $KAFKA_HOME/libs
   done
 fi

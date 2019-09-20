@@ -271,61 +271,65 @@ object WorkerApi {
 
   /**
     * used to generate the payload and url for POST/PUT request.
+    * this request is extended by collie also so it is public than sealed.
     */
-  sealed trait Request extends ClusterRequest[WorkerClusterInfo] {
+  trait Request extends ClusterRequest {
 
     @Optional("the default port is random")
-    def clientPort(clientPort: Int): Request =
+    def clientPort(clientPort: Int): Request.this.type =
       setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
 
     @Optional("the default port is random")
-    def jmxPort(jmxPort: Int): Request = setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
+    def jmxPort(jmxPort: Int): Request.this.type =
+      setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
 
     @Optional("Ignoring the name will invoke an auto-mapping to existent broker cluster")
-    def brokerClusterName(brokerClusterName: String): Request =
+    def brokerClusterName(brokerClusterName: String): Request.this.type =
       setting(BROKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
 
     @Optional("the default port is random")
-    def groupId(groupId: String): Request = setting(GROUP_ID_KEY, JsString(CommonUtils.requireNonEmpty(groupId)))
+    def groupId(groupId: String): Request.this.type =
+      setting(GROUP_ID_KEY, JsString(CommonUtils.requireNonEmpty(groupId)))
     @Optional("the default port is random")
-    def statusTopicName(statusTopicName: String): Request =
+    def statusTopicName(statusTopicName: String): Request.this.type =
       setting(STATUS_TOPIC_NAME_KEY, JsString(CommonUtils.requireNonEmpty(statusTopicName)))
     @Optional("the default number is 1")
-    def statusTopicPartitions(statusTopicPartitions: Int): Request =
+    def statusTopicPartitions(statusTopicPartitions: Int): Request.this.type =
       setting(STATUS_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(statusTopicPartitions)))
     @Optional("the default number is 1")
-    def statusTopicReplications(statusTopicReplications: Short): Request =
+    def statusTopicReplications(statusTopicReplications: Short): Request.this.type =
       setting(STATUS_TOPIC_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(statusTopicReplications)))
     @Optional("the default number is random")
-    def configTopicName(configTopicName: String): Request =
+    def configTopicName(configTopicName: String): Request.this.type =
       setting(CONFIG_TOPIC_NAME_KEY, JsString(CommonUtils.requireNonEmpty(configTopicName)))
     @Optional("the default number is 1")
-    def configTopicReplications(configTopicReplications: Short): Request =
+    def configTopicReplications(configTopicReplications: Short): Request.this.type =
       setting(CONFIG_TOPIC_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(configTopicReplications)))
-    def offsetTopicName(offsetTopicName: String): Request =
+    def offsetTopicName(offsetTopicName: String): Request.this.type =
       setting(OFFSET_TOPIC_NAME_KEY, JsString(CommonUtils.requireNonEmpty(offsetTopicName)))
     @Optional("the default number is 1")
-    def offsetTopicPartitions(offsetTopicPartitions: Int): Request =
+    def offsetTopicPartitions(offsetTopicPartitions: Int): Request.this.type =
       setting(OFFSET_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(offsetTopicPartitions)))
     @Optional("the default number is 1")
-    def offsetTopicReplications(offsetTopicReplications: Short): Request =
+    def offsetTopicReplications(offsetTopicReplications: Short): Request.this.type =
       setting(OFFSET_TOPIC_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(offsetTopicReplications)))
     @Optional("the default value is empty")
-    def jarKeys(jarKeys: Set[ObjectKey]): Request =
+    def jarKeys(jarKeys: Set[ObjectKey]): Request.this.type =
       setting(JAR_KEYS_KEY, JsArray(jarKeys.map(ObjectKey.toJsonString).map(_.parseJson).toVector))
     @Optional("the default value is empty")
-    def jarInfos(jarInfos: Seq[FileInfo]): Request =
+    def jarInfos(jarInfos: Seq[FileInfo]): Request.this.type =
       setting(JAR_INFOS_KEY, JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector))
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Map[String, JsValue]): Request = setting(TAGS_KEY, JsObject(tags))
+    def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))
 
     /**
       * set the port to pre-bind by this worker cluster
       * @param port port to pre-bind
       * @return this request
       */
-    def freePort(port: Int): Request = freePorts(Set(port))
-    def freePorts(ports: Set[Int]): Request = setting(FREE_PORTS_KEY, JsArray(ports.map(JsNumber(_)).toVector))
+    def freePort(port: Int): Request.this.type = freePorts(Set(port))
+    def freePorts(ports: Set[Int]): Request.this.type =
+      setting(FREE_PORTS_KEY, JsArray(ports.map(JsNumber(_)).toVector))
 
     /**
       * Creation instance includes many useful parsers for custom settings so we open it to code with a view to reusing
@@ -343,9 +347,18 @@ object WorkerApi {
       WORKER_UPDATING_JSON_FORMAT.read(WORKER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
+  /**
+    * similar to Request but it has execution methods.
+    *
+    */
+  sealed trait ExecutableRequest extends Request {
+    def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo]
+    def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo]
+  }
+
   final class Access private[WorkerApi]
       extends ClusterAccess[Creation, Updating, WorkerClusterInfo](WORKER_PREFIX_PATH) {
-    def request: Request = new Request {
+    def request: ExecutableRequest = new ExecutableRequest {
 
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)
 

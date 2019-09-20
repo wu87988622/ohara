@@ -55,12 +55,12 @@ class TestZookeeperCreator extends OharaTest with Matchers {
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator().clusterName(null)
+    an[NullPointerException] should be thrownBy zkCreator().name(null)
   }
 
   @Test
   def emptyClusterName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy zkCreator().clusterName("")
+    an[IllegalArgumentException] should be thrownBy zkCreator().name("")
   }
 
   @Test
@@ -100,7 +100,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
 
   @Test
   def testNameLength(): Unit = zkCreator()
-    .clusterName(CommonUtils.randomString(10))
+    .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
     .imageName(CommonUtils.randomString(10))
     .peerPort(CommonUtils.availablePort())
@@ -112,7 +112,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
   @Test
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy zkCreator()
-      .clusterName(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
@@ -121,7 +121,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
   @Test
   def testInvalidGroup(): Unit =
     an[DeserializationException] should be thrownBy zkCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
@@ -148,7 +148,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
   @Test
   def testMinimumCreator(): Unit = Await.result(
     zkCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
@@ -175,7 +175,7 @@ class TestZookeeperCreator extends OharaTest with Matchers {
     val zookeeperCollie = new FakeZookeeperCollie(NodeCollie(Seq(node1, node2)))
 
     val zkCreator: Future[ZookeeperClusterInfo] = zookeeperCollie.creator
-      .clusterName("cluster1")
+      .name("cluster1")
       .group("group1")
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .clientPort(2181)

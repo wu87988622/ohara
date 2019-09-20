@@ -19,17 +19,15 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import spray.json.{JsString, JsValue}
+import spray.json.JsString
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -147,6 +145,8 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                       // the sync mechanism in kafka needs to know each other location.
                       // the key controls the hostname exposed to other nodes.
                         + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name)
+                      // define the urls as string list so as to simplify the script for worker
+                        + (WorkerCollie.JAR_URLS_KEY -> creation.jarInfos.map(_.url.toURI.toASCIIString).mkString(","))
                       // we convert all settings to specific string in order to fetch all settings from
                       // container env quickly. Also, the specific string enable us to pick up the "true" settings
                       // from envs since there are many system-defined settings in container envs.
@@ -314,112 +314,14 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 }
 
 object WorkerCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] val request = WorkerApi.access.request
-
-    override def clusterName(clusterName: String): ClusterCreator.this.type = {
-      request.name(clusterName)
-      this
-    }
-    override def group(group: String): ClusterCreator.this.type = {
-      request.group(group)
-      this
-    }
-    override def imageName(imageName: String): ClusterCreator.this.type = {
-      request.imageName(imageName)
-      this
-    }
-    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
-      request.nodeNames(nodeNames)
-      this
-    }
-    override def settings(settings: Map[String, JsValue]): ClusterCreator.this.type = {
-      request.settings(settings)
-      this
-    }
-
-    def brokerClusterName(name: String): ClusterCreator = {
-      request.brokerClusterName(name)
-      this
-    }
-
-    def clientPort(clientPort: Int): ClusterCreator = {
-      request.clientPort(clientPort)
-      this
-    }
-
-    def groupId(groupId: String): ClusterCreator = {
-      request.groupId(groupId)
-      this
-    }
-
-    def offsetTopicName(offsetTopicName: String): ClusterCreator = {
-      request.offsetTopicName(offsetTopicName)
-      this
-    }
-
-    def offsetTopicReplications(offsetTopicReplications: Short): ClusterCreator = {
-      request.offsetTopicReplications(offsetTopicReplications)
-      this
-    }
-
-    def offsetTopicPartitions(offsetTopicPartitions: Int): ClusterCreator = {
-      request.offsetTopicPartitions(offsetTopicPartitions)
-      this
-    }
-
-    def statusTopicName(statusTopicName: String): ClusterCreator = {
-      request.statusTopicName(statusTopicName)
-      this
-    }
-
-    def statusTopicReplications(statusTopicReplications: Short): ClusterCreator = {
-      request.statusTopicReplications(statusTopicReplications)
-      this
-    }
-
-    def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator = {
-      request.statusTopicPartitions(statusTopicPartitions)
-      this
-    }
-
-    def configTopicName(configTopicName: String): ClusterCreator = {
-      request.configTopicName(configTopicName)
-      this
-    }
-
-    def configTopicReplications(configTopicReplications: Short): ClusterCreator = {
-      request.configTopicReplications(configTopicReplications)
-      this
-    }
-
-    @Optional("default is empty")
-    def jarInfos(jarInfos: Seq[FileInfo]): ClusterCreator = {
-      // skip the empty array to avoid generating weird string to env
-      if (jarInfos.nonEmpty) {
-        request
-          .jarInfos(jarInfos)
-          // The URLs don't follow the json representation since we use this string in bash and we don't want
-          // to make a complicated parse process in bash.
-          .setting(JAR_URLS_KEY, JsString(jarInfos.map(_.url.toURI.toASCIIString).mkString(",")))
-      }
-      this
-    }
-
-    @Optional("default is random port")
-    def jmxPort(jmxPort: Int): ClusterCreator = {
-      request.jmxPort(jmxPort)
-      this
-    }
-
-    override def create(): Future[WorkerClusterInfo] = {
+  trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] with WorkerApi.Request {
+    override def create(): Future[WorkerClusterInfo] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = request.creation
+        creation = creation
       )
-    }
 
-    protected def doCreate(executionContext: ExecutionContext, creation: WorkerApi.Creation): Future[WorkerClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[WorkerClusterInfo]
   }
   private[agent] val BROKERS_KEY: String = "WORKER_BROKERS"
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"

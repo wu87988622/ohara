@@ -90,7 +90,7 @@ object BrokerRoute {
                 s"zk cluster:${brokerClusterInfo.zookeeperClusterName} is already used by broker cluster:${sameZkNameClusters.head.name}")
             clusterCollie.brokerCollie.creator
               .settings(brokerClusterInfo.settings)
-              .clusterName(brokerClusterInfo.name)
+              .name(brokerClusterInfo.name)
               .group(brokerClusterInfo.group)
               .clientPort(brokerClusterInfo.clientPort)
               .exporterPort(brokerClusterInfo.exporterPort)

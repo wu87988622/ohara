@@ -56,13 +56,13 @@ class TestStreamCreator extends OharaTest with Matchers {
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().clusterName(null)
+    an[NullPointerException] should be thrownBy streamCreator().name(null)
   }
 
   @Test
   def IllegalClusterName(): Unit = {
     an[DeserializationException] should be thrownBy streamCreator()
-      .clusterName("!@#$-")
+      .name("!@#$-")
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString(10))
@@ -122,7 +122,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   @Test
   def testNameLength(): Unit = {
     streamCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
@@ -135,7 +135,7 @@ class TestStreamCreator extends OharaTest with Matchers {
 
     // name + group length > 100
     an[DeserializationException] should be thrownBy streamCreator()
-      .clusterName(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
@@ -150,7 +150,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   @Test
   def testInvalidGroup(): Unit =
     an[DeserializationException] should be thrownBy streamCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
@@ -191,7 +191,7 @@ class TestStreamCreator extends OharaTest with Matchers {
     // could set jmx port
     result(
       streamCreator()
-        .clusterName(CommonUtils.randomString(10))
+        .name(CommonUtils.randomString(10))
         .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
@@ -208,7 +208,7 @@ class TestStreamCreator extends OharaTest with Matchers {
     val jarInfo = fileInfo(new URL("http://localhost:12345/group/abc.jar"))
     val res = result(
       streamCreator()
-        .clusterName(CommonUtils.randomString(10))
+        .name(CommonUtils.randomString(10))
         .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
@@ -225,7 +225,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   @Test
   def ignoreFromTopic(): Unit = an[IllegalArgumentException] should be thrownBy
     streamCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
@@ -238,7 +238,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   @Test
   def ignoreToTopic(): Unit = an[IllegalArgumentException] should be thrownBy
     streamCreator()
-      .clusterName(CommonUtils.randomString(10))
+      .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
@@ -255,7 +255,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   def ignoreJmxPort(): Unit = CommonUtils.requireConnectionPort(
     result(
       streamCreator()
-        .clusterName(CommonUtils.randomString(10))
+        .name(CommonUtils.randomString(10))
         .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())

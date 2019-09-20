@@ -190,8 +190,9 @@ object ZookeeperApi {
 
   /**
     * used to generate the payload and url for POST/PUT request.
+    * this request is extended by collie also so it is public than sealed.
     */
-  sealed trait Request extends ClusterRequest[ZookeeperClusterInfo] {
+  trait Request extends ClusterRequest {
     @Optional("the default port is random")
     def clientPort(clientPort: Int): Request.this.type =
       setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
@@ -223,9 +224,18 @@ object ZookeeperApi {
       ZOOKEEPER_UPDATING_JSON_FORMAT.read(ZOOKEEPER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
+  /**
+    * similar to Request but it has execution methods.
+    *
+    */
+  sealed trait ExecutableRequest extends Request {
+    def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo]
+    def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo]
+  }
+
   final class Access private[ZookeeperApi]
       extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
-    def request: Request = new Request {
+    def request: ExecutableRequest = new ExecutableRequest {
 
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = post(creation)
 

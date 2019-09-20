@@ -22,10 +22,9 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{Creation, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
-import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import spray.json.{JsString, JsValue}
+import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -205,54 +204,12 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
 }
 
 object ZookeeperCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {
-    private[this] val request = ZookeeperApi.access.request
-
-    override def clusterName(clusterName: String): ClusterCreator.this.type = {
-      request.name(clusterName)
-      this
-    }
-    override def group(group: String): ClusterCreator.this.type = {
-      request.group(group)
-      this
-    }
-    override def imageName(imageName: String): ClusterCreator.this.type = {
-      request.imageName(imageName)
-      this
-    }
-    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
-      request.nodeNames(nodeNames)
-      this
-    }
-    override def settings(settings: Map[String, JsValue]): ClusterCreator.this.type = {
-      request.settings(settings)
-      this
-    }
-
-    @Optional("default is random port")
-    def clientPort(clientPort: Int): ClusterCreator = {
-      request.clientPort(clientPort)
-      this
-    }
-
-    @Optional("default is random port")
-    def peerPort(peerPort: Int): ClusterCreator = {
-      request.peerPort(peerPort)
-      this
-    }
-
-    @Optional("default is random port")
-    def electionPort(electionPort: Int): ClusterCreator = {
-      request.electionPort(electionPort)
-      this
-    }
-
-    override def create(): Future[ZookeeperClusterInfo] = {
+  trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] with ZookeeperApi.Request {
+    override def create(): Future[ZookeeperClusterInfo] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = request.creation
+        creation = creation
       )
-    }
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[ZookeeperClusterInfo]
   }

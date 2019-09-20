@@ -313,7 +313,7 @@ class TestStreamRoute extends OharaTest with Matchers {
         .jarInfo(fileInfo)
         .nodeName(CommonUtils.randomString(5))
         .imageName(CommonUtils.randomString())
-        .clusterName(name)
+        .name(name)
         .group(CommonUtils.randomString(10))
         .brokerClusterName(CommonUtils.randomString())
         .setting(key, value)

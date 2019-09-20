@@ -196,21 +196,23 @@ object BrokerApi {
 
   /**
     * used to generate the payload and url for POST/PUT request.
+    * this request is extended by collie also so it is public than sealed.
     */
-  sealed trait Request extends ClusterRequest[BrokerClusterInfo] {
+  trait Request extends ClusterRequest {
     @Optional("Ignoring zookeeper cluster name enable server to match a zk for you")
-    def zookeeperClusterName(zookeeperClusterName: String): Request =
+    def zookeeperClusterName(zookeeperClusterName: String): Request.this.type =
       setting(ZOOKEEPER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(zookeeperClusterName)))
     @Optional("the default port is random")
-    def clientPort(clientPort: Int): Request =
+    def clientPort(clientPort: Int): Request.this.type =
       setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
     @Optional("the default port is random")
-    def exporterPort(exporterPort: Int): Request =
+    def exporterPort(exporterPort: Int): Request.this.type =
       setting(EXPORTER_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(exporterPort)))
     @Optional("the default port is random")
-    def jmxPort(jmxPort: Int): Request = setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
+    def jmxPort(jmxPort: Int): Request.this.type =
+      setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Map[String, JsValue]): Request = setting(TAGS_KEY, JsObject(tags))
+    def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))
 
     /**
       * broker information creation.
@@ -231,9 +233,17 @@ object BrokerApi {
       BROKER_UPDATING_JSON_FORMAT.read(BROKER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
+  /**
+    * similar to Request but it has execution methods.
+    */
+  sealed trait ExecutableRequest extends Request {
+    def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
+    def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
+  }
+
   final class Access private[BrokerApi]
       extends ClusterAccess[Creation, Updating, BrokerClusterInfo](BROKER_PREFIX_PATH) {
-    def request: Request = new Request {
+    def request: ExecutableRequest = new ExecutableRequest {
 
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)
 
