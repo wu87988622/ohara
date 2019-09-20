@@ -268,8 +268,13 @@ const WorkerNewModal = props => {
     const checkResult = res => {
       return 'RUNNING' === get(res, 'data.result.state', null);
     };
+    const prefix = window.servicePrefix ? window.servicePrefix : '';
 
-    const zookeeperName = generate.serviceName();
+    const zookeeperName = generate.serviceName({
+      prefix: `${prefix}zk`,
+      length: 5,
+    });
+
     const zookeeperPostParams = {
       name: zookeeperName,
       clientPort: generate.port(),
@@ -293,7 +298,11 @@ const WorkerNewModal = props => {
     setActiveStep(1);
     saveService({ service: 'zookeeper', name: zookeeperName });
 
-    const brokerClusterName = generate.serviceName();
+    const brokerClusterName = generate.serviceName({
+      prefix: `${prefix}bk`,
+      length: 5,
+    });
+
     const brokerPostParams = {
       name: brokerClusterName,
       zookeeperClusterName: zookeeperName,

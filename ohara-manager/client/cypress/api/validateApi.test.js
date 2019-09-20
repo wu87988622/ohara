@@ -105,6 +105,7 @@ describe('Validate API', () => {
         'connector.class': connector.className,
         topicKeys: [{ group: 'default', name: topicName }],
         workerClusterName,
+        'jio.binding.port': generate.port(),
       };
 
       cy.validateConnector(params).then(response => {

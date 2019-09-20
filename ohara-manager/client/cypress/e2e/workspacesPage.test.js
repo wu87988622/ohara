@@ -48,7 +48,11 @@ describe('WorkspacesPage', () => {
       length: 3,
     });
 
-    cy.visit(WORKSPACES)
+    cy.visit(WORKSPACES, {
+      onBeforeLoad(win) {
+        win.servicePrefix = prefix; // Add prefix for generated services
+      },
+    })
       .getByText('New workspace')
       .click()
       .getByPlaceholderText('cluster00')
