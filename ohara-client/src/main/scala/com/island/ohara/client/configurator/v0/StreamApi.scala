@@ -79,8 +79,7 @@ object StreamApi {
 
     override def ports: Set[Int] = Set(jmxPort)
 
-    // TODO: the creation should carry the jar key ... by chia
-    def jarKey: Option[ObjectKey] = settings.jarKey
+    def jarKey: ObjectKey = settings.jarKey.get
 
     /**
       * exposed to StreamCollie
@@ -102,7 +101,13 @@ object StreamApi {
     // the following checkers is a part of global cluster checks.
     // We don't reuse the global checks since streamapp accept empty/null nodeNames ... by chia
     basicRulesOfKey[Creation](STREAM_GROUP_DEFAULT)
+      .format(new RootJsonFormat[Creation] {
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
+      })
       .rejectEmptyString()
+      // jarKey is required in creation
+      .requireKey(StreamDefUtils.JAR_KEY_DEFINITION.key())
       .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:
       // xxx/cluster/{name}/{node}
@@ -114,10 +119,6 @@ object StreamApi {
       .nullToString(IMAGE_NAME_KEY, IMAGE_NAME_DEFAULT)
       .nullToEmptyObject(TAGS_KEY)
       //----------------------------------------//
-      .format(new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
-      })
       .nullToRandomPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
       //TODO remove this default value after #2288
       .nullToEmptyArray(StreamDefUtils.NODE_NAMES_DEFINITION.key())
@@ -231,7 +232,7 @@ object StreamApi {
       * Normally, the key should be equal to jar info
       * @return key of jar
       */
-    def jarKey: ObjectKey = settings.jarKey.get
+    def jarKey: ObjectKey = settings.jarKey
 
     def jarInfo: FileInfo = settings.jarInfo.get
 
@@ -282,8 +283,11 @@ object StreamApi {
       setting(StreamDefUtils.IMAGE_NAME_DEFINITION.key(), JsString(CommonUtils.requireNonEmpty(imageName)))
     def jarKey(jarKey: ObjectKey): Request =
       setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarKey).parseJson)
-    def jarInfo(jarInfo: FileInfo): Request =
+    def jarInfo(jarInfo: FileInfo): Request = {
       setting(StreamDefUtils.JAR_INFO_DEFINITION.key(), FileInfoApi.FILE_INFO_JSON_FORMAT.write(jarInfo))
+      // Since the jarKey is required in API, we fill the "required" field by jarInfo
+      setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarInfo.key).parseJson)
+    }
     def fromTopicKey(fromTopicKey: TopicKey): Request = fromTopicKeys(Set(fromTopicKey))
     def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request =
       setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),

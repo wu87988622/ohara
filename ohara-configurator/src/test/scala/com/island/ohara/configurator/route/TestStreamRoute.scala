@@ -45,6 +45,7 @@ class TestStreamRoute extends OharaTest with Matchers {
   private[this] val accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] final val fakeKey: ObjectKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
 
@@ -388,13 +389,13 @@ class TestStreamRoute extends OharaTest with Matchers {
   @Test
   def testMixNodeNameAndInstancesInCreation(): Unit = {
     an[IllegalArgumentException] should be thrownBy
-      result(accessStream.request.nodeNames(nodes).instances(1).create())
+      result(accessStream.request.jarKey(fakeKey).nodeNames(nodes).instances(1).create())
 
     // pass
-    result(accessStream.request.instances(1).create())
+    result(accessStream.request.jarKey(fakeKey).instances(1).create())
 
     // pass too
-    result(accessStream.request.nodeNames(nodes).create())
+    result(accessStream.request.jarKey(fakeKey).nodeNames(nodes).create())
   }
 
   // TODO remove this test after #2288
@@ -492,7 +493,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(accessStream.request.name(info.name).group(info.group).nodeNames(nodes).update()).nodeNames shouldBe nodes
 
     // use different group will cause a create request
-    result(accessStream.request.name(info.name).group(CommonUtils.randomString(10)).update()).jmxPort should not be info.jmxPort
+    result(accessStream.request.name(info.name).group(CommonUtils.randomString(10)).jarKey(fakeKey).update()).jmxPort should not be info.jmxPort
   }
 
   @Test

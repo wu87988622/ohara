@@ -302,6 +302,8 @@ object StreamCollie {
       */
     def jarInfo(jarInfo: FileInfo): ClusterCreator = {
       request.jarInfo(jarInfo)
+      // Since the jarKey is required in API, we fill the "required" field by jarInfo
+      request.jarKey(jarInfo.key)
       this
     }
 

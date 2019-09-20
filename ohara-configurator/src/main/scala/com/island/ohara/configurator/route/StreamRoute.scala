@@ -83,18 +83,20 @@ private[configurator] object StreamRoute {
     * 3) find the single broker cluster
     * 4) throw exception
     */
-  private[this] def pickBrokerCluster(brokerClusterName: Option[String], jarKey: Option[ObjectKey])(
+  private[this] def pickBrokerCluster(brokerClusterName: Option[String], jarKey: ObjectKey)(
     implicit workerCollie: WorkerCollie,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext): Future[String] = if (brokerClusterName.isDefined)
     Future.successful(brokerClusterName.get)
-  else if (jarKey.isDefined) workerCollie.clusters().map(_.keys).flatMap { workerClusters =>
-    workerClusters
-      .find(_.name == jarKey.get.group())
-      .map(_.brokerClusterName)
-      .map(Future.successful)
-      .getOrElse(CollieUtils.singleCluster[BrokerClusterInfo]())
-  } else CollieUtils.singleCluster[BrokerClusterInfo]()
+  else {
+    workerCollie.clusters().map(_.keys).flatMap { workerClusters =>
+      workerClusters
+        .find(_.name == jarKey.group())
+        .map(_.brokerClusterName)
+        .map(Future.successful)
+        .getOrElse(CollieUtils.singleCluster[BrokerClusterInfo]())
+    }
+  }
 
   /**
     * This is a temporary solution for using both nodeNames and instances
@@ -155,10 +157,9 @@ private[configurator] object StreamRoute {
         //TODO remove this after #2288
         pickNodeNames(Some(creation.nodeNames), creation.instances).flatMap(
           nodes =>
-            creation.jarKey
-              .map(fileStore.fileInfo)
-              .map(_.map(_.url).flatMap(streamCollie.loadDefinition).map((_, Option.empty[String])))
-              .getOrElse(Future.successful((None, None)))
+            fileStore
+              .fileInfo(creation.jarKey)
+              .flatMap(info => streamCollie.loadDefinition(info.url).map((_, Option.empty[String])))
               .recover {
                 case e: Throwable => (None, Some(e.getMessage))
               }
@@ -195,8 +196,13 @@ private[configurator] object StreamRoute {
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped StreamApp cluster: $key")
-          pickBrokerCluster(update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName)),
-                            update.jarKey.orElse(previousOption.map(_.jarKey))).flatMap(
+          pickBrokerCluster(
+            update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName)),
+            // this resolving logic neglect if previous is None, and update has no jarKey specified
+            // Since this is a workaround for resolving "actual broker" for streamApp running,
+            // TODO: we will remove this workaround after #2151...by Sam
+            update.jarKey.orElse(previousOption.map(_.jarKey)).get
+          ).flatMap(
             bkName =>
               //TODO remove this after #2288
               pickNodeNames(update.nodeNames, update.instances).map { nodes =>
