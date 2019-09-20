@@ -139,6 +139,7 @@ object FakeWorkerClient {
     val classes = reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala ++ reflections
       .getSubTypesOf(classOf[RowSinkConnector])
       .asScala
+
     classes
     // the abstract class is not instantiable.
       .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
