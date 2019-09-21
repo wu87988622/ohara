@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.jio
+package com.island.ohara.it.connector.jio
+import com.island.ohara.connector.jio.BasicTestsOfJsonIn
+import com.island.ohara.it.category.SshConnectorGroup
+import org.junit.experimental.categories.Category
 
-import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.testing.WithBrokerWorker
-
-class TestJsonIn extends WithBrokerWorker with BasicTestsOfJsonIn {
-  override protected val workerClient: WorkerClient =
-    WorkerClient(testUtil.workersConnProps)
-
-  override protected val brokersConnProps: String = testUtil().brokersConnProps()
-
-  override protected val freePort: Int = CommonUtils.availablePort()
-}
+@Category(Array(classOf[SshConnectorGroup]))
+class TestJsonInOnSsh extends BasicIntegrationTestsOfJsonIoOnSsh with BasicTestsOfJsonIn

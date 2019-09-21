@@ -29,9 +29,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 object ConnectorTestUtils {
   private[this] val TIMEOUT = Duration.ofSeconds(60)
-  def assertFailedConnector(testUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit = CommonUtils.await(
+
+  def assertFailedConnector(testingUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit =
+    assertFailedConnector(testingUtil.workersConnProps(), connectorKey)
+
+  def assertFailedConnector(workersConnProps: String, connectorKey: ConnectorKey): Unit = CommonUtils.await(
     () => {
-      val client = WorkerClient(testUtil.workersConnProps)
+      val client = WorkerClient(workersConnProps)
       try Await.result(client.status(connectorKey), 10 seconds).connector.state == State.FAILED.name
       catch {
         case _: Throwable => false
@@ -40,17 +44,20 @@ object ConnectorTestUtils {
     TIMEOUT
   )
 
-  def checkConnector(testUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit = {
+  def checkConnector(testingUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit =
+    checkConnector(testingUtil.workersConnProps(), connectorKey)
+
+  def checkConnector(workersConnProps: String, connectorKey: ConnectorKey): Unit = {
     CommonUtils.await(
       () => {
-        val workerClient = WorkerClient(testUtil.workersConnProps)
+        val workerClient = WorkerClient(workersConnProps)
         Await.result(workerClient.activeConnectors(), 10 seconds).contains(connectorKey.connectorNameOnKafka())
       },
       TIMEOUT
     )
     CommonUtils.await(
       () => {
-        val workerClient = WorkerClient(testUtil.workersConnProps)
+        val workerClient = WorkerClient(workersConnProps)
         try Await.result(workerClient.status(connectorKey), 10 seconds).connector.state == State.RUNNING.name
         catch {
           case _: Throwable => false

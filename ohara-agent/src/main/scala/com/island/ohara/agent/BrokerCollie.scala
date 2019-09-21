@@ -99,7 +99,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
             zkContainers
               .flatMap(zkContainers => {
                 if (zkContainers.isEmpty)
-                  throw new IllegalArgumentException(s"${creation.name} zookeeper container doesn't exist")
+                  throw new IllegalArgumentException(s"zookeeper:${creation.zookeeperClusterName.get} does not exist")
                 val zookeepers = zkContainers
                   .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
                   .mkString(",")
