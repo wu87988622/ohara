@@ -19,7 +19,6 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.Statement
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Row, Serializer}
@@ -50,8 +49,6 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
     val column2 = RdbColumn("column2", "VARCHAR(45)", false)
     val column3 = RdbColumn("column3", "VARCHAR(45)", false)
     val column4 = RdbColumn("column4", "integer", true)
-    TopicApi.access.request.numberOfPartitions(1)
-    TopicApi.Updating
 
     client.createTable(tableName, Seq(column1, column2, column3, column4))
     val statement: Statement = db.connection.createStatement()
@@ -161,10 +158,6 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers
       poll5(1000).key.get.cell(2).value shouldBe "a1001-2"
 
       poll5(1001).key.get.cell(2).value shouldBe "a1002-2"
-
-      //Test repartition topic
-      TopicApi.access.request.numberOfPartitions(1)
-      TopicApi.Updating
 
       consumer.seekToBeginning() //Reset consumer
       val poll6 = consumer.poll(java.time.Duration.ofSeconds(30), 1002).asScala
