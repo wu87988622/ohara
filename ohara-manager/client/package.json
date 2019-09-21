@@ -24,7 +24,6 @@
   "dependencies": {
     "@material-ui/core": "4.3.3",
     "@material-ui/icons": "4.2.1",
-    "@material-ui/styles": "4.3.3",
     "@testing-library/cypress": "4.1.1",
     "@testing-library/jest-dom": "4.1.0",
     "@testing-library/react": "8.0.7",
