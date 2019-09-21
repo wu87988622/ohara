@@ -96,9 +96,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorDescription] =
     (creation: Creation) =>
       creation.workerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { clusterName =>
-        toRes(
-          creation.copy(
-            settings = access.request.settings(creation.settings).workerClusterName(clusterName).creation.settings))
+        toRes(new Creation(access.request.settings(creation.settings).workerClusterName(clusterName).creation.settings))
     }
 
   private[this] def HookOfUpdating(implicit workerCollie: WorkerCollie,

@@ -17,9 +17,9 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State._
-import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
+import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.common.data.{Column, DataType, Serializer}
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{PropGroups, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -72,7 +72,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     creation.settings.contains("className") shouldBe false
     creation.settings.contains("aaa") shouldBe false
     creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)) shouldBe creation
+    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)).settings shouldBe creation.settings
 
     val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
@@ -104,19 +104,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     creation2.settings.contains("className") shouldBe false
     creation2.settings.contains("aaa") shouldBe false
     creation2.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation2)) shouldBe creation2
-  }
-
-  @Test
-  def testSerialization(): Unit = {
-    val request = Creation(
-      settings = Map(
-        "abc" -> JsString("Asdasdasd"),
-        "ccc" -> JsNumber(312313),
-        "bbb" -> JsArray(JsString("Asdasdasd"), JsString("aaa")),
-        "ddd" -> JsObject("asdasd" -> JsString("Asdasdasd"))
-      ))
-    request shouldBe Serializer.OBJECT.from(Serializer.OBJECT.to(request)).asInstanceOf[BasicCreation]
+    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation2)).settings shouldBe creation2.settings
   }
 
   @Test

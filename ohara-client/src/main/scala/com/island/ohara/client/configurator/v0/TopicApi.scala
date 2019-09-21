@@ -242,7 +242,7 @@ object TopicApi {
     */
   val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
 
-  case class Updating private[TopicApi] (settings: Map[String, JsValue]) {
+  final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
     def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
 
     private[TopicApi] def numberOfPartitions: Option[Int] =
@@ -261,16 +261,16 @@ object TopicApi {
   implicit val TOPIC_UPDATING_FORMAT: RootJsonFormat[Updating] =
     JsonRefiner[Updating]
       .format(new RootJsonFormat[Updating] {
-        override def read(json: JsValue): Updating = Updating(noJsNull(json.asJsObject.fields))
+        override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
         override def write(obj: Updating): JsValue = JsObject(obj.settings)
       })
       .rejectEmptyString()
       .refine
 
-  case class Creation private[TopicApi] (settings: Map[String, JsValue])
+  final class Creation private[TopicApi] (val settings: Map[String, JsValue])
       extends com.island.ohara.client.configurator.v0.BasicCreation {
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = Updating(noJsNull(settings))
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     def key: TopicKey = TopicKey.of(group, name)
 
@@ -288,7 +288,7 @@ object TopicApi {
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(new RootJsonFormat[Creation] {
-      override def read(json: JsValue): Creation = Creation(noJsNull(json.asJsObject.fields))
+      override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
       override def write(obj: Creation): JsValue = JsObject(obj.settings)
     })
     .stringRestriction(Set(GROUP_KEY, NAME_KEY))
@@ -327,7 +327,7 @@ object TopicApi {
                        lastModified: Long)
       extends Data {
 
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(settings)
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: TopicKey = TopicKey.of(group, name)
     override def kind: String = "topic"
@@ -443,12 +443,12 @@ object TopicApi {
     final def creation: Creation =
       // rewrite the creation via format since the format will auto-complete the creation
       // this make the creaion is consistent to creation sent to server
-      TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(Creation(settings.toMap)))
+      TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     private[v0] final def updating: Updating =
       // rewrite the update via format since the format will auto-complete the creation
       // this make the update is consistent to creation sent to server
-      TOPIC_UPDATING_FORMAT.read(TOPIC_UPDATING_FORMAT.write(Updating(noJsNull(settings.toMap))))
+      TOPIC_UPDATING_FORMAT.read(TOPIC_UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
 
     /**
       * generate the POST request

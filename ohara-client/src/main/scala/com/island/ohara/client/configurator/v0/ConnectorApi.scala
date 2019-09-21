@@ -72,10 +72,10 @@ object ConnectorApi {
         State.forName(json.convertTo[String])
     }
 
-  final case class Creation(settings: Map[String, JsValue])
+  final class Creation(val settings: Map[String, JsValue])
       extends com.island.ohara.client.configurator.v0.BasicCreation {
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = Updating(noJsNull(settings))
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -105,7 +105,7 @@ object ConnectorApi {
   implicit val CONNECTOR_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(new RootJsonFormat[Creation] {
       override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
+      override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
     })
     // set the default number of tasks
     .nullToInt(NUMBER_OF_TASKS_KEY, DEFAULT_NUMBER_OF_TASKS)
@@ -153,7 +153,7 @@ object ConnectorApi {
     )
     .refine
 
-  final case class Updating(settings: Map[String, JsValue]) {
+  final class Updating(val settings: Map[String, JsValue]) {
     private[ConnectorApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     private[ConnectorApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
@@ -172,7 +172,7 @@ object ConnectorApi {
   implicit val CONNECTOR_UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner[Updating]
     .format(new RootJsonFormat[Updating] {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): Updating = Updating(json.asJsObject.fields)
+      override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
     // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
     // to users to save their life :)
@@ -203,7 +203,7 @@ object ConnectorApi {
                                         lastModified: Long)
       extends Data {
 
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(settings)
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: ConnectorKey = settings.key
 
@@ -305,10 +305,10 @@ object ConnectorApi {
       * @return creation object
       */
     final def creation: Creation =
-      CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(Creation(settings.toMap)))
+      CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     private[v0] final def updating: Updating =
-      CONNECTOR_UPDATING_FORMAT.read(CONNECTOR_UPDATING_FORMAT.write(Updating(noJsNull(settings.toMap))))
+      CONNECTOR_UPDATING_FORMAT.read(CONNECTOR_UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**
