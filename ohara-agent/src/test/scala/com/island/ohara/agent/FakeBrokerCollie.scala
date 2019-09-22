@@ -18,7 +18,6 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -28,22 +27,10 @@ private class FakeBrokerCollie(nodes: Seq[Node],
                                zkContainers: Seq[ContainerInfo],
                                bkExistContainers: Seq[ContainerInfo])
     extends BrokerCollie {
-  override protected def zookeeperClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future.successful(
-    Map(
-      ZookeeperClusterInfo(
-        settings = ZookeeperApi.access.request
-          .name(FakeBrokerCollie.zookeeperClusterName)
-          .nodeNames(nodes.map(_.hostname).toSet)
-          .creation
-          .settings,
-        deadNodes = Set.empty,
-        lastModified = 0L,
-        state = Some(ClusterState.RUNNING.name),
-        error = None
-      ) -> zkContainers,
-    )
-  )
+  protected override def zookeeperContainers(zkClusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    if (FakeBrokerCollie.zookeeperClusterName == zkClusterName) Future.successful(zkContainers)
+    else Future.failed(new NoSuchClusterException(s"$zkClusterName does not exist"))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,

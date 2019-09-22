@@ -21,7 +21,6 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, TopicApi, ZookeeperApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
@@ -212,14 +211,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
   protected def prefixKey: String
 
   /**
-    * Please implement this function to get Zookeeper cluster information
-    * @param executionContext execution context
-    * @return zookeeper cluster information
-    */
-  protected def zookeeperClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
-
-  /**
     * Update exist node info
     * @param node node object
     * @param container container information
@@ -309,20 +300,14 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
   }
 
   /**
-    * For check, zookeeper cluster exist. You can override this function to check zookeeper cluster info
+    * In creation progress, broker has to check the existence of zookeeper and then fetch something important from zookeeper
+    * containers.
     * @param zkClusterName zookeeper cluster name
     * @param executionContext execution context
     * @return
     */
-  private def zookeeperContainers(zkClusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-    zookeeperClusters.map(
-      _.filter(_._1.isInstanceOf[ZookeeperClusterInfo])
-        .find(_._1.name == zkClusterName)
-        .map(_._2)
-        .getOrElse(throw new NoSuchClusterException(s"zookeeper cluster:$zkClusterName doesn't exist"))
-    )
-  }
+  protected def zookeeperContainers(zkClusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 
   /**
     * there is new route to the node. the sub class can update the running container to apply new route.
