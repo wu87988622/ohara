@@ -45,12 +45,6 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(Map.empty)
 
-  override def doAddNode(
-    previousCluster: ZookeeperClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    throw new UnsupportedOperationException("Not support addNode function")
-
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support removeNode function")

@@ -38,12 +38,6 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.successful(true)
 
-  override protected def doAddNode(
-    previousCluster: FakeCollieClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[FakeCollieClusterInfo] =
-    Future.successful(FakeCollieClusterInfo(previousCluster.key, previousCluster.nodeNames ++ Seq(newNodeName), None))
-
   override protected def doRemove(clusterInfo: FakeCollieClusterInfo, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future.successful(true)
 

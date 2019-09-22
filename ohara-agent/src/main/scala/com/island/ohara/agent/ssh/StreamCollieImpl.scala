@@ -74,12 +74,6 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support remove node from a running cluster"))
 
-  override protected def doAddNode(
-    previousCluster: StreamClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-    Future.failed(new UnsupportedOperationException("stream collie doesn't support add node from a running cluster"))
-
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
 

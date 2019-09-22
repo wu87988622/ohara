@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{ClusterState, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.{NodeApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -46,7 +46,14 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     Future.successful(
       addCluster(
         WorkerClusterInfo(
-          settings = creation.settings,
+          settings = WorkerApi.access.request
+            .settings(creation.settings)
+            .nodeNames(creation.nodeNames ++ clusterCache.asScala
+              .find(_._1.key == creation.key)
+              .map(_._1.nodeNames)
+              .getOrElse(Set.empty))
+            .creation
+            .settings,
           connectors = FakeWorkerClient.localConnectorDefinitions,
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
@@ -60,7 +67,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     .successful(
       addCluster(
         previousCluster
-          .clone(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
+          .newNodeNames(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
           .asInstanceOf[WorkerClusterInfo]))
     .map(_ => true)
 
@@ -72,13 +79,6 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
       val r = fakeClientCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
     } else WorkerClient.builder.connectionProps(wkConnectionProps).build
-
-  override protected def doAddNode(
-    previousCluster: WorkerClusterInfo,
-    previousContainers: Seq[ContainerApi.ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    Future.successful(
-      addCluster(previousCluster.clone(previousCluster.nodeNames ++ Set(newNodeName)).asInstanceOf[WorkerClusterInfo]))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,

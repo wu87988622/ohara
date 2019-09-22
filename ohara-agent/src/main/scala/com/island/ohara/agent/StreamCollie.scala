@@ -49,7 +49,8 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
         if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.key == creation.key))
-          Future.failed(new IllegalArgumentException(s"stream cluster:${creation.key} exists!"))
+          Future.failed(
+            new UnsupportedOperationException(s"Streamapp cluster does NOT support to add new nodes at runtime"))
         else {
           val jarInfo = creation.jarInfo.getOrElse(throw new RuntimeException("jarInfo should be defined"))
           nodeCollie
@@ -123,6 +124,10 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                       )
                       doCreator(executionContext, containerName, containerInfo, node, route, creation.jmxPort, jarInfo)
                         .map(_ => Some(containerInfo))
+                        .recover {
+                          case _: Throwable =>
+                            None
+                        }
                   })
                   .map(_.flatten.toSeq)
                   .flatMap(

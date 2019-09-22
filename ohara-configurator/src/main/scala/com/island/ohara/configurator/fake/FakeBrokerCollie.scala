@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -47,7 +47,14 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     Future.successful(
       addCluster(
         BrokerClusterInfo(
-          settings = creation.settings,
+          settings = BrokerApi.access.request
+            .settings(creation.settings)
+            .nodeNames(creation.nodeNames ++ clusterCache.asScala
+              .find(_._1.key == creation.key)
+              .map(_._1.nodeNames)
+              .getOrElse(Set.empty))
+            .creation
+            .settings,
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
@@ -61,7 +68,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     .successful(
       addCluster(
         previousCluster
-          .clone(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
+          .newNodeNames(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
           .asInstanceOf[BrokerClusterInfo]))
     .map(_ => true)
 
@@ -73,12 +80,6 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
       val r = fakeAdminCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
     } else TopicAdmin(bkConnectionProps)
-
-  override protected def doAddNode(
-    previousCluster: BrokerClusterInfo,
-    previousContainers: Seq[ContainerApi.ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = Future.successful(
-    addCluster(previousCluster.clone(previousCluster.nodeNames ++ Set(newNodeName)).asInstanceOf[BrokerClusterInfo]))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,

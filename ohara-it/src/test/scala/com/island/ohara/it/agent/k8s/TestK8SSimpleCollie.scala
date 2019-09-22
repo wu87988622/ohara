@@ -117,8 +117,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       createZookeeperCollie(zookeeperCollie, clusterName, firstNode, clientPort, peerPort, electionPort)
 
     intercept[UnsupportedOperationException] {
-      result(zookeeperCollie.addNode(zookeeperClusterInfo.key, secondNode))
-    }.getMessage shouldBe "zookeeper collie doesn't support to add node from a running cluster"
+      result(zookeeperCollie.creator.settings(zookeeperClusterInfo.settings).nodeName(secondNode).create())
+    }.getMessage shouldBe "zookeeper collie doesn't support to add node to a running cluster"
 
     zookeeperClusterInfo.name shouldBe clusterName
     zookeeperClusterInfo.nodeNames.size shouldBe 1
@@ -241,7 +241,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
     waitBrokerCluster(brokerClusterInfo1.key)
     //Test add broker node
-    val brokerClusterInfo2: BrokerClusterInfo = result(brokerCollie.addNode(brokerClusterInfo1.key, secondNode))
+    val brokerClusterInfo2: BrokerClusterInfo = result(
+      brokerCollie.creator.settings(brokerClusterInfo1.settings).nodeName(secondNode).create())
 
     brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
     brokerClusterInfo2.connectionProps should include(s"$secondNode:$brokerClientPort")
@@ -291,7 +292,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       createWorkerCollie(workerCollie, workerClusterName, firstNode, workerClientPort, brokerClusterName)
     waitWorkerCluster(workerClusterInfo1.key)
     //Test add worker node
-    val workerClusterInfo2: WorkerClusterInfo = result(workerCollie.addNode(workerClusterInfo1.key, secondNode))
+    val workerClusterInfo2: WorkerClusterInfo = result(
+      workerCollie.creator.settings(workerClusterInfo1.settings).nodeName(secondNode).create())
     brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
     workerClusterInfo1.connectionProps shouldBe s"$firstNode:$workerClientPort"
     workerClusterInfo2.connectionProps should include(s"$secondNode:$workerClientPort")
@@ -324,7 +326,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     waitBrokerCluster(brokerClusterInfo.key)
     val firstContainerName: String = result(brokerCollie.cluster(brokerClusterName))._2.head.hostname
 
-    result(brokerCollie.addNode(brokerClusterInfo.key, secondNode))
+    result(brokerCollie.creator.settings(brokerClusterInfo.settings).nodeName(secondNode).create())
     // wait a period for k8s get latest pods information
     TimeUnit.SECONDS.sleep(10)
     result(brokerCollie.cluster(brokerClusterName))._2.size shouldBe 2
@@ -370,7 +372,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     waitWorkerCluster(workerClusterInfo.key)
     val firstContainerName: String = result(workerCollie.cluster(workerClusterName))._2.head.hostname
 
-    result(workerCollie.addNode(workerClusterInfo.key, secondNode))
+    result(workerCollie.creator.settings(workerClusterInfo.settings).nodeName(secondNode).create())
     // wait a period for k8s get latest pods information
     TimeUnit.SECONDS.sleep(10)
     result(workerCollie.cluster(workerClusterName))._2.size shouldBe 2

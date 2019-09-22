@@ -574,14 +574,17 @@ package object route {
         )
         // handle the node increment
         .hook { (key: ObjectKey, nodeName: String, _: Map[String, String]) =>
-          store.value[Cluster](key).flatMap { cluster =>
-            // A BIT hard-code here to reuse the checker :(
-            rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))
-            if (cluster.nodeNames.contains(nodeName)) Future.unit
-            else
-              collie
-                .addNode(key, nodeName)
-                .flatMap(_ => store.addIfPresent(cluster.clone(cluster.nodeNames + nodeName).asInstanceOf[Cluster]))
+          store.value[Cluster](key).flatMap {
+            cluster =>
+              // A BIT hard-code here to reuse the checker :(
+              rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))
+              collie.creator
+                .settings(cluster.settings)
+                .nodeName(nodeName)
+                .create()
+                // we have to update the nodeNames of stored cluster info. Otherwise, the following Get/List request
+                // will see the out-of-date nodeNames
+                .flatMap(_ => store.add(cluster.newNodeNames(cluster.nodeNames + nodeName)))
                 .flatMap(_ => Future.unit)
           }
         }
@@ -594,7 +597,8 @@ package object route {
             .map { cluster =>
               collie
                 .removeNode(key, nodeName)
-                .flatMap(_ => store.addIfPresent(cluster.clone(cluster.nodeNames - nodeName).asInstanceOf[Cluster]))
+                .flatMap(_ =>
+                  store.addIfPresent(cluster.newNodeNames(cluster.nodeNames - nodeName).asInstanceOf[Cluster]))
                 .flatMap(_ => Future.unit)
             }
             .getOrElse(Future.unit)

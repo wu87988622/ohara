@@ -72,12 +72,6 @@ private class FakeBrokerCollie(nodes: Seq[Node],
 
   override protected def resolveHostName(node: String): String = "1.1.1.1"
 
-  override protected def doAddNode(
-    previousCluster: BrokerClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    throw new UnsupportedOperationException("Not support addNode function")
-
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support removeNode function")

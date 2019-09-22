@@ -42,37 +42,6 @@ class TestCollie extends OharaTest with Matchers {
     validationReport = None,
     tags = Map.empty
   )
-  @Test
-  def testAddNodeNameUpperCase(): Unit = {
-    validErrorNodeName("Node1", "Your node name can't uppercase")
-  }
-
-  @Test
-  def testAddNodeNameEmpty(): Unit = {
-    validErrorNodeName("", "nodeName can't empty")
-  }
-
-  @Test
-  def testAddNodeNormal(): Unit = {
-    val nodeName1 = "node1"
-    val nodeName2 = "node2"
-
-    val node1 = node(nodeName1)
-    val node2 = node(nodeName2)
-
-    val container1 =
-      ContainerInfo(nodeName1, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx")
-
-    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1, node2)), Seq(container1))
-    val cluster = Await.result(fakeCollie.cluster(FakeCollie.key), TIMEOUT)
-    cluster._1.nodeNames.size shouldBe 1
-
-    val result: FakeCollieClusterInfo =
-      Await.result(fakeCollie.addNode(FakeCollie.key, nodeName2), TIMEOUT)
-    result.nodeNames.size shouldBe 2
-    result.nodeNames.contains("node1") shouldBe true
-    result.nodeNames.contains("node2") shouldBe true
-  }
 
   @Test
   def testRemoveEmptyNode(): Unit = {
@@ -132,27 +101,6 @@ class TestCollie extends OharaTest with Matchers {
     val fakeCollie = new FakeCollie(NodeCollie(Seq(node1, node2)), Seq(container1, container2))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, "node1")
     Await.result(removeNode, TIMEOUT) shouldBe true
-  }
-
-  private[this] def validErrorNodeName(nodeName: String, expectErrMsg: String): Unit = {
-    val node1 = node(nodeName)
-    val containerInfo =
-      ContainerInfo(node1.name,
-                    "0",
-                    "fakeimage",
-                    "",
-                    "RUNNING",
-                    "",
-                    "container1",
-                    "0",
-                    Seq(),
-                    Map(),
-                    s"xxx-${node1.name}")
-    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
-    val addNode: Future[FakeCollieClusterInfo] = fakeCollie.addNode(fakeClusterKey, nodeName)
-    intercept[IllegalArgumentException] {
-      Await.result(addNode, TIMEOUT)
-    }.getMessage shouldBe expectErrMsg
   }
 
   @Test

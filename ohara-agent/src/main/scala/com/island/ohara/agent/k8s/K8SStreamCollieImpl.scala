@@ -77,12 +77,6 @@ private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
     Future.failed(
       new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))
 
-  override protected def doAddNode(
-    previousCluster: StreamClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-    Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
-
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
 

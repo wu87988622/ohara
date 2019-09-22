@@ -79,105 +79,115 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         }
         .flatMap {
           case (existNodes, newNodes, brokerContainers) =>
-            brokerContainers.flatMap(brokerContainers => {
+            brokerContainers
+              .flatMap(brokerContainers => {
 
-              if (brokerContainers.isEmpty)
-                throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterName} doesn't exist")
-              val brokers = brokerContainers
-                .map(c => s"${c.nodeName}:${c.environments(BrokerApi.CLIENT_PORT_KEY).toInt}")
-                .mkString(",")
+                if (brokerContainers.isEmpty)
+                  throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterName} doesn't exist")
 
-              val route = resolveHostNames(
-                (existNodes.keys.map(_.hostname)
-                  ++ newNodes.keys.map(_.hostname)
-                  ++ brokerContainers.map(_.nodeName)).toSet
-                // make sure the worker can connect to configurator for downloading jars
-                // Normally, the jar host name should be resolvable by worker since
-                // we should add the "hostname" to configurator for most cases...
-                // This is for those configurators that have no hostname (for example, temp configurator)
-                  ++ creation.jarInfos.map(_.url.getHost).toSet)
-              existNodes.foreach {
-                case (node, container) => hookOfNewRoute(node, container, route)
-              }
+                if (newNodes.isEmpty) Future.successful(Seq.empty)
+                else {
+                  val brokers = brokerContainers
+                    .map(c => s"${c.nodeName}:${c.environments(BrokerApi.CLIENT_PORT_KEY).toInt}")
+                    .mkString(",")
 
-              // ssh connection is slow so we submit request by multi-thread
-              Future
-                .sequence(newNodes.map {
-                  case (node, containerName) =>
-                    val containerInfo = ContainerInfo(
-                      nodeName = node.name,
-                      id = Collie.UNKNOWN,
-                      imageName = creation.imageName,
-                      created = Collie.UNKNOWN,
-                      // this fake container will be cached before refreshing cache so we make it running.
-                      // other, it will be filtered later ...
-                      state = ContainerState.RUNNING.name,
-                      kind = Collie.UNKNOWN,
-                      name = containerName,
-                      size = Collie.UNKNOWN,
-                      portMappings = Seq(
-                        PortMapping(
-                          hostIp = Collie.UNKNOWN,
-                          portPairs = creation.ports
-                            .map(port =>
-                              PortPair(
-                                hostPort = port,
-                                containerPort = port
-                            ))
-                            .toSeq
-                        )),
-                      environments = creation.settings.map {
-                        case (k, v) =>
-                          k -> (v match {
-                            // the string in json representation has quote in the beginning and end.
-                            // we don't like the quotes since it obstruct us to cast value to pure string.
-                            case JsString(s) => s
-                            // save the json string for all settings
-                            // TODO: the setting required by worker scripts is either string or number. Hence, the other types
-                            // should be skipped... by chia
-                            case _ => CommonUtils.toEnvString(v.toString)
-                          })
-                        // TODO: put this setting into definition in #2191...by Sam
-                      } + (WorkerCollie.BROKERS_KEY -> brokers)
-                      // the default hostname is container name and it is not exposed publicly.
-                      // Hence, we have to set the jmx hostname to node name
-                        + (WorkerCollie.JMX_HOSTNAME_KEY -> node.hostname)
-                      // the sync mechanism in kafka needs to know each other location.
-                      // the key controls the hostname exposed to other nodes.
-                        + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name)
-                      // define the urls as string list so as to simplify the script for worker
-                        + (WorkerCollie.JAR_URLS_KEY -> creation.jarInfos.map(_.url.toURI.toASCIIString).mkString(","))
-                      // we convert all settings to specific string in order to fetch all settings from
-                      // container env quickly. Also, the specific string enable us to pick up the "true" settings
-                      // from envs since there are many system-defined settings in container envs.
-                        + toEnvString(creation.settings),
-                      hostname = containerName
-                    )
-                    doCreator(executionContext, containerName, containerInfo, node, route).map(_ => Some(containerInfo))
-                })
-                .map(_.flatten.toSeq)
-                .map {
-                  successfulContainers =>
-                    val nodeNames = creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(
-                      _.hostname)
-                    val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
-                    val clusterInfo = WorkerClusterInfo(
-                      settings =
-                        WorkerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
-                      connectors = Seq.empty,
-                      // no state means cluster is NOT running so we cleanup the dead nodes
-                      deadNodes = state
-                        .map(_ =>
-                          nodeNames -- successfulContainers.map(_.nodeName) -- existNodes.values.map(_.hostname))
-                        .getOrElse(Set.empty),
-                      state = state,
-                      error = None,
-                      lastModified = CommonUtils.current()
-                    )
-                    postCreateWorkerCluster(clusterInfo, successfulContainers)
-                    clusterInfo
+                  val route = resolveHostNames(
+                    (existNodes.keys.map(_.hostname)
+                      ++ newNodes.keys.map(_.hostname)
+                      ++ brokerContainers.map(_.nodeName)).toSet
+                    // make sure the worker can connect to configurator for downloading jars
+                    // Normally, the jar host name should be resolvable by worker since
+                    // we should add the "hostname" to configurator for most cases...
+                    // This is for those configurators that have no hostname (for example, temp configurator)
+                      ++ creation.jarInfos.map(_.url.getHost).toSet)
+                  existNodes.foreach {
+                    case (node, container) => hookOfNewRoute(node, container, route)
+                  }
+
+                  // ssh connection is slow so we submit request by multi-thread
+                  Future.sequence(newNodes.map {
+                    case (node, containerName) =>
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = Collie.UNKNOWN,
+                        imageName = creation.imageName,
+                        created = Collie.UNKNOWN,
+                        // this fake container will be cached before refreshing cache so we make it running.
+                        // other, it will be filtered later ...
+                        state = ContainerState.RUNNING.name,
+                        kind = Collie.UNKNOWN,
+                        name = containerName,
+                        size = Collie.UNKNOWN,
+                        portMappings = Seq(
+                          PortMapping(
+                            hostIp = Collie.UNKNOWN,
+                            portPairs = creation.ports
+                              .map(port =>
+                                PortPair(
+                                  hostPort = port,
+                                  containerPort = port
+                              ))
+                              .toSeq
+                          )),
+                        environments = creation.settings.map {
+                          case (k, v) =>
+                            k -> (v match {
+                              // the string in json representation has quote in the beginning and end.
+                              // we don't like the quotes since it obstruct us to cast value to pure string.
+                              case JsString(s) => s
+                              // save the json string for all settings
+                              // TODO: the setting required by worker scripts is either string or number. Hence, the other types
+                              // should be skipped... by chia
+                              case _ => CommonUtils.toEnvString(v.toString)
+                            })
+                          // TODO: put this setting into definition in #2191...by Sam
+                        } + (WorkerCollie.BROKERS_KEY -> brokers)
+                        // the default hostname is container name and it is not exposed publicly.
+                        // Hence, we have to set the jmx hostname to node name
+                          + (WorkerCollie.JMX_HOSTNAME_KEY -> node.hostname)
+                        // the sync mechanism in kafka needs to know each other location.
+                        // the key controls the hostname exposed to other nodes.
+                          + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name)
+                        // define the urls as string list so as to simplify the script for worker
+                          + (WorkerCollie.JAR_URLS_KEY -> creation.jarInfos
+                            .map(_.url.toURI.toASCIIString)
+                            .mkString(","))
+                        // we convert all settings to specific string in order to fetch all settings from
+                        // container env quickly. Also, the specific string enable us to pick up the "true" settings
+                        // from envs since there are many system-defined settings in container envs.
+                          + toEnvString(creation.settings),
+                        hostname = containerName
+                      )
+                      doCreator(executionContext, containerName, containerInfo, node, route)
+                        .map(_ => Some(containerInfo))
+                        .recover {
+                          case _: Throwable =>
+                            None
+                        }
+                  })
                 }
-            })
+              })
+              .map(_.flatten.toSeq)
+              .map {
+                successfulContainers =>
+                  val nodeNames = creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(
+                    _.hostname)
+                  val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
+                  val clusterInfo = WorkerClusterInfo(
+                    settings =
+                      WorkerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
+                    connectors = Seq.empty,
+                    // no state means cluster is NOT running so we cleanup the dead nodes
+                    deadNodes = state
+                      .map(_ => nodeNames -- successfulContainers.map(_.nodeName) -- existNodes.values.map(_.hostname))
+                      .getOrElse(Set.empty),
+                    state = state,
+                    error = None,
+                    lastModified = CommonUtils.current()
+                  )
+                  postCreateWorkerCluster(clusterInfo, successfulContainers)
+                  clusterInfo
+              }
         }
     })
   }

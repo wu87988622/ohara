@@ -88,7 +88,15 @@ trait Collie[T <: ClusterInfo] {
   def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
 
   /**
-    * create a cluster creator
+    * create a cluster creator. The subclass should have following rules.
+    * 1) create an new cluster if there is no specific cluster
+    * 2) add new nodes to a running cluster if there is a running cluster and the new nodes is different from running nodes
+    * for example, running nodes are a0 and a1, and the new settings carries a1 and a2. The sub class should assume user
+    * want to add an new node "a2" to the running cluster.
+    * 3) otherwise, does nothing.
+    *
+    * However, it probably throw exception in facing 2) condition if the cluster does NOT support to add node at runtime
+    * (for example, zookeeper).
     * @return creator of cluster
     */
   def creator: ClusterCreator[T]
@@ -160,39 +168,6 @@ trait Collie[T <: ClusterInfo] {
     */
   def nonExist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     exist(key).map(!_)
-
-  /**
-    * add a node to a running cluster
-    * NOTED: this is a async operation since graceful adding a node to a running service may be slow.
-    * @param key cluster key
-    * @param nodeName node name
-    * @return updated cluster
-    */
-  final def addNode(key: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    cluster(key).flatMap {
-      case (cluster, containers) =>
-        if (Objects.isNull(key))
-          Future.failed(new IllegalArgumentException("clusterName can't empty"))
-        else if (CommonUtils.isEmpty(nodeName))
-          Future.failed(new IllegalArgumentException("nodeName can't empty"))
-        else if (CommonUtils.hasUpperCase(nodeName))
-          Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
-        else if (cluster.nodeNames.contains(nodeName))
-          // the new node is running so we don't need to do anything for this method
-          Future.successful(cluster)
-        else doAddNode(cluster, containers, nodeName)
-    }
-
-  /**
-    * do the add actually. Normally, the sub-class doesn't need to check the existence of removed node.
-    * @param previousCluster previous cluster
-    * @param previousContainers previous container
-    * @param newNodeName new node
-    * @param executionContext thread pool
-    * @return true if success. otherwise, false
-    */
-  protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T]
 
   /**
     * remove a node from a running cluster.

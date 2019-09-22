@@ -82,7 +82,7 @@ trait ClusterInfo extends Data {
     * this is a small helper method used to update the node names for cluster info
     * @return updated cluster info
     */
-  def clone(newNodeNames: Set[String]): ClusterInfo = this match {
+  def newNodeNames(newNodeNames: Set[String]): ClusterInfo = this match {
     case c: ZookeeperClusterInfo =>
       c.copy(settings = ZookeeperApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
     case c: BrokerClusterInfo =>

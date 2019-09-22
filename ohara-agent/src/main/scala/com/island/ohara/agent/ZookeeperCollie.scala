@@ -50,7 +50,8 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
     clusters().flatMap(
       clusters => {
         if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.key == creation.key))
-          Future.failed(new IllegalArgumentException(s"zookeeper cluster:${creation.key} exists!"))
+          Future.failed(
+            new UnsupportedOperationException(s"zookeeper collie doesn't support to add node to a running cluster"))
         else
           nodeCollie
             .nodes(creation.nodeNames)
@@ -116,8 +117,12 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                         // node name here can save our life to solve the connection problem...
                         hostname = node.name
                       )
-                      doCreator(executionContext, containerName, containerInfo, node, route).map(_ =>
-                        Some(containerInfo))
+                      doCreator(executionContext, containerName, containerInfo, node, route)
+                        .map(_ => Some(containerInfo))
+                        .recover {
+                          case _: Throwable =>
+                            None
+                        }
                   })
                   .map(_.flatten.toSeq)
                   .map {

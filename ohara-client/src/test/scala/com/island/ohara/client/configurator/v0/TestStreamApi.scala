@@ -59,7 +59,7 @@ class TestStreamApi extends OharaTest with Matchers {
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
-    streamClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
+    streamClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test

@@ -99,78 +99,86 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
               .flatMap(zkContainers => {
                 if (zkContainers.isEmpty)
                   throw new IllegalArgumentException(s"zookeeper:${creation.zookeeperClusterName.get} does not exist")
-                val zookeepers = zkContainers
-                  .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
-                  .mkString(",")
+                if (newNodes.isEmpty) Future.successful(Seq.empty)
+                else {
+                  val zookeepers = zkContainers
+                    .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
+                    .mkString(",")
 
-                val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys
-                  .map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
-                existNodes.foreach {
-                  case (node, container) => hookOfNewRoute(node, container, route)
-                }
+                  val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys
+                    .map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
+                  existNodes.foreach {
+                    case (node, container) => hookOfNewRoute(node, container, route)
+                  }
 
-                // the new broker node can't take used id so we find out the max id which is used by current cluster
-                val maxId: Int =
-                  if (existNodes.isEmpty) 0
-                  else existNodes.values.map(_.environments(BrokerApi.ID_KEY).toInt).toSet.max + 1
+                  // the new broker node can't take used id so we find out the max id which is used by current cluster
+                  val maxId: Int =
+                    if (existNodes.isEmpty) 0
+                    else existNodes.values.map(_.environments(BrokerApi.ID_KEY).toInt).toSet.max + 1
 
-                // ssh connection is slow so we submit request by multi-thread
-                Future.sequence(newNodes.zipWithIndex.map {
-                  case ((node, containerName), index) =>
-                    val containerInfo = ContainerInfo(
-                      nodeName = node.name,
-                      id = Collie.UNKNOWN,
-                      imageName = creation.imageName,
-                      created = Collie.UNKNOWN,
-                      // this fake container will be cached before refreshing cache so we make it running.
-                      // other, it will be filtered later ...
-                      state = ContainerState.RUNNING.name,
-                      kind = Collie.UNKNOWN,
-                      name = containerName,
-                      size = Collie.UNKNOWN,
-                      portMappings = Seq(PortMapping(
-                        hostIp = Collie.UNKNOWN,
-                        portPairs = Seq(
-                          PortPair(
-                            hostPort = creation.clientPort,
-                            containerPort = creation.clientPort
-                          ),
-                          PortPair(
-                            hostPort = creation.exporterPort,
-                            containerPort = creation.exporterPort
-                          ),
-                          PortPair(
-                            hostPort = creation.jmxPort,
-                            containerPort = creation.jmxPort
+                  // ssh connection is slow so we submit request by multi-thread
+                  Future.sequence(newNodes.zipWithIndex.map {
+                    case ((node, containerName), index) =>
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = Collie.UNKNOWN,
+                        imageName = creation.imageName,
+                        created = Collie.UNKNOWN,
+                        // this fake container will be cached before refreshing cache so we make it running.
+                        // other, it will be filtered later ...
+                        state = ContainerState.RUNNING.name,
+                        kind = Collie.UNKNOWN,
+                        name = containerName,
+                        size = Collie.UNKNOWN,
+                        portMappings = Seq(PortMapping(
+                          hostIp = Collie.UNKNOWN,
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = creation.clientPort,
+                              containerPort = creation.clientPort
+                            ),
+                            PortPair(
+                              hostPort = creation.exporterPort,
+                              containerPort = creation.exporterPort
+                            ),
+                            PortPair(
+                              hostPort = creation.jmxPort,
+                              containerPort = creation.jmxPort
+                            )
                           )
-                        )
-                      )),
-                      environments = creation.settings.map {
-                        case (k, v) =>
-                          k -> (v match {
-                            // the string in json representation has quote in the beginning and end.
-                            // we don't like the quotes since it obstruct us to cast value to pure string.
-                            case JsString(s) => s
-                            // save the json string for all settings
-                            case _ => CommonUtils.toEnvString(v.toString)
-                          })
-                      }
-                      // each broker instance needs an unique id to identify
-                        + (BrokerApi.ID_KEY -> (maxId + index).toString)
-                      // connect to user defined zookeeper cluster
-                        + (BrokerApi.ZOOKEEPERS_KEY -> zookeepers)
-                      // expose the borker hostname for zookeeper to register
-                        + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> node.hostname)
-                      // jmx exporter host name
-                        + (BrokerApi.JMX_HOSTNAME_KEY -> node.hostname)
-                      // we convert all settings to specific string in order to fetch all settings from
-                      // container env quickly. Also, the specific string enable us to pick up the "true" settings
-                      // from envs since there are many system-defined settings in container envs.
-                        + toEnvString(creation.settings),
-                      hostname = containerName
-                    )
-                    doCreator(executionContext, containerName, containerInfo, node, route).map(_ => Some(containerInfo))
-                })
+                        )),
+                        environments = creation.settings.map {
+                          case (k, v) =>
+                            k -> (v match {
+                              // the string in json representation has quote in the beginning and end.
+                              // we don't like the quotes since it obstruct us to cast value to pure string.
+                              case JsString(s) => s
+                              // save the json string for all settings
+                              case _ => CommonUtils.toEnvString(v.toString)
+                            })
+                        }
+                        // each broker instance needs an unique id to identify
+                          + (BrokerApi.ID_KEY -> (maxId + index).toString)
+                        // connect to user defined zookeeper cluster
+                          + (BrokerApi.ZOOKEEPERS_KEY -> zookeepers)
+                        // expose the borker hostname for zookeeper to register
+                          + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> node.hostname)
+                        // jmx exporter host name
+                          + (BrokerApi.JMX_HOSTNAME_KEY -> node.hostname)
+                        // we convert all settings to specific string in order to fetch all settings from
+                        // container env quickly. Also, the specific string enable us to pick up the "true" settings
+                        // from envs since there are many system-defined settings in container envs.
+                          + toEnvString(creation.settings),
+                        hostname = containerName
+                      )
+                      doCreator(executionContext, containerName, containerInfo, node, route)
+                        .map(_ => Some(containerInfo))
+                        .recover {
+                          case _: Throwable =>
+                            None
+                        }
+                  })
+                }
               })
               .map(_.flatten.toSeq)
               .map {

@@ -40,7 +40,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       lastModified = CommonUtils.current(),
       topicSettingDefinitions = Seq.empty
     )
-    brokerClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
+    brokerClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test

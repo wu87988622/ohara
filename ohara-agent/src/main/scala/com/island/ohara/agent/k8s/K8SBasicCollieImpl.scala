@@ -34,15 +34,6 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
   protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[T]
 
-  override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] =
-    // create the cluster with more nodes again. the creation progress handles the "add" than "creation" by default
-    creator
-      .settings(previousCluster.settings)
-      .nodeNames(previousCluster.nodeNames + newNodeName)
-      .threadPool(executionContext)
-      .create()
-
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
     Future.sequence(containerInfos.map(c => k8sClient.remove(c.name))).map(_.nonEmpty)

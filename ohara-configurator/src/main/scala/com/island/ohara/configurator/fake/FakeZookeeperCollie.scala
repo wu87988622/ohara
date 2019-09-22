@@ -24,31 +24,30 @@ import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import scala.collection.JavaConverters._
+
 private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     extends FakeCollie[ZookeeperClusterInfo](node)
     with ZookeeperCollie {
   override def creator: ZookeeperCollie.ClusterCreator = (_, creation) =>
-    Future.successful(
-      addCluster(
-        ZookeeperClusterInfo(
-          settings = creation.settings,
-          deadNodes = Set.empty,
-          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
-          error = None,
-          lastModified = CommonUtils.current()
-        )))
+    if (clusterCache.asScala.exists(_._1.key == creation.key))
+      Future.failed(new IllegalArgumentException(s"zookeeper can't increase nodes at runtime"))
+    else
+      Future.successful(
+        addCluster(
+          ZookeeperClusterInfo(
+            settings = creation.settings,
+            deadNodes = Set.empty,
+            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+            state = Some(ClusterState.RUNNING.name),
+            error = None,
+            lastModified = CommonUtils.current()
+          )))
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
-
-  override protected def doAddNode(
-    previousCluster: ZookeeperClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
-    new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,

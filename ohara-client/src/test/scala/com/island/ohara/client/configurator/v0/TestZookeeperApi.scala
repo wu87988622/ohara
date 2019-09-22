@@ -38,7 +38,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
       error = None,
       lastModified = CommonUtils.current()
     )
-    zookeeperClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
+    zookeeperClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test

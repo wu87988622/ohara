@@ -250,8 +250,7 @@ class TestBrokerRoute extends OharaTest with Matchers {
     val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
     result(brokerApi.start(cluster.key))
 
-    result(brokerApi.addNode(cluster.key, nodeNames.last).flatMap(_ => brokerApi.get(cluster.key))).nodeNames shouldBe cluster.nodeNames ++ Set(
-      nodeNames.last)
+    result(brokerApi.addNode(cluster.key, nodeNames.last).flatMap(_ => brokerApi.get(cluster.key))).nodeNames shouldBe cluster.nodeNames + nodeNames.last
   }
 
   @Test

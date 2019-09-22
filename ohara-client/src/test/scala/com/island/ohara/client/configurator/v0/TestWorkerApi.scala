@@ -57,7 +57,7 @@ class TestWorkerApi extends OharaTest with Matchers {
       error = None,
       lastModified = CommonUtils.current()
     )
-    workerClusterInfo.clone(nodeNames).nodeNames shouldBe nodeNames
+    workerClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
   }
 
   @Test

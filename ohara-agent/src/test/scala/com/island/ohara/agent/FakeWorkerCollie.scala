@@ -86,12 +86,6 @@ class FakeWorkerCollie(nodes: Seq[Node],
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")
 
-  override protected def doAddNode(
-    previousCluster: WorkerClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")
-
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")

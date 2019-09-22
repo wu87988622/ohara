@@ -49,30 +49,27 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
 
   override def creator: StreamCollie.ClusterCreator =
     (_, creation) =>
-      Future.successful(
-        addCluster(
-          StreamApi.StreamClusterInfo(
-            settings = creation.settings,
-            // convert to list in order to be serializable
-            definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
-            deadNodes = Set.empty,
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ClusterState.RUNNING.name),
-            error = None,
-            metrics = Metrics.EMPTY,
-            lastModified = CommonUtils.current()
-          )))
+      if (clusterCache.asScala.exists(_._1.key == creation.key))
+        Future.failed(new IllegalArgumentException(s"streamapp can't increase nodes at runtime"))
+      else
+        Future.successful(
+          addCluster(
+            StreamApi.StreamClusterInfo(
+              settings = creation.settings,
+              // convert to list in order to be serializable
+              definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
+              deadNodes = Set.empty,
+              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+              state = Some(ClusterState.RUNNING.name),
+              error = None,
+              metrics = Metrics.EMPTY,
+              lastModified = CommonUtils.current()
+            )))
 
   override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))
-
-  override protected def doAddNode(
-    previousCluster: StreamClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-    Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,
