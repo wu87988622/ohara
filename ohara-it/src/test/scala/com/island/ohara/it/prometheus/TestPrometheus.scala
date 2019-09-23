@@ -110,6 +110,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .name(clusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
           .create()
+          .flatMap(_ => zookeeperCollie.cluster(clusterName).map(_._1))
       ))
     finally result(zookeeperCollie.remove(ObjectKey.of(ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT, clusterName)))
   }
@@ -132,6 +133,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .zookeeperClusterName(zkClusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
           .create()
+          .flatMap(_ => brokerCollie.cluster(clusterName).map(_._1))
       )
     )
     finally result(brokerCollie.remove(ObjectKey.of(BrokerApi.BROKER_GROUP_DEFAULT, clusterName)))

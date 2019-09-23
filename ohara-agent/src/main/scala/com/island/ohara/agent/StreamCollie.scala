@@ -158,7 +158,6 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                         lastModified = CommonUtils.current()
                       )
                       postCreateCluster(clusterInfo, successfulContainers)
-                      clusterInfo
                   }
             }
         }
@@ -272,8 +271,8 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
 }
 
 object StreamCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] with StreamApi.Request {
-    override def create(): Future[StreamClusterInfo] = {
+  trait ClusterCreator extends Collie.ClusterCreator with StreamApi.Request {
+    override def create(): Future[Unit] = {
       val request = creation
       // TODO: the to/from topics should not be empty in building creation ... However, our stream route
       // allowed user to enter empty for both fields... With a view to keeping the compatibility
@@ -287,7 +286,7 @@ object StreamCollie {
       )
     }
 
-    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[StreamClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }
 
   /**

@@ -23,7 +23,6 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
@@ -298,29 +297,6 @@ class TestStreamRoute extends OharaTest with Matchers {
     val streamDesc = result(accessStream.request.jarKey(fileInfo.key).setting(key, value).create())
     // the url is not illegal
     streamDesc.definition should not be None
-    streamDesc.settings(key) shouldBe value
-  }
-
-  @Test
-  def createStream(): Unit = {
-    import spray.json._
-    val name = CommonUtils.randomString(5)
-    val key = CommonUtils.randomString()
-    val value = JsString(CommonUtils.randomString())
-    val streamDesc = result(
-      configurator.clusterCollie.streamCollie.creator
-        .jarInfo(fileInfo)
-        .nodeName(CommonUtils.randomString(5))
-        .imageName(CommonUtils.randomString())
-        .name(name)
-        .group(CommonUtils.randomString(10))
-        .brokerClusterName(CommonUtils.randomString())
-        .setting(key, value)
-        .setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.availablePort()))
-        .setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
-        .setting(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
-        .create())
-    streamDesc.name shouldBe name
     streamDesc.settings(key) shouldBe value
   }
 

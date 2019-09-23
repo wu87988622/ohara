@@ -144,7 +144,6 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                         lastModified = CommonUtils.current()
                       )
                       postCreateZookeeperCluster(clusterInfo, successfulContainers)
-                      clusterInfo
                   }
             }
       })
@@ -209,13 +208,13 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
 }
 
 object ZookeeperCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] with ZookeeperApi.Request {
-    override def create(): Future[ZookeeperClusterInfo] =
+  trait ClusterCreator extends Collie.ClusterCreator with ZookeeperApi.Request {
+    override def create(): Future[Unit] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
 
-    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[ZookeeperClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }
 }

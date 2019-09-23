@@ -206,18 +206,17 @@ class TestStreamCreator extends OharaTest with Matchers {
   def testParseJarKey(): Unit = {
     //a normal url
     val jarInfo = fileInfo(new URL("http://localhost:12345/group/abc.jar"))
-    val res = result(
-      streamCreator()
-        .name(CommonUtils.randomString(10))
-        .group(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString())
-        .brokerClusterName(CommonUtils.randomString())
-        .nodeName(CommonUtils.randomString())
-        .fromTopicKey(topicKey())
-        .toTopicKey(topicKey())
-        .jmxPort(CommonUtils.availablePort())
-        .jarInfo(jarInfo)
-        .create())
+    val res = streamCreator()
+      .name(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString())
+      .brokerClusterName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString())
+      .fromTopicKey(topicKey())
+      .toTopicKey(topicKey())
+      .jmxPort(CommonUtils.availablePort())
+      .jarInfo(jarInfo)
+      .creation
     res.jarKey.group() shouldBe jarInfo.group
     res.jarKey.name() shouldBe jarInfo.name
   }
@@ -253,16 +252,16 @@ class TestStreamCreator extends OharaTest with Matchers {
     */
   @Test
   def ignoreJmxPort(): Unit = CommonUtils.requireConnectionPort(
-    result(
-      streamCreator()
-        .name(CommonUtils.randomString(10))
-        .group(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString())
-        .brokerClusterName(CommonUtils.randomString())
-        .jarInfo(fileInfo)
-        .fromTopicKey(topicKey())
-        .toTopicKey(topicKey())
-        .nodeName(CommonUtils.randomString())
-        .create()).jmxPort)
+    streamCreator()
+      .name(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString())
+      .brokerClusterName(CommonUtils.randomString())
+      .jarInfo(fileInfo)
+      .fromTopicKey(topicKey())
+      .toTopicKey(topicKey())
+      .nodeName(CommonUtils.randomString())
+      .creation
+      .jmxPort)
 
 }

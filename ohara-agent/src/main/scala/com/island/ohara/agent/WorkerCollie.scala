@@ -186,7 +186,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                     lastModified = CommonUtils.current()
                   )
                   postCreateWorkerCluster(clusterInfo, successfulContainers)
-                  clusterInfo
               }
         }
     })
@@ -324,14 +323,14 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 }
 
 object WorkerCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] with WorkerApi.Request {
-    override def create(): Future[WorkerClusterInfo] =
+  trait ClusterCreator extends Collie.ClusterCreator with WorkerApi.Request {
+    override def create(): Future[Unit] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
 
-    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[WorkerClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }
   private[agent] val BROKERS_KEY: String = "WORKER_BROKERS"
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"

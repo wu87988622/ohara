@@ -200,7 +200,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                     topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
                   )
                   postCreateBrokerCluster(clusterInfo, successfulContainers)
-                  clusterInfo
               }
         }
     })
@@ -327,13 +326,13 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
 object BrokerCollie {
 
-  trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] with BrokerApi.Request {
-    override def create(): Future[BrokerClusterInfo] =
+  trait ClusterCreator extends Collie.ClusterCreator with BrokerApi.Request {
+    override def create(): Future[Unit] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = creation
       )
 
-    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[BrokerClusterInfo]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }
 }

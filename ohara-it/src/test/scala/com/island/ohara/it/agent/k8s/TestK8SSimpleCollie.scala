@@ -242,7 +242,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     waitBrokerCluster(brokerClusterInfo1.key)
     //Test add broker node
     val brokerClusterInfo2: BrokerClusterInfo = result(
-      brokerCollie.creator.settings(brokerClusterInfo1.settings).nodeName(secondNode).create())
+      brokerCollie.creator
+        .settings(brokerClusterInfo1.settings)
+        .nodeName(secondNode)
+        .create()
+        .flatMap(_ => brokerCollie.cluster(brokerClusterInfo1.name).map(_._1)))
 
     brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
     brokerClusterInfo2.connectionProps should include(s"$secondNode:$brokerClientPort")
@@ -293,7 +297,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     waitWorkerCluster(workerClusterInfo1.key)
     //Test add worker node
     val workerClusterInfo2: WorkerClusterInfo = result(
-      workerCollie.creator.settings(workerClusterInfo1.settings).nodeName(secondNode).create())
+      workerCollie.creator
+        .settings(workerClusterInfo1.settings)
+        .nodeName(secondNode)
+        .create()
+        .flatMap(_ => workerCollie.cluster(workerClusterInfo1.name).map(_._1)))
     brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
     workerClusterInfo1.connectionProps shouldBe s"$firstNode:$workerClientPort"
     workerClusterInfo2.connectionProps should include(s"$secondNode:$workerClientPort")
@@ -537,35 +545,36 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .peerPort(peerPort)
         .electionPort(electionPort)
         .nodeName(nodeName)
-        .create())
+        .create()
+        .flatMap(_ => zookeeperCollie.cluster(ObjectKey.of(group, clusterName)).map(_._1)))
     waitZookeeperCluster(info.key)
     info
   }
 
   private[this] def createBrokerCollie(brokerCollie: BrokerCollie,
-                                       cluseterName: String,
+                                       clusterName: String,
                                        nodeNames: Set[String],
                                        clientPort: Int,
                                        exporterPort: Int,
-                                       zookeeperClusterName: String): BrokerClusterInfo = {
+                                       zookeeperClusterName: String): BrokerClusterInfo =
     result(
       brokerCollie.creator
         .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-        .name(cluseterName)
+        .name(clusterName)
         .group(BrokerApi.BROKER_GROUP_DEFAULT)
         .clientPort(clientPort)
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)
         .nodeNames(nodeNames)
         .jmxPort(CommonUtils.availablePort())
-        .create())
-  }
+        .create()
+        .flatMap(_ => brokerCollie.cluster(clusterName).map(_._1)))
 
   private[this] def createWorkerCollie(workerCollie: WorkerCollie,
                                        clusterName: String,
                                        nodeName: String,
                                        clientPort: Int,
-                                       brokerClusterName: String): WorkerClusterInfo = {
+                                       brokerClusterName: String): WorkerClusterInfo =
     result(
       workerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
@@ -585,8 +594,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .jmxPort(CommonUtils.availablePort())
         .nodeName(nodeName)
         .create()
-    )
-  }
+        .flatMap(_ => workerCollie.cluster(clusterName).map(_._1)))
 
   @After
   final def tearDown(): Unit = {

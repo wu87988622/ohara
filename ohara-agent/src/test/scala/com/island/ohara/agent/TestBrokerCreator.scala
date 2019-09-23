@@ -170,7 +170,9 @@ class TestBrokerCreator extends OharaTest with Matchers {
       lastModified = 0,
       topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
     )
-    Await.result(bkCreator().settings(brokerClusterInfo.settings).create(), 30 seconds) shouldBe brokerClusterInfo
+
+    // pass
+    Await.result(bkCreator().settings(brokerClusterInfo.settings).create(), 30 seconds)
   }
 
   @Test
@@ -179,19 +181,20 @@ class TestBrokerCreator extends OharaTest with Matchers {
     val node1 = node(node1Name)
     val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty)
 
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .name("cluster123")
-      .group(CommonUtils.randomString(10))
-      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-      .zookeeperClusterName("zk123456")
-      .clientPort(9092)
-      .exporterPort(9093)
-      .jmxPort(9094)
-      .nodeName(node1Name)
-      .create()
-
     an[NoSuchClusterException] should be thrownBy {
-      Await.result(bkCreator, TIMEOUT)
+      Await.result(
+        brokerCollie.creator
+          .name("cluster123")
+          .group(CommonUtils.randomString(10))
+          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+          .zookeeperClusterName("zk123456")
+          .clientPort(9092)
+          .exporterPort(9093)
+          .jmxPort(9094)
+          .nodeName(node1Name)
+          .create(),
+        TIMEOUT
+      )
     }
   }
 
@@ -201,75 +204,22 @@ class TestBrokerCreator extends OharaTest with Matchers {
     val node1 = node(node1Name)
 
     val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty) //Zk container set empty
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .name("cluster123")
-      .group(CommonUtils.randomString(10))
-      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
-      .clientPort(9092)
-      .exporterPort(9093)
-      .jmxPort(9094)
-      .nodeName(node1Name)
-      .create()
 
     an[IllegalArgumentException] should be thrownBy {
-      Await.result(bkCreator, TIMEOUT)
-    }
-  }
-
-  @Test
-  def testNodeIsRunningBroker(): Unit = {
-    val node1Name = "node1"
-    val node1 = node(node1Name)
-    val zkContainers = Seq(
-      ContainerInfo(
-        "node1",
-        "00000",
-        "zookeeper",
-        "2018-05-24 00:00:00",
-        "RUNNING",
-        "unknown",
-        "containername",
-        "",
-        Seq.empty,
-        Map(ZookeeperApi.CLIENT_PORT_KEY -> "2181"),
-        "host"
-      ))
-
-    val bkContainers = Seq(
-      ContainerInfo(
-        "node1",
-        "00000",
-        BrokerApi.IMAGE_NAME_DEFAULT,
-        "2018-05-24 00:00:00",
-        "RUNNING",
-        "unknown",
-        "containername",
-        "",
-        Seq.empty,
-        Map(BrokerApi.CLIENT_PORT_KEY -> "9092",
-            BrokerApi.ID_KEY -> "1",
-            BrokerApi.ZOOKEEPER_CLUSTER_NAME_KEY -> FakeBrokerCollie.zookeeperClusterName),
-        "host"
-      ))
-
-    val brokerCollie = new FakeBrokerCollie(Seq(node1), zkContainers, bkContainers)
-
-    Await
-      .result(
+      Await.result(
         brokerCollie.creator
-          .name("bk1")
+          .name("cluster123")
           .group(CommonUtils.randomString(10))
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
           .clientPort(9092)
           .exporterPort(9093)
           .jmxPort(9094)
-          .nodeName(node1Name) //node1 is running on a bk1
+          .nodeName(node1Name)
           .create(),
         TIMEOUT
       )
-      .nodeNames shouldBe Set(node1Name)
+    }
   }
 
   @Test
@@ -314,66 +264,22 @@ class TestBrokerCreator extends OharaTest with Matchers {
 
     val brokerCollie = new FakeBrokerCollie(Seq(node1, node2), zkContainers, bkContainers)
 
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .name("bk1")
-      // In FakeBrokerCollie, we create a cluster without specified group
-      // we should use default group here to fetch the same cluster
-      .group(BrokerApi.BROKER_GROUP_DEFAULT)
-      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
-      .clientPort(9092)
-      .jmxPort(9093)
-      .exporterPort(9094)
-      .imageName("brokerimage") //Docker image setting error
-      .nodeName(node2Name)
-      .create()
-
     an[IllegalArgumentException] shouldBe thrownBy {
-      Await.result(bkCreator, TIMEOUT)
+      Await.result(
+        brokerCollie.creator
+          .name("bk1")
+          // In FakeBrokerCollie, we create a cluster without specified group
+          // we should use default group here to fetch the same cluster
+          .group(BrokerApi.BROKER_GROUP_DEFAULT)
+          .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
+          .clientPort(9092)
+          .jmxPort(9093)
+          .exporterPort(9094)
+          .imageName("brokerimage") //Docker image setting error
+          .nodeName(node2Name)
+          .create(),
+        TIMEOUT
+      )
     }
   }
-
-  @Test
-  def testBkCreator(): Unit = {
-    val node1Name = "node1"
-    val node1 = node(node1Name)
-    val node2Name = "node2"
-    val node2 = node(node2Name)
-
-    val containers = Seq(
-      ContainerInfo(
-        "node1",
-        "00000",
-        "zookeeper",
-        "2018-05-24 00:00:00",
-        "RUNNING",
-        "unknown",
-        "containername",
-        "",
-        Seq.empty,
-        Map(ZookeeperApi.CLIENT_PORT_KEY -> "2181"),
-        "host"
-      ))
-    val brokerCollie = new FakeBrokerCollie(Seq(node1, node2), containers, Seq.empty)
-
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
-      .name("cluster123")
-      .group(CommonUtils.randomString(10))
-      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
-      .clientPort(9092)
-      .exporterPort(9093)
-      .jmxPort(9094)
-      .nodeNames(Set(node1Name, node2Name))
-      .create()
-
-    val result: BrokerClusterInfo = Await.result(bkCreator, TIMEOUT)
-    result.zookeeperClusterName shouldBe FakeBrokerCollie.zookeeperClusterName
-    result.nodeNames.size shouldBe 2
-    result.clientPort shouldBe 9092
-    result.exporterPort shouldBe 9093
-    result.jmxPort shouldBe 9094
-    result.connectionProps shouldBe "node1:9092,node2:9092"
-    result.ports.size shouldBe 3
-  }
-
 }

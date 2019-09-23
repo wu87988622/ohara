@@ -100,17 +100,18 @@ class TestListCluster extends IntegrationTest with Matchers {
 
   @Test
   def deadBrokerClusterShouldNotDisappear(): Unit = {
+    val zkName = nameHolder.generateClusterName()
     log.info("[TestListCluster] before create zk cluster")
     val zkCluster = result(
       clusterCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-        .group(BrokerApi.BROKER_GROUP_DEFAULT)
         .clientPort(CommonUtils.availablePort())
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
         .nodeNames(nodes.map(_.name).toSet)
-        .name(nameHolder.generateClusterName())
+        .name(zkName)
         .create()
+        .flatMap(_ => clusterCollie.zookeeperCollie.cluster(zkName).map(_._1))
     )
 
     log.info("[TestListCluster] before create bk cluster")

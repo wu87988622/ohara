@@ -99,7 +99,7 @@ trait Collie[T <: ClusterInfo] {
     * (for example, zookeeper).
     * @return creator of cluster
     */
-  def creator: ClusterCreator[T]
+  def creator: ClusterCreator
 
   /**
     * get the containers information from cluster
@@ -300,11 +300,8 @@ object Collie {
     * We define the "required" parameters for a cluster here, and you should fill in each parameter
     * in the individual cluster creation.
     * Note: the checking rules are moved to the api-creation level.
-    * @tparam T Cluster information type
     */
-  trait ClusterCreator[T <: ClusterInfo]
-      extends com.island.ohara.common.pattern.Creator[Future[T]]
-      with ClusterRequest {
+  trait ClusterCreator extends com.island.ohara.common.pattern.Creator[Future[Unit]] with ClusterRequest {
 
     protected var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
@@ -325,6 +322,6 @@ object Collie {
       * for example, the cluster-A exists and it is running on node-01. When user pass a creation to run cluster-A on
       * node-02, the creation progress should be aware of that user tries to add a new node (node-02) to the cluster-A.
       */
-    override def create(): Future[T]
+    override def create(): Future[Unit]
   }
 }
