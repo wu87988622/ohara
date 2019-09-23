@@ -20,10 +20,10 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
 import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder}
-import com.island.ohara.it.category.SshCollieGroup
+import com.island.ohara.it.category.SshConfiguratorGroup
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[SshCollieGroup]))
+@Category(Array(classOf[SshConfiguratorGroup]))
 class TestSshStreamApp extends BasicTests4StreamApp {
   override protected val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 

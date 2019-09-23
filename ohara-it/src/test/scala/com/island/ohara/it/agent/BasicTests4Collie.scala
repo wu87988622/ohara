@@ -20,14 +20,16 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, LogApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.exception.{OharaExecutionException, OharaTimeoutException}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.metrics.BeanChannel
@@ -52,76 +54,166 @@ import scala.concurrent.Future
 abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTests4Collie])
   private[this] val numberOfClusters = 2
-  protected val nodes: Seq[Node]
+  protected def configurator: Configurator
+  protected def nodes: Seq[Node]
+  protected def nameHolder: ClusterNameHolder
+
+  private[this] def zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] def bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] def wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] def logApi = LogApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] def containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  /** to simplify test, we use the same group for ALL collie test
+    * It is ok to use same group since we will use different cluster name
+    */
+  private[this] final val group: String = CommonUtils.randomString(10)
 
   //--------------------------------------------------[zk operations]--------------------------------------------------//
-  protected def zk_exist(clusterName: String): Future[Boolean]
-  protected def zk_create(clusterName: String,
-                          clientPort: Int,
-                          electionPort: Int,
-                          peerPort: Int,
-                          nodeNames: Set[String]): Future[ZookeeperClusterInfo]
-  protected def zk_start(clusterName: String): Future[Unit]
-  protected def zk_stop(clusterName: String): Future[Unit]
-  protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo] =
+  private[this] def zk_exist(clusterName: String): Future[Boolean] =
+    zkApi.list().map(_.exists(_.name == clusterName))
+  private[this] def zk_create(clusterName: String,
+                              clientPort: Int,
+                              electionPort: Int,
+                              peerPort: Int,
+                              nodeNames: Set[String]): Future[ZookeeperClusterInfo] =
+    zkApi.request
+      .name(clusterName)
+      .group(group)
+      .clientPort(clientPort)
+      .electionPort(electionPort)
+      .peerPort(peerPort)
+      .nodeNames(nodeNames)
+      .create()
+  private[this] def zk_start(clusterName: String): Future[Unit] = zkApi.start(ObjectKey.of(group, clusterName))
+  private[this] def zk_stop(clusterName: String): Future[Unit] =
+    zkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
+  private[this] def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo] =
     zk_clusters().map(_.find(_.name == clusterName).get)
-  protected def zk_clusters(): Future[Seq[ZookeeperClusterInfo]]
-  protected def zk_logs(clusterName: String): Future[Seq[String]]
-  protected def zk_containers(clusterName: String): Future[Seq[ContainerInfo]]
-  protected def zk_delete(clusterName: String): Future[Unit]
+  private[this] def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list()
+
+  private[this] def zk_logs(clusterName: String): Future[Seq[String]] =
+    logApi.log4ZookeeperCluster(clusterName).map(_.logs.map(_.value))
+
+  private[this] def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
+    containerApi.get(clusterName).map(_.flatMap(_.containers))
+
+  private[this] def zk_delete(clusterName: String): Future[Unit] = zkApi.delete(ObjectKey.of(group, clusterName))
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
-  protected def bk_exist(clusterName: String): Future[Boolean]
-  protected def bk_create(clusterName: String,
-                          clientPort: Int,
-                          exporterPort: Int,
-                          jmxPort: Int,
-                          zkClusterName: String,
-                          nodeNames: Set[String]): Future[BrokerClusterInfo]
-  protected def bk_start(clusterName: String): Future[Unit]
-  protected def bk_stop(clusterName: String): Future[Unit]
-  protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo] =
+  private[this] def bk_exist(clusterName: String): Future[Boolean] =
+    bkApi.list().map(_.exists(_.name == clusterName))
+
+  private[this] def bk_create(clusterName: String,
+                              clientPort: Int,
+                              exporterPort: Int,
+                              jmxPort: Int,
+                              zkClusterName: String,
+                              nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi.request
+    .name(clusterName)
+    .group(group)
+    .clientPort(clientPort)
+    .exporterPort(exporterPort)
+    .jmxPort(jmxPort)
+    .zookeeperClusterName(zkClusterName)
+    .nodeNames(nodeNames)
+    .create()
+
+  def bk_cluster(clusterName: String): Future[BrokerClusterInfo] =
     bk_clusters().map(_.find(_.name == clusterName).get)
-  protected def bk_clusters(): Future[Seq[BrokerClusterInfo]]
-  protected def bk_logs(clusterName: String): Future[Seq[String]]
-  protected def bk_containers(clusterName: String): Future[Seq[ContainerInfo]]
-  protected def bk_delete(clusterName: String): Future[Unit]
-  protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo]
-  protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit]
+
+  private[this] def bk_start(clusterName: String): Future[Unit] = bkApi.start(ObjectKey.of(group, clusterName))
+
+  private[this] def bk_stop(clusterName: String): Future[Unit] =
+    bkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
+
+  private[this] def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
+
+  private[this] def bk_logs(clusterName: String): Future[Seq[String]] =
+    logApi.log4BrokerCluster(clusterName).map(_.logs.map(_.value))
+
+  private[this] def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
+    containerApi.get(clusterName).map(_.flatMap(_.containers))
+
+  private[this] def bk_delete(clusterName: String): Future[Unit] = bkApi.delete(ObjectKey.of(group, clusterName))
+
+  private[this] def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
+    bkApi.addNode(ObjectKey.of(group, clusterName), nodeName).flatMap(_ => bkApi.get(ObjectKey.of(group, clusterName)))
+
+  private[this] def bk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
+    bkApi.removeNode(ObjectKey.of(group, clusterName), nodeName)
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
-  protected def wk_exist(clusterName: String): Future[Boolean]
-  protected def wk_create(clusterName: String,
-                          clientPort: Int,
-                          jmxPort: Int,
-                          bkClusterName: String,
-                          nodeNames: Set[String]): Future[WorkerClusterInfo]
-  protected def wk_create(clusterName: String,
-                          clientPort: Int,
-                          jmxPort: Int,
-                          groupId: String,
-                          configTopicName: String,
-                          statusTopicName: String,
-                          offsetTopicName: String,
-                          bkClusterName: String,
-                          nodeNames: Set[String]): Future[WorkerClusterInfo]
-  protected def wk_start(clusterName: String): Future[Unit]
-  protected def wk_stop(clusterName: String): Future[Unit]
-  protected def wk_cluster(clusterName: String): Future[WorkerClusterInfo] =
+  private[this] def wk_exist(clusterName: String): Future[Boolean] =
+    wkApi.list().map(_.exists(_.name == clusterName))
+
+  private[this] def wk_create(clusterName: String,
+                              clientPort: Int,
+                              jmxPort: Int,
+                              bkClusterName: String,
+                              nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
+    wkApi.request
+      .name(clusterName)
+      .group(group)
+      .clientPort(clientPort)
+      .jmxPort(jmxPort)
+      .brokerClusterName(bkClusterName)
+      .nodeNames(nodeNames)
+      .create()
+
+  private[this] def wk_create(clusterName: String,
+                              clientPort: Int,
+                              jmxPort: Int,
+                              groupId: String,
+                              configTopicName: String,
+                              statusTopicName: String,
+                              offsetTopicName: String,
+                              bkClusterName: String,
+                              nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
+    wkApi.request
+      .name(clusterName)
+      .group(group)
+      .clientPort(clientPort)
+      .jmxPort(jmxPort)
+      .brokerClusterName(bkClusterName)
+      .nodeNames(nodeNames)
+      .groupId(groupId)
+      .configTopicName(configTopicName)
+      .statusTopicName(statusTopicName)
+      .offsetTopicName(offsetTopicName)
+      .create()
+
+  private[this] def wk_start(clusterName: String): Future[Unit] = wkApi.start(ObjectKey.of(group, clusterName))
+
+  private[this] def wk_stop(clusterName: String): Future[Unit] =
+    wkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
+
+  private[this] def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
+
+  private[this] def wk_logs(clusterName: String): Future[Seq[String]] =
+    logApi.log4WorkerCluster(clusterName).map(_.logs.map(_.value))
+
+  private[this] def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
+    containerApi.get(clusterName).map(_.flatMap(_.containers))
+
+  private[this] def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(ObjectKey.of(group, clusterName))
+
+  private[this] def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
+    wkApi.addNode(ObjectKey.of(group, clusterName), nodeName).flatMap(_ => wkApi.get(ObjectKey.of(group, clusterName)))
+
+  private[this] def wk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
+    wkApi.removeNode(ObjectKey.of(group, clusterName), nodeName)
+  private[this] def wk_cluster(clusterName: String): Future[WorkerClusterInfo] =
     wk_clusters().map(_.find(_.name == clusterName).get)
-  protected def wk_clusters(): Future[Seq[WorkerClusterInfo]]
-  protected def wk_logs(clusterName: String): Future[Seq[String]]
-  protected def wk_containers(clusterName: String): Future[Seq[ContainerInfo]]
-  protected def wk_delete(clusterName: String): Future[Unit]
-  protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo]
-  protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit]
 
   /**
     * used to debug...
     */
   private[this] val cleanup: Boolean = true
-
-  protected def nameHolder: ClusterNameHolder
   private[this] def generateClusterName(): String = nameHolder.generateClusterName()
 
   @Test
@@ -745,5 +837,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   @After
-  def cleanAllContainers(): Unit = if (cleanup) Releasable.close(nameHolder)
+  def cleanAllContainers(): Unit = {
+    Releasable.close(configurator)
+    if (cleanup) Releasable.close(nameHolder)
+  }
 }

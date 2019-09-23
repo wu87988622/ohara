@@ -20,26 +20,23 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
+import com.island.ohara.it.agent.{BasicTests4Collie, ClusterNameHolder}
 import com.island.ohara.it.category.K8sConfiguratorGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
 
 import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[K8sConfiguratorGroup]))
-class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
+class TestK8SCollie extends BasicTests4Collie {
 
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
-
-  override def configurator: Configurator = _configurator
-  private[this] var _configurator: Configurator = _
-
-  override protected def nameHolder: ClusterNameHolder = _nameHolder
-  private[this] var _nameHolder: ClusterNameHolder = _
+  override protected val configurator: Configurator =
+    Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
+  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
 
   @Before
-  final def setup(): Unit = {
-    _configurator = Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
+  final def setup(): Unit = if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
+  else {
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodes.foreach { node =>
       result(
@@ -47,6 +44,5 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
     }
     result(nodeApi.list()).size shouldBe nodes.size
     result(nodeApi.list()).foreach(node => nodes.exists(_.name == node.name) shouldBe true)
-    _nameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
   }
 }
