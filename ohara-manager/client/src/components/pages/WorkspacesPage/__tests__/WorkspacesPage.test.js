@@ -139,7 +139,7 @@ describe('<WorkspacesPage />', () => {
 
     const warning = `You don't have any nodes available yet. But you can create one in here`;
 
-    fireEvent.click(getByText('New workspace'));
+    fireEvent.click(getByText('NEW WORKSPACE'));
 
     expect(getByTestId('redirect-warning').textContent).toBe(warning);
   });
@@ -151,7 +151,7 @@ describe('<WorkspacesPage />', () => {
 
     expect(queryByTestId('new-workspace-modal')).toBeNull();
 
-    fireEvent.click(getByText('New workspace'));
+    fireEvent.click(getByText('NEW WORKSPACE'));
 
     const newModal = await waitForElement(() =>
       getByTestId('new-workspace-modal'),
@@ -165,8 +165,8 @@ describe('<WorkspacesPage />', () => {
       renderWithProvider(<WorkspacesPage {...props} />),
     );
 
-    fireEvent.click(getByText('New workspace'));
-    const addButton = await waitForElement(() => getByText('Add'));
+    fireEvent.click(getByText('NEW WORKSPACE'));
+    const addButton = await waitForElement(() => getByText('ADD'));
 
     expect(addButton).toBeDisabled();
   });
@@ -194,7 +194,7 @@ describe('<WorkspacesPage />', () => {
     const validName = 'abc';
     const invalidName = 'ABC';
 
-    fireEvent.click(getByText('New workspace'));
+    fireEvent.click(getByText('NEW WORKSPACE'));
     const nameInput = getByPlaceholderText('cluster00');
 
     fireEvent.change(nameInput, { target: { value: validName } });

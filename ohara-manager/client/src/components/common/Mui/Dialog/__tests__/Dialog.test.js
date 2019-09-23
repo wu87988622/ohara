@@ -64,22 +64,22 @@ describe('<Dialog />', () => {
     const props = setup();
 
     const { getByText } = render(<Dialog {...props} />);
-    getByText('Add');
-    getByText('Cancel');
+    getByText('ADD');
+    getByText('CANCEL');
   });
 
   it('should enable the dialog confirm button via confirmDisabled prop', () => {
     const props = setup({ confirmDisabled: false });
 
     const { getByText } = render(<Dialog {...props} />);
-    expect(getByText('Add')).toBeEnabled();
+    expect(getByText('ADD')).toBeEnabled();
   });
 
   it('should disable the dialog confirm button via confirmDisabled prop', () => {
     const props = setup({ confirmDisabled: true });
 
     const { getByText } = render(<Dialog {...props} />);
-    expect(getByText('Add')).not.toBeEnabled();
+    expect(getByText('ADD')).not.toBeEnabled();
   });
 
   it('renders the loading indicator if the loading is true', () => {
@@ -109,7 +109,7 @@ describe('<Dialog />', () => {
     const props = setup();
     const { getByText } = render(<Dialog {...props} />);
 
-    fireEvent.click(getByText('Add'));
+    fireEvent.click(getByText('ADD'));
     expect(props.handleConfirm).toHaveBeenCalledTimes(1);
   });
 
@@ -117,7 +117,7 @@ describe('<Dialog />', () => {
     const props = setup();
     const { getByText } = render(<Dialog {...props} />);
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(props.handleClose).toHaveBeenCalledTimes(1);
   });
 });

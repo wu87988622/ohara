@@ -135,7 +135,7 @@ const StreamApp = props => {
         }}
       />
       <StyledLabel htmlFor="fileInput">
-        <Button component="span" text="New jar" />
+        <Button component="span" text="NEW JAR" />
       </StyledLabel>
       <Main>
         <SortTable

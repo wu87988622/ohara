@@ -96,7 +96,7 @@ const NodeNewModal = props => {
             }}
             handleConfirm={handleSubmit}
             title="New node"
-            confirmBtnText="Add"
+            confirmBtnText="ADD"
             confirmDisabled={
               submitting || pristine || invalid || !isValidConnection
             }
@@ -156,9 +156,8 @@ const NodeNewModal = props => {
                 </DialogContent>
                 <DialogContent>
                   <s.NewNodeBtn
-                    variant="contained"
                     color="primary"
-                    text=" Test connection"
+                    text="TEST CONNECTION"
                     data-testid="edit-test-connection-button"
                     onClick={() => testConnection(values)}
                   />

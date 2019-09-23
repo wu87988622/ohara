@@ -143,10 +143,10 @@ describe('<Nodes />', () => {
   it('should close the new node modal with cancel button', async () => {
     const { getByText, getByTestId } = renderWithProvider(<Nodes {...props} />);
 
-    fireEvent.click(getByText('New node'));
+    fireEvent.click(getByText('NEW NODE'));
     expect(getByTestId('node-new-dialog')).toBeVisible();
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(getByTestId('node-new-dialog')).not.toBeVisible();
   });
 });

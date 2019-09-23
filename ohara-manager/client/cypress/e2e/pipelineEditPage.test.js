@@ -46,7 +46,7 @@ describe('PipelineEditPage', () => {
       .click()
       .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
       .wait('@getPipeline');
   });
@@ -118,6 +118,8 @@ describe('PipelineEditPage', () => {
       .click()
       .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       .wait('@putPipeline');
+
+    cy.wait(1000); // Temp workaround, need this to make sure Cypress can get the right element to work on
 
     // Try to remove the topic
     cy.getByTestId('pipeline-graph')

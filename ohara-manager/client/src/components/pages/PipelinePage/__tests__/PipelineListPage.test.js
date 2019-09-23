@@ -111,7 +111,7 @@ describe('<PipelineListPage />', () => {
 
     expect(queryByTestId('new-pipeline-modal')).toBeVisible();
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(queryByTestId('new-pipeline-modal')).not.toBeVisible();
   });
 
@@ -132,7 +132,7 @@ describe('<PipelineListPage />', () => {
     getByText('Workspace name');
     getByTestId('workspace-name-select');
 
-    expect(getByText('Add')).toBeDisabled();
+    expect(getByText('ADD')).toBeDisabled();
   });
 
   it('renders pipeline data list', async () => {
@@ -171,7 +171,7 @@ describe('<PipelineListPage />', () => {
 
     expect(getByTestId('delete-dialog')).toBeVisible();
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(getByTestId('delete-dialog')).not.toBeVisible();
   });
 

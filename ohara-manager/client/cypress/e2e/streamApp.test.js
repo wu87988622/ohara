@@ -52,7 +52,7 @@ describe('StreamApp', () => {
       .click()
       .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
       .wait('@getPipeline');
 

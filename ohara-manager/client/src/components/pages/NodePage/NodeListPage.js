@@ -118,7 +118,7 @@ const NodeListPage = () => {
           <s.TopWrapper>
             <H2>Nodes</H2>
             <s.NewNodeBtn
-              text="New node"
+              text="NEW NODE"
               data-testid="new-node"
               onClick={handleNewModalOpen}
             />

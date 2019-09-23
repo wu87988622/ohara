@@ -93,14 +93,16 @@ describe('Stream property API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createProperty', () => {
-    setup();
+    const { brokerClusterName } = setup();
     const streamName = generate.serviceName({ prefix: 'stream' });
+
     cy.createJar('ohara-it-source.jar').then(response => {
       const params = {
         jarKey: {
           name: response.data.result.name,
           group: response.data.result.group,
         },
+        brokerClusterName,
         name: streamName,
         tags: {
           name: streamName,

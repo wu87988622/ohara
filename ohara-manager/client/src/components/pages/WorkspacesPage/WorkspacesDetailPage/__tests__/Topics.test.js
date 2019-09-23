@@ -181,10 +181,10 @@ describe('<Topics />', () => {
       <Topics {...props} />,
     );
 
-    fireEvent.click(getByText('New topic'));
+    fireEvent.click(getByText('NEW TOPIC'));
     expect(queryByTestId('topic-new-modal')).toBeVisible();
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(queryByTestId('topic-new-modal')).not.toBeVisible();
   });
 
@@ -247,7 +247,7 @@ describe('<Topics />', () => {
     fireEvent.click(topic);
     expect(getByText('Delete topic?')).toBeVisible(); // Ensure the modal is opened by getting it's title
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
 
     expect(getByText('Delete topic?')).not.toBeVisible();
   });

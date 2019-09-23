@@ -180,7 +180,7 @@ const Topics = props => {
   return (
     <>
       <NewButton
-        text="New topic"
+        text="NEW TOPIC"
         data-testid="new-topic"
         onClick={() => {
           setState({ isNewModalOpen: true });

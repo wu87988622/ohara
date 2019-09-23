@@ -95,7 +95,7 @@ const NodeEditModal = props => {
             }}
             title="New ohara node"
             handleConfirm={handleSubmit}
-            confirmBtnText="Save"
+            confirmBtnText="SAVE"
             confirmDisabled={!isValidConnection}
           >
             <div data-testid="edit-node-modal">
@@ -154,7 +154,7 @@ const NodeEditModal = props => {
                   <s.NewNodeBtn
                     variant="contained"
                     color="primary"
-                    text="Test connection"
+                    text="TEST CONNECTION"
                     data-testid="edit-test-connection-button"
                     onClick={() => {
                       testConnection(values);

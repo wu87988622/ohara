@@ -35,11 +35,11 @@ const StyledTabs = styled(Tabs)`
 const MuiTabs = props => {
   const [value, setValue] = React.useState(0);
 
-  const tabArray = ['overview', 'nodes', 'topics', 'streamapps', 'plugins'];
+  const tabArray = ['overview', 'nodes', 'topics', 'streamjars', 'plugins'];
   const { workspaceName } = props.match.params;
   const baseUrl = `/workspaces/${workspaceName}`;
 
-  const handleChange = (e, newValue) => {
+  const handleChange = (event, newValue) => {
     // map newValue to different path: e.g. 0 = overview, 1 = nodes
     const activeTab = tabArray[newValue];
     setValue(newValue);
@@ -61,11 +61,11 @@ const MuiTabs = props => {
         onChange={handleChange}
         data-testid="workspace-tab"
       >
-        <Tab label="Overview" />
-        <Tab label="Nodes" />
-        <Tab label="Topics" />
-        <Tab label="Stream jars" />
-        <Tab label="Plugins" />
+        <Tab label="OVERVIEW" />
+        <Tab label="NODES" />
+        <Tab label="TOPICS" />
+        <Tab label="STREAM JARS" />
+        <Tab label="PLUGINS" />
       </StyledTabs>
       <Route
         path={`${baseUrl}/overview`}
@@ -77,7 +77,7 @@ const MuiTabs = props => {
       />
       <Route path={`${baseUrl}/topics`} render={() => <Topics {...props} />} />
       <Route
-        path={`${baseUrl}/streamapps`}
+        path={`${baseUrl}/streamjars`}
         render={() => <StreamApp workspaceName={workspaceName} />}
       />
       <Route

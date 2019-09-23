@@ -524,7 +524,7 @@ const WorkerNewModal = props => {
                             );
                           })}
                           <s.StyledLabel htmlFor="fileInput">
-                            <Button component="span" text="New Plugin" />
+                            <Button component="span" text="NEW PLUGIN" />
                           </s.StyledLabel>
                         </List>
                       </s.StyledPaper>

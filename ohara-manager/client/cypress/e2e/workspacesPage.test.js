@@ -53,7 +53,7 @@ describe('WorkspacesPage', () => {
         win.servicePrefix = prefix; // Add prefix for generated services
       },
     })
-      .getByText('New workspace')
+      .getByText('NEW WORKSPACE')
       .click()
       .getByPlaceholderText('cluster00')
       .type(workerName)
@@ -68,7 +68,7 @@ describe('WorkspacesPage', () => {
       .wait(500)
       .getByText('ohara-it-sink')
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
       .wait('@createZookeeper')
       .wait('@createBroker');
@@ -85,9 +85,9 @@ describe('WorkspacesPage', () => {
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Topics').click();
+        cy.getByText('TOPICS').click();
       })
-      .getByText('New topic')
+      .getByText('NEW TOPIC')
       .click()
       .getByPlaceholderText('Kafka Topic')
       .type(topicName)
@@ -95,7 +95,7 @@ describe('WorkspacesPage', () => {
       .type(1)
       .getByTestId('replications-input')
       .type(1)
-      .getByText('Add')
+      .getByText('ADD')
       .click()
       .wait('@getTopics')
       .getByText(topicName)
@@ -116,7 +116,7 @@ describe('WorkspacesPage', () => {
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Stream jars').click();
+        cy.getByText('STREAM JARS').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -147,7 +147,7 @@ describe('WorkspacesPage', () => {
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Stream jars').click();
+        cy.getByText('STREAM JARS').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -183,7 +183,7 @@ describe('WorkspacesPage', () => {
       .should('include', '/nodes')
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Overview').click();
+        cy.getByText('OVERVIEW').click();
       })
       .getByTestId('overview-topics-link')
       .click()
@@ -191,7 +191,7 @@ describe('WorkspacesPage', () => {
       .should('include', '/topics')
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Overview').click();
+        cy.getByText('OVERVIEW').click();
       })
       .getByTestId('overview-streamapps-link')
       .click()
@@ -199,7 +199,7 @@ describe('WorkspacesPage', () => {
       .should('include', '/streamapps')
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Overview').click();
+        cy.getByText('OVERVIEW').click();
       })
       .getByTestId('overview-plugins-link')
       .click()
@@ -368,14 +368,14 @@ describe('plugin', () => {
     cy.route('GET', 'api/files').as('getFiles');
   });
 
-  it('update workespace with add new plugin', () => {
+  it('should update a workespace', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(workerName)
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Plugins').click();
+        cy.getByText('PLUGINS').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -405,7 +405,7 @@ describe('plugin', () => {
       .should('have.length', 1);
   });
 
-  it('faild update workespace with remove plugin', () => {
+  it('should faild to update a workespace', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const perfName = generate.serviceName({ prefix: 'perf' });
     const topicName = generate.serviceName({ prefix: 'topic' });
@@ -487,7 +487,7 @@ describe('plugin', () => {
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Plugins').click();
+        cy.getByText('PLUGINS').click();
       })
       .wait('@getFiles')
       .getByTestId('ohara-it-sink.jar')

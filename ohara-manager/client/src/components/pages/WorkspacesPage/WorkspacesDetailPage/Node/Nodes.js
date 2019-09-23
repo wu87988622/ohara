@@ -153,7 +153,7 @@ const Nodes = props => {
 
   return (
     <>
-      <NewButton text="New node" onClick={handelOpen} />
+      <NewButton text="NEW NODE" onClick={handelOpen} />
       <Main>
         <SortTable
           isLoading={isLoading}

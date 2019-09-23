@@ -63,7 +63,7 @@ describe('<DeleteDialog />', () => {
 
     const { getByText } = renderWithProvider(<DeleteDialog {...props} />);
     getByText('DELETE');
-    getByText('Cancel');
+    getByText('CANCEL');
   });
 
   it('should enable the dialog confirm button via isWorking prop', () => {
@@ -84,14 +84,14 @@ describe('<DeleteDialog />', () => {
     const props = setup({ isWorking: false });
 
     const { getByText } = renderWithProvider(<DeleteDialog {...props} />);
-    expect(getByText('Cancel')).toBeEnabled();
+    expect(getByText('CANCEL')).toBeEnabled();
   });
 
   it('should disable the dialog cancel button via isWorking prop', () => {
     const props = setup({ isWorking: true });
 
     const { getByText } = renderWithProvider(<DeleteDialog {...props} />);
-    expect(getByText('Cancel')).not.toBeEnabled();
+    expect(getByText('CANCEL')).not.toBeEnabled();
   });
 
   it('renders the loading indicator if the isWorking is true', () => {
@@ -129,7 +129,7 @@ describe('<DeleteDialog />', () => {
     const props = setup();
     const { getByText } = renderWithProvider(<DeleteDialog {...props} />);
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(props.handleClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -82,10 +82,8 @@ const WorkspacesPage = props => {
 
           <StyledButton
             onClick={() => setIsModalOpen(true)}
-            text="New workspace"
-          >
-            New workspace
-          </StyledButton>
+            text="NEW WORKSPACE"
+          />
         </PageHeader>
         <SortTable
           isLoading={isLoading}

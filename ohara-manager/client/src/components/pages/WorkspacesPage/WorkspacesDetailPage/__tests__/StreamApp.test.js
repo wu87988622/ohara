@@ -114,7 +114,7 @@ describe('<StreamApp />', () => {
     fireEvent.click(getByTestId(streamAppName));
     expect(getByText('Delete jar?')).toBeVisible(); // Ensure the modal is opened by getting it's title
 
-    fireEvent.click(getByText('Cancel'));
+    fireEvent.click(getByText('CANCEL'));
     expect(getByText('Delete jar?')).not.toBeVisible();
   });
 });

@@ -43,7 +43,7 @@ describe('PipelineListPage', () => {
       .click()
       .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
       .wait('@postPipeline')
       .wait('@getPipelines')
@@ -67,7 +67,7 @@ describe('PipelineListPage', () => {
       .getByText(pipelineName)
       .then($el => {
         cy.wrap($el.parent()).within(() => {
-          cy.getByTestId('edit-pipeline').click();
+          cy.getByTestId('edit-pipeline').click({ force: true });
         });
       })
       .location('pathname')

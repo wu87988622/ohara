@@ -139,7 +139,7 @@ describe('<NodeListPage />', () => {
 
       expect(queryByTestId('new-node-modal')).toBeNull();
 
-      const newButton = getByText('New node');
+      const newButton = getByText('NEW NODE');
       fireEvent.click(newButton);
       const newModal = await waitForElement(() =>
         getByTestId('new-node-modal'),
@@ -147,7 +147,7 @@ describe('<NodeListPage />', () => {
 
       expect(newModal).toBeVisible();
 
-      const cancelButton = getByText('Cancel');
+      const cancelButton = getByText('CANCEL');
       fireEvent.click(cancelButton);
 
       expect(queryByTestId('new-node-modal')).not.toBeVisible();
@@ -158,8 +158,8 @@ describe('<NodeListPage />', () => {
         renderWithProvider(<NodeListPage />),
       );
 
-      fireEvent.click(getByText('New node'));
-      const addButton = await waitForElement(() => getByText('Add'));
+      fireEvent.click(getByText('NEW NODE'));
+      const addButton = await waitForElement(() => getByText('ADD'));
 
       expect(addButton).toBeDisabled();
     });
@@ -169,7 +169,7 @@ describe('<NodeListPage />', () => {
         renderWithProvider(<NodeListPage />),
       );
 
-      fireEvent.click(getByText('New node'));
+      fireEvent.click(getByText('NEW NODE'));
       const nodeInput = getByPlaceholderText('node-01');
       const portInput = getByPlaceholderText('22');
       const userInput = getByPlaceholderText('admin');
@@ -213,11 +213,11 @@ describe('<NodeListPage />', () => {
         };
       });
       jest.clearAllMocks();
-      const testConnectionButton = getByText('Test connection');
+      const testConnectionButton = getByText('TEST CONNECTION');
 
       fireEvent.click(testConnectionButton);
 
-      const addButton = await waitForElement(() => getByText('Add'));
+      const addButton = await waitForElement(() => getByText('ADD'));
       fireEvent.click(addButton);
 
       expect(useSnackbar).toHaveBeenCalledTimes(1);
@@ -241,7 +241,7 @@ describe('<NodeListPage />', () => {
 
       expect(editModal).toBeVisible();
 
-      const cancelButton = getByText('Cancel');
+      const cancelButton = getByText('CANCEL');
       fireEvent.click(cancelButton);
 
       expect(queryByTestId('edit-node-modal')).not.toBeVisible();
@@ -253,7 +253,7 @@ describe('<NodeListPage />', () => {
       );
 
       fireEvent.click(getByTestId('edit-node-icon'));
-      const saveButton = await waitForElement(() => getByText('Save'));
+      const saveButton = await waitForElement(() => getByText('SAVE'));
 
       expect(saveButton).toBeDisabled();
     });
@@ -265,9 +265,8 @@ describe('<NodeListPage />', () => {
       );
 
       fireEvent.click(getByTestId('edit-node-icon'));
-      const testConnectionButton = getByText('Test connection');
+      const testConnectionButton = getByText('TEST CONNECTION');
       fireEvent.click(testConnectionButton);
-      // expect(getByText('Save')).not.toBeDisabled();
     });
   });
 });
