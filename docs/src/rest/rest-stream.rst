@@ -53,13 +53,13 @@ streamApp stored data
 
      - name (**string**) — cluster name
      - group (**string**) — cluster group
-     - jarKey (**option(object)**) — the used jar key
+     - jarKey (**object**) — the used jar key
      - jmxPort (**int**) — expose port for jmx
      - from (**array(TopicKey)**) — source topic
      - to (**array(TopicKey)**) — target topic
      - instances (**int**) — number of running streamApp
      - nodeNames (**array(string)**) — the nodes running the zookeeper process
-     - brokerClusterName (**array(string)**) — the broker cluser name used for streamApp running
+     - brokerClusterName (**string**) — the broker cluser name used for streamApp running
      - tags (**object**) — the user defined parameters
 
 #. definition (**Option(object)**) — definition for current streamApp. If there was no **jarKey** defined, this
@@ -115,11 +115,13 @@ Example Request
   #. imageName (**string**) — image name of streamApp used to ; default is oharastream/streamapp:|version|
   #. nodeNames (**array(string)**) — node name list of streamApp used to ; default is empty
   #. tags (**object**) — a key-value map of user defined data ; default is empty
-  #. jarKey (**option(object)**) — the used jar key
+  #. jarKey (**object**) — the used jar key
 
      - group (**string**) — the group name of this jar
-     - name (**string**) — the name without extension of this jar
+     - name (**string**) — the name of this jar
 
+  #. brokerClusterName (**option(string)**) — the broker cluser name used for streamApp running ; default we will auto fill this
+     parameter for you if you don't specify it and there only exists one broker cluster.
   #. jmxPort (**int**) — expose port for jmx ; default is random port
   #. from (**array(TopicKey)**) — source topic ; default is empty array
 
@@ -140,74 +142,20 @@ Example Request
   #. instances (**int**) — number of running streamApp
 
      The above fields are pre-defined and could use in request body for convenient. The option fields will have no default value,
-     but others will auto fill default value as we describe above. The minimum required request fields is empty:
+     but others will auto fill default value as we describe above. The minimum required fields for request are nodeNames and jarKey:
 
      .. code-block:: json
 
         {
+          "nodeNames": ["node1"],
+          "jarKey": {
+            "name": "stream-app.jar",
+            "group": "wk01"
+          }
         }
-
-Examples of create streamApp properties:
-
-  .. code-block:: json
-
-     {
-       "name": "myapp",
-       "group": "default",
-       "jarKey": {
-         "group": "wk01",
-         "name": "stream-app.jar"
-       },
-       "from": ["topic1"],
-       "to": ["topic2"],
-       "jmxPort": 5678,
-       "instances": 3
-     }
 
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
-
-All default value response
---------------------------
-
-  .. code-block:: json
-
-    {
-      "lastModified": 1563462747977,
-      "deadNodes": [],
-      "aliveNodes": [],
-      "metrics": {
-        "meters": []
-      },
-      "nodeNames": [],
-      "settings": {
-        "name": "db810cd561044c10ac21",
-        "group": "default",
-        "tags": {},
-        "from": [],
-        "to": [],
-        "instances": 1,
-        "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
-        "jmxPort": 3383,
-        "nodeNames": []
-      }
-    }
-
-All default value response with only supply jarKey field
---------------------------------------------------------
-
-The following request will generate definition for you:
-
-  .. code-block:: json
-
-    {
-      "jarKey": {
-        "group": "default",
-        "name": "name.jar"
-      }
-    }
-
-And the response:
 
   .. code-block:: json
 
@@ -352,18 +300,18 @@ And the response:
       "nodeNames": [],
       "settings": {
         "name": "a5eddb5b9fd144f1a75e",
+        "brokerClusterName": "4ef3d4a266",
         "group": "default",
         "tags": {},
-        "instances": 1,
-        "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
+        "imageName": "oharastream/streamapp:$|VERSION|",
         "from": [],
         "to": [],
         "jarKey": {
           "group": "wk01",
-          "name": "ohara-streamapp.jar"
+          "name": "stream-app.jar"
         },
         "jmxPort": 3792,
-        "nodeNames": []
+        "nodeNames": ["node1"]
       }
     }
 
