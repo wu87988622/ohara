@@ -33,6 +33,7 @@ import Metrics from './Metrics';
 import { usePrevious } from 'utils/hooks';
 import { PIPELINE_EDIT } from 'constants/documentTitles';
 import { Wrapper, Main, Sidebar, Heading2 } from './styles';
+import Detail from './Detail';
 
 const PipelineEditPage = props => {
   const [topics, setTopics] = useState([]);
@@ -267,7 +268,6 @@ const PipelineEditPage = props => {
               graph={graph}
               pipeline={pipeline}
               updateGraph={updateGraph}
-              nodeNames={nodeNames}
             />
 
             <Sidebar>
@@ -277,6 +277,8 @@ const PipelineEditPage = props => {
                 fetchPipeline={fetchPipeline}
                 updateHasRunningServices={updateHasRunningServices}
               />
+
+              <Detail {...props} graph={graph} nodeNames={nodeNames} />
 
               <Metrics {...props} graph={graph} updateGraph={updateGraph} />
 
