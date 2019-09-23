@@ -148,24 +148,33 @@ describe('cleanPrevFromTopics', () => {
 
 describe('updateGraph()', () => {
   it(`Adds a new connector to the current graph if it's not being found in the current graph`, () => {
-    const graph = [{ name: 'a', to: ['b'] }];
+    const graph = [{ name: 'a', to: ['b'], isActive: false }];
     const update = { name: 'b', to: [] };
+    const dispatcher = { name: 'NOT_TOOLBAR' };
 
-    const expected = [
-      { name: 'a', to: ['b'], isActive: false },
-      { ...update, isActive: true },
-    ];
+    const expected = [...graph, { ...update, isActive: true }];
 
-    expect(utils.updateGraph({ graph, update })).toEqual(expected);
+    expect(utils.updateGraph({ graph, update, dispatcher })).toEqual(expected);
+  });
+
+  it(`Should not update the connector active state if the update is coming from toolbar`, () => {
+    const graph = [{ name: 'a', to: [], isActive: true }];
+    const update = { name: 'b', to: [], isActive: false };
+    const dispatcher = { name: 'TOOLBAR' };
+
+    const expected = [...graph, update];
+
+    expect(utils.updateGraph({ graph, update, dispatcher })).toEqual(expected);
   });
 
   it(`updates the correct connector in the graph`, () => {
     const graph = [{ name: 'a', to: [] }];
     const update = { name: 'a', to: ['b'] };
+    const dispatcher = { name: 'NOT_TOOLBAR' };
 
     const expected = [{ name: 'a', to: ['b'], isActive: true }];
 
-    expect(utils.updateGraph({ graph, update })).toEqual(expected);
+    expect(utils.updateGraph({ graph, update, dispatcher })).toEqual(expected);
   });
 
   it('updates formTopic and sink connectors', () => {
@@ -182,12 +191,14 @@ describe('updateGraph()', () => {
 
     const sinkName = 'abc';
     const update = { name: 'c', to: ['e'] };
+    const dispatcher = { name: 'NOT_TOOLBAR' };
 
     const result = utils.updateGraph({
       graph,
       update,
       sinkName,
       isFromTopic: true,
+      dispatcher,
     });
 
     const expected = [

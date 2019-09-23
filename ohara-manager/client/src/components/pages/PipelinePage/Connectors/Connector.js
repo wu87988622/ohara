@@ -112,8 +112,9 @@ const Connector = props => {
           return (
             <>
               <AutoSave
-                save={() => utils.useSave(props, values)}
+                save={() => utils.handleSave(props, values, showMessage)}
                 updateHasChanges={updateHasChanges}
+                match={props.match}
               />
               {utils.renderForm({ parentValues: values, ...formProps })}
               <TestConfigBtn

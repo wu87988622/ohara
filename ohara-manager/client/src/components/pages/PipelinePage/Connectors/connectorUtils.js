@@ -461,7 +461,7 @@ export const handleDeleteConnector = async (isRunning, props, showMessage) => {
   }
 };
 
-export const useSave = async (props, values) => {
+export const handleSave = async (props, values, showMessage) => {
   const { globalTopics, graph, updateGraph, pipeline } = props;
   const { connectorName } = props.match.params;
   const {
@@ -486,11 +486,16 @@ export const useSave = async (props, values) => {
   });
 
   const params = { ..._values, topicKeys, name: connectorName };
-  await connectorApi.updateConnector({
-    name: connectorName,
-    group: pipelineGroup,
-    params,
-  });
+
+  try {
+    await connectorApi.updateConnector({
+      name: connectorName,
+      group: pipelineGroup,
+      params,
+    });
+  } catch (error) {
+    showMessage(error.message);
+  }
 
   const { sinkProps, update } = getUpdatedTopic({
     currTopicName: topic,

@@ -175,16 +175,6 @@ const PipelineEditPage = props => {
     await updatePipeline({ ...params });
   };
 
-  const resetGraph = () => {
-    setGraph(prevGraph => {
-      const update = prevGraph.map(g => {
-        return { ...g, isActive: false };
-      });
-
-      return update;
-    });
-  };
-
   const refreshGraph = () => {
     if (pipelineName) fetchPipeline(pipelineName);
   };
@@ -277,7 +267,6 @@ const PipelineEditPage = props => {
               graph={graph}
               pipeline={pipeline}
               updateGraph={updateGraph}
-              resetGraph={resetGraph}
               nodeNames={nodeNames}
             />
 

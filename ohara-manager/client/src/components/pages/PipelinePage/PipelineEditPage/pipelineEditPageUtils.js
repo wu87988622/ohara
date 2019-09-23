@@ -137,6 +137,7 @@ export const updateGraph = params => {
     isFromTopic,
     streamAppName = null,
     sinkName = null,
+    dispatcher,
   } = params;
 
   let updatedGraph;
@@ -162,11 +163,16 @@ export const updateGraph = params => {
     }
   }
 
-  // Update active graph, this state is not kept on the server, so
+  // 1. Update active graph, this state is not kept on the server, so
   // we're storing it in the local state, and update if needed for now
-  updatedGraph = updatedGraph.map(graph => {
-    return { ...graph, isActive: graph.name === update.name };
-  });
+  // 2. The update coming from toolbar is ommited since it will create
+  // a weird effect the graph (set active state to the added graph and switch back
+  // to the current active connecto)
+  if (dispatcher.name !== 'TOOLBAR') {
+    updatedGraph = updatedGraph.map(graph => {
+      return { ...graph, isActive: graph.name === update.name };
+    });
+  }
 
   return updatedGraph;
 };
