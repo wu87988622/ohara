@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty } from 'lodash';
 
-import ConnectorDetail from './ConnectorDetail';
+import NodeNames from './NodeNames';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import { Box } from './styles';
 
@@ -28,8 +28,6 @@ const Detail = props => {
 
   const { graph, match, nodeNames } = props;
 
-  // TODO: add an active state here so we won't need to reach
-  // for connectorName from the router
   const { connectorName } = match.params;
   const currentConnector = graph.find(g => g.name === connectorName);
 
@@ -43,7 +41,7 @@ const Detail = props => {
 
   return (
     <Box>
-      <ConnectorDetail connectorName={connectorName} nodeNames={nodeNames} />
+      <NodeNames connectorName={connectorName} nodeNames={nodeNames} />
     </Box>
   );
 };

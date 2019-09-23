@@ -63,7 +63,7 @@ export const StyledExpansionPanel = styled(ExpansionPanel)`
   }
 `;
 
-export const DetailsList = styled.ul`
+export const NodeNamesList = styled.ul`
   .item {
     color: ${props => props.theme.palette.text.secondary};
   }
