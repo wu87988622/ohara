@@ -96,7 +96,7 @@ object StreamApi {
     def instances: Option[Int] = settings.instances
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    // TODO: reuse the global checks for streamapp ...
+    // TODO: reuse the global checks for streamapp in #2288
     // the following checkers is a part of global cluster checks.
     // We don't reuse the global checks since streamapp accept empty/null nodeNames ... by chia
     basicRulesOfKey[Creation](STREAM_GROUP_DEFAULT)

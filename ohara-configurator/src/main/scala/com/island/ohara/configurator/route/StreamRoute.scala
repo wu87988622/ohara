@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.route
 
+import java.util.Objects
+
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -41,12 +43,16 @@ private[configurator] object StreamRoute {
     */
   private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue()
 
+  /**
+    * Assert the require streamApp properties in creation / updating
+    *
+    * @param streamClusterInfo streamApp data
+    */
   private[this] def assertParameters(streamClusterInfo: StreamClusterInfo): StreamClusterInfo = {
     CommonUtils.requireNonEmpty(streamClusterInfo.name, () => "name fail assert")
     CommonUtils.requireConnectionPort(streamClusterInfo.jmxPort)
-    // we don't check the jar key for creation/update since it breaks the APIs.
-    // https://github.com/oharastream/ohara/issues/2151
-    // Objects.requireNonNull(streamClusterInfo.jarKey)
+    // jarKey is required in properties payload
+    Objects.requireNonNull(streamClusterInfo.jarKey)
     streamClusterInfo
   }
 
@@ -76,27 +82,14 @@ private[configurator] object StreamRoute {
 
   /**
     * fina the broker cluster for this creation. The rules are shown below.
-    * 1) fp;nd the defined value for broker cluster name
-    * 2) find the group of jar key to seek the worker cluster and its broker cluster
-    * (TODO: this is a really really really ugly design and it will be fixed by https://github.com/oharastream/ohara/issues/2151)
-    * 2.1) find the single broker cluster if the group of jar key is not associated to any worker cluster
-    * 3) find the single broker cluster
-    * 4) throw exception
+    * 1) find the defined value for broker cluster name
+    * 2) find the single broker cluster if brokerClusterName is None
+    * 3) throw exception otherwise
     */
-  private[this] def pickBrokerCluster(brokerClusterName: Option[String], jarKey: ObjectKey)(
-    implicit workerCollie: WorkerCollie,
-    brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): Future[String] = if (brokerClusterName.isDefined)
-    Future.successful(brokerClusterName.get)
-  else {
-    workerCollie.clusters().map(_.keys).flatMap { workerClusters =>
-      workerClusters
-        .find(_.name == jarKey.group())
-        .map(_.brokerClusterName)
-        .map(Future.successful)
-        .getOrElse(CollieUtils.singleCluster[BrokerClusterInfo]())
-    }
-  }
+  private[this] def pickBrokerCluster(brokerClusterName: Option[String])(
+    implicit brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext): Future[String] =
+    brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster[BrokerClusterInfo]())
 
   /**
     * This is a temporary solution for using both nodeNames and instances
@@ -148,12 +141,11 @@ private[configurator] object StreamRoute {
 
   private[this] def hookOfCreation(implicit fileStore: FileStore,
                                    nodeCollie: NodeCollie,
-                                   workerCollie: WorkerCollie,
                                    brokerCollie: BrokerCollie,
                                    streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
     (creation: Creation) =>
-      pickBrokerCluster(creation.brokerClusterName, creation.jarKey).flatMap { bkName =>
+      pickBrokerCluster(creation.brokerClusterName).flatMap { bkName =>
         //TODO remove this after #2288
         pickNodeNames(Some(creation.nodeNames), creation.instances).flatMap(
           nodes =>
@@ -187,7 +179,6 @@ private[configurator] object StreamRoute {
 
   private[this] def HookOfUpdating(
     implicit nodeCollie: NodeCollie,
-    workerCollie: WorkerCollie,
     brokerCollie: BrokerCollie,
     streamCollie: StreamCollie,
     executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, StreamClusterInfo] =
@@ -196,13 +187,7 @@ private[configurator] object StreamRoute {
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped StreamApp cluster: $key")
-          pickBrokerCluster(
-            update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName)),
-            // this resolving logic neglect if previous is None, and update has no jarKey specified
-            // Since this is a workaround for resolving "actual broker" for streamApp running,
-            // TODO: we will remove this workaround after #2151...by Sam
-            update.jarKey.orElse(previousOption.map(_.jarKey)).get
-          ).flatMap(
+          pickBrokerCluster(update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName))).flatMap(
             bkName =>
               //TODO remove this after #2288
               pickNodeNames(update.nodeNames, update.instances).map { nodes =>
@@ -238,7 +223,7 @@ private[configurator] object StreamRoute {
 
   private[this] def hookOfStart(implicit store: DataStore,
                                 fileStore: FileStore,
-                                clusterCollie: ClusterCollie,
+                                streamCollie: StreamCollie,
                                 brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
@@ -290,7 +275,7 @@ private[configurator] object StreamRoute {
             }
             .flatMap { brokerClusterInfo =>
               fileStore.fileInfo(streamClusterInfo.jarKey).flatMap { fileInfo =>
-                clusterCollie.streamCollie.creator
+                streamCollie.creator
                 // these settings will send to container environment
                 // we convert all value to string for convenient
                   .settings(streamClusterInfo.settings)
@@ -320,7 +305,6 @@ private[configurator] object StreamRoute {
             nodeCollie: NodeCollie,
             streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
-            workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
             fileStore: FileStore,
             meterCache: MeterCache,

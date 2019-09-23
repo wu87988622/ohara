@@ -39,7 +39,6 @@ class TestStreamRoute extends OharaTest with Matchers {
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val accessJar = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -351,11 +350,6 @@ class TestStreamRoute extends OharaTest with Matchers {
     thrown1.getMessage should include("We don't allow multiple topics of to field")
   }
 
-  /**
-    * stream route seeks two place to find the based cluster
-    * 1) the key StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key()
-    * 2) the group of jar (mapped to worker cluster) (this is deprecated) (see https://github.com/oharastream/ohara/issues/2151)
-    */
   @Test
   def testBrokerClusterName(): Unit = {
     val nodeNames = result(bkApi.list()).head.nodeNames
@@ -368,6 +362,15 @@ class TestStreamRoute extends OharaTest with Matchers {
     val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
     result(topicApi.start(to0.key))
     result(bkApi.start(bk.key))
+
+    // we already have pre-defined broker, lake brokerClusterName parameter will cause exception
+    an[IllegalArgumentException] should be thrownBy result(
+      accessStream.request
+        .jarKey(fileInfo.key)
+        .fromTopicKey(from0.key)
+        .toTopicKey(to0.key)
+        .instances(1)
+        .create()).brokerClusterName
 
     val streamDesc = result(
       accessStream.request
@@ -430,18 +433,6 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(accessStream.request.name(info2.name).instances(nodes.size).update()).nodeNames.size shouldBe nodes.size
     // update nodeNames normally
     result(accessStream.request.name(info.name).nodeNames(Set(nodes.last)).update()).nodeNames shouldBe Set(nodes.last)
-  }
-
-  // TODO: this is for deprecated APIs ... fix it by https://github.com/oharastream/ohara/issues/2151
-  @Test
-  def testWorkerClusterNameInJarGroup(): Unit = {
-    val wk = result(wkApi.list()).head
-    val file = CommonUtils.createTempJar("empty_")
-    val jar = result(accessJar.request.file(file).group(wk.group).upload())
-    val name = CommonUtils.randomString(10)
-    val defaultProps = result(accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create())
-    defaultProps.jarKey shouldBe jar.key
-    defaultProps.brokerClusterName shouldBe result(wkApi.get(wk.key)).brokerClusterName
   }
 
   @Test
