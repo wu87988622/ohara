@@ -231,10 +231,13 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(streams)) {
       streams.forEach(stream => {
-        if (!isUndefined(stream.state)) {
-          cy.stopStreamApp(stream.group, stream.name);
+        const { group, state, settings } = stream;
+        const { name } = settings;
+
+        if (!isUndefined(state)) {
+          cy.stopStreamApp(group, name);
         }
-        cy.deleteProperty(stream.group, stream.name);
+        cy.deleteProperty(group, name);
       });
     }
   });
@@ -254,11 +257,14 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(topics)) {
       topics.forEach(topic => {
-        if (!isUndefined(topic.state)) {
-          cy.stopTopic(topic.group, topic.name);
+        const { group, state, settings } = topic;
+        const { name } = settings;
+
+        if (!isUndefined(state)) {
+          cy.stopTopic(group, name);
         }
 
-        cy.deleteTopic(topic.group, topic.name);
+        cy.deleteTopic(group, name);
       });
     }
   });
@@ -268,10 +274,14 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(workers)) {
       workers.forEach(worker => {
-        if (!isUndefined(worker.state)) {
-          cy.stopWorker(worker.name);
+        const { state, settings } = worker;
+        const { name } = settings;
+
+        if (!isUndefined(state)) {
+          cy.stopWorker(name);
         }
-        cy.request('DELETE', `api/workers/${worker.name}`);
+
+        cy.request('DELETE', `api/workers/${name}`);
       });
     }
   });
@@ -281,11 +291,14 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(brokers)) {
       brokers.forEach(broker => {
-        if (!isUndefined(broker.state)) {
-          cy.stopBroker(broker.name);
+        const { state, settings } = broker;
+        const { name } = settings;
+
+        if (!isUndefined(state)) {
+          cy.stopBroker(name);
         }
 
-        cy.deleteBroker(broker.name);
+        cy.deleteBroker(name);
       });
     }
   });
@@ -295,11 +308,14 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(zookeepers)) {
       zookeepers.forEach(zookeeper => {
-        if (!isUndefined(zookeeper.state)) {
-          cy.stopZookeeper(zookeeper.name);
+        const { state, settings } = zookeeper;
+        const { name } = settings;
+
+        if (!isUndefined(state)) {
+          cy.stopZookeeper(name);
         }
 
-        cy.deleteZookeeper(zookeeper.name);
+        cy.deleteZookeeper(name);
       });
     }
   });

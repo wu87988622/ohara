@@ -21,7 +21,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -165,21 +165,7 @@ object ZookeeperApi {
         private[this] val format = jsonFormat5(ZookeeperClusterInfo)
         override def read(json: JsValue): ZookeeperClusterInfo = format.read(json)
         override def write(obj: ZookeeperClusterInfo): JsValue =
-          JsObject(
-            noJsNull(
-              format.write(obj).asJsObject.fields ++
-                // TODO: remove this stale fields
-                Map(
-                  NAME_KEY -> JsString(obj.name),
-                  GROUP_KEY -> JsString(obj.group),
-                  IMAGE_NAME_KEY -> JsString(obj.imageName),
-                  NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
-                  CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
-                  PEER_PORT_KEY -> JsNumber(obj.peerPort),
-                  ELECTION_PORT_KEY -> JsNumber(obj.electionPort),
-                  TAGS_KEY -> JsObject(obj.tags)
-                )
-            ))
+          JsObject(noJsNull(format.write(obj).asJsObject.fields))
       })
       .refine
 
