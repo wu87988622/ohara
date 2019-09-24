@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement } from '@testing-library/react';
+import { waitForElement } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { divide, floor } from 'lodash';
 
@@ -27,7 +27,6 @@ import * as URL from 'components/controller/url';
 
 jest.mock('api/infoApi');
 jest.mock('components/controller');
-afterEach(cleanup);
 
 // Skip the tests for now. We should mock the XHR requests in the test
 describe('<Overview />', () => {

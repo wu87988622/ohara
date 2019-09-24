@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import { waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
@@ -25,8 +25,6 @@ import Topics from '../Topics';
 import { renderWithProvider } from 'utils/testUtils';
 
 jest.mock('components/controller');
-
-afterEach(cleanup);
 
 describe('<Topics />', () => {
   let props;

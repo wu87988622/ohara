@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import { waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
@@ -28,8 +28,6 @@ import useSnackbar from 'components/context/Snackbar/useSnackbar';
 jest.mock('components/controller');
 jest.mock('api/validateApi');
 jest.mock('components/context/Snackbar/useSnackbar');
-
-afterEach(cleanup);
 
 describe('<NodeListPage />', () => {
   beforeEach(() => {

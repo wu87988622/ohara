@@ -15,13 +15,14 @@
  */
 
 import React from 'react';
-import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import WorkspacesNewModal from '../WorkspacesNewModal';
 import { renderWithProvider } from 'utils/testUtils';
+import * as useApi from 'components/controller';
+import * as generate from 'utils/generate';
 
-afterEach(cleanup);
+jest.mock('components/controller');
 
 describe('<WorkspacesNewModal />', () => {
   let props;
@@ -31,6 +32,41 @@ describe('<WorkspacesNewModal />', () => {
       onClose: jest.fn(),
       onConfirm: jest.fn(),
     };
+
+    jest.spyOn(useApi, 'useUploadApi').mockImplementation(() => {
+      return { getData: jest.fn() };
+    });
+
+    jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
+      return { deleteApi: jest.fn() };
+    });
+
+    jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
+      return { getData: jest.fn() };
+    });
+
+    jest.spyOn(useApi, 'useWaitApi').mockImplementation(() => {
+      return { getData: jest.fn() };
+    });
+
+    jest.spyOn(useApi, 'usePostApi').mockImplementation(() => {
+      return { getData: jest.fn() };
+    });
+
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: [
+              {
+                name: generate.name(),
+              },
+            ],
+          },
+        },
+        isLoading: false,
+      };
+    });
   });
 
   it('renders the modal', () => {

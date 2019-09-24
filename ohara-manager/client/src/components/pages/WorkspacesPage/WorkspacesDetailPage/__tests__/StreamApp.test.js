@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import { waitForElement, fireEvent } from '@testing-library/react';
 import { divide, floor } from 'lodash';
 import '@testing-library/jest-dom/extend-expect';
 
@@ -25,8 +25,6 @@ import { renderWithProvider } from 'utils/testUtils';
 import * as useApi from 'components/controller';
 
 jest.mock('components/controller');
-
-afterEach(cleanup);
 
 const props = { workspaceName: generate.serviceName() };
 

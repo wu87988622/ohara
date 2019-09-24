@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import { waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import { renderWithProvider } from 'utils/testUtils';
@@ -25,8 +25,6 @@ import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 
 jest.mock('components/controller');
-
-afterEach(cleanup);
 
 describe('<Nodes />', () => {
   let nodes;

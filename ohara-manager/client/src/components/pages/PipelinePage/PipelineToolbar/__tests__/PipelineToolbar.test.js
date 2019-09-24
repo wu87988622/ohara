@@ -15,12 +15,7 @@
  */
 
 import React from 'react';
-import {
-  cleanup,
-  render,
-  waitForElement,
-  fireEvent,
-} from '@testing-library/react';
+import { render, waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
@@ -117,8 +112,6 @@ fetchPipelines.mockImplementation(() =>
     },
   }),
 );
-
-afterEach(cleanup);
 
 describe('<PipelineToolbar />', () => {
   it('renders self', async () => {

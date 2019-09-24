@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import { waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
@@ -25,8 +25,6 @@ import { fetchInfo } from 'api/infoApi';
 import { renderWithProvider } from 'utils/testUtils';
 
 jest.mock('api/infoApi');
-
-afterEach(cleanup);
 
 describe('<Header />', () => {
   beforeEach(() => {

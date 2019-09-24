@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, render, waitForElement } from '@testing-library/react';
+import { render, waitForElement } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
@@ -28,8 +28,6 @@ jest.mock('api/logApi');
 const props = {
   match: { params: jest.fn() },
 };
-
-afterEach(cleanup);
 
 describe('<LogsPage />', () => {
   const match = {

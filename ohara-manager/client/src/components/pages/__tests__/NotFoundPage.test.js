@@ -15,13 +15,11 @@
  */
 
 import React from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import NotFoundPage from '../NotFoundPage';
 import { NOT_FOUND_PAGE } from 'constants/documentTitles';
-
-afterEach(cleanup);
 
 describe('<NotFoundPage />', () => {
   it('renders the right document title', () => {

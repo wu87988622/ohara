@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import { waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import PipelineListPage from '../PipelineListPage/PipelineListPage';
@@ -42,8 +42,6 @@ jest.doMock('../PipelineToolbar', () => {
   const PipelineToolbar = () => <div />;
   return PipelineToolbar;
 });
-
-afterEach(cleanup);
 
 describe('<PipelineListPage />', () => {
   let pipelines;
