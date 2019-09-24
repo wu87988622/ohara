@@ -18,11 +18,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty } from 'lodash';
 
-import NodeNames from './NodeNames';
+import NodeNameList from './NodeNameList';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import { Box } from './styles';
 
-const Detail = props => {
+const NodeNames = props => {
   // If it's an empty canvas don't render anything
   if (isEmpty(props.graph)) return null;
 
@@ -41,12 +41,12 @@ const Detail = props => {
 
   return (
     <Box>
-      <NodeNames connectorName={connectorName} nodeNames={nodeNames} />
+      <NodeNameList connectorName={connectorName} nodeNames={nodeNames} />
     </Box>
   );
 };
 
-Detail.propTypes = {
+NodeNames.propTypes = {
   graph: PropTypes.arrayOf(graphPropType).isRequired,
   match: PropTypes.shape({
     params: PropTypes.shape({
@@ -56,4 +56,4 @@ Detail.propTypes = {
   nodeNames: PropTypes.array.isRequired,
 };
 
-export default Detail;
+export default NodeNames;

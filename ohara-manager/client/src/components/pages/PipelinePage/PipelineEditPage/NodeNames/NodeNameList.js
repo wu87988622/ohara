@@ -17,19 +17,19 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { StyledH4, NodeNamesList } from './styles';
+import * as s from './styles';
 
-const NodeNames = props => {
+const NodeNameList = props => {
   const { connectorName, nodeNames } = props;
 
   return (
     <>
-      <StyledH4>
+      <s.StyledH4>
         <i className="fas fa-sitemap"></i>
         {`Node (${connectorName})`}
-      </StyledH4>
+      </s.StyledH4>
 
-      <NodeNamesList>
+      <s.NodeNamesList>
         {nodeNames.map(nodeName => (
           <li key={nodeName} className="item" data-testid="detail-item">
             <div className="item-header">Name</div>
@@ -38,14 +38,14 @@ const NodeNames = props => {
             </div>
           </li>
         ))}
-      </NodeNamesList>
+      </s.NodeNamesList>
     </>
   );
 };
 
-NodeNames.propTypes = {
+NodeNameList.propTypes = {
   connectorName: PropTypes.string.isRequired,
   nodeNames: PropTypes.array.isRequired,
 };
 
-export default NodeNames;
+export default NodeNameList;

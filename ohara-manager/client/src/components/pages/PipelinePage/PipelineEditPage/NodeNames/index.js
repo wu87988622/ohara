@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import Detail from './Detail';
+import NodeNames from './NodeNames';
 
-export default Detail;
+export default NodeNames;
