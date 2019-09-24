@@ -26,7 +26,7 @@ import { graph as graphPropType } from 'propTypes/pipeline';
 const PipelineGraph = props => {
   useEffect(() => {
     const renderGraph = () => {
-      const { graph, pipeline = {}, nodeNames } = props;
+      const { graph, pipeline = {} } = props;
       const {
         tags: { workerClusterName },
       } = pipeline;
@@ -48,7 +48,6 @@ const PipelineGraph = props => {
           state,
           metrics,
           isActive,
-          nodeNames,
           workerClusterName,
         });
 
