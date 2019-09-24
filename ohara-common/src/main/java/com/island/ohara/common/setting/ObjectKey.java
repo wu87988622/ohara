@@ -55,6 +55,17 @@ public interface ObjectKey {
   /**
    * parse input json and then generate a ObjectKey instance.
    *
+   * <p>Noted: the parser of scala version is powerful to accept multiples format of requests. By
+   * contrast, this json parser is too poor to accept following formats: { "name": "n" }
+   *
+   * <p>and
+   *
+   * <p>"n"
+   *
+   * <p>however, it is ok to java version as this parser is used internally. The data transferred
+   * internally is normalized to a standard format: { "group": "n", "name": "n" } and hence we don't
+   * worry about taking other "supported" formats for java code.
+   *
    * @param json json representation
    * @return a serializable instance
    */
@@ -62,6 +73,23 @@ public interface ObjectKey {
     return JsonUtils.toObject(json, new TypeReference<KeyImpl>() {});
   }
 
+  /**
+   * parse input json and then generate a ObjectKey instance.
+   *
+   * <p>Noted: the parser of scala version is powerful to accept multiples format of requests. By
+   * contrast, this json parser is too poor to accept following formats: { "name": "n" }
+   *
+   * <p>and
+   *
+   * <p>"n"
+   *
+   * <p>however, it is ok to java version as this parser is used internally. The data transferred
+   * internally is normalized to a standard format: { "group": "n", "name": "n" } and hence we don't
+   * worry about taking other "supported" formats for java code.
+   *
+   * @param json json representation
+   * @return a serializable instance
+   */
   static List<ObjectKey> toObjectKeys(String json) {
     return JsonUtils.toObject(json, new TypeReference<List<KeyImpl>>() {}).stream()
         .map(key -> (ObjectKey) key)

@@ -47,6 +47,7 @@ public interface ConnectorKey extends ObjectKey {
   /**
    * parse input json and then generate a ConnectorKey instance.
    *
+   * @see ObjectKey#toObjectKey(String)
    * @param json json representation
    * @return a serializable instance
    */
@@ -58,6 +59,7 @@ public interface ConnectorKey extends ObjectKey {
   /**
    * parse input json and then generate a ConnectorKey instance.
    *
+   * @see ObjectKey#toObjectKeys(String)
    * @param json json representation
    * @return a serializable instance
    */

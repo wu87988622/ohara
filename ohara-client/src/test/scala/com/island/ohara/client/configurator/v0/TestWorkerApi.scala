@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -428,5 +429,16 @@ class TestWorkerApi extends OharaTest with Matchers {
       .freePorts(freePorts)
       .creation
       .freePorts shouldBe freePorts
+  }
+
+  @Test
+  def stringArrayToJarKeys(): Unit = {
+    val key = CommonUtils.randomString()
+    val updating = WorkerApi.WORKER_UPDATING_JSON_FORMAT.read(s"""
+                                                  |  {
+                                                  |    "jarKeys": ["$key"]
+                                                  |  }
+                                                  |  """.stripMargin.parseJson)
+    updating.jarKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
   }
 }

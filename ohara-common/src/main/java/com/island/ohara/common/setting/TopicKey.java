@@ -46,6 +46,7 @@ public interface TopicKey extends ObjectKey {
   /**
    * parse input json and then generate a TopicKey instance.
    *
+   * @see ObjectKey#toObjectKey(String)
    * @param json json representation
    * @return a serializable instance
    */
@@ -57,6 +58,7 @@ public interface TopicKey extends ObjectKey {
   /**
    * parse input json and then generate a TopicKey instances.
    *
+   * @see ObjectKey#toObjectKeys(String)
    * @param json json representation
    * @return a serializable instance
    */

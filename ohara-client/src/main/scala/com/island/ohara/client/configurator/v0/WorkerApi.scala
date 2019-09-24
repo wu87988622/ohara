@@ -144,10 +144,8 @@ object WorkerApi {
     def offsetTopicPartitions: Option[Int] = noJsNull(settings).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def offsetTopicReplications: Option[Short] =
       noJsNull(settings).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    import scala.collection.JavaConverters._
-    def jarKeys: Option[Set[ObjectKey]] = jarInfos
-      .map(_.map(_.key).toSet)
-      .orElse(noJsNull(settings).get(JAR_KEYS_KEY).map(js => ObjectKey.toObjectKeys(js.toString).asScala.toSet))
+    def jarKeys: Option[Set[ObjectKey]] =
+      jarInfos.map(_.map(_.key).toSet).orElse(noJsNull(settings).get(JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]]))
     def freePorts: Option[Set[Int]] =
       noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
 
