@@ -293,6 +293,7 @@ const WorkerNewModal = props => {
     await createZookeeper({
       postParams: zookeeperPostParams,
       checkResult,
+      sleep: 3000,
     });
     if (handleZookeeper()) throw new ERROR();
     setActiveStep(1);
@@ -311,7 +312,11 @@ const WorkerNewModal = props => {
       jmxPort: generate.port(),
       nodeNames,
     };
-    await createBroker({ postParams: brokerPostParams, checkResult });
+    await createBroker({
+      postParams: brokerPostParams,
+      checkResult,
+      sleep: 3000,
+    });
     if (handleBroker()) throw new ERROR();
     setActiveStep(2);
     saveService({ service: 'broker', name: brokerClusterName });
@@ -355,6 +360,7 @@ const WorkerNewModal = props => {
 
     await createWorker({
       postParams: workerPostParams,
+      sleep: 3000,
       checkResult: response => {
         const { connectors } = response.data.result;
         return !isEmpty(connectors);
