@@ -251,17 +251,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
   }
 
   /**
-    * Create a topic admin according to passed cluster name.
-    * Noted: if target cluster doesn't exist, an future with exception will return
-    * @param clusterName target cluster
-    * @return cluster info and topic admin
-    */
-  def topicAdmin(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] = cluster(clusterName).map {
-    case (c, _) => (c, topicAdmin(c))
-  }
-
-  /**
     * Create a topic admin according to passed cluster.
     * @param cluster target cluster
     * @return topic admin

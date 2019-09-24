@@ -32,35 +32,18 @@ import scala.reflect.ClassTag
   */
 private[route] object CollieUtils {
 
+  /**
+    * Create a topic admin according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterName target cluster
+    * @return cluster info and topic admin
+    */
   def topicAdmin(clusterName: String)(implicit brokerCollie: BrokerCollie,
                                       cleaner: AdminCleaner,
                                       executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
-    topicAdmin(Some(clusterName))
-
-  /**
-    * find the broker cluster info. If the input cluster name is empty, the single broker cluster is returned. Otherwise,
-    * an exception is thrown.
-    * @param clusterName broker cluster name
-    * @param brokerCollie broker collie
-    * @param cleaner cleaner
-    * @param executionContext thread pool
-    * @return broker cluster and topic admin
-    */
-  private[this] def topicAdmin(clusterName: Option[String])(implicit brokerCollie: BrokerCollie,
-                                                            cleaner: AdminCleaner,
-                                                            executionContext: ExecutionContext)
-    : Future[(BrokerClusterInfo, TopicAdmin)] = clusterName.fold(brokerCollie.clusters
-    .map { clusters =>
-      clusters.size match {
-        case 0 =>
-          throw new IllegalArgumentException(s"we can't choose default broker cluster since there is no broker cluster")
-        case 1 => clusters.keys.head
-        case _ =>
-          throw new IllegalArgumentException(
-            s"we can't choose default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
-      }
+    brokerCollie.cluster(clusterName).map {
+      case (c, _) => (c, cleaner.add(brokerCollie.topicAdmin(c)))
     }
-    .map(clusterInfo => (clusterInfo, cleaner.add(brokerCollie.topicAdmin(clusterInfo)))))(brokerCollie.topicAdmin)
 
   /**
     * The mechanism has three phases.
@@ -128,7 +111,7 @@ private[route] object CollieUtils {
     executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
     workerClient(wkClusterName).flatMap {
       case (wkInfo, wkClient) =>
-        brokerCollie.topicAdmin(wkInfo.brokerClusterName).map {
+        topicAdmin(wkInfo.brokerClusterName).map {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
         }
     }

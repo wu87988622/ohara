@@ -224,6 +224,7 @@ private[configurator] object StreamRoute {
   private[this] def hookOfStart(implicit store: DataStore,
                                 fileStore: FileStore,
                                 streamCollie: StreamCollie,
+                                cleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
@@ -259,7 +260,7 @@ private[configurator] object StreamRoute {
           }
         }
         .flatMap { streamClusterInfo =>
-          brokerCollie
+          CollieUtils
             .topicAdmin(streamClusterInfo.brokerClusterName)
             .flatMap {
               case (brokerClusterInfo, topicAdmin) =>
@@ -303,6 +304,7 @@ private[configurator] object StreamRoute {
             nodeCollie: NodeCollie,
             streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
+            cleaner: AdminCleaner,
             brokerCollie: BrokerCollie,
             fileStore: FileStore,
             meterCache: MeterCache,
