@@ -296,6 +296,7 @@ const Plugins = props => {
     setWorkerActions([]);
     workerRefetch(true);
     jarRefetch(true);
+    setErrors([]);
   };
 
   const handleError = async params => {
@@ -443,6 +444,9 @@ const Plugins = props => {
     );
 
     setActiveStep(4);
+
+    //Waiting for remove files
+    await commonUtils.sleep(1000);
 
     resetModal();
   };
