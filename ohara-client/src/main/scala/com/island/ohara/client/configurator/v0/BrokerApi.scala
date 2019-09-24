@@ -27,11 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object BrokerApi {
 
-  /**
-    * The default value of group for this API.
-    */
-  val BROKER_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-
   val BROKER_PREFIX_PATH: String = "brokers"
 
   val BROKER_SERVICE_NAME: String = "bk"
@@ -88,7 +83,7 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, BROKER_GROUP_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
@@ -250,7 +245,7 @@ object BrokerApi {
       override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(updating.group.getOrElse(BROKER_GROUP_DEFAULT),
+          key(updating.group.getOrElse(GROUP_DEFAULT),
               updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
           updating
         )

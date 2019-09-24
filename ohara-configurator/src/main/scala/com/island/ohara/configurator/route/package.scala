@@ -79,7 +79,6 @@ package object route {
     * The LIST is routed to "GET /$root"
     * The DELETE is routed to "DELETE /$root/$name"
     * @param root the prefix of URL
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation custom action for CREATION. the name is either user-defined request or random string
     * @param HookOfUpdating custom action for UPDATE. the name from URL is must equal to name in payload
     * @param store data store
@@ -92,7 +91,6 @@ package object route {
     */
   private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     HookOfUpdating: HookOfUpdating[Creation, Update, Res])(implicit store: DataStore,
                                                            // normally, update request does not carry the name field,
@@ -104,7 +102,6 @@ package object route {
                                                            executionContext: ExecutionContext): server.Route =
     route(
       root = root,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfGet = (res: Res) => Future.successful(res),
@@ -116,7 +113,6 @@ package object route {
     *  this is the basic route of all APIs to access ohara's data.
     *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -134,7 +130,6 @@ package object route {
     */
   private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -156,8 +151,12 @@ package object route {
       } ~ path(Segment) { name =>
         parameter(GROUP_KEY ?) { groupOption =>
           val key =
-            ObjectKey.of(rm.check(GROUP_KEY, JsString(hookOfGroup(groupOption))).value,
-                         rm.check(NAME_KEY, JsString(name)).value)
+            ObjectKey.of(
+              rm.check(GROUP_KEY,
+                       JsString(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)))
+                .value,
+              rm.check(NAME_KEY, JsString(name)).value
+            )
           get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
             delete(complete(
               hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
@@ -184,7 +183,6 @@ package object route {
     * The START is routed to "PUT /$root/$name/start"
     * The STOP is routed to "PUT /$root/$name/stop"
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -204,7 +202,6 @@ package object route {
     */
   private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -220,7 +217,6 @@ package object route {
                               rm2: RootJsonFormat[Res],
                               executionContext: ExecutionContext): server.Route = route(
     root = root,
-    hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
@@ -245,7 +241,6 @@ package object route {
     * The PAUSE is routed to "PUT /$root/$name/pause"
     * The RESUME is routed to "PUT /$root/$name/resume"
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -267,7 +262,6 @@ package object route {
     */
   private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -285,7 +279,6 @@ package object route {
                                 rm2: RootJsonFormat[Res],
                                 executionContext: ExecutionContext): server.Route = route(
     root = root,
-    hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
@@ -309,7 +302,6 @@ package object route {
     * The DELETE is routed to "DELETE /$root/$name"
     * The ACTION is routed to "PUT /$root/$name/$action"
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -328,7 +320,6 @@ package object route {
     */
   private[route] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -343,7 +334,6 @@ package object route {
                                               rm2: RootJsonFormat[Res],
                                               executionContext: ExecutionContext): server.Route = route(
     root = root,
-    hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
@@ -364,7 +354,6 @@ package object route {
     * The "ACTION"" is routed to "PUT /$root/$name/$action". Noted: the action request will get NotFound if the input
     * action handles are disable to process the request properly.
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -384,7 +373,6 @@ package object route {
     */
   private[this] def route[Creation <: BasicCreation, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     HookOfUpdating: HookOfUpdating[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -400,7 +388,6 @@ package object route {
                                             rm2: RootJsonFormat[Res],
                                             executionContext: ExecutionContext): server.Route = route(
     root = root,
-    hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     HookOfUpdating = HookOfUpdating,
     hookOfList = hookOfList,
@@ -409,7 +396,7 @@ package object route {
   ) ~ pathPrefix(root / Segment / Segment) {
     case (name, subName) =>
       parameterMap { params =>
-        val key = ObjectKey.of(hookOfGroup(params.get(GROUP_KEY)), name)
+        val key = ObjectKey.of(params.getOrElse(GROUP_KEY, com.island.ohara.client.configurator.v0.GROUP_DEFAULT), name)
         put {
           HookOfSubNameOfPut(key, subName, params)
             .map(_.map(_ => StatusCodes.Accepted))
@@ -439,7 +426,6 @@ package object route {
     * The GET/LIST route auto-update the state of cluster
     * The DELETE route reject the request to a running cluster
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfStart used to handle start command
@@ -458,7 +444,6 @@ package object route {
                                   Creation <: ClusterCreation,
                                   Update <: ClusterUpdating](root: String,
                                                              metricsKey: Option[String],
-                                                             hookOfGroup: HookOfGroup,
                                                              hookOfCreation: HookOfCreation[Creation, Cluster],
                                                              HookOfUpdating: HookOfUpdating[Creation, Update, Cluster],
                                                              hookOfStart: HookOfAction,
@@ -474,7 +459,6 @@ package object route {
     executionContext: ExecutionContext): server.Route =
     clusterRoute[Cluster, Creation, Update](
       root = root,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfGet = updateState[Cluster](_, metricsKey),
@@ -495,7 +479,6 @@ package object route {
     * The START is routed to "PUT /$root/$name/start"
     * The STOP is routed to "PUT /$root/$name/stop"
     * @param root path to root
-    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param HookOfUpdating used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -516,7 +499,6 @@ package object route {
   private[this] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
                                  Creation <: ClusterCreation,
                                  Update <: ClusterUpdating](root: String,
-                                                            hookOfGroup: HookOfGroup,
                                                             hookOfCreation: HookOfCreation[Creation, Cluster],
                                                             HookOfUpdating: HookOfUpdating[Creation, Update, Cluster],
                                                             hookOfGet: HookOfGet[Cluster],
@@ -534,7 +516,6 @@ package object route {
     executionContext: ExecutionContext): server.Route =
     route(
       root = root,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfList = hookOfList,

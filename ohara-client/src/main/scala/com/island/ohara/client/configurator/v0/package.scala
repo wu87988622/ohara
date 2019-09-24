@@ -26,11 +26,8 @@ package object v0 {
     * the default group to all objects.
     * the group is useful to Ohara Manager. However, in simple case, the group is a bit noisy so we offer the default group to all objects when
     * input group is ignored.
-    *
-    * This field is protected since it is a "default" to all APIs scopes than a "global" default to whole project.
-    * However, each APIs scope may have custom default value of group.
     */
-  private[v0] val GROUP_DEFAULT: String = "default"
+  val GROUP_DEFAULT: String = "default"
   val GROUP_KEY: String = "group"
 
   /**
@@ -110,7 +107,7 @@ package object v0 {
       }
       override def read(json: JsValue): TopicKey = TopicKey.toTopicKey(json.toString())
     })
-    .nullToString(GROUP_KEY, () => TopicApi.GROUP_DEFAULT)
+    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
 
@@ -128,7 +125,7 @@ package object v0 {
       }
       override def read(json: JsValue): ConnectorKey = ConnectorKey.toConnectorKey(json.toString())
     })
-    .nullToString(GROUP_KEY, () => ConnectorApi.GROUP_DEFAULT)
+    .nullToString(GROUP_KEY, GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
 
@@ -150,16 +147,15 @@ package object v0 {
     * 3) group will use defaultGroup if not defined.
     * 4) name length + group length <= LIMIT_OF_KEY_LENGTH
     *
-    * @param defaultGroup this object default group
     * @tparam T type of object
     * @return json refiner object
     */
-  private[v0] def basicRulesOfKey[T](defaultGroup: String): JsonRefiner[T] =
+  private[v0] def basicRulesOfKey[T]: JsonRefiner[T] =
     JsonRefiner[T]
     //------------------------------ "name" and "group" rules ----------------------------------//
     // we random a default name for this object
       .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_KEY_LENGTH / 2))
-      .nullToString(GROUP_KEY, () => defaultGroup)
+      .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
       .stringRestriction(Set(NAME_KEY, GROUP_KEY))
       .withNumber()
       .withLowerCase()
@@ -176,14 +172,11 @@ package object v0 {
     * 4) imageName will use {defaultImage} if not defined.
     * 5) tags will use empty map if not defined.
     * @param defaultImage this cluster default images
-    * @param defaultGroup this cluster default group. Different type of cluster may have different default group, so
-    *                     we open a door for them
     * @tparam T type of creation
     * @return json refiner object
     */
-  private[v0] def basicRulesOfCreation[T <: ClusterCreation](defaultImage: String,
-                                                             defaultGroup: String): JsonRefiner[T] =
-    basicRulesOfKey[T](defaultGroup)
+  private[v0] def basicRulesOfCreation[T <: ClusterCreation](defaultImage: String): JsonRefiner[T] =
+    basicRulesOfKey[T]
     // for each field, we should reject any empty string
       .rejectEmptyString()
       // cluster creation should use the default image of current version

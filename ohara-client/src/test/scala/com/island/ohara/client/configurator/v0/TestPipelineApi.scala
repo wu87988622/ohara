@@ -121,7 +121,7 @@ class TestPipelineApi extends OharaTest with Matchers {
                                                           |  }
                                                           |
     """.stripMargin.parseJson)
-    creation.group shouldBe PipelineApi.GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.flows shouldBe Seq.empty
 

@@ -38,7 +38,7 @@ class TestFileStore extends OharaTest with Matchers {
   def testAddFile(): Unit = {
     val file = generateJarFile()
     val info = result(fileStore.fileInfoCreator.file(file).create())
-    info.group shouldBe FileInfoApi.GROUP_DEFAULT
+    info.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
     info.name shouldBe file.getName
     info.size shouldBe file.length()
     info.tags shouldBe Map.empty
@@ -61,7 +61,7 @@ class TestFileStore extends OharaTest with Matchers {
     val name = CommonUtils.randomString(10) + ".jar"
     val file = generateJarFile()
     val info = result(fileStore.fileInfoCreator.name(name).file(file).create())
-    info.group shouldBe FileInfoApi.GROUP_DEFAULT
+    info.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
     info.name shouldBe name
     info.size shouldBe file.length()
     info.tags shouldBe Map.empty
@@ -72,7 +72,7 @@ class TestFileStore extends OharaTest with Matchers {
     val file = generateJarFile()
     val tags = Map("a" -> JsString("c"), "b" -> JsNumber(123))
     val info = result(fileStore.fileInfoCreator.file(file).tags(tags).create())
-    info.group shouldBe FileInfoApi.GROUP_DEFAULT
+    info.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
     info.name shouldBe file.getName
     info.size shouldBe file.length()
     info.tags shouldBe tags
@@ -83,7 +83,7 @@ class TestFileStore extends OharaTest with Matchers {
     val file0 = generateJarFile()
     val tags0 = Map("a" -> JsString("c"), "b" -> JsNumber(123))
     val info0 = result(fileStore.fileInfoCreator.file(file0).tags(tags0).create())
-    info0.group shouldBe FileInfoApi.GROUP_DEFAULT
+    info0.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
     info0.name shouldBe file0.getName
     info0.size shouldBe file0.length()
     info0.tags shouldBe tags0

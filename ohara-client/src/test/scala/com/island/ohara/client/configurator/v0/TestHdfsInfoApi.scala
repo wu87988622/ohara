@@ -102,7 +102,7 @@ class TestHdfsInfoApi extends OharaTest with Matchers {
                                                                | "uri": "$uri"
                                                                |}
        """.stripMargin.parseJson)
-    creation.group shouldBe HdfsInfoApi.GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.uri shouldBe uri
 

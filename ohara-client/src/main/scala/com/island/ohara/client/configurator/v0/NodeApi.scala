@@ -29,11 +29,6 @@ import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
 
   /**
-    * The default value of group for this API.
-    */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-
-  /**
     * node does not support group. However, we are in group world and there are many cases of inputting key (group, name)
     * to access resource. This method used to generate key for hostname of node.
     * @param hostname hostname

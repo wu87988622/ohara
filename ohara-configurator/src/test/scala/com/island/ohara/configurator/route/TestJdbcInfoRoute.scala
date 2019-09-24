@@ -189,7 +189,7 @@ class TestJdbcInfoRoute extends OharaTest with Matchers {
         .jdbcUrl("url")
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
-        .create()).group shouldBe JdbcInfoApi.GROUP_DEFAULT
+        .create()).group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(

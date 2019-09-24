@@ -138,7 +138,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
       |  }
       """.stripMargin.parseJson)
 
-    creation.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
@@ -178,7 +178,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
     val creation = access.name(name).nodeName(nodeName).creation
     creation.name shouldBe name
     // use default values if absent
-    creation.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
     creation.nodeNames shouldBe Set(nodeName)
 
@@ -452,12 +452,12 @@ class TestZookeeperApi extends OharaTest with Matchers {
       ))
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.read(res)
     data.name shouldBe name
-    data.group shouldBe ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT
+    data.group shouldBe GROUP_DEFAULT
   }
 
   @Test

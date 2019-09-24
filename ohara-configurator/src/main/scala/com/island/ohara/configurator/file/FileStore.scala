@@ -206,7 +206,7 @@ object FileStore {
 
   trait FileInfoCreator extends com.island.ohara.common.pattern.Creator[Future[FileInfo]] {
     private[this] var file: File = _
-    private[this] var group: String = FileInfoApi.GROUP_DEFAULT
+    private[this] var group: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
     private[this] var name: String = _
     private[this] var tags: Map[String, JsValue] = Map.empty
     private[this] var threadPool: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global

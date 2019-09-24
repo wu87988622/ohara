@@ -34,11 +34,6 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object TopicApi {
-
-  /**
-    * The default value of group for this API.
-    */
-  private[ohara] val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   private[v0] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   private[v0] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   private[ohara] val TOPICS_PREFIX_PATH: String = "topics"

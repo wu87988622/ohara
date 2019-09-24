@@ -34,11 +34,6 @@ import scala.concurrent.{ExecutionContext, Future}
 object ConnectorApi {
 
   val CONNECTORS_PREFIX_PATH: String = "connectors"
-
-  /**
-    * The default value of group for this API.
-    */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   private[this] val WORKER_CLUSTER_NAME_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key()
   private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()

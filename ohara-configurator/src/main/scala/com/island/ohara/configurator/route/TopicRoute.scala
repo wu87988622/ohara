@@ -28,7 +28,6 @@ import com.island.ohara.configurator.route.hook.{
   HookOfAction,
   HookOfCreation,
   HookOfGet,
-  HookOfGroup,
   HookOfList,
   HookOfUpdating
 }
@@ -244,8 +243,6 @@ private[configurator] object TopicRoute {
           }
     }
 
-  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
-
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             meterCache: MeterCache,
@@ -253,7 +250,6 @@ private[configurator] object TopicRoute {
             executionContext: ExecutionContext): server.Route =
     route[Creation, Updating, TopicInfo](
       root = TOPICS_PREFIX_PATH,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,

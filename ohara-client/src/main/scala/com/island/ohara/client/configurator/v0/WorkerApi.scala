@@ -27,10 +27,6 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
 
-  /**
-    * The default value of group for this API.
-    */
-  val WORKER_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val WORKER_SERVICE_NAME: String = "wk"
 
   val WORKER_PREFIX_PATH: String = "workers"
@@ -103,7 +99,7 @@ object WorkerApi {
     * exposed to configurator
     */
   private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT, WORKER_GROUP_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -365,7 +361,7 @@ object WorkerApi {
       override def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(updating.group.getOrElse(WORKER_GROUP_DEFAULT),
+          key(updating.group.getOrElse(GROUP_DEFAULT),
               updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
           updating
         )

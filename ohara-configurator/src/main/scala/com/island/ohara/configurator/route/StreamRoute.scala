@@ -27,7 +27,7 @@ import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json._
@@ -299,8 +299,6 @@ private[configurator] object StreamRoute {
 
   private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
 
-  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(STREAM_GROUP_DEFAULT)
-
   def apply(implicit store: DataStore,
             nodeCollie: NodeCollie,
             streamCollie: StreamCollie,
@@ -312,7 +310,6 @@ private[configurator] object StreamRoute {
     clusterRoute(
       root = STREAM_PREFIX_PATH,
       metricsKey = Some(STREAM_APP_GROUP),
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,

@@ -312,7 +312,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(pipelineApi.request.create()).group shouldBe PipelineApi.GROUP_DEFAULT
+    result(pipelineApi.request.create()).group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(pipelineApi.request.group(group).create())

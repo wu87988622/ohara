@@ -224,8 +224,6 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
-  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
-
   private[this] def hookOfRefresh(implicit store: DataStore, executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
       store.get[Pipeline](key).flatMap { pipelineOption =>
@@ -259,7 +257,6 @@ private[configurator] object PipelineRoute {
             meterCache: MeterCache): server.Route =
     route[Creation, Updating, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,

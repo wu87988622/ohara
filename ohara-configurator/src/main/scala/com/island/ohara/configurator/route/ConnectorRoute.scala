@@ -238,8 +238,6 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         }
     }
 
-  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
-
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             brokerCollie: BrokerCollie,
@@ -248,7 +246,6 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             meterCache: MeterCache): server.Route =
     route[Creation, Updating, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfGet = hookOfGet,

@@ -60,7 +60,7 @@ class TestConnectorApi extends OharaTest with Matchers {
        |}
       """.stripMargin.parseJson)
 
-    creation.group shouldBe ConnectorApi.GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.workerClusterName.get shouldBe workerClusterName
     creation.className shouldBe className

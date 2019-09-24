@@ -66,22 +66,26 @@ object LogRoute {
             case ZOOKEEPER_PREFIX_PATH =>
               route(clusterName,
                     collie.zookeeperCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(ZOOKEEPER_GROUP_DEFAULT), clusterName)
+                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
+                                   clusterName)
                     ))
             case BROKER_PREFIX_PATH =>
               route(clusterName,
                     collie.brokerCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(BROKER_GROUP_DEFAULT), clusterName)
+                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
+                                   clusterName)
                     ))
             case WORKER_PREFIX_PATH =>
               route(clusterName,
                     collie.workerCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(WORKER_GROUP_DEFAULT), clusterName)
+                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
+                                   clusterName)
                     ))
             case STREAMS_PREFIX_PATH =>
               route(clusterName,
                     collie.streamCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(STREAM_GROUP_DEFAULT), clusterName)
+                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
+                                   clusterName)
                     ))
           }
         }

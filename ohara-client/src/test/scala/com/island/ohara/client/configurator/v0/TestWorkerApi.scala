@@ -259,7 +259,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     val creation = accessApi.name(name).nodeName(nodeName).creation
     creation.name shouldBe name
     // use default values if absent
-    creation.group shouldBe WorkerApi.WORKER_GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
     creation.nodeNames shouldBe Set(nodeName)
 

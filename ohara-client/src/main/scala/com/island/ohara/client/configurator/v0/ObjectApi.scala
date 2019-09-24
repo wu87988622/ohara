@@ -24,11 +24,6 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
-
-  /**
-    * The default value of group for this API.
-    */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val OBJECT_PREFIX_PATH: String = "objects"
 
   final case class Object(group: String, name: String, lastModified: Long, kind: String, tags: Map[String, JsValue])

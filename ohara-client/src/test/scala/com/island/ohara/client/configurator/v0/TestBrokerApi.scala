@@ -146,7 +146,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       |    "nodeNames": ["$nodeName"]
       |  }
       """.stripMargin.parseJson)
-    creation.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.zookeeperClusterName shouldBe None
@@ -212,7 +212,7 @@ class TestBrokerApi extends OharaTest with Matchers {
     val creation = access.name(name).nodeName(nodeName).creation
     creation.name shouldBe name
     // use default values if absent
-    creation.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.nodeNames shouldBe Set(nodeName)
 
@@ -514,12 +514,12 @@ class TestBrokerApi extends OharaTest with Matchers {
       ))
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe BrokerApi.BROKER_GROUP_DEFAULT
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.read(res)
     data.name shouldBe name
-    data.group shouldBe BrokerApi.BROKER_GROUP_DEFAULT
+    data.group shouldBe GROUP_DEFAULT
   }
 
   @Test

@@ -38,7 +38,7 @@ private[configurator] object ObjectRoute {
     pathPrefix(OBJECT_PREFIX_PATH) {
       pathEnd(get(complete(store.raws().map(_.map(toObject))))) ~ path(Segment) { name =>
         parameter(GROUP_KEY ?) { groupOption =>
-          val group = groupOption.getOrElse(GROUP_DEFAULT)
+          val group = groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
           get(complete(store.raws(ObjectKey.of(group, name)).map(_.map(toObject))))
         }
       }

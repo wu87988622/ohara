@@ -26,11 +26,6 @@ import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object FtpInfoApi {
-
-  /**
-    * The default value of group for this API.
-    */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val FTP_PREFIX_PATH: String = "ftp"
   final case class Updating(hostname: Option[String],
                             port: Option[Int],

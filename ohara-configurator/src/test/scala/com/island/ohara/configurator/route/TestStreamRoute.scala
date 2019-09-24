@@ -45,7 +45,7 @@ class TestStreamRoute extends OharaTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
   private[this] final val fakeKey: ObjectKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
-  private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
+  private[this] def topicKey(name: String): TopicKey = TopicKey.of(GROUP_DEFAULT, name)
 
   private[this] var nodes: Set[String] = _
   private[this] var fileInfo: FileInfo = _

@@ -202,7 +202,7 @@ class TestFtpInfoRoute extends OharaTest with Matchers {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(ftpApi.request.hostname("hostname").port(22).user("user").password("password").create()).group shouldBe FtpInfoApi.GROUP_DEFAULT
+    result(ftpApi.request.hostname("hostname").port(22).user("user").password("password").create()).group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(

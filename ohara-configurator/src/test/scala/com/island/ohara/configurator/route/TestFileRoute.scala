@@ -91,7 +91,7 @@ class TestFileRoute extends OharaTest with Matchers {
     }
     result(fileApi.list()).size shouldBe 1
     val fileInfo = result(fileApi.list()).head
-    fileInfo.group shouldBe FileInfoApi.GROUP_DEFAULT
+    fileInfo.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
     fileInfo.name shouldBe file.getName
     fileInfo.size shouldBe file.length()
     fileInfo.tags shouldBe tagsList.last

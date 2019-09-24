@@ -61,7 +61,7 @@ private[configurator] object FileRoute {
     pathPrefix(FILE_PREFIX_PATH) {
       path(Segment) { name =>
         parameter(GROUP_KEY ?) { groupOption =>
-          val key = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), name)
+          val key = ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), name)
           get(complete(fileStore.fileInfo(key))) ~ delete(
             complete(fileStore
               .exist(key)
@@ -100,7 +100,7 @@ private[configurator] object FileRoute {
                   case (metadata, file) =>
                     complete(
                       fileStore.fileInfoCreator
-                        .group(group.getOrElse(GROUP_DEFAULT))
+                        .group(group.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT))
                         .name(metadata.fileName)
                         .file(file)
                         .tags(tagsString.map(FileInfoApi.toTags).getOrElse(Map.empty))

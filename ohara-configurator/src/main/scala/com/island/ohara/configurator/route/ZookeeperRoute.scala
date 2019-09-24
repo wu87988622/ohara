@@ -21,7 +21,7 @@ import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -103,8 +103,6 @@ object ZookeeperRoute {
                     s"you can't remove zookeeper cluster:${zkClusterInfo.name} since it is used by broker cluster:${cluster.name}"))
           ))
 
-  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(ZOOKEEPER_GROUP_DEFAULT)
-
   def apply(implicit store: DataStore,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
@@ -114,7 +112,6 @@ object ZookeeperRoute {
     clusterRoute(
       root = ZOOKEEPER_PREFIX_PATH,
       metricsKey = None,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,

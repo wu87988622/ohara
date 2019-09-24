@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdating}
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -121,8 +121,6 @@ object BrokerRoute {
                       s"you can't remove broker cluster:${brokerClusterInfo.name} since it is used by worker cluster:${cluster.name}"))
             ))
 
-  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(BROKER_GROUP_DEFAULT)
-
   def apply(implicit store: DataStore,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
@@ -133,7 +131,6 @@ object BrokerRoute {
     clusterRoute(
       root = BROKER_PREFIX_PATH,
       metricsKey = None,
-      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
       hookOfStart = hookOfStart,

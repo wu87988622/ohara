@@ -38,11 +38,6 @@ object StreamApi {
   val STREAMS_PREFIX_PATH: String = "streams"
 
   /**
-    * The default value of group for this API.
-    */
-  val STREAM_GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-
-  /**
     * StreamApp Docker Image name
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
@@ -99,7 +94,7 @@ object StreamApi {
     // TODO: reuse the global checks for streamapp in #2288
     // the following checkers is a part of global cluster checks.
     // We don't reuse the global checks since streamapp accept empty/null nodeNames ... by chia
-    basicRulesOfKey[Creation](STREAM_GROUP_DEFAULT)
+    basicRulesOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
@@ -340,7 +335,7 @@ object StreamApi {
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(updating.group.getOrElse(STREAM_GROUP_DEFAULT),
+          key(updating.group.getOrElse(GROUP_DEFAULT),
               updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
           updating
         )

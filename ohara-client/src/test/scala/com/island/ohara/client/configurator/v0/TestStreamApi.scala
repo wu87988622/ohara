@@ -40,7 +40,7 @@ class TestStreamApi extends OharaTest with Matchers {
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
-  private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
+  private[this] def topicKey(name: String): TopicKey = TopicKey.of(GROUP_DEFAULT, name)
 
   @Test
   def checkVersion(): Unit = {
@@ -195,7 +195,7 @@ class TestStreamApi extends OharaTest with Matchers {
     val creationApi = accessRequest.jarKey(fakeJar).creation
 
     creationApi.name.nonEmpty shouldBe true
-    creationApi.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
+    creationApi.group shouldBe GROUP_DEFAULT
     creationApi.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationApi.jarKey shouldBe fakeJar
     creationApi.fromTopicKeys shouldBe Set.empty
@@ -211,7 +211,7 @@ class TestStreamApi extends OharaTest with Matchers {
                                                   |  }
      """.stripMargin.parseJson)
     creationJson.name.nonEmpty shouldBe true
-    creationJson.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
+    creationJson.group shouldBe GROUP_DEFAULT
     creationJson.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationJson.jmxPort should not be 0
     creationJson.instances shouldBe None
@@ -285,7 +285,7 @@ class TestStreamApi extends OharaTest with Matchers {
       |  }
       |  """.stripMargin.parseJson)
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
-    creation.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
+    creation.group shouldBe GROUP_DEFAULT
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jarKey shouldBe fakeJar
     creation.fromTopicKeys shouldBe Set(from)
@@ -593,16 +593,12 @@ class TestStreamApi extends OharaTest with Matchers {
       ))
     // serialize to json should see the object key (group, name) in "settings"
     res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject
-      .fields("settings")
-      .asJsObject
-      .fields(GROUP_KEY)
-      .convertTo[String] shouldBe StreamApi.STREAM_GROUP_DEFAULT
+    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(res)
     data.name shouldBe name
-    data.group shouldBe StreamApi.STREAM_GROUP_DEFAULT
+    data.group shouldBe GROUP_DEFAULT
   }
 
   @Test

@@ -270,7 +270,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
           .name("bk1")
           // In FakeBrokerCollie, we create a cluster without specified group
           // we should use default group here to fetch the same cluster
-          .group(BrokerApi.BROKER_GROUP_DEFAULT)
+          .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
           .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
           .clientPort(9092)
           .jmxPort(9093)

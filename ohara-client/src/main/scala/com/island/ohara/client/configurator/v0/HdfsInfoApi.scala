@@ -27,11 +27,6 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object HdfsInfoApi {
-
-  /**
-    * The default value of group for this API.
-    */
-  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val HDFS_PREFIX_PATH: String = "hdfs"
   final case class Updating(uri: Option[String], tags: Option[Map[String, JsValue]])
 

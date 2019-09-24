@@ -523,7 +523,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                           electionPort: Int): ZookeeperClusterInfo =
     createZookeeperCollie(zookeeperCollie,
                           clusterName,
-                          ZookeeperApi.ZOOKEEPER_GROUP_DEFAULT,
+                          com.island.ohara.client.configurator.v0.GROUP_DEFAULT,
                           nodeName,
                           clientPort,
                           peerPort,
@@ -561,7 +561,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       brokerCollie.creator
         .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
         .name(clusterName)
-        .group(BrokerApi.BROKER_GROUP_DEFAULT)
+        .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
         .clientPort(clientPort)
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)
@@ -579,7 +579,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       workerCollie.creator
         .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
         .name(clusterName)
-        .group(WorkerApi.WORKER_GROUP_DEFAULT)
+        .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
         .clientPort(clientPort)
         .brokerClusterName(brokerClusterName)
         .groupId(CommonUtils.randomString(RANDOM_LEN))
