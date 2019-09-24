@@ -607,59 +607,61 @@ object JsonRefiner {
           value
         }
 
-        override def read(json: JsValue): T = {
-          var fields = json.asJsObject.fields.filter {
-            case (_, value) =>
-              value match {
-                case JsNull => false
-                case _      => true
-              }
-          }
-
-          // 1) convert the value to another type
-          fields = fields ++ valueConverters
-            .filter {
-              case (key, _) => fields.contains(key)
-            }
-            .map {
-              case (key, converter) => key -> converter(fields(key))
-            }
-            .filter {
-              case (_, jsValue) =>
-                jsValue match {
+        override def read(json: JsValue): T = json match {
+          // we refine only the complicated json object
+          case _: JsObject =>
+            var fields = json.asJsObject.fields.filter {
+              case (_, value) =>
+                value match {
                   case JsNull => false
                   case _      => true
                 }
             }
 
-          // 2) convert the null to the value of another key
-          fields = fields ++ nullToAnotherValueOfKey
-            .filterNot(pair => fields.contains(pair._1))
-            .filter(pair => fields.contains(pair._2))
-            .map {
-              case (key, anotherKye) => key -> fields(anotherKye)
+            // 1) convert the value to another type
+            fields = fields ++ valueConverters
+              .filter {
+                case (key, _) => fields.contains(key)
+              }
+              .map {
+                case (key, converter) => key -> converter(fields(key))
+              }
+              .filter {
+                case (_, jsValue) =>
+                  jsValue match {
+                    case JsNull => false
+                    case _      => true
+                  }
+              }
+
+            // 2) convert the null to the value of another key
+            fields = fields ++ nullToAnotherValueOfKey
+              .filterNot(pair => fields.contains(pair._1))
+              .filter(pair => fields.contains(pair._2))
+              .map {
+                case (key, anotherKye) => key -> fields(anotherKye)
+              }
+
+            // 3) convert the null to default value
+            fields = fields ++ nullToJsValue.map {
+              case (key, defaultValue) =>
+                key -> fields.getOrElse(key, defaultValue())
             }
 
-          // 3) convert the null to default value
-          fields = fields ++ nullToJsValue.map {
-            case (key, defaultValue) =>
-              key -> fields.getOrElse(key, defaultValue())
-          }
+            // 4) check the value
+            fields.foreach {
+              case (k, v) => check(k, v)
+            }
 
-          // 4) check the value
-          fields.foreach {
-            case (k, v) => check(k, v)
-          }
+            // 5) check the keys
+            keyCheckers.foreach(_(fields.keySet))
 
-          // 5) check the keys
-          keyCheckers.foreach(_(fields.keySet))
-
-          // 6) check the values of specific keys
-          allvaluesCheckers.foreach {
-            case (keys, f) => f(fields.filter(field => keys.contains(field._1)).values.toSeq)
-          }
-
-          format.read(JsObject(fields))
+            // 6) check the values of specific keys
+            allvaluesCheckers.foreach {
+              case (keys, f) => f(fields.filter(field => keys.contains(field._1)).values.toSeq)
+            }
+            format.read(JsObject(fields))
+          case _ => format.read(json)
         }
         override def write(obj: T): JsValue = format.write(obj)
       }

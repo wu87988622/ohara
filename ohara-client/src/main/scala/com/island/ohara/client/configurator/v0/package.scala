@@ -18,8 +18,7 @@ package com.island.ohara.client.configurator
 
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import spray.json.{JsNull, JsValue, RootJsonFormat}
-
+import spray.json.{JsNull, JsValue, RootJsonFormat, _}
 package object v0 {
 
   /**
@@ -85,58 +84,43 @@ package object v0 {
 
   private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
-      import spray.json._
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
-      override def read(json: JsValue): ObjectKey = ObjectKey.toObjectKey(json.toString())
+      override def read(json: JsValue): ObjectKey = json match {
+        case JsString(s) => ObjectKey.of(GROUP_DEFAULT, s)
+        case _: JsObject => ObjectKey.toObjectKey(json.toString())
+        case _ =>
+          throw DeserializationException(
+            "the form of key must be {\"group\": \"g\", \"name\": \"n\"}, {\"name\": \"n\"} or pure string")
+      }
     })
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
 
-  implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
-    .format(new RootJsonFormat[TopicKey] {
-      import spray.json._
-      override def write(obj: TopicKey): JsValue = try TopicKey.toJsonString(obj).parseJson
-      catch {
-        case e: Throwable =>
-          throw DeserializationException(
-            msg = e.getMessage,
-            cause = e,
-            fieldNames = List("group", "name")
-          )
-      }
-      override def read(json: JsValue): TopicKey = TopicKey.toTopicKey(json.toString())
-    })
-    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
-    .rejectEmptyString()
-    .refine
+  private[v0] implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = new RootJsonFormat[TopicKey] {
+    override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
+    override def read(json: JsValue): TopicKey = {
+      // reuse the rules of ObjectKey
+      val key = OBJECT_KEY_FORMAT.read(json)
+      TopicKey.of(key.group(), key.name())
+    }
+  }
 
-  private[v0] implicit val CONNECTOR_KEY_FORMAT: RootJsonFormat[ConnectorKey] = JsonRefiner[ConnectorKey]
-    .format(new RootJsonFormat[ConnectorKey] {
-      import spray.json._
-      override def write(obj: ConnectorKey): JsValue = try ConnectorKey.toJsonString(obj).parseJson
-      catch {
-        case e: Throwable =>
-          throw DeserializationException(
-            msg = e.getMessage,
-            cause = e,
-            fieldNames = List("group", "name")
-          )
-      }
-      override def read(json: JsValue): ConnectorKey = ConnectorKey.toConnectorKey(json.toString())
-    })
-    .nullToString(GROUP_KEY, GROUP_DEFAULT)
-    .rejectEmptyString()
-    .refine
+  private[v0] implicit val CONNECTOR_KEY_FORMAT: RootJsonFormat[ConnectorKey] = new RootJsonFormat[ConnectorKey] {
+    override def write(obj: ConnectorKey): JsValue = ConnectorKey.toJsonString(obj).parseJson
+    override def read(json: JsValue): ConnectorKey = {
+      // reuse the rules of ObjectKey
+      val key = OBJECT_KEY_FORMAT.read(json)
+      ConnectorKey.of(key.group(), key.name())
+    }
+  }
 
   /**
     * exposed to configurator
     */
   private[v0] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
     new RootJsonFormat[SettingDef] {
-      import spray.json._
       override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
-
       override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
     }
 

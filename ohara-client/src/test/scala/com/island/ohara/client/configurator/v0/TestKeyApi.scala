@@ -87,4 +87,73 @@ class TestKeyApi extends OharaTest with Matchers {
                               |   "name": ""
                               | }
                               |""".stripMargin.parseJson)
+
+  @Test
+  def testPureStringInObjectKey(): Unit = {
+    val name = CommonUtils.randomString()
+    val key = OBJECT_KEY_FORMAT.read(JsString(name))
+    key.group() shouldBe GROUP_DEFAULT
+    key.name() shouldBe name
+  }
+
+  @Test
+  def testPureStringInTopicKey(): Unit = {
+    val name = CommonUtils.randomString()
+    val key = TOPIC_KEY_FORMAT.read(JsString(name))
+    key.group() shouldBe GROUP_DEFAULT
+    key.name() shouldBe name
+  }
+
+  @Test
+  def testPureStringInConnectorKey(): Unit = {
+    val name = CommonUtils.randomString()
+    val key = CONNECTOR_KEY_FORMAT.read(JsString(name))
+    key.group() shouldBe GROUP_DEFAULT
+    key.name() shouldBe name
+  }
+
+  @Test
+  def testGroupAndNameInObjectKey(): Unit = {
+    val group = CommonUtils.randomString()
+    val name = CommonUtils.randomString()
+    val key = OBJECT_KEY_FORMAT.read(s"""
+                                        |
+                                        | {
+                                        |   "group": "$group",
+                                        |   "name": "$name"
+                                        | }
+                                        |""".stripMargin.parseJson)
+    key.group() shouldBe group
+    key.name() shouldBe name
+  }
+
+  @Test
+  def testGroupAndNameInTopicKey(): Unit = {
+    val group = CommonUtils.randomString()
+    val name = CommonUtils.randomString()
+    val key = TOPIC_KEY_FORMAT.read(s"""
+                                        |
+                                        | {
+                                        |   "group": "$group",
+                                        |   "name": "$name"
+                                        | }
+                                        |""".stripMargin.parseJson)
+    key.group() shouldBe group
+    key.name() shouldBe name
+  }
+
+  @Test
+  def testGroupAndNameInConnectorKey(): Unit = {
+    val group = CommonUtils.randomString()
+    val name = CommonUtils.randomString()
+    val key = CONNECTOR_KEY_FORMAT.read(s"""
+                                       |
+                                       | {
+                                       |   "group": "$group",
+                                       |   "name": "$name"
+                                       | }
+                                       |""".stripMargin.parseJson)
+    key.group() shouldBe group
+    key.name() shouldBe name
+  }
 }
