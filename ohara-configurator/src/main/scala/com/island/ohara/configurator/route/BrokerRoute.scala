@@ -34,7 +34,7 @@ object BrokerRoute {
       creation.zookeeperClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { zkName =>
         BrokerClusterInfo(
           settings = BrokerApi.access.request.settings(creation.settings).zookeeperClusterName(zkName).creation.settings,
-          deadNodes = Set.empty,
+          aliveNodes = Set.empty,
           state = None,
           error = None,
           lastModified = CommonUtils.current(),
@@ -64,7 +64,7 @@ object BrokerRoute {
           val newSettings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings
           BrokerClusterInfo(
             settings = BrokerApi.access.request.settings(newSettings).zookeeperClusterName(zkName).creation.settings,
-            deadNodes = Set.empty,
+            aliveNodes = Set.empty,
             state = None,
             error = None,
             lastModified = CommonUtils.current(),

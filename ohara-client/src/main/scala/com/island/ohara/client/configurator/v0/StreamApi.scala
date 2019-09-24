@@ -197,7 +197,7 @@ object StreamApi {
     */
   final case class StreamClusterInfo(settings: Map[String, JsValue],
                                      definition: Option[Definition],
-                                     deadNodes: Set[String],
+                                     aliveNodes: Set[String],
                                      state: Option[String],
                                      error: Option[String],
                                      metrics: Metrics,

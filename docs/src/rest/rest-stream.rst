@@ -83,8 +83,7 @@ streamApp stored data
        - definitions[j].tableKeys (**array(string)**) — the column name when the type is TABLE
 
 #. nodeNames (**array(string)**) — node list of streamApp running container
-#. deadNodes (**array(string)**) — dead node list of the exited containers from this cluster
-#. aliveNodes (**array(string)**) — alive node list of the running containers from this cluster
+#. aliveNodes (**array(string)**) — the nodes that host the running containers of streamapp cluster
 #. state (**option(string)**) — only started/failed streamApp has state (DEAD if all containers are not running, else RUNNING)
 #. error (**option(string)**) — the error message from a failed streamApp.
    If the streamApp is fine or un-started, you won't get this field.
@@ -161,7 +160,7 @@ Example Response
 
     {
       "lastModified": 1563499550267,
-      "deadNodes": [],
+      "aliveNodes": [],
       "aliveNodes": [],
       "definition": {
         "className": "com.island.ohara.it.streamapp.DumbStreamApp",
@@ -349,7 +348,6 @@ Example Response
        "exactlyOnce": "false",
        "metrics": [],
        "lastModified": 1563499550267,
-       "deadNodes": [],
        "aliveNodes": [],
        "definition": {
          "className": "com.island.ohara.it.streamapp.DumbStreamApp",
@@ -400,7 +398,6 @@ Example Response
          "exactlyOnce": "false",
          "metrics": [],
          "lastModified": 1563499550267,
-         "deadNodes": [],
          "aliveNodes": [],
          "definition": {
            "className": "com.island.ohara.it.streamapp.DumbStreamApp",
@@ -489,7 +486,6 @@ Example Response
 
      {
         "lastModified": 1563503358666,
-        "deadNodes": [],
         "aliveNodes": [
           "node1", "node2"
         ],
@@ -563,7 +559,6 @@ Example Response
 
    {
      "lastModified": 1563499550267,
-     "deadNodes": [],
      "aliveNodes": [],
      "definition": {
        "className": "com.island.ohara.it.streamapp.DumbStreamApp",
@@ -619,7 +614,6 @@ Example Response
 
      {
        "lastModified": 1563499550267,
-       "deadNodes": [],
        "aliveNodes": [],
        "definition": {
          "className": "com.island.ohara.it.streamapp.DumbStreamApp",

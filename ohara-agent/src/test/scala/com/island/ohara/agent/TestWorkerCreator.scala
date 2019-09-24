@@ -39,7 +39,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
       WorkerClusterInfo(
         settings = creation.settings,
         connectors = Seq.empty,
-        deadNodes = Set.empty,
+        aliveNodes = Set.empty,
         state = None,
         error = None,
         lastModified = 0
@@ -214,7 +214,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
       settings =
         WorkerApi.access.request.brokerClusterName(CommonUtils.randomString(5)).nodeNames(nodeNames).creation.settings,
       connectors = Seq.empty,
-      deadNodes = Set.empty,
+      aliveNodes = nodeNames,
       state = None,
       error = None,
       lastModified = 0

@@ -33,7 +33,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
     val nodeNames = Set(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
       settings = access.nodeNames(Set(CommonUtils.randomString())).creation.settings,
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       lastModified = CommonUtils.current()
@@ -445,7 +445,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
     val res = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(
       ZookeeperClusterInfo(
         settings = ZookeeperApi.access.request.name(name).nodeNames(Set("n1")).creation.settings,
-        deadNodes = Set.empty,
+        aliveNodes = Set.empty,
         state = None,
         error = None,
         lastModified = CommonUtils.current()
@@ -477,16 +477,16 @@ class TestZookeeperApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testAliveNodes(): Unit = {
+  def testDeadNodes(): Unit = {
     val cluster = ZookeeperClusterInfo(
       settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
-      deadNodes = Set("n0"),
+      aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current()
     )
     cluster.nodeNames shouldBe Set("n0", "n1")
-    cluster.aliveNodes shouldBe Set("n1")
-    cluster.copy(state = None).aliveNodes shouldBe Set.empty
+    cluster.deadNodes shouldBe Set("n1")
+    cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
 }

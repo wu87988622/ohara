@@ -62,7 +62,7 @@ private class FakeBrokerCollie(nodes: Seq[Node],
             .nodeNames(nodes.map(_.hostname).toSet)
             .creation
             .settings,
-          deadNodes = Set.empty,
+          aliveNodes = nodes.map(_.hostname).toSet,
           lastModified = CommonUtils.current(),
           state = None,
           error = None,

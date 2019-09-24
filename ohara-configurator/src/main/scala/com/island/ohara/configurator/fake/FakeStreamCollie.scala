@@ -58,7 +58,7 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
               settings = creation.settings,
               // convert to list in order to be serializable
               definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
-              deadNodes = Set.empty,
+              aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING.name),
               error = None,

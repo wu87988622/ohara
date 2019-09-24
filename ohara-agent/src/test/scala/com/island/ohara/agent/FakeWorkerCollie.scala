@@ -55,7 +55,7 @@ class FakeWorkerCollie(nodes: Seq[Node],
             .creation
             .settings,
           connectors = Seq.empty,
-          deadNodes = Set.empty,
+          aliveNodes = nodes.map(_.hostname).toSet,
           lastModified = CommonUtils.current(),
           state = Some(ClusterState.RUNNING.name),
           error = None

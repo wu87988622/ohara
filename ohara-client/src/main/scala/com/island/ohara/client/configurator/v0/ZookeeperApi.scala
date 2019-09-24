@@ -126,7 +126,7 @@ object ZookeeperApi {
       .refine
 
   final case class ZookeeperClusterInfo private[ZookeeperApi] (settings: Map[String, JsValue],
-                                                               deadNodes: Set[String],
+                                                               aliveNodes: Set[String],
                                                                lastModified: Long,
                                                                state: Option[String],
                                                                error: Option[String])

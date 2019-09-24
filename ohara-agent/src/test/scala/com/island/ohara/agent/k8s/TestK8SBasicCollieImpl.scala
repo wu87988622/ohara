@@ -81,7 +81,7 @@ class TestK8SBasicCollieImpl extends OharaTest with Matchers {
                 .nodeNames(nodes.map(_.name).toSet)
                 .creation
                 .settings,
-              deadNodes = Set.empty,
+              aliveNodes = nodes.map(_.name).toSet,
               state = None,
               error = None,
               lastModified = 0

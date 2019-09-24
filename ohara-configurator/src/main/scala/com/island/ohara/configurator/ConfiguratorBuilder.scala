@@ -140,7 +140,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .nodeName(host)
             .creation
             .settings,
-          deadNodes = Set.empty,
+          aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
           error = None,
@@ -161,7 +161,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .creation
             .settings,
           connectors = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
-          deadNodes = Set.empty,
+          aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
           error = None,
@@ -213,7 +213,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               .nodeNames(nodeNames)
               .creation
               .settings,
-            deadNodes = Set.empty,
+            aliveNodes = nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,
@@ -233,7 +233,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
                 .nodeNames(zkCluster.nodeNames)
                 .creation
                 .settings,
-              deadNodes = Set.empty,
+              aliveNodes = zkCluster.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING.name),
               error = None,
@@ -252,7 +252,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               .creation
               .settings,
             connectors = FakeWorkerClient.localConnectorDefinitions,
-            deadNodes = Set.empty,
+            aliveNodes = bkCluster.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,

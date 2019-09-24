@@ -167,7 +167,7 @@ private[configurator] object StreamRoute {
                       req.creation.settings
                     },
                     definition = definition,
-                    deadNodes = Set.empty,
+                    aliveNodes = Set.empty,
                     state = None,
                     metrics = Metrics(Seq.empty),
                     error = error,
@@ -212,7 +212,7 @@ private[configurator] object StreamRoute {
               .settings,
             definition = previousOption.flatMap(_.definition),
             // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
-            deadNodes = Set.empty,
+            aliveNodes = Set.empty,
             state = None,
             metrics = Metrics.EMPTY,
             error = None,

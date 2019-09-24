@@ -37,7 +37,7 @@ class TestWorkerApi extends OharaTest with Matchers {
         .creation
         .settings,
       connectors = Seq.empty,
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       lastModified = CommonUtils.current()
@@ -52,7 +52,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     val workerClusterInfo = WorkerClusterInfo(
       settings = WorkerApi.access.request.nodeNames(Set(CommonUtils.randomString())).creation.settings,
       connectors = Seq.empty,
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       lastModified = CommonUtils.current()
@@ -404,18 +404,18 @@ class TestWorkerApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testAliveNodes(): Unit = {
+  def testDeadNodes(): Unit = {
     val cluster = WorkerClusterInfo(
       settings = WorkerApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       connectors = Seq.empty,
-      deadNodes = Set("n0"),
+      aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current()
     )
     cluster.nodeNames shouldBe Set("n0", "n1")
-    cluster.aliveNodes shouldBe Set("n1")
-    cluster.copy(state = None).aliveNodes shouldBe Set.empty
+    cluster.deadNodes shouldBe Set("n1")
+    cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
 
   @Test

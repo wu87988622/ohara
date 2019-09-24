@@ -43,7 +43,7 @@ class TestStreamCreator extends OharaTest with Matchers {
       StreamClusterInfo(
         settings = creation.settings,
         definition = None,
-        deadNodes = Set.empty,
+        aliveNodes = Set.empty,
         metrics = Metrics.EMPTY,
         state = None,
         error = None,
@@ -175,7 +175,7 @@ class TestStreamCreator extends OharaTest with Matchers {
         .creation
         .settings,
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       metrics = Metrics.EMPTY,

@@ -34,7 +34,7 @@ class TestBrokerApi extends OharaTest with Matchers {
     val nodeNames = Set(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
       settings = access.nodeNames(Set(CommonUtils.randomString())).creation.settings,
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       lastModified = CommonUtils.current(),
@@ -506,7 +506,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       BrokerClusterInfo(
         settings =
           BrokerApi.access.request.name(name).zookeeperClusterName("zk1").nodeNames(Set("n1")).creation.settings,
-        deadNodes = Set.empty,
+        aliveNodes = Set.empty,
         state = None,
         error = None,
         lastModified = CommonUtils.current(),
@@ -539,16 +539,16 @@ class TestBrokerApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testAliveNodes(): Unit = {
+  def testDeadNodes(): Unit = {
     val cluster = BrokerClusterInfo(
       settings = BrokerApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
-      deadNodes = Set("n0"),
+      aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current(),
       topicSettingDefinitions = Seq.empty
     )
-    cluster.aliveNodes shouldBe Set("n1")
-    cluster.copy(state = None).aliveNodes shouldBe Set.empty
+    cluster.deadNodes shouldBe Set("n1")
+    cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
 }

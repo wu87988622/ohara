@@ -149,8 +149,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                           StreamApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
                         definition = definition,
                         // no state means cluster is NOT running so we cleanup the dead nodes
-                        deadNodes =
-                          state.map(_ => nodeNames -- successfulContainers.map(_.nodeName)).getOrElse(Set.empty),
+                        aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
                         // We do not care the user parameters since it's stored in configurator already
                         state = state,
                         metrics = Metrics.EMPTY,
@@ -222,10 +221,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
         definition = definition,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = creation.nodeNames -- containers
-          .filter(_.state == ContainerState.RUNNING.name)
-          .map(_.nodeName)
-          .toSet,
+        aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         metrics = Metrics.EMPTY,
         state = toClusterState(containers).map(_.name),
         error = None,

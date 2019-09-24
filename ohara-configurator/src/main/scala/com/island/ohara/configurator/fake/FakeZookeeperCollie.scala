@@ -37,7 +37,7 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
         addCluster(
           ZookeeperClusterInfo(
             settings = creation.settings,
-            deadNodes = Set.empty,
+            aliveNodes = creation.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,

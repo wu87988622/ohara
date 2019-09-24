@@ -191,8 +191,8 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                     settings =
                       BrokerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
                     // no state means cluster is NOT running so we cleanup the dead nodes
-                    deadNodes = state
-                      .map(_ => nodeNames -- successfulContainers.map(_.nodeName) -- existNodes.values.map(_.hostname))
+                    aliveNodes = state
+                      .map(_ => (successfulContainers.map(_.nodeName) ++ existNodes.values.map(_.hostname)).toSet)
                       .getOrElse(Set.empty),
                     state = state,
                     error = None,
@@ -294,10 +294,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
         settings = creation.settings,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = creation.nodeNames -- containers
-          .filter(_.state == ContainerState.RUNNING.name)
-          .map(_.nodeName)
-          .toSet,
+        aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None,

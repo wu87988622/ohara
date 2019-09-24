@@ -49,7 +49,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
       Future.successful(
         BrokerClusterInfo(
           settings = BrokerApi.access.request.settings(creation.settings).creation.settings,
-          deadNodes = Set.empty,
+          aliveNodes = creation.nodeNames,
           state = None,
           error = None,
           lastModified = 0,
@@ -164,7 +164,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
         .nodeNames(nodeNames)
         .creation
         .settings,
-      deadNodes = Set.empty,
+      aliveNodes = nodeNames,
       state = None,
       error = None,
       lastModified = 0,

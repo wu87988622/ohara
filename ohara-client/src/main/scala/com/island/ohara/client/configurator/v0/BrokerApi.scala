@@ -130,7 +130,7 @@ object BrokerApi {
       .refine
 
   final case class BrokerClusterInfo private[BrokerApi] (settings: Map[String, JsValue],
-                                                         deadNodes: Set[String],
+                                                         aliveNodes: Set[String],
                                                          lastModified: Long,
                                                          state: Option[String],
                                                          error: Option[String],

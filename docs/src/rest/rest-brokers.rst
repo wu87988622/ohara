@@ -48,7 +48,7 @@ The properties which can be set by user are shown below.
      - nodeNames (**array(string)**) — the nodes running the zookeeper process
      - tags (**object**) — the user defined parameters
 
-#. deadNodes (**array(string)**) — the nodes that have failed containers of broker
+#. aliveNodes (**array(string)**) — the nodes that host the running containers of broker cluster
 #. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
 #. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
 #. lastModified (**long**) — last modified this jar time
@@ -106,7 +106,7 @@ Example Response
          ],
          "tags": {}
        }
-       "deadNodes": [],
+       "aliveNodes": [],
        "lastModified": 1563158986411
      }
 
@@ -149,7 +149,7 @@ Example Response
          ],
          "tags": {}
        }
-       "deadNodes": [],
+       "aliveNodes": [],
        "lastModified": 1563158986411
      }
 
@@ -176,7 +176,7 @@ Example Response
            ],
            "tags": {}
          }
-         "deadNodes": [],
+         "aliveNodes": [],
          "lastModified": 1563158986411
        }
      ]
@@ -230,7 +230,7 @@ Example Response
          ],
          "tags": {}
        }
-       "deadNodes": [],
+       "aliveNodes": [],
        "lastModified": 1563158986411
      }
 
@@ -277,7 +277,9 @@ Example Response
          ],
          "tags": {}
        }
-       "deadNodes": [],
+       "aliveNodes": [
+         "node00"
+       ],
        "state": "RUNNING",
        "lastModified": 1563158986411
      }

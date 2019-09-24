@@ -47,7 +47,7 @@ object WorkerRoute {
                 .creation
                 .settings,
               connectors = Seq.empty,
-              deadNodes = Set.empty,
+              aliveNodes = Set.empty,
               state = None,
               error = None,
               lastModified = CommonUtils.current()
@@ -85,7 +85,7 @@ object WorkerRoute {
                 .creation
                 .settings,
               connectors = Seq.empty,
-              deadNodes = Set.empty,
+              aliveNodes = Set.empty,
               state = None,
               error = None,
               lastModified = CommonUtils.current()

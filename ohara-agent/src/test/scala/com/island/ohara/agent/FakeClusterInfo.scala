@@ -29,7 +29,7 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def nodeNames: Set[String] = Set.empty
 
-  override def deadNodes: Set[String] = Set.empty
+  override def aliveNodes: Set[String] = Set.empty
 
   override def group: String = "fake_group"
 

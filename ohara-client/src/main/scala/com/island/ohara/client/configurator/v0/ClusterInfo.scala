@@ -48,19 +48,25 @@ trait ClusterInfo extends Data {
   def nodeNames: Set[String]
 
   /**
-    * List the dead nodes.
-    * This is the counting "unit" for this cluster ; dead nodes have no relation with other clusters.
+    * List the dead nodes. the number of dead nodes is calculated since the gone container may be not leave any information
+    * to us to trace. By contrast, the number of alive nodes is real since we can observe the "running" state from the
+    * nodes.
     *
-    * @return nodes which the rely container was dead
+    * @return nothing if there is no state (normally, it means there is no containers on the nodes). otherwise, the number
+    *         of dead nodes is equal to (the number of node names) - (the number of alive nodes)
     */
-  def deadNodes: Set[String]
+  def deadNodes: Set[String] = if (state.isEmpty) Set.empty else nodeNames -- aliveNodes
 
   /**
     * @return the state of this cluster. None means the cluster is not running
     */
   def state: Option[String]
 
-  def aliveNodes: Set[String] = if (state.isEmpty) Set.empty else nodeNames -- deadNodes
+  /**
+    * the nodes do run the containers of cluster.
+    * @return a collection of node names
+    */
+  def aliveNodes: Set[String]
 
   /**
     * @return the error message of this cluster.

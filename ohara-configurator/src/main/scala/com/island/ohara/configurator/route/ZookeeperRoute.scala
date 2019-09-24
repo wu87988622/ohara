@@ -32,7 +32,7 @@ object ZookeeperRoute {
     Future.successful(
       ZookeeperClusterInfo(
         settings = creation.settings,
-        deadNodes = Set.empty,
+        aliveNodes = Set.empty,
         state = None,
         error = None,
         lastModified = CommonUtils.current()
@@ -57,7 +57,7 @@ object ZookeeperRoute {
               .creation
               .settings,
             // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
-            deadNodes = Set.empty,
+            aliveNodes = Set.empty,
             state = None,
             error = None,
             lastModified = CommonUtils.current()

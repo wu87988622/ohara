@@ -43,7 +43,7 @@ room to enable you to overwrite somethings you do care.
      - nodeNames (**array(string)**) — the nodes running the zookeeper process
      - tags (**object**) — the user defined parameters
 
-#. deadNodes (**array(string)**) — the nodes that have failed containers of zookeeper
+#. aliveNodes (**array(string)**) — the nodes that host the running containers of zookeeper
 #. state (**option(string)**) — only started/failed zookeeper has state (RUNNING or DEAD)
 #. error (**option(string)**) — the error message from a failed zookeeper.
    If zookeeper is fine or un-started, you won’t get this field.
@@ -98,7 +98,7 @@ Example Response
          ],
          "tags": {}
        },
-       "deadNodes": [],
+       "aliveNodes": [],
        "lastModified": 1563158986411
      }
 
@@ -135,7 +135,7 @@ Example Response
          ],
          "tags": {}
        },
-       "deadNodes": [],
+       "aliveNodes": [],
        "lastModified": 1563158986411
      }
 
@@ -163,7 +163,9 @@ Example Response
            "tags": {}
          },
          "state": "RUNNING",
-         "deadNodes": [],
+         "aliveNodes": [
+           "node00"
+         ],
          "lastModified": 1563158986411
        }
      ]
@@ -213,7 +215,7 @@ Example Response
          ],
          "tags": {}
        },
-       "deadNodes": [],
+       "aliveNodes": [],
        "lastModified": 1563158986411
      }
 
@@ -263,7 +265,9 @@ Example Response
          "tags": {}
        },
        "state": "RUNNING",
-       "deadNodes": [],
+       "aliveNodes": [
+         "node00"
+       ],
        "lastModified": 1563158986411
      }
 

@@ -178,7 +178,7 @@ object WorkerApi {
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
                                                      connectors: Seq[Definition],
-                                                     deadNodes: Set[String],
+                                                     aliveNodes: Set[String],
                                                      lastModified: Long,
                                                      state: Option[String],
                                                      error: Option[String])

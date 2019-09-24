@@ -64,7 +64,7 @@ The properties which can be set by user are shown below.
      will replace this by :ref:`JarInfo <rest-files>`.
    - nodeNames (**array(string)**) — the nodes running the worker process
 
-#. deadNodes (**array(string)**) — the nodes that have failed containers of worker
+#. aliveNodes (**array(string)**) — the nodes that host the running containers of worker
 
     .. note::
        The groupId, configTopicName, offsetTopicName and statusTopicName
@@ -206,7 +206,7 @@ Example Response
     {
       "lastModified": 1567177024356,
       "connectors": [],
-      "deadNodes": [],
+      "aliveNodes": [],
       "settings": {
         "statusTopicName": "statusTopic",
         "name": "wk00",
@@ -260,7 +260,7 @@ Example Response
     {
       "lastModified": 1567176877946,
       "connectors": [],
-      "deadNodes": [],
+      "aliveNodes": [],
       "settings": {
         "statusTopicName": "a6c5018531",
         "name": "wk",
@@ -301,7 +301,7 @@ Example Response
       {
         "lastModified": 1567177024356,
         "connectors": [],
-        "deadNodes": [],
+        "aliveNodes": [],
         "settings": {
           "statusTopicName": "statusTopic",
           "name": "wk00",
@@ -388,7 +388,7 @@ Example Response
     {
       "lastModified": 1567177024356,
       "connectors": [],
-      "deadNodes": [],
+      "aliveNodes": [],
       "settings": {
         "statusTopicName": "statusTopic",
         "name": "wk00",
@@ -728,7 +728,7 @@ Example Response
                ]
             }
          ],
-         "deadNodes":[
+         "aliveNodes":[
          ],
          "settings":{
             "statusTopicName":"d28ca7c875",

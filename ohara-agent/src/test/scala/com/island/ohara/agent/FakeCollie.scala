@@ -83,7 +83,7 @@ case class FakeCollieClusterInfo(objectKey: ObjectKey, nodeNames: Set[String], s
 
   override def imageName: String = "I DON'T CARE"
 
-  override def deadNodes: Set[String] = Set.empty
+  override def aliveNodes: Set[String] = Set.empty
 
   override def ports: Set[Int] = Set.empty
 

@@ -53,7 +53,7 @@ class TestStreamApi extends OharaTest with Matchers {
     val streamClusterInfo = StreamClusterInfo(
       settings = StreamApi.access.request.jarKey(fakeJar).nodeNames(Set(CommonUtils.randomString())).creation.settings,
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       metrics = Metrics.EMPTY,
@@ -87,7 +87,7 @@ class TestStreamApi extends OharaTest with Matchers {
         .creation
         .settings,
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
-      deadNodes = Set.empty,
+      aliveNodes = Set.empty,
       state = None,
       error = None,
       metrics = Metrics.EMPTY,
@@ -585,7 +585,7 @@ class TestStreamApi extends OharaTest with Matchers {
       StreamClusterInfo(
         settings = StreamApi.access.request.jarKey(fakeJar).name(name).creation.settings,
         definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
-        deadNodes = Set.empty,
+        aliveNodes = Set.empty,
         state = None,
         error = None,
         metrics = Metrics.EMPTY,
@@ -632,17 +632,17 @@ class TestStreamApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testAliveNodes(): Unit = {
+  def testDeadNodes(): Unit = {
     val cluster = StreamClusterInfo(
       settings = StreamApi.access.request.jarKey(fakeJar).nodeNames(Set("n0", "n1")).creation.settings,
       definition = None,
-      deadNodes = Set("n0"),
+      aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
-    cluster.aliveNodes shouldBe Set("n1")
-    cluster.copy(state = None).aliveNodes shouldBe Set.empty
+    cluster.deadNodes shouldBe Set("n1")
+    cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
 }

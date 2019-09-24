@@ -696,25 +696,25 @@ package object route {
             cluster match {
               case c: ZookeeperClusterInfo =>
                 c.copy(
-                  deadNodes = Set.empty,
+                  aliveNodes = Set.empty,
                   state = None,
                   error = None,
                 )
               case c: BrokerClusterInfo =>
                 c.copy(
-                  deadNodes = Set.empty,
+                  aliveNodes = Set.empty,
                   state = None,
                   error = None,
                 )
               case c: WorkerClusterInfo =>
                 c.copy(
-                  deadNodes = Set.empty,
+                  aliveNodes = Set.empty,
                   state = None,
                   error = None,
                 )
               case c: StreamClusterInfo =>
                 c.copy(
-                  deadNodes = Set.empty,
+                  aliveNodes = Set.empty,
                   state = None,
                   error = None,
                   // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
