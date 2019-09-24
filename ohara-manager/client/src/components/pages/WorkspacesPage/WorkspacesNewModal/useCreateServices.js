@@ -26,7 +26,7 @@ const useCreateServices = url => {
   const fail = useRef();
   const response = useRef();
   const createServices = async params => {
-    const { postParams, checkResult } = params;
+    const { postParams, checkResult, sleep } = params;
     await postApi(postParams);
     response.current = getData();
     const name = get(getData(), 'data.result.name');
@@ -40,6 +40,8 @@ const useCreateServices = url => {
     await waitApi({
       url: `${url}/${name}`,
       checkFn: checkResult,
+      maxRetry: 20,
+      sleep,
     });
 
     if (!getFinish()) {
