@@ -103,7 +103,10 @@ public interface CsvConnector {
           .build();
 
   String TASK_TOTAL_KEY = "task.total";
+  int TASK_TOTAL_DEFAULT = 1;
+
   String TASK_HASH_KEY = "task.hash";
+  int TASK_HASH_DEFAULT = 0;
 
   List<SettingDef> CSV_SOURCE_DEFINITIONS =
       Arrays.asList(

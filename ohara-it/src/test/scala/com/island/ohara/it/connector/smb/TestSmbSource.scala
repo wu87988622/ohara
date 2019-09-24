@@ -49,8 +49,6 @@ class TestSmbSource extends CsvSourceTestBase {
     SMB_SHARE_NAME_KEY -> itProps.shareName,
     INPUT_FOLDER_KEY -> "input",
     COMPLETED_FOLDER_KEY -> "completed",
-    ERROR_FOLDER_KEY -> "error",
-    TASK_TOTAL_KEY -> "1",
-    TASK_HASH_KEY -> "0"
+    ERROR_FOLDER_KEY -> "error"
   )
 }
