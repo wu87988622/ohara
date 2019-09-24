@@ -230,18 +230,8 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
   }
 
   /**
-    * Create a worker client according to passed cluster name.
-    * Noted: if target cluster doesn't exist, an future with exception will return
-    * @param clusterName target cluster
-    * @return cluster info and client
-    */
-  def workerClient(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = cluster(clusterName).map {
-    case (c, _) => (c, workerClient(c))
-  }
-
-  /**
     * Create a worker client according to passed cluster.
+    * Noted: this method is placed at collie so as to enable fake collie be available to route.
     * @param cluster target cluster
     * @return worker client
     */

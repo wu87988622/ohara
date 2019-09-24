@@ -216,7 +216,7 @@ object WorkerApi {
     /**
       * Our client to broker and worker accept the connection props:host:port,host2:port2
       */
-    def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
+    def connectionProps: String = aliveNodes.map(n => s"$n:$clientPort").mkString(",")
 
     override def ports: Set[Int] = settings.ports
 

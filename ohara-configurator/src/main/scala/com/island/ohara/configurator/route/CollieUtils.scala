@@ -84,14 +84,22 @@ private[route] object CollieUtils {
       }
     }
 
-  def workerClient[T](clusterName: String)(
-    implicit workerCollie: WorkerCollie,
-    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = workerClient(Some(clusterName))
+  /**
+    * Create a worker client according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterName target cluster
+    * @return cluster info and client
+    */
+  def workerClient(clusterName: String)(implicit workerCollie: WorkerCollie,
+                                        executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] =
+    workerCollie.cluster(clusterName).map {
+      case (c, _) => (c, workerCollie.workerClient(c))
+    }
 
   private[this] def workerClient[T](clusterName: Option[String])(
     implicit workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
-    .map(workerCollie.workerClient)
+    .map(CollieUtils.workerClient)
     .getOrElse(workerCollie.clusters
       .map { clusters =>
         clusters.size match {
