@@ -42,37 +42,27 @@ class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
   def goodCase(): Unit =
     assertSuccess(
       workerClient,
-      ValidationUtils.run(workerClient,
-                          topicAdmin,
-                          HdfsValidation(uri = "file:///tmp", workerClusterKey = None, workerClusterName = None),
-                          NUMBER_OF_TASKS)
+      ValidationUtils
+        .run(workerClient, topicAdmin, HdfsValidation(uri = "file:///tmp", workerClusterKey = None), NUMBER_OF_TASKS)
     )
 
   @Test
   def badCase(): Unit = assertFailure(
     workerClient,
-    ValidationUtils.run(workerClient,
-                        topicAdmin,
-                        HdfsValidation(uri = "hdfs:///tmp", workerClusterKey = None, workerClusterName = None),
-                        NUMBER_OF_TASKS)
+    ValidationUtils
+      .run(workerClient, topicAdmin, HdfsValidation(uri = "hdfs:///tmp", workerClusterKey = None), NUMBER_OF_TASKS)
   )
 
   @Test
   def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy
-    ValidationUtils.run(workerClient,
-                        topicAdmin,
-                        HdfsValidation(uri = "", workerClusterKey = None, workerClusterName = None),
-                        NUMBER_OF_TASKS)
+    ValidationUtils.run(workerClient, topicAdmin, HdfsValidation(uri = "", workerClusterKey = None), NUMBER_OF_TASKS)
 
   /**
     * the failure is produced by spray json rather than our check. It chooses IllegalArgumentException.
     */
   @Test
   def nullUri(): Unit = an[IllegalArgumentException] should be thrownBy
-    ValidationUtils.run(workerClient,
-                        topicAdmin,
-                        HdfsValidation(uri = null, workerClusterKey = None, workerClusterName = None),
-                        NUMBER_OF_TASKS)
+    ValidationUtils.run(workerClient, topicAdmin, HdfsValidation(uri = null, workerClusterKey = None), NUMBER_OF_TASKS)
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

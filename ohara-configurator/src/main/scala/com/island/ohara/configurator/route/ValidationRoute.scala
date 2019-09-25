@@ -94,7 +94,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
         verify = (req: HdfsValidation) =>
-          req._workerClusterKey
+          req.workerClusterKey
             .map(Future.successful)
             .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
@@ -108,7 +108,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (req: RdbValidation) =>
-          req._workerClusterKey
+          req.workerClusterKey
             .map(Future.successful)
             .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
@@ -123,7 +123,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (req: FtpValidation) =>
-          req._workerClusterKey
+          req.workerClusterKey
             .map(Future.successful)
             .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)

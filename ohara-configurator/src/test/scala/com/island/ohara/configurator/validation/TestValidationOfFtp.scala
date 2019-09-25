@@ -49,8 +49,7 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
                       port = ftpServer.port,
                       user = ftpServer.user,
                       password = ftpServer.password,
-                      workerClusterKey = None,
-                      workerClusterName = None),
+                      workerClusterKey = None),
         NUMBER_OF_TASKS
       )
     )
@@ -67,8 +66,7 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
           port = ftpServer.port,
           user = CommonUtils.randomString(10),
           password = ftpServer.password,
-          workerClusterKey = None,
-          workerClusterName = None
+          workerClusterKey = None
         ),
         NUMBER_OF_TASKS
       )

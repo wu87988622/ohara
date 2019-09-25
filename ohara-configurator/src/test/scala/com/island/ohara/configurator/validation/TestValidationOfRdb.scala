@@ -51,11 +51,7 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
       ValidationUtils.run(
         workerClient,
         topicAdmin,
-        RdbValidation(url = rdb.url,
-                      user = rdb.user,
-                      password = rdb.password,
-                      workerClusterKey = None,
-                      workerClusterName = None),
+        RdbValidation(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterKey = None),
         NUMBER_OF_TASKS
       )
     )

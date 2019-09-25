@@ -112,6 +112,7 @@ class TestValidationApi extends OharaTest with Matchers {
   @Test
   def nullWorkerClusterKeyOnFtp(): Unit =
     an[NullPointerException] should be thrownBy ValidationApi.access.ftpRequest.workerClusterKey(null)
+
   @Test
   def testFtpValidation(): Unit = {
     val hostname = CommonUtils.randomString()
@@ -140,7 +141,7 @@ class TestValidationApi extends OharaTest with Matchers {
       .user(user)
       .password(password)
       .validation
-      .workerClusterName shouldBe None
+      .workerClusterKey shouldBe None
   }
 
   @Test
@@ -163,7 +164,7 @@ class TestValidationApi extends OharaTest with Matchers {
     validation.uri shouldBe uri
     validation.workerClusterKey.get shouldBe workerClusterKey
 
-    ValidationApi.access.hdfsRequest.uri(uri).validation.workerClusterName shouldBe None
+    ValidationApi.access.hdfsRequest.uri(uri).validation.workerClusterKey shouldBe None
   }
 
   @Test
@@ -210,12 +211,7 @@ class TestValidationApi extends OharaTest with Matchers {
     validation.password shouldBe password
     validation.workerClusterKey.get shouldBe workerClusterKey
 
-    ValidationApi.access.rdbRequest
-      .jdbcUrl(url)
-      .user(user)
-      .password(password)
-      .validation
-      .workerClusterName shouldBe None
+    ValidationApi.access.rdbRequest.jdbcUrl(url).user(user).password(password).validation.workerClusterKey shouldBe None
   }
 
   @Test
@@ -277,9 +273,9 @@ class TestValidationApi extends OharaTest with Matchers {
     ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "uri": "$uri",
-         |    "workerClusterName": "$workerClusterName"
+         |    "workerClusterKey": "$workerClusterName"
          |  }
-      """.stripMargin.parseJson).workerClusterName.get shouldBe workerClusterName
+      """.stripMargin.parseJson).workerClusterKey.get.name() shouldBe workerClusterName
   }
 
   @Test
@@ -294,7 +290,7 @@ class TestValidationApi extends OharaTest with Matchers {
       """
         |  {
         |    "uri": "asdad",
-        |    "workerClusterName": ""
+        |    "workerClusterKey": ""
         |  }
       """.stripMargin.parseJson)
   }
@@ -322,9 +318,9 @@ class TestValidationApi extends OharaTest with Matchers {
          |    "url": "$url",
          |    "user": "$user",
          |    "password": "$password",
-         |    "workerClusterName": "$workerClusterName"
+         |    "workerClusterKey": "$workerClusterName"
          |  }
-      """.stripMargin.parseJson).workerClusterName.get shouldBe workerClusterName
+      """.stripMargin.parseJson).workerClusterKey.get.name() shouldBe workerClusterName
   }
 
   @Test
@@ -361,7 +357,7 @@ class TestValidationApi extends OharaTest with Matchers {
         |    "url": "url",
         |    "user": "user",
         |    "password": "password",
-        |    "workerClusterName": ""
+        |    "workerClusterKey": ""
         |  }
       """.stripMargin.parseJson)
   }
@@ -393,9 +389,9 @@ class TestValidationApi extends OharaTest with Matchers {
          |    "port": $port,
          |    "user": "$user",
          |    "password": "$password",
-         |    "workerClusterName": "$workerClusterName"
+         |    "workerClusterKey": "$workerClusterName"
          |  }
-      """.stripMargin.parseJson).workerClusterName.get shouldBe workerClusterName
+      """.stripMargin.parseJson).workerClusterKey.get.name() shouldBe workerClusterName
   }
 
   @Test
