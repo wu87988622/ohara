@@ -52,7 +52,8 @@ connectors. The common settings are shown below.
    - workerClusterKey.newName (**string**) — the name of cluster
 
   .. note::
-    the pure string is accepted also if you don't use group
+    the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
+    {"group": "default", "name": "n"}
 
 #. tags (**object**) — the extra description to this object
 

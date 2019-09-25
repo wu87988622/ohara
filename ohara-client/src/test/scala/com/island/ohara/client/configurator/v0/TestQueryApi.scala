@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -51,7 +52,7 @@ class TestQueryApi extends OharaTest with Matchers {
     val url = CommonUtils.randomString(10)
     val user = CommonUtils.randomString(10)
     val password = CommonUtils.randomString(10)
-    val workerClusterName = CommonUtils.randomString(10)
+    val workerClusterKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val catalogPattern = CommonUtils.randomString(10)
     val schemaPattern = CommonUtils.randomString(10)
     val tableName = CommonUtils.randomString(10)
@@ -62,7 +63,7 @@ class TestQueryApi extends OharaTest with Matchers {
       .jdbcUrl(url)
       .user(user)
       .password(password)
-      .workerClusterName(workerClusterName)
+      .workerClusterKey(workerClusterKey)
       .catalogPattern(catalogPattern)
       .schemaPattern(schemaPattern)
       .tableName(tableName)
@@ -71,7 +72,7 @@ class TestQueryApi extends OharaTest with Matchers {
     query.url shouldBe url
     query.user shouldBe user
     query.password shouldBe password
-    query.workerClusterName.get shouldBe workerClusterName
+    query.workerClusterKey.get shouldBe workerClusterKey
     query.catalogPattern.get shouldBe catalogPattern
     query.schemaPattern.get shouldBe schemaPattern
     query.tableName.get shouldBe tableName
@@ -123,12 +124,8 @@ class TestQueryApi extends OharaTest with Matchers {
   def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.password("")
 
   @Test
-  def nullWorkerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy QueryApi.access.request.workerClusterName(null)
-
-  @Test
-  def emptyWorkerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy QueryApi.access.request.workerClusterName("")
+  def nullWorkerClusterKey(): Unit =
+    an[NullPointerException] should be thrownBy QueryApi.access.request.workerClusterKey(null)
 
   @Test
   def nullSchemaPattern(): Unit =
@@ -178,6 +175,7 @@ class TestQueryApi extends OharaTest with Matchers {
     query.user shouldBe user
     query.password shouldBe password
     query.workerClusterName.get shouldBe workerClusterName
+    query._workerClusterKey.get.name() shouldBe workerClusterName
     query.catalogPattern.get shouldBe catalogPattern
     query.schemaPattern.get shouldBe schemaPattern
     query.tableName.get shouldBe tableName

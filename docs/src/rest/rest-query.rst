@@ -44,7 +44,15 @@ following fields.
 #. url (**string**) — jdbc url
 #. user (**string**) — user who can access target database
 #. password (**string**) — password which can access target database
-#. workerClusterName (**string**) — used to execute connectors to fetch table information
+#. workerClusterKey (**Object**) — target worker cluster.
+
+   - workerClusterKey.group (**option(string)**) — the group of cluster
+   - workerClusterKey.newName (**string**) — the name of cluster
+
+  .. note::
+    the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
+    {"group": "default", "name": "n"}
+
 #. catalogPattern (**option(string)**) — filter returned tables according to catalog
 #. schemaPattern (**option(string)**) — filter returned tables according to schema
 #. tableName (**option(string)**) — filter returned tables according to name
@@ -56,7 +64,10 @@ Example Request
        "url": "jdbc:sqlserver://",
        "user": "abc",
        "password": "abc",
-       "workerClusterName": "wk00"
+       "workerClusterKey": {
+         "group": "default",
+         "name": "wk00"
+       }
      }
 
 Example Response

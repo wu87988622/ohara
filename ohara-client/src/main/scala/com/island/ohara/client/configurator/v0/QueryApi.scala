@@ -16,7 +16,10 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.util.Objects
+
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -36,13 +39,20 @@ object QueryApi {
 
   final case class RdbQuery private[QueryApi] (url: String,
                                                user: String,
+                                               workerClusterKey: Option[ObjectKey],
                                                password: String,
+                                               // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
                                                workerClusterName: Option[String],
                                                catalogPattern: Option[String],
                                                schemaPattern: Option[String],
-                                               tableName: Option[String])
+                                               tableName: Option[String]) {
+    // a helper method to keep compatibility
+    // TODO: remove this helper method (see https://github.com/oharastream/ohara/issues/2769)
+    def _workerClusterKey: Option[ObjectKey] =
+      workerClusterKey.orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+  }
   implicit val RDB_QUERY_JSON_FORMAT: OharaJsonFormat[RdbQuery] =
-    JsonRefiner[RdbQuery].format(jsonFormat7(RdbQuery)).rejectEmptyString().refine
+    JsonRefiner[RdbQuery].format(jsonFormat8(RdbQuery)).rejectEmptyString().refine
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
@@ -54,7 +64,7 @@ object QueryApi {
     def jdbcUrl(url: String): Request
 
     @Optional("server will match a broker cluster for you if the wk name is ignored")
-    def workerClusterName(workerClusterName: String): Request
+    def workerClusterKey(workerClusterKey: ObjectKey): Request
 
     def user(user: String): Request
 
@@ -85,7 +95,7 @@ object QueryApi {
       private[this] var jdbcUrl: String = _
       private[this] var user: String = _
       private[this] var password: String = _
-      private[this] var workerClusterName: String = _
+      private[this] var workerClusterKey: ObjectKey = _
       private[this] var catalogPattern: String = _
       private[this] var schemaPattern: String = _
       private[this] var tableName: String = _
@@ -95,8 +105,8 @@ object QueryApi {
         this
       }
 
-      override def workerClusterName(workerClusterName: String): Request = {
-        this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
+      override def workerClusterKey(workerClusterKey: ObjectKey): Request = {
+        this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
         this
       }
 
@@ -129,7 +139,8 @@ object QueryApi {
         url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty),
+        workerClusterKey = Option(workerClusterKey),
+        workerClusterName = None,
         catalogPattern = Option(catalogPattern).map(CommonUtils.requireNonEmpty),
         schemaPattern = Option(schemaPattern).map(CommonUtils.requireNonEmpty),
         tableName = Option(tableName).map(CommonUtils.requireNonEmpty)

@@ -22,7 +22,6 @@ import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.configurator.fake.FakeWorkerClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,13 +39,12 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
       post {
         entity(as[RdbQuery]) { query =>
           complete(
-            query.workerClusterName
-            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-              .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+            query.workerClusterKey
+              .map(Future.successful)
               .getOrElse(CollieUtils.singleWorkerCluster())
               .flatMap(CollieUtils.both)
               .flatMap {
-                case (_, topicAdmin, _, workerClient) =>
+                case (_, topicAdmin, workerCluster, workerClient) =>
                   workerClient match {
                     case _: FakeWorkerClient =>
                       val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
@@ -61,15 +59,18 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
                       finally client.close()
                     case _ =>
                       ValidationUtils
-                        .run(workerClient,
-                             topicAdmin,
-                             RdbValidation(
-                               url = query.url,
-                               user = query.user,
-                               password = query.password,
-                               workerClusterName = query.workerClusterName
-                             ),
-                             1)
+                        .run(
+                          workerClient,
+                          topicAdmin,
+                          RdbValidation(
+                            url = query.url,
+                            user = query.user,
+                            password = query.password,
+                            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+                            workerClusterName = Some(workerCluster.name)
+                          ),
+                          1
+                        )
                         .map { reports =>
                           if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
                           reports.head.rdbInfo
