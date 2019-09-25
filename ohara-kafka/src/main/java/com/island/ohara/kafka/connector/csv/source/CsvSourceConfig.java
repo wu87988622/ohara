@@ -165,8 +165,8 @@ public class CsvSourceConfig implements CsvConnector {
   public static CsvSourceConfig of(TaskSetting setting, List<Column> schema) {
     CsvSourceConfig.Builder builder = new CsvSourceConfig.Builder();
 
-    builder.total(setting.intOption(TASK_TOTAL_KEY).orElse(TASK_TOTAL_DEFAULT));
-    builder.hash(setting.intOption(TASK_HASH_KEY).orElse(TASK_HASH_DEFAULT));
+    builder.total(setting.intValue(TASK_TOTAL_KEY));
+    builder.hash(setting.intValue(TASK_HASH_KEY));
 
     Optional<String> inputFolder = setting.stringOption(INPUT_FOLDER_KEY);
     if (inputFolder.isPresent()) {
