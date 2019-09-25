@@ -334,19 +334,6 @@ Example Response
   .. code-block:: json
 
      {
-       "name": "myapp",
-       "group": "default",
-       "imageName": "oharastream/streamapp:$|version|",
-       "instances": 3,
-       "jar": {
-         "name": "stream-app",
-         "group": "wk01"
-       },
-       "from": ["topic1"],
-       "to": ["topic2"],
-       "jmxPort": 5678,
-       "exactlyOnce": "false",
-       "metrics": [],
        "lastModified": 1563499550267,
        "aliveNodes": [],
        "definition": {
@@ -384,19 +371,6 @@ Example Response
 
      [
        {
-         "name": "myapp",
-         "group": "default",
-         "imageName": "oharastream/streamapp:$|version|",
-         "instances": 3,
-         "jar": {
-           "name": "stream-app",
-           "group": "wk01"
-         },
-         "from": ["topic1"],
-         "to": ["topic2"],
-         "jmxPort": 5678,
-         "exactlyOnce": "false",
-         "metrics": [],
          "lastModified": 1563499550267,
          "aliveNodes": [],
          "definition": {
@@ -555,34 +529,6 @@ Example Response
   .. note::
      You should use :ref:`get streamapp <rest-stream-get-information>` to fetch up-to-date status
 
-  .. code-block:: json
-
-   {
-     "lastModified": 1563499550267,
-     "aliveNodes": [],
-     "definition": {
-       "className": "com.island.ohara.it.streamapp.DumbStreamApp",
-       "definitions": []
-     },
-     "metrics": {
-       "meters": []
-     },
-     "nodeNames": [],
-     "settings": {
-       "name": "a5eddb5b9fd144f1a75e",
-       "group": "default",
-       "tags": {},
-       "instances": 1,
-       "imageName": "oharastream/streamapp:$|version|",
-       "jarKey": {
-         "group": "wk01",
-         "name": "ohara-streamapp.jar"
-       },
-       "jmxPort": 3792,
-       "nodeNames": []
-     }
-   }
-
 .. _rest-stop-streamapp:
 
 stop a StreamApp
@@ -608,35 +554,6 @@ Example Response
   .. note::
 
      You should use :ref:`get streamapp <rest-stream-get-information>` to fetch up-to-date status
-
-
-  .. code-block:: json
-
-     {
-       "lastModified": 1563499550267,
-       "aliveNodes": [],
-       "definition": {
-         "className": "com.island.ohara.it.streamapp.DumbStreamApp",
-         "definitions": []
-       },
-       "metrics": {
-         "meters": []
-       },
-       "nodeNames": [],
-       "settings": {
-         "name": "a5eddb5b9fd144f1a75e",
-         "group": "default",
-         "tags": {},
-         "instances": 1,
-         "imageName": "oharastream/streamapp:$|version|",
-         "jarKey": {
-           "group": "wk01",
-           "name": "ohara-streamapp.jar"
-         },
-         "jmxPort": 3792,
-         "nodeNames": []
-       }
-     }
 
 get topology tree graph from specific streamApp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
