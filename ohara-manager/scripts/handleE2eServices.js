@@ -181,16 +181,16 @@ const getByServiceType = (services, servicePrefix) => {
   let zookeepers = { serviceType: 'zookeepers', serviceNames: [] };
 
   services.forEach(service => {
-    if (service.name.includes(servicePrefix)) {
+    if (service.settings.name.includes(servicePrefix)) {
       workers.serviceNames.push(service.name);
     }
 
-    if (service.tags.broker) {
-      brokers.serviceNames.push(service.tags.broker.name);
+    if (service.settings.tags.broker) {
+      brokers.serviceNames.push(service.settings.tags.broker.name);
     }
 
-    if (service.tags.zookeeper) {
-      zookeepers.serviceNames.push(service.tags.zookeeper.name);
+    if (service.settings.tags.zookeeper) {
+      zookeepers.serviceNames.push(service.settings.tags.zookeeper.name);
     }
   });
 
@@ -218,11 +218,11 @@ exports.cleanServices = async (apiRoot, nodeName, servicePrefix) => {
     const zookeepersRes = await axios.get(`${apiRoot}/zookeepers`);
     const lastBrokers = {
       serviceType: 'brokers',
-      serviceNames: brokersRes.data.map(bk => bk.name),
+      serviceNames: brokersRes.data.map(bk => bk.settings.name),
     };
     const lastZookeepers = {
       serviceType: 'zookeepers',
-      serviceNames: zookeepersRes.data.map(zk => zk.name),
+      serviceNames: zookeepersRes.data.map(zk => zk.settings.name),
     };
     await deleteServices(lastBrokers, apiRoot);
     await deleteServices(lastZookeepers, apiRoot);
