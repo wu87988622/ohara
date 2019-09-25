@@ -104,7 +104,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .create()
         .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key))))
     assertCluster(() => result(zkApi.list()),
-                  () => result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers))),
+                  () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
                   zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
@@ -115,7 +115,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .create()
         .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key))))
     assertCluster(() => result(bkApi.list()),
-                  () => result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers))),
+                  () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
                   bkCluster.name)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
@@ -127,7 +127,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .create())
     result(wkApi.start(wkCluster.key))
     assertCluster(() => result(wkApi.list()),
-                  () => result(containerApi.get(wkCluster.name).map(_.flatMap(_.containers))),
+                  () => result(containerApi.get(wkCluster.key).map(_.flatMap(_.containers))),
                   wkCluster.name)
     // add all remaining node to the running worker cluster
     nodes.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>

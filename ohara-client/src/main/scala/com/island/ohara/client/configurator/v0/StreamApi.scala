@@ -335,8 +335,9 @@ object StreamApi {
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
         put(
           // for update request, we should use default group if it was absent
-          key(updating.group.getOrElse(GROUP_DEFAULT),
-              updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
+          ObjectKey.of(
+            updating.group.getOrElse(GROUP_DEFAULT),
+            updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
           updating
         )
     }

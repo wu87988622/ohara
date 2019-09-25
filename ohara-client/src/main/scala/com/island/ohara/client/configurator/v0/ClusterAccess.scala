@@ -28,14 +28,6 @@ private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Update <: 
   prefixPath: String)(implicit rm1: OharaJsonFormat[Creation], rm2: OharaJsonFormat[Update], rm3: OharaJsonFormat[Res])
     extends BasicAccess(prefixPath) {
 
-  /**
-    * generate a key for cluster
-    * @param group cluster name
-    * @param name cluster group
-    * @return key of this cluster
-    */
-  private[v0] def key(group: String, name: String): ObjectKey = ObjectKey.of(group, name)
-
   final def post(creation: Creation)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.post[Creation, Res, ErrorApi.Error](url, creation)
   final def put(objectKey: ObjectKey, update: Update)(implicit executionContext: ExecutionContext): Future[Res] =

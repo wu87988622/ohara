@@ -87,7 +87,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
           ContainerApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .get(cluster.name)
+            .get(cluster.key)
             .map(_.flatMap(_.containers))),
       cluster.name
     )

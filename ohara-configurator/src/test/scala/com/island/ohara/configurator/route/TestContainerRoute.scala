@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
@@ -33,9 +34,9 @@ class TestContainerRoute extends OharaTest with Matchers {
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val zkClusterName = CommonUtils.randomString(10)
-  private[this] val bkClusterName = CommonUtils.randomString(10)
-  private[this] val wkClusterName = CommonUtils.randomString(10)
+  private[this] val zkClusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
+  private[this] val bkClusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
+  private[this] val wkClusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
@@ -54,27 +55,27 @@ class TestContainerRoute extends OharaTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(zkClusterName)
+        .key(zkClusterKey)
         .nodeNames(nodeNames)
         .create())
-    zk.name shouldBe zkClusterName
+    zk.key shouldBe zkClusterKey
     result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key))
 
     val bk = result(
-      brokerApi.request.name(bkClusterName).zookeeperClusterName(zkClusterName).nodeNames(nodeNames).create())
+      brokerApi.request.key(bkClusterKey).zookeeperClusterName(zkClusterKey.name()).nodeNames(nodeNames).create())
     result(brokerApi.start(bk.key))
 
     val wk = result(
-      workerApi.request.name(wkClusterName).brokerClusterName(bkClusterName).nodeNames(nodeNames).create())
+      workerApi.request.key(wkClusterKey).brokerClusterName(bkClusterKey.name()).nodeNames(nodeNames).create())
     result(workerApi.start(wk.key))
   }
 
   @Test
   def testGetContainersOfZookeeperCluster(): Unit = {
-    val containerGroups = result(containerApi.get(zkClusterName))
+    val containerGroups = result(containerApi.get(zkClusterKey))
     containerGroups.size should not be 0
     containerGroups.foreach(group => {
-      group.clusterName shouldBe zkClusterName
+      group.clusterKey shouldBe zkClusterKey
       group.clusterType shouldBe "zookeeper"
       group.containers.size should not be 0
     })
@@ -82,10 +83,10 @@ class TestContainerRoute extends OharaTest with Matchers {
 
   @Test
   def testGetContainersOfBrokerCluster(): Unit = {
-    val containerGroups = result(containerApi.get(bkClusterName))
+    val containerGroups = result(containerApi.get(bkClusterKey))
     containerGroups.size should not be 0
     containerGroups.foreach(group => {
-      group.clusterName shouldBe bkClusterName
+      group.clusterKey shouldBe bkClusterKey
       group.clusterType shouldBe "broker"
       group.containers.size should not be 0
     })
@@ -93,10 +94,10 @@ class TestContainerRoute extends OharaTest with Matchers {
 
   @Test
   def testGetContainersOfWorkerCluster(): Unit = {
-    val containerGroups = result(containerApi.get(wkClusterName))
+    val containerGroups = result(containerApi.get(wkClusterKey))
     containerGroups.size should not be 0
     containerGroups.foreach(group => {
-      group.clusterName shouldBe wkClusterName
+      group.clusterKey shouldBe wkClusterKey
       group.clusterType shouldBe "worker"
       group.containers.size should not be 0
     })

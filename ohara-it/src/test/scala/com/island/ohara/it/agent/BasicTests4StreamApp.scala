@@ -107,7 +107,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       )
       result(zkApi.start(zkCluster.key))
       assertCluster(() => result(zkApi.list()),
-                    () => result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers))),
+                    () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
                     zkCluster.name)
       log.info("create zkCluster...done")
 
@@ -122,7 +122,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       bkKey = bkCluster.key
       result(bkApi.start(bkCluster.key))
       assertCluster(() => result(bkApi.list()),
-                    () => result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers))),
+                    () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
                     bkCluster.name)
       log.info("create bkCluster...done")
       brokerConnProps = bkCluster.connectionProps
@@ -239,7 +239,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     log.info(s"[testRunSimpleStreamApp] get definition from $jar...done")
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()),
-                  () => result(containerApi.get(bkKey.name()).map(_.flatMap(_.containers))),
+                  () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))),
                   bkKey.name())
     log.info(s"[testRunSimpleStreamApp] broker cluster [$bkKey] assert...done")
     // create topic

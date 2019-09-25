@@ -100,7 +100,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     logApi.log4ZookeeperCluster(clusterName).map(_.logs.map(_.value))
 
   private[this] def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterName).map(_.flatMap(_.containers))
+    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
 
   private[this] def zk_delete(clusterName: String): Future[Unit] = zkApi.delete(ObjectKey.of(group, clusterName))
 
@@ -137,7 +137,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     logApi.log4BrokerCluster(clusterName).map(_.logs.map(_.value))
 
   private[this] def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterName).map(_.flatMap(_.containers))
+    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
 
   private[this] def bk_delete(clusterName: String): Future[Unit] = bkApi.delete(ObjectKey.of(group, clusterName))
 
@@ -198,7 +198,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     logApi.log4WorkerCluster(clusterName).map(_.logs.map(_.value))
 
   private[this] def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterName).map(_.flatMap(_.containers))
+    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
 
   private[this] def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(ObjectKey.of(group, clusterName))
 

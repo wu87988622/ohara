@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.{JsArray, JsString, JsValue}
 
@@ -28,6 +29,12 @@ import scala.collection.mutable
   */
 trait ClusterRequest {
   protected val settings: mutable.Map[String, JsValue] = mutable.Map()
+
+  @Optional("default key is a random string. But it is required in updating")
+  def key(key: ObjectKey): ClusterRequest.this.type = {
+    setting(NAME_KEY, JsString(key.name()))
+    setting(GROUP_KEY, JsString(key.group()))
+  }
 
   @Optional("default name is a random string. But it is required in updating")
   def name(name: String): ClusterRequest.this.type =

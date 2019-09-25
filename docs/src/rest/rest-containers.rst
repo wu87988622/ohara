@@ -31,7 +31,7 @@ of containers.
 retrieve the container details of a running cluster
 ---------------------------------------------------
 
-*GET /v0/containers/$clusterName*
+*GET /v0/containers/$clusterName?group=$clusterGroup*
 
 Example Response
   The **cluster name** may be mapped to different services (of course, it
@@ -39,7 +39,7 @@ Example Response
   the returned JSON is in array type. The details of elements are shown
   below.
 
-  #. clusterName (**string**) — cluster name
+  #. clusterKey (**Object**) — cluster key
   #. clusterType (**string**) — cluster type
   #. containers (**array(object)**) — the container in this cluster
 
@@ -65,7 +65,10 @@ Example Response
 
      [
        {
-         "clusterName": "zk00",
+         "clusterKey": {
+           "group": "default",
+           "name": "zk00"
+         },
          "clusterType": "zookeeper",
          "containers": [
            {

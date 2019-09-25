@@ -233,7 +233,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     zkApi.list()
 
   private[this] def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterName).map(_.flatMap(_.containers))
+    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
 
   private[this] def zk_start(clusterName: String): Future[Unit] = zkApi.start(ObjectKey.of(group, clusterName))
 
@@ -256,7 +256,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   private[this] def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
 
   private[this] def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterName).map(_.flatMap(_.containers))
+    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
 
   private[this] def bk_create(clusterName: String,
                               clientPort: Int,
@@ -280,7 +280,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     wkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
 
   private[this] def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterName).map(_.flatMap(_.containers))
+    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
 
   private[this] def wk_exist(clusterName: String): Future[Boolean] = wkApi.list().map(_.exists(_.name == clusterName))
 

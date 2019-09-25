@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -42,12 +42,12 @@ object ContainerApi {
                                  hostname: String)
   implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat11(ContainerInfo)
 
-  final case class ContainerGroup(clusterName: String, clusterType: String, containers: Seq[ContainerInfo])
+  final case class ContainerGroup(clusterKey: ObjectKey, clusterType: String, containers: Seq[ContainerInfo])
   implicit val CONTAINER_GROUP_JSON_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)
 
   class Access private[v0] extends BasicAccess(CONTAINER_PREFIX_PATH) {
-    def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
-      exec.get[Seq[ContainerGroup], ErrorApi.Error](s"$url/${CommonUtils.requireNonEmpty(clusterName)}")
+    def get(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
+      exec.get[Seq[ContainerGroup], ErrorApi.Error](url(clusterKey))
   }
 
   def access: Access = new Access

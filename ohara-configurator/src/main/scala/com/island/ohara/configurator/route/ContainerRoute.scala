@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi._
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext
@@ -31,23 +32,26 @@ object ContainerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     path(CONTAINER_PREFIX_PATH / Segment)({ clusterName =>
-      get {
-        complete(
-          clusterCollie
-            .clusters()
-            .map(_.filter(_._1.name == clusterName).map {
-              case (cluster, containers) =>
-                ContainerGroup(
-                  clusterName = clusterName,
-                  clusterType = cluster match {
-                    case _: ZookeeperClusterInfo => "zookeeper"
-                    case _: BrokerClusterInfo    => "broker"
-                    case _: WorkerClusterInfo    => "worker"
-                    case _                       => "unknown"
-                  },
-                  containers = containers
-                )
-            }))
+      parameter(GROUP_KEY ?) {
+        groupOption =>
+          get {
+            complete(
+              clusterCollie
+                .clusters()
+                .map(_.filter(_._1.key == ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), clusterName)).map {
+                  case (cluster, containers) =>
+                    ContainerGroup(
+                      clusterKey = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), clusterName),
+                      clusterType = cluster match {
+                        case _: ZookeeperClusterInfo => "zookeeper"
+                        case _: BrokerClusterInfo    => "broker"
+                        case _: WorkerClusterInfo    => "worker"
+                        case _                       => "unknown"
+                      },
+                      containers = containers
+                    )
+                }))
+          }
       }
     })
 }
