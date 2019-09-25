@@ -218,11 +218,11 @@ exports.cleanServices = async (apiRoot, nodeName, servicePrefix) => {
     const zookeepersRes = await axios.get(`${apiRoot}/zookeepers`);
     const lastBrokers = {
       serviceType: 'brokers',
-      serviceNames: brokersRes.data.map(bk => bk.name),
+      serviceNames: brokersRes.data.map(bk => bk.settings.name),
     };
     const lastZookeepers = {
       serviceType: 'zookeepers',
-      serviceNames: zookeepersRes.data.map(zk => zk.name),
+      serviceNames: zookeepersRes.data.map(zk => zk.settings.name),
     };
     await deleteServices(lastBrokers, apiRoot);
     await deleteServices(lastZookeepers, apiRoot);
