@@ -60,7 +60,7 @@ class TestConfiguratorBuilder extends OharaTest with Matchers {
       (1, 1),
       (1, 2),
       (2, 1),
-      (99, 99)
+      (10, 10)
     ).foreach {
       case (numberOfBrokers, numberOfWorkers) =>
         val configurator = Configurator.builder.fake(numberOfBrokers, numberOfWorkers).build()
