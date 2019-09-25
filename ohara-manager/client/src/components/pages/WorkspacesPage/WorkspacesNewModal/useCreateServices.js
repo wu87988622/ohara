@@ -29,7 +29,7 @@ const useCreateServices = url => {
     const { postParams, checkResult, sleep } = params;
     await postApi(postParams);
     response.current = getData();
-    const name = get(getData(), 'data.result.name');
+    const name = get(getData(), 'data.result.settings.name');
 
     if (!name) {
       fail.current = true;

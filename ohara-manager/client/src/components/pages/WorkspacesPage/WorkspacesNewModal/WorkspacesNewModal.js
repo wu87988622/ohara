@@ -348,12 +348,12 @@ const WorkerNewModal = props => {
       ],
       tags: {
         broker: {
-          name: getBrokerRes().data.result.name,
-          imageName: getBrokerRes().data.result.imageName,
+          name: getBrokerRes().data.result.settings.name,
+          imageName: getBrokerRes().data.result.settings.imageName,
         },
         zookeeper: {
-          name: getZookeeperRes().data.result.name,
-          imageName: getZookeeperRes().data.result.imageName,
+          name: getZookeeperRes().data.result.settings.name,
+          imageName: getZookeeperRes().data.result.settings.imageName,
         },
       },
     };
