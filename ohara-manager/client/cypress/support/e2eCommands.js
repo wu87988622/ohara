@@ -58,18 +58,18 @@ Cypress.Commands.add('addWorker', params => {
     cy.get('@broker').then(broker => {
       cy.request('POST', 'api/workers', {
         name: workerName,
-        brokerClusterName: broker.name,
+        brokerClusterName: broker.settings.name,
         jarKeys,
         groupId: generate.id(),
         nodeNames: [nodeName],
         tags: {
           broker: {
-            name: broker.name,
-            imageName: broker.imageName,
+            name: broker.settings.name,
+            imageName: broker.settings.imageName,
           },
           zookeeper: {
-            name: zookeepers.name,
-            imageName: zookeepers.imageName,
+            name: zookeepers.settings.name,
+            imageName: zookeepers.settings.imageName,
           },
         },
       });
