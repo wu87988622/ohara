@@ -21,7 +21,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -170,22 +170,7 @@ object BrokerApi {
         private[this] val format = jsonFormat6(BrokerClusterInfo)
         override def read(json: JsValue): BrokerClusterInfo = format.read(json)
         override def write(obj: BrokerClusterInfo): JsValue =
-          JsObject(
-            noJsNull(
-              format.write(obj).asJsObject.fields ++
-                // TODO: remove this stale fields
-                Map(
-                  NAME_KEY -> JsString(obj.name),
-                  GROUP_KEY -> JsString(obj.group),
-                  IMAGE_NAME_KEY -> JsString(obj.imageName),
-                  NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
-                  EXPORTER_PORT_KEY -> JsNumber(obj.exporterPort),
-                  CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
-                  JMX_PORT_KEY -> JsNumber(obj.jmxPort),
-                  TAGS_KEY -> JsObject(obj.tags),
-                  ZOOKEEPER_CLUSTER_NAME_KEY -> JsString(obj.zookeeperClusterName)
-                )
-            ))
+          JsObject(noJsNull(format.write(obj).asJsObject.fields))
       })
       .refine
 

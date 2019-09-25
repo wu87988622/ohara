@@ -513,8 +513,8 @@ class TestBrokerApi extends OharaTest with Matchers {
         topicSettingDefinitions = Seq.empty
       ))
     // serialize to json should see the object key (group, name)
-    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
+    res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
 
     // // deserialize to info should see the object key (group, name)
     val data = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.read(res)
