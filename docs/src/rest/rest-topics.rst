@@ -24,14 +24,27 @@ ohara will invoke a creation of kafka also. Also, the delete to ohara
 topic also invoke a delete request to kafka. The common properties in
 topic are shown below.
 
-#. settings(**object**) — topic settings. Normally, it includes following configs
+#. group (**string**) — topic group.
+#. name (**string**) — topic name
+#. brokerClusterKey (**Object**) — target broker cluster.
 
-  #. group (**string**) — topic group.
-  #. name (**string**) — topic name
-  #. brokerClusterName (**option(string)**) — the broker cluster hosting this topic
-  #. numberOfReplications (**option(int)**) — the number of replications
-  #. numberOfPartitions (**option(int)**)— the number of partitions for this topic
-  #. tags (**option(object)**) — the extra description to this object
+   - brokerClusterKey.group (**option(string)**) — the group of cluster
+   - brokerClusterKey.newName (**string**) — the name of cluster
+
+  .. note::
+    the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
+    {"group": "default", "name": "n"}
+
+#. numberOfReplications (**option(int)**) — the number of replications
+#. numberOfPartitions (**option(int)**)— the number of partitions for this topic
+#. tags (**option(object)**) — the extra description to this object
+
+.. note::
+  #. The name must be unique in a broker cluster.
+  #. There are many other available configs which are useful in creating topic. Please ref :ref:`broker clusters <rest-brokers>` to see how to retrieve the available configs for specific broker cluster.
+
+
+The following information are tagged by ohara.
 
 #. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
 #. partitionInfos (**Array(object)**) — the details of partitions.
@@ -43,17 +56,7 @@ topic are shown below.
   #. beginningOffset (**long**) — the beginning offset
   #. endOffset (**endOffset**) — the latest offset (Normally, it is the latest commit data)
 
-
-.. note::
-  #. The name must be unique in a broker cluster.
-  #. There are many other available configs which are useful in creating topic. Please ref :ref:`broker clusters <rest-brokers>` to see how to retrieve the available configs for specific broker cluster.
-
-
-The following information are tagged by ohara.
-
-#. group (**string**) — the group value is always "default" (the default
-   value will be changed to be equal to brokerClusterName as the group
-   of topic is “broker cluster”)
+#. group (**string**) — the group value is always "default"
 #. lastModified (**long**) — the last time to update this ftp
    information
 
@@ -62,21 +65,6 @@ store a topic properties
 ------------------------
 
 *POST /v0/topics*
-
-#. group (**string**) — topic group. Default group is "default".
-#. name (**string**) — topic name
-#. brokerClusterName (**option(string)**) — the broker cluster hosting
-   this topic (**If you don’t specify the broker cluster in request,
-   ohara will try to find a broker cluster for you. And it works only if
-   there is only a broker cluster exists in ohara**)
-#. numberOfReplications (**option(int)**) — the number of replications
-   for this topic (**it is illegal to input the number of replications
-   which is larger than the number of broker nodes**)
-#. numberOfPartitions (**option(int)**)— the number of partitions for
-   this topic
-#. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
-#. tags (**option(object)**) — the extra description to this
-   object
 
 .. note::
   #. the name you pass to ohara is used to build topic on kafka, and it is restricted by Kafka ([a-zA-Z0-9\._\-])
@@ -101,7 +89,10 @@ Example Response
       "settings": {
         "group": "default",
         "name": "topic0",
-        "brokerClusterName": "preCreatedBkCluster",
+        "workerClusterKey": {
+          "group": "default",
+          "name": "preCreatedBkCluster"
+        },
         "numberOfReplications": 1,
         "numberOfPartitions": 1,
         "tags": {}
@@ -121,25 +112,6 @@ update a topic properties
 
 *PUT /v0/topics/${name}?group=${group}*
 
-#. group (**string**) — topic group. Default group is "default".
-#. name (**string**) — topic name
-#. brokerClusterName (**option(string)**) — the broker cluster hosting
-   this topic (**If you don’t specify the broker cluster in request,
-   ohara will try to find a broker cluster for you. And it works only if
-   there is only a broker cluster exists in ohara**)
-#. numberOfReplications (**option(int)**) — the number of replications
-   for this topic (**it is illegal to input the number of replications
-   which is larger than the number of broker nodes**)
-#. numberOfPartitions (**option(int)**)— the number of partitions for
-   this topic
-#. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
-#. tags (**option(object)**) — the extra description to this
-   object
-
-.. note::
-  #. There are many other available configs which are useful in creating topic. Please ref :ref:`broker clusters <rest-brokers>`
-  to see how to retrieve the available configs for specific broker cluster.
-
 Example Request
   .. code-block:: json
 
@@ -155,7 +127,10 @@ Example Response
       "settings": {
         "group": "default",
         "name": "topic0",
-        "brokerClusterName": "preCreatedBkCluster",
+        "workerClusterKey": {
+          "group": "default",
+          "name": "preCreatedBkCluster"
+        },
         "numberOfReplications": 1,
         "numberOfPartitions": 3,
         "tags": {}
@@ -180,7 +155,10 @@ Example Response
         "settings": {
           "group": "default",
           "name": "topic0",
-          "brokerClusterName": "preCreatedBkCluster",
+          "workerClusterKey": {
+            "group": "default",
+            "name": "preCreatedBkCluster"
+          },
           "numberOfReplications": 1,
           "numberOfPartitions": 3,
           "tags": {}
@@ -222,7 +200,10 @@ Example Response
       "settings": {
         "group": "default",
         "name": "topic0",
-        "brokerClusterName": "preCreatedBkCluster",
+        "workerClusterKey": {
+          "group": "default",
+          "name": "preCreatedBkCluster"
+        },
         "numberOfReplications": 1,
         "numberOfPartitions": 3,
         "tags": {}

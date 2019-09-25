@@ -136,7 +136,7 @@ private[configurator] object PipelineRoute {
         case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
       }
     case data: TopicInfo =>
-      CollieUtils.topicAdmin(data.brokerClusterName).flatMap {
+      CollieUtils.topicAdmin(data.brokerClusterKey).flatMap {
         case (cluster, admin) => toAbstract(data, cluster, admin)
       }
     case data: StreamClusterInfo =>

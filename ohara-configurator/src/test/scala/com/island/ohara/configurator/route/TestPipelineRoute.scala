@@ -105,9 +105,9 @@ class TestPipelineRoute extends OharaTest with Matchers {
     val file = CommonUtils.createTempJar("empty_")
     val fileInfo = result(fileApi.request.file(file).upload())
     val bk = result(brokerApi.list()).head
-    val from = result(topicApi.request.brokerClusterName(bk.name).create())
+    val from = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(from.key))
-    val to = result(topicApi.request.brokerClusterName(bk.name).create())
+    val to = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(to.key))
 
     // create an empty streamApp

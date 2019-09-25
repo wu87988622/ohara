@@ -333,9 +333,9 @@ class TestStreamRoute extends OharaTest with Matchers {
     val bk = result(
       bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterName(zk.name).create())
     result(bkApi.start(bk.key))
-    val from0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    val from0 = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(from0.key))
-    val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    val to0 = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(to0.key))
     result(bkApi.start(bk.key))
 
@@ -418,9 +418,9 @@ class TestStreamRoute extends OharaTest with Matchers {
     val bk = result(
       bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterName(zk.name).create())
     result(bkApi.start(bk.key))
-    val from0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    val from0 = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(from0.key))
-    val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    val to0 = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(to0.key))
     result(bkApi.start(bk.key))
 

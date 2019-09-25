@@ -63,12 +63,8 @@ class TestTopicApi extends OharaTest with Matchers {
   def nullName(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.name(null)
 
   @Test
-  def emptyBrokerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy TopicApi.access.request.brokerClusterName("")
-
-  @Test
-  def nullBrokerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy TopicApi.access.request.brokerClusterName(null)
+  def nullBrokerClusterKey(): Unit =
+    an[NullPointerException] should be thrownBy TopicApi.access.request.brokerClusterKey(null)
 
   @Test
   def negativeNumberOfPartitions(): Unit =
@@ -91,7 +87,7 @@ class TestTopicApi extends OharaTest with Matchers {
 
     creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe 10
-    creation.brokerClusterName shouldBe None
+    creation.brokerClusterKey shouldBe None
     creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
     creation.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
 
@@ -101,7 +97,7 @@ class TestTopicApi extends OharaTest with Matchers {
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
-         | "$BROKER_CLUSTER_NAME_KEY": "$brokerClusterName",
+         | "$BROKER_CLUSTER_KEY_KEY": "$brokerClusterName",
          | "$NUMBER_OF_PARTITIONS_KEY": $numberOfPartitions,
          | "$NUMBER_OF_REPLICATIONS_KEY": $numberOfReplications
          |}
@@ -109,7 +105,7 @@ class TestTopicApi extends OharaTest with Matchers {
 
     creation2.group shouldBe group
     creation2.name shouldBe name
-    creation2.brokerClusterName.get shouldBe brokerClusterName
+    creation2.brokerClusterKey.get.name() shouldBe brokerClusterName
     creation2.numberOfPartitions shouldBe numberOfPartitions
     creation2.numberOfReplications shouldBe numberOfReplications
   }
@@ -123,13 +119,13 @@ class TestTopicApi extends OharaTest with Matchers {
     val update = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
                                                                   |{
                                                                   | "$NAME_KEY": "$name",
-                                                                  | "$BROKER_CLUSTER_NAME_KEY": "$brokerClusterName",
+                                                                  | "$BROKER_CLUSTER_KEY_KEY": "$brokerClusterName",
                                                                   | "$NUMBER_OF_PARTITIONS_KEY": $numberOfPartitions,
                                                                   | "$NUMBER_OF_REPLICATIONS_KEY": $numberOfReplications
                                                                   |}
        """.stripMargin.parseJson)
 
-    update.brokerClusterName.get shouldBe brokerClusterName
+    update.brokerClusterKey.get.name() shouldBe brokerClusterName
     update.settings(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
     update.settings(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
 
@@ -138,7 +134,7 @@ class TestTopicApi extends OharaTest with Matchers {
          |}
        """.stripMargin.parseJson)
 
-    update2.brokerClusterName shouldBe None
+    update2.brokerClusterKey shouldBe None
     update2.settings should not contain NUMBER_OF_PARTITIONS_KEY
     update2.settings should not contain NUMBER_OF_REPLICATIONS_KEY
   }

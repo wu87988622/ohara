@@ -22,8 +22,8 @@ import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.kafka.TopicAdmin.PartitionInfo
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.{SettingDef, TopicKey}
-import com.island.ohara.common.setting.SettingDef.Type
+import com.island.ohara.common.setting.SettingDef.{Reference, Type}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.record.Records
@@ -40,7 +40,9 @@ object TopicApi {
 
   private[v0] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
   private[v0] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
-  private[v0] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
+  private[v0] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
+  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
+  private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val TAGS_KEY = "tags"
 
   /**
@@ -93,10 +95,16 @@ object TopicApi {
                        doc = "the number of replications",
                        valueType = Type.SHORT,
                        default = NUMBER_OF_REPLICATIONS_KEY),
-      toDefWithoutDefault(key = BROKER_CLUSTER_NAME_KEY,
-                          group = coreGroup,
-                          valueType = Type.STRING,
-                          doc = "the broker cluster to deploy this topic"),
+      SettingDef
+        .builder()
+        .key(BROKER_CLUSTER_KEY_KEY)
+        .displayName(BROKER_CLUSTER_KEY_KEY)
+        .documentation("the broker cluster to deploy this topic")
+        .group(coreGroup)
+        .orderInGroup(count.getAndIncrement())
+        .valueType(Type.OBJECT_KEY)
+        .reference(Reference.BROKER_CLUSTER)
+        .build(),
       toDefWithoutDefault(key = TAGS_KEY, group = coreGroup, doc = "the tags to this topic", valueType = Type.TAGS),
       //-----------[kafka custom]-----------
       toDefWithDefault(key = TopicConfig.SEGMENT_BYTES_CONFIG,
@@ -238,8 +246,13 @@ object TopicApi {
   val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
 
   final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
-    def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
-
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+    private[this] def brokerClusterName: Option[String] =
+      noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings)
+      .get(BROKER_CLUSTER_KEY_KEY)
+      .map(_.convertTo[ObjectKey])
+      .orElse(brokerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
     private[TopicApi] def numberOfPartitions: Option[Int] =
       noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
 
@@ -269,7 +282,7 @@ object TopicApi {
 
     def key: TopicKey = TopicKey.of(group, name)
 
-    def brokerClusterName: Option[String] = settings.brokerClusterName
+    def brokerClusterKey: Option[ObjectKey] = settings.brokerClusterKey
 
     def numberOfPartitions: Int = settings.numberOfPartitions.get
     def numberOfReplications: Short = settings.numberOfReplications.get
@@ -339,7 +352,7 @@ object TopicApi {
 
     override def tags: Map[String, JsValue] = settings.tags
 
-    def brokerClusterName: String = settings.brokerClusterName.get
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
     def numberOfPartitions: Int = settings.numberOfPartitions
 
     def numberOfReplications: Short = settings.numberOfReplications
@@ -369,7 +382,7 @@ object TopicApi {
         Map(
           GROUP_KEY -> JsString(obj.group),
           NAME_KEY -> JsString(obj.name),
-          BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
+          BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterKey.name()),
           NUMBER_OF_PARTITIONS_KEY -> JsNumber(obj.numberOfPartitions),
           NUMBER_OF_REPLICATIONS_KEY -> JsNumber(obj.numberOfReplications),
           TAGS_KEY -> JsObject(obj.tags)
@@ -400,8 +413,8 @@ object TopicApi {
       setting(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
 
     @Optional("server will match a broker cluster for you if the bk name is ignored")
-    def brokerClusterName(brokerClusterName: String): Request =
-      setting(BROKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
+    def brokerClusterKey(brokerClusterKey: ObjectKey): Request =
+      setting(BROKER_CLUSTER_KEY_KEY, OBJECT_KEY_FORMAT.write(brokerClusterKey))
 
     @Optional("default value is DEFAULT_NUMBER_OF_PARTITIONS")
     def numberOfPartitions(numberOfPartitions: Int): Request =

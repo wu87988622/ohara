@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.TopicKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.apache.kafka.common.config.TopicConfig
@@ -57,7 +57,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     // test get
     val response2 = result(topicApi.get(response.key))
     response.name shouldBe response2.name
-    response.brokerClusterName shouldBe response2.brokerClusterName
+    response.brokerClusterKey shouldBe response2.brokerClusterKey
     response.numberOfPartitions shouldBe response2.numberOfPartitions
     response.numberOfReplications shouldBe response2.numberOfReplications
 
@@ -99,7 +99,10 @@ class TestTopicRoute extends OharaTest with Matchers {
   def createTopicOnNonexistentCluster(): Unit = {
     // we don't check the existence of broker cluster in creating properties
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(CommonUtils.randomString()).create())
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
+        .create())
     an[IllegalArgumentException] should be thrownBy result(topicApi.start(topic.key))
   }
 
@@ -131,7 +134,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
     an[IllegalArgumentException] should be thrownBy result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(bk2.name).create())
+    result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bk2.key).create())
   }
 
   @Test
@@ -163,10 +166,9 @@ class TestTopicRoute extends OharaTest with Matchers {
     val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
     bks.size shouldBe 2
 
-    val topicInfo = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(bks.head.name).create())
+    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bks.head.key).create())
 
-    result(topicApi.request.key(topicInfo.key).brokerClusterName(bks.last.name).update())
+    result(topicApi.request.key(topicInfo.key).brokerClusterKey(bks.last.key).update())
   }
 
   @Test
@@ -252,7 +254,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     val updated = result(req(topicApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
-    updated.brokerClusterName shouldBe expected.brokerClusterName
+    updated.brokerClusterKey shouldBe expected.brokerClusterKey
     updated.numberOfReplications shouldBe expected.numberOfReplications
     updated.numberOfPartitions shouldBe expected.numberOfPartitions
   }

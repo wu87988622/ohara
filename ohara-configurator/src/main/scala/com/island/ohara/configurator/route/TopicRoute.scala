@@ -110,7 +110,7 @@ private[configurator] object TopicRoute {
   private[this] def hookOfGet(implicit meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
-    brokerCollie.cluster(topicInfo.brokerClusterName).flatMap {
+    brokerCollie.cluster(topicInfo.brokerClusterKey).flatMap {
       case (cluster, _) => updateState(cluster, topicInfo)
   }
 
@@ -119,7 +119,7 @@ private[configurator] object TopicRoute {
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) =>
       Future.traverse(topicInfos) { response =>
-        brokerCollie.cluster(response.brokerClusterName).flatMap {
+        brokerCollie.cluster(response.brokerClusterKey).flatMap {
           case (cluster, _) => updateState(cluster, response)
         }
     }
@@ -127,36 +127,26 @@ private[configurator] object TopicRoute {
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     (creation: Creation) =>
-      creation.brokerClusterName
-      // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
-        .getOrElse(CollieUtils.singleBrokerCluster())
-        .map { clusterkey =>
-          TopicInfo(
-            // the default custom configs is at first since it is able to be replaced by creation.
-            settings = TOPIC_CUSTOM_CONFIGS
-              ++ access.request
-                .settings(creation.settings)
-                // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-                .brokerClusterName(clusterkey.name())
-                .creation
-                .settings,
-            partitionInfos = Seq.empty,
-            metrics = Metrics.EMPTY,
-            state = None,
-            lastModified = CommonUtils.current()
-          )
-      }
+      creation.brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster()).map { clusterKey =>
+        TopicInfo(
+          // the default custom configs is at first since it is able to be replaced by creation.
+          settings = TOPIC_CUSTOM_CONFIGS
+            ++ access.request.settings(creation.settings).brokerClusterKey(clusterKey).creation.settings,
+          partitionInfos = Seq.empty,
+          metrics = Metrics.EMPTY,
+          state = None,
+          lastModified = CommonUtils.current()
+        )
+    }
 
   private[this] def HookOfUpdating(implicit adminCleaner: AdminCleaner,
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, TopicInfo] =
     (key: ObjectKey, update: Updating, previous: Option[TopicInfo]) =>
       previous
-        .map(_.brokerClusterName)
-        .orElse(update.brokerClusterName)
-        // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        .map(_.brokerClusterKey)
+        .orElse(update.brokerClusterKey)
+        .map(Future.successful)
         .getOrElse(CollieUtils.singleBrokerCluster())
         .flatMap(CollieUtils.topicAdmin)
         .flatMap {
@@ -171,7 +161,7 @@ private[configurator] object TopicRoute {
                   settings = access.request
                     .settings(previous.map(_.settings).getOrElse(Map.empty))
                     .settings(update.settings)
-                    .brokerClusterName(cluster.name)
+                    .brokerClusterKey(cluster.key)
                     .creation
                     .settings,
                   partitionInfos = Seq.empty,
@@ -191,7 +181,7 @@ private[configurator] object TopicRoute {
       .get[TopicInfo](key)
       .flatMap(_.fold(Future.unit) { topicInfo =>
         CollieUtils
-          .topicAdmin(topicInfo.brokerClusterName)
+          .topicAdmin(topicInfo.brokerClusterKey)
           .flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
@@ -207,7 +197,7 @@ private[configurator] object TopicRoute {
           .recover {
             case e: NoSuchClusterException =>
               LOG.warn(
-                s"the cluster:${topicInfo.brokerClusterName} doesn't exist!!! just remove topic from configurator",
+                s"the cluster:${topicInfo.brokerClusterKey} doesn't exist!!! just remove topic from configurator",
                 e)
           }
       })
@@ -220,7 +210,7 @@ private[configurator] object TopicRoute {
       store
         .value[TopicInfo](key)
         .flatMap(topicInfo =>
-          CollieUtils.topicAdmin(topicInfo.brokerClusterName).flatMap {
+          CollieUtils.topicAdmin(topicInfo.brokerClusterKey).flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
                 if (_) Future.unit
@@ -239,7 +229,7 @@ private[configurator] object TopicRoute {
     (key: ObjectKey, _, _) =>
       store.value[TopicInfo](key).flatMap { topicInfo =>
         CollieUtils
-          .topicAdmin(topicInfo.brokerClusterName)
+          .topicAdmin(topicInfo.brokerClusterKey)
           .flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
