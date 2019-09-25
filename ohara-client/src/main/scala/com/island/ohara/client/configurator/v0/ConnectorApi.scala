@@ -35,8 +35,6 @@ object ConnectorApi {
 
   val CONNECTORS_PREFIX_PATH: String = "connectors"
   private[this] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
-  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
-  private[this] val WORKER_CLUSTER_NAME_KEY: String = "workerClusterName"
   private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
   private[this] val TOPIC_NAMES_KEY: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
@@ -159,13 +157,7 @@ object ConnectorApi {
       noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroups.ofJson(s.toString).toColumns.asScala)
     def numberOfTasks: Option[Int] = noJsNull(settings).get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
 
-    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
-    private[this] def workerClusterName: Option[String] =
-      noJsNull(settings).get(WORKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
-    def workerClusterKey: Option[ObjectKey] = noJsNull(settings)
-      .get(WORKER_CLUSTER_KEY_KEY)
-      .map(_.convertTo[ObjectKey])
-      .orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+    def workerClusterKey: Option[ObjectKey] = noJsNull(settings).get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
 
     def topicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])

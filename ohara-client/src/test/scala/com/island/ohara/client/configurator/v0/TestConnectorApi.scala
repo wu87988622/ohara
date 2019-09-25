@@ -51,7 +51,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
     val creation = CONNECTOR_CREATION_FORMAT.read(s"""
        |{
-       |  "workerClusterName": ${JsString(workerClusterName).toString()},
+       |  "workerClusterKey": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
        |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
@@ -86,7 +86,7 @@ class TestConnectorApi extends OharaTest with Matchers {
        |{
        |  "group": "$group",
        |  "name": ${JsString(name).toString()},
-       |  "workerClusterName": ${JsString(workerClusterName).toString()},
+       |  "workerClusterKey": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
        |  "$COLUMNS_KEY": ${PropGroups.ofColumn(column).toJsonString},
        |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
