@@ -49,7 +49,6 @@ package object v0 {
     */
   val NODE_NAMES_KEY: String = "nodeNames"
   val IMAGE_NAME_KEY: String = "imageName"
-  val CLUSTER_KEY: String = "cluster"
   val FORCE_KEY: String = "force"
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"

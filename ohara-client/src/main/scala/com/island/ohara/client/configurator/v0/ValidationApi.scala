@@ -15,11 +15,13 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.setting.TopicKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json._
+import com.island.ohara.kafka.connector.json.SettingInfo
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -36,9 +38,16 @@ object ValidationApi {
   val REQUEST_ID = "requestId"
 
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
-  final case class HdfsValidation private[ValidationApi] (uri: String, workerClusterName: Option[String])
+  final case class HdfsValidation private[ValidationApi] (uri: String,
+                                                          workerClusterKey: Option[ObjectKey],
+                                                          // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+                                                          workerClusterName: Option[String]) {
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+    def _workerClusterKey: Option[ObjectKey] =
+      workerClusterKey.orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+  }
   implicit val HDFS_VALIDATION_JSON_FORMAT: OharaJsonFormat[HdfsValidation] =
-    JsonRefiner[HdfsValidation].format(jsonFormat2(HdfsValidation)).rejectEmptyString().refine
+    JsonRefiner[HdfsValidation].format(jsonFormat3(HdfsValidation)).rejectEmptyString().refine
 
   val VALIDATION_RDB_PREFIX_PATH: String = "rdb"
 
@@ -48,19 +57,31 @@ object ValidationApi {
   final case class RdbValidation private[ohara] (url: String,
                                                  user: String,
                                                  password: String,
-                                                 workerClusterName: Option[String])
+                                                 workerClusterKey: Option[ObjectKey],
+                                                 // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+                                                 workerClusterName: Option[String]) {
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+    def _workerClusterKey: Option[ObjectKey] =
+      workerClusterKey.orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+  }
   implicit val RDB_VALIDATION_JSON_FORMAT: OharaJsonFormat[RdbValidation] =
-    JsonRefiner[RdbValidation].format(jsonFormat4(RdbValidation)).rejectEmptyString().refine
+    JsonRefiner[RdbValidation].format(jsonFormat5(RdbValidation)).rejectEmptyString().refine
 
   val VALIDATION_FTP_PREFIX_PATH: String = "ftp"
   final case class FtpValidation private[ValidationApi] (hostname: String,
                                                          port: Int,
                                                          user: String,
                                                          password: String,
-                                                         workerClusterName: Option[String])
+                                                         workerClusterKey: Option[ObjectKey],
+                                                         // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+                                                         workerClusterName: Option[String]) {
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+    def _workerClusterKey: Option[ObjectKey] =
+      workerClusterKey.orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+  }
 
   implicit val FTP_VALIDATION_JSON_FORMAT: OharaJsonFormat[FtpValidation] = JsonRefiner[FtpValidation]
-    .format(jsonFormat5(FtpValidation))
+    .format(jsonFormat6(FtpValidation))
     .rejectEmptyString()
     .requireConnectionPort("port")
     // this marshalling must be able to parse string for number since ValidationUtils use Map[String, String] to carry
@@ -137,11 +158,11 @@ object ValidationApi {
     * used to send the request of validating ftp to Configurator.
     */
   sealed abstract class FtpRequest extends BasicNodeRequest {
-    protected var workerClusterName: String = _
+    protected var workerClusterKey: ObjectKey = _
 
     @Optional("server will try to pick a worker cluster for you if this field is ignored")
-    def workerClusterName(workerClusterName: String): FtpRequest = {
-      this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
+    def workerClusterKey(workerClusterKey: ObjectKey): FtpRequest = {
+      this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
       this
     }
 
@@ -164,7 +185,7 @@ object ValidationApi {
     def uri(uri: String): HdfsRequest
 
     @Optional("server will try to pick a worker cluster for you if this field is ignored")
-    def workerClusterName(workerClusterName: String): HdfsRequest
+    def workerClusterKey(workerClusterKey: ObjectKey): HdfsRequest
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
@@ -185,7 +206,7 @@ object ValidationApi {
     def user(user: String): RdbRequest
     def password(password: String): RdbRequest
     @Optional("server will try to pick a worker cluster for you if this field is ignored")
-    def workerClusterName(workerClusterName: String): RdbRequest
+    def workerClusterKey(workerClusterKey: ObjectKey): RdbRequest
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
@@ -246,21 +267,22 @@ object ValidationApi {
 
     override def hdfsRequest: HdfsRequest = new HdfsRequest {
       private[this] var uri: String = _
-      private[this] var workerClusterName: String = _
+      private[this] var workerClusterKey: ObjectKey = _
 
       override def uri(uri: String): HdfsRequest = {
         this.uri = CommonUtils.requireNonEmpty(uri)
         this
       }
 
-      override def workerClusterName(workerClusterName: String): HdfsRequest = {
-        this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
+      override def workerClusterKey(workerClusterKey: ObjectKey): HdfsRequest = {
+        this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
         this
       }
 
       override private[v0] def validation: HdfsValidation = HdfsValidation(
         uri = CommonUtils.requireNonEmpty(uri),
-        workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty)
+        workerClusterKey = Option(workerClusterKey),
+        workerClusterName = None
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
@@ -273,7 +295,7 @@ object ValidationApi {
       private[this] var jdbcUrl: String = _
       private[this] var user: String = _
       private[this] var password: String = _
-      private[this] var workerClusterName: String = _
+      private[this] var workerClusterKey: ObjectKey = _
 
       override def jdbcUrl(jdbcUrl: String): RdbRequest = {
         this.jdbcUrl = CommonUtils.requireNonEmpty(jdbcUrl)
@@ -290,8 +312,8 @@ object ValidationApi {
         this
       }
 
-      override def workerClusterName(workerClusterName: String): RdbRequest = {
-        this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
+      override def workerClusterKey(workerClusterKey: ObjectKey): RdbRequest = {
+        this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
         this
       }
 
@@ -299,11 +321,10 @@ object ValidationApi {
         url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty)
+        workerClusterKey = Option(workerClusterKey),
+        workerClusterName = None
       )
 
-      //      override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-      //        exec.put[RdbValidation, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH), validation)
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]] =
         exec
           .put[RdbValidation, Seq[RdbValidationReport], ErrorApi.Error](s"$url/$VALIDATION_RDB_PREFIX_PATH", validation)
@@ -335,7 +356,8 @@ object ValidationApi {
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty)
+        workerClusterKey = Option(workerClusterKey),
+        workerClusterName = None
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =

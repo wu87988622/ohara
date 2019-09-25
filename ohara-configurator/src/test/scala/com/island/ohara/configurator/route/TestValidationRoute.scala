@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{NodeApi, ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.TopicKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
@@ -64,16 +64,15 @@ class TestValidationRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def validateHdfsOnNonexistentWorkerCluster(): Unit = {
+  def validateHdfsOnNonexistentWorkerCluster(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .hdfsRequest
         .uri("file:///tmp")
-        .workerClusterName(CommonUtils.randomString(10))
+        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
         .verify())
-  }
 
   @Test
   def validateRdb(): Unit = {
@@ -92,7 +91,7 @@ class TestValidationRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def validateRbdOnNonexistentWorkerCluster(): Unit = {
+  def validateRbdOnNonexistentWorkerCluster(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       ValidationApi.access
         .hostname(configurator.hostname)
@@ -101,9 +100,8 @@ class TestValidationRoute extends OharaTest with Matchers {
         .jdbcUrl("fake_url")
         .user("fake_user")
         .password("fake_password")
-        .workerClusterName(CommonUtils.randomString(10))
+        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
         .verify())
-  }
 
   @Test
   def validateFtp(): Unit = {
@@ -122,7 +120,7 @@ class TestValidationRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def validateFtpOnNonexistentWorkerCluster(): Unit = {
+  def validateFtpOnNonexistentWorkerCluster(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       ValidationApi.access
         .hostname(configurator.hostname)
@@ -132,9 +130,8 @@ class TestValidationRoute extends OharaTest with Matchers {
         .port(22)
         .user("fake_user")
         .password("fake_password")
-        .workerClusterName(CommonUtils.randomString(10))
+        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
         .verify())
-  }
 
   @Test
   def validateNode(): Unit = {

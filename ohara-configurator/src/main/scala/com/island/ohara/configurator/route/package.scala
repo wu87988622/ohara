@@ -62,7 +62,6 @@ package object route {
   private[route] val NAME_KEY: String = com.island.ohara.client.configurator.v0.NAME_KEY
   private[route] val GROUP_KEY: String = com.island.ohara.client.configurator.v0.GROUP_KEY
   private[route] val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-  private[route] val CLUSTER_KEY: String = com.island.ohara.client.configurator.v0.CLUSTER_KEY
   private[route] val TAGS_KEY: String = com.island.ohara.client.configurator.v0.TAGS_KEY
   private[this] val FORCE_KEY: String = com.island.ohara.client.configurator.v0.FORCE_KEY
   @VisibleForTesting

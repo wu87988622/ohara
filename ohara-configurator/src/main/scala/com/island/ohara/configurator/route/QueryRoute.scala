@@ -66,8 +66,9 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
                             url = query.url,
                             user = query.user,
                             password = query.password,
+                            workerClusterKey = Some(workerCluster.key),
                             // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-                            workerClusterName = Some(workerCluster.name)
+                            workerClusterName = None
                           ),
                           1
                         )

@@ -49,6 +49,7 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
                       port = ftpServer.port,
                       user = ftpServer.user,
                       password = ftpServer.password,
+                      workerClusterKey = None,
                       workerClusterName = None),
         NUMBER_OF_TASKS
       )
@@ -61,11 +62,14 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
       ValidationUtils.run(
         workerClient,
         topicAdmin,
-        FtpValidation(hostname = ftpServer.hostname,
-                      port = ftpServer.port,
-                      user = CommonUtils.randomString(10),
-                      password = ftpServer.password,
-                      workerClusterName = None),
+        FtpValidation(
+          hostname = ftpServer.hostname,
+          port = ftpServer.port,
+          user = CommonUtils.randomString(10),
+          password = ftpServer.password,
+          workerClusterKey = None,
+          workerClusterName = None
+        ),
         NUMBER_OF_TASKS
       )
     )

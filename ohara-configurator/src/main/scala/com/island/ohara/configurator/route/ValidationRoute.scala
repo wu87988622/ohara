@@ -26,7 +26,6 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.store.DataStore
@@ -39,18 +38,16 @@ import scala.util.{Failure, Success}
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
 
-  private[this] def verifyRoute[Req, Report](root: String, verify: (Option[String], Req) => Future[Seq[Report]])(
+  private[this] def verifyRoute[Req, Report](root: String, verify: Req => Future[Seq[Report]])(
     implicit rm: RootJsonFormat[Req],
     rm2: RootJsonFormat[Report],
     executionContext: ExecutionContext): server.Route = path(root) {
     put {
-      parameter(CLUSTER_KEY ?) { clusterName =>
-        entity(as[Req])(req =>
-          complete(verify(clusterName, req).map { reports =>
-            if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run verification on $root")
-            else reports
-          }))
-      }
+      entity(as[Req])(req =>
+        complete(verify(req).map { reports =>
+          if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run verification on $root")
+          else reports
+        }))
     }
   }
 
@@ -96,11 +93,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     pathPrefix(VALIDATION_PREFIX_PATH) {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
-        verify = (clusterName, req: HdfsValidation) =>
-          req.workerClusterName
-            .orElse(clusterName)
-            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        verify = (req: HdfsValidation) =>
+          req._workerClusterKey
+            .map(Future.successful)
             .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
             .flatMap {
@@ -112,11 +107,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
-        verify = (clusterName, req: RdbValidation) =>
-          req.workerClusterName
-            .orElse(clusterName)
-            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        verify = (req: RdbValidation) =>
+          req._workerClusterKey
+            .map(Future.successful)
             .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
             .flatMap {
@@ -129,11 +122,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
-        verify = (clusterName, req: FtpValidation) =>
-          req.workerClusterName
-            .orElse(clusterName)
-            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        verify = (req: FtpValidation) =>
+          req._workerClusterKey
+            .map(Future.successful)
             .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
             .flatMap {
@@ -145,7 +136,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
-        verify = (_, req: NodeValidation) =>
+        verify = (req: NodeValidation) =>
           clusterCollie
             .verifyNode(Node(
               hostname = req.hostname,

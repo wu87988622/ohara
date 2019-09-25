@@ -21,6 +21,7 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import ValidationApi.FTP_VALIDATION_JSON_FORMAT
+import com.island.ohara.common.setting.ObjectKey
 import spray.json._
 class TestValidationApi extends OharaTest with Matchers {
 
@@ -109,34 +110,29 @@ class TestValidationApi extends OharaTest with Matchers {
     an[IllegalArgumentException] should be thrownBy ValidationApi.access.ftpRequest.password("")
 
   @Test
-  def nullWorkerClusterNameOnFtp(): Unit =
-    an[NullPointerException] should be thrownBy ValidationApi.access.ftpRequest.workerClusterName(null)
-
-  @Test
-  def emptyWorkerClusterNameOnFtp(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.ftpRequest.workerClusterName("")
-
+  def nullWorkerClusterKeyOnFtp(): Unit =
+    an[NullPointerException] should be thrownBy ValidationApi.access.ftpRequest.workerClusterKey(null)
   @Test
   def testFtpValidation(): Unit = {
     val hostname = CommonUtils.randomString()
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val workerClusterName = CommonUtils.randomString()
+    val workerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
 
     val validation = ValidationApi.access.ftpRequest
       .hostname(hostname)
       .port(port)
       .user(user)
       .password(password)
-      .workerClusterName(workerClusterName)
+      .workerClusterKey(workerClusterKey)
       .validation
 
     validation.hostname shouldBe hostname
     validation.port shouldBe port
     validation.user shouldBe user
     validation.password shouldBe password
-    validation.workerClusterName.get shouldBe workerClusterName
+    validation.workerClusterKey.get shouldBe workerClusterKey
 
     ValidationApi.access.ftpRequest
       .hostname(hostname)
@@ -154,22 +150,18 @@ class TestValidationApi extends OharaTest with Matchers {
   def emptyUriOnHdfs(): Unit = an[IllegalArgumentException] should be thrownBy ValidationApi.access.hdfsRequest.uri("")
 
   @Test
-  def nullWorkerClusterNameOnHdfs(): Unit =
-    an[NullPointerException] should be thrownBy ValidationApi.access.hdfsRequest.workerClusterName(null)
-
-  @Test
-  def emptyWorkerClusterNameOnHdfs(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.hdfsRequest.workerClusterName("")
+  def nullWorkerClusterKeyOnHdfs(): Unit =
+    an[NullPointerException] should be thrownBy ValidationApi.access.hdfsRequest.workerClusterKey(null)
 
   @Test
   def testHdfsValidation(): Unit = {
     val uri = CommonUtils.randomString()
-    val workerClusterName = CommonUtils.randomString()
+    val workerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
 
-    val validation = ValidationApi.access.hdfsRequest.uri(uri).workerClusterName(workerClusterName).validation
+    val validation = ValidationApi.access.hdfsRequest.uri(uri).workerClusterKey(workerClusterKey).validation
 
     validation.uri shouldBe uri
-    validation.workerClusterName.get shouldBe workerClusterName
+    validation.workerClusterKey.get shouldBe workerClusterKey
 
     ValidationApi.access.hdfsRequest.uri(uri).validation.workerClusterName shouldBe None
   }
@@ -196,31 +188,27 @@ class TestValidationApi extends OharaTest with Matchers {
     an[IllegalArgumentException] should be thrownBy ValidationApi.access.rdbRequest.password("")
 
   @Test
-  def nullWorkerClusterNameOnRdb(): Unit =
-    an[NullPointerException] should be thrownBy ValidationApi.access.rdbRequest.workerClusterName(null)
-
-  @Test
-  def emptyWorkerClusterNameOnRdb(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.rdbRequest.workerClusterName("")
+  def nullWorkerClusterKeyOnRdb(): Unit =
+    an[NullPointerException] should be thrownBy ValidationApi.access.rdbRequest.workerClusterKey(null)
 
   @Test
   def testRdbValidation(): Unit = {
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val workerClusterName = CommonUtils.randomString()
+    val workerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
 
     val validation = ValidationApi.access.rdbRequest
       .jdbcUrl(url)
       .user(user)
       .password(password)
-      .workerClusterName(workerClusterName)
+      .workerClusterKey(workerClusterKey)
       .validation
 
     validation.url shouldBe url
     validation.user shouldBe user
     validation.password shouldBe password
-    validation.workerClusterName.get shouldBe workerClusterName
+    validation.workerClusterKey.get shouldBe workerClusterKey
 
     ValidationApi.access.rdbRequest
       .jdbcUrl(url)
