@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroups, Top
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat, _}
+import spray.json.{DeserializationException, JsArray, JsObject, JsString, JsValue, RootJsonFormat, _}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -234,16 +234,7 @@ object ConnectorApi {
       private[this] val format = jsonFormat5(ConnectorDescription)
       override def read(json: JsValue): ConnectorDescription = format.read(json)
 
-      override def write(obj: ConnectorDescription): JsValue =
-        JsObject(
-          noJsNull(
-            format.write(obj).asJsObject.fields
-            // TODO: the group should be equal to workerClusterName ... by chia
-              + (GROUP_KEY -> JsString(obj.group))
-              + (NAME_KEY -> JsString(obj.name))
-              + ("state" -> obj.status.map(_.state.name).map(JsString(_)).getOrElse(JsNull))
-              + ("error" -> obj.status.flatMap(_.error).map(JsString(_)).getOrElse(JsNull))
-          ))
+      override def write(obj: ConnectorDescription): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
     }
 
   /**
