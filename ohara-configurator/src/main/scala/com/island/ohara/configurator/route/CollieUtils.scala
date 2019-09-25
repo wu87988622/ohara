@@ -15,11 +15,13 @@
  */
 
 package com.island.ohara.configurator.route
-import com.island.ohara.agent.{BrokerCollie, Collie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, Collie, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
+import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -32,18 +34,52 @@ import scala.reflect.ClassTag
   */
 private[route] object CollieUtils {
 
-  /**
-    * Create a topic admin according to passed cluster name.
-    * Noted: if target cluster doesn't exist, an future with exception will return
-    * @param clusterName target cluster
-    * @return cluster info and topic admin
-    */
+  // TODO: remove this stale method
   def topicAdmin(clusterName: String)(implicit brokerCollie: BrokerCollie,
                                       cleaner: AdminCleaner,
                                       executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
-    brokerCollie.cluster(clusterName).map {
+    topicAdmin(ObjectKey.of(GROUP_DEFAULT, clusterName))
+
+  /**
+    * Create a topic admin according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterKey target cluster
+    * @return cluster info and topic admin
+    */
+  def topicAdmin(clusterKey: ObjectKey)(implicit brokerCollie: BrokerCollie,
+                                        cleaner: AdminCleaner,
+                                        executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
+    brokerCollie.cluster(clusterKey).map {
       case (c, _) => (c, cleaner.add(brokerCollie.topicAdmin(c)))
     }
+
+  /**
+    * find the single running zookeeper cluster. Otherwise, it throws exception
+    * @param collie zookeeper collie
+    * @param executionContext thread pool
+    * @return key of single running zookeeper cluster
+    */
+  def singleZookeeperCluster()(implicit collie: ZookeeperCollie,
+                               executionContext: ExecutionContext): Future[ObjectKey] =
+    singleCluster[ZookeeperClusterInfo]
+
+  /**
+    * find the single running broker cluster. Otherwise, it throws exception
+    * @param collie broker collie
+    * @param executionContext thread pool
+    * @return key of single running broker cluster
+    */
+  def singleBrokerCluster()(implicit collie: BrokerCollie, executionContext: ExecutionContext): Future[ObjectKey] =
+    singleCluster[BrokerClusterInfo]
+
+  /**
+    * find the single running worker cluster. Otherwise, it throws exception
+    * @param collie worker collie
+    * @param executionContext thread pool
+    * @return key of single running worker cluster
+    */
+  def singleWorkerCluster()(implicit collie: WorkerCollie, executionContext: ExecutionContext): Future[ObjectKey] =
+    singleCluster[WorkerClusterInfo]
 
   /**
     * The mechanism has three phases.
@@ -54,13 +90,14 @@ private[route] object CollieUtils {
     * @tparam Req cluster type
     * @return matched cluster name
     */
-  def singleCluster[Req <: ClusterInfo: ClassTag]()(implicit collie: Collie[Req],
-                                                    executionContext: ExecutionContext): Future[String] =
+  private[this] def singleCluster[Req <: ClusterInfo: ClassTag]()(
+    implicit collie: Collie[Req],
+    executionContext: ExecutionContext): Future[ObjectKey] =
     collie.clusters().map { clusters =>
       clusters.size match {
         case 0 =>
           throw new IllegalArgumentException(s"we can't choose default cluster since there is no cluster available")
-        case 1 => clusters.keys.head.name
+        case 1 => clusters.keys.head.key
         case _ =>
           throw new IllegalArgumentException(
             s"we can't choose default cluster since there are too many clusters:${clusters.keys.map(_.name).mkString(",")}")
@@ -70,46 +107,22 @@ private[route] object CollieUtils {
   /**
     * Create a worker client according to passed cluster name.
     * Noted: if target cluster doesn't exist, an future with exception will return
-    * @param clusterName target cluster
+    * @param clusterKey target cluster
     * @return cluster info and client
     */
-  def workerClient(clusterName: String)(implicit workerCollie: WorkerCollie,
-                                        executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] =
-    workerCollie.cluster(clusterName).map {
+  def workerClient(clusterKey: ObjectKey)(
+    implicit workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] =
+    workerCollie.cluster(clusterKey).map {
       case (c, _) => (c, workerCollie.workerClient(c))
     }
 
-  private[this] def workerClient[T](clusterName: Option[String])(
-    implicit workerCollie: WorkerCollie,
-    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
-    .map(CollieUtils.workerClient)
-    .getOrElse(workerCollie.clusters
-      .map { clusters =>
-        clusters.size match {
-          case 0 =>
-            throw new IllegalArgumentException(
-              s"we can't choose default worker cluster since there is no worker cluster")
-          case 1 => clusters.keys.head
-          case _ =>
-            throw new IllegalArgumentException(
-              s"we can't choose default worker cluster since there are too many worker cluster:${clusters.keys.map(_.name).mkString(",")}")
-        }
-      }
-      .map(c => (c, workerCollie.workerClient(c))))
-
-  def both[T](wkClusterName: String)(
+  def both[T](workerClusterKey: ObjectKey)(
     implicit brokerCollie: BrokerCollie,
     cleaner: AdminCleaner,
     workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
-    both(Some(wkClusterName))
-
-  private[this] def both[T](wkClusterName: Option[String])(
-    implicit brokerCollie: BrokerCollie,
-    cleaner: AdminCleaner,
-    workerCollie: WorkerCollie,
-    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
-    workerClient(wkClusterName).flatMap {
+    workerClient(workerClusterKey).flatMap {
       case (wkInfo, wkClient) =>
         topicAdmin(wkInfo.brokerClusterName).map {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)

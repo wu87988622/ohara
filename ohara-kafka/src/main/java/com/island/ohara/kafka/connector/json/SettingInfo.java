@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
+import com.island.ohara.common.setting.ObjectKey;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.ArrayList;
@@ -161,8 +162,8 @@ public final class SettingInfo implements JsonObject {
     return value(ConnectorDefUtils.REVISION_DEFINITION.key());
   }
 
-  public Optional<String> workerClusterName() {
-    return value(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key());
+  public Optional<ObjectKey> workerClusterKey() {
+    return value(ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()).map(ObjectKey::toObjectKey);
   }
 
   public Optional<String> connectorType() {

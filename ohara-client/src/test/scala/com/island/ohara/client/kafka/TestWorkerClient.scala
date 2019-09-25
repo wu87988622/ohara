@@ -235,21 +235,21 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.defaultValue() shouldBe null
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .internal() shouldBe false
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .editable() shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .defaultValue() shouldBe null
 

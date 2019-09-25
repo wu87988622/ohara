@@ -25,12 +25,11 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.annotations.VisibleForTesting
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -100,8 +99,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         verify = (clusterName, req: HdfsValidation) =>
           req.workerClusterName
             .orElse(clusterName)
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+            .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
             .flatMap {
               case (_, topicAdmin, _, workerClient) =>
@@ -115,8 +115,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         verify = (clusterName, req: RdbValidation) =>
           req.workerClusterName
             .orElse(clusterName)
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+            .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
             .flatMap {
               case (_, topicAdmin, _, workerClient) =>
@@ -131,8 +132,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         verify = (clusterName, req: FtpValidation) =>
           req.workerClusterName
             .orElse(clusterName)
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+            .getOrElse(CollieUtils.singleWorkerCluster())
             .flatMap(CollieUtils.both)
             .flatMap {
               case (_, topicAdmin, _, workerClient) =>
@@ -191,9 +193,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           entity(as[Creation])(
             req =>
               complete(
-                req.workerClusterName
+                req.workerClusterKey
                   .map(Future.successful)
-                  .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+                  .getOrElse(CollieUtils.singleWorkerCluster())
                   .flatMap(CollieUtils.workerClient)
                   .flatMap {
                     case (cluster, workerClient) =>
@@ -201,9 +203,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                         .connectorValidator()
                         .settings(req.plain)
                         .className(req.className)
-                        // we define the cluster name again since user may ignore the worker cluster in request
-                        // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
-                        .setting(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)
+                        .workerClusterKey(cluster.key)
                         // the topic name is composed by group and name. However, the kafka topic is still a pure string.
                         // Hence, we can't just push Ohara topic "key" to kafka topic "name".
                         // The name of topic is a required for connector and hence we have to fill the filed when starting

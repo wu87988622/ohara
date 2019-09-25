@@ -49,7 +49,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
-        .workerClusterName(wkCluster.name)
+        .workerClusterKey(wkCluster.key)
         .topicKeys(topicKeys)
         .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
@@ -60,7 +60,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
-    response.workerClusterName().isPresent shouldBe true
+    response.workerClusterKey().isPresent shouldBe true
     response.connectorType().isPresent shouldBe true
     response.errorCount() shouldBe 0
   }
@@ -76,7 +76,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .connectorRequest
       .name(CommonUtils.randomString(10))
       .numberOfTasks(1)
-      .workerClusterName(wkCluster.name)
+      .workerClusterKey(wkCluster.key)
       .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
       .verify())
 
@@ -89,7 +89,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .name(CommonUtils.randomString(10))
       .className(classOf[DumbSink].getName)
       .numberOfTasks(1)
-      .workerClusterName(wkCluster.name)
+      .workerClusterKey(wkCluster.key)
       .verify())
 
   @Test
@@ -112,7 +112,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
     // configurator auto-match a worker cluster for this validation.
-    response.workerClusterName().get shouldBe wkCluster.name
+    response.workerClusterKey().get shouldBe wkCluster.key
     response.connectorType().isPresent shouldBe true
     response.errorCount() shouldBe 0
   }
@@ -127,7 +127,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-        .workerClusterName(wkCluster.name)
+        .workerClusterKey(wkCluster.key)
         .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
@@ -136,7 +136,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
-    response.workerClusterName().get shouldBe wkCluster.name
+    response.workerClusterKey().get shouldBe wkCluster.key
     response.connectorType().isPresent shouldBe true
     response.errorCount() shouldBe 0
   }
@@ -152,7 +152,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-        .workerClusterName(wkCluster.name)
+        .workerClusterKey(wkCluster.key)
         .tags(tags)
         .verify())
     response.value(ConnectorDefUtils.TAGS_DEFINITION.key()).get().parseJson shouldBe JsObject(Map("a" -> JsString("b")))
@@ -175,7 +175,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-        .workerClusterName(wkCluster.name)
+        .workerClusterKey(wkCluster.key)
         .verify())
     response2.errorCount() shouldBe 0
   }

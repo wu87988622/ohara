@@ -34,25 +34,30 @@ object WorkerRoute {
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
     (creation: Creation) =>
-      creation.brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).flatMap { bkName =>
-        Future
-          .traverse(creation.jarKeys)(fileStore.fileInfo)
-          .map(_.toSeq)
-          .map(jarInfos =>
-            WorkerClusterInfo(
-              settings = WorkerApi.access.request
-                .settings(creation.settings)
-                .brokerClusterName(bkName)
-                .jarInfos(jarInfos)
-                .creation
-                .settings,
-              connectors = Seq.empty,
-              aliveNodes = Set.empty,
-              state = None,
-              error = None,
-              lastModified = CommonUtils.current()
-          ))
-    }
+      creation.brokerClusterName
+      // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        .getOrElse(CollieUtils.singleBrokerCluster())
+        .flatMap { bkKey =>
+          Future
+            .traverse(creation.jarKeys)(fileStore.fileInfo)
+            .map(_.toSeq)
+            .map(jarInfos =>
+              WorkerClusterInfo(
+                settings = WorkerApi.access.request
+                  .settings(creation.settings)
+                  // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
+                  .brokerClusterName(bkKey.name())
+                  .jarInfos(jarInfos)
+                  .creation
+                  .settings,
+                connectors = Seq.empty,
+                aliveNodes = Set.empty,
+                state = None,
+                error = None,
+                lastModified = CommonUtils.current()
+            ))
+      }
 
   private[this] def HookOfUpdating(
     implicit fileStore: FileStore,
@@ -67,10 +72,11 @@ object WorkerRoute {
             throw new RuntimeException(s"You cannot update property on non-stopped worker cluster: $key")
           update.brokerClusterName
             .orElse(previousOption.map(_.brokerClusterName))
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleCluster())
+            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+            .getOrElse(CollieUtils.singleBrokerCluster())
         }
-        .flatMap { bkName =>
+        .flatMap { bkKey =>
           // use PUT as creation request
           Future.traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo).map(_.toSeq).map { jarInfos =>
             // 1) fill the previous settings (if exists)
@@ -80,7 +86,8 @@ object WorkerRoute {
             WorkerClusterInfo(
               settings = WorkerApi.access.request
                 .settings(newSettings)
-                .brokerClusterName(bkName)
+                // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
+                .brokerClusterName(bkKey.name())
                 .jarInfos(jarInfos)
                 .creation
                 .settings,

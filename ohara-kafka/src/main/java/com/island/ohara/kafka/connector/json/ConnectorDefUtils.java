@@ -142,11 +142,11 @@ public final class ConnectorDefUtils {
               Arrays.asList(ORDER_KEY, COLUMN_DATA_TYPE_KEY, COLUMN_NAME_KEY, COLUMN_NEW_NAME_KEY))
           .build();
 
-  public static final SettingDef WORKER_CLUSTER_NAME_DEFINITION =
+  public static final SettingDef WORKER_CLUSTER_KEY_DEFINITION =
       SettingDef.builder()
           .displayName("worker cluster")
-          .key("workerClusterName")
-          .valueType(Type.STRING)
+          .key("workerClusterKey")
+          .valueType(Type.OBJECT_KEY)
           .documentation(
               "the cluster name of running this connector."
                   + "If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you")
@@ -258,6 +258,7 @@ public final class ConnectorDefUtils {
       case TABLE:
       case TOPIC_KEYS:
       case CONNECTOR_KEY:
+      case OBJECT_KEY:
       case JAR_KEY:
       case TAGS:
         return ConfigDef.Type.STRING;
@@ -345,7 +346,7 @@ public final class ConnectorDefUtils {
           ConnectorDefUtils.COLUMNS_DEFINITION,
           ConnectorDefUtils.KEY_CONVERTER_DEFINITION,
           ConnectorDefUtils.VALUE_CONVERTER_DEFINITION,
-          ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION,
+          ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION,
           ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION,
           ConnectorDefUtils.TOPIC_KEYS_DEFINITION,
           ConnectorDefUtils.TOPIC_NAMES_DEFINITION,

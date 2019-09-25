@@ -34,7 +34,9 @@ import scala.concurrent.{ExecutionContext, Future}
 object ConnectorApi {
 
   val CONNECTORS_PREFIX_PATH: String = "connectors"
-  private[this] val WORKER_CLUSTER_NAME_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key()
+  private[this] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
+  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
+  private[this] val WORKER_CLUSTER_NAME_KEY: String = "workerClusterName"
   private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
   private[this] val TOPIC_NAMES_KEY: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
@@ -85,7 +87,7 @@ object ConnectorApi {
     def className: String = settings.className.get
     def columns: Seq[Column] = settings.columns.get
     def numberOfTasks: Int = settings.numberOfTasks.get
-    def workerClusterName: Option[String] = settings.workerClusterName
+    def workerClusterKey: Option[ObjectKey] = settings.workerClusterKey
     def topicKeys: Set[TopicKey] = settings.topicKeys.get
 
     override def group: String = settings.group.get
@@ -156,7 +158,14 @@ object ConnectorApi {
     def columns: Option[Seq[Column]] =
       noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroups.ofJson(s.toString).toColumns.asScala)
     def numberOfTasks: Option[Int] = noJsNull(settings).get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
-    def workerClusterName: Option[String] = noJsNull(settings).get(WORKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
+    private[this] def workerClusterName: Option[String] =
+      noJsNull(settings).get(WORKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+    def workerClusterKey: Option[ObjectKey] = noJsNull(settings)
+      .get(WORKER_CLUSTER_KEY_KEY)
+      .map(_.convertTo[ObjectKey])
+      .orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
 
     def topicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
@@ -215,7 +224,7 @@ object ConnectorApi {
 
     def columns: Seq[Column] = settings.columns
     def numberOfTasks: Int = settings.numberOfTasks
-    def workerClusterName: String = settings.workerClusterName.get
+    def workerClusterKey: ObjectKey = settings.workerClusterKey.get
     def topicKeys: Set[TopicKey] = settings.topicKeys
     override def tags: Map[String, JsValue] = settings.tags
   }
@@ -275,8 +284,8 @@ object ConnectorApi {
       setting(NUMBER_OF_TASKS_KEY, JsNumber(CommonUtils.requirePositiveInt(numberOfTasks)))
 
     @Optional("server will match a worker cluster for you if the wk name is ignored")
-    def workerClusterName(workerClusterName: String): BasicRequest.this.type =
-      setting(WORKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(workerClusterName)))
+    def workerClusterKey(workerClusterKey: ObjectKey): BasicRequest.this.type =
+      setting(WORKER_CLUSTER_KEY_KEY, OBJECT_KEY_FORMAT.write(Objects.requireNonNull(workerClusterKey)))
 
     @Optional("extra settings for this connectors")
     def setting(key: String, value: JsValue): BasicRequest.this.type = settings(

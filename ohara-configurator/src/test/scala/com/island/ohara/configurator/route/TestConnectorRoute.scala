@@ -105,10 +105,10 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .workerClusterName(defaultWk.name)
+        .workerClusterKey(defaultWk.key)
         .create())
 
-    connector.workerClusterName shouldBe defaultWk.name
+    connector.workerClusterKey shouldBe defaultWk.key
     result(configurator.clusterCollie.workerCollie.remove(defaultWk.key))
 
     result(connectorApi.delete(connector.key))
@@ -122,7 +122,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .workerClusterName(CommonUtils.randomString())
+        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .create())
 
     an[IllegalArgumentException] should be thrownBy result(connectorApi.start(c.key))
@@ -136,9 +136,9 @@ class TestConnectorRoute extends OharaTest with Matchers {
     val connector = result(
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     // In creation, workerClusterName will not be auto-filled
-    connector.workerClusterName shouldBe defaultWk.name
+    connector.workerClusterKey shouldBe defaultWk.key
     // data stored in configurator should also get the auto-filled result
-    result(connectorApi.get(connector.key)).workerClusterName shouldBe defaultWk.name
+    result(connectorApi.get(connector.key)).workerClusterKey shouldBe defaultWk.key
 
     val bk = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
@@ -171,7 +171,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .topicKey(topic.key)
-        .workerClusterName(wk.name)
+        .workerClusterKey(wk.key)
         .create())
     //pass since we have assigned a worker cluster
     result(topicApi.start(topic.key))
@@ -278,20 +278,16 @@ class TestConnectorRoute extends OharaTest with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .workerClusterName(defaultWk.name)
+        .workerClusterKey(defaultWk.key)
         .topicKey(topic.key)
         .create())
 
-    response.workerClusterName shouldBe defaultWk.name
+    response.workerClusterKey shouldBe defaultWk.key
     result(topicApi.start(topic.key))
     result(connectorApi.start(response.key))
     // after start, you cannot change worker cluster
     an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.request
-        .key(response.key)
-        .className(CommonUtils.randomString(10))
-        .workerClusterName(wk.name)
-        .update())
+      connectorApi.request.key(response.key).className(CommonUtils.randomString(10)).workerClusterKey(wk.key).update())
 
     result(connectorApi.stop(response.key))
 
@@ -300,8 +296,8 @@ class TestConnectorRoute extends OharaTest with Matchers {
       connectorApi.request
         .key(response.key)
         .className(CommonUtils.randomString(10))
-        .workerClusterName(wk.name)
-        .update()).workerClusterName shouldBe wk.name
+        .workerClusterKey(wk.key)
+        .update()).workerClusterKey shouldBe wk.key
   }
 
   @Test

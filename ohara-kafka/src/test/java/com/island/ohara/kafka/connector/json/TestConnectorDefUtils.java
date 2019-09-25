@@ -283,7 +283,7 @@ public class TestConnectorDefUtils extends OharaTest {
     Assert.assertEquals(
         1,
         ConnectorDefUtils.DEFINITIONS_DEFAULT.stream()
-            .filter(d -> d.equals(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION))
+            .filter(d -> d.equals(ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION))
             .count());
   }
 

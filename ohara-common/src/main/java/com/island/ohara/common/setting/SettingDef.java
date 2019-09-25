@@ -95,6 +95,8 @@ public class SettingDef implements JsonObject, Serializable {
     BINDING_PORT,
     /** { "group": "default", "name":" name.jar" } */
     JAR_KEY,
+    /** { "group": "g", "name":" n" } */
+    OBJECT_KEY,
     /** [ { "group": "g", "name":" n" } ] */
     TOPIC_KEYS,
     /** { "group": "g0", "name": "n0" } */
@@ -326,6 +328,14 @@ public class SettingDef implements JsonObject, Serializable {
           try {
             if (TopicKey.toTopicKeys(String.valueOf(trueValue)).isEmpty())
               throw new OharaConfigException("TOPIC_KEYS can't be empty!!!");
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case OBJECT_KEY:
+          try {
+            // try parse the json string to Connector Key
+            ObjectKey.toObjectKey(String.valueOf(trueValue));
           } catch (Exception e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }

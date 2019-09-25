@@ -127,17 +127,26 @@ private[configurator] object TopicRoute {
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     (creation: Creation) =>
-      creation.brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { clusterName =>
-        TopicInfo(
-          // the default custom configs is at first since it is able to be replaced by creation.
-          settings = TOPIC_CUSTOM_CONFIGS
-            ++ access.request.settings(creation.settings).brokerClusterName(clusterName).creation.settings,
-          partitionInfos = Seq.empty,
-          metrics = Metrics.EMPTY,
-          state = None,
-          lastModified = CommonUtils.current()
-        )
-    }
+      creation.brokerClusterName
+      // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        .getOrElse(CollieUtils.singleBrokerCluster())
+        .map { clusterkey =>
+          TopicInfo(
+            // the default custom configs is at first since it is able to be replaced by creation.
+            settings = TOPIC_CUSTOM_CONFIGS
+              ++ access.request
+                .settings(creation.settings)
+                // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+                .brokerClusterName(clusterkey.name())
+                .creation
+                .settings,
+            partitionInfos = Seq.empty,
+            metrics = Metrics.EMPTY,
+            state = None,
+            lastModified = CommonUtils.current()
+          )
+      }
 
   private[this] def HookOfUpdating(implicit adminCleaner: AdminCleaner,
                                    brokerCollie: BrokerCollie,
@@ -146,8 +155,9 @@ private[configurator] object TopicRoute {
       previous
         .map(_.brokerClusterName)
         .orElse(update.brokerClusterName)
-        .map(Future.successful)
-        .getOrElse(CollieUtils.singleCluster())
+        // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        .getOrElse(CollieUtils.singleBrokerCluster())
         .flatMap(CollieUtils.topicAdmin)
         .flatMap {
           case (cluster, client) =>

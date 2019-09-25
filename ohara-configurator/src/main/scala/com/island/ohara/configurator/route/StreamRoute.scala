@@ -20,7 +20,6 @@ import java.util.Objects
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
@@ -89,7 +88,8 @@ private[configurator] object StreamRoute {
   private[this] def pickBrokerCluster(brokerClusterName: Option[String])(
     implicit brokerCollie: BrokerCollie,
     executionContext: ExecutionContext): Future[String] =
-    brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster[BrokerClusterInfo]())
+    // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
+    brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster().map(_.name()))
 
   /**
     * This is a temporary solution for using both nodeNames and instances

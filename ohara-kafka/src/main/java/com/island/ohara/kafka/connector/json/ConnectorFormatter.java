@@ -21,6 +21,7 @@ import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.ConnectorKey;
+import com.island.ohara.common.setting.ObjectKey;
 import com.island.ohara.common.setting.PropGroups;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
@@ -75,6 +76,11 @@ public final class ConnectorFormatter {
         ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key(), ConnectorKey.toJsonString(connectorKey));
     group(connectorKey.group());
     return name(connectorKey.connectorNameOnKafka());
+  }
+
+  public ConnectorFormatter workerClusterKey(ObjectKey classKey) {
+    return setting(
+        ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key(), ObjectKey.toJsonString(classKey));
   }
 
   public ConnectorFormatter setting(String key, String value) {

@@ -44,7 +44,7 @@ class TestValidationRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(className)
         .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
-        .workerClusterName(wkCluster.name)
+        .workerClusterKey(wkCluster.key)
         .verify()
     )
     response.className.get() shouldBe className

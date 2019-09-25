@@ -352,7 +352,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(className)
         // unknown worker
-        .workerClusterName(CommonUtils.randomString())
+        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .create())
     val pipeline = result(pipelineApi.request.flow(Flow(connector.key, Set(topic.key))).create())
     pipeline.objects.size shouldBe 2

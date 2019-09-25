@@ -21,8 +21,8 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.configurator.fake.FakeWorkerClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,8 +41,9 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
         entity(as[RdbQuery]) { query =>
           complete(
             query.workerClusterName
-              .map(Future.successful)
-              .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+              .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+              .getOrElse(CollieUtils.singleWorkerCluster())
               .flatMap(CollieUtils.both)
               .flatMap {
                 case (_, topicAdmin, _, workerClient) =>

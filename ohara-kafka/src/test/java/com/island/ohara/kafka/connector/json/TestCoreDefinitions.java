@@ -68,13 +68,11 @@ public class TestCoreDefinitions extends OharaTest {
   public void testWorkerClusterNameDefinition() {
     DumbSink sink = new DumbSink();
     ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key());
-    Assert.assertEquals(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key(), key.name);
+        sink.config().configKeys().get(ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key());
+    Assert.assertEquals(ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key(), key.name);
     Assert.assertEquals(
-        ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.group(), key.group);
-    Assert.assertEquals(
-        ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.valueType().name(), key.type.name());
+        ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.group(), key.group);
   }
 
   @Test

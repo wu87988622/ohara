@@ -62,7 +62,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
     creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe 10
-    creation.workerClusterName.get shouldBe workerClusterName
+    creation.workerClusterKey.get.name() shouldBe workerClusterName
     creation.className shouldBe className
     creation.columns shouldBe Seq.empty
     creation.topicKeys shouldBe topicKeys
@@ -95,7 +95,7 @@ class TestConnectorApi extends OharaTest with Matchers {
        |}""".stripMargin.parseJson)
     creation2.group shouldBe group
     creation2.name shouldBe name
-    creation2.workerClusterName.get shouldBe workerClusterName
+    creation2.workerClusterKey.get.name() shouldBe workerClusterName
     creation2.className shouldBe className
     creation2.columns shouldBe Seq(column)
     creation.topicKeys shouldBe topicKeys
@@ -300,12 +300,8 @@ class TestConnectorApi extends OharaTest with Matchers {
   def nullColumns(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.columns(null)
 
   @Test
-  def emptyWorkerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.workerClusterName("")
-
-  @Test
-  def nullWorkerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy ConnectorApi.access.request.workerClusterName(null)
+  def nullWorkerClusterKey(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access.request.workerClusterKey(null)
 
   @Test
   def emptyTopicKeys(): Unit = ConnectorApi.access.request.topicKeys(Set.empty)

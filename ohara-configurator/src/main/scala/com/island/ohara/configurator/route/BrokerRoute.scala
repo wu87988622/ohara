@@ -31,16 +31,25 @@ object BrokerRoute {
   private[this] def hookOfCreation(implicit zookeeperCollie: ZookeeperCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
     (creation: Creation) =>
-      creation.zookeeperClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { zkName =>
-        BrokerClusterInfo(
-          settings = BrokerApi.access.request.settings(creation.settings).zookeeperClusterName(zkName).creation.settings,
-          aliveNodes = Set.empty,
-          state = None,
-          error = None,
-          lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-        )
-    }
+      creation.zookeeperClusterName
+      // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+        .getOrElse(CollieUtils.singleZookeeperCluster())
+        .map { zkKey =>
+          BrokerClusterInfo(
+            settings = BrokerApi.access.request
+              .settings(creation.settings)
+              // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
+              .zookeeperClusterName(zkKey.name())
+              .creation
+              .settings,
+            aliveNodes = Set.empty,
+            state = None,
+            error = None,
+            lastModified = CommonUtils.current(),
+            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+          )
+      }
 
   private[this] def HookOfUpdating(
     implicit zookeeperCollie: ZookeeperCollie,
@@ -54,16 +63,22 @@ object BrokerRoute {
             throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
           update.zookeeperClusterName
             .orElse(previousOption.map(_.zookeeperClusterName))
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleCluster())
+            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
+            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+            .getOrElse(CollieUtils.singleZookeeperCluster())
         }
-        .map { zkName =>
+        .map { zkKey =>
           // 1) fill the previous settings (if exists)
           // 2) overwrite previous settings by updated settings
           // 3) fill the ignored settings by creation
           val newSettings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings
           BrokerClusterInfo(
-            settings = BrokerApi.access.request.settings(newSettings).zookeeperClusterName(zkName).creation.settings,
+            settings = BrokerApi.access.request
+              .settings(newSettings)
+              // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
+              .zookeeperClusterName(zkKey.name())
+              .creation
+              .settings,
             aliveNodes = Set.empty,
             state = None,
             error = None,

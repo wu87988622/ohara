@@ -35,7 +35,6 @@ Apart from custom settings, common settings are required by all
 connectors. The common settings are shown below.
 
 #. group (**string**) — the value of group is always "default"
-   (and it will be replaced by workerClusterName...see :ohara-issue:`1734`
 #. name (**string**) — the name of this connector
 #. connector.class (**class**) — class name of connector implementation
 #. topicKeys(**array(object)**) — the source topics or target topics for this connector
@@ -47,7 +46,14 @@ connectors. The common settings are shown below.
    - columns[i].order (**int**) — the order of this column
 
 #. numberOfTasks (**int**) — the number of tasks
-#. workerClusterName (**string**) — target worker cluster
+#. workerClusterKey (**Object**) — target worker cluster.
+
+   - workerClusterKey.group (**option(string)**) — the group of cluster
+   - workerClusterKey.newName (**string**) — the name of cluster
+
+  .. note::
+    the pure string is accepted also if you don't use group
+
 #. tags (**object**) — the extra description to this object
 
 The following information are updated by Ohara.
@@ -134,7 +140,10 @@ Example Response
         "topicKeys": [],
         "name": "pc",
         "tags": {},
-        "workerClusterName": "wk",
+        "workerClusterKey": {
+          "group": "default",
+          "name": "wk"
+        },
         "tasks.max": 1,
         "connector.class": "com.island.ohara.connector.perf.PerfSource",
         "columns": [],
@@ -143,7 +152,7 @@ Example Response
     }
 
   .. note::
-    Normally, you should define the "workerClusterName" for your connector. However, Ohara Configurator will pick up a
+    Normally, you should define the "workerClusterKey" for your connector. However, Ohara Configurator will pick up a
     worker cluster if the field is ignored and 2) there is only one running worker cluster in backend.
 
 update the settings of connector
@@ -186,7 +195,10 @@ Example Response
         ],
         "name": "pc",
         "tags": {},
-        "workerClusterName": "wk",
+        "workerClusterKey": {
+          "group": "default",
+          "name": "wk"
+        },
         "tasks.max": 1,
         "connector.class": "com.island.ohara.connector.perf.PerfSource",
         "columns": [],
@@ -220,7 +232,10 @@ Example Response
           ],
           "name": "pc",
           "tags": {},
-          "workerClusterName": "wk",
+          "workerClusterKey": {
+            "group": "default",
+            "name": "wk"
+          },
           "tasks.max": 1,
           "connector.class": "com.island.ohara.connector.perf.PerfSource",
           "columns": [],
@@ -276,7 +291,10 @@ Example Response
         ],
         "name": "pc",
         "tags": {},
-        "workerClusterName": "wk",
+        "workerClusterKey": {
+          "group": "default",
+          "name": "wk"
+        },
         "tasks.max": 1,
         "connector.class": "com.island.ohara.connector.perf.PerfSource",
         "columns": [],
