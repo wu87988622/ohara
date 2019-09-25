@@ -232,32 +232,7 @@ object WorkerApi {
       .format(new RootJsonFormat[WorkerClusterInfo] {
         implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
         private[this] val format = jsonFormat6(WorkerClusterInfo)
-        override def write(obj: WorkerClusterInfo): JsValue = JsObject(
-          noJsNull(
-            format.write(obj).asJsObject.fields ++
-              Map(
-                // TODO: remove the following stale fields ... by chia
-                NAME_KEY -> JsString(obj.name),
-                GROUP_KEY -> JsString(obj.group),
-                IMAGE_NAME_KEY -> JsString(obj.imageName),
-                BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
-                CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
-                JMX_PORT_KEY -> JsNumber(obj.jmxPort),
-                GROUP_ID_KEY -> JsString(obj.groupId),
-                STATUS_TOPIC_NAME_KEY -> JsString(obj.statusTopicName),
-                STATUS_TOPIC_PARTITIONS_KEY -> JsNumber(obj.statusTopicPartitions),
-                STATUS_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.statusTopicReplications),
-                CONFIG_TOPIC_NAME_KEY -> JsString(obj.configTopicName),
-                CONFIG_TOPIC_PARTITIONS_KEY -> JsNumber(obj.configTopicPartitions),
-                CONFIG_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.configTopicReplications),
-                OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
-                OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
-                OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
-                JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
-                NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
-                TAGS_KEY -> JsObject(obj.tags)
-              ))
-        )
+        override def write(obj: WorkerClusterInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
 
         override def read(json: JsValue): WorkerClusterInfo = format.read(json)
       })

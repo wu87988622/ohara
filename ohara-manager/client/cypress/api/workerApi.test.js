@@ -97,7 +97,7 @@ describe('Worker API', () => {
       expect(result.settings.jarInfos).to.be.a('array');
       expect(result.settings.configTopicName).to.be.a('string');
       expect(result.settings.offsetTopicName).to.be.a('string');
-      expect(result.statusTopicName).to.be.a('string');
+      expect(result.settings.statusTopicName).to.be.a('string');
       expect(result.settings.imageName).to.be.a('string');
       expect(result.settings.tags.name).to.eq(workerClusterName);
     });

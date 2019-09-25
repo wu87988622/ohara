@@ -22,6 +22,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
 
 class TestWorkerApi extends OharaTest with Matchers {
@@ -440,5 +441,28 @@ class TestWorkerApi extends OharaTest with Matchers {
                                                   |  }
                                                   |  """.stripMargin.parseJson)
     updating.jarKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
+  }
+
+  @Test
+  def groupShouldAppearInResponse(): Unit = {
+    val name = CommonUtils.randomString(5)
+    val res = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.write(
+      WorkerClusterInfo(
+        settings = accessApi.name(name).brokerClusterName("bk1").nodeNames(Set("n1")).creation.settings,
+        aliveNodes = Set.empty,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current(),
+        connectors = Seq.empty
+      ))
+
+    // serialize to json should see the object key (group, name)
+    res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
+
+    // deserialize to info should see the object key (group, name)
+    val data = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.read(res)
+    data.name shouldBe name
+    data.group shouldBe GROUP_DEFAULT
   }
 }
