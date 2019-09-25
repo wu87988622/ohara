@@ -22,8 +22,8 @@ import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceTask, TaskSetting}
+import com.island.ohara.kafka.connector.csv.CsvConnector._
 import com.island.ohara.kafka.connector.csv.CsvSourceConnector
-import com.island.ohara.kafka.connector.csv.source.CsvSourceConfig
 
 import scala.collection.JavaConverters._
 
@@ -52,20 +52,18 @@ class SmbSource extends CsvSourceConnector {
         .build()
 
     try {
-      val csvSourceConfig = CsvSourceConfig.of(settings)
-
-      val inputFolder = csvSourceConfig.inputFolder()
+      val inputFolder = settings.stringValue(INPUT_FOLDER_KEY)
       verifyFolder(inputFolder)
       if (fileSystem.nonExists(inputFolder))
         throw new IllegalArgumentException(s"${inputFolder} doesn't exist")
 
-      val completedFolder = csvSourceConfig.completedFolder()
+      val completedFolder = settings.stringOption(COMPLETED_FOLDER_KEY)
       if (completedFolder.isPresent) {
         verifyFolder(completedFolder.get())
         if (fileSystem.nonExists(completedFolder.get())) fileSystem.mkdirs(completedFolder.get())
       }
 
-      val errorFolder = csvSourceConfig.errorFolder()
+      val errorFolder = settings.stringValue(ERROR_FOLDER_KEY)
       verifyFolder(errorFolder)
       if (fileSystem.nonExists(errorFolder)) fileSystem.mkdirs(errorFolder)
     } finally fileSystem.close()
