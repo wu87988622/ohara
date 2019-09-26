@@ -247,7 +247,7 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(files)) {
       files.forEach(file => {
-        cy.request('DELETE', `api/files/${file.name}?group=default`);
+        cy.request('DELETE', `api/files/${file.name}?group=${file.group}`);
       });
     }
   });
