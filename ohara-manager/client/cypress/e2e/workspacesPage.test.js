@@ -207,7 +207,7 @@ describe('WorkspacesPage', () => {
       .should('include', '/plugins');
   });
 
-  it.only('should display the overview info', () => {
+  it('should display the overview info', () => {
     cy.addTopic().as('overviewTopic');
 
     cy.visit(WORKSPACES)
@@ -257,6 +257,7 @@ describe('WorkspacesPage', () => {
           definitions
             .filter(definition => keys.includes(definition.key))
             .forEach((definition, index) => {
+              cy.wait(100); //waiting for show tooltip
               cy.findByTestId(`${keys[index]}-value`).then($el =>
                 cy.wrap($el.text()).should('have.eq', definition.defaultValue),
               );
@@ -267,30 +268,17 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getBroker')
       .then(xhr => {
-<<<<<<< HEAD
         const {
           clientPort,
           nodeNames,
           jmxPort,
           exporterPort,
         } = xhr.response.body.settings;
-        cy.getByText(
+        cy.findByText(
           `Broker Image: ${xhr.response.body.settings.imageName}`,
         ).should('have.length', 1);
         nodeNames.forEach(node => {
-          cy.getByText(`${node}:${clientPort}`)
-=======
-        const clientPort = xhr.response.body.clientPort;
-        const bkNodes = xhr.response.body.nodeNames;
-        const jmxPort = xhr.response.body.jmxPort;
-        const exporterPort = xhr.response.body.exporterPort;
-        cy.findByText(`Broker Image: ${xhr.response.body.imageName}`).should(
-          'have.length',
-          1,
-        );
-        bkNodes.forEach(node => {
           cy.findByText(`${node}:${clientPort}`)
->>>>>>> wip
             .should('have.length', 1)
             .findByTestId(`Broker-${node}:${clientPort}`)
             .trigger('mouseover')
@@ -302,30 +290,17 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getZookeeper')
       .then(xhr => {
-<<<<<<< HEAD
         const {
           clientPort,
           nodeNames,
           peerPort,
           electionPort,
         } = xhr.response.body.settings;
-        cy.getByText(
+        cy.findByText(
           `Zookeeper Image: ${xhr.response.body.settings.imageName}`,
         ).should('have.length', 1);
         nodeNames.forEach(node => {
-          cy.getByText(`${node}:${clientPort}`)
-=======
-        const clientPort = xhr.response.body.clientPort;
-        const ZkNodes = xhr.response.body.nodeNames;
-        const peerPort = xhr.response.body.peerPort;
-        const electionPort = xhr.response.body.electionPort;
-        cy.findByText(`Zookeeper Image: ${xhr.response.body.imageName}`).should(
-          'have.length',
-          1,
-        );
-        ZkNodes.forEach(node => {
           cy.findByText(`${node}:${clientPort}`)
->>>>>>> wip
             .should('have.length', 1)
             .findByTestId(`Zookeeper-${node}:${clientPort}`)
             .trigger('mouseover')
