@@ -41,18 +41,11 @@ object QueryApi {
                                                user: String,
                                                workerClusterKey: Option[ObjectKey],
                                                password: String,
-                                               // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
-                                               workerClusterName: Option[String],
                                                catalogPattern: Option[String],
                                                schemaPattern: Option[String],
-                                               tableName: Option[String]) {
-    // a helper method to keep compatibility
-    // TODO: remove this helper method (see https://github.com/oharastream/ohara/issues/2769)
-    def _workerClusterKey: Option[ObjectKey] =
-      workerClusterKey.orElse(workerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
-  }
+                                               tableName: Option[String])
   implicit val RDB_QUERY_JSON_FORMAT: OharaJsonFormat[RdbQuery] =
-    JsonRefiner[RdbQuery].format(jsonFormat8(RdbQuery)).rejectEmptyString().refine
+    JsonRefiner[RdbQuery].format(jsonFormat7(RdbQuery)).rejectEmptyString().refine
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
@@ -140,7 +133,6 @@ object QueryApi {
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
         workerClusterKey = Option(workerClusterKey),
-        workerClusterName = None,
         catalogPattern = Option(catalogPattern).map(CommonUtils.requireNonEmpty),
         schemaPattern = Option(schemaPattern).map(CommonUtils.requireNonEmpty),
         tableName = Option(tableName).map(CommonUtils.requireNonEmpty)

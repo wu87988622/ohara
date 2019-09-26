@@ -41,7 +41,7 @@ class TestQueryApi extends OharaTest with Matchers {
     query.url shouldBe url
     query.user shouldBe user
     query.password shouldBe password
-    query.workerClusterName shouldBe None
+    query.workerClusterKey shouldBe None
     query.catalogPattern shouldBe None
     query.schemaPattern shouldBe None
     query.tableName shouldBe None
@@ -164,7 +164,7 @@ class TestQueryApi extends OharaTest with Matchers {
          |  "url": "$url",
          |  "user": "$user",
          |  "password": "$password",
-         |  "workerClusterName": "$workerClusterName",
+         |  "workerClusterKey": "$workerClusterName",
          |  "catalogPattern": "$catalogPattern",
          |  "schemaPattern": "$schemaPattern",
          |  "tableName": "$tableName"
@@ -174,8 +174,7 @@ class TestQueryApi extends OharaTest with Matchers {
     query.url shouldBe url
     query.user shouldBe user
     query.password shouldBe password
-    query.workerClusterName.get shouldBe workerClusterName
-    query._workerClusterKey.get.name() shouldBe workerClusterName
+    query.workerClusterKey.get.name() shouldBe workerClusterName
     query.catalogPattern.get shouldBe catalogPattern
     query.schemaPattern.get shouldBe schemaPattern
     query.tableName.get shouldBe tableName
@@ -191,7 +190,7 @@ class TestQueryApi extends OharaTest with Matchers {
     query2.url shouldBe url
     query2.user shouldBe user
     query2.password shouldBe password
-    query2.workerClusterName shouldBe None
+    query2.workerClusterKey shouldBe None
     query2.catalogPattern shouldBe None
     query2.schemaPattern shouldBe None
     query2.tableName shouldBe None
@@ -231,7 +230,7 @@ class TestQueryApi extends OharaTest with Matchers {
      |  "url": "url",
      |  "user": "user",
      |  "password": "password",
-     |  "workerClusterName": ""
+     |  "workerClusterKey": ""
      |}
      """.stripMargin.parseJson)
 
