@@ -156,4 +156,46 @@ class TestKeyApi extends OharaTest with Matchers {
     key.group() shouldBe group
     key.name() shouldBe name
   }
+
+  @Test
+  def incorrectRequestShouldGetCorrectException(): Unit = {
+    an[DeserializationException] should be thrownBy CONNECTOR_KEY_FORMAT.read(s"""
+                                                                                 |
+                                                                                 | {
+                                                                                 |   "group": "g"
+                                                                                 | }
+                                                                                 |""".stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy TOPIC_KEY_FORMAT.read(s"""
+                                                                                 |
+                                                                                 | {
+                                                                                 |   "group": ["g"]
+                                                                                 | }
+                                                                                 |""".stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy OBJECT_KEY_FORMAT.read(s"""
+                                                                                 |
+                                                                                 | {
+                                                                                 |   "group": {
+                                                                                 |     "A": "A"
+                                                                                 |   }
+                                                                                 | }
+                                                                                 |""".stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy CONNECTOR_KEY_FORMAT.read(s"""
+                                                                                 |
+                                                                                 | {
+                                                                                 |   "group": "",
+                                                                                 |   "name": "n"
+                                                                                 | }
+                                                                                 |""".stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy CONNECTOR_KEY_FORMAT.read(s"""
+                                                                                 |
+                                                                                 | {
+                                                                                 |   "group": "g",
+                                                                                 |   "name": ""
+                                                                                 | }
+                                                                                 |""".stripMargin.parseJson)
+  }
 }

@@ -86,7 +86,25 @@ package object v0 {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
       override def read(json: JsValue): ObjectKey = json match {
         case JsString(s) => ObjectKey.of(GROUP_DEFAULT, s)
-        case _: JsObject => ObjectKey.toObjectKey(json.toString())
+        case JsObject(fields) =>
+          val group = noJsNull(fields)
+            .get(GROUP_KEY)
+            .map {
+              case JsString(s) => s
+              case _ =>
+                throw DeserializationException(s"the type of $GROUP_KEY must be string", fieldNames = List(GROUP_KEY))
+            }
+            .getOrElse(GROUP_DEFAULT)
+          val name = noJsNull(fields).getOrElse(NAME_KEY,
+                                                throw DeserializationException(s"$NAME_KEY is required field",
+                                                                               fieldNames = List(NAME_KEY))) match {
+            case JsString(s) => s
+            case _ =>
+              throw DeserializationException(s"the type of $NAME_KEY must be string", fieldNames = List(NAME_KEY))
+          }
+          if (group.isEmpty) throw DeserializationException(s"$GROUP_KEY can't be empty", fieldNames = List(GROUP_KEY))
+          if (name.isEmpty) throw DeserializationException(s"$NAME_KEY can't be empty", fieldNames = List(NAME_KEY))
+          ObjectKey.of(group, name)
         case _ =>
           throw DeserializationException(
             "the form of key must be {\"group\": \"g\", \"name\": \"n\"}, {\"name\": \"n\"} or pure string")
