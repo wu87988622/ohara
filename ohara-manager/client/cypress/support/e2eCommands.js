@@ -49,7 +49,7 @@ Cypress.Commands.add('addWorker', params => {
     .as('broker');
 
   cy.get('@broker').then(broker => {
-    cy.request('GET', `api/zookeepers/${broker.zookeeperClusterName}`)
+    cy.request('GET', `api/zookeepers/${broker.settings.zookeeperClusterName}`)
       .then(res => res.body)
       .as('zookeepers');
   });
@@ -131,7 +131,7 @@ Cypress.Commands.add(
           worker => worker.settings.name === currentWorkerName,
         );
 
-        return worker.brokerClusterName;
+        return worker.settings.brokerClusterName;
       })
       .as('brokerClusterName');
 
@@ -162,7 +162,7 @@ Cypress.Commands.add('removeWorkers', () => {
 
     if (isEmpty(workers)) return;
     workers.forEach(worker => {
-      const { name } = worker;
+      const { name } = worker.settings;
 
       // Make a request to stop the worker and wait until the
       // worker is stopped

@@ -54,7 +54,7 @@ const usePlugin = () => {
     let stopConnectorsSuccess = true;
 
     const stopConnectorCheckFn = res => {
-      return isUndefined(get(res, 'data.result.state', undefined));
+      return isUndefined(get(res, 'data.result.status.state', undefined));
     };
 
     /* eslint-disable no-unused-vars */
@@ -86,7 +86,7 @@ const usePlugin = () => {
     let startConnectorsSuccess = true;
 
     const startConnectorCheckFn = res => {
-      return get(res, 'data.result.state', undefined) === 'RUNNING';
+      return get(res, 'data.result.status.state', undefined) === 'RUNNING';
     };
 
     /* eslint-disable no-unused-vars */

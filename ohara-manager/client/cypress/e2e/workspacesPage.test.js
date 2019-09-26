@@ -217,7 +217,12 @@ describe('WorkspacesPage', () => {
       .click()
       .wait('@getWorker')
       .then(xhr => {
-        const { imageName, clientPort, nodeNames, jmxPort } = xhr.response.body;
+        const {
+          imageName,
+          clientPort,
+          nodeNames,
+          jmxPort,
+        } = xhr.response.body.settings;
 
         // Basic info
         cy.getByText(`Worker Image: ${imageName}`).should('have.length', 1);
@@ -262,15 +267,16 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getBroker')
       .then(xhr => {
-        const clientPort = xhr.response.body.clientPort;
-        const bkNodes = xhr.response.body.nodeNames;
-        const jmxPort = xhr.response.body.jmxPort;
-        const exporterPort = xhr.response.body.exporterPort;
-        cy.getByText(`Broker Image: ${xhr.response.body.imageName}`).should(
-          'have.length',
-          1,
-        );
-        bkNodes.forEach(node => {
+        const {
+          clientPort,
+          nodeNames,
+          jmxPort,
+          exporterPort,
+        } = xhr.response.body.settings;
+        cy.getByText(
+          `Broker Image: ${xhr.response.body.settings.imageName}`,
+        ).should('have.length', 1);
+        nodeNames.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
             .should('have.length', 1)
             .getByTestId(`Broker-${node}:${clientPort}`)
@@ -283,15 +289,16 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getZookeeper')
       .then(xhr => {
-        const clientPort = xhr.response.body.clientPort;
-        const ZkNodes = xhr.response.body.nodeNames;
-        const peerPort = xhr.response.body.peerPort;
-        const electionPort = xhr.response.body.electionPort;
-        cy.getByText(`Zookeeper Image: ${xhr.response.body.imageName}`).should(
-          'have.length',
-          1,
-        );
-        ZkNodes.forEach(node => {
+        const {
+          clientPort,
+          nodeNames,
+          peerPort,
+          electionPort,
+        } = xhr.response.body.settings;
+        cy.getByText(
+          `Zookeeper Image: ${xhr.response.body.settings.imageName}`,
+        ).should('have.length', 1);
+        nodeNames.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
             .should('have.length', 1)
             .getByTestId(`Zookeeper-${node}:${clientPort}`)
@@ -422,7 +429,7 @@ describe('plugin', () => {
       'connector.class': 'com.island.ohara.connector.perf.PerfSource',
       group: `${workerName}${pipelineName}`,
       name: perfName,
-      workerClusterName: workerName,
+      workerClusterKey: { name: workerName },
     });
     cy.putConnector({
       url: `/${perfName}?group=${workerName}${pipelineName}`,
@@ -434,7 +441,7 @@ describe('plugin', () => {
       'connector.class': 'com.island.ohara.it.connector.DumbSinkConnector',
       group: `${workerName}${pipelineName}`,
       name: dumbsinkName,
-      workerClusterName: workerName,
+      workerClusterKey: { name: workerName },
     });
     cy.putConnector({
       url: `/${dumbsinkName}?group=${workerName}${pipelineName}`,
