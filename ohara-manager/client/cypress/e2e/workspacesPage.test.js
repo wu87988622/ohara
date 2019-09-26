@@ -257,7 +257,7 @@ describe('WorkspacesPage', () => {
           definitions
             .filter(definition => keys.includes(definition.key))
             .forEach((definition, index) => {
-              cy.wait(100); //waiting for show tooltip
+              cy.wait(500); //waiting for show tooltip
               cy.findByTestId(`${keys[index]}-value`).then($el =>
                 cy.wrap($el.text()).should('have.eq', definition.defaultValue),
               );
