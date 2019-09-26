@@ -219,11 +219,11 @@ export const changeKeySeparator = key => {
 export const useFetchConnectors = props => {
   const [state, setState] = useState(null);
   const [configs, setConfigs] = useState(null);
+  const { group } = props.pipeline;
+  const { connectorName } = props.match.params;
 
   useEffect(() => {
     const fetchConnector = async () => {
-      const { connectorName } = props.match.params;
-      const { group } = props.pipeline;
       const res = await connectorApi.fetchConnector(group, connectorName);
       const result = get(res, 'data.result', null);
 
@@ -246,7 +246,7 @@ export const useFetchConnectors = props => {
     };
 
     fetchConnector();
-  }, [props.match.params, props.pipeline]);
+  }, [connectorName, group]);
 
   return [state, setState, configs, setConfigs];
 };

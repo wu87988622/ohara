@@ -86,13 +86,18 @@ const PipelineEditPage = props => {
     [connectorName],
   );
 
-  const previousPipeline = usePrevious(pipeline);
-
+  const prevPipeline = usePrevious(pipeline);
   useEffect(() => {
-    if (isEmpty(pipeline) || isEqual(previousPipeline, pipeline)) return;
+    // If the pipeline data is not ready and prevPipeline is equal to pipeline
+    // don't load the graph
+    if (isEmpty(pipeline) || isEqual(prevPipeline, pipeline)) return;
 
     // Pipeline data is ready, let's load the graph
     loadGraph(pipeline);
+  }, [loadGraph, pipeline, prevPipeline]);
+
+  useEffect(() => {
+    if (isEmpty(pipeline) || !isEmpty(connectors)) return;
 
     const fetchWorker = async () => {
       const { tags } = pipeline;
@@ -114,7 +119,7 @@ const PipelineEditPage = props => {
     };
 
     fetchWorker();
-  }, [loadGraph, pipeline, previousPipeline]);
+  }, [connectors, pipeline]);
 
   useEffect(() => {
     if (!brokerClusterName) return;

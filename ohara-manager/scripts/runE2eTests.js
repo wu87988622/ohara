@@ -76,8 +76,6 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     },
   );
 
-  console.log('server.pid', server.pid);
-
   try {
     await server;
   } catch (err) {
@@ -100,7 +98,6 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
         stdio: 'inherit',
       },
     );
-    console.log('client.pid', client.pid);
 
     try {
       await client;
@@ -137,7 +134,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   };
 
   // Run e2e test
-  console.log(chalk.blue('Running end to end tests with Cypress'));
+  console.log(chalk.blue('Running End-to-End tests with Cypress'));
   cypress = execa(
     'yarn',
     [
@@ -152,7 +149,6 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
       stdio: 'inherit',
     },
   );
-  console.log('cypress.pid', cypress.pid);
 
   const killSubProcess = () => {
     if (cypress) cypress.kill();

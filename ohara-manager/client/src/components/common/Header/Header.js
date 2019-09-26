@@ -57,7 +57,9 @@ const Header = () => {
     };
 
     fetchInfo();
-  }, [showMessage]);
+    // We only want to fetch the data once...
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { versionInfo = {}, mode = '' } = info;
   const { version, revision, date } = versionInfo;

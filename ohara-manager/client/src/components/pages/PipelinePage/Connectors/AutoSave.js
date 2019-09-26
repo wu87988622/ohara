@@ -18,13 +18,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import diff from 'deep-diff';
 import { FormSpy } from 'react-final-form';
-import { debounce } from 'lodash';
+import { debounce, isNull } from 'lodash';
 
 class AutoSave extends React.Component {
   static propTypes = {
     values: PropTypes.object.isRequired,
     save: PropTypes.func.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
+    connectorState: PropTypes.string,
   };
 
   state = {
@@ -36,10 +37,15 @@ class AutoSave extends React.Component {
   }
 
   save = debounce(async () => {
-    const { values, save, updateHasChanges } = this.props;
+    const { values, save, updateHasChanges, connectorState } = this.props;
     const difference = diff(this.state.values, values);
 
-    if (difference && difference.length) {
+    // If the connector is running, we shouldn't update since it will cause
+    // server side error
+    const shouldUpdate =
+      difference && difference.length && isNull(connectorState);
+
+    if (shouldUpdate) {
       // values have changed
       updateHasChanges(true);
       this.setState({ values });
