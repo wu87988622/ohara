@@ -17,22 +17,20 @@
 package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent._
-import com.island.ohara.agent.docker.{ContainerState, DockerClient}
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import com.island.ohara.it.agent.ClusterNameHolder
-import com.island.ohara.it.category.SshConfiguratorGroup
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.it.category.SshCollieGroup
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-@Category(Array(classOf[SshConfiguratorGroup]))
+@Category(Array(classOf[SshCollieGroup]))
 class TestListCluster extends IntegrationTest with Matchers {
-  private[this] val log = Logger(classOf[TestListCluster])
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   private[this] val nameHolder = ClusterNameHolder(nodes)
 
@@ -44,24 +42,24 @@ class TestListCluster extends IntegrationTest with Matchers {
   private[this] val cleanup: Boolean = true
 
   @Before
-  def setup(): Unit = nodes.foreach { node =>
-    val dockerClient =
-      DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-    try {
-      withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-        dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
-      withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
-        dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
-      withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
-        dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
-    } finally dockerClient.close()
-  }
+  def setup(): Unit = if (nodes.size < 2) skipTest("please buy more servers to run this test")
+  else
+    nodes.foreach { node =>
+      val dockerClient =
+        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+      try {
+        withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+      } finally dockerClient.close()
+    }
 
   @Test
-  def deadZookeeperClusterShouldNotDisappear(): Unit = {
-
+  def deadContainerAndClusterShouldDisappear(): Unit = {
     val name = nameHolder.generateClusterName()
-    log.info(s"[TestListCluster] before create zk cluster:$name")
     try result(
       clusterCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
@@ -80,88 +78,27 @@ class TestListCluster extends IntegrationTest with Matchers {
     }
 
     // we stop the running containers to simulate a "dead" cluster
+    val aliveNode = nodes.head
     nameHolder.release(
       clusterNames = Set(name),
-      // remove all containers
+      excludedNodes = Set(aliveNode.hostname)
+    )
+
+    await { () =>
+      val containers =
+        result(clusterCollie.zookeeperCollie.clusters()).find(_._1.name == name).map(_._2).getOrElse(Seq.empty)
+      containers.map(_.nodeName).toSet == Set(aliveNode.hostname)
+    }
+
+    // remove all containers
+    nameHolder.release(
+      clusterNames = Set(name),
       excludedNodes = Set.empty
     )
 
-    log.info("[TestListCluster] before check zk containers")
-    nodes.foreach { node =>
-      val dockerClient =
-        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-      try await(() => result(dockerClient.activeContainers(_.contains(name))).isEmpty)
-      finally dockerClient.close()
+    await { () =>
+      !result(clusterCollie.zookeeperCollie.clusters()).map(_._1.name).toSet.contains(name)
     }
-
-    log.info("[TestListCluster] before check zk clusters still can be fetch")
-    await(() => result(clusterCollie.zookeeperCollie.clusters()).exists(_._1.name == name))
-  }
-
-  @Test
-  def deadBrokerClusterShouldNotDisappear(): Unit = {
-    val zkName = nameHolder.generateClusterName()
-    log.info("[TestListCluster] before create zk cluster")
-    val zkCluster = result(
-      clusterCollie.zookeeperCollie.creator
-        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-        .clientPort(CommonUtils.availablePort())
-        .peerPort(CommonUtils.availablePort())
-        .electionPort(CommonUtils.availablePort())
-        .nodeNames(nodes.map(_.name).toSet)
-        .name(zkName)
-        .create()
-        .flatMap(_ => clusterCollie.zookeeperCollie.cluster(zkName).map(_._1))
-    )
-
-    log.info("[TestListCluster] before create bk cluster")
-    try {
-      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq,
-                    () => result(clusterCollie.zookeeperCollie.containers(zkCluster.key)),
-                    zkCluster.name)
-      // since we only get "active" containers, all containers belong to the cluster should be running.
-      // Currently, both k8s and pure docker have the same context of "RUNNING".
-      // It is ok to filter container via RUNNING state.
-      await(() => {
-        val containers = result(clusterCollie.zookeeperCollie.containers(zkCluster.key))
-        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-      })
-      val name = nameHolder.generateClusterName()
-      try result(
-        clusterCollie.brokerCollie.creator
-          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-          .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
-          .clientPort(CommonUtils.availablePort())
-          .exporterPort(CommonUtils.availablePort())
-          .nodeNames(nodes.map(_.name).toSet)
-          .name(name)
-          .zookeeperClusterName(zkCluster.name)
-          .create()
-      )
-      catch {
-        case e: Throwable =>
-          // this is a normal case to start zookeeper, there should not have any exception...
-          throw e
-      }
-
-      // we stop the running containers to simulate a "dead" cluster
-      nameHolder.release(
-        clusterNames = Set(name),
-        // remove all containers
-        excludedNodes = Set.empty
-      )
-
-      log.info("[TestListCluster] before check bk containers")
-      nodes.foreach { node =>
-        val dockerClient =
-          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-        try await(() => result(dockerClient.activeContainers(_.contains(name))).isEmpty)
-        finally dockerClient.close()
-      }
-
-      log.info("[TestListCluster] before check bk clusters still can be fetch")
-      await(() => result(clusterCollie.brokerCollie.clusters()).exists(_._1.name == name))
-    } finally if (cleanup) result(clusterCollie.zookeeperCollie.remove(zkCluster.key))
   }
 
   @After
