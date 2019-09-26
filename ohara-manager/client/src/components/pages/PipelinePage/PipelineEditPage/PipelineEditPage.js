@@ -48,6 +48,7 @@ const PipelineEditPage = props => {
   const [connectors, setConnectors] = useState([]);
   const [freePorts, setFreePorts] = useState([]);
   const [nodeNames, setNodeNames] = useState([]);
+  const [workerGroup, setWorkerGroup] = useState('default');
   const [brokerClusterName, setBrokerClusterName] = useState('');
 
   const { workspaceName, pipelineName, connectorName } = props.match.params;
@@ -108,6 +109,7 @@ const PipelineEditPage = props => {
         setNodeNames(get(worker, 'settings.nodeNames', []));
         setConnectors(worker.connectors);
         setBrokerClusterName(worker.settings.brokerClusterName);
+        setWorkerGroup(worker.settings.group);
       }
     };
 
@@ -258,6 +260,7 @@ const PipelineEditPage = props => {
             resetCurrentTopic={() => setCurrentTopic(topics[0])}
             updateCurrentTopic={currentTopic => setCurrentTopic(currentTopic)}
             workerClusterName={workerClusterName}
+            workerGroup={workerGroup}
             brokerClusterName={brokerClusterName}
             connectors={connectors}
           />

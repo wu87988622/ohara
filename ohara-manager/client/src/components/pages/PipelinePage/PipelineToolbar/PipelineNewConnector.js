@@ -55,13 +55,17 @@ const PipelineNewConnector = forwardRef((props, ref) => {
       activeConnector: connector,
       pipelineGroup,
       workerClusterName,
+      workerGroup,
     } = props;
 
     utils.createConnector({
       updateGraph,
       connector,
       newConnectorName,
-      workerClusterName,
+      workerClusterKey: {
+        group: workerGroup,
+        name: workerClusterName,
+      },
       group: pipelineGroup,
     });
 
@@ -125,6 +129,7 @@ PipelineNewConnector.propTypes = {
   handleClose: PropTypes.func.isRequired,
   pipelineGroup: PropTypes.string.isRequired,
   workerClusterName: PropTypes.string.isRequired,
+  workerGroup: PropTypes.string.isRequired,
   activeConnector: PropTypes.object,
 };
 

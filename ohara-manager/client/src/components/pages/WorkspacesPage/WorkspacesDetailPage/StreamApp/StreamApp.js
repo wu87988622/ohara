@@ -39,7 +39,7 @@ const StreamApp = props => {
     URL.FILE_URL,
   );
   const jars = get(jarsRes, 'data.result', []).filter(
-    jar => jar.tags.type === 'streamjar',
+    jar => jar.tags.type === 'streamjar' && jar.group === workspaceName,
   );
   const { getData: getJarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
   const { getData: getDeleteRes, deleteApi } = useApi.useDeleteApi(

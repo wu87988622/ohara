@@ -48,7 +48,7 @@ const Plugins = props => {
     refetch: jarRefetch,
   } = useApi.useFetchApi(URL.FILE_URL);
   const jars = get(jarsRes, 'data.result', []).filter(
-    jar => jar.tags.type === 'plugin',
+    jar => jar.tags.type === 'plugin' && jar.group === worker.settings.name,
   );
 
   const [workerActions, setWorkerActions] = useState([]);

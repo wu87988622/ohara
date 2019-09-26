@@ -38,7 +38,7 @@ export const createConnector = async params => {
     connector,
     newConnectorName,
     newStreamAppName,
-    workerClusterName,
+    workerClusterKey,
     brokerClusterName,
     group,
   } = params;
@@ -67,7 +67,7 @@ export const createConnector = async params => {
     const response = await connectorApi.createConnector({
       name: newConnectorName,
       'connector.class': className,
-      workerClusterName,
+      workerClusterKey,
       group,
     });
 

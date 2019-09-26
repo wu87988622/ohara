@@ -55,6 +55,7 @@ const PipelineToolbar = props => {
     graph,
     currentTopic,
     updateCurrentTopic,
+    workerGroup,
   } = props;
 
   useEffect(() => {
@@ -233,6 +234,7 @@ const PipelineToolbar = props => {
               workerClusterName={workerClusterName}
               handleClose={handleModalClose}
               pipelineGroup={pipelineGroup}
+              workerGroup={workerGroup}
             />
           )}
         </div>
@@ -309,6 +311,7 @@ PipelineToolbar.propTypes = {
   resetCurrentTopic: PropTypes.func.isRequired,
   currentTopic: PropTypes.object,
   workerClusterName: PropTypes.string.isRequired,
+  workerGroup: PropTypes.string.isRequired,
   brokerClusterName: PropTypes.string.isRequired,
 };
 

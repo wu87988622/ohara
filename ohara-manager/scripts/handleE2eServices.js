@@ -182,7 +182,7 @@ const getByServiceType = (services, servicePrefix) => {
 
   services.forEach(service => {
     if (service.settings.name.includes(servicePrefix)) {
-      workers.serviceNames.push(service.name);
+      workers.serviceNames.push(service.settings.name);
     }
 
     if (service.settings.tags.broker) {

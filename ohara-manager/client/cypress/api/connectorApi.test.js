@@ -71,7 +71,9 @@ const setup = () => {
     'connector.name': connectorName,
     name: connectorName,
     topicKeys: [{ group: topicGroup, name: topicName }],
-    workerClusterName,
+    workerClusterKey: {
+      name: workerClusterName,
+    },
     group: pipelineGroup,
     tags: { name: connectorName },
   }).as('createConnector');
