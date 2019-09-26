@@ -41,8 +41,6 @@ object TopicApi {
   private[v0] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
   private[v0] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
   private[v0] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
-  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
-  private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val TAGS_KEY = "tags"
 
   /**
@@ -246,13 +244,7 @@ object TopicApi {
   val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
 
   final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
-    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2769)
-    private[this] def brokerClusterName: Option[String] =
-      noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings)
-      .get(BROKER_CLUSTER_KEY_KEY)
-      .map(_.convertTo[ObjectKey])
-      .orElse(brokerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
     private[TopicApi] def numberOfPartitions: Option[Int] =
       noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
 
@@ -375,7 +367,6 @@ object TopicApi {
         Map(
           GROUP_KEY -> JsString(obj.group),
           NAME_KEY -> JsString(obj.name),
-          BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterKey.name()),
           NUMBER_OF_PARTITIONS_KEY -> JsNumber(obj.numberOfPartitions),
           NUMBER_OF_REPLICATIONS_KEY -> JsNumber(obj.numberOfReplications),
           TAGS_KEY -> JsObject(obj.tags)
