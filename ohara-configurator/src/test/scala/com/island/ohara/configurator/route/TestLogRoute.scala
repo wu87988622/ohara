@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
@@ -48,24 +49,24 @@ class TestLogRoute extends OharaTest with Matchers {
   @Test
   def fetchLogFromZookeeper(): Unit = {
     val cluster = result(zkApi.list()).head
-    val clusterLogs = result(logApi.log4ZookeeperCluster(cluster.name))
-    clusterLogs.name shouldBe cluster.name
+    val clusterLogs = result(logApi.log4ZookeeperCluster(cluster.key))
+    clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
   }
 
   @Test
   def fetchLogFromBroker(): Unit = {
     val cluster = result(bkApi.list()).head
-    val clusterLogs = result(logApi.log4BrokerCluster(cluster.name))
-    clusterLogs.name shouldBe cluster.name
+    val clusterLogs = result(logApi.log4BrokerCluster(cluster.key))
+    clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
   }
 
   @Test
   def fetchLogFromWorker(): Unit = {
     val cluster = result(wkApi.list()).head
-    val clusterLogs = result(logApi.log4WorkerCluster(cluster.name))
-    clusterLogs.name shouldBe cluster.name
+    val clusterLogs = result(logApi.log4WorkerCluster(cluster.key))
+    clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
   }
 
@@ -85,16 +86,17 @@ class TestLogRoute extends OharaTest with Matchers {
         .jarKey(file.key)
         .create())
     result(streamApi.start(cluster.key))
-    val clusterLogs = result(logApi.log4StreamCluster(cluster.name))
-    clusterLogs.name shouldBe cluster.name
+    val clusterLogs = result(logApi.log4StreamCluster(cluster.key))
+    clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
   }
 
   @Test
   def fetchLogFromUnknown(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4ZookeeperCluster(CommonUtils.randomString(10)))
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4BrokerCluster(CommonUtils.randomString(10)))
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4WorkerCluster(CommonUtils.randomString(10)))
+    val unknownKey = ObjectKey.of("default", CommonUtils.randomString(10))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4ZookeeperCluster(unknownKey))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4BrokerCluster(unknownKey))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4WorkerCluster(unknownKey))
   }
 
   @After

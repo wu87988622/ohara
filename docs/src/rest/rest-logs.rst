@@ -27,17 +27,21 @@ friend, open a door to observe the logs of running cluster.
 It collect output from all containers’ of a cluster and then format them
 to JSON representation which has following elements.
 
-#. name (**string**) — cluster name
+#. clusterKey (**object**) — cluster key
+
+  - clusterKey.group (**string**) — cluster group
+  - clusterKey.name (**string**) — cluster name
+
 #. logs (**array(object)**) — log of each container
 
-   - logs[i].name — container’s name
-   - logs[i].value — total output of a container
+   - logs[i].hostname — hostname
+   - logs[i].value — total log of a container
 
 
 get the log of a running cluster
 --------------------------------
 
-*GET /v0/logs/$clusterType/$clusterName*
+*GET /v0/logs/$clusterType/$clusterName?group=$group*
 
 - clusterType (**string**)
 
@@ -49,13 +53,16 @@ get the log of a running cluster
 Example Response
   .. code-block:: json
 
-     {
-       "name": "precreatezkcluster",
-       "logs": [
-         {
-           "name": "node00",
-           "value": "2019-04-15 02:13:33,168 [myid:] - INFO [main:QuorumPeerConfig@136"
-         }
-       ]
-     }
+    {
+      "clusterKey": {
+        "group": "default",
+        "name": "precreatezkcluster"
+      },
+      "logs": [
+        {
+          "hostname": "node00",
+          "value": "2019-04-15 02:13:33,168 [myid:] - INFO [main:QuorumPeerConfig@136"
+        }
+      ]
+    }
 

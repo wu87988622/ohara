@@ -68,10 +68,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   private[this] def containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  /** to simplify test, we use the same group for ALL collie test
-    * It is ok to use same group since we will use different cluster name
-    */
-  private[this] final val group: String = CommonUtils.randomString(10)
+  private[this] final val group: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   //--------------------------------------------------[zk operations]--------------------------------------------------//
   private[this] def zk_exist(clusterName: String): Future[Boolean] =
@@ -97,7 +94,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list()
 
   private[this] def zk_logs(clusterName: String): Future[Seq[String]] =
-    logApi.log4ZookeeperCluster(clusterName).map(_.logs.map(_.value))
+    logApi.log4ZookeeperCluster(ObjectKey.of(group, clusterName)).map(_.logs.map(_.value))
 
   private[this] def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
@@ -134,7 +131,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
 
   private[this] def bk_logs(clusterName: String): Future[Seq[String]] =
-    logApi.log4BrokerCluster(clusterName).map(_.logs.map(_.value))
+    logApi.log4BrokerCluster(ObjectKey.of(group, clusterName)).map(_.logs.map(_.value))
 
   private[this] def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
@@ -195,7 +192,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
 
   private[this] def wk_logs(clusterName: String): Future[Seq[String]] =
-    logApi.log4WorkerCluster(clusterName).map(_.logs.map(_.value))
+    logApi.log4WorkerCluster(ObjectKey.of(group, clusterName)).map(_.logs.map(_.value))
 
   private[this] def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))

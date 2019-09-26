@@ -23,9 +23,9 @@ import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.BrokerApi._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.LogApi._
+import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
-import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,21 +37,21 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 object LogRoute {
 
-  private[this] def route(clusterName: String, data: Future[Map[ContainerInfo, String]])(
+  private[this] def route(clusterKey: ObjectKey, data: Future[Map[ContainerInfo, String]])(
     implicit executionContext: ExecutionContext): server.Route =
     complete(data.map { d =>
       if (d.isEmpty)
         ClusterLog(
-          name = clusterName,
+          clusterKey = clusterKey,
           logs = Seq(
             NodeLog(
-              name = "N/A",
+              hostname = "N/A",
               value = "Please buy some machines to build the services :)"
             ))
         )
       else
         ClusterLog(
-          name = clusterName,
+          clusterKey = clusterKey,
           logs = d.map {
             case (container, log) => NodeLog(container.nodeName, log)
           }.toSeq
@@ -62,31 +62,17 @@ object LogRoute {
     pathPrefix(LOG_PREFIX_PATH / Segment / Segment) {
       case (clusterPrefix, clusterName) =>
         parameter(GROUP_KEY ?) { groupOption =>
+          val clusterKey =
+            ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)
           clusterPrefix match {
             case ZOOKEEPER_PREFIX_PATH =>
-              route(clusterName,
-                    collie.zookeeperCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
-                                   clusterName)
-                    ))
+              route(clusterKey, collie.zookeeperCollie.logs(clusterKey))
             case BROKER_PREFIX_PATH =>
-              route(clusterName,
-                    collie.brokerCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
-                                   clusterName)
-                    ))
+              route(clusterKey, collie.brokerCollie.logs(clusterKey))
             case WORKER_PREFIX_PATH =>
-              route(clusterName,
-                    collie.workerCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
-                                   clusterName)
-                    ))
+              route(clusterKey, collie.workerCollie.logs(clusterKey))
             case STREAMS_PREFIX_PATH =>
-              route(clusterName,
-                    collie.streamCollie.logs(
-                      ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT),
-                                   clusterName)
-                    ))
+              route(clusterKey, collie.streamCollie.logs(clusterKey))
           }
         }
     }
