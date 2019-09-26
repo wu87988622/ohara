@@ -23,17 +23,17 @@ describe('Header', () => {
 
   it('visits all pages from main navigation', () => {
     cy.get('nav').within(() => {
-      cy.getByText('Pipelines')
+      cy.findByText('Pipelines')
         .click()
         .location('pathname')
         .should('eq', URLS.PIPELINES);
 
-      cy.getByText('Nodes')
+      cy.findByText('Nodes')
         .click()
         .location('pathname')
         .should('eq', URLS.NODES);
 
-      cy.getByText('Workspaces')
+      cy.findByText('Workspaces')
         .click()
         .location('pathname')
         .should('contains', URLS.WORKSPACES);
@@ -48,25 +48,25 @@ describe('Header', () => {
       })
       .as('info');
 
-    cy.getByTestId('version-btn')
+    cy.findByTestId('version-btn')
       .click()
-      .getByTestId('info-modal')
+      .findByTestId('info-modal')
       .then($el => {
         cy.wrap($el)
           .should('be.visible')
-          .getByText('Ohara version')
+          .findByText('Ohara version')
           .should('be.visible');
 
         cy.get('@info').then(info => {
           const { version, revision, date, mode } = info;
 
-          cy.getByText(version)
-            .getByText(mode)
-            .getByText(revision)
-            .getByText(date);
+          cy.findByText(version)
+            .findByText(mode)
+            .findByText(revision)
+            .findByText(date);
 
           // Ensure we only render these element in the screen
-          cy.getByTestId('info-list')
+          cy.findByTestId('info-list')
             .find('li')
             .should('have.length', Object.keys(info).length);
         });

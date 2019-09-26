@@ -53,11 +53,11 @@ describe('WorkspacesPage', () => {
         win.servicePrefix = prefix; // Add prefix for generated services
       },
     })
-      .getByText('NEW WORKSPACE')
+      .findByText('NEW WORKSPACE')
       .click()
-      .getByPlaceholderText('cluster00')
+      .findByPlaceholderText('cluster00')
       .type(workerName)
-      .getByTestId(nodeName)
+      .findByTestId(nodeName)
       .click()
       .uploadJar(
         'input[type=file]',
@@ -66,14 +66,14 @@ describe('WorkspacesPage', () => {
         'application/java-archive',
       )
       .wait(500)
-      .getByText('ohara-it-sink')
+      .findByText('ohara-it-sink')
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@createZookeeper')
       .wait('@createBroker');
 
-    cy.getByText(workerName, { timeout: 40000 }).should('have.length', 1);
+    cy.findByText(workerName, { timeout: 40000 }).should('have.length', 1);
   });
 
   it('adds and removes a topic', () => {
@@ -81,42 +81,42 @@ describe('WorkspacesPage', () => {
 
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
-      .getByTestId(Cypress.env('WORKER_NAME'))
+      .findByTestId(Cypress.env('WORKER_NAME'))
       .click()
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('TOPICS').click();
+        cy.findByText('TOPICS').click();
       })
-      .getByText('NEW TOPIC')
+      .findByText('NEW TOPIC')
       .click()
-      .getByPlaceholderText('Kafka Topic')
+      .findByPlaceholderText('Kafka Topic')
       .type(topicName)
-      .getByTestId('partitions-input')
+      .findByTestId('partitions-input')
       .type(1)
-      .getByTestId('replications-input')
+      .findByTestId('replications-input')
       .type(1)
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@getTopics')
-      .getByText(topicName)
+      .findByText(topicName)
       .should('have.length', 1);
 
-    cy.getByTestId(topicName)
+    cy.findByTestId(topicName)
       .click({ force: true })
-      .getByText('DELETE')
+      .findByText('DELETE')
       .click()
-      .getByText(`Successfully deleted the topic: ${topicName}`)
+      .findByText(`Successfully deleted the topic: ${topicName}`)
       .should('have.length', 1);
   });
 
   it('adds and removes a streamApp', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
-      .getByTestId(Cypress.env('WORKER_NAME'))
+      .findByTestId(Cypress.env('WORKER_NAME'))
       .click()
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('STREAM JARS').click();
+        cy.findByText('STREAM JARS').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -126,14 +126,14 @@ describe('WorkspacesPage', () => {
         'application/java-archive',
       )
       .wait(500)
-      .getByText('ohara-streamapp.jar')
+      .findByText('ohara-streamapp.jar')
       .should('have.length', 1);
 
-    cy.getByTestId('ohara-streamapp.jar')
+    cy.findByTestId('ohara-streamapp.jar')
       .click()
-      .getByText('DELETE')
+      .findByText('DELETE')
       .click()
-      .getByText('Successfully deleted the stream app!')
+      .findByText('Successfully deleted the stream app!')
       .should('have.length', 1)
       .wait('@getFiles')
       .get('td')
@@ -143,11 +143,11 @@ describe('WorkspacesPage', () => {
   it('should warn the user when a duplicate jar name is upload', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
-      .getByTestId(Cypress.env('WORKER_NAME'))
+      .findByTestId(Cypress.env('WORKER_NAME'))
       .click()
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('STREAM JARS').click();
+        cy.findByText('STREAM JARS').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -164,7 +164,7 @@ describe('WorkspacesPage', () => {
         'application/java-archive',
       )
       .wait(500)
-      .getByText('The jar name already exists!')
+      .findByText('The jar name already exists!')
       .should('have.length', 1)
       .queryAllByText('ohara-streamapp.jar')
       .should('have.length', 1);
@@ -173,47 +173,47 @@ describe('WorkspacesPage', () => {
   it('should link to the correct service page', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
-      .getByTestId(Cypress.env('WORKER_NAME'))
+      .findByTestId(Cypress.env('WORKER_NAME'))
       .click()
       .url()
       .should('include', '/overview')
-      .getByTestId('overview-nodes-link')
+      .findByTestId('overview-nodes-link')
       .click()
       .url()
       .should('include', '/nodes')
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('OVERVIEW').click();
+        cy.findByText('OVERVIEW').click();
       })
-      .getByTestId('overview-topics-link')
+      .findByTestId('overview-topics-link')
       .click()
       .url()
       .should('include', '/topics')
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('OVERVIEW').click();
+        cy.findByText('OVERVIEW').click();
       })
-      .getByTestId('overview-streamapps-link')
+      .findByTestId('overview-streamapps-link')
       .click()
       .url()
       .should('include', '/streamapps')
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('OVERVIEW').click();
+        cy.findByText('OVERVIEW').click();
       })
-      .getByTestId('overview-plugins-link')
+      .findByTestId('overview-plugins-link')
       .click()
       .url()
       .should('include', '/plugins');
   });
 
-  it('should display the overview info', () => {
+  it.only('should display the overview info', () => {
     cy.addTopic().as('overviewTopic');
 
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))
-      .getByTestId(Cypress.env('WORKER_NAME'))
+      .findByTestId(Cypress.env('WORKER_NAME'))
       .click()
       .wait('@getWorker')
       .then(xhr => {
@@ -225,15 +225,15 @@ describe('WorkspacesPage', () => {
         } = xhr.response.body.settings;
 
         // Basic info
-        cy.getByText(`Worker Image: ${imageName}`).should('have.length', 1);
+        cy.findByText(`Worker Image: ${imageName}`).should('have.length', 1);
 
         // Nodes
         nodeNames.forEach(node => {
-          cy.getByText(`${node}:${clientPort}`)
+          cy.findByText(`${node}:${clientPort}`)
             .should('have.length', 1)
-            .getByTestId(`Worker-${node}:${clientPort}`)
+            .findByTestId(`Worker-${node}:${clientPort}`)
             .trigger('mouseover')
-            .getByText(`Jmxport: ${jmxPort}`)
+            .findByText(`Jmxport: ${jmxPort}`)
             .should('have.length', 1);
         });
 
@@ -244,11 +244,11 @@ describe('WorkspacesPage', () => {
         connectors.forEach(connector => {
           const name = connector.className.split('.').pop();
 
-          cy.getByText(name)
+          cy.findByText(name)
             .should('have.length', 1)
-            .getByTestId(`${name}-tooltip`)
+            .findByTestId(`${name}-tooltip`)
             .trigger('mouseover')
-            .getByText(connector.className)
+            .findByText(connector.className)
             .should('have.length', 1);
 
           const definitions = connector.definitions;
@@ -257,16 +257,17 @@ describe('WorkspacesPage', () => {
           definitions
             .filter(definition => keys.includes(definition.key))
             .forEach((definition, index) => {
-              cy.getByTestId(`${keys[index]}-value`).then($el =>
+              cy.findByTestId(`${keys[index]}-value`).then($el =>
                 cy.wrap($el.text()).should('have.eq', definition.defaultValue),
               );
             });
 
-          cy.getByTestId(`${name}-tooltip`).trigger('mouseout');
+          cy.findByTestId(`${name}-tooltip`).trigger('mouseout');
         });
       })
       .wait('@getBroker')
       .then(xhr => {
+<<<<<<< HEAD
         const {
           clientPort,
           nodeNames,
@@ -278,17 +279,30 @@ describe('WorkspacesPage', () => {
         ).should('have.length', 1);
         nodeNames.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
+=======
+        const clientPort = xhr.response.body.clientPort;
+        const bkNodes = xhr.response.body.nodeNames;
+        const jmxPort = xhr.response.body.jmxPort;
+        const exporterPort = xhr.response.body.exporterPort;
+        cy.findByText(`Broker Image: ${xhr.response.body.imageName}`).should(
+          'have.length',
+          1,
+        );
+        bkNodes.forEach(node => {
+          cy.findByText(`${node}:${clientPort}`)
+>>>>>>> wip
             .should('have.length', 1)
-            .getByTestId(`Broker-${node}:${clientPort}`)
+            .findByTestId(`Broker-${node}:${clientPort}`)
             .trigger('mouseover')
-            .getByText(`Jmxport: ${jmxPort}`)
+            .findByText(`Jmxport: ${jmxPort}`)
             .should('have.length', 1)
-            .getByText(`Exporterport: ${exporterPort}`)
+            .findByText(`Exporterport: ${exporterPort}`)
             .should('have.length', 1);
         });
       })
       .wait('@getZookeeper')
       .then(xhr => {
+<<<<<<< HEAD
         const {
           clientPort,
           nodeNames,
@@ -300,14 +314,26 @@ describe('WorkspacesPage', () => {
         ).should('have.length', 1);
         nodeNames.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
+=======
+        const clientPort = xhr.response.body.clientPort;
+        const ZkNodes = xhr.response.body.nodeNames;
+        const peerPort = xhr.response.body.peerPort;
+        const electionPort = xhr.response.body.electionPort;
+        cy.findByText(`Zookeeper Image: ${xhr.response.body.imageName}`).should(
+          'have.length',
+          1,
+        );
+        ZkNodes.forEach(node => {
+          cy.findByText(`${node}:${clientPort}`)
+>>>>>>> wip
             .should('have.length', 1)
-            .getByTestId(`Zookeeper-${node}:${clientPort}`)
+            .findByTestId(`Zookeeper-${node}:${clientPort}`)
             .trigger('mouseover')
-            .getByText(`Peerport: ${peerPort}`)
+            .findByText(`Peerport: ${peerPort}`)
             .should('have.length', 1)
-            .getByText(`Electionport: ${electionPort}`)
+            .findByText(`Electionport: ${electionPort}`)
             .should('have.length', 1)
-            .getByTestId(`Zookeeper-${node}:${clientPort}`)
+            .findByTestId(`Zookeeper-${node}:${clientPort}`)
             .trigger('mouseout');
         });
       })
@@ -323,11 +349,11 @@ describe('WorkspacesPage', () => {
             })
             .forEach(topic => {
               const { name, numberOfPartitions, numberOfReplications } = topic;
-              cy.getByText(name)
+              cy.findByText(name)
                 .should('have.length', 1)
-                .getByTestId(`${name}-nop-${numberOfPartitions}`)
+                .findByTestId(`${name}-nop-${numberOfPartitions}`)
                 .should('have.length', 1)
-                .getByTestId(`${name}-nor-${numberOfReplications}`)
+                .findByTestId(`${name}-nor-${numberOfReplications}`)
                 .should('have.length', 1);
             });
         });
@@ -336,9 +362,9 @@ describe('WorkspacesPage', () => {
       .then(xhr => {
         xhr.response.body.forEach(file => {
           const size = floor(divide(file.size, 1024), 1);
-          cy.getByText(file.name)
+          cy.findByText(file.name)
             .should('have.length', 1)
-            .getByText(String(size))
+            .findByText(String(size))
             .should('have.length', 1);
         });
       });
@@ -379,11 +405,11 @@ describe('plugin', () => {
   it('should update a workespace', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
-      .getByTestId(workerName)
+      .findByTestId(workerName)
       .click()
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('PLUGINS').click();
+        cy.findByText('PLUGINS').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -393,23 +419,23 @@ describe('plugin', () => {
         'application/java-archive',
       )
       .wait('@getFiles')
-      .getByText('Plugin successfully uploaded!')
+      .findByText('Plugin successfully uploaded!')
       .should('have.length', 1)
       .queryAllByText('ohara-it-source.jar')
       .should('have.length', 1)
-      .getByText(
+      .findByText(
         'You’ve made some changes to the plugins: 1 added. Please restart for these settings to take effect!!',
       )
       .should('have.length', 1)
-      .getByText('RESTART')
+      .findByText('RESTART')
       .click()
-      .getByTestId('confirm-button-RESTART')
+      .findByTestId('confirm-button-RESTART')
       .click()
       .wait('@getPipelines', { timeout: 60000 })
       .wait('@stopWorker', { timeout: 60000 })
       .wait('@startWorker', { timeout: 60000 })
       .wait('@getFiles', { timeout: 60000 })
-      .getByTestId('plugins-loaded', { timeout: 60000 })
+      .findByTestId('plugins-loaded', { timeout: 60000 })
       .should('have.length', 1);
   });
 
@@ -491,18 +517,18 @@ describe('plugin', () => {
     });
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
-      .getByTestId(workerName)
+      .findByTestId(workerName)
       .click()
-      .getByTestId('workspace-tab')
+      .findByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('PLUGINS').click();
+        cy.findByText('PLUGINS').click();
       })
       .wait('@getFiles')
-      .getByTestId('ohara-it-sink.jar')
+      .findByTestId('ohara-it-sink.jar')
       .click()
-      .getByText('RESTART')
+      .findByText('RESTART')
       .click()
-      .getByTestId('confirm-button-RESTART')
+      .findByTestId('confirm-button-RESTART')
       .click()
       .wait('@getPipelines', { timeout: 60000 })
       .wait('@stopConnector', { timeout: 60000 })
@@ -518,7 +544,7 @@ describe('plugin', () => {
       .wait('@startConnector', { timeout: 60000 })
       .wait('@startConnector', { timeout: 60000 })
       .wait('@getFiles', { timeout: 60000 })
-      .getByTestId('ohara-it-sink.jar', { timeout: 60000 })
+      .findByTestId('ohara-it-sink.jar', { timeout: 60000 })
       .should('have.length', 1);
   });
 });

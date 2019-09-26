@@ -39,15 +39,15 @@ describe('PipelineEditPage', () => {
 
     cy.addTopic();
     cy.visit(URLS.PIPELINES)
-      .getByTestId('new-pipeline')
+      .findByTestId('new-pipeline')
       .click()
-      .getByTestId('pipeline-name-input')
+      .findByTestId('pipeline-name-input')
       .type(pipelineName)
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@getPipeline');
   });
@@ -55,26 +55,28 @@ describe('PipelineEditPage', () => {
   it('adds a topic into pipeline graph and removes it later', () => {
     // Add the topic
     cy.wait('@getTopics')
-      .getByTestId('toolbar-topics')
+      .findByTestId('toolbar-topics')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@putPipeline')
-      .getByText(Cypress.env('TOPIC_NAME'))
+      .findByText(Cypress.env('TOPIC_NAME'))
       .should('be.exist');
 
     // Remove the topic
-    cy.getByText(Cypress.env('TOPIC_NAME'))
+    cy.findByText(Cypress.env('TOPIC_NAME'))
       .click({ force: true })
-      .getByTestId('delete-button')
+      .findByTestId('delete-button')
       .click()
-      .getByText('DELETE')
+      .findByText('DELETE')
       .click()
-      .getByText(`Successfully deleted the topic: ${Cypress.env('TOPIC_NAME')}`)
+      .findByText(
+        `Successfully deleted the topic: ${Cypress.env('TOPIC_NAME')}`,
+      )
       .wait('@getPipeline')
       .wait(500) // wait here, so the local state is up-to-date with the API response
       .queryByText(Cypress.env('TOPIC_NAME'), { timeout: 500 })
@@ -84,41 +86,41 @@ describe('PipelineEditPage', () => {
   it('should prevent user from deleting a topic that has connection', () => {
     // Add topic
     cy.wait('@getTopics')
-      .getByTestId('toolbar-topics')
+      .findByTestId('toolbar-topics')
       .click()
-      .getByTestId('topic-select')
-      .getByText('Please select...')
+      .findByTestId('topic-select')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@putPipeline');
 
     // Add ftp source connector
     const connectorName = generate.serviceName({ prefix: 'connector' });
 
-    cy.getByTestId('toolbar-sources')
+    cy.findByTestId('toolbar-sources')
       .click()
-      .getByText(CONNECTOR_TYPES.jdbcSource)
+      .findByText(CONNECTOR_TYPES.jdbcSource)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(connectorName)
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline');
 
     // Set the connection between them
-    cy.getByText(connectorName)
+    cy.findByText(connectorName)
       .click({ force: true })
       .wait('@getConnector')
-      .getByText('core')
+      .findByText('core')
       .click({ force: true })
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
@@ -128,21 +130,21 @@ describe('PipelineEditPage', () => {
     cy.wait(1000); // Temp workaround, need this to make sure Cypress can get the right element to work on
 
     // Try to remove the topic
-    cy.getByTestId('pipeline-graph')
+    cy.findByTestId('pipeline-graph')
       .within(() => {
-        cy.getByText(Cypress.env('TOPIC_NAME')).click({ force: true });
+        cy.findByText(Cypress.env('TOPIC_NAME')).click({ force: true });
       })
-      .getByTestId('delete-button')
+      .findByTestId('delete-button')
       .click()
-      .getByTestId('delete-dialog')
+      .findByTestId('delete-dialog')
       .within(() => {
-        cy.getByText('DELETE').click();
+        cy.findByText('DELETE').click();
       });
 
-    cy.getByText('You cannot delete the topic while it has any connection');
+    cy.findByText('You cannot delete the topic while it has any connection');
     // The topic should still be there
-    cy.getByTestId('pipeline-graph').within(() =>
-      cy.getByText(Cypress.env('TOPIC_NAME')),
+    cy.findByTestId('pipeline-graph').within(() =>
+      cy.findByText(Cypress.env('TOPIC_NAME')),
     );
   });
 
@@ -177,17 +179,17 @@ describe('PipelineEditPage', () => {
     // Add connector to the graph
     cy.wrap(connectors).each(connector => {
       const { toolbarTestId, type, nodeType, connectorName } = connector;
-      cy.getByTestId(toolbarTestId)
+      cy.findByTestId(toolbarTestId)
         .click()
-        .getByText(type)
+        .findByText(type)
         .click()
-        .getByText('ADD')
+        .findByText('ADD')
         .click()
-        .getByPlaceholderText('myconnector')
+        .findByPlaceholderText('myconnector')
         .type(connectorName)
-        .getByTestId('new-connector-dialog')
+        .findByTestId('new-connector-dialog')
         .within(() => {
-          cy.getByText('ADD').click();
+          cy.findByText('ADD').click();
         });
 
       cy.wait(['@postConnector', '@putPipeline'])
@@ -201,13 +203,13 @@ describe('PipelineEditPage', () => {
     cy.wrap(connectors).each(connector => {
       const { connectorName } = connector;
 
-      cy.getByText(connectorName)
+      cy.findByText(connectorName)
         .click({ force: true })
-        .getByTestId('delete-button')
+        .findByTestId('delete-button')
         .click()
-        .getByText('DELETE')
+        .findByText('DELETE')
         .click()
-        .getByText(`Successfully deleted the connector: ${connectorName}`)
+        .findByText(`Successfully deleted the connector: ${connectorName}`)
         .wait('@getPipeline')
         .wait(500) // wait here, so the local state is up-to-date with the API response
         .queryByText(connectorName, { timeout: 500 })
@@ -217,36 +219,36 @@ describe('PipelineEditPage', () => {
 
   it('saves and removes a connector even after page refresh', () => {
     const connectorName = generate.serviceName({ prefix: 'connector' });
-    cy.getByTestId('toolbar-sources')
+    cy.findByTestId('toolbar-sources')
       .click()
-      .getByText(CONNECTOR_TYPES.jdbcSource)
+      .findByText(CONNECTOR_TYPES.jdbcSource)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(connectorName)
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
-      .getByText(connectorName)
+      .findByText(connectorName)
       .should('have.length', '1')
       .get('.node-type')
       .should('contain', 'JDBCSourceConnector')
       .wait(3000)
       .reload()
-      .getByText(connectorName)
+      .findByText(connectorName)
       .should('have.length', '1')
       .get('.node-type')
       .should('contain', 'JDBCSourceConnector');
 
-    cy.getByText(connectorName)
+    cy.findByText(connectorName)
       .click({ force: true })
-      .getByTestId('delete-button')
+      .findByTestId('delete-button')
       .click()
-      .getByText('DELETE')
+      .findByText('DELETE')
       .click()
-      .getByText(`Successfully deleted the connector: ${connectorName}`)
+      .findByText(`Successfully deleted the connector: ${connectorName}`)
       .should('be.exist')
       .wait(3000)
       .reload()
@@ -257,48 +259,48 @@ describe('PipelineEditPage', () => {
   });
 
   it('connects Ftp soure -> Topic -> Ftp sink', () => {
-    cy.getByTestId('toolbar-sinks')
+    cy.findByTestId('toolbar-sinks')
       .click()
-      .getByText(CONNECTOR_TYPES.ftpSink)
+      .findByText(CONNECTOR_TYPES.ftpSink)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline')
-      .getByTestId('toolbar-sources')
+      .findByTestId('toolbar-sources')
       .click()
-      .getByText(CONNECTOR_TYPES.ftpSource)
+      .findByText(CONNECTOR_TYPES.ftpSource)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline')
-      .getByTestId('toolbar-topics')
+      .findByTestId('toolbar-topics')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@putPipeline');
 
-    cy.getByText('FtpSink')
+    cy.findByText('FtpSink')
       .click({ force: true })
-      .getByText('core')
+      .findByText('core')
       .click()
       .wait('@getConnector')
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
@@ -309,12 +311,12 @@ describe('PipelineEditPage', () => {
 
     cy.wait(1000); // Temp workaround, need this to make sure Cypress can get the right element to work on
 
-    cy.getByText('FtpSource')
+    cy.findByText('FtpSource')
       .click({ force: true })
       .wait('@getConnector')
-      .getByText('core')
+      .findByText('core')
       .click({ force: true })
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
@@ -325,50 +327,50 @@ describe('PipelineEditPage', () => {
   });
 
   it('connects Jdbc source -> Topic -> Hdfs sink together', () => {
-    cy.getByTestId('toolbar-sinks')
+    cy.findByTestId('toolbar-sinks')
       .click()
-      .getByText(CONNECTOR_TYPES.hdfsSink)
+      .findByText(CONNECTOR_TYPES.hdfsSink)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline')
-      .getByTestId('toolbar-sources')
+      .findByTestId('toolbar-sources')
       .click()
-      .getByText(CONNECTOR_TYPES.jdbcSource)
+      .findByText(CONNECTOR_TYPES.jdbcSource)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline')
-      .getByTestId('toolbar-topics')
+      .findByTestId('toolbar-topics')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@putPipeline');
 
     cy.wait(1000); // Temp workaround, need this to make sure Cypress can get the right element to work on
 
-    cy.getByText('HDFSSink')
+    cy.findByText('HDFSSink')
       .click({ force: true })
       .wait('@getConnector')
-      .getByText('core')
+      .findByText('core')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
@@ -379,12 +381,12 @@ describe('PipelineEditPage', () => {
 
     cy.wait(1000); // Temp workaround, need this to make sure Cypress can get the right element to work on
 
-    cy.getByText('JDBCSourceConnector')
+    cy.findByText('JDBCSourceConnector')
       .click({ force: true })
       .wait('@getConnector')
-      .getByText('core')
+      .findByText('core')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
@@ -398,41 +400,41 @@ describe('PipelineEditPage', () => {
     const perfName = generate.serviceName({ prefix: 'connector' });
     const topicName = Cypress.env('TOPIC_NAME');
 
-    cy.getByTestId('toolbar-sources')
+    cy.findByTestId('toolbar-sources')
       .click()
-      .getByText('Add a new source connector')
+      .findByText('Add a new source connector')
       .should('be.exist')
-      .getByText(CONNECTOR_TYPES.perfSource)
+      .findByText(CONNECTOR_TYPES.perfSource)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('myconnector')
+      .findByPlaceholderText('myconnector')
       .type(perfName)
-      .getByTestId('new-connector-dialog')
+      .findByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('ADD').click();
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline')
-      .getByTestId('toolbar-topics')
+      .findByTestId('toolbar-topics')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@putPipeline')
-      .getByText('PerfSource')
+      .findByText('PerfSource')
       .click({ force: true })
-      .getByText('core')
+      .findByText('core')
       .click()
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${topicName}]`)
       .click()
       .wait(2000)
       .wait('@putPipeline')
-      .getByTestId('start-btn')
+      .findByTestId('start-btn')
       .click({ force: true })
       .wait('@putConnector')
       .wait('@getPipeline') // Waiting for multiple `GET pipeline` requests here, so the metrics data can be ready for us to test
@@ -440,7 +442,7 @@ describe('PipelineEditPage', () => {
       .wait('@getPipeline')
       .wait('@getPipeline')
       .wait('@getPipeline')
-      .getByText(`Metrics (${perfName})`)
+      .findByText(`Metrics (${perfName})`)
       .should('have.length', 1)
       .get('@getPipeline')
       .then(xhr => {
@@ -461,17 +463,17 @@ describe('PipelineEditPage', () => {
       // 2.Topic click cause refresh cypress couldn't get DOM event so click unable to end, we need click two time.
       // reference https://github.com/cypress-io/cypress/issues/695#issuecomment-493578023
       .get('@getPipeline')
-      .getByTestId(`topic-${topicName}`)
+      .findByTestId(`topic-${topicName}`)
       .invoke('width')
       .should('be.gt', 0)
-      .getByTestId(`topic-${topicName}`)
+      .findByTestId(`topic-${topicName}`)
       .click({ force: true })
-      .getByTestId(`topic-${topicName}`)
+      .findByTestId(`topic-${topicName}`)
       .click({ force: true })
 
-      .getByText(`Metrics (${topicName})`)
+      .findByText(`Metrics (${topicName})`)
       .should('have.length', 1)
-      .getByTestId('expandIcon')
+      .findByTestId('expandIcon')
       .click({ force: true })
       .get('@getPipeline')
       .then(xhr => {

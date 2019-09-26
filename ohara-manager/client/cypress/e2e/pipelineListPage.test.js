@@ -37,19 +37,19 @@ describe('PipelineListPage', () => {
     });
 
     cy.visit(URLS.PIPELINES)
-      .getByText('NEW PIPELINE')
+      .findByText('NEW PIPELINE')
       .click()
-      .getByTestId('pipeline-name-input')
+      .findByTestId('pipeline-name-input')
       .type(pipelineName)
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@postPipeline')
       .wait('@getPipelines')
-      .getByText(pipelineName)
+      .findByText(pipelineName)
       .should('have.length', 1);
   });
 
@@ -66,10 +66,10 @@ describe('PipelineListPage', () => {
     cy.addPipeline(pipelineParams)
       .visit(URLS.PIPELINES)
       .wait('@getPipelines')
-      .getByText(pipelineName)
+      .findByText(pipelineName)
       .then($el => {
         cy.wrap($el.parent()).within(() => {
-          cy.getByTestId('edit-pipeline').click({ force: true });
+          cy.findByTestId('edit-pipeline').click({ force: true });
         });
       })
       .location('pathname')
@@ -89,16 +89,16 @@ describe('PipelineListPage', () => {
     cy.addPipeline(pipelineParams)
       .visit(URLS.PIPELINES)
       .wait('@getPipelines')
-      .getByText(pipelineName)
+      .findByText(pipelineName)
       .then($el => {
         cy.wrap($el.parent()).within(() => {
-          cy.getByTestId('delete-pipeline').click({ force: true });
+          cy.findByTestId('delete-pipeline').click({ force: true });
         });
       })
-      .getByText('DELETE')
+      .findByText('DELETE')
       .click({ force: true })
       .wait('@deletePipeline')
-      .getByText(`Successfully deleted the pipeline: ${pipelineName}`)
+      .findByText(`Successfully deleted the pipeline: ${pipelineName}`)
       .should('have.length', 1);
   });
 });

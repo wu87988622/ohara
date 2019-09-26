@@ -44,21 +44,22 @@ describe.skip('StreamApp', () => {
 
     cy.visit(URLS.PIPELINES)
       .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))
-      .getByText('NEW PIPELINE')
+      .findByText('NEW PIPELINE')
       .click()
-      .getByTestId('pipeline-name-input')
+      .findByTestId('pipeline-name-input')
       .type(pipelineName)
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
       .wait('@getPipeline');
 
-    cy.getByTestId('toolbar-streams')
+    cy.findByTestId('toolbar-streams')
       .click()
       .wait('@getJars')
+<<<<<<< HEAD
       .getByText('Please select...')
       .click()
       .get(`li[data-value='ohara-streamapp.jar']`)
@@ -66,38 +67,59 @@ describe.skip('StreamApp', () => {
       .getByText('ADD')
       .click()
       .getByPlaceholderText('mystreamapp')
+=======
+      .findByText('Add')
+      .click()
+      .findByPlaceholderText('StreamApp name')
+>>>>>>> wip
       .type(streamAppName)
       .getByTestId('new-steam-dialog')
       .within(() => {
+<<<<<<< HEAD
         cy.getByText('ADD').click();
+=======
+        cy.findByText('Add').click();
+>>>>>>> wip
       })
       .wait('@putPipeline');
 
     // TODO: these two topics can be added via API which should be faster than
     // adding from the UI
-    cy.getByTestId('toolbar-topics')
+    cy.findByTestId('toolbar-topics')
       .click({ force: true })
+<<<<<<< HEAD
       .getByText('Please select...')
       .click()
       .get(`li[data-value=${fromTopicName}]`)
       .click()
       .getByText('ADD')
+=======
+      .findByTestId('topic-select')
+      .select(fromTopicName)
+      .findByText('Add')
+>>>>>>> wip
       .click()
       .wait('@putPipeline');
 
-    cy.getByTestId('toolbar-topics')
+    cy.findByTestId('toolbar-topics')
       .click({ force: true })
+<<<<<<< HEAD
       .getByText('Please select...')
       .click()
       .get(`li[data-value=${toTopicName}]`)
       .click()
       .getByText('ADD')
+=======
+      .findByTestId('topic-select')
+      .select(toTopicName)
+      .findByText('Add')
+>>>>>>> wip
       .click()
       .wait('@putPipeline');
 
-    cy.getByText(streamAppName)
+    cy.findByText(streamAppName)
       .click({ force: true })
-      .getByTestId('from')
+      .findByTestId('from')
       .siblings()
       .then($els => {
         cy.wrap($els.first())
@@ -107,7 +129,7 @@ describe.skip('StreamApp', () => {
       })
       .wait(2000) // UI has one sec throttle
       .wait('@putPipeline')
-      .getByTestId('to')
+      .findByTestId('to')
       .siblings()
       .then($els => {
         cy.wrap($els.first())
@@ -117,11 +139,11 @@ describe.skip('StreamApp', () => {
       })
       .wait(2000) // UI has one sec throttle
       .wait('@putPipeline')
-      .getByTestId('start-button')
+      .findByTestId('start-button')
       .click()
-      .getByText('Stream app successfully started!')
-      .getByText(streamAppName)
-      .getByTestId('stop-button')
+      .findByText('Stream app successfully started!')
+      .findByText(streamAppName)
+      .findByTestId('stop-button')
       .click();
   });
 });
