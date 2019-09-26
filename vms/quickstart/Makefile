@@ -1,12 +1,13 @@
-PACKER_CACHE_DIR = ".cache/packer_cache"
-PACKER_LOG = 1
-PACKER_LOG_PATH = ".cache/packer.log"
+CACHE_DIR=.cache
+PACKER_CACHE_DIR=$(CACHE_DIR)/packer_cache
+PACKER_LOG=1
+PACKER_LOG_PATH=$(CACHE_DIR)/packer.log
 BUILD_TIME=`date +'%Y/%m/%d %H:%k'`
 VM_NAME=ohara-quickstart-$(OHARA_VER)
 
 ifndef OHARA_VER
 $(warning Usage:)
-$(warning $(  )  $$ make OHARA={version} {command})
+$(warning $(  )  $$ make OHARA_VER={version} {command})
 $(error OHARA_VER required)
 endif
 
@@ -16,7 +17,7 @@ help:
 	@echo "  Both {version} and {command} is required."
 	@echo "Command:"
 	@echo "  clean: Remove following files:"
-	@echo "         build/, .cache/packer_cache/, ${PACKER_LOG_PATH}"
+	@echo "         build/, ${PACKER_CACHE_DIR}/, ${PACKER_LOG_PATH}"
 	@echo "  ova: Generate the OVA file. "
 	@echo "       The output is build/ohara-quickstart-{OHARA_VER}.ova"
 	@echo "  vm-import: Import the ova file into VirtualBox"
@@ -32,6 +33,7 @@ clean:
 	@rm -f $(PACKER_LOG_PATH)
 
 ova:
+	@mkdir -p $(CACHE_DIR)
 	@echo "OHARA_VER=$(OHARA_VER)"
 	@echo "Build time: $(BUILD_TIME)"
 	@echo "Start building quickstart VM ova file..."

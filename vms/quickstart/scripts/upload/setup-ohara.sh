@@ -15,6 +15,9 @@
 # limitations under the License.
 #
 
+source ./ohara-env.sh
+
+echo "HOST=$HOST"
 
 # variable `OHARA_VER` should pass from command
 if [[ -z "$OHARA_VER" ]]; then
@@ -35,16 +38,48 @@ if [[ -z "$OHARA_IMAGES" ]]; then
   docker pull "oharastream/connect-worker:$OHARA_VER"
   docker pull "oharastream/streamapp:$OHARA_VER"
   docker pull "oharastream/shabondi:$OHARA_VER"
-  docker pull "oharastream/backend:$OHARA_VER"
   echo ""
   echo "Download completed!"
 else
   echo "Ohara docker images already downloaded."
 fi
 
-echo "IP address info:"
-ip -br addr
-echo ""
-echo "Now you can run:"
-printf "  $ ./ohara-configurator.sh\n"
-printf "  $ ./ohara-manager.sh {IP}\n"
+# Remove all exited or dead containers
+if [ "$(docker ps -q -f status=exited)" ]; then
+  echo -e "\n> Remove all exited containers..."
+  docker rm -f $(docker ps -qa --filter status=exited)
+fi
+
+if [ "$(docker ps -q -f status=dead)" ]; then
+  echo -e "\n> Remove all dead containers..."
+  docker rm -f $(docker ps -qa --filter status=dead)
+fi
+
+# Start Ohara services
+./ohara-configurator.sh
+./ohara-manager.sh
+./ohara-demo-ftp.sh
+./ohara-demo-postgresql.sh
+./ohara-demo-smb.sh
+
+sleep 3
+
+if [ "$(docker ps -q -f name=ohara-demo-ftp)" ]; then
+  echo -e "\n> FTP ready on ftp://$FTP_USER:$FTP_PASSWORD@$FTP_HOST:$FTP_PORT"
+fi
+
+if [ "$(docker ps -q -f name=ohara-demo-postgresql)" ]; then
+  echo -e "\n> Postgresql ready on jdbc:postgresql://$PGSQL_HOST:$PGSQL_PORT/$PGSQL_DATABASE (user=$PGSQL_USER, password=$PGSQL_PASSWORD)"
+fi
+
+if [ "$(docker ps -q -f name=ohara-demo-smb)" ]; then
+  echo -e "\n> SMB ready on smb://$SMB_USER:$SMB_PASSWORD@$SMB_HOST:$SMB_PORT/$SMB_USER"
+fi
+
+if [ "$(docker ps -q -f name=ohara-configurator)" ] && [ "$(docker ps -q -f name=ohara-manager)" ]; then
+  echo -e "\n> Ohara ready on http://$MANAGER_HOST:$MANAGER_PORT \n"
+else
+  echo -e "\nStartup ohara was failure."
+fi
+
+

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright 2019 is-land
 #
@@ -17,14 +17,23 @@
 
 source ./ohara-env.sh
 
-container_name="ohara-manager"
+container_name="ohara-demo-postgresql"
 
 if [ ! "$(docker ps -q -f name=$container_name)" ]; then
-  echo -e "\n> Start ohara-manager..."
+  echo -e "\n> Start postgresql server..."
+
+  docker volume create pg_data
 
   docker run --name $container_name --restart=always \
-    -p $MANAGER_PORT:$MANAGER_PORT \
-    -d "oharastream/manager:$OHARA_VER" \
-    --port $MANAGER_PORT \
-    --configurator $CONFIGURATOR_API
+    -v pg_data:/var/lib/pgsql -p $PGSQL_PORT:$PGSQL_PORT \
+    --env "POSTGRES_USER=$PGSQL_USER" \
+    --env "POSTGRES_PASSWORD=$PGSQL_PASSWORD" \
+    --env "POSTGRES_DB=$PGSQL_DATABASE" \
+    -d islandsystems/postgresql:9.2.24
+
+  sleep 3
+
+  # create a table employees and insert some data
+  docker cp ~/employees.sql $container_name:/tmp/employees.sql
+  docker exec -u postgres $container_name psql -f /tmp/employees.sql
 fi

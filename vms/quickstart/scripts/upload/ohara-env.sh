@@ -15,16 +15,31 @@
 # limitations under the License.
 #
 
-source ./ohara-env.sh
+HOST=`ip -br addr | grep -E -o "192\.168\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1`
+USER="ohara"
+PASSWORD="oharastream"
 
-container_name="ohara-manager"
+CONFIGURATOR_HOST=$HOST
+CONFIGURATOR_PORT=12345
+CONFIGURATOR_FOLDER="/home/ohara/configurator"
+CONFIGURATOR_API="http://$CONFIGURATOR_HOST:$CONFIGURATOR_PORT/v0"
 
-if [ ! "$(docker ps -q -f name=$container_name)" ]; then
-  echo -e "\n> Start ohara-manager..."
+MANAGER_HOST=$HOST
+MANAGER_PORT=5050
 
-  docker run --name $container_name --restart=always \
-    -p $MANAGER_PORT:$MANAGER_PORT \
-    -d "oharastream/manager:$OHARA_VER" \
-    --port $MANAGER_PORT \
-    --configurator $CONFIGURATOR_API
-fi
+FTP_HOST=$HOST
+FTP_PORT=21
+FTP_USER=$USER
+FTP_PASSWORD=$PASSWORD
+
+SMB_HOST=$HOST
+SMB_PORT=445
+SMB_USER=$USER
+SMB_PASSWORD=$PASSWORD
+SMB_ROOT_DIR="/home/ohara/smb"
+
+PGSQL_HOST=$HOST
+PGSQL_PORT=5432
+PGSQL_USER=$USER
+PGSQL_PASSWORD=$PASSWORD
+PGSQL_DATABASE="postgres"

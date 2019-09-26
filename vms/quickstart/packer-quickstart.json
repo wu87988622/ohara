@@ -58,7 +58,7 @@
       "vm_name": "ohara-quickstart-{{user `OHARA_VER`}}",
       "vboxmanage": [
         ["modifyvm", "{{.Name}}", "--cpus", "2"],
-        ["modifyvm", "{{.Name}}", "--memory", "4096"],
+        ["modifyvm", "{{.Name}}", "--memory", "8192"],
         ["modifyvm", "{{.Name}}", "--description", "Ohara Quickstart VM\nOhara version: {{user `OHARA_VER`}}\nBuild time: {{user `BUILD_TIME`}}"],
         ["modifyvm", "{{.Name}}", "--nic2", "hostonly"],
         ["modifyvm", "{{.Name}}", "--hostonlyadapter2", "vboxnet0"]
