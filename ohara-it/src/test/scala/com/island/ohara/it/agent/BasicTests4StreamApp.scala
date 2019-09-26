@@ -227,8 +227,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   @Test
   def testRunSimpleStreamApp(): Unit = {
-    val from = TopicKey.of("default", "fromTopic")
-    val to = TopicKey.of("default", "toTopic")
+    val from = TopicKey.of("default", CommonUtils.randomString(5))
+    val to = TopicKey.of("default", CommonUtils.randomString(5))
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
     // jar should be parse-able
