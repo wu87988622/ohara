@@ -44,9 +44,6 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matche
   protected var _workerClient: WorkerClient = _
 
   protected var _brokersConnProps: String = _
-
-  private[this] val cleanup: Boolean = true
-
   @Before
   def setup(): Unit = {
     val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list())
@@ -117,6 +114,6 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matche
   def cleanupContainers(): Unit = {
     // we don't need to cleanup connectors since we directly delete all containers :)
     Releasable.close(configurator)
-    if (cleanup) Releasable.close(nameHolder)
+    Releasable.close(nameHolder)
   }
 }

@@ -39,8 +39,6 @@ class TestListCluster extends IntegrationTest with Matchers {
   private[this] val clusterCollie: ClusterCollie =
     ClusterCollie.builderOfSsh.nodeCollie(nodeCollie).build()
 
-  private[this] val cleanup: Boolean = true
-
   @Before
   def setup(): Unit = if (nodes.size < 2) skipTest("please buy more servers to run this test")
   else
@@ -104,6 +102,6 @@ class TestListCluster extends IntegrationTest with Matchers {
   @After
   def tearDown(): Unit = {
     Releasable.close(clusterCollie)
-    if (cleanup) Releasable.close(nameHolder)
+    Releasable.close(nameHolder)
   }
 }

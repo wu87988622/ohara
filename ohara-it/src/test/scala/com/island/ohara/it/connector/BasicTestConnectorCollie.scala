@@ -46,7 +46,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTestConnectorCollie])
-  private[this] val cleanup: Boolean = true
   private[this] val JAR_FOLDER_KEY: String = "ohara.it.jar.folder"
   private[this] val jarFolderPath = sys.env.getOrElse(JAR_FOLDER_KEY, "/jar")
 
@@ -342,7 +341,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
       statement.execute(s"drop table $tableName")
     }
     Releasable.close(client)
-    if (cleanup) Releasable.close(nameHolder)
     Releasable.close(configurator)
+    Releasable.close(nameHolder)
   }
 }

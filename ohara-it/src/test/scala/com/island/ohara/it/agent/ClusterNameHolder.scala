@@ -87,6 +87,11 @@ trait ClusterNameHolder extends Releasable {
 }
 
 object ClusterNameHolder {
+
+  /**
+    * used to debug :)
+    */
+  private[this] val KEEP_CONTAINERS = sys.env.get("ohara.it.keep.containers").exists(_.toLowerCase == "true")
   private[this] val LOG = Logger(classOf[ClusterNameHolder])
 
   /**
@@ -96,30 +101,36 @@ object ClusterNameHolder {
     */
   def apply(nodes: Seq[Node]): ClusterNameHolder =
     (clusterNames: Set[String], excludedNodes: Set[String], _: Boolean) =>
-      nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
-        val client =
-          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-        try client
-          .containerNames()
-          .filter(containerName => clusterNames.exists(clusterName => containerName.contains(clusterName)))
-          .foreach { containerName =>
-            try {
-              println(s"[-----------------------------------$containerName-----------------------------------]")
-              val containerLogs = try client.log(containerName)
-              catch {
+      if (!KEEP_CONTAINERS)
+        nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
+          val client =
+            DockerClient.builder
+              .hostname(node.hostname)
+              .port(node._port)
+              .user(node._user)
+              .password(node._password)
+              .build
+          try client
+            .containerNames()
+            .filter(containerName => clusterNames.exists(clusterName => containerName.contains(clusterName)))
+            .foreach { containerName =>
+              try {
+                println(s"[-----------------------------------$containerName-----------------------------------]")
+                val containerLogs = try client.log(containerName)
+                catch {
+                  case e: Throwable =>
+                    s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
+                }
+                println(containerLogs)
+                println("[------------------------------------------------------------------------------------]")
+                client.forceRemove(containerName)
+                LOG.info(s"succeed to remove container $containerName")
+              } catch {
                 case e: Throwable =>
-                  s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
+                  LOG.error(s"failed to remove container $containerName", e)
               }
-              println(containerLogs)
-              println("[------------------------------------------------------------------------------------]")
-              client.forceRemove(containerName)
-              LOG.info(s"succeed to remove container $containerName")
-            } catch {
-              case e: Throwable =>
-                LOG.error(s"failed to remove container $containerName", e)
-            }
-          } finally client.close()
-    }
+            } finally client.close()
+      }
 
   /**
     * create a name holder based on k8s.
@@ -129,24 +140,25 @@ object ClusterNameHolder {
     */
   def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder =
     (clusterNames: Set[String], excludedNodes: Set[String], closeThisHolder: Boolean) =>
-      try Await
-        .result(client.containers(), 30 seconds)
-        .filter(container => clusterNames.exists(clusterName => container.name.contains(clusterName)))
-        .filterNot(container => excludedNodes.contains(container.nodeName))
-        .foreach { container =>
-          try {
-            println(s"[-----------------------------------${container.name}-----------------------------------]")
-            val containerLogs = try Await.result(client.log(container.name), 30 seconds)
-            catch {
+      if (!KEEP_CONTAINERS)
+        try Await
+          .result(client.containers(), 30 seconds)
+          .filter(container => clusterNames.exists(clusterName => container.name.contains(clusterName)))
+          .filterNot(container => excludedNodes.contains(container.nodeName))
+          .foreach { container =>
+            try {
+              println(s"[-----------------------------------${container.name}-----------------------------------]")
+              val containerLogs = try Await.result(client.log(container.name), 30 seconds)
+              catch {
+                case e: Throwable =>
+                  s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"
+              }
+              println(containerLogs)
+              println("[------------------------------------------------------------------------------------]")
+              Await.result(client.forceRemove(container.name), 30 seconds)
+            } catch {
               case e: Throwable =>
-                s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"
+                LOG.error(s"failed to remove container ${container.name}", e)
             }
-            println(containerLogs)
-            println("[------------------------------------------------------------------------------------]")
-            Await.result(client.forceRemove(container.name), 30 seconds)
-          } catch {
-            case e: Throwable =>
-              LOG.error(s"failed to remove container ${container.name}", e)
-          }
-        } finally if (closeThisHolder) client.close()
+          } finally if (closeThisHolder) client.close()
 }

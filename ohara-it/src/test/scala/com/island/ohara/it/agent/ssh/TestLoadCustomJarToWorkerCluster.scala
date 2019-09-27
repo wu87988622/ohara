@@ -66,11 +66,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val nameHolder = ClusterNameHolder(nodes)
 
-  /**
-    * used to debug. setting false to disable cleanup of containers after testing.
-    */
-  private[this] val cleanup: Boolean = true
-
   @Before
   def setup(): Unit = if (nodes.isEmpty || port == invalidPort || hostname == invalidHostname)
     skipTest("public hostname and public port must exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
@@ -155,6 +150,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   @After
   final def tearDown(): Unit = {
     Releasable.close(configurator)
-    if (cleanup) Releasable.close(nameHolder)
+    Releasable.close(nameHolder)
   }
 }

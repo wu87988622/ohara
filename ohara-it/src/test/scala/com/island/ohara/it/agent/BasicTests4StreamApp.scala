@@ -48,11 +48,6 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   protected val nodes: Seq[Node]
   protected val nameHolder: ClusterNameHolder
 
-  /**
-    * useful to debug. setting it to false to keep all testing containers.
-    */
-  private[this] val cleanup: Boolean = true
-
   protected def createConfigurator(hostname: String, port: Int): Configurator
 
   private[this] var configurator: Configurator = _
@@ -403,7 +398,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   @After
   def cleanUp(): Unit = {
-    if (cleanup) Releasable.close(nameHolder)
+    Releasable.close(nameHolder)
     Releasable.close(configurator)
   }
 }

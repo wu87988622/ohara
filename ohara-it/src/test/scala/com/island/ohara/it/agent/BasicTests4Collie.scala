@@ -207,10 +207,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def wk_cluster(clusterName: String): Future[WorkerClusterInfo] =
     wk_clusters().map(_.find(_.name == clusterName).get)
 
-  /**
-    * used to debug...
-    */
-  private[this] val cleanup: Boolean = true
   private[this] def generateClusterName(): String = nameHolder.generateClusterName()
 
   @Test
@@ -836,6 +832,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   @After
   def cleanAllContainers(): Unit = {
     Releasable.close(configurator)
-    if (cleanup) Releasable.close(nameHolder)
+    Releasable.close(nameHolder)
   }
 }

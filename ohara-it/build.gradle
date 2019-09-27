@@ -137,7 +137,9 @@ class OharaTest extends Test {
           "ohara.it.smb.port",
           "ohara.it.smb.username",
           "ohara.it.smb.password",
-          "ohara.it.smb.shareName"
+          "ohara.it.smb.shareName",
+          // assign "true" to this false to keep all containers created by IT
+          "ohara.it.keep.containers"
   ]
 
   public OharaTest() {
