@@ -21,25 +21,29 @@ import React, {
   forwardRef,
 } from 'react';
 import PropTypes from 'prop-types';
+import DialogContent from '@material-ui/core/DialogContent';
 import { Link } from 'react-router-dom';
-import { get, truncate, isEmpty } from 'lodash';
+import { get, truncate, isEmpty, isNull } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import * as URLS from 'constants/urls';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { ListLoader } from 'components/common/Loader';
-import { Modal } from 'components/common/Modal';
-import { Select } from 'components/common/Form';
+import { Dialog } from 'components/common/Mui/Dialog';
 import { createConnector } from './pipelineToolbarUtils';
-import { Wrapper, Inner, LoaderWrapper } from './styles';
-import { Input, FormGroup } from 'components/common/Form';
+import { LoaderWrapper } from './styles';
+import { InputField } from 'components/common/Mui/Form';
 import { Warning } from 'components/common/Messages';
+import { Select } from 'components/common/Mui/Form';
 
 const PipelineNewStream = forwardRef((props, ref) => {
-  const [newStreamAppName, setNewStreamAppName] = useState('');
+  const [newStreamName, setNewStreamName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [jars, setJars] = useState([]);
-  const [activeJar, setActiveJar] = useState({});
+  const [currentJar, setCurrentJar] = useState('');
+
+  const { showMessage } = useSnackbar();
 
   const {
     workerClusterName,
@@ -51,25 +55,21 @@ const PipelineNewStream = forwardRef((props, ref) => {
   const jarGroup = workerClusterName;
 
   useEffect(() => {
+    const isDisabled = currentJar === '' || currentJar === 'Please select...';
+    enableAddButton(isDisabled);
+
     const fetchJars = async () => {
       const response = await jarApi.fetchJars(jarGroup);
       setIsLoading(false);
-
-      const jars = get(response, 'data.result', null);
-      const activeJar = {
-        group: get(jars, '[0].group', null),
-        name: get(jars, '[0].name', null),
-      };
+      const jars = get(response, 'data.result', []);
 
       if (!isEmpty(jars)) {
         setJars(jars);
-        setActiveJar(activeJar);
-        enableAddButton(false);
       }
     };
 
     fetchJars();
-  }, [jarGroup, enableAddButton]);
+  }, [currentJar, enableAddButton, jarGroup]);
 
   useImperativeHandle(ref, () => ({
     update() {
@@ -82,11 +82,11 @@ const PipelineNewStream = forwardRef((props, ref) => {
       length: 20,
       omission: '',
     });
-    setNewStreamAppName(newStreamAppName);
+    setNewStreamName(newStreamAppName);
   };
 
   const handleConfirm = () => {
-    const { group, name } = jars.filter(jar => jar.name === activeJar.name)[0];
+    const { group, name } = jars.find(jar => jar.name === currentJar);
 
     const connector = {
       jarKey: { group, name },
@@ -97,8 +97,9 @@ const PipelineNewStream = forwardRef((props, ref) => {
     createConnector({
       updateGraph,
       connector,
-      newStreamAppName,
+      newStreamName,
       brokerClusterName,
+      showMessage,
       group: pipelineGroup,
     });
 
@@ -112,14 +113,14 @@ const PipelineNewStream = forwardRef((props, ref) => {
           <ListLoader />
         </LoaderWrapper>
       ) : (
-        <Wrapper>
-          {isEmpty(jars) ? (
+        <DialogContent>
+          {isEmpty(jars) || isNull(currentJar) ? (
             <Warning
               text={
                 <>
                   {`You don't have any stream jars available in this workspace yet. But you can create one in `}
                   <Link
-                    to={`${URLS.WORKSPACES}/${workerClusterName}/streamapps`}
+                    to={`${URLS.WORKSPACES}/${workerClusterName}/streamjars`}
                   >
                     here
                   </Link>
@@ -128,38 +129,46 @@ const PipelineNewStream = forwardRef((props, ref) => {
             />
           ) : (
             <Select
-              isObject
-              list={jars}
-              selected={activeJar}
-              handleChange={event => setActiveJar(event.target.value)}
-              data-testid="streamapp-select"
+              required
+              autoFocus
+              placeholder="mystream"
+              input={{
+                name: 'stream',
+                onChange: event => setCurrentJar(event.target.value),
+                value: currentJar,
+              }}
+              meta={{}}
+              list={jars.map(jar => jar.name)}
+              inputProps={{
+                'data-testid': 'streamapp-select',
+              }}
             />
           )}
-        </Wrapper>
+        </DialogContent>
       )}
 
-      <Modal
-        isActive={isModalOpen}
-        title="New StreamApp Name"
-        width="370px"
-        data-testid="addStreamApp"
-        confirmBtnText="Add"
+      <Dialog
+        title="New stream app name"
+        open={isModalOpen}
+        confirmDisabled={newStreamName.length === 0}
+        maxWidth="xs"
         handleConfirm={handleConfirm}
-        handleCancel={() => setIsModalOpen(false)}
+        handleClose={() => setIsModalOpen(false)}
+        testId="new-steam-dialog"
       >
-        <Inner>
-          <FormGroup data-testid="name">
-            <Input
-              name="name"
-              width="100%"
-              placeholder="StreamApp name"
-              data-testid="name-input"
-              value={newStreamAppName}
-              handleChange={handleChange}
-            />
-          </FormGroup>
-        </Inner>
-      </Modal>
+        <DialogContent>
+          <InputField
+            autoFocus
+            placeholder="mystreamapp"
+            input={{
+              name: 'name',
+              onChange: handleChange,
+              value: newStreamName,
+            }}
+            inputProps={{ 'data-testid': 'name-input' }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });

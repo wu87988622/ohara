@@ -28,9 +28,7 @@ export const darkerBlue = '#202a41';
 export const green = '#45dd97';
 export const lightYellow = '#fff4ce';
 export const lightOrange = '#fecc22';
-export const orange = '#fdba00';
 export const red = '#ff545f';
-export const redHover = '#d02e38';
 
 export const white = '#fff';
 export const whiteSmoke = '#f5f6fa';

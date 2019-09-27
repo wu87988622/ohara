@@ -36,10 +36,11 @@ export const createConnector = async params => {
   const {
     updateGraph,
     connector,
-    newConnectorName,
-    newStreamAppName,
-    workerClusterKey,
     brokerClusterName,
+    workerClusterKey,
+    newConnectorName,
+    newStreamName,
+    showMessage,
     group,
   } = params;
 
@@ -52,26 +53,35 @@ export const createConnector = async params => {
     // Topic is created beforehand therefore, a name is already exist.
     connectorName = connector.name;
   } else if (typeName === 'stream') {
-    const response = await createProperty({
-      jarKey: connector.jarKey,
-      name: newStreamAppName,
-      brokerClusterName,
-      group,
-    });
+    try {
+      const response = await createProperty({
+        jarKey: connector.jarKey,
+        name: newStreamName,
+        brokerClusterName,
+        group,
+      });
 
-    if (!response.data.isSuccess) return; // failed to create
+      if (!response.data.isSuccess) return; // failed to create
 
-    connectorName = newStreamAppName;
+      connectorName = newStreamName;
+    } catch (error) {
+      showMessage(error.message);
+    }
   } else if (typeName === 'source' || typeName === 'sink') {
-    connectorName = newConnectorName;
-    const response = await connectorApi.createConnector({
-      name: newConnectorName,
-      'connector.class': className,
-      workerClusterKey,
-      group,
-    });
+    try {
+      const response = await connectorApi.createConnector({
+        name: newConnectorName,
+        'connector.class': className,
+        workerClusterKey,
+        group,
+      });
 
-    if (!response.data.isSuccess) return; // failed to create
+      if (!response.data.isSuccess) return; // failed to create
+
+      connectorName = newConnectorName;
+    } catch (error) {
+      showMessage(error.message);
+    }
   }
 
   const update = {

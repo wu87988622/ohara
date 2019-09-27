@@ -18,11 +18,12 @@ import styled from 'styled-components';
 import DialogContent from '@material-ui/core/DialogContent';
 import Paper from '@material-ui/core/Paper';
 
-import { Label } from 'components/common/Form';
 import { Warning } from 'components/common/Messages';
 
 export const StyledDialogContent = styled(DialogContent)`
-  padding-top: 30px;
+  .section-header {
+    margin: 15px 0 10px;
+  }
 `;
 
 export const StyledDialogDividers = styled(DialogContent)`
@@ -34,10 +35,13 @@ export const StyledInputFile = styled.input`
   display: none;
 `;
 
-export const StyledLabel = styled(Label)`
-  position: absolute;
-  right: 0;
-  top: -3rem;
+export const PluginHeader = styled.div`
+  display: flex;
+  align-items: center;
+
+  .new-plugin {
+    margin-left: auto;
+  }
 `;
 
 export const StyledPaper = styled(Paper)`

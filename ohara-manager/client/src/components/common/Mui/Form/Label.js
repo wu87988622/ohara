@@ -18,13 +18,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import InputLabel from '@material-ui/core/InputLabel';
 
-const Label = ({ children, htmlFor }) => {
-  return <InputLabel htmlFor={htmlFor}>{children}</InputLabel>;
+const Label = ({ children, htmlFor, ...rest }) => {
+  return (
+    <InputLabel {...rest} htmlFor={htmlFor ? htmlFor : undefined}>
+      {children}
+    </InputLabel>
+  );
 };
 
 Label.propTypes = {
   children: PropTypes.any.isRequired,
-  htmlFor: PropTypes.string.isRequired,
+  htmlFor: PropTypes.string,
 };
 
 export default Label;

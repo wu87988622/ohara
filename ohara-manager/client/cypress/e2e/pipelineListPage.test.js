@@ -32,7 +32,9 @@ describe('PipelineListPage', () => {
   });
 
   it('should display a newly created pipeline in the list', () => {
-    const pipelineName = generate.serviceName({ prefix: 'pi', length: 3 });
+    const pipelineName = generate.serviceName({
+      prefix: 'pipeline',
+    });
 
     cy.visit(URLS.PIPELINES)
       .getByText('NEW PIPELINE')
@@ -52,7 +54,7 @@ describe('PipelineListPage', () => {
   });
 
   it('edits a pipeline', () => {
-    const pipelineName = generate.serviceName({ prefix: 'pi', length: 3 });
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
       group: `${Cypress.env('WORKER_NAME')}${pipelineName}`,
@@ -75,7 +77,7 @@ describe('PipelineListPage', () => {
   });
 
   it('deletes a pipeline', () => {
-    const pipelineName = generate.serviceName({ prefix: 'pi', length: 3 });
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
       group: `${Cypress.env('WORKER_NAME')}${pipelineName}`,

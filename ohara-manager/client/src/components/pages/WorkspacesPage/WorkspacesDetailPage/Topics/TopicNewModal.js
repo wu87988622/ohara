@@ -49,7 +49,7 @@ const TopicNewModal = props => {
       numberOfReplications: Number(values.numberOfReplications),
       brokerClusterKey: {
         group: 'default',
-        name: props.brokerClusterName,
+        name: worker.settings.brokerClusterName,
       },
       group: `${worker.settings.name}`,
     });
@@ -129,10 +129,10 @@ TopicNewModal.propTypes = {
   isActive: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
-  brokerClusterName: PropTypes.string.isRequired,
   worker: PropTypes.shape({
     settings: PropTypes.shape({
       name: PropTypes.string.isRequired,
+      brokerClusterName: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
 };

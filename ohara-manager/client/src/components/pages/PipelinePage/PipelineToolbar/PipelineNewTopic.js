@@ -21,100 +21,108 @@ import React, {
   forwardRef,
 } from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty, get, isNull } from 'lodash';
+import DialogContent from '@material-ui/core/DialogContent';
+import { isEmpty, get } from 'lodash';
 import { Link } from 'react-router-dom';
 
-import * as MESSAGES from 'constants/messages';
 import * as URLS from 'constants/urls';
 import * as pipelineApi from 'api/pipelineApi';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { Warning } from 'components/common/Messages';
-import { Select } from 'components/common/Form';
 import { createConnector } from './pipelineToolbarUtils';
-import { findByGraphName } from '../pipelineUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
-import { Wrapper } from './styles';
+import { Select } from 'components/common/Mui/Form';
 
 const PipelineNewTopic = forwardRef((props, ref) => {
-  const [updatedTopics, setUpdateTopics] = useState([]);
-  const { showMessage } = useSnackbar();
+  const [displayTopics, setDisplayTopics] = useState([]);
+  const [disabledTopics, setDisabledTopics] = useState([]);
+  const [currentTopic, setCurrentTopic] = useState('');
 
-  const { enableAddButton, currentTopic, topics, workerClusterName } = props;
+  const { enableAddButton, topics, workerClusterName } = props;
 
   useEffect(() => {
-    enableAddButton(isNull(currentTopic));
+    const isDisabled =
+      currentTopic === '' || currentTopic === 'Please select...';
+
+    enableAddButton(isDisabled);
 
     const fetchPipelines = async () => {
       const response = await pipelineApi.fetchPipelines();
       const pipelines = get(response, 'data.result', []);
 
-      const updatedTopics = topics.map(topic => {
-        const isDisabled = pipelines.some(pipeline => {
+      const displayTopics = [];
+      const disabledTopics = [];
+
+      topics.forEach(topic => {
+        const shouldBeDisabled = pipelines.some(pipeline => {
           return pipeline.objects.some(object => object.name === topic.name);
         });
 
-        return {
-          ...topic,
-          disabled: isDisabled,
-        };
+        if (shouldBeDisabled) {
+          disabledTopics.push(topic.name);
+        }
+
+        // We want to display all the topics
+        displayTopics.push(topic.name);
       });
 
-      setUpdateTopics(updatedTopics);
+      setDisplayTopics(displayTopics);
+      setDisabledTopics(disabledTopics);
     };
 
     fetchPipelines();
-  }, [currentTopic, topics, enableAddButton]);
-
-  const handleSelectChange = ({ target }) => {
-    const currentTopic = { name: target.value };
-    props.updateTopic(currentTopic);
-  };
+  }, [currentTopic, enableAddButton, topics]);
 
   useImperativeHandle(ref, () => ({
     update() {
-      const { graph, updateGraph, currentTopic, pipelineName } = props;
+      const { updateGraph, pipelineName } = props;
+      const activeTopic = topics.find(
+        topic => topic.settings.name === currentTopic,
+      );
 
-      if (!currentTopic) {
-        return showMessage(MESSAGES.NO_TOPIC_IS_SUPPLIED);
-      }
+      const connector = {
+        ...activeTopic,
+        className: 'topic',
+        typeName: 'topic',
+      };
 
-      // Don't add a topic if it's already existed in the pipeline graph
-      const isTopicExist = findByGraphName(graph, currentTopic.name);
-
-      if (!isTopicExist) {
-        const connector = {
-          ...currentTopic,
-          className: 'topic',
-          typeName: 'topic',
-        };
-        createConnector({ updateGraph, connector, pipelineName });
-      }
+      createConnector({ updateGraph, connector, pipelineName });
     },
   }));
 
   return (
-    <Wrapper>
+    <>
       {isEmpty(topics) ? (
-        <Warning
-          text={
-            <>
-              {`You don't have any topics available in this workspace yet. But you can create one in `}
-              <Link to={`${URLS.WORKSPACES}/${workerClusterName}/topics`}>
-                here
-              </Link>
-            </>
-          }
-        />
+        <DialogContent>
+          <Warning
+            text={
+              <>
+                {`You don't have any topics available in this workspace yet. But you can create one in `}
+                <Link to={`${URLS.WORKSPACES}/${workerClusterName}/topics`}>
+                  here
+                </Link>
+              </>
+            }
+          />
+        </DialogContent>
       ) : (
-        <Select
-          isObject
-          list={updatedTopics}
-          selected={currentTopic}
-          handleChange={handleSelectChange}
-          data-testid="topic-select"
-        />
+        <DialogContent>
+          <Select
+            required
+            autoFocus
+            input={{
+              name: 'topic',
+              onChange: event => setCurrentTopic(event.target.value),
+              value: currentTopic,
+            }}
+            list={displayTopics}
+            disables={disabledTopics}
+            inputProps={{
+              'data-testid': 'topic-select',
+            }}
+          />
+        </DialogContent>
       )}
-    </Wrapper>
+    </>
   );
 });
 
@@ -122,10 +130,8 @@ PipelineNewTopic.propTypes = {
   graph: PropTypes.arrayOf(graphPropType).isRequired,
   updateGraph: PropTypes.func.isRequired,
   topics: PropTypes.array.isRequired,
-  updateTopic: PropTypes.func.isRequired,
   enableAddButton: PropTypes.func.isRequired,
   workerClusterName: PropTypes.string.isRequired,
-  currentTopic: PropTypes.object,
   pipelineName: PropTypes.string.isRequired,
 };
 

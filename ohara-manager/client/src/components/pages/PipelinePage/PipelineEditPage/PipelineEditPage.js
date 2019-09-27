@@ -25,6 +25,7 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as topicApi from 'api/topicApi';
 import * as workerApi from 'api/workerApi';
 import * as utils from './pipelineEditPageUtils';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
 import Operate from './Operate';
@@ -37,7 +38,6 @@ import NodeNames from './NodeNames';
 
 const PipelineEditPage = props => {
   const [topics, setTopics] = useState([]);
-  const [currentTopic, setCurrentTopic] = useState(null);
   const [graph, setGraph] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -51,29 +51,35 @@ const PipelineEditPage = props => {
   const [workerGroup, setWorkerGroup] = useState('default');
   const [brokerClusterName, setBrokerClusterName] = useState('');
 
+  const { showMessage } = useSnackbar();
+
   const { workspaceName, pipelineName, connectorName } = props.match.params;
   const group = `${workspaceName}${pipelineName}`;
 
   const fetchPipeline = useCallback(async () => {
     if (pipelineName) {
-      const res = await pipelineApi.fetchPipeline(group, pipelineName);
-      const pipeline = get(res, 'data.result', null);
+      try {
+        const res = await pipelineApi.fetchPipeline(group, pipelineName);
+        const pipeline = get(res, 'data.result', null);
 
-      if (pipeline) {
-        const pipelineTopics = pipeline.objects.filter(
-          object => object.kind === 'topic',
-        );
+        if (pipeline) {
+          const pipelineTopics = pipeline.objects.filter(
+            object => object.kind === 'topic',
+          );
 
-        const hasRunningServices = pipeline.objects
-          .filter(object => object.kind !== 'topic') // topics are not counted as running objects
-          .some(object => Boolean(object.state));
+          const hasRunningServices = pipeline.objects
+            .filter(object => object.kind !== 'topic') // topics are not counted as running objects
+            .some(object => Boolean(object.state));
 
-        setPipeline(pipeline);
-        setPipelineTopics(pipelineTopics);
-        setHasRunningServices(hasRunningServices);
+          setPipeline(pipeline);
+          setPipelineTopics(pipelineTopics);
+          setHasRunningServices(hasRunningServices);
+        }
+      } catch (error) {
+        showMessage(error.message);
       }
     }
-  }, [group, pipelineName]);
+  }, [group, pipelineName, showMessage]);
 
   useEffect(() => {
     fetchPipeline();
@@ -130,13 +136,14 @@ const PipelineEditPage = props => {
       const topics = get(res, 'data.result', null);
 
       if (!isEmpty(topics)) {
+        // In the UI, topics are belong to a workspace in which users add new
+        // topics. Here we are using `brokerClusterName`
         const topicsUnderBrokerCluster = topics.filter(
           topic => topic.settings.brokerClusterKey.name === brokerClusterName,
         );
 
         if (topicsUnderBrokerCluster) {
           setTopics(topicsUnderBrokerCluster);
-          setCurrentTopic(topicsUnderBrokerCluster[0]);
         }
       }
     };
@@ -198,25 +205,28 @@ const PipelineEditPage = props => {
 
     setIsUpdating(true);
 
-    const response = await pipelineApi.updatePipeline({
-      name,
-      group,
-      params: { flows: updatedFlows },
-    });
+    try {
+      const response = await pipelineApi.updatePipeline({
+        name,
+        group,
+        params: { flows: updatedFlows },
+      });
+      const updatedPipelines = get(response, 'data.result', null);
+
+      if (!isEmpty(updatedPipelines)) {
+        const pipelineTopics = updatedPipelines.objects.filter(
+          object => object.kind === 'topic',
+        );
+
+        setPipeline(updatedPipelines);
+        setPipelineTopics(pipelineTopics);
+        loadGraph(updatedPipelines);
+      }
+    } catch (error) {
+      showMessage(error.message);
+    }
 
     setIsUpdating(false);
-
-    const updatedPipelines = get(response, 'data.result', null);
-
-    if (!isEmpty(updatedPipelines)) {
-      const pipelineTopics = updatedPipelines.objects.filter(
-        object => object.kind === 'topic',
-      );
-
-      setPipeline(updatedPipelines);
-      setPipelineTopics(pipelineTopics);
-      loadGraph(updatedPipelines);
-    }
   };
 
   const updateHasRunningServices = update => {
@@ -260,10 +270,7 @@ const PipelineEditPage = props => {
             graph={graph}
             hasChanges={hasChanges}
             topics={topics}
-            currentTopic={currentTopic}
             isLoading={isLoading}
-            resetCurrentTopic={() => setCurrentTopic(topics[0])}
-            updateCurrentTopic={currentTopic => setCurrentTopic(currentTopic)}
             workerClusterName={workerClusterName}
             workerGroup={workerGroup}
             brokerClusterName={brokerClusterName}

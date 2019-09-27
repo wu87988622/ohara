@@ -61,10 +61,10 @@ const StreamApp = props => {
       const result = get(response, 'data.result', null);
 
       if (result) {
-        const {
-          settings,
-          definition: { definitions },
-        } = result;
+        const { settings, definition } = result;
+
+        if (!definition) return;
+
         const { from, to } = settings;
         const state = get(result, 'state', null);
         const fromTopic = get(from, '[0].name', '');
@@ -78,7 +78,7 @@ const StreamApp = props => {
 
         setConfigs({ ..._settings, from: fromTopic, to: toTopic });
 
-        setDefs(definitions);
+        setDefs(definition.definitions);
         setFrom(fromTopic);
         setState(state);
       }
@@ -118,7 +118,7 @@ const StreamApp = props => {
       toTopic = [];
     }
 
-    const { workerClusterName } = props.pipeline.tags;
+    const { workerClusterName, brokerCluterName } = props.pipeline.tags;
     const topicGroup = workerClusterName;
     const streamJarGroup = workerClusterName;
     const fromKey = isEmpty(fromTopic)
@@ -136,6 +136,7 @@ const StreamApp = props => {
       instances,
       from: fromKey,
       to: toKey,
+      brokerCluterName,
     };
 
     const res = await streamApi.updateProperty({
@@ -347,6 +348,7 @@ StreamApp.propTypes = {
     ).isRequired,
     tags: PropTypes.shape({
       workerClusterName: PropTypes.string.isRequired,
+      brokerCluterName: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
   updateGraph: PropTypes.func.isRequired,

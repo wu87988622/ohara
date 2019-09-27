@@ -26,15 +26,16 @@ describe('PipelineEditPage', () => {
 
   beforeEach(() => {
     cy.server();
+    cy.route('POST', 'api/pipelines').as('postPipeline');
     cy.route('GET', 'api/pipelines/*').as('getPipeline');
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
-    cy.route('POST', 'api/pipelines').as('postPipeline');
     cy.route('GET', 'api/topics').as('getTopics');
     cy.route('GET', 'api/workers').as('getWorkers');
+    cy.route('POST', '/api/connectors').as('postConnector');
     cy.route('GET', '/api/connectors/*').as('getConnector');
     cy.route('PUT', '/api/connectors/*').as('putConnector');
 
-    const pipelineName = generate.serviceName({ prefix: 'pi', length: 3 });
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
     cy.addTopic();
     cy.visit(URLS.PIPELINES)
@@ -56,9 +57,11 @@ describe('PipelineEditPage', () => {
     cy.wait('@getTopics')
       .getByTestId('toolbar-topics')
       .click()
-      .getByTestId('topic-select')
-      .select(Cypress.env('TOPIC_NAME'))
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline')
       .getByText(Cypress.env('TOPIC_NAME'))
@@ -84,8 +87,11 @@ describe('PipelineEditPage', () => {
       .getByTestId('toolbar-topics')
       .click()
       .getByTestId('topic-select')
-      .select(Cypress.env('TOPIC_NAME'))
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline');
 
@@ -96,15 +102,15 @@ describe('PipelineEditPage', () => {
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(connectorName)
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
-      });
+        cy.getByText('ADD').click();
+      })
+      .wait('@putPipeline');
 
     // Set the connection between them
     cy.getByText(connectorName)
@@ -168,9 +174,6 @@ describe('PipelineEditPage', () => {
       },
     ];
 
-    cy.server();
-    cy.route('POST', '/api/connectors').as('createConnector');
-
     // Add connector to the graph
     cy.wrap(connectors).each(connector => {
       const { toolbarTestId, type, nodeType, connectorName } = connector;
@@ -178,17 +181,16 @@ describe('PipelineEditPage', () => {
         .click()
         .getByText(type)
         .click()
-        .getByText('Add')
+        .getByText('ADD')
         .click()
-        .getByPlaceholderText('Connector name')
+        .getByPlaceholderText('myconnector')
         .type(connectorName)
-        .get('.ReactModal__Content')
-        .eq(1)
+        .getByTestId('new-connector-dialog')
         .within(() => {
-          cy.getByText('Add').click();
+          cy.getByText('ADD').click();
         });
 
-      cy.wait('@createConnector')
+      cy.wait(['@postConnector', '@putPipeline'])
         .getAllByText(connectorName)
         .should('have.length', 1)
         .get('.node-type')
@@ -219,14 +221,13 @@ describe('PipelineEditPage', () => {
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(connectorName)
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .getByText(connectorName)
       .should('have.length', '1')
@@ -260,35 +261,35 @@ describe('PipelineEditPage', () => {
       .click()
       .getByText(CONNECTOR_TYPES.ftpSink)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.ftpSource)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()
-      .getByTestId('topic-select')
-      .select(Cypress.env('TOPIC_NAME'))
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline');
 
@@ -328,35 +329,35 @@ describe('PipelineEditPage', () => {
       .click()
       .getByText(CONNECTOR_TYPES.hdfsSink)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(generate.serviceName({ prefix: 'connector' }))
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()
-      .getByTestId('topic-select')
-      .select(Cypress.env('TOPIC_NAME'))
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline');
 
@@ -403,21 +404,22 @@ describe('PipelineEditPage', () => {
       .should('be.exist')
       .getByText(CONNECTOR_TYPES.perfSource)
       .click()
-      .getByText('Add')
+      .getByText('ADD')
       .click()
-      .getByPlaceholderText('Connector name')
+      .getByPlaceholderText('myconnector')
       .type(perfName)
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-connector-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()
-      .getByTestId('topic-select')
-      .select(topicName)
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline')
       .getByText('PerfSource')

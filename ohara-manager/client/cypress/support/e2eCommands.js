@@ -122,35 +122,35 @@ Cypress.Commands.add(
     topicName = generate.serviceName({ prefix: 'topic' }),
     workerName = Cypress.env('WORKER_NAME'),
   ) => {
-    cy.request('GET', 'api/workers')
-      .then(res => {
-        // Make sure we're getting the right broker cluster name here
-        const workers = res.body;
-        const currentWorkerName = workerName;
-        const worker = workers.find(
-          worker => worker.settings.name === currentWorkerName,
-        );
+    return cy.request('GET', 'api/workers').then(res => {
+      // Make sure we're getting the right broker cluster name here
+      const workers = res.body;
+      const currentWorkerName = workerName;
+      const {
+        settings: { brokerClusterName },
+      } = workers.find(worker => worker.settings.name === currentWorkerName);
 
-        return worker.settings.brokerClusterName;
-      })
-      .as('brokerClusterName');
+      const topicGroup = `${Cypress.env('WORKER_NAME')}`;
 
-    const group = `${Cypress.env('WORKER_NAME')}`;
-    cy.get('@brokerClusterName').then(brokerClusterName => {
       cy.request('POST', '/api/topics', {
         name: topicName,
-        numberOfReplications: 1,
-        numberOfPartitions: 1,
         brokerClusterKey: {
           group: 'default',
           name: brokerClusterName,
         },
-        group,
-      }).then(({ body }) => body);
-    });
+        group: topicGroup,
+      });
 
-    cy.request('PUT', `/api/topics/${topicName}/start?group=${group}`);
-    Cypress.env('TOPIC_NAME', topicName);
+      Cypress.env('TOPIC_NAME', topicName);
+      cy.request('PUT', `/api/topics/${topicName}/start?group=${topicGroup}`);
+
+      // Return the data with `cy.wrap()` ensuring it can be `chain` with other
+      // cy commands later
+      return cy.wrap({
+        name: topicName,
+        brokerClusterName,
+      });
+    });
   },
 );
 

@@ -17,7 +17,7 @@
 import styled from 'styled-components';
 import Icon from '@material-ui/core/Icon';
 
-import { Label } from 'components/common/Form';
+import { Label } from 'components/common/Mui/Form';
 
 export const ActionIcon = styled(Icon)`
   font-size: 20px;

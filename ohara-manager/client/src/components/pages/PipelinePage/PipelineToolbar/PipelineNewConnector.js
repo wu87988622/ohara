@@ -21,19 +21,23 @@ import React, {
   forwardRef,
 } from 'react';
 import PropTypes from 'prop-types';
+import DialogContent from '@material-ui/core/DialogContent';
 import { isNull } from 'lodash';
 
 import * as utils from './pipelineToolbarUtils';
-import { Modal } from 'components/common/Modal';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { ListLoader } from 'components/common/Loader';
-import { TableWrapper, Table, Inner } from './styles';
-import { Input, FormGroup } from 'components/common/Form';
+import { Dialog } from 'components/common/Mui/Dialog';
+import { Table } from './styles';
+import { InputField } from 'components/common/Mui/Form';
 
 const PipelineNewConnector = forwardRef((props, ref) => {
+  const { activeConnector, connectors, enableAddButton } = props;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newConnectorName, setNewConnectorName] = useState('');
 
-  const { activeConnector, connectors, enableAddButton } = props;
+  const { showMessage } = useSnackbar();
 
   useEffect(() => {
     enableAddButton(isNull(activeConnector));
@@ -44,10 +48,6 @@ const PipelineNewConnector = forwardRef((props, ref) => {
       setIsModalOpen(true);
     },
   }));
-
-  const handleChange = ({ target: { value } }) => {
-    setNewConnectorName(value);
-  };
 
   const handleConfirm = () => {
     const {
@@ -66,6 +66,7 @@ const PipelineNewConnector = forwardRef((props, ref) => {
         group: workerGroup,
         name: workerClusterName,
       },
+      showMessage,
       group: pipelineGroup,
     });
 
@@ -73,7 +74,7 @@ const PipelineNewConnector = forwardRef((props, ref) => {
   };
 
   return (
-    <TableWrapper>
+    <DialogContent>
       {!activeConnector ? (
         <ListLoader />
       ) : (
@@ -96,28 +97,29 @@ const PipelineNewConnector = forwardRef((props, ref) => {
           })}
         </Table>
       )}
-      <Modal
-        isActive={isModalOpen}
-        title="New Connector Name"
-        width="370px"
-        confirmBtnText="Add"
+      <Dialog
+        title="New connector name"
+        open={isModalOpen}
+        confirmDisabled={newConnectorName.length === 0}
+        width="xs"
         handleConfirm={handleConfirm}
-        handleCancel={() => setIsModalOpen(false)}
+        handleClose={() => setIsModalOpen(false)}
+        testId="new-connector-dialog"
       >
-        <Inner>
-          <FormGroup data-testid="name">
-            <Input
-              name="name"
-              width="100%"
-              placeholder="Connector name"
-              data-testid="name-input"
-              value={newConnectorName}
-              handleChange={handleChange}
-            />
-          </FormGroup>
-        </Inner>
-      </Modal>
-    </TableWrapper>
+        <DialogContent>
+          <InputField
+            autoFocus
+            placeholder="myconnector"
+            input={{
+              name: 'name',
+              onChange: event => setNewConnectorName(event.target.value),
+              value: newConnectorName,
+            }}
+            inputProps={{ 'data-testid': 'name-input' }}
+          />
+        </DialogContent>
+      </Dialog>
+    </DialogContent>
   );
 });
 

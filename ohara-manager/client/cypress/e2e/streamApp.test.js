@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import * as generate from '../../src/utils/generate';
 
-describe('StreamApp', () => {
+describe.skip('StreamApp', () => {
   before(() => {
     cy.removeWorkers();
     cy.addWorker();
@@ -34,8 +34,8 @@ describe('StreamApp', () => {
     const fromTopicName = generate.serviceName({ prefix: 'topic' });
     const toTopicName = generate.serviceName({ prefix: 'topic' });
     const pipelineName = generate.serviceName({
-      prefix: 'pi',
-      length: 3,
+      prefix: 'pipeline',
+      length: 5,
     });
     const streamAppName = generate.serviceName({ prefix: 'stream' });
 
@@ -59,14 +59,17 @@ describe('StreamApp', () => {
     cy.getByTestId('toolbar-streams')
       .click()
       .wait('@getJars')
-      .getByText('Add')
+      .getByText('Please select...')
       .click()
-      .getByPlaceholderText('StreamApp name')
+      .get(`li[data-value='ohara-streamapp.jar']`)
+      .click()
+      .getByText('ADD')
+      .click()
+      .getByPlaceholderText('mystreamapp')
       .type(streamAppName)
-      .get('.ReactModal__Content')
-      .eq(1)
+      .getByTestId('new-steam-dialog')
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText('ADD').click();
       })
       .wait('@putPipeline');
 
@@ -74,17 +77,21 @@ describe('StreamApp', () => {
     // adding from the UI
     cy.getByTestId('toolbar-topics')
       .click({ force: true })
-      .getByTestId('topic-select')
-      .select(fromTopicName)
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${fromTopicName}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline');
 
     cy.getByTestId('toolbar-topics')
       .click({ force: true })
-      .getByTestId('topic-select')
-      .select(toTopicName)
-      .getByText('Add')
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${toTopicName}]`)
+      .click()
+      .getByText('ADD')
       .click()
       .wait('@putPipeline');
 

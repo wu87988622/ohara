@@ -26,7 +26,7 @@ import Controller from './Controller';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { ListLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
-import { FormGroup, Label, Input } from 'components/common/Form';
+import { InputField } from 'components/common/Mui/Form';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
 const Topic = props => {
@@ -122,10 +122,14 @@ const Topic = props => {
               show={['delete']}
             />
           </s.TitleWrapper>
-          <FormGroup data-testid="name">
-            <Label>Name</Label>
-            <Input name="name" width="100%" value={topic.name} disabled />
-          </FormGroup>
+          <InputField
+            input={{
+              name: 'name',
+              value: topic.name,
+              onChange: () => {}, // No action for this input
+            }}
+            disabled
+          />
         </Box>
       )}
     </>

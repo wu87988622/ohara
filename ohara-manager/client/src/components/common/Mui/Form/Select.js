@@ -29,16 +29,16 @@ const StyledSelect = styled(TextField)`
 const Select = props => {
   const {
     input: { name, onChange, value, ...restInput },
-    meta,
+    meta = {},
     list = [],
     width = '100%',
+    disables = [],
     ...rest
   } = props;
 
   const placeholder = 'Please select...';
   const _list = [placeholder, ...list];
   const _value = value ? value : placeholder;
-
   const error = meta.error && meta.touched;
 
   return (
@@ -54,8 +54,9 @@ const Select = props => {
       select={true}
     >
       {_list.map(item => {
+        const disabled = disables.includes(item);
         return (
-          <MenuItem key={item} value={item}>
+          <MenuItem disabled={disabled} key={item} value={item}>
             {item}
           </MenuItem>
         );
@@ -73,9 +74,10 @@ Select.propTypes = {
   meta: PropTypes.shape({
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  }).isRequired,
+  }),
   width: PropTypes.string,
   list: PropTypes.array.isRequired,
+  disables: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default Select;

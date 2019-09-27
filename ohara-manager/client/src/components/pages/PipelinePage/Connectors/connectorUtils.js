@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import FormControl from '@material-ui/core/FormControl';
 import { isEmpty, isUndefined, isNull, get } from 'lodash';
 import { Field } from 'react-final-form';
 
@@ -26,7 +27,6 @@ import Tabs from './Tabs';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { validateConnector } from 'api/validateApi';
-import { FormGroup } from 'components/common/Form';
 import { InputField, Select, Checkbox } from 'components/common/Mui/Form';
 import { findByGraphName } from '../pipelineUtils';
 
@@ -239,7 +239,14 @@ export const useFetchConnectors = props => {
           replaceToken: '_',
         });
 
-        const configs = { ..._settings, topicKeys: topicName };
+        const workerClusterKey = settings.workerClusterKey.name;
+
+        const configs = {
+          ..._settings,
+          topicKeys: topicName,
+          workerClusterKey,
+        };
+
         setConfigs(configs);
         setState(state);
       }
@@ -479,13 +486,23 @@ export const handleSave = async (props, values, showMessage) => {
     ? topic
     : [{ group: topicGroup, name: topic }];
 
+  const workerClusterKey = {
+    group: 'default',
+    name: values.workerClusterKey,
+  };
+
   const _values = changeToken({
     values,
     targetToken: '_',
     replaceToken: '.',
   });
 
-  const params = { ..._values, topicKeys, name: connectorName };
+  const params = {
+    ..._values,
+    topicKeys,
+    workerClusterKey,
+    name: connectorName,
+  };
 
   try {
     await connectorApi.updateConnector({
@@ -640,7 +657,7 @@ export const renderer = props => {
         const inputType = switchType(valueType);
 
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               type={inputType}
               component={InputField}
@@ -653,12 +670,12 @@ export const renderer = props => {
               inputProps={{ 'data-testid': key }}
               required={required}
             />
-          </FormGroup>
+          </FormControl>
         );
 
       case 'PORT':
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               type="number"
               component={InputField}
@@ -675,12 +692,12 @@ export const renderer = props => {
                 max: 65535,
               }}
             />
-          </FormGroup>
+          </FormControl>
         );
 
       case 'BOOLEAN':
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               label={displayName}
               name={key}
@@ -691,12 +708,12 @@ export const renderer = props => {
               required={required}
               inputProps={{ 'data-testid': key }}
             />
-          </FormGroup>
+          </FormControl>
         );
 
       case 'TABLE':
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <ColumnTable
               parentValues={parentValues}
               headers={columnTableHeader}
@@ -707,11 +724,11 @@ export const renderer = props => {
               handleColumnRowUp={handleColumnRowUp}
               handleColumnRowDown={handleColumnRowDown}
             />
-          </FormGroup>
+          </FormControl>
         );
       case 'BINDING_PORT':
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               label={displayName}
               id={displayName}
@@ -723,11 +740,11 @@ export const renderer = props => {
               disabled={isRunning}
               inputProps={{ 'data-testid': key }}
             />
-          </FormGroup>
+          </FormControl>
         );
       default:
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               type="text"
               component={InputField}
@@ -740,7 +757,7 @@ export const renderer = props => {
               disabled={!editable || isRunning}
               inputProps={{ 'data-testid': key }}
             />
-          </FormGroup>
+          </FormControl>
         );
     }
   };
@@ -758,7 +775,7 @@ export const renderer = props => {
     switch (reference) {
       case 'TOPIC':
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               label={displayName}
               id={displayName}
@@ -770,11 +787,11 @@ export const renderer = props => {
               disabled={isRunning}
               inputProps={{ 'data-testid': key }}
             />
-          </FormGroup>
+          </FormControl>
         );
       case 'WORKER_CLUSTER':
         return (
-          <FormGroup key={key}>
+          <FormControl key={key} fullWidth margin="normal">
             <Field
               type="string"
               component={InputField}
@@ -787,7 +804,7 @@ export const renderer = props => {
               required={required}
               inputProps={{ 'data-testid': key }}
             />
-          </FormGroup>
+          </FormControl>
         );
       default:
         return;

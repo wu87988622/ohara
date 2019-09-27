@@ -15,7 +15,7 @@
  */
 
 /******************************
-  Success messages -- green 
+  Success messages 
 *******************************/
 
 // Topic
@@ -47,7 +47,7 @@ export const STREAM_APP_DELETION_SUCCESS =
   'Successfully deleted the stream app';
 
 /******************************
-  Error messages -- red
+  Error messages
 *******************************/
 
 // Error messages
@@ -84,7 +84,7 @@ export const CANNOT_UPDATE_WHILE_RUNNING_ERROR = `You cannot update the pipeline
 export const GENERIC_ERROR = 'Oops, something went wrong 😱 😱 😱';
 
 /******************************
-  Warning messages -- orange
+  Warning messages
 *******************************/
 export const LEAVE_WITHOUT_SAVE =
   'You have unsaved changes or pending requests, are you sure you want to leave?';

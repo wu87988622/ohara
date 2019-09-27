@@ -22,16 +22,9 @@ import * as PIPELINES from 'constants/pipelines';
 import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
-import { Modal } from 'components/common/Modal';
+import { Dialog } from 'components/common/Mui/Dialog';
 import { Icon, ToolbarWrapper, FileSavingStatus } from './styles.js';
 import { graph as graphPropType } from 'propTypes/pipeline';
-
-const modalNames = {
-  ADD_SOURCE_CONNECTOR: 'sources',
-  ADD_SINK_CONNECTOR: 'sinks',
-  ADD_STREAM: 'streams',
-  ADD_TOPIC: 'topics',
-};
 
 const PipelineToolbar = props => {
   const [isModalActive, setIsModalActive] = useState(false);
@@ -42,19 +35,16 @@ const PipelineToolbar = props => {
   const [isAddBtnDisabled, setIsAddBtnDisabled] = useState(true);
   const [modalName, setModalName] = useState('');
 
-  const modalChild = createRef();
+  const modalChild = createRef(null);
 
   const {
     connectors,
-    resetCurrentTopic,
     hasChanges,
     workerClusterName,
     match,
     updateGraph,
     topics,
     graph,
-    currentTopic,
-    updateCurrentTopic,
     workerGroup,
   } = props;
 
@@ -129,10 +119,6 @@ const PipelineToolbar = props => {
   const handleModalClose = () => {
     setIsModalActive(false);
     setActiveConnector(null);
-
-    if (modalName === 'topics') {
-      resetCurrentTopic();
-    }
   };
 
   const handleConfirm = () => {
@@ -155,9 +141,9 @@ const PipelineToolbar = props => {
 
   const getModalTitle = () => {
     switch (modalName) {
-      case modalNames.ADD_STREAM:
+      case 'streams':
         return 'Add a new stream app';
-      case modalNames.ADD_TOPIC:
+      case 'topics':
         return 'Add a new topic';
       default:
         return `Add a new ${connectorType} connector`;
@@ -166,34 +152,29 @@ const PipelineToolbar = props => {
 
   const getModalTestId = () => {
     switch (modalName) {
-      case modalNames.ADD_STREAM:
+      case 'streams':
         return 'streamapp-modal';
-      case modalNames.ADD_TOPIC:
+      case 'topics':
         return 'topic-modal';
       default:
         return `${connectorType}-connector-modal`;
     }
   };
 
+  const dialogWidth = ['topics', 'streams'].includes(modalName) ? 'xs' : 'md';
+
   return (
     <ToolbarWrapper>
-      <Modal
+      <Dialog
         title={getModalTitle()}
-        isActive={isModalActive}
-        width={
-          modalName === modalNames.ADD_TOPIC ||
-          modalName === modalNames.ADD_STREAM
-            ? '350px'
-            : '600px'
-        }
-        handleCancel={handleModalClose}
+        open={isModalActive}
+        maxWidth={dialogWidth}
         handleConfirm={handleConfirm}
-        confirmBtnText="Add"
-        showActions={true}
-        isConfirmDisabled={isAddBtnDisabled}
+        handleClose={handleModalClose}
+        confirmDisabled={isAddBtnDisabled}
       >
         <div data-testid={getModalTestId()}>
-          {modalName === modalNames.ADD_STREAM && (
+          {modalName === 'streams' && (
             <PipelineNewStream
               {...props}
               ref={modalChild}
@@ -204,24 +185,20 @@ const PipelineToolbar = props => {
             />
           )}
 
-          {modalName === modalNames.ADD_TOPIC && (
+          {modalName === 'topics' && (
             <PipelineNewTopic
               ref={modalChild}
               updateGraph={updateGraph}
               graph={graph}
               topics={topics}
-              currentTopic={currentTopic}
-              updateTopic={updateCurrentTopic}
               enableAddButton={setIsAddBtnDisabled}
               workerClusterName={workerClusterName}
               pipelineName={pipelineName}
+              handleConfirm={handleConfirm}
             />
           )}
 
-          {[
-            modalNames.ADD_SOURCE_CONNECTOR,
-            modalNames.ADD_SINK_CONNECTOR,
-          ].includes(modalName) && (
+          {['sources', 'sinks'].includes(modalName) && (
             <PipelineNewConnector
               ref={modalChild}
               connectorType={connectorType}
@@ -238,14 +215,12 @@ const PipelineToolbar = props => {
             />
           )}
         </div>
-      </Modal>
+      </Dialog>
 
       <Tooltip title="Add a source connector" enterDelay={1000}>
         <Icon
           className="fas fa-file-import"
-          onClick={() =>
-            handleModalOpen(modalNames.ADD_SOURCE_CONNECTOR, 'source')
-          }
+          onClick={() => handleModalOpen('sources', 'source')}
           data-id={ftpSource}
           data-testid="toolbar-sources"
         />
@@ -254,8 +229,8 @@ const PipelineToolbar = props => {
       <Tooltip title="Add a topic" enterDelay={1000}>
         <Icon
           className="fas fa-list-ul"
-          onClick={() => handleModalOpen(modalNames.ADD_TOPIC, 'topic')}
-          data-id={modalNames.ADD_TOPIC}
+          onClick={() => handleModalOpen('topics', 'topic')}
+          data-id={'topics'}
           data-testid="toolbar-topics"
         />
       </Tooltip>
@@ -263,8 +238,8 @@ const PipelineToolbar = props => {
       <Tooltip title="Add a stream app" enterDelay={1000}>
         <Icon
           className="fas fa-wind"
-          onClick={() => handleModalOpen(modalNames.ADD_STREAM, 'stream')}
-          data-id={modalNames.ADD_STREAM}
+          onClick={() => handleModalOpen('streams', 'stream')}
+          data-id={'streams'}
           data-testid="toolbar-streams"
         />
       </Tooltip>
@@ -272,7 +247,7 @@ const PipelineToolbar = props => {
       <Tooltip title="Add a sink connector" enterDelay={1000}>
         <Icon
           className="fas fa-file-export"
-          onClick={() => handleModalOpen(modalNames.ADD_SINK_CONNECTOR, 'sink')}
+          onClick={() => handleModalOpen('sinks', 'sink')}
           data-id={ftpSource}
           data-testid="toolbar-sinks"
         />
@@ -307,9 +282,6 @@ PipelineToolbar.propTypes = {
   hasChanges: PropTypes.bool.isRequired,
   topics: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
-  updateCurrentTopic: PropTypes.func.isRequired,
-  resetCurrentTopic: PropTypes.func.isRequired,
-  currentTopic: PropTypes.object,
   workerClusterName: PropTypes.string.isRequired,
   workerGroup: PropTypes.string.isRequired,
   brokerClusterName: PropTypes.string.isRequired,

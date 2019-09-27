@@ -16,12 +16,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import DialogContent from '@material-ui/core/DialogContent';
+import FormControl from '@material-ui/core/FormControl';
 import { Form, Field } from 'react-final-form';
 
-import { Modal } from 'components/common/Modal';
-import { FormGroup, Label } from 'components/common/Form';
-import { FormInner } from './styles';
-import { InputField, SelectField } from 'components/common/FormFields';
+import { Dialog } from 'components/common/Mui/Dialog';
+import { InputField, Select } from 'components/common/Mui/Form';
 
 const NewRowModal = props => {
   const { isActive, dataTypes, handleConfirmClick, handleModalClose } = props;
@@ -29,56 +29,53 @@ const NewRowModal = props => {
     <Form
       onSubmit={handleConfirmClick}
       initialValues={{ types: 'STRING' }}
-      render={({ handleSubmit, form }) => {
+      render={({ handleSubmit, form, pristine, submitting }) => {
         return (
-          <Modal
-            isActive={isActive}
+          <Dialog
             title="New row"
-            width="290px"
-            confirmBtnText="Create"
+            open={isActive}
+            maxWidth="xs"
+            confirmDisabled={pristine || submitting}
             handleConfirm={values => {
               handleSubmit(values);
               form.reset();
             }}
-            handleCancel={() => {
+            handleClose={() => {
               form.reset();
               handleModalClose();
             }}
           >
-            <form>
-              <FormInner>
-                <FormGroup>
-                  <Label>Column name</Label>
-                  <Field
-                    type="text"
-                    name="columnName"
-                    width="100%"
-                    placeholder="Column name"
-                    component={InputField}
-                  />
-                </FormGroup>
-                <FormGroup>
-                  <Label>New column name</Label>
-                  <Field
-                    type="text"
-                    name="newColumnName"
-                    width="100%"
-                    placeholder="New column name"
-                    component={InputField}
-                  />
-                </FormGroup>
-                <FormGroup>
-                  <Label>Type</Label>
-                  <Field
-                    name="types"
-                    width="100%"
-                    list={dataTypes}
-                    component={SelectField}
-                  />
-                </FormGroup>
-              </FormInner>
-            </form>
-          </Modal>
+            <DialogContent>
+              <FormControl fullWidth margin="normal">
+                <Field
+                  autoFocus
+                  name="columnName"
+                  label="Column name"
+                  placeholder="name"
+                  component={InputField}
+                  required
+                />
+              </FormControl>
+              <FormControl fullWidth margin="normal">
+                <Field
+                  name="newColumnName"
+                  label="New column name"
+                  placeholder="newname"
+                  component={InputField}
+                  required
+                />
+              </FormControl>
+              <FormControl fullWidth margin="normal">
+                <Field
+                  name="dataType"
+                  label="Data type"
+                  list={dataTypes}
+                  component={Select}
+                  required
+                />
+              </FormControl>
+            </DialogContent>
+          </Dialog>
         );
       }}
     />

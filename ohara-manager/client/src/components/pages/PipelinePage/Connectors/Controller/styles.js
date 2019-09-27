@@ -17,8 +17,7 @@
 import styled from 'styled-components';
 
 const Controller = styled.div`
-  position: absolute;
-  right: 0;
+  margin-left: auto;
 `;
 
 const ControlButton = styled.button`

@@ -36,11 +36,10 @@ import * as URL from 'components/controller/url';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import useCreateServices from './useCreateServices';
 import validate from './validate';
-import { Label } from 'components/common/Form';
 import { Progress } from 'components/common/Mui/Feedback';
 import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
-import { InputField } from 'components/common/Mui/Form';
+import { InputField, Label } from 'components/common/Mui/Form';
 
 const WorkerNewModal = props => {
   const [checkedNodes, setCheckedNodes] = useState([]);
@@ -469,7 +468,7 @@ const WorkerNewModal = props => {
                       />
                     </DialogContent>
                     <s.StyledDialogContent>
-                      <Label>Node List</Label>
+                      <Label className="section-header">Node List</Label>
                       <s.StyledPaper>
                         <List>
                           {get(nodes, 'data.result', []).map(node => {
@@ -502,7 +501,12 @@ const WorkerNewModal = props => {
                       </s.StyledPaper>
                     </s.StyledDialogContent>
                     <s.StyledDialogContent>
-                      <Label>Plugin List</Label>
+                      <s.PluginHeader>
+                        <Label className="section-header">Plugin List</Label>
+                        <Label className="new-plugin" htmlFor="fileInput">
+                          <Button component="span" text="NEW PLUGIN" />
+                        </Label>
+                      </s.PluginHeader>
                       <s.StyledPaper>
                         <List>
                           {jars.map(jar => {
@@ -530,9 +534,6 @@ const WorkerNewModal = props => {
                               </ListItem>
                             );
                           })}
-                          <s.StyledLabel htmlFor="fileInput">
-                            <Button component="span" text="NEW PLUGIN" />
-                          </s.StyledLabel>
                         </List>
                       </s.StyledPaper>
                     </s.StyledDialogContent>

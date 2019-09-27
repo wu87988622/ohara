@@ -95,12 +95,16 @@ const PipelineListPage = props => {
   const handleNewModalSubmit = async values => {
     const { history, match } = props;
     const { name: pipelineName, workspace: workerClusterName } = values;
+    const {
+      settings: { brokerClusterName },
+    } = workers.find(worker => worker.settings.name === workerClusterName);
 
     const params = {
       name: values.name,
       group: `${workerClusterName}${pipelineName}`,
       tags: {
         workerClusterName,
+        brokerClusterName,
       },
     };
 

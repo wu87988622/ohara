@@ -39,7 +39,7 @@ const TooltipWrap = styled.div`
 const InputField = props => {
   const {
     input: { name, onChange, value, ...restInput },
-    meta,
+    meta = {},
     width = '100%',
     helperText,
     ...rest
@@ -85,7 +85,7 @@ InputField.propTypes = {
     dirty: PropTypes.bool,
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  }).isRequired,
+  }),
   width: PropTypes.string,
   helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   errorMessage: PropTypes.string,

@@ -206,7 +206,6 @@ const Topics = props => {
         onConfirm={() => {
           refetch(true);
         }}
-        brokerClusterName={worker.settings.brokerClusterName}
         worker={worker}
       />
 
