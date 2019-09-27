@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS employees;
 CREATE TABLE employees (
-                         employee_id   NUMERIC       NOT NULL,
+                         employee_id   INTEGER       NOT NULL,
                          first_name    VARCHAR(1000) NOT NULL,
                          last_name     VARCHAR(1000) NOT NULL,
                          date_of_birth DATE                  ,
