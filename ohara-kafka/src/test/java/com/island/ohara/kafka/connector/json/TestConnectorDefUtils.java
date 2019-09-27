@@ -354,7 +354,7 @@ public class TestConnectorDefUtils extends OharaTest {
     Assert.assertTrue(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
-    Assert.assertEquals(SettingDef.Type.CONNECTOR_KEY, setting.valueType());
+    Assert.assertEquals(SettingDef.Type.OBJECT_KEY, setting.valueType());
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(ConnectorDefUtils.CORE_GROUP, setting.group());
   }

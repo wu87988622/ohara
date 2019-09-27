@@ -599,7 +599,7 @@ Example Response
                      "displayName":"Connector key",
                      "internal":false,
                      "documentation":"the key of this connector",
-                     "valueType":"CONNECTOR_KEY",
+                     "valueType":"OBJECT_KEY",
                      "tableKeys":[
 
                      ],

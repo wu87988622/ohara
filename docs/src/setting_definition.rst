@@ -459,22 +459,6 @@ Note the type of the plural char "s". It means the request value should pass a a
      }]
    }
 
-Type.CONNECTOR_KEY
-^^^^^^^^^^^^^^^^^^
-
-Connector key represents a format of **com.island.ohara.common.setting.ConnectorKey** for specific connector.
-It consists "group" and "name" fields.
-In a custom application, you should check the request contains both fields.
-
-.. code-block::json
-
-   {
-     "connectorKey": {
-       "group": "default",
-       "name": "mySinkConnector"
-     }
-   }
-
 Type.TAGS
 ^^^^^^^^^
 

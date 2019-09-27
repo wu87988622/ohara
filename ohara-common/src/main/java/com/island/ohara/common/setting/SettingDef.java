@@ -100,8 +100,6 @@ public class SettingDef implements JsonObject, Serializable {
     OBJECT_KEY,
     /** [ { "group": "g", "name":" n" } ] */
     TOPIC_KEYS,
-    /** { "group": "g0", "name": "n0" } */
-    CONNECTOR_KEY,
     /**
      * TAGS is a flexible type accepting a json representation. For example:
      *
@@ -337,14 +335,6 @@ public class SettingDef implements JsonObject, Serializable {
           try {
             // try parse the json string to Connector Key
             ObjectKey.toObjectKey(String.valueOf(trueValue));
-          } catch (Exception e) {
-            throw new OharaConfigException(this.key, trueValue, e.getMessage());
-          }
-          break;
-        case CONNECTOR_KEY:
-          try {
-            // try parse the json string to Connector Key
-            ConnectorKey.toConnectorKey(String.valueOf(trueValue));
           } catch (Exception e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }

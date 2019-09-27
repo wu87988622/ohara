@@ -54,7 +54,7 @@ public final class ConnectorDefUtils {
       SettingDef.builder()
           .displayName("Connector key")
           .key("connectorKey")
-          .valueType(Type.CONNECTOR_KEY)
+          .valueType(Type.OBJECT_KEY)
           .documentation("the key of this connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
@@ -257,7 +257,6 @@ public final class ConnectorDefUtils {
       case DURATION:
       case TABLE:
       case TOPIC_KEYS:
-      case CONNECTOR_KEY:
       case OBJECT_KEY:
       case JAR_KEY:
       case TAGS:
