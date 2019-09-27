@@ -103,11 +103,18 @@ trait Collie[T <: ClusterInfo] {
 
   /**
     * get the containers information from cluster
+    * Note: this method intends to fetch all containers belong to required cluster, so you should honor to your
+    * filter logic to fetch the running containers or use '''cluster(key)''' instead
+    *
     * @param key cluster key
     * @return containers information
     */
   def containers(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    cluster(key).map(_._2)
+    clusterWithAllContainers().map(
+      _.find(_._1.key == key)
+        .map(_._2)
+        .getOrElse(throw new IllegalArgumentException(s"cluster with objectKey [$key] is not running"))
+    )
 
   /**
     * fetch all clusters and belonging containers from cache.
