@@ -90,11 +90,11 @@ describe('PipelineListPage', () => {
       .getByText(pipelineName)
       .then($el => {
         cy.wrap($el.parent()).within(() => {
-          cy.getByTestId('delete-pipeline').click();
+          cy.getByTestId('delete-pipeline').click({ force: true });
         });
       })
       .getByText('DELETE')
-      .click()
+      .click({ force: true })
       .wait('@deletePipeline')
       .getByText(`Successfully deleted the pipeline: ${pipelineName}`)
       .should('have.length', 1);

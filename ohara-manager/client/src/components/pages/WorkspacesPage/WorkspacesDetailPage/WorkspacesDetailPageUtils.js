@@ -35,7 +35,7 @@ export const useFetchTopics = brokerClusterName => {
 
     if (!isEmpty(topics)) {
       const topicsUnderBrokerCluster = topics.filter(
-        topic => topic.brokerClusterName === brokerClusterName,
+        topic => topic.settings.brokerClusterKey.name === brokerClusterName,
       );
       setTopics(orderBy(topicsUnderBrokerCluster, 'name'));
     }

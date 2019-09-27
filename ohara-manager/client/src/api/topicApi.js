@@ -56,7 +56,10 @@ export const createTopic = async params => {
       group,
       name,
       numberOfPartitions: toNumber(numberOfPartitions),
-      brokerClusterName: params.brokerClusterName,
+      brokerClusterName: {
+        group: 'default',
+        name: params.brokerClusterName,
+      },
       numberOfReplications: toNumber(numberOfReplications),
       tags: params.tags,
     };

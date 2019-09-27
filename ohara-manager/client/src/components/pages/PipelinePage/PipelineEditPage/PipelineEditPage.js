@@ -131,7 +131,7 @@ const PipelineEditPage = props => {
 
       if (!isEmpty(topics)) {
         const topicsUnderBrokerCluster = topics.filter(
-          topic => topic.brokerClusterName === brokerClusterName,
+          topic => topic.settings.brokerClusterKey.name === brokerClusterName,
         );
 
         if (topicsUnderBrokerCluster) {

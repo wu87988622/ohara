@@ -316,10 +316,12 @@ describe('WorkspacesPage', () => {
         const topics = xhr.response.body;
 
         cy.get('@overviewTopic').then(res => {
-          const currentBroker = res.brokerClusterName;
+          const currentBroker = res.settings.brokerClusterKey.name;
 
           topics
-            .filter(topic => topic.brokerClusterName === currentBroker)
+            .filter(
+              topic => topic.settings.brokerClusterKey.name === currentBroker,
+            )
             .forEach(topic => {
               const { name, numberOfPartitions, numberOfReplications } = topic;
               cy.getByText(name)

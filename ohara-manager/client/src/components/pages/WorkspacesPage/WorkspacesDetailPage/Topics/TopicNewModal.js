@@ -47,7 +47,10 @@ const TopicNewModal = props => {
       name: values.name,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
-      brokerClusterName: props.brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: props.brokerClusterName,
+      },
       group: `${worker.settings.name}`,
     });
     await startTopic(`/${values.name}/start?group=${worker.settings.name}`);

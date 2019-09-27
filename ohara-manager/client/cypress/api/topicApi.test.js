@@ -54,7 +54,10 @@ const setup = () => {
 
   cy.createTopic({
     name: topicName,
-    brokerClusterName,
+    brokerClusterKey: {
+      group: 'default',
+      name: brokerClusterName,
+    },
     group: topicGroup,
     tags: {
       name: topicName,
@@ -138,13 +141,19 @@ describe('Topic API', () => {
     const paramsOne = {
       name: generate.serviceName({ prefix: 'topic' }),
       group: topicGroup,
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     };
 
     const paramsTwo = {
       name: generate.serviceName({ prefix: 'topic' }),
       group: topicGroup,
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     };
 
     cy.createTopic(paramsOne);

@@ -141,7 +141,10 @@ Cypress.Commands.add(
         name: topicName,
         numberOfReplications: 1,
         numberOfPartitions: 1,
-        brokerClusterName,
+        brokerClusterKey: {
+          group: 'default',
+          name: brokerClusterName,
+        },
         group,
       }).then(({ body }) => body);
     });

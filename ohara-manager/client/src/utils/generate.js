@@ -68,7 +68,10 @@ export const topics = ({
       metrics: {},
       numberOfPartitions: number(),
       numberOfReplications: number(),
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
       group: workspaceName,
     };
 

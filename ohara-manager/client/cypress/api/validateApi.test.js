@@ -57,8 +57,11 @@ const setup = () => {
 
   cy.createTopic({
     name: topicName,
-    brokerClusterName,
     group: topicGroup,
+    brokerClusterKey: {
+      group: 'default',
+      name: brokerClusterName,
+    },
   }).as('createTopic');
 
   cy.startTopic(topicGroup, topicName);

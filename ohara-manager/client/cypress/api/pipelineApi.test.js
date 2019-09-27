@@ -157,7 +157,10 @@ describe('Pipeline API', () => {
     cy.createTopic({
       name: topicName,
       group: topicGroup,
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     });
 
     cy.startTopic(topicGroup, topicName);

@@ -172,16 +172,22 @@ describe('Stream property API', () => {
 
     cy.createTopic({
       name: fromTopicName,
-      brokerClusterName,
       group: topicGroup,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     }).as('createTopic');
 
     cy.startTopic(topicGroup, fromTopicName);
 
     cy.createTopic({
       name: toTopicName,
-      brokerClusterName,
       group: topicGroup,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     }).as('createTopic');
 
     cy.startTopic(topicGroup, toTopicName);
@@ -221,16 +227,22 @@ describe('Stream property API', () => {
 
     cy.createTopic({
       name: fromTopicName,
-      brokerClusterName,
       group: topicGroup,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     }).as('createTopic');
 
     cy.startTopic(topicGroup, fromTopicName);
 
     cy.createTopic({
       name: toTopicName,
-      brokerClusterName,
       group: topicGroup,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     }).as('createTopic');
 
     cy.startTopic(topicGroup, toTopicName);

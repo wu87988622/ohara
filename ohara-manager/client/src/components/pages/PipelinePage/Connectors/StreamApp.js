@@ -316,6 +316,7 @@ const StreamApp = props => {
                 <AutoSave
                   save={handleSave}
                   updateHasChanges={updateHasChanges}
+                  connectorState={state}
                 />
 
                 {utils.renderForm({ parentValues: values, ...formProps })}
