@@ -65,8 +65,8 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
             .flatMap(
               nodes =>
                 brokerContainers(
-                  creation.brokerClusterName.getOrElse(
-                    throw new RuntimeException("broker cluster name should be defined")
+                  creation.brokerClusterKey.getOrElse(
+                    throw new RuntimeException("broker cluster key should be defined")
                   )
                 ).map(cs => (nodes, cs))
             )
@@ -258,11 +258,11 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
 
   /**
     * get the containers for specific broker cluster. This method is used to update the route.
-    * @param clusterName name of broker cluster
+    * @param clusterKey key of broker cluster
     * @param executionContext thread pool
     * @return containers
     */
-  protected def brokerContainers(clusterName: String)(
+  protected def brokerContainers(clusterKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 }
 

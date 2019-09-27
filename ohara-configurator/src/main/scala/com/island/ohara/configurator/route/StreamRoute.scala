@@ -81,15 +81,14 @@ private[configurator] object StreamRoute {
 
   /**
     * fina the broker cluster for this creation. The rules are shown below.
-    * 1) find the defined value for broker cluster name
-    * 2) find the single broker cluster if brokerClusterName is None
+    * 1) find the defined value for broker cluster key
+    * 2) find the single broker cluster if brokerClusterKey is None
     * 3) throw exception otherwise
     */
-  private[this] def pickBrokerCluster(brokerClusterName: Option[String])(
+  private[this] def pickBrokerCluster(brokerClusterKey: Option[ObjectKey])(
     implicit brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): Future[String] =
-    // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
-    brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster().map(_.name()))
+    executionContext: ExecutionContext): Future[ObjectKey] =
+    brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster())
 
   /**
     * This is a temporary solution for using both nodeNames and instances
@@ -145,7 +144,7 @@ private[configurator] object StreamRoute {
                                    streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
     (creation: Creation) =>
-      pickBrokerCluster(creation.brokerClusterName).flatMap { bkName =>
+      pickBrokerCluster(creation.brokerClusterKey).flatMap { bkKey =>
         //TODO remove this after #2288
         pickNodeNames(Some(creation.nodeNames), creation.instances).flatMap(
           nodes =>
@@ -162,7 +161,7 @@ private[configurator] object StreamRoute {
                       // In creation, we have to re-define the following value since they may changed:
                       // 1) broker cluster name
                       // 2) node name (This should be removed after #2288
-                      val req = access.request.settings(creation.settings).brokerClusterName(bkName)
+                      val req = access.request.settings(creation.settings).brokerClusterKey(bkKey)
                       if (nodes.isDefined) req.nodeNames(nodes.get)
                       req.creation.settings
                     },
@@ -187,12 +186,13 @@ private[configurator] object StreamRoute {
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped StreamApp cluster: $key")
-          pickBrokerCluster(update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName))).flatMap(
-            bkName =>
+          pickBrokerCluster(update.brokerClusterKey.orElse(previousOption.map(_.brokerClusterKey))).flatMap(
+            bkKey =>
               //TODO remove this after #2288
               pickNodeNames(update.nodeNames, update.instances).map { nodes =>
                 var extra_settings =
-                  Map[String, JsValue](StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(bkName))
+                  Map[String, JsValue](
+                    StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key() -> ObjectKey.toJsonString(bkKey).parseJson)
                 if (nodes.isDefined)
                   extra_settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
                     nodes.get.map(JsString(_)).toVector)
@@ -261,7 +261,7 @@ private[configurator] object StreamRoute {
         }
         .flatMap { streamClusterInfo =>
           CollieUtils
-            .topicAdmin(streamClusterInfo.brokerClusterName)
+            .topicAdmin(streamClusterInfo.brokerClusterKey)
             .flatMap {
               case (brokerClusterInfo, topicAdmin) =>
                 topicAdmin.topics().map { topicInfos =>
@@ -285,7 +285,7 @@ private[configurator] object StreamRoute {
                   .imageName(streamClusterInfo.imageName)
                   .nodeNames(streamClusterInfo.nodeNames)
                   .jarInfo(fileInfo)
-                  .brokerClusterName(brokerClusterInfo.name)
+                  .brokerClusterKey(brokerClusterInfo.key)
                   .connectionProps(brokerClusterInfo.connectionProps)
                   // This is a temporary solution for "enable exactly once",
                   // but we should change the behavior to not just "true or false"...by Sam

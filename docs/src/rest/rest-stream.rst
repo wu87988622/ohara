@@ -59,7 +59,15 @@ streamApp stored data
      - to (**array(TopicKey)**) — target topic
      - instances (**int**) — number of running streamApp
      - nodeNames (**array(string)**) — the nodes running the zookeeper process
-     - brokerClusterName (**string**) — the broker cluser name used for streamApp running
+     - brokerClusterKey (**object**) — the broker cluster key used for streamApp running
+
+       - brokerClusterKey.group (**option(string)**) — the group of broker cluster
+       - brokerClusterKey.name (**string**) — the name of broker cluster
+
+       .. note::
+          the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
+          {"group": "default", "name": "n"}
+
      - tags (**object**) — the user defined parameters
 
 #. definition (**Option(object)**) — definition for current streamApp. If there was no **jarKey** defined, this
@@ -119,7 +127,7 @@ Example Request
      - group (**string**) — the group name of this jar
      - name (**string**) — the name of this jar
 
-  #. brokerClusterName (**option(string)**) — the broker cluser name used for streamApp running ; default we will auto fill this
+  #. brokerClusterKey (**option(object)**) — the broker cluster used for streamApp running ; default we will auto fill this
      parameter for you if you don't specify it and there only exists one broker cluster.
   #. jmxPort (**int**) — expose port for jmx ; default is random port
   #. from (**array(TopicKey)**) — source topic ; default is empty array
@@ -296,10 +304,12 @@ Example Response
       "metrics": {
         "meters": []
       },
-      "nodeNames": [],
       "settings": {
         "name": "a5eddb5b9fd144f1a75e",
-        "brokerClusterName": "4ef3d4a266",
+        "brokerClusterKey": {
+          "group": "default",
+          "name": "4ef3d4a266"
+        },
         "group": "default",
         "tags": {},
         "imageName": "oharastream/streamapp:$|VERSION|",
@@ -343,13 +353,17 @@ Example Response
        "metrics": {
          "meters": []
        },
-       "nodeNames": [],
        "settings": {
          "name": "a5eddb5b9fd144f1a75e",
          "group": "default",
+         "brokerClusterKey": {
+           "group": "default",
+           "name": "4ef3d4a266"
+         },
          "tags": {},
-         "instances": 1,
          "imageName": "oharastream/streamapp:$|version|",
+         "from": [],
+         "to": [],
          "jarKey": {
            "group": "wk01",
            "name": "ohara-streamapp.jar"
@@ -380,13 +394,17 @@ Example Response
          "metrics": {
            "meters": []
          },
-         "nodeNames": [],
          "settings": {
            "name": "a5eddb5b9fd144f1a75e",
            "group": "default",
+           "brokerClusterKey": {
+             "group": "default",
+             "name": "4ef3d4a266"
+           },
            "tags": {},
-           "instances": 1,
            "imageName": "oharastream/streamapp:$|version|",
+           "from": [],
+           "to": [],
            "jarKey": {
              "group": "wk01",
              "name": "ohara-streamapp.jar"
@@ -470,14 +488,14 @@ Example Response
         "metrics": {
           "meters": []
         },
-        "nodeNames": [
-          "node1", "node2"
-        ],
         "settings": {
           "name": "myapp",
           "group": "default",
+          "brokerClusterKey": {
+            "group": "default",
+            "name": "4ef3d4a266"
+          },
           "tags": {},
-          "instances": 3,
           "imageName": "myimage",
           "jarKey": {
               "group": "newGroup",

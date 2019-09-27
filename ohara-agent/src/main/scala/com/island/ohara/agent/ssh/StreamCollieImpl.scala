@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -77,13 +78,12 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
 
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(clusterKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
       clusterCache.snapshot
         .filter(_._1.isInstanceOf[BrokerClusterInfo])
-        .find(_._1.name == clusterName)
+        .find(_._1.key == clusterKey)
         .map(_._2)
-        .getOrElse(
-          throw new NoSuchClusterException(s"broker cluster:$clusterName doesn't exist. other broker clusters")))
+        .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterKey doesn't exist.")))
 }

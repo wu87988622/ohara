@@ -80,12 +80,12 @@ private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
 
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(clusterKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     bkCollie
       .clusters()
       .map(
-        _.find(_._1.name == clusterName)
+        _.find(_._1.key == clusterKey)
           .map(_._2)
-          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterName does not exist")))
+          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterKey does not exist")))
 }

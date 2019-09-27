@@ -177,11 +177,16 @@ class TestStreamApi extends OharaTest with Matchers {
   @Test
   def nodeNamesFieldCheck(): Unit = {
     an[NullPointerException] should be thrownBy accessRequest.nodeNames(null)
-    // empty node names is legal to streamapp
+    // empty node names is legal to streamApp
     accessRequest.nodeNames(Set.empty)
 
     // default value
     accessRequest.name(CommonUtils.randomString(5)).jarKey(fakeJar).creation.nodeNames shouldBe Set.empty
+  }
+
+  @Test
+  def brokerClusterKeyFieldCheck(): Unit = {
+    an[NullPointerException] should be thrownBy accessRequest.brokerClusterKey(null)
   }
 
   @Test
@@ -627,8 +632,9 @@ class TestStreamApi extends OharaTest with Matchers {
   @Test
   def testBrokerClusterName(): Unit = {
     val bkName = CommonUtils.randomString()
-    val r1 = accessRequest.brokerClusterName(bkName).jarKey(fakeJar).creation
-    r1.brokerClusterName.get shouldBe bkName
+    val bkGroup = CommonUtils.randomString()
+    val r1 = accessRequest.brokerClusterKey(ObjectKey.of(bkGroup, bkName)).jarKey(fakeJar).creation
+    r1.brokerClusterKey.get.name() shouldBe bkName
   }
 
   @Test

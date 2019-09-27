@@ -25,6 +25,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
 import com.island.ohara.metrics.basic.{Counter, CounterMBean}
@@ -99,7 +100,7 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
       }
       .map(_.orElse(Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)))) // a serializable collection
 
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(clusterKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     throw new UnsupportedOperationException
 }

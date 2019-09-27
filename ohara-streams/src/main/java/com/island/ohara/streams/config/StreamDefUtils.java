@@ -37,14 +37,14 @@ public final class StreamDefUtils {
   /** This is the default configurations we will load into {@code StreamDefUtils}. */
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
 
-  public static final SettingDef BROKER_CLUSTER_NAME_DEFINITION =
+  public static final SettingDef BROKER_CLUSTER_KEY_DEFINITION =
       SettingDef.builder()
-          .key("brokerClusterName")
+          .key("brokerClusterKey")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Broker cluster name")
-          .documentation("the name of broker cluster used to transfer data for this streamapp")
-          .valueType(Type.STRING)
+          .displayName("Broker cluster key")
+          .documentation("the key of broker cluster used to transfer data for this streamApp")
+          .valueType(Type.OBJECT_KEY)
           .internal()
           .build();
 

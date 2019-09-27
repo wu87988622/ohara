@@ -346,17 +346,17 @@ class TestStreamRoute extends OharaTest with Matchers {
         .fromTopicKey(from0.key)
         .toTopicKey(to0.key)
         .instances(1)
-        .create()).brokerClusterName
+        .create()).brokerClusterKey
 
     val streamDesc = result(
       accessStream.request
-        .brokerClusterName(bk.name)
+        .brokerClusterKey(bk.key)
         .jarKey(fileInfo.key)
         .fromTopicKey(from0.key)
         .toTopicKey(to0.key)
         .instances(1)
         .create())
-    streamDesc.brokerClusterName shouldBe bk.name
+    streamDesc.brokerClusterKey shouldBe bk.key
     result(accessStream.start(streamDesc.key))
 
     // fail to update a running streamApp
@@ -431,7 +431,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     )
     val streamDesc = result(
       accessStream.request
-        .brokerClusterName(bk.name)
+        .brokerClusterKey(bk.key)
         .jarKey(fileInfo.key)
         .tags(tags)
         .fromTopicKey(from0.key)

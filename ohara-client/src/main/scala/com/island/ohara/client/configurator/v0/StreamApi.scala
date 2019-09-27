@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -36,6 +38,9 @@ object StreamApi {
   // TODO: TODO: "stream" is derpecated now. see https://github.com/oharastream/ohara/issues/2115
   val STREAM_PREFIX_PATH: String = STREAM_SERVICE_NAME
   val STREAMS_PREFIX_PATH: String = "streams"
+
+  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2731)
+  private[this] val BROKER_CLUSTER_NAME_KEY: String = "brokerClusterName"
 
   /**
     * StreamApp Docker Image name
@@ -63,7 +68,7 @@ object StreamApi {
         })
     }
 
-    def brokerClusterName: Option[String] = settings.brokerClusterName
+    def brokerClusterKey: Option[ObjectKey] = settings.brokerClusterKey
 
     override def imageName: String = settings.imageName.get
 
@@ -129,8 +134,15 @@ object StreamApi {
     // We use the update parser to get the name and group
     private[StreamApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    def brokerClusterName: Option[String] =
-      noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key()).map(_.convertTo[String])
+
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2731)
+    private[this] def brokerClusterName: Option[String] =
+      noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings)
+      .get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key())
+      .map(_.convertTo[ObjectKey])
+      .orElse(brokerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
 
     override def imageName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
@@ -189,7 +201,7 @@ object StreamApi {
     *
     * @param settings streamApp key-value pair settings
     * @param definition the core and custom definition that defined in jar
-    * @param deadNodes dead node list of the exited containers from this cluster
+    * @param aliveNodes alive node list of the running containers from this cluster
     * @param state the state of streamApp (stopped streamApp does not have this field)
     * @param error the error message if the state was failed to fetch
     * @param metrics the metrics bean
@@ -230,7 +242,7 @@ object StreamApi {
 
     def jarInfo: FileInfo = settings.jarInfo.get
 
-    def brokerClusterName: String = settings.brokerClusterName.get
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
     def toTopicKeys: Set[TopicKey] = settings.toTopicKeys
     def jmxPort: Int = settings.jmxPort
@@ -272,9 +284,9 @@ object StreamApi {
     def toTopicKeys(toTopicKeys: Set[TopicKey]): Request.this.type =
       setting(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(toTopicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
     @Optional("server picks up a broker cluster for you if broker cluster name is empty")
-    def brokerClusterName(brokerClusterName: String): Request.this.type = setting(
-      StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key(),
-      JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
+    def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type = setting(
+      StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key(),
+      OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey)))
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireConnectionPort(jmxPort)))

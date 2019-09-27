@@ -146,7 +146,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       access.request
         .name(nameHolder.generateClusterName())
         .jarKey(jarInfo.key)
-        .brokerClusterName(bkKey.name())
+        .brokerClusterKey(bkKey)
         .instances(instances)
         .create())
 
@@ -256,11 +256,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request
-        .name(nameHolder.generateClusterName())
-        .jarKey(jarInfo.key)
-        .brokerClusterName(bkKey.name())
-        .create())
+      access.request.name(nameHolder.generateClusterName()).jarKey(jarInfo.key).brokerClusterKey(bkKey).create())
     log.info(s"[testRunSimpleStreamApp] stream properties creation [$stream]...done")
 
     // update streamApp properties
@@ -371,7 +367,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       access.request
         .name(nameHolder.generateClusterName())
         .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
-        .brokerClusterName(bkKey.name())
+        .brokerClusterKey(bkKey)
         .nodeNames(nodes.map(_.hostname).toSet)
         .fromTopicKey(topic1.key)
         .toTopicKey(topic2.key)

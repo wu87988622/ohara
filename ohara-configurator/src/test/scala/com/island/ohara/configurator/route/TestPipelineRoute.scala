@@ -115,7 +115,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
       streamApi.request
         .fromTopicKey(from.key)
         .toTopicKey(to.key)
-        .brokerClusterName(bk.name)
+        .brokerClusterKey(bk.key)
         .instances(1)
         .jarKey(fileInfo.key)
         .create())
