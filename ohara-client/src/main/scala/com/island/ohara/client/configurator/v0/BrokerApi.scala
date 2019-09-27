@@ -149,7 +149,14 @@ object BrokerApi {
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags
     def nodeNames: Set[String] = settings.nodeNames
-    def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
+
+    /**
+      * the node names is not equal to "running" nodes. The connection props may reference to invalid nodes and the error
+      * should be handled by the client code.
+      * @return a string host_0:port,host_1:port
+      */
+    def connectionProps: String = if (nodeNames.isEmpty) throw new IllegalArgumentException("there is no nodes!!!")
+    else nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
     // TODO remove this duplicated fields after #2191
     def imageName: String = settings.imageName

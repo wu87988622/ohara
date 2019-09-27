@@ -53,10 +53,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
 
   protected def nameHolder: ClusterNameHolder
 
-  /** to simplify test, we use the same group for ALL collie test
-    * It is ok to use same group since we will use different cluster name
-    */
-  private[this] final val group: String = CommonUtils.randomString(10)
+  private[this] final val group: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   private[this] val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
   private[this] val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))

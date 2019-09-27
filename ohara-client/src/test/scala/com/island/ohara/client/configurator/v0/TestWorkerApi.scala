@@ -465,4 +465,17 @@ class TestWorkerApi extends OharaTest with Matchers {
     data.name shouldBe name
     data.group shouldBe GROUP_DEFAULT
   }
+
+  @Test
+  def testConnectionProps(): Unit = {
+    val cluster = WorkerClusterInfo(
+      settings = WorkerApi.access.request.nodeNames(Set("n0", "m1")).creation.settings,
+      aliveNodes = Set("nn"),
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current(),
+      connectors = Seq.empty
+    )
+    cluster.connectionProps should not include "nn"
+  }
 }

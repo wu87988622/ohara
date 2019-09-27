@@ -551,4 +551,17 @@ class TestBrokerApi extends OharaTest with Matchers {
     cluster.deadNodes shouldBe Set("n1")
     cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
+
+  @Test
+  def testConnectionProps(): Unit = {
+    val cluster = BrokerClusterInfo(
+      settings = BrokerApi.access.request.nodeNames(Set("n0", "m1")).creation.settings,
+      aliveNodes = Set("nn"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current(),
+      topicSettingDefinitions = Seq.empty
+    )
+    cluster.connectionProps should not include "nn"
+  }
 }
