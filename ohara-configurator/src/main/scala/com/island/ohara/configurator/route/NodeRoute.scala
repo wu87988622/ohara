@@ -86,9 +86,9 @@ object NodeRoute {
       .get[Node](key)
       .flatMap(_.map {
         updateServices(_).flatMap { node =>
-          if (node.services.map(_.clusterNames.size).sum != 0)
+          if (node.services.map(_.clusterKeys.size).sum != 0)
             Future.failed(new IllegalStateException(
-              s"${node.name} is running ${node.services.filter(_.clusterNames.nonEmpty).map(s => s"${s.name}:${s.clusterNames.mkString(".")}").mkString(" ")}. " +
+              s"${node.name} is running ${node.services.filter(_.clusterKeys.nonEmpty).map(s => s"${s.name}:${s.clusterKeys.mkString(".")}").mkString(" ")}. " +
                 s"Please stop all services before deleting"))
           else Future.unit
         }

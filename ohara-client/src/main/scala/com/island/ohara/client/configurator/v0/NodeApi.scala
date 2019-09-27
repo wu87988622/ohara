@@ -23,7 +23,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsString, JsValue, RootJsonFormat}
+import spray.json.{JsArray, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
@@ -45,6 +45,7 @@ object NodeApi {
   val ZOOKEEPER_SERVICE_NAME: String = "zookeeper"
   val BROKER_SERVICE_NAME: String = "broker"
   val WORKER_SERVICE_NAME: String = "connect-worker"
+  val STREAM_SERVICE_NAME: String = "streamapp"
 
   case class Updating(port: Option[Int],
                       user: Option[String],
@@ -80,8 +81,16 @@ object NodeApi {
       .nullToAnotherValueOfKey("hostname", "name")
       .refine
 
-  case class NodeService(name: String, clusterNames: Seq[String])
-  implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
+  case class NodeService(name: String, clusterKeys: Seq[ObjectKey])
+  implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = new RootJsonFormat[NodeService] {
+    private[this] val format = jsonFormat2(NodeService)
+    override def read(json: JsValue): NodeService = format.read(json)
+    override def write(obj: NodeService): JsValue = JsObject(
+      format.write(obj).asJsObject.fields +
+        // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
+        ("clusterNames" -> JsArray(obj.clusterKeys.map(_.name()).map(JsString(_)).toVector))
+    )
+  }
 
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.

@@ -29,6 +29,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, TopicApi, Wo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.pattern.Builder
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.fake._
 import com.island.ohara.configurator.file.FileStore
@@ -101,11 +102,12 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
       val store = getOrCreateStore()
-      val embeddedBkName = "embeddedbk"
-      val embeddedWkName = "embeddedwk"
+      val embeddedBrokerKey = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedbk")
+      val embeddedWorkerKey = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedwk")
       // we fake nodes for embedded bk and wk
       def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
       import scala.concurrent.ExecutionContext.Implicits.global
+
       (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
       // DON'T add duplicate nodes!!!
         .toSet[String]
@@ -113,10 +115,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           Node(
             hostname = nodeName,
             services = (if (bkConnectionProps.contains(nodeName))
-                          Seq(NodeService(NodeApi.BROKER_SERVICE_NAME, Seq(embeddedBkName)))
-                        else Seq.empty) ++ (if (wkConnectionProps.contains(nodeName))
-                                              Seq(NodeService(NodeApi.WORKER_SERVICE_NAME, Seq(embeddedWkName)))
-                                            else Seq.empty),
+                          Seq(NodeService(NodeApi.BROKER_SERVICE_NAME, Seq(embeddedBrokerKey)))
+                        else Seq.empty)
+              ++ (if (wkConnectionProps.contains(nodeName))
+                    Seq(NodeService(NodeApi.WORKER_SERVICE_NAME, Seq(embeddedWorkerKey)))
+                  else Seq.empty),
             port = Some(22),
             user = Some("fake"),
             password = Some("fake"),
@@ -133,7 +136,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val port = pair.map(_.split(":").last).head.toInt
         BrokerClusterInfo(
           settings = BrokerApi.access.request
-            .name(embeddedBkName)
+            .key(embeddedBrokerKey)
             .imageName("None")
             .zookeeperClusterName("None")
             .clientPort(port)
@@ -154,7 +157,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val port = pair.map(_.split(":").last).head.toInt
         WorkerClusterInfo(
           settings = WorkerApi.access.request
-            .name(embeddedWkName)
+            .key(embeddedWorkerKey)
             .brokerClusterName(bkCluster.name)
             .clientPort(port)
             .nodeName(host)

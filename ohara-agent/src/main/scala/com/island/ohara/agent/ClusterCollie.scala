@@ -23,6 +23,7 @@ import com.island.ohara.agent.ssh.ClusterCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
@@ -98,27 +99,35 @@ trait ClusterCollie extends Releasable {
           services = Seq(
             NodeService(
               name = NodeApi.ZOOKEEPER_SERVICE_NAME,
-              clusterNames = clusters
+              clusterKeys = clusters
                 .filter(_.isInstanceOf[ZookeeperClusterInfo])
                 .map(_.asInstanceOf[ZookeeperClusterInfo])
                 .filter(_.nodeNames.contains(node.name))
-                .map(_.name)
+                .map(_.key)
             ),
             NodeService(
               name = NodeApi.BROKER_SERVICE_NAME,
-              clusterNames = clusters
+              clusterKeys = clusters
                 .filter(_.isInstanceOf[BrokerClusterInfo])
                 .map(_.asInstanceOf[BrokerClusterInfo])
                 .filter(_.nodeNames.contains(node.name))
-                .map(_.name)
+                .map(_.key)
             ),
             NodeService(
               name = NodeApi.WORKER_SERVICE_NAME,
-              clusterNames = clusters
+              clusterKeys = clusters
                 .filter(_.isInstanceOf[WorkerClusterInfo])
                 .map(_.asInstanceOf[WorkerClusterInfo])
                 .filter(_.nodeNames.contains(node.name))
-                .map(_.name)
+                .map(_.key)
+            ),
+            NodeService(
+              name = NodeApi.STREAM_SERVICE_NAME,
+              clusterKeys = clusters
+                .filter(_.isInstanceOf[StreamClusterInfo])
+                .map(_.asInstanceOf[StreamClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.key)
             )
           )
         )

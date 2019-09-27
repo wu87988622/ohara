@@ -47,11 +47,14 @@ class TestNodeRoute extends OharaTest with Matchers {
   }
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+
   @Test
   def testServices(): Unit = {
     val nodes = result(nodeApi.list())
     nodes.isEmpty shouldBe false
-    nodes.foreach(_.services.isEmpty shouldBe false)
+    nodes.foreach(_.services.size should not be 0)
+    nodes.foreach(_.services.flatMap(_.clusterKeys).size should not be 0)
+    nodes.flatMap(_.services.flatMap(_.clusterKeys)).foreach(_.group() shouldBe GROUP_DEFAULT)
   }
 
   @Test
@@ -93,7 +96,7 @@ class TestNodeRoute extends OharaTest with Matchers {
   @Test
   def disableToDeleteNodeRunningService(): Unit = {
     val nodes = result(nodeApi.list())
-    val runningNode = nodes.filter(_.services.exists(_.clusterNames.nonEmpty)).head
+    val runningNode = nodes.filter(_.services.exists(_.clusterKeys.nonEmpty)).head
     an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.key))
   }
 

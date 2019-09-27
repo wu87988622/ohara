@@ -53,6 +53,11 @@ The properties used in describing a node are shown below.
 #. user (**string**) — ssh account
 #. password (**string**) — ssh password
 #. tags (**object**) — the extra description to this object
+#. services (**array(object)**) — the services hosted by this node
+
+   - services[i].name (**string**) — service name (zookeeper, broker, connect-worker and streamapp)
+   - services[i].clusterKeys (**array(object)**) — the keys of this service
+
 #. validationReport (**object**) — last validation result.
 
    This information is attached by Ohara Configurator after you request the :ref:`validation <rest-validation>`
@@ -95,14 +100,38 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "hostname": "node00",
-       "port": 22,
-       "user": "abc",
-       "password": "pwd",
-       "lastModified": 1553498552595,
-       "tags": {}
-     }
+    {
+      "services": [
+        {
+          "name": "zookeeper",
+          "clusterKeys": [
+            {
+              "group": "default",
+              "name": "zk"
+            }
+          ]
+        },
+        {
+          "name": "broker",
+          "clusterKeys": []
+        },
+        {
+          "name": "connect-worker",
+          "clusterKeys": []
+        },
+        {
+          "name": "streamapp",
+          "clusterKeys": []
+        }
+      ],
+      "name": "node00",
+      "hostname": "node00",
+      "lastModified": 1569569857613,
+      "tags": {},
+      "port": 22,
+      "user": "chia7712",
+      "password": "jellynina0208"
+    }
 
 
 update a node
@@ -134,14 +163,38 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "hostname": "node00",
-       "port": 22,
-       "user": "abc",
-       "password": "pwd",
-       "lastModified": 1553498552595,
-       "tags": {}
-     }
+    {
+      "services": [
+        {
+          "name": "zookeeper",
+          "clusterKeys": [
+            {
+              "group": "default",
+              "name": "zk"
+            }
+          ]
+        },
+        {
+          "name": "broker",
+          "clusterKeys": []
+        },
+        {
+          "name": "connect-worker",
+          "clusterKeys": []
+        },
+        {
+          "name": "streamapp",
+          "clusterKeys": []
+        }
+      ],
+      "name": "node00",
+      "hostname": "node00",
+      "lastModified": 1569569857613,
+      "tags": {},
+      "port": 22,
+      "user": "chia7712",
+      "password": "jellynina0208"
+    }
 
 
 list all nodes stored in Ohara
@@ -152,16 +205,40 @@ list all nodes stored in Ohara
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "hostname": "node00",
-         "port": 22,
-         "user": "abc",
-         "password": "pwd",
-         "lastModified": 1553498552595,
-         "tags": {}
-       }
-     ]
+    [
+      {
+        "services": [
+          {
+            "name": "zookeeper",
+            "clusterKeys": [
+              {
+                "group": "default",
+                "name": "zk"
+              }
+            ]
+          },
+          {
+            "name": "broker",
+            "clusterKeys": []
+          },
+          {
+            "name": "connect-worker",
+            "clusterKeys": []
+          },
+          {
+            "name": "streamapp",
+            "clusterKeys": []
+          }
+        ],
+        "name": "node00",
+        "hostname": "node00",
+        "lastModified": 1569569857613,
+        "tags": {},
+        "port": 22,
+        "user": "chia7712",
+        "password": "jellynina0208"
+      }
+    ]
 
 
 delete a node
@@ -188,14 +265,38 @@ get a node
 Example Response
   .. code-block:: json
 
-     {
-       "hostname": "node00",
-       "port": 22,
-       "user": "abc",
-       "password": "pwd",
-       "lastModified": 1553498552595,
-       "tags": {}
-     }
+    {
+      "services": [
+        {
+          "name": "zookeeper",
+          "clusterKeys": [
+            {
+              "group": "default",
+              "name": "zk"
+            }
+          ]
+        },
+        {
+          "name": "broker",
+          "clusterKeys": []
+        },
+        {
+          "name": "connect-worker",
+          "clusterKeys": []
+        },
+        {
+          "name": "streamapp",
+          "clusterKeys": []
+        }
+      ],
+      "name": "node00",
+      "hostname": "node00",
+      "lastModified": 1569569857613,
+      "tags": {},
+      "port": 22,
+      "user": "chia7712",
+      "password": "jellynina0208"
+    }
 
 .. _oharastream/zookeeper: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/zookeeper
 .. _oharastream/broker: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/broker

@@ -94,7 +94,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).isEmpty shouldBe false
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).foreach { node =>
       node.services.isEmpty shouldBe false
-      withClue(s"${node.services}")(node.services.map(_.clusterNames.size).sum > 0 shouldBe true)
+      withClue(s"${node.services}")(node.services.map(_.clusterKeys.size).sum > 0 shouldBe true)
     }
   }
 
