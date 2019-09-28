@@ -39,9 +39,6 @@ object StreamApi {
   val STREAM_PREFIX_PATH: String = STREAM_SERVICE_NAME
   val STREAMS_PREFIX_PATH: String = "streams"
 
-  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2731)
-  private[this] val BROKER_CLUSTER_NAME_KEY: String = "brokerClusterName"
-
   /**
     * StreamApp Docker Image name
     */
@@ -135,14 +132,8 @@ object StreamApi {
     private[StreamApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
 
-    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2731)
-    private[this] def brokerClusterName: Option[String] =
-      noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
-
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings)
-      .get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key())
-      .map(_.convertTo[ObjectKey])
-      .orElse(brokerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+    def brokerClusterKey: Option[ObjectKey] =
+      noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key()).map(_.convertTo[ObjectKey])
 
     override def imageName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])

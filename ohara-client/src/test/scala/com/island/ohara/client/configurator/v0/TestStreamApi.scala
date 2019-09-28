@@ -630,7 +630,7 @@ class TestStreamApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testBrokerClusterName(): Unit = {
+  def testBrokerClusterKey(): Unit = {
     val bkName = CommonUtils.randomString()
     val bkGroup = CommonUtils.randomString()
     val r1 = accessRequest.brokerClusterKey(ObjectKey.of(bkGroup, bkName)).jarKey(fakeJar).creation

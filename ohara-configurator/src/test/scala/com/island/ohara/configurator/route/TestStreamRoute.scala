@@ -327,7 +327,7 @@ class TestStreamRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testBrokerClusterName(): Unit = {
+  def testBrokerClusterKey(): Unit = {
     val nodeNames = result(bkApi.list()).head.nodeNames
     val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
     val bk = result(
@@ -339,7 +339,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(topicApi.start(to0.key))
     result(bkApi.start(bk.key))
 
-    // we already have pre-defined broker, lake brokerClusterName parameter will cause exception
+    // we already have pre-defined broker, lake brokerClusterKey parameter will cause exception
     an[IllegalArgumentException] should be thrownBy result(
       accessStream.request
         .jarKey(fileInfo.key)
