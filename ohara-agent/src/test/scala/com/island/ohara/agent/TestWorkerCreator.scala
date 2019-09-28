@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -87,13 +88,8 @@ class TestWorkerCreator extends OharaTest with Matchers {
   }
 
   @Test
-  def nullBkClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator().brokerClusterName(null)
-  }
-
-  @Test
-  def emptyBkClusterName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy wkCreator().brokerClusterName("")
+  def nullBkClusterKey(): Unit = {
+    an[NullPointerException] should be thrownBy wkCreator().brokerClusterKey(null)
   }
 
   @Test
@@ -172,7 +168,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     .imageName(CommonUtils.randomString(10))
     .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
-    .brokerClusterName("bk")
+    .brokerClusterKey(ObjectKey.of("default", "bk"))
     .clientPort(CommonUtils.availablePort())
     .jmxPort(8084)
     .groupId(CommonUtils.randomString(10))
@@ -212,7 +208,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     val nodeNames = Set(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.brokerClusterName(CommonUtils.randomString(5)).nodeNames(nodeNames).creation.settings,
+        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("default", "bk")).nodeNames(nodeNames).creation.settings,
       connectors = Seq.empty,
       aliveNodes = nodeNames,
       state = None,
@@ -277,7 +273,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
         .group(CommonUtils.randomString(10))
         .clientPort(8083)
         .jmxPort(8084)
-        .brokerClusterName(bkName)
+        .brokerClusterKey(ObjectKey.of("default", bkName))
         .groupId(CommonUtils.randomString(10))
         .configTopicName(CommonUtils.randomString(10))
         .configTopicReplications(1)
@@ -299,7 +295,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
         .group(CommonUtils.randomString(10))
         .clientPort(8083)
         .jmxPort(8084)
-        .brokerClusterName(CommonUtils.randomString()) // bk2 not exists
+        .brokerClusterKey(ObjectKey.of("default", "bk"))
         .groupId(CommonUtils.randomString(10))
         .configTopicName(CommonUtils.randomString(10))
         .configTopicReplications(1)

@@ -34,30 +34,25 @@ object WorkerRoute {
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
     (creation: Creation) =>
-      creation.brokerClusterName
-      // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-        .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
-        .getOrElse(CollieUtils.singleBrokerCluster())
-        .flatMap { bkKey =>
-          Future
-            .traverse(creation.jarKeys)(fileStore.fileInfo)
-            .map(_.toSeq)
-            .map(jarInfos =>
-              WorkerClusterInfo(
-                settings = WorkerApi.access.request
-                  .settings(creation.settings)
-                  // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
-                  .brokerClusterName(bkKey.name())
-                  .jarInfos(jarInfos)
-                  .creation
-                  .settings,
-                connectors = Seq.empty,
-                aliveNodes = Set.empty,
-                state = None,
-                error = None,
-                lastModified = CommonUtils.current()
-            ))
-      }
+      creation.brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster()).flatMap { bkKey =>
+        Future
+          .traverse(creation.jarKeys)(fileStore.fileInfo)
+          .map(_.toSeq)
+          .map(jarInfos =>
+            WorkerClusterInfo(
+              settings = WorkerApi.access.request
+                .settings(creation.settings)
+                .brokerClusterKey(bkKey)
+                .jarInfos(jarInfos)
+                .creation
+                .settings,
+              connectors = Seq.empty,
+              aliveNodes = Set.empty,
+              state = None,
+              error = None,
+              lastModified = CommonUtils.current()
+          ))
+    }
 
   private[this] def HookOfUpdating(
     implicit fileStore: FileStore,
@@ -70,10 +65,9 @@ object WorkerRoute {
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped worker cluster: $key")
-          update.brokerClusterName
-            .orElse(previousOption.map(_.brokerClusterName))
-            // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2769)
-            .map(n => Future.successful(ObjectKey.of(GROUP_DEFAULT, n)))
+          update.brokerClusterKey
+            .orElse(previousOption.map(_.brokerClusterKey))
+            .map(Future.successful)
             .getOrElse(CollieUtils.singleBrokerCluster())
         }
         .flatMap { bkKey =>
@@ -86,8 +80,7 @@ object WorkerRoute {
             WorkerClusterInfo(
               settings = WorkerApi.access.request
                 .settings(newSettings)
-                // TODO: use key instead (see https://github.com/oharastream/ohara/issues/2731)
-                .brokerClusterName(bkKey.name())
+                .brokerClusterKey(bkKey)
                 .jarInfos(jarInfos)
                 .creation
                 .settings,
@@ -114,10 +107,8 @@ object WorkerRoute {
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
 
             // check broker cluster
-            if (!clusters
-                  .filter(_.isInstanceOf[BrokerClusterInfo])
-                  .exists(_.name == workerClusterInfo.brokerClusterName))
-              throw new NoSuchClusterException(s"broker cluster:${workerClusterInfo.brokerClusterName} doesn't exist")
+            if (!clusters.filter(_.isInstanceOf[BrokerClusterInfo]).exists(_.key == workerClusterInfo.brokerClusterKey))
+              throw new NoSuchClusterException(s"broker cluster:${workerClusterInfo.brokerClusterKey} doesn't exist")
 
             // check group id
             wkClusters.find(_.groupId == workerClusterInfo.groupId).foreach { cluster =>
@@ -149,7 +140,7 @@ object WorkerRoute {
               .group(workerClusterInfo.group)
               .clientPort(workerClusterInfo.clientPort)
               .jmxPort(workerClusterInfo.jmxPort)
-              .brokerClusterName(workerClusterInfo.brokerClusterName)
+              .brokerClusterKey(workerClusterInfo.brokerClusterKey)
               .groupId(workerClusterInfo.groupId)
               .configTopicName(workerClusterInfo.configTopicName)
               .configTopicReplications(workerClusterInfo.configTopicReplications)

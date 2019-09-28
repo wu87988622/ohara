@@ -64,8 +64,7 @@ class TestContainerRoute extends OharaTest with Matchers {
     val bk = result(brokerApi.request.key(bkClusterKey).zookeeperClusterKey(zkClusterKey).nodeNames(nodeNames).create())
     result(brokerApi.start(bk.key))
 
-    val wk = result(
-      workerApi.request.key(wkClusterKey).brokerClusterName(bkClusterKey.name()).nodeNames(nodeNames).create())
+    val wk = result(workerApi.request.key(wkClusterKey).brokerClusterKey(bkClusterKey).nodeNames(nodeNames).create())
     result(workerApi.start(wk.key))
   }
 

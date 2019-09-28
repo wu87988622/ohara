@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{NodeApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -90,7 +91,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
                                    route: Map[String, String]): Future[Unit] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
 
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(classKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support brokerClusters function")
 

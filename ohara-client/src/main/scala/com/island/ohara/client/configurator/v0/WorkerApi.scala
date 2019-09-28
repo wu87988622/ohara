@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
@@ -36,6 +38,8 @@ object WorkerApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
+  private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
+  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2731)
   private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val CLIENT_PORT_KEY = "clientPort"
   private[this] val JMX_PORT_KEY = "jmxPort"
@@ -70,7 +74,7 @@ object WorkerApi {
     private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
     override def imageName: String = settings.imageName.get
-    def brokerClusterName: Option[String] = settings.brokerClusterName
+    def brokerClusterKey: Option[ObjectKey] = settings.brokerClusterKey
     def clientPort: Int = settings.clientPort.get
     def jmxPort: Int = settings.jmxPort.get
     def groupId: String = settings.groupId.get
@@ -129,7 +133,13 @@ object WorkerApi {
     private[WorkerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[WorkerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     override def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
-    def brokerClusterName: Option[String] = noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2731)
+    private[this] def brokerClusterName: Option[String] =
+      noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings)
+      .get(BROKER_CLUSTER_KEY_KEY)
+      .map(_.convertTo[ObjectKey])
+      .orElse(brokerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
     def jmxPort: Option[Int] = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
     def groupId: Option[String] = noJsNull(settings).get(GROUP_ID_KEY).map(_.convertTo[String])
@@ -192,7 +202,7 @@ object WorkerApi {
     override def name: String = settings.name
     override def group: String = settings.group
     override def imageName: String = settings.imageName
-    def brokerClusterName: String = settings.brokerClusterName.get
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
     def groupId: String = settings.groupId
@@ -256,8 +266,8 @@ object WorkerApi {
       setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
 
     @Optional("Ignoring the name will invoke an auto-mapping to existent broker cluster")
-    def brokerClusterName(brokerClusterName: String): Request.this.type =
-      setting(BROKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
+    def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type =
+      setting(BROKER_CLUSTER_KEY_KEY, OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey)))
 
     @Optional("the default port is random")
     def groupId(groupId: String): Request.this.type =

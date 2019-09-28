@@ -64,14 +64,14 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .map(_ => Unit)
   }
 
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(classKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     bkCollie
       .clusters()
       .map(
-        _.find(_._1.name == clusterName)
+        _.find(_._1.key == classKey)
           .map(_._2)
-          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterName does not exist")))
+          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey does not exist")))
 
   /**
     * Please implement nodeCollie

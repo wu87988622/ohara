@@ -148,7 +148,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
-        .brokerClusterName(bk.name)
+        .brokerClusterKey(bk.key)
         .nodeNames(bk.nodeNames)
         .create())
     result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.key))
@@ -268,7 +268,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
-        .brokerClusterName(bk.name)
+        .brokerClusterKey(bk.key)
         .nodeNames(bk.nodeNames)
         .create())
     result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.key))

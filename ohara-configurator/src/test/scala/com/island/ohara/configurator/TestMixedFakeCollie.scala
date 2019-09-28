@@ -99,7 +99,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .port(configurator.port)
           .request
           .name(CommonUtils.randomString(10))
-          .brokerClusterName(bk.name)
+          .brokerClusterKey(bk.key)
           .nodeNames(nodes.map(_.name).toSet)
           .create(),
         20 seconds

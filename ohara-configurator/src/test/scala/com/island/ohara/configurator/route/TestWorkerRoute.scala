@@ -39,8 +39,8 @@ class TestWorkerRoute extends OharaTest with Matchers {
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val bkClusterName =
-    Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds).head.name
+  private[this] val brokerClusterKey =
+    Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds).head.key
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
@@ -68,7 +68,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testDefaultBk(): Unit =
-    result(workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).brokerClusterName shouldBe bkClusterName
+    result(workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).brokerClusterKey shouldBe brokerClusterKey
 
   @Test
   def runOnIncorrectBk(): Unit =
@@ -76,7 +76,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
       workerApi.request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
-        .brokerClusterName(CommonUtils.randomString())
+        .brokerClusterKey(ObjectKey.of("default", CommonUtils.randomString()))
         .create()
         .flatMap(wk => workerApi.start(wk.key)))
 
@@ -155,11 +155,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
     )
     // pass
     result(
-      workerApi.request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .brokerClusterName(anotherBk.name)
-        .create()
+      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).brokerClusterKey(anotherBk.key).create()
     )
   }
 

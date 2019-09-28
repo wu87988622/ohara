@@ -18,6 +18,7 @@ package com.island.ohara.it.agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 
@@ -37,7 +38,7 @@ trait ClusterNameHolder extends Releasable {
   /**
     * store the name used to create cluster. We can remove all created cluster in the "after" phase.
     */
-  protected val usedClusterNames: mutable.HashSet[String] = new mutable.HashSet[String]()
+  private[this] val usedClusterKeys: mutable.HashSet[ObjectKey] = new mutable.HashSet[ObjectKey]()
 
   /**
     * our IT env is flooded with many running/exited containers. As a normal human, it is hard to observer the containers
@@ -45,24 +46,31 @@ trait ClusterNameHolder extends Releasable {
     */
   private[this] val prefix: String = sys.env.getOrElse("ohara.it.container.prefix", "cnh")
 
-  def generateClusterName(): String = {
-    val name = prefix + CommonUtils.randomString(7)
-    log.info(s"cluster name is ${name}")
-    usedClusterNames += name
-    name
+  /**
+    * generate a random cluster key. The key is logged and this holder will iterate all nodes to remove all related
+    * containers
+    *
+    * Noted: the group of key is always "default".
+    * @return a random key
+    */
+  def generateClusterKey(): ObjectKey = {
+    val key = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, prefix + CommonUtils.randomString(7))
+    log.info(s"cluster key is $key")
+    usedClusterKeys += key
+    key
   }
 
   /**
     * Add a cluster name to this ClusterNameHolder for managing.
     *
-    * @param clusterName cluster name
+    * @param clusterKey cluster key
     */
-  def addClusterName(clusterName: String): Unit = {
-    usedClusterNames += clusterName
+  def addClusterKey(clusterKey: ObjectKey): Unit = {
+    usedClusterKeys += clusterKey
   }
 
   override def close(): Unit = release(
-    clusterNames = usedClusterNames.toSet,
+    clusterKeys = usedClusterKeys.toSet,
     excludedNodes = Set.empty,
     closeThisHolder = false
   )
@@ -70,20 +78,20 @@ trait ClusterNameHolder extends Releasable {
   /**
     * remove all containers belonging to input clusters. The argument "excludedNodes" enable you to remove a part of
     * containers from input clusters.
-    * @param clusterNames clusters to remove
+    * @param clusterKeys clusters to remove
     * @param excludedNodes nodes to keep the containers
     */
-  def release(clusterNames: Set[String], excludedNodes: Set[String]): Unit =
-    release(clusterNames = clusterNames, excludedNodes = excludedNodes, closeThisHolder = false)
+  def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String]): Unit =
+    release(clusterKeys = clusterKeys, excludedNodes = excludedNodes, closeThisHolder = false)
 
   /**
     * remove all containers belonging to input clusters. The argument "excludedNodes" enable you to remove a part of
     * containers from input clusters.
-    * @param clusterNames clusters to remove
+    * @param clusterKeys clusters to remove
     * @param excludedNodes nodes to keep the containers
     * @param closeThisHolder true if this name holder should be closed as well
     */
-  protected def release(clusterNames: Set[String], excludedNodes: Set[String], closeThisHolder: Boolean): Unit
+  protected def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String], closeThisHolder: Boolean): Unit
 }
 
 object ClusterNameHolder {
@@ -100,7 +108,7 @@ object ClusterNameHolder {
     * @return name holder
     */
   def apply(nodes: Seq[Node]): ClusterNameHolder =
-    (clusterNames: Set[String], excludedNodes: Set[String], _: Boolean) =>
+    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], _: Boolean) =>
       if (!KEEP_CONTAINERS)
         nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
           val client =
@@ -112,7 +120,8 @@ object ClusterNameHolder {
               .build
           try client
             .containerNames()
-            .filter(containerName => clusterNames.exists(clusterName => containerName.contains(clusterName)))
+            .filter(containerName =>
+              clusterKey.exists(key => containerName.contains(key.group()) && containerName.contains(key.name())))
             .foreach { containerName =>
               try {
                 println(s"[-----------------------------------$containerName-----------------------------------]")
@@ -139,11 +148,12 @@ object ClusterNameHolder {
     * @return name holder
     */
   def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder =
-    (clusterNames: Set[String], excludedNodes: Set[String], closeThisHolder: Boolean) =>
+    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], closeThisHolder: Boolean) =>
       if (!KEEP_CONTAINERS)
         try Await
           .result(client.containers(), 30 seconds)
-          .filter(container => clusterNames.exists(clusterName => container.name.contains(clusterName)))
+          .filter(container =>
+            clusterKey.exists(key => container.name.contains(key.group()) && container.name.contains(key.name())))
           .filterNot(container => excludedNodes.contains(container.nodeName))
           .foreach { container =>
             try {

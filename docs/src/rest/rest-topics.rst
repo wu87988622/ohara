@@ -29,7 +29,7 @@ topic are shown below.
 #. brokerClusterKey (**Object**) — target broker cluster.
 
    - brokerClusterKey.group (**option(string)**) — the group of cluster
-   - brokerClusterKey.newName (**string**) — the name of cluster
+   - brokerClusterKey.name (**string**) — the name of cluster
 
   .. note::
     the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to

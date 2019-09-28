@@ -49,10 +49,10 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matche
     val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list())
     if (nodes.isEmpty) skipTest("are you kidding me? where is the nodes???")
     else {
-      val zkName = nameHolder.generateClusterName()
-      val zkKey = result(
+      val zkKey = nameHolder.generateClusterKey()
+      result(
         zkApi.request
-          .name(zkName)
+          .key(zkKey)
           .nodeName(nodes.head.hostname)
           .create()
           .map(_.key)
@@ -64,10 +64,10 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matche
         }
       }
 
-      val bkName = nameHolder.generateClusterName()
-      val bkKey = result(
+      val bkKey = nameHolder.generateClusterKey()
+      result(
         bkApi.request
-          .name(bkName)
+          .key(bkKey)
           .zookeeperClusterKey(zkKey)
           .nodeName(nodes.head.hostname)
           .create()
@@ -80,11 +80,11 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matche
         }
       }
 
-      val wkName = nameHolder.generateClusterName()
-      val wkKey = result(
+      val wkKey = nameHolder.generateClusterKey()
+      result(
         wkApi.request
-          .name(wkName)
-          .brokerClusterName(bkName)
+          .key(wkKey)
+          .brokerClusterKey(bkKey)
           .nodeName(nodes.head.hostname)
           .freePort(freePort)
           .create()

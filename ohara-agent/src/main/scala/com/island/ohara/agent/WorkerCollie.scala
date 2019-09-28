@@ -74,7 +74,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
              // find the nodes which have not run the services
              nodes.filterNot(n => existNodes.exists(_._1.hostname == n._1.hostname)),
              brokerContainers(
-               creation.brokerClusterName.getOrElse(
+               creation.brokerClusterKey.getOrElse(
                  throw new RuntimeException("The broker cluser name should be define"))))
         }
         .flatMap {
@@ -83,7 +83,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
               .flatMap(brokerContainers => {
 
                 if (brokerContainers.isEmpty)
-                  throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterName} doesn't exist")
+                  throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey.get} doesn't exist")
 
                 if (newNodes.isEmpty) Future.successful(Seq.empty)
                 else {
@@ -301,11 +301,11 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   /**
     * get the containers for specific broker cluster. This method is used to update the route.
-    * @param clusterName name of broker cluster
+    * @param classKey key of broker cluster
     * @param executionContext thread pool
     * @return containers
     */
-  protected def brokerContainers(clusterName: String)(
+  protected def brokerContainers(classKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 }
 

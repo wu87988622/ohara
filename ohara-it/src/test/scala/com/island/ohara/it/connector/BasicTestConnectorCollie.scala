@@ -41,8 +41,8 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTestConnectorCollie])
@@ -52,8 +52,6 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   protected def nodes: Seq[Node]
 
   protected def nameHolder: ClusterNameHolder
-
-  private[this] final val group: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   private[this] val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
   private[this] val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
@@ -117,49 +115,48 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
 
   @Test
   def testJDBCSourceConnector(): Unit = {
+
     val zkCluster = result(
       zk_create(
-        clusterName = generateClusterName(),
+        clusterKey = nameHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
         nodeNames = Set(nodes.head.name)
       ))
-    result(zk_start(zkCluster.name))
-    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
+    result(zk_start(zkCluster.key))
+    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
     val bkCluster = result(
       bk_create(
-        clusterName = generateClusterName(),
+        clusterKey = nameHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
         exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
-        zkClusterKey = zkCluster.key,
+        zookeeperClusterKey = zkCluster.key,
         nodeNames = Set(nodes.head.name)
       ))
-    result(bk_start(bkCluster.name))
-    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
+    result(bk_start(bkCluster.key))
+    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
     log.info("[WORKER] start to test worker")
     val nodeName = nodes.head.name
-    val clusterName = generateClusterName()
-    result(wk_exist(clusterName)) shouldBe false
     log.info("[WORKER] verify:nonExists done")
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     log.info("[WORKER] create ...")
     val wkCluster = result(
       wk_create(
-        clusterName = clusterName,
+        clusterKey = nameHolder.generateClusterKey(),
         clientPort = clientPort,
         jmxPort = jmxPort,
-        bkClusterName = bkCluster.name,
+        brokerClusterKey = bkCluster.key,
         nodeNames = Set(nodeName)
       ))
     log.info("[WORKER] create done")
-    result(wk_start(wkCluster.name))
+    result(wk_start(wkCluster.key))
     log.info("[WORKER] start done")
-    assertCluster(() => result(wk_clusters()), () => result(wk_containers(wkCluster.name)), wkCluster.name)
+    assertCluster(() => result(wk_clusters()), () => result(wk_containers(wkCluster.key)), wkCluster.key)
     log.info("[WORKER] verify:create done")
-    result(wk_exist(wkCluster.name)) shouldBe true
+    result(wk_exist(wkCluster.key)) shouldBe true
     log.info("[WORKER] verify:exist done")
     // we can't assume the size since other tests may create zk cluster at the same time
     result(wk_clusters()).isEmpty shouldBe false
@@ -168,16 +165,16 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     runningJDBCSourceConnector(wkCluster.connectionProps)
     checkTopicData(bkCluster.connectionProps, topicKey.topicNameOnKafka())
 
-    result(wk_stop(clusterName))
+    result(wk_stop(wkCluster.key))
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
       // In collie mode: clusters() will return the "cluster list except stop one" in normal case
       // we should consider these two cases by case...
       val clusters = result(wk_clusters())
-      !clusters.map(_.name).contains(clusterName) || clusters.find(_.name == clusterName).get.state.isEmpty
+      !clusters.map(_.key).contains(wkCluster.key) || clusters.find(_.key == wkCluster.key).get.state.isEmpty
     })
     // the cluster is stopped actually, delete the data
-    wk_delete(clusterName)
+    wk_delete(wkCluster.key)
   }
 
   private[this] def runningJDBCSourceConnector(workerConnProps: String): Unit =
@@ -223,78 +220,73 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     jdbcJarFileInfo = result(jarApi.request.file(jar).upload())
   }
 
-  private[this] def generateClusterName(): String = nameHolder.generateClusterName()
-
   private[this] def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
     zkApi.list()
 
-  private[this] def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
+  private[this] def zk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
+    containerApi.get(clusterKey).map(_.flatMap(_.containers))
 
-  private[this] def zk_start(clusterName: String): Future[Unit] = zkApi.start(ObjectKey.of(group, clusterName))
+  private[this] def zk_start(clusterKey: ObjectKey): Future[Unit] = zkApi.start(clusterKey)
 
-  private[this] def zk_create(clusterName: String,
+  private[this] def zk_create(clusterKey: ObjectKey,
                               clientPort: Int,
                               electionPort: Int,
                               peerPort: Int,
                               nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkApi.request
-      .name(clusterName)
-      .group(group)
+      .key(clusterKey)
       .clientPort(clientPort)
       .electionPort(electionPort)
       .peerPort(peerPort)
       .nodeNames(nodeNames)
       .create()
 
-  private[this] def bk_start(clusterName: String): Future[Unit] = bkApi.start(ObjectKey.of(group, clusterName))
+  private[this] def bk_start(clusterKey: ObjectKey): Future[Unit] = bkApi.start(clusterKey)
 
   private[this] def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
 
-  private[this] def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
+  private[this] def bk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
+    containerApi.get(clusterKey).map(_.flatMap(_.containers))
 
-  private[this] def bk_create(clusterName: String,
+  private[this] def bk_create(clusterKey: ObjectKey,
                               clientPort: Int,
                               exporterPort: Int,
                               jmxPort: Int,
-                              zkClusterKey: ObjectKey,
+                              zookeeperClusterKey: ObjectKey,
                               nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkApi.request
-      .name(clusterName)
-      .group(group)
+      .key(clusterKey)
       .clientPort(clientPort)
       .exporterPort(exporterPort)
       .jmxPort(jmxPort)
-      .zookeeperClusterKey(zkClusterKey)
+      .zookeeperClusterKey(zookeeperClusterKey)
       .nodeNames(nodeNames)
       .create()
 
-  private[this] def wk_start(clusterName: String): Future[Unit] = wkApi.start(ObjectKey.of(group, clusterName))
+  private[this] def wk_start(clusterKey: ObjectKey): Future[Unit] = wkApi.start(clusterKey)
 
-  private[this] def wk_stop(clusterName: String): Future[Unit] =
-    wkApi.forceStop(ObjectKey.of(group, clusterName)).map(_ => Unit)
+  private[this] def wk_stop(clusterKey: ObjectKey): Future[Unit] =
+    wkApi.forceStop(clusterKey).map(_ => Unit)
 
-  private[this] def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(ObjectKey.of("default", clusterName)).map(_.flatMap(_.containers))
+  private[this] def wk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
+    containerApi.get(clusterKey).map(_.flatMap(_.containers))
 
-  private[this] def wk_exist(clusterName: String): Future[Boolean] = wkApi.list().map(_.exists(_.name == clusterName))
+  private[this] def wk_exist(clusterKey: ObjectKey): Future[Boolean] = wkApi.list().map(_.exists(_.key == clusterKey))
 
-  private[this] def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(ObjectKey.of(group, clusterName))
+  private[this] def wk_delete(clusterKey: ObjectKey): Future[Unit] = wkApi.delete(clusterKey)
 
   private[this] def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
 
-  private[this] def wk_create(clusterName: String,
+  private[this] def wk_create(clusterKey: ObjectKey,
                               clientPort: Int,
                               jmxPort: Int,
-                              bkClusterName: String,
+                              brokerClusterKey: ObjectKey,
                               nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkApi.request
-      .name(clusterName)
-      .group(group)
+      .key(clusterKey)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
-      .brokerClusterName(bkClusterName)
+      .brokerClusterKey(brokerClusterKey)
       .nodeNames(nodeNames)
       .jarInfos(Seq(jdbcJarFileInfo))
       .create()

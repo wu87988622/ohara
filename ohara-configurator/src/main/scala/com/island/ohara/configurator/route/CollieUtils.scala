@@ -124,7 +124,7 @@ private[route] object CollieUtils {
     executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
     workerClient(workerClusterKey).flatMap {
       case (wkInfo, wkClient) =>
-        topicAdmin(wkInfo.brokerClusterName).map {
+        topicAdmin(wkInfo.brokerClusterKey).map {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
         }
     }

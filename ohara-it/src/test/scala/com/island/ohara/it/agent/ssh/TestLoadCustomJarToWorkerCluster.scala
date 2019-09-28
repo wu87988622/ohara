@@ -94,36 +94,36 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
     val zkCluster = result(
       zkApi.request
-        .name(nameHolder.generateClusterName())
+        .key(nameHolder.generateClusterKey())
         .nodeNames(nodes.map(_.name).toSet)
         .create()
         .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key))))
     assertCluster(() => result(zkApi.list()),
                   () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
-                  zkCluster.name)
+                  zkCluster.key)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
       bkApi.request
-        .name(nameHolder.generateClusterName())
+        .key(nameHolder.generateClusterKey())
         .zookeeperClusterKey(zkCluster.key)
         .nodeNames(nodes.map(_.name).toSet)
         .create()
         .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key))))
     assertCluster(() => result(bkApi.list()),
                   () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
-                  bkCluster.name)
+                  bkCluster.key)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
       wkApi.request
-        .name(nameHolder.generateClusterName())
-        .brokerClusterName(bkCluster.name)
+        .key(nameHolder.generateClusterKey())
+        .brokerClusterKey(bkCluster.key)
         .jarKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
         .nodeName(nodes.head.name)
         .create())
     result(wkApi.start(wkCluster.key))
     assertCluster(() => result(wkApi.list()),
                   () => result(containerApi.get(wkCluster.key).map(_.flatMap(_.containers))),
-                  wkCluster.name)
+                  wkCluster.key)
     // add all remaining node to the running worker cluster
     nodes.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
       result(wkApi.addNode(wkCluster.key, n.name))

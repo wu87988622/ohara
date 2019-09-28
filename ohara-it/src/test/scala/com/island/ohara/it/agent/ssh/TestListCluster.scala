@@ -57,7 +57,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
   @Test
   def deadContainerAndClusterShouldDisappear(): Unit = {
-    val name = nameHolder.generateClusterName()
+    val clusterKey = nameHolder.generateClusterKey()
     try result(
       clusterCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
@@ -66,7 +66,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .peerPort(CommonUtils.availablePort())
         .electionPort(CommonUtils.availablePort())
         .nodeNames(nodes.map(_.name).toSet)
-        .name(name)
+        .key(clusterKey)
         .create()
     )
     catch {
@@ -78,24 +78,24 @@ class TestListCluster extends IntegrationTest with Matchers {
     // we stop the running containers to simulate a "dead" cluster
     val aliveNode = nodes.head
     nameHolder.release(
-      clusterNames = Set(name),
+      clusterKeys = Set(clusterKey),
       excludedNodes = Set(aliveNode.hostname)
     )
 
     await { () =>
       val containers =
-        result(clusterCollie.zookeeperCollie.clusters()).find(_._1.name == name).map(_._2).getOrElse(Seq.empty)
+        result(clusterCollie.zookeeperCollie.clusters()).find(_._1.key == clusterKey).map(_._2).getOrElse(Seq.empty)
       containers.map(_.nodeName).toSet == Set(aliveNode.hostname)
     }
 
     // remove all containers
     nameHolder.release(
-      clusterNames = Set(name),
+      clusterKeys = Set(clusterKey),
       excludedNodes = Set.empty
     )
 
     await { () =>
-      !result(clusterCollie.zookeeperCollie.clusters()).map(_._1.name).toSet.contains(name)
+      !result(clusterCollie.zookeeperCollie.clusters()).map(_._1.key).toSet.contains(clusterKey)
     }
   }
 

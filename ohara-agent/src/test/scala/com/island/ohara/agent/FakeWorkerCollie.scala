@@ -29,10 +29,10 @@ class FakeWorkerCollie(nodes: Seq[Node],
                        brokerClusters: Map[String, Seq[ContainerInfo]],
                        existedWorkerClusterName: String = CommonUtils.randomString(5))
     extends WorkerCollie {
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(classKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
-      brokerClusters.getOrElse(clusterName, throw new NoSuchClusterException(s"$clusterName does not exist")))
+      brokerClusters.getOrElse(classKey.name(), throw new NoSuchClusterException(s"$classKey does not exist")))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,

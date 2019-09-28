@@ -115,7 +115,7 @@ object BrokerRoute {
               .clusters()
               .map(
                 _.keys
-                  .find(_.brokerClusterName == brokerClusterInfo.name)
+                  .find(_.brokerClusterKey == brokerClusterInfo.key)
                   .map(cluster =>
                     throw new IllegalArgumentException(
                       s"you can't remove broker cluster:${brokerClusterInfo.name} since it is used by worker cluster:${cluster.name}"))

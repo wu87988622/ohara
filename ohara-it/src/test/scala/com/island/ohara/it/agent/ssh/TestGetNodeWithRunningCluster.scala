@@ -70,7 +70,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(nameHolder.generateClusterName())
+        .key(nameHolder.generateClusterKey())
         .nodeNames(nodes.map(_.name).toSet)
         .create()
         .flatMap(
@@ -89,7 +89,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
             .port(configurator.port)
             .get(cluster.key)
             .map(_.flatMap(_.containers))),
-      cluster.name
+      cluster.key
     )
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).isEmpty shouldBe false
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).foreach { node =>

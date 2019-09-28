@@ -22,6 +22,7 @@ import com.island.ohara.agent.NoSuchClusterException
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.rules.Timeout
 import org.junit.{AssumptionViolatedException, Rule}
@@ -47,13 +48,13 @@ abstract class IntegrationTest {
     * the creation of cluster is async so you need to wait the cluster to build.
     * @param clusters clusters
     * @param containers containers
-    * @param name cluster name
+    * @param clusterKey cluster key
     */
   protected def assertCluster(clusters: () => Seq[ClusterInfo],
                               containers: () => Seq[ContainerInfo],
-                              name: String): Unit = await(() =>
+                              clusterKey: ObjectKey): Unit = await(() =>
     try {
-      clusters().map(_.name).contains(name) &&
+      clusters().map(_.key).contains(clusterKey) &&
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
       // It is ok to filter container via RUNNING state.

@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -78,15 +79,14 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     updateRoute(node, container.name, route)
   }
 
-  override protected def brokerContainers(clusterName: String)(
+  override protected def brokerContainers(classKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
       clusterCache.snapshot
         .filter(_._1.isInstanceOf[BrokerClusterInfo])
-        .find(_._1.name == clusterName)
+        .find(_._1.key == classKey)
         .map(_._2)
-        .getOrElse(
-          throw new NoSuchClusterException(s"broker cluster:$clusterName doesn't exist. other broker clusters")))
+        .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey doesn't exist. other broker clusters")))
 
   /**
     * Please implement nodeCollie
