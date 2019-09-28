@@ -59,27 +59,17 @@ describe.skip('StreamApp', () => {
     cy.findByTestId('toolbar-streams')
       .click()
       .wait('@getJars')
-<<<<<<< HEAD
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value='ohara-streamapp.jar']`)
       .click()
-      .getByText('ADD')
+      .findByText('ADD')
       .click()
-      .getByPlaceholderText('mystreamapp')
-=======
-      .findByText('Add')
-      .click()
-      .findByPlaceholderText('StreamApp name')
->>>>>>> wip
+      .findByPlaceholderText('mystreamapp')
       .type(streamAppName)
-      .getByTestId('new-steam-dialog')
+      .findByTestId('new-steam-dialog')
       .within(() => {
-<<<<<<< HEAD
-        cy.getByText('ADD').click();
-=======
-        cy.findByText('Add').click();
->>>>>>> wip
+        cy.findByText('ADD').click();
       })
       .wait('@putPipeline');
 
@@ -87,33 +77,21 @@ describe.skip('StreamApp', () => {
     // adding from the UI
     cy.findByTestId('toolbar-topics')
       .click({ force: true })
-<<<<<<< HEAD
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${fromTopicName}]`)
       .click()
-      .getByText('ADD')
-=======
-      .findByTestId('topic-select')
-      .select(fromTopicName)
-      .findByText('Add')
->>>>>>> wip
+      .findByText('ADD')
       .click()
       .wait('@putPipeline');
 
     cy.findByTestId('toolbar-topics')
       .click({ force: true })
-<<<<<<< HEAD
-      .getByText('Please select...')
+      .findByText('Please select...')
       .click()
       .get(`li[data-value=${toTopicName}]`)
       .click()
-      .getByText('ADD')
-=======
-      .findByTestId('topic-select')
-      .select(toTopicName)
-      .findByText('Add')
->>>>>>> wip
+      .findByText('ADD')
       .click()
       .wait('@putPipeline');
 
