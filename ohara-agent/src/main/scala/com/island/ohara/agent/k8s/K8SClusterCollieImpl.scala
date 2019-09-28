@@ -18,7 +18,7 @@ package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.{Releasable, ReleaseOnce}
+import com.island.ohara.common.util.ReleaseOnce
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
@@ -35,7 +35,9 @@ private[ohara] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
 
   override val streamCollie: StreamCollie = new K8SStreamCollieImpl(nodeCollie, brokerCollie, k8sClient)
 
-  override protected def doClose(): Unit = Releasable.close(k8sClient)
+  override protected def doClose(): Unit = {
+    //Nothing
+  }
 
   override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future

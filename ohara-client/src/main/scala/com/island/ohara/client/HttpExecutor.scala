@@ -43,6 +43,7 @@ private[client] trait HttpExecutor {
   def get[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
                                                      rm1: RootJsonFormat[E],
                                                      executionContext: ExecutionContext): Future[Res]
+  def getOnlyMessage(url: String)(implicit executionContext: ExecutionContext): Future[String]
   //-------------------------------------------------[DELETE]-------------------------------------------------//
   def delete[E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[E],
                                                    executionContext: ExecutionContext): Future[Unit]
@@ -140,6 +141,8 @@ private[ohara] object HttpExecutor {
       res: HttpResponse)(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
       if (res.status.isSuccess()) Future.successful[Unit](())
       else asError(res)
+    private[this] def unmarshal[T](res: HttpResponse)(implicit executionContext: ExecutionContext): Future[String] =
+      Unmarshal(res.entity).to[String]
 
     private[this] def asError[E <: HttpExecutor.Error](res: HttpResponse)(implicit rm: RootJsonFormat[E],
                                                                           executionContext: ExecutionContext) =
@@ -165,6 +168,10 @@ private[ohara] object HttpExecutor {
                                                                 rm1: RootJsonFormat[E],
                                                                 executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[Res, E])
+
+    override def getOnlyMessage(url: String)(implicit executionContext: ExecutionContext): Future[String] =
+      Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[String])
+
     //-------------------------------------------------[DELETE]-------------------------------------------------//
     override def delete[E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[E],
                                                               executionContext: ExecutionContext): Future[Unit] =

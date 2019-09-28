@@ -19,13 +19,9 @@ package com.island.ohara.agent.fake
 import com.island.ohara.agent.k8s.{K8SClient, K8SJson, K8SStatusInfo, Report}
 import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.typesafe.scalalogging.Logger
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], containerName: String) extends K8SClient {
-  private val LOG = Logger(classOf[FakeK8SClient])
-
   override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
     Future.successful {
       Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT)
@@ -35,8 +31,6 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
     Future.successful(
       Report(nodeName, isK8SNode, k8sStatusInfo)
     )
-
-  override def close(): Unit = LOG.info("close client")
 
   override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful {

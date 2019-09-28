@@ -19,9 +19,9 @@ package com.island.ohara.it.shabondi
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.ContainerApi._
 import com.island.ohara.client.configurator.v0.ShabondiApi
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.{IntegrationTest, EnvTestingUtils}
-import org.junit.{After, Before, Ignore, Test}
+import org.junit.{Before, Ignore, Test}
 import org.scalatest.{Inside, Matchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -95,7 +95,4 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
     })
 
   }
-
-  @After
-  def tearDown(): Unit = Releasable.close(k8sClient)
 }

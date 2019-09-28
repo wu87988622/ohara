@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
@@ -31,7 +31,7 @@ import spray.json._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,24 +55,23 @@ class TestK8SClient extends OharaTest with Matchers {
     val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient(s.url)
-      try {
-        val result: Option[ContainerInfo] = Await.result(
-          client
-            .containerCreator()
-            .name(podName)
-            .imageName("hello world")
-            .labelName("ohara")
-            .hostname("test1")
-            .domainName("ohara")
-            .nodeName(nodeName)
-            .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
-            .create(),
-          30 seconds
-        )
-        result.get.name shouldBe podName
-        result.get.environments shouldBe Map.empty
-        result.get.nodeName shouldBe nodeName
-      } finally client.close()
+      val result: Option[ContainerInfo] = Await.result(
+        client
+          .containerCreator()
+          .name(podName)
+          .imageName("hello world")
+          .labelName("ohara")
+          .hostname("test1")
+          .domainName("ohara")
+          .nodeName(nodeName)
+          .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
+          .create(),
+        30 seconds
+      )
+      result.get.name shouldBe podName
+      result.get.environments shouldBe Map.empty
+      result.get.nodeName shouldBe nodeName
+
     } finally s.close()
   }
 
@@ -83,24 +82,22 @@ class TestK8SClient extends OharaTest with Matchers {
     val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient(s.url)
-      try {
-        val result: Option[ContainerInfo] = Await.result(
-          client
-            .containerCreator()
-            .name(podName)
-            .imageName("hello world")
-            .labelName("ohara")
-            .hostname("test1")
-            .domainName("ohara")
-            .nodeName(nodeName)
-            .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
-            .create(),
-          30 seconds
-        )
-        result.get.name shouldBe podName
-        result.get.environments shouldBe Map.empty
-        result.get.nodeName shouldBe nodeName
-      } finally client.close()
+      val result: Option[ContainerInfo] = Await.result(
+        client
+          .containerCreator()
+          .name(podName)
+          .imageName("hello world")
+          .labelName("ohara")
+          .hostname("test1")
+          .domainName("ohara")
+          .nodeName(nodeName)
+          .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
+          .create(),
+        30 seconds
+      )
+      result.get.name shouldBe podName
+      result.get.environments shouldBe Map.empty
+      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -111,24 +108,22 @@ class TestK8SClient extends OharaTest with Matchers {
     val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.ALWAYS)
     try {
       val client = K8SClient(s.url)
-      try {
-        val result: Option[ContainerInfo] = Await.result(
-          client
-            .containerCreator()
-            .name(podName)
-            .imageName("hello world")
-            .labelName("ohara")
-            .hostname("test1")
-            .domainName("ohara")
-            .pullImagePolicy(ImagePullPolicy.ALWAYS)
-            .nodeName(nodeName)
-            .create(),
-          30 seconds
-        )
-        result.get.name shouldBe podName
-        result.get.environments shouldBe Map.empty
-        result.get.nodeName shouldBe nodeName
-      } finally client.close()
+      val result: Option[ContainerInfo] = Await.result(
+        client
+          .containerCreator()
+          .name(podName)
+          .imageName("hello world")
+          .labelName("ohara")
+          .hostname("test1")
+          .domainName("ohara")
+          .pullImagePolicy(ImagePullPolicy.ALWAYS)
+          .nodeName(nodeName)
+          .create(),
+        30 seconds
+      )
+      result.get.name shouldBe podName
+      result.get.environments shouldBe Map.empty
+      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -139,24 +134,22 @@ class TestK8SClient extends OharaTest with Matchers {
     val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.NEVER)
     try {
       val client = K8SClient(s.url)
-      try {
-        val result: Option[ContainerInfo] = Await.result(
-          client
-            .containerCreator()
-            .name(podName)
-            .imageName("hello world")
-            .labelName("ohara")
-            .hostname("test1")
-            .domainName("ohara")
-            .pullImagePolicy(ImagePullPolicy.NEVER)
-            .nodeName(nodeName)
-            .create(),
-          30 seconds
-        )
-        result.get.name shouldBe podName
-        result.get.environments shouldBe Map.empty
-        result.get.nodeName shouldBe nodeName
-      } finally client.close()
+      val result: Option[ContainerInfo] = Await.result(
+        client
+          .containerCreator()
+          .name(podName)
+          .imageName("hello world")
+          .labelName("ohara")
+          .hostname("test1")
+          .domainName("ohara")
+          .pullImagePolicy(ImagePullPolicy.NEVER)
+          .nodeName(nodeName)
+          .create(),
+        30 seconds
+      )
+      result.get.name shouldBe podName
+      result.get.environments shouldBe Map.empty
+      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -167,23 +160,21 @@ class TestK8SClient extends OharaTest with Matchers {
     val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient(s.url)
-      try {
-        val result: Option[ContainerInfo] = Await.result(
-          client
-            .containerCreator()
-            .name(podName)
-            .imageName("hello world")
-            .labelName("ohara")
-            .hostname("test1")
-            .domainName("ohara")
-            .nodeName(nodeName)
-            .create(),
-          30 seconds
-        )
-        result.get.name shouldBe podName
-        result.get.environments shouldBe Map.empty
-        result.get.nodeName shouldBe nodeName
-      } finally client.close()
+      val result: Option[ContainerInfo] = Await.result(
+        client
+          .containerCreator()
+          .name(podName)
+          .imageName("hello world")
+          .labelName("ohara")
+          .hostname("test1")
+          .domainName("ohara")
+          .nodeName(nodeName)
+          .create(),
+        30 seconds
+      )
+      result.get.name shouldBe podName
+      result.get.environments shouldBe Map.empty
+      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -225,24 +216,53 @@ class TestK8SClient extends OharaTest with Matchers {
     }
     try {
       val client = K8SClient(s.url)
-      try {
-        val imagesFromServer = Await.result(client.images(node), 30 seconds)
-        imagesFromServer shouldBe images
-      } finally client.close()
+      val imagesFromServer = Await.result(client.images(node), 30 seconds)
+      imagesFromServer shouldBe images
     } finally s.close()
   }
 
   @Test
   def testForceRemovePod(): Unit = {
     val s = forceRemovePodURL("k8soccl-057aac6a97-bk-c720992")
+    val k8sClient = K8SClient(s.url)
+    try {
+      val result: ContainerInfo = Await.result(k8sClient.forceRemove("k8soccl-057aac6a97-bk-c720992"), 30 seconds)
+      result.name shouldBe "k8soccl-057aac6a97-bk-c720992"
+      result.hostname shouldBe "k8soccl-057aac6a97-bk-c720992-ohara-jenkins-it-00"
+      result.nodeName shouldBe "ohara-jenkins-it-00"
+    } finally s.close()
+  }
+
+  @Test
+  def testLog(): Unit = {
+    val podName = "broker-pod"
+    val s = log(podName)
     try {
       val k8sClient = K8SClient(s.url)
-      try {
-        val result: ContainerInfo = Await.result(k8sClient.forceRemove("k8soccl-057aac6a97-bk-c720992"), 30 seconds)
-        result.name shouldBe "k8soccl-057aac6a97-bk-c720992"
-        result.hostname shouldBe "k8soccl-057aac6a97-bk-c720992-ohara-jenkins-it-00"
-        result.nodeName shouldBe "ohara-jenkins-it-00"
-      } finally k8sClient.close()
+      val result: String = Await.result(k8sClient.log(podName), 5 seconds)
+      result shouldBe "start pods ......."
+    } finally s.close()
+  }
+
+  @Test
+  def testCreatePodFailed(): Unit = {
+    val s = createFailedPod()
+    try {
+      val k8sClient = K8SClient(s.url)
+      intercept[IllegalArgumentException] {
+        Await.result(
+          k8sClient
+            .containerCreator()
+            .name("is-land.hsinchu")
+            .imageName("hello world")
+            .labelName("ohara")
+            .hostname("test1")
+            .domainName("ohara")
+            .nodeName("node1")
+            .create(),
+          30 seconds
+        )
+      }.getMessage() shouldBe "host name error"
     } finally s.close()
   }
 
@@ -321,6 +341,85 @@ class TestK8SClient extends OharaTest with Matchers {
             entity(as[CreatePod]) { createPod =>
               createPod.spec.containers(0).imagePullPolicy shouldBe expectImagePullPolicy
               complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, createPodResult)))
+            }
+          }
+        }
+    }
+  }
+
+  private[this] def log(podName: String): SimpleServer = {
+    val logMessage = "start pods ......."
+    toServer {
+      path("namespaces" / "default" / "pods" / podName / "log") {
+        get {
+          complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, logMessage)))
+        }
+      }
+    }
+  }
+
+  private[this] def createFailedPod(): SimpleServer = {
+    val nodesResponse = s"""
+                           |{"items": [
+                           |    {
+                           |      "metadata": {
+                           |        "name": "node1"
+                           |      },
+                           |      "status": {
+                           |        "conditions": [
+                           |          {
+                           |            "type": "Ready",
+                           |            "status": "True",
+                           |            "lastHeartbeatTime": "2019-05-14T06:14:46Z",
+                           |            "lastTransitionTime": "2019-04-15T08:21:11Z",
+                           |            "reason": "KubeletReady",
+                           |            "message": "kubelet is posting ready status"
+                           |          }
+                           |        ],
+                           |        "addresses": [
+                           |          {
+                           |            "type": "InternalIP",
+                           |            "address": "10.2.0.4"
+                           |          },
+                           |          {
+                           |            "type": "Hostname",
+                           |            "address": "ohara-it-02"
+                           |          }
+                           |        ],
+                           |        "images": [
+                           |          {
+                           |            "names": [
+                           |              "quay.io/coreos/etcd@sha256:ea49a3d44a50a50770bff84eab87bac2542c7171254c4d84c609b8c66aefc211",
+                           |              "quay.io/coreos/etcd:v3.3.9"
+                           |            ],
+                           |            "sizeBytes": 39156721
+                           |          }
+                           |        ]
+                           |      }
+                           |    }
+                           |  ]
+                           |}
+                """.stripMargin
+
+    val resultMessage = s"""
+                           |{
+                           |  "message": "host name error"
+                           |}
+       """.stripMargin
+
+    // test communication
+    toServer {
+      path("nodes") {
+        get {
+          complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, nodesResponse)))
+        }
+      } ~
+        path("namespaces" / "default" / "pods") {
+          post {
+            entity(as[CreatePod]) { _ =>
+              complete(
+                HttpResponse(status = StatusCodes.BadRequest,
+                             entity = HttpEntity(ContentTypes.`application/json`, resultMessage)))
             }
           }
         }

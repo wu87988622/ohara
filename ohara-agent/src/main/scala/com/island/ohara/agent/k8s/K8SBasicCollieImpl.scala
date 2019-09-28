@@ -21,15 +21,12 @@ import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.Releasable
-
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
 private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: NodeCollie,
                                                                             k8sClient: K8SClient)
-    extends Collie[T]
-    with Releasable {
+    extends Collie[T] {
 
   protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[T]
@@ -83,10 +80,6 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
     })
     .flatMap(Future.sequence(_))
     .map(_.toMap)
-
-  override def close(): Unit = {
-    Releasable.close(k8sClient)
-  }
 
   private[this] def filterContainerService(nodes: Seq[Node])(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {

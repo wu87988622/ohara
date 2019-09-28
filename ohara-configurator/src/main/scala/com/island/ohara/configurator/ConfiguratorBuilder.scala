@@ -402,7 +402,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     fileStore = null
     Releasable.close(clusterCollie)
     clusterCollie = null
-    Releasable.close(k8sClient)
     k8sClient = null
   }
 }

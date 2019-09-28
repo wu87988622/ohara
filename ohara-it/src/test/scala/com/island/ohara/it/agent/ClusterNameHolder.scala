@@ -150,7 +150,7 @@ object ClusterNameHolder {
   def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder =
     (clusterKey: Set[ObjectKey], excludedNodes: Set[String], closeThisHolder: Boolean) =>
       if (!KEEP_CONTAINERS)
-        try Await
+        Await
           .result(client.containers(), 30 seconds)
           .filter(container =>
             clusterKey.exists(key => container.name.contains(key.group()) && container.name.contains(key.name())))
@@ -170,5 +170,5 @@ object ClusterNameHolder {
               case e: Throwable =>
                 LOG.error(s"failed to remove container ${container.name}", e)
             }
-          } finally if (closeThisHolder) client.close()
+        }
 }

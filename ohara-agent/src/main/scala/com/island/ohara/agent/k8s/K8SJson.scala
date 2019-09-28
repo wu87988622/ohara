@@ -17,6 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
+import com.island.ohara.client.HttpExecutor
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -177,6 +178,6 @@ object K8SJson {
   implicit val CREATEPOD_RESULT_FORMAT: RootJsonFormat[CreatePodResult] = jsonFormat2(CreatePodResult)
 
   //for error
-  final case class K8SErrorResponse(message: String)
+  final case class K8SErrorResponse(message: String) extends HttpExecutor.Error
   implicit val K8SERROR_RESPONSE_FORMAT: RootJsonFormat[K8SErrorResponse] = jsonFormat1(K8SErrorResponse)
 }

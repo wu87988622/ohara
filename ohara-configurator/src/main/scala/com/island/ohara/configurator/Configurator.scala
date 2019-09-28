@@ -286,7 +286,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     Releasable.close(clusterCollie)
     Releasable.close(fileStore)
     Releasable.close(store)
-    k8sClient.foreach(Releasable.close)
     Releasable.close(adminCleaner)
     log.info(s"succeed to close Ohara Configurator. elapsed:${CommonUtils.current() - start} ms")
   }
