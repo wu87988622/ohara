@@ -20,8 +20,8 @@ import java.util.Objects
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -145,22 +145,6 @@ trait Collie[T <: ClusterInfo] {
     clusters().map(
       _.find(_._1.key == key)
         .getOrElse(throw new NoSuchClusterException(s"cluster with objectKey [$key] is not running")))
-
-  /**
-    * This is a helper method for those caller only knows cluster name.
-    *
-    * @param clusterName the cluster name in current type T
-    * @param executionContext execution context
-    * @return cluster information
-    */
-  def cluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
-    clusters().map(
-      clusters =>
-        // We need to filter by current type since there may have same name in different cluster type
-        clusters
-          .filter(_._1.isInstanceOf[T])
-          .find(_._1.name == clusterName)
-          .getOrElse(throw new NoSuchClusterException(s"cluster with name [$clusterName] is not running")))
 
   /**
     * @param key cluster key

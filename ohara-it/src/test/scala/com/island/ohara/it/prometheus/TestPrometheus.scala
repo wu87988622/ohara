@@ -93,7 +93,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
 
 //  val clientPort = CommonUtils.availablePort()
   def startZK(f: ZookeeperClusterInfo => Unit): Unit = {
-    val clusterName = CommonUtils.randomString(10)
+    val clusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
     val electionPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
     val clientPort = CommonUtils.availablePort()
@@ -107,17 +107,16 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .clientPort(clientPort)
           .electionPort(electionPort)
           .peerPort(peerPort)
-          .name(clusterName)
+          .key(clusterKey)
           .nodeName(result(nodeCollie.nodes()).head.name)
           .create()
-          .flatMap(_ => zookeeperCollie.cluster(clusterName).map(_._1))
+          .flatMap(_ => zookeeperCollie.cluster(clusterKey).map(_._1))
       ))
-    finally result(
-      zookeeperCollie.remove(ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, clusterName)))
+    finally result(zookeeperCollie.remove(clusterKey))
   }
 
   def startBroker(zkClusterKey: ObjectKey, f: (Int, BrokerClusterInfo) => Unit): Unit = {
-    val clusterName = CommonUtils.randomString(10)
+    val clusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
     val brokerCollie = clusterCollie.brokerCollie
@@ -128,17 +127,16 @@ class TestPrometheus extends IntegrationTest with Matchers {
         brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
-          .name(clusterName)
+          .key(clusterKey)
           .clientPort(clientPort)
           .exporterPort(exporterPort)
           .zookeeperClusterKey(zkClusterKey)
           .nodeName(result(nodeCollie.nodes()).head.name)
           .create()
-          .flatMap(_ => brokerCollie.cluster(clusterName).map(_._1))
+          .flatMap(_ => brokerCollie.cluster(clusterKey).map(_._1))
       )
     )
-    finally result(
-      brokerCollie.remove(ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, clusterName)))
+    finally result(brokerCollie.remove(clusterKey))
   }
 
   private val fakeUrl = "128.128.128.128"

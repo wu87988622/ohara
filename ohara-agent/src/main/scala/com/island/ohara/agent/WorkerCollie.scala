@@ -239,15 +239,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   /**
     * Get all counter beans from specific worker cluster
-    * @param clusterName cluster name
-    * @param executionContext thread pool
-    * @return counter beans
-    */
-  def counters(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[CounterMBean]] =
-    cluster(clusterName).map(_._1).map(counters)
-
-  /**
-    * Get all counter beans from specific worker cluster
     * @param cluster cluster
     * @return counter beans
     */
