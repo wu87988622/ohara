@@ -103,7 +103,8 @@ public final class StreamDefUtils {
           .displayName("Jar primary key")
           .documentation("The jar key of this streamApp using")
           .readonly()
-          .valueType(Type.JAR_KEY)
+          .valueType(Type.OBJECT_KEY)
+          .reference(SettingDef.Reference.JAR)
           .build();
 
   /** this field is used to store whole info for a jar file */

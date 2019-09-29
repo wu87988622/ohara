@@ -331,25 +331,6 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(ConnectorKey.toConnectorKey(def.defaultValue()), key);
   }
 
-  @Test
-  public void testJarKeyType() {
-    SettingDef def =
-        SettingDef.builder()
-            .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.JAR_KEY)
-            .build();
-    // pass
-    def.checker()
-        .accept(
-            JsonUtils.toString(
-                ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())));
-    // empty array is illegal
-    assertException(OharaConfigException.class, () -> def.checker().accept("{}"));
-    assertException(
-        OharaConfigException.class, () -> def.checker().accept(CommonUtils.randomString()));
-    assertException(OharaConfigException.class, () -> def.checker().accept(100000000));
-  }
-
   @Test(expected = OharaConfigException.class)
   public void testRejectNullValue() {
     SettingDef.builder().key(CommonUtils.randomString()).build().checker().accept(null);

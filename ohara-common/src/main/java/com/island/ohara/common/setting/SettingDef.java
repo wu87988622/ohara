@@ -53,7 +53,8 @@ public class SettingDef implements JsonObject, Serializable {
     NONE,
     TOPIC,
     BROKER_CLUSTER,
-    WORKER_CLUSTER
+    WORKER_CLUSTER,
+    JAR
   }
 
   // -------------------------------[type]-------------------------------//
@@ -94,8 +95,6 @@ public class SettingDef implements JsonObject, Serializable {
      * we will check the availability for the BINDING_PORT.
      */
     BINDING_PORT,
-    /** { "group": "default", "name":" name.jar" } */
-    JAR_KEY,
     /** { "group": "g", "name":" n" } */
     OBJECT_KEY,
     /** [ { "group": "g", "name":" n" } ] */
@@ -312,13 +311,6 @@ public class SettingDef implements JsonObject, Serializable {
                       "the port:" + port + " is not available in host:" + CommonUtils.hostname());
               }
             }
-          } catch (Exception e) {
-            throw new OharaConfigException(this.key, trueValue, e.getMessage());
-          }
-          break;
-        case JAR_KEY:
-          try {
-            ObjectKey.toObjectKey(String.valueOf(trueValue));
           } catch (Exception e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }

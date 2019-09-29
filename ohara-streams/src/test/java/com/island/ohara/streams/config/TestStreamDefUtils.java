@@ -107,4 +107,10 @@ public class TestStreamDefUtils extends OharaTest {
         .values()
         .add(SettingDef.builder().key(CommonUtils.randomString()).build());
   }
+
+  @Test
+  public void testJarDefinition() {
+    Assert.assertEquals(StreamDefUtils.JAR_KEY_DEFINITION.valueType(), SettingDef.Type.OBJECT_KEY);
+    Assert.assertEquals(StreamDefUtils.JAR_KEY_DEFINITION.reference(), SettingDef.Reference.JAR);
+  }
 }

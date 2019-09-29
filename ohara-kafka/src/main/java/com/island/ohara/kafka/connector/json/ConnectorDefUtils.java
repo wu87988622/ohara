@@ -258,7 +258,6 @@ public final class ConnectorDefUtils {
       case TABLE:
       case TOPIC_KEYS:
       case OBJECT_KEY:
-      case JAR_KEY:
       case TAGS:
         return ConfigDef.Type.STRING;
       case SHORT:

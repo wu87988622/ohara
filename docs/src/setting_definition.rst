@@ -427,19 +427,19 @@ This type is similar to Type.PORT except that the value mapped to BINDING_PORT h
 the target nodes. For example, you define value 5555 as a BINDING_PORT, and you will get a exception when you try to
 deploy your code on the node which is using port 5555 as well.
 
-Type.JAR_KEY
-^^^^^^^^^^^^
+Type.OBJECT_KEY
+^^^^^^^^^^^^^^^
 
-Jar key represents a format of **com.island.ohara.common.setting.ObjectKey** for specific jar.
+object key represents a format of **com.island.ohara.common.setting.ObjectKey** for specific object.
 It consists "group" and "name" fields.
 In a custom application, you should check the request contains both fields.
 
 .. code-block::json
 
    {
-     "jarKey": {
+     "key": {
        "group": "default",
-       "name": "abc.jar"
+       "name": "abc"
      }
    }
 
