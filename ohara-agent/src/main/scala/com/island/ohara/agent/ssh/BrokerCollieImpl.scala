@@ -81,7 +81,6 @@ private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
 
   override protected def prefixKey: String = PREFIX_KEY
 
-  override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
+  override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit =
     updateRoute(node, container.name, route)
-  }
 }

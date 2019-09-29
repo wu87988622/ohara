@@ -99,7 +99,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
       .map(_.flatten)
   }
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] = {
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
     if (containers.isEmpty) None
     else {
       // we use a "pod" as a container of ohara cluster, so it is more easy to define a cluster state than docker
@@ -111,5 +111,4 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
       else if (containers.exists(_.state == K8sContainerState.SUCCEEDED.name)) Some(ClusterState.FAILED)
       else Some(ClusterState.UNKNOWN)
     }
-  }
 }

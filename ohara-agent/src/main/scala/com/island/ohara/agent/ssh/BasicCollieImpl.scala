@@ -116,7 +116,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
     }
   }
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] = {
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
     if (containers.isEmpty) None
     else {
       // one of the containers in pending state means cluster pending
@@ -132,5 +132,4 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
       // since there are too many cases that we could not handle for now, we should open the door for whitelist only
       else Some(ClusterState.FAILED)
     }
-  }
 }

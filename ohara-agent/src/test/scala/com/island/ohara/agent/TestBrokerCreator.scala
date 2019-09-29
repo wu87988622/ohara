@@ -17,9 +17,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -33,18 +31,7 @@ import scala.concurrent.{Await, Future}
 class TestBrokerCreator extends OharaTest with Matchers {
 
   private[this] val zkKey: ObjectKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
-  private[this] def node(hostname: String): Node = Node(
-    hostname = hostname,
-    port = Some(22),
-    user = Some("user"),
-    password = Some("password"),
-    services = Seq.empty,
-    lastModified = CommonUtils.current(),
-    validationReport = None,
-    tags = Map.empty
-  )
   private[this] def bkCreator(): BrokerCollie.ClusterCreator =
     (executionContext, creation) => {
       // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
@@ -171,115 +158,5 @@ class TestBrokerCreator extends OharaTest with Matchers {
 
     // pass
     Await.result(bkCreator().settings(brokerClusterInfo.settings).create(), 30 seconds)
-  }
-
-  @Test
-  def testBkCreatorZKNotExists(): Unit = {
-    val node1Name = "node1"
-    val node1 = node(node1Name)
-    val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty)
-
-    an[NoSuchClusterException] should be thrownBy {
-      Await.result(
-        brokerCollie.creator
-          .name("cluster123")
-          .group(CommonUtils.randomString(10))
-          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-          .zookeeperClusterKey(zkKey)
-          .clientPort(9092)
-          .exporterPort(9093)
-          .jmxPort(9094)
-          .nodeName(node1Name)
-          .create(),
-        TIMEOUT
-      )
-    }
-  }
-
-  @Test
-  def testBkCreatorZKContainerEmpty(): Unit = {
-    val node1Name = "node1"
-    val node1 = node(node1Name)
-
-    val brokerCollie = new FakeBrokerCollie(Seq(node1), Seq.empty, Seq.empty) //Zk container set empty
-
-    an[IllegalArgumentException] should be thrownBy {
-      Await.result(
-        brokerCollie.creator
-          .name("cluster123")
-          .group(CommonUtils.randomString(10))
-          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
-          .zookeeperClusterKey(FakeBrokerCollie.zookeeperClusterKey)
-          .clientPort(9092)
-          .exporterPort(9093)
-          .jmxPort(9094)
-          .nodeName(node1Name)
-          .create(),
-        TIMEOUT
-      )
-    }
-  }
-
-  @Test
-  def testCheckBrokerImageValue(): Unit = {
-    val node1Name = "node1"
-    val node1 = node(node1Name)
-
-    val node2Name = "node2"
-    val node2 = node(node2Name)
-
-    val zkContainers = Seq(
-      ContainerInfo(
-        "node1",
-        "00000",
-        "zookeeper",
-        "2018-05-24 00:00:00",
-        "RUNNING",
-        "unknown",
-        "containername",
-        "",
-        Seq.empty,
-        Map(ZookeeperApi.CLIENT_PORT_KEY -> "2181"),
-        "host"
-      ))
-
-    val bkContainers = Seq(
-      ContainerInfo(
-        "node1",
-        "00000",
-        BrokerApi.IMAGE_NAME_DEFAULT,
-        "2018-05-24 00:00:00",
-        "RUNNING",
-        "unknown",
-        "containername",
-        "",
-        Seq.empty,
-        Map(
-          BrokerApi.ID_KEY -> "0",
-          BrokerApi.CLIENT_PORT_KEY -> "9092",
-          BrokerApi.ZOOKEEPER_CLUSTER_KEY_KEY -> ObjectKey.toJsonString(FakeBrokerCollie.zookeeperClusterKey)
-        ),
-        "host"
-      ))
-
-    val brokerCollie = new FakeBrokerCollie(Seq(node1, node2), zkContainers, bkContainers)
-
-    an[IllegalArgumentException] shouldBe thrownBy {
-      Await.result(
-        brokerCollie.creator
-          .name("bk1")
-          // In FakeBrokerCollie, we create a cluster without specified group
-          // we should use default group here to fetch the same cluster
-          .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
-          .zookeeperClusterKey(FakeBrokerCollie.zookeeperClusterKey)
-          .clientPort(9092)
-          .jmxPort(9093)
-          .exporterPort(9094)
-          .imageName("brokerimage") //Docker image setting error
-          .nodeName(node2Name)
-          .create(),
-        TIMEOUT
-      )
-    }
   }
 }

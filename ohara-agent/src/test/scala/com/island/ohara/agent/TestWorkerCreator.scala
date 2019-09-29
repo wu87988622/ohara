@@ -16,9 +16,7 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
@@ -30,8 +28,6 @@ import spray.json.DeserializationException
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestWorkerCreator extends OharaTest with Matchers {
-
-  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext, creation) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
@@ -218,96 +214,5 @@ class TestWorkerCreator extends OharaTest with Matchers {
 
     // pass
     Await.result(wkCreator().settings(workerClusterInfo.settings).create(), 30 seconds)
-  }
-
-  @Test
-  def testBrokerClusterNotExists(): Unit = {
-    val node1Name = "node1"
-    val node1 = Node(
-      hostname = node1Name,
-      port = Some(22),
-      user = Some("fake"),
-      password = Some("fake"),
-      services = Seq.empty,
-      lastModified = CommonUtils.current(),
-      validationReport = None,
-      tags = Map.empty
-    )
-    val node2Name = "node2"
-    val node2 = Node(
-      hostname = node2Name,
-      port = Some(22),
-      user = Some("fake"),
-      password = Some("fake"),
-      services = Seq.empty,
-      lastModified = CommonUtils.current(),
-      validationReport = None,
-      tags = Map.empty
-    )
-
-    val bkName = CommonUtils.randomString(5)
-    val fakeWorkerCollie = new FakeWorkerCollie(
-      Seq(node1, node2),
-      Map(
-        bkName -> Seq(
-          ContainerInfo(
-            "node1",
-            "aaaa",
-            "broker",
-            "2019-05-28 00:00:00",
-            "running",
-            "unknown",
-            "ohara-xxx-bk-0000",
-            "unknown",
-            Seq.empty,
-            Map(BrokerApi.CLIENT_PORT_KEY -> "9092"),
-            "ohara-xxx-bk-0000"
-          )
-        ))
-    )
-
-    Await.result(
-      fakeWorkerCollie.creator
-        .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-        .name("wk1")
-        .group(CommonUtils.randomString(10))
-        .clientPort(8083)
-        .jmxPort(8084)
-        .brokerClusterKey(ObjectKey.of("default", bkName))
-        .groupId(CommonUtils.randomString(10))
-        .configTopicName(CommonUtils.randomString(10))
-        .configTopicReplications(1)
-        .statusTopicName(CommonUtils.randomString(10))
-        .statusTopicPartitions(1)
-        .statusTopicReplications(1)
-        .offsetTopicName(CommonUtils.randomString(10))
-        .offsetTopicPartitions(1)
-        .offsetTopicReplications(1)
-        .nodeName(node2Name)
-        .create(),
-      TIMEOUT
-    )
-
-    an[NoSuchClusterException] should be thrownBy Await.result(
-      fakeWorkerCollie.creator
-        .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-        .name("wk1")
-        .group(CommonUtils.randomString(10))
-        .clientPort(8083)
-        .jmxPort(8084)
-        .brokerClusterKey(ObjectKey.of("default", "bk"))
-        .groupId(CommonUtils.randomString(10))
-        .configTopicName(CommonUtils.randomString(10))
-        .configTopicReplications(1)
-        .statusTopicName(CommonUtils.randomString(10))
-        .statusTopicPartitions(1)
-        .statusTopicReplications(1)
-        .offsetTopicName(CommonUtils.randomString(10))
-        .offsetTopicPartitions(1)
-        .offsetTopicReplications(1)
-        .nodeName(node2Name)
-        .create(),
-      TIMEOUT
-    )
   }
 }
