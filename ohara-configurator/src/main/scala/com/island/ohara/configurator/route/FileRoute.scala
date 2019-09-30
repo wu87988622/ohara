@@ -92,8 +92,11 @@ private[configurator] object FileRoute {
         }
       } ~ pathEnd {
         withSizeLimit(DEFAULT_FILE_SIZE_BYTES) {
+          // We need to convert the request entity to strict entity in order to fetch the "form fields",
+          // The timeout here used seconds by the formula (for a worse case):
+          // timeout = DEFAULT_FILE_SIZE_BYTES(50MB) / 10Mbps upload = 40 seconds
           //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
-          toStrictEntity(1.seconds) {
+          toStrictEntity(40.seconds) {
             formFields((GROUP_KEY ?, TAGS_KEY ?)) {
               case (group, tagsString) =>
                 storeUploadedFile(FIELD_NAME, tempDestination) {

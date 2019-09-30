@@ -46,7 +46,7 @@ class TestFileRoute extends OharaTest with Matchers {
     f
   }
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("40 seconds"))
   @Test
   def testUpload(): Unit = {
     // upload jar to random group
