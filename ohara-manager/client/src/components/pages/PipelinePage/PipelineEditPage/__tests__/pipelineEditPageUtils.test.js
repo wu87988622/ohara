@@ -278,4 +278,130 @@ describe('loadGraph()', () => {
 
     expect(utils.loadGraph(pipeline, connectorName)).toEqual(expected);
   });
+
+  it('should not create a graph object when the target object is not found in the flows field', () => {
+    const pipeline = {
+      flows: [
+        {
+          from: { group: 'default', name: 'abc' },
+          to: [],
+        },
+      ],
+      objects: [],
+    };
+
+    expect(utils.loadGraph(pipeline, '123')).toEqual([]);
+  });
+
+  it('should filter out not supported object kinds', () => {
+    const pipeline = {
+      flows: [
+        {
+          from: {
+            group: 'default',
+            name: 'abc',
+          },
+          to: [],
+        },
+        {
+          from: {
+            group: 'default',
+            name: 'cdf',
+          },
+          to: [],
+        },
+      ],
+      objects: [
+        {
+          name: 'abc',
+          kind: 'xxx',
+        },
+        {
+          name: 'cdf',
+          kind: 'topic',
+        },
+      ],
+    };
+
+    const expected = [
+      {
+        className: 'topic',
+        isActive: true,
+        kind: 'topic',
+        name: 'cdf',
+        to: [],
+      },
+    ];
+
+    expect(utils.loadGraph(pipeline, 'cdf')).toEqual(expected);
+  });
+
+  it('should add class name to stream and topic objects', () => {
+    const pipeline = {
+      flows: [
+        {
+          from: {
+            group: 'default',
+            name: 'abc',
+          },
+          to: [],
+        },
+        {
+          from: {
+            group: 'default',
+            name: 'cdf',
+          },
+          to: [],
+        },
+        {
+          from: {
+            group: 'default',
+            name: 'kfs',
+          },
+          to: [],
+        },
+      ],
+      objects: [
+        {
+          name: 'abc',
+          kind: 'stream',
+        },
+        {
+          name: 'cdf',
+          kind: 'topic',
+        },
+        {
+          name: 'kfs',
+          kind: 'source',
+          className: 'unknown',
+        },
+      ],
+    };
+
+    const expected = [
+      {
+        className: 'stream',
+        isActive: true,
+        kind: 'stream',
+        name: 'abc',
+        to: [],
+      },
+      {
+        className: 'topic',
+        isActive: false,
+        kind: 'topic',
+        name: 'cdf',
+        to: [],
+      },
+      {
+        className: 'unknown',
+        isActive: false,
+        kind: 'source',
+        name: 'kfs',
+        to: [],
+      },
+    ];
+
+    expect(utils.loadGraph(pipeline, 'abc')).toEqual(expected);
+  });
 });

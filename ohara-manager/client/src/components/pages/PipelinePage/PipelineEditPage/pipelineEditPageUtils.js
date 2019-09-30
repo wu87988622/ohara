@@ -178,24 +178,30 @@ export const updateGraph = params => {
 };
 
 export const loadGraph = (pipeline, currentConnectorName) => {
-  const { objects, flows } = pipeline;
+  // We only want to display supported connectors, stream app and topic
+  const supportedKind = ['stream', 'topic', 'source', 'sink'];
+  const objects = pipeline.objects.filter(object =>
+    supportedKind.includes(object.kind),
+  );
 
-  const graph = flows.map((flow, index) => {
+  const graph = pipeline.flows.map((flow, index) => {
     const target = objects.find(object => object.name === flow.from.name);
 
     // Target object is not found, return a `null` value so
     // it can be fitler out later
     if (!target) return null;
 
-    const { kind } = target;
     const isActive = flow.from.name === currentConnectorName;
+    const { kind } = target;
 
     const props = {
       ...target,
       isActive,
-      to: flows[index].to,
+      to: pipeline.flows[index].to,
     };
 
+    // Topic and stream do not have class name, we need to manually
+    // add it here
     if (kind === 'topic' || kind === 'stream') {
       return {
         ...props,
@@ -203,7 +209,7 @@ export const loadGraph = (pipeline, currentConnectorName) => {
       };
     }
 
-    return { ...props };
+    return props;
   });
 
   // Filter out `null` values since they're not valid to be rendered later in
