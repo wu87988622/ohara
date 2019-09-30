@@ -13,4 +13,3 @@ ohara-manager/scripts/servicesApi/service.json
 .attach_pid*
 .rej
 .vscode/
-.cache/
