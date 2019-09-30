@@ -805,13 +805,13 @@ How to use Kubernetes in Ohara?
 .. code-block:: console
 
    # docker run --rm \
-              -p 5000:5000 \
-              --add-host ${K8S_WORKER01_HOSTNAME}:${K8S_WORKER01_IP} \
-              --add-host ${K8S_WORKER02_HOSTNAME}:${K8S_WORKER02_IP} \
-              oharastream/configurator:0.6.0-SNAPSHOT \
-              --port 5000 \
-              --hostname ${Start Configurator Host Name} \
-              --k8s http://${Your_K8S_Master_Host_IP}:8080/api/v1
+                -p 5000:5000 \
+                --add-host ${K8S_WORKER01_HOSTNAME}:${K8S_WORKER01_IP} \
+                --add-host ${K8S_WORKER02_HOSTNAME}:${K8S_WORKER02_IP} \
+                oharastream/configurator:$|version| \
+                --port 5000 \
+                --hostname ${Start Configurator Host Name} \
+                --k8s http://${Your_K8S_Master_Host_IP}:8080/api/v1
 
 ..
 
@@ -826,45 +826,51 @@ How to use Kubernetes in Ohara?
 .. code-block:: console
 
    # Add Ohara Node example
-   curl -H "Content-Type: application/json" \
-        -X POST \
-        -d '{"name": "${K8S_WORKER01_HOSTNAME}", \ 
-             "port": 22, \
-             "user": "${USERNAME}", \ 
-             "password": "${PASSWORD}"}' \ 
-        http://${CONFIGURATOR_HOST_IP}:5000/v0/nodes
+   $ curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"name": "${K8S_WORKER01_HOSTNAME}", \
+               "port": 22, \
+               "user": "${USERNAME}", \
+               "password": "${PASSWORD}"}' \
+          http://${CONFIGURATOR_HOST_IP}:5000/v0/nodes
 
-   curl -H "Content-Type: application/json" \ 
-        -X POST \
-        -d '{"name": "${K8S_WORKER02_HOSTNAME}", \ 
-             "port": 22, \
-             "user": "${USERNAME}", \
-             "password": "${PASSWORD}"}' \
-        http://${CONFIGURATOR_HOST_IP}:5000/v0/nodes
+   $ curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"name": "${K8S_WORKER02_HOSTNAME}", \
+               "port": 22, \
+               "user": "${USERNAME}", \
+               "password": "${PASSWORD}"}' \
+          http://${CONFIGURATOR_HOST_IP}:5000/v0/nodes
 
    # You must pre pull docker image in the ${K8S_WORKER01_HOSTNAME} and ${K8S_WORKER02_HOSTNAME} host, Below is command:
-   docker pull oharastream/zookeeper:0.6.0-SNAPSHOT
-   docker pull oharastream/broker:0.6.0-SNAPSHOT
+   docker pull oharastream/zookeeper:$|version|
+   docker pull oharastream/broker:$|version|
 
-   # Create Zookeeper service example
-   curl -H "Content-Type: application/json" \
-        -X POST \
-        -d '{"name": "zk", \
-             "clientPort": 2181, \
-             "imageName": "oharastream/zookeeper:0.6.0-SNAPSHOT", \
-             "peerPort": 2000, \
-             "electionPort": 2001, \
-             "nodeNames": ["${K8S_WORKER01_HOSTNAME}"]}' \
-        http://${CONFIGURATOR_HOST_IP}:5000/v0/zookeepers
+   # Create Zookeeper cluster service
+   $ curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"name": "zk", \
+               "clientPort": 2181, \
+               "imageName": "oharastream/zookeeper:$|version|", \
+               "peerPort": 2000, \
+               "electionPort": 2001, \
+               "nodeNames": ["${K8S_WORKER01_HOSTNAME}"]}' \
+          http://${CONFIGURATOR_HOST_IP}:5000/v0/zookeepers
+
+   # Start Zookeeper cluster service
+   $ curl -H "Content-Type: application/json" -X PUT http://${CONFIGURATOR_HOST_IP}:5000/v0/zookeepers/zk/start
 
    # Create Broker service example
-   curl -H "Content-Type: application/json" \
-        -X POST \
-        -d '{"name": "bk", \
-             "clientPort": 9092, \
-             "zookeeperClusterName": "zk", \
-             "nodeNames": ["${K8S_WORKER02_HOSTNAME}"]}' \
-        http://${CONFIGURATOR_HOST_IP}:5000/v0/brokers
+   $ curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"name": "bk", \
+               "clientPort": 9092, \
+               "zookeeperClusterName": "zk", \
+               "nodeNames": ["${K8S_WORKER02_HOSTNAME}"]}' \
+          http://${CONFIGURATOR_HOST_IP}:5000/v0/brokers
+
+   # Start Broker cluster service
+   $ curl -H "Content-Type: application/json" -X PUT http://192.168.56.103:12345/v0/brokers/bk/start
 
 -  You can use the kubectl command to get zookeeper and broker pod
    status with the following command:
