@@ -100,6 +100,8 @@ Cypress.Commands.add('fetchProperty', (group, name) =>
   streamApp.fetchProperty(group, name),
 );
 
+Cypress.Commands.add('fetchPropertys', () => streamApp.fetchPropertys());
+
 Cypress.Commands.add('createProperty', params =>
   streamApp.createProperty(params),
 );
@@ -282,6 +284,23 @@ Cypress.Commands.add('deleteAllServices', () => {
         }
 
         cy.request('DELETE', `api/workers/${name}`);
+      });
+    }
+  });
+
+  cy.fetchPropertys().then(response => {
+    const { result: streams } = response.data;
+
+    if (!isEmpty(streams)) {
+      streams.forEach(stream => {
+        const { state, settings } = stream;
+        const { name, group } = settings;
+
+        if (!isUndefined(state)) {
+          cy.stopStreamApp(group, name);
+        }
+
+        cy.deleteProperty(group, name);
       });
     }
   });

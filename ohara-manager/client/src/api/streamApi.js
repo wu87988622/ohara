@@ -33,6 +33,21 @@ export const fetchProperty = async (group, name) => {
   }
 };
 
+export const fetchPropertys = async () => {
+  try {
+    const res = await axiosInstance.get('/api/stream');
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const createProperty = async params => {
   try {
     const res = await axiosInstance.post('/api/stream', params);
