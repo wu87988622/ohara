@@ -391,21 +391,21 @@ class TestBrokerRoute extends OharaTest with Matchers {
 
   @Test
   def testForceDelete(): Unit = {
-    val initialCount = configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount
+    val initialCount = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount
 
     // graceful delete
     val bk0 = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.start(bk0.key))
     result(brokerApi.stop(bk0.key))
     result(brokerApi.delete(bk0.key))
-    configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
+    configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
     val bk1 = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.start(bk1.key))
     result(brokerApi.forceStop(bk1.key))
     result(brokerApi.delete(bk1.key))
-    configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
+    configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
   @Test

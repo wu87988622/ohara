@@ -20,7 +20,7 @@ import com.island.ohara.agent.docker.NetworkDriver
 import com.typesafe.scalalogging.Logger
 
 package object ssh {
-  private[ssh] val LOG = Logger("SshClusterCollie")
+  private[ssh] val LOG = Logger(classOf[ServiceCollieImpl])
 
   /**
     * We need this prefix in order to distinguish our containers from others.

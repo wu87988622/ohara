@@ -44,7 +44,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var homeFolder: String = _
   private[this] var store: DataStore = _
   private[this] var fileStore: FileStore = _
-  private[this] var clusterCollie: ClusterCollie = _
+  private[this] var serviceCollie: ServiceCollie = _
   private[this] var k8sClient: K8SClient = _
 
   @Optional("default is random folder")
@@ -100,7 +100,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[configurator] def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder =
     doOrReleaseObjects {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
-      if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
+      if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
       val store = getOrCreateStore()
       val embeddedZkName = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedzk")
       val embeddedBrokerKey = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedbk")
@@ -130,7 +130,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           )
         }
         .foreach(r => store.addIfAbsent(r))
-      val collie = new FakeClusterCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
+      val collie = new FakeServiceCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
       val bkCluster = {
         val pair = bkConnectionProps.split(",")
         val host = pair.map(_.split(":").head).head
@@ -146,7 +146,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .settings,
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
+          state = Some(ServiceState.RUNNING.name),
           error = None,
           lastModified = CommonUtils.current(),
           topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
@@ -167,7 +167,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           connectors = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
+          state = Some(ServiceState.RUNNING.name),
           error = None,
           lastModified = CommonUtils.current()
         )
@@ -185,7 +185,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
           aliveNodes = bkCluster.nodeNames,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
+          state = Some(ServiceState.RUNNING.name),
           error = None
         ),
         bkCluster.imageName,
@@ -199,14 +199,14 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           connectors = wkCluster.connectors,
           aliveNodes = wkCluster.nodeNames,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
+          state = Some(ServiceState.RUNNING.name),
           error = None
         ),
         wkCluster.imageName,
         wkCluster.nodeNames,
         wkCluster.ports
       )
-      clusterCollie(collie)
+      serviceCollie(collie)
     }
 
   /**
@@ -223,7 +223,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
                                  wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder =
     doOrReleaseObjects {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
-      if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
+      if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
       if (numberOfBrokerCluster < 0)
         throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
       if (numberOfWorkerCluster < 0)
@@ -231,7 +231,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
         throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
       val store = getOrCreateStore()
-      val collie = new FakeClusterCollie(createCollie(), store)
+      val collie = new FakeServiceCollie(createCollie(), store)
 
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkCreations = (0 until numberOfBrokerCluster).map { index =>
@@ -247,7 +247,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             name = creation.name,
             aliveNodes = nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ClusterState.RUNNING.name),
+            state = Some(ServiceState.RUNNING.name),
             error = None
           ),
           creation.imageName,
@@ -274,7 +274,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
               aliveNodes = zkCreation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ClusterState.RUNNING.name),
+              state = Some(ServiceState.RUNNING.name),
               error = None
             ),
             creation.imageName,
@@ -295,7 +295,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             connectors = FakeWorkerClient.localConnectorDefinitions,
             aliveNodes = bkCreation.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ClusterState.RUNNING.name),
+            state = Some(ServiceState.RUNNING.name),
             error = None
           ),
           creation.imageName,
@@ -314,7 +314,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               settings = creation.settings,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ClusterState.RUNNING.name),
+              state = Some(ServiceState.RUNNING.name),
               error = None,
               lastModified = CommonUtils.current()
           ))
@@ -328,7 +328,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ClusterState.RUNNING.name),
+              state = Some(ServiceState.RUNNING.name),
               error = None,
               lastModified = CommonUtils.current()
           ))
@@ -341,7 +341,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               connectors = FakeWorkerClient.localConnectorDefinitions,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ClusterState.RUNNING.name),
+              state = Some(ServiceState.RUNNING.name),
               error = None,
               lastModified = CommonUtils.current()
           ))
@@ -364,14 +364,14 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             tags = Map.empty
         ))
         .foreach(store.addIfAbsent[Node])
-      clusterCollie(collie)
+      serviceCollie(collie)
     }
 
   @VisibleForTesting
   @Optional("default is implemented by ssh")
-  private[configurator] def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = doOrReleaseObjects {
-    if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
-    this.clusterCollie = Objects.requireNonNull(clusterCollie)
+  private[configurator] def serviceCollie(serviceCollie: ServiceCollie): ConfiguratorBuilder = doOrReleaseObjects {
+    if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
+    this.serviceCollie = Objects.requireNonNull(serviceCollie)
     this
   }
 
@@ -384,7 +384,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   @Optional("default is null")
   def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = doOrReleaseObjects {
     if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
-    if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
+    if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
     this.k8sClient = Objects.requireNonNull(k8sClient)
     this
   }
@@ -402,7 +402,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(store = getOrCreateStore(),
                                                                                  fileStore = getOrCreateFileStore(),
                                                                                  nodeCollie = createCollie(),
-                                                                                 clusterCollie = getOrCreateCollie(),
+                                                                                 serviceCollie = getOrCreateCollie(),
                                                                                  k8sClient = Option(k8sClient)))
 
   private[this] def folder(prefix: String): String =
@@ -447,12 +447,12 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     fileStore
   } else fileStore
 
-  private[this] def getOrCreateCollie(): ClusterCollie = if (clusterCollie == null) {
-    this.clusterCollie =
-      if (k8sClient == null) ClusterCollie.builderOfSsh.nodeCollie(createCollie()).build
-      else ClusterCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
-    clusterCollie
-  } else clusterCollie
+  private[this] def getOrCreateCollie(): ServiceCollie = if (serviceCollie == null) {
+    this.serviceCollie =
+      if (k8sClient == null) ServiceCollie.builderOfSsh.nodeCollie(createCollie()).build
+      else ServiceCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
+    serviceCollie
+  } else serviceCollie
 
   /**
     * do the action and auto-release all internal objects if the action fails.
@@ -480,8 +480,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     store = null
     Releasable.close(fileStore)
     fileStore = null
-    Releasable.close(clusterCollie)
-    clusterCollie = null
+    Releasable.close(serviceCollie)
+    serviceCollie = null
     k8sClient = null
   }
 }

@@ -55,20 +55,20 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
   override def creator: FakeCollie.FakeClusterCreator =
     () => Future.successful(FakeCollieClusterInfo(FakeCollie.key, Set.empty, None))
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
     if (containers.isEmpty) None
     else {
       // one of the containers in pending state means cluster pending
-      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ClusterState.PENDING)
+      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ServiceState.PENDING)
       // not pending, if one of the containers in running state means cluster running (even other containers are in
       // restarting, paused, exited or dead state
-      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
+      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ServiceState.RUNNING)
       // exists one container in dead state, and others are in exited state means cluster failed
       else if (containers.exists(_.state == ContainerState.DEAD.name) &&
                containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
-        Some(ClusterState.FAILED)
+        Some(ServiceState.FAILED)
       // we don't care other situation for now
-      else Some(ClusterState.UNKNOWN)
+      else Some(ServiceState.UNKNOWN)
     }
 
   override def serviceName: String = "fake"

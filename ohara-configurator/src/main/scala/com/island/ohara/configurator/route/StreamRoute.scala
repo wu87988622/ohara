@@ -307,7 +307,7 @@ private[configurator] object StreamRoute {
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
-            clusterCollie: ClusterCollie,
+            serviceCollie: ServiceCollie,
             cleaner: AdminCleaner,
             fileStore: FileStore,
             meterCache: MeterCache,

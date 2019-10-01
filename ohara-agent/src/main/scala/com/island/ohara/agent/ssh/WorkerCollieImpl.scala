@@ -26,7 +26,7 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
+private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[WorkerClusterStatus](node, dockerCache, clusterCache)
     with WorkerCollie {
 

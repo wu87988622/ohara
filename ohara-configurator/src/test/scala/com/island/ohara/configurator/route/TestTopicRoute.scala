@@ -79,7 +79,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def removeTopicFromNonexistentBrokerCluster(): Unit = {
     val name = CommonUtils.randomString(10)
-    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
+    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(
       topicApi.request
         .name(name)
@@ -267,7 +267,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
     val brokerClusterInfo = result(
       BrokerApi.access.hostname(configurator.hostname).port(configurator.port).get(topic.brokerClusterKey))
-    val topicAdmin = configurator.clusterCollie.brokerCollie.topicAdmin(brokerClusterInfo)
+    val topicAdmin = configurator.serviceCollie.brokerCollie.topicAdmin(brokerClusterInfo)
     try {
       topicAdmin.delete(topic.key)
       // the topic is removed but we don't throw exception.
@@ -376,7 +376,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def stopTopicFromStoppingBrokerCluster(): Unit = {
     val topic = result(topicApi.request.create())
-    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
+    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
@@ -388,7 +388,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def stopTopicFromNonexistentBrokerCluster(): Unit = {
     val topic = result(topicApi.request.create())
-    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
+    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
@@ -402,7 +402,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def deleteTopicFromNonexistentBrokerCluster(): Unit = {
     val topic = result(topicApi.request.create())
-    val bk = result(configurator.clusterCollie.brokerCollie.clusters()).keys.head
+    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
     // remove broker cluster

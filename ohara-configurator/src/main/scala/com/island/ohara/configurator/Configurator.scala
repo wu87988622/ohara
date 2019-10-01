@@ -54,7 +54,7 @@ import scala.concurrent.{Await, ExecutionContext}
 class Configurator private[configurator] (val hostname: String, val port: Int)(implicit val store: DataStore,
                                                                                val fileStore: FileStore,
                                                                                val nodeCollie: NodeCollie,
-                                                                               val clusterCollie: ClusterCollie,
+                                                                               val serviceCollie: ServiceCollie,
                                                                                val k8sClient: Option[K8SClient])
     extends ReleaseOnce
     with SprayJsonSupport {
@@ -93,16 +93,16 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 
   private[this] val log = Logger(classOf[Configurator])
 
-  private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
-  private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
-  private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie
-  private[this] implicit val streamCollie: StreamCollie = clusterCollie.streamCollie
+  private[this] implicit val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
+  private[this] implicit val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
+  private[this] implicit val workerCollie: WorkerCollie = serviceCollie.workerCollie
+  private[this] implicit val streamCollie: StreamCollie = serviceCollie.streamCollie
 
-  def mode: Mode = clusterCollie match {
-    case _: com.island.ohara.agent.ssh.ClusterCollieImpl         => Mode.SSH
-    case _: com.island.ohara.agent.k8s.K8SClusterCollieImpl      => Mode.K8S
-    case _: com.island.ohara.configurator.fake.FakeClusterCollie => Mode.FAKE
-    case _                                                       => throw new IllegalArgumentException(s"unknown cluster collie: ${clusterCollie.getClass.getName}")
+  def mode: Mode = serviceCollie match {
+    case _: com.island.ohara.agent.ssh.ServiceCollieImpl         => Mode.SSH
+    case _: com.island.ohara.agent.k8s.K8SServiceCollieImpl      => Mode.K8S
+    case _: com.island.ohara.configurator.fake.FakeServiceCollie => Mode.FAKE
+    case _                                                       => throw new IllegalArgumentException(s"unknown cluster collie: ${serviceCollie.getClass.getName}")
   }
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
@@ -176,7 +176,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       .refresher { () =>
         // we do the sync here to simplify the interface
         // TODO: how to set a suitable timeout ??? by chia
-        val clusters = Await.result(clusterCollie.clusters(), cacheTimeout * 5)
+        val clusters = Await.result(serviceCollie.clusters(), cacheTimeout * 5)
         def swallow(f: () => Map[String, Seq[Meter]], serviceName: String): Map[String, Seq[Meter]] = try f()
         catch {
           case e: Throwable =>
@@ -295,7 +295,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       if (!threadPool.awaitTermination(terminateTimeout.toMillis, TimeUnit.MILLISECONDS))
         log.error("failed to terminate all running threads!!!")
     }
-    Releasable.close(clusterCollie)
+    Releasable.close(serviceCollie)
     Releasable.close(fileStore)
     Releasable.close(store)
     Releasable.close(adminCleaner)

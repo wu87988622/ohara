@@ -41,47 +41,47 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val nodeNames: Set[String] = nodes.map(_.hostname).toSet
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodes)
   private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
-  private[this] val clusterCollie: ClusterCollie =
-    ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(EnvTestingUtils.k8sClient()).build()
+  private[this] val serviceCollie: ServiceCollie =
+    ServiceCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(EnvTestingUtils.k8sClient()).build()
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   @Before
   def before(): Unit = if (nodes.size < 2) skipTest("TestK8SSimpleCollie requires two nodes at least")
 
   private[this] def waitZookeeperCluster(clusterKey: ObjectKey): ZookeeperClusterStatus = {
-    await(() => result(clusterCollie.zookeeperCollie.clusters()).exists(_._1.key == clusterKey))
+    await(() => result(serviceCollie.zookeeperCollie.clusters()).exists(_._1.key == clusterKey))
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
     // It is ok to filter container via RUNNING state.
     await(() => {
-      val containers = result(clusterCollie.zookeeperCollie.containers(clusterKey))
+      val containers = result(serviceCollie.zookeeperCollie.containers(clusterKey))
       containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
     })
-    result(clusterCollie.zookeeperCollie.cluster(clusterKey))._1
+    result(serviceCollie.zookeeperCollie.cluster(clusterKey))._1
   }
 
   private[this] def waitBrokerCluster(clusterKey: ObjectKey): BrokerClusterStatus = {
-    await(() => result(clusterCollie.brokerCollie.clusters()).exists(_._1.key == clusterKey))
+    await(() => result(serviceCollie.brokerCollie.clusters()).exists(_._1.key == clusterKey))
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
     // It is ok to filter container via RUNNING state.
     await(() => {
-      val containers = result(clusterCollie.brokerCollie.containers(clusterKey))
+      val containers = result(serviceCollie.brokerCollie.containers(clusterKey))
       containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
     })
-    result(clusterCollie.brokerCollie.cluster(clusterKey))._1
+    result(serviceCollie.brokerCollie.cluster(clusterKey))._1
   }
 
   private[this] def waitWorkerCluster(clusterKey: ObjectKey): WorkerClusterStatus = {
-    await(() => result(clusterCollie.workerCollie.clusters()).exists(_._1.key == clusterKey))
+    await(() => result(serviceCollie.workerCollie.clusters()).exists(_._1.key == clusterKey))
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
     // It is ok to filter container via RUNNING state.
     await(() => {
-      val containers = result(clusterCollie.workerCollie.containers(clusterKey))
+      val containers = result(serviceCollie.workerCollie.containers(clusterKey))
       containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
     })
-    result(clusterCollie.workerCollie.cluster(clusterKey))._1
+    result(serviceCollie.workerCollie.cluster(clusterKey))._1
   }
 
   private[this] def node(hostname: String): Node = Node(
@@ -101,7 +101,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
     firstNode should not be secondNode
 
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
 
     val clientPort: Int = CommonUtils.availablePort()
     val peerPort: Int = CommonUtils.availablePort()
@@ -123,7 +123,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
 
     //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     val zkClientPort: Int = CommonUtils.availablePort()
     val zkPeerPort: Int = CommonUtils.availablePort()
     val zkElectionPort: Int = CommonUtils.availablePort()
@@ -137,7 +137,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create broker cluster service
     val brokerClientPort = CommonUtils.availablePort()
     val brokerExporterPort = CommonUtils.availablePort()
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+    val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
     val brokerClusterStatus = createBrokerCollie(brokerCollie,
                                                  nameHolder.generateClusterKey(),
                                                  firstNode,
@@ -154,7 +154,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
 
     //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     val zkClientPort: Int = CommonUtils.availablePort()
     val zkPeerPort: Int = CommonUtils.availablePort()
     val zkElectionPort: Int = CommonUtils.availablePort()
@@ -169,7 +169,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create broker cluster service
     val brokerClientPort = CommonUtils.availablePort()
     val brokerExporterPort = CommonUtils.availablePort()
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+    val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
     val brokerClusterInfo = createBrokerCollie(brokerCollie,
                                                nameHolder.generateClusterKey(),
                                                firstNode,
@@ -178,7 +178,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                                zk.key)
 
     //Create worker cluster service
-    val workerCollie: WorkerCollie = clusterCollie.workerCollie
+    val workerCollie: WorkerCollie = serviceCollie.workerCollie
     val workerClientPort: Int = CommonUtils.availablePort()
     val workerClusterStatus =
       createWorkerCollie(workerCollie,
@@ -203,7 +203,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     val zkClientPort: Int = CommonUtils.availablePort()
     val zkPeerPort: Int = CommonUtils.availablePort()
     val zkElectionPort: Int = CommonUtils.availablePort()
@@ -220,7 +220,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val brokerClientPort = CommonUtils.availablePort()
     val brokerExporterPort = CommonUtils.availablePort()
 
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+    val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
 
     val brokerClusterStatus1 =
       createBrokerCollie(brokerCollie, brokerClusterKey, firstNode, brokerClientPort, brokerExporterPort, zk.key)
@@ -239,7 +239,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     val zkClientPort: Int = CommonUtils.availablePort()
     val zkPeerPort: Int = CommonUtils.availablePort()
     val zkElectionPort: Int = CommonUtils.availablePort()
@@ -254,7 +254,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create broker cluster service
     val brokerClientPort = CommonUtils.availablePort()
     val brokerExporterPort = CommonUtils.availablePort()
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+    val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
 
     val brokerClusterStatus =
       createBrokerCollie(brokerCollie,
@@ -266,7 +266,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
     //Create worker cluster service
     val workerClusterKey = nameHolder.generateClusterKey()
-    val workerCollie: WorkerCollie = clusterCollie.workerCollie
+    val workerCollie: WorkerCollie = serviceCollie.workerCollie
     val workerClientPort: Int = CommonUtils.availablePort()
     val workerClusterStatus1 =
       createWorkerCollie(workerCollie, workerClusterKey, firstNode, workerClientPort, brokerClusterStatus.key)
@@ -283,8 +283,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
+    val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
     val zkClientPort: Int = CommonUtils.availablePort()
     val zkPeerPort: Int = CommonUtils.availablePort()
     val zkElectionPort: Int = CommonUtils.availablePort()
@@ -320,7 +320,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterKey1 = nameHolder.generateClusterKey()
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     // for zookeeper, we assign node name to "hostname" field
     result(zookeeperCollie.clusters())
       .flatMap(x => x._2)
@@ -351,7 +351,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
 
     //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     val zkClientPort: Int = CommonUtils.availablePort()
     val zkPeerPort: Int = CommonUtils.availablePort()
     val zkElectionPort: Int = CommonUtils.availablePort()
@@ -366,7 +366,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create broker cluster service
     val brokerClientPort = CommonUtils.availablePort()
     val brokerExporterPort = CommonUtils.availablePort()
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+    val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
     val brokerClusterInfo = createBrokerCollie(brokerCollie,
                                                nameHolder.generateClusterKey(),
                                                firstNode,
@@ -374,7 +374,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                                brokerExporterPort,
                                                zk.key)
     //Create worker cluster service
-    val workerCollie: WorkerCollie = clusterCollie.workerCollie
+    val workerCollie: WorkerCollie = serviceCollie.workerCollie
     val workerClientPort: Int = CommonUtils.availablePort()
     val workerClusterInfo =
       createWorkerCollie(workerCollie,
@@ -405,13 +405,13 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
     val verifyNode: Try[String] =
       Await.result(
-        clusterCollie.verifyNode(node(firstNode)),
+        serviceCollie.verifyNode(node(firstNode)),
         30 seconds
       )
     verifyNode.get.contains("node is running.") shouldBe true
 
     val unknownNode: Try[String] = Await.result(
-      clusterCollie.verifyNode(node("unknow-node")),
+      serviceCollie.verifyNode(node("unknow-node")),
       30 seconds
     )
     unknownNode.isFailure shouldBe true
@@ -430,7 +430,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
     firstNode should not be secondNode
 
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
     val clientPort: Int = CommonUtils.availablePort()
     val peerPort: Int = CommonUtils.availablePort()
     val electionPort: Int = CommonUtils.availablePort()
@@ -493,7 +493,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   @After
   final def tearDown(): Unit = {
-    Releasable.close(clusterCollie)
+    Releasable.close(serviceCollie)
     Releasable.close(nameHolder)
   }
 }

@@ -199,7 +199,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testStreamMeterInPipeline(): Unit = {
-    val wkInfo = result(configurator.clusterCollie.workerCollie.clusters().map(_.keys)).head
+    val wkInfo = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys)).head
     val jar = CommonUtils.createTempJar("stream")
     val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
     jarInfo.name shouldBe jar.getName

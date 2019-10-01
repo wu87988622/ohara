@@ -16,13 +16,13 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{ClusterCache, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{ServiceCache, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 
 import scala.concurrent.{ExecutionContext, Future}
-private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
+private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[ZookeeperClusterStatus](node, dockerCache, clusterCache)
     with ZookeeperCollie {
 

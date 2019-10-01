@@ -42,7 +42,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    defaultWk = result(configurator.clusterCollie.workerCollie.clusters().map(_.keys.headOption))
+    defaultWk = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys.headOption))
       .getOrElse(throw new IllegalArgumentException("we expected at least one worker cluster, but none?"))
   }
 
@@ -110,7 +110,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .create())
 
     connector.workerClusterKey shouldBe defaultWk.key
-    result(configurator.clusterCollie.workerCollie.remove(defaultWk.key))
+    result(configurator.serviceCollie.workerCollie.remove(defaultWk.key))
 
     result(connectorApi.delete(connector.key))
 

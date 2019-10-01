@@ -19,7 +19,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -89,7 +89,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
             meterCache: MeterCache,
             adminCleaner: AdminCleaner,
             workerCollie: WorkerCollie,
-            clusterCollie: ClusterCollie,
+            serviceCollie: ServiceCollie,
             executionContext: ExecutionContext): server.Route =
     pathPrefix(VALIDATION_PREFIX_PATH) {
       verifyRoute(
@@ -138,7 +138,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
         verify = (req: NodeValidation) =>
-          clusterCollie
+          serviceCollie
             .verifyNode(Node(
               hostname = req.hostname,
               port = req.port,

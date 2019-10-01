@@ -36,8 +36,8 @@ class TestListCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodes)
 
-  private[this] val clusterCollie: ClusterCollie =
-    ClusterCollie.builderOfSsh.nodeCollie(nodeCollie).build()
+  private[this] val serviceCollie: ServiceCollie =
+    ServiceCollie.builderOfSsh.nodeCollie(nodeCollie).build()
 
   @Before
   def setup(): Unit = if (nodes.size < 2) skipTest("please buy more servers to run this test")
@@ -59,7 +59,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   def deadContainerAndClusterShouldDisappear(): Unit = {
     val clusterKey = nameHolder.generateClusterKey()
     try result(
-      clusterCollie.zookeeperCollie.creator
+      serviceCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
         .clientPort(CommonUtils.availablePort())
@@ -84,7 +84,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     await { () =>
       val containers =
-        result(clusterCollie.zookeeperCollie.clusters()).find(_._1.key == clusterKey).map(_._2).getOrElse(Seq.empty)
+        result(serviceCollie.zookeeperCollie.clusters()).find(_._1.key == clusterKey).map(_._2).getOrElse(Seq.empty)
       containers.map(_.nodeName).toSet == Set(aliveNode.hostname)
     }
 
@@ -95,13 +95,13 @@ class TestListCluster extends IntegrationTest with Matchers {
     )
 
     await { () =>
-      !result(clusterCollie.zookeeperCollie.clusters()).map(_._1.key).toSet.contains(clusterKey)
+      !result(serviceCollie.zookeeperCollie.clusters()).map(_._1.key).toSet.contains(clusterKey)
     }
   }
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(clusterCollie)
+    Releasable.close(serviceCollie)
     Releasable.close(nameHolder)
   }
 }

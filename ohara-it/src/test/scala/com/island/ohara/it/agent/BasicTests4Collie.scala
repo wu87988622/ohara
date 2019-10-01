@@ -547,9 +547,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
       container.hostname.contains(clusterKey.name) shouldBe true
-      // [BEFORE] ClusterCollieImpl applies --network=host to all worker containers so there is no port mapping.
+      // [BEFORE] ServiceCollieImpl applies --network=host to all worker containers so there is no port mapping.
       // The following checks are disabled rather than deleted since it seems like a bug if we don't check the port mapping.
-      // [AFTER] ClusterCollieImpl use bridge network now
+      // [AFTER] ServiceCollieImpl use bridge network now
       container.portMappings.head.portPairs.size shouldBe 2
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
       container.environments.exists(_._2 == clientPort.toString) shouldBe true

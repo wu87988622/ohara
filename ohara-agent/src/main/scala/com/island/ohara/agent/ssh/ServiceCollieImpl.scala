@@ -31,13 +31,13 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 // accessible to configurator
-private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
+private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
     extends ReleaseOnce
-    with ClusterCollie {
+    with ServiceCollie {
 
   private[this] val dockerCache = DockerClientCache()
 
-  private[this] val clusterCache: ClusterCache = ClusterCache.builder
+  private[this] val clusterCache: ServiceCache = ServiceCache.builder
     .frequency(cacheTimeout)
     // TODO: 5 * timeout is enough ??? by chia
     .supplier(() => Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheTimeout * 5))

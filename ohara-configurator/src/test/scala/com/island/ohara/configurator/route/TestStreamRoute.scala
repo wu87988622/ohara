@@ -152,7 +152,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     running.error.isEmpty shouldBe true
 
     // get the stream clusters information by clusterCache
-    val cluster = result(configurator.clusterCollie.streamCollie.clusters())
+    val cluster = result(configurator.serviceCollie.streamCollie.clusters())
     cluster.size shouldBe 1
 
     // start the same streamApp cluster will get the previous stream cluster
@@ -174,7 +174,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(accessStream.get(props.key)).state shouldBe None
 
     // get the stream clusters information again, should be zero
-    result(configurator.clusterCollie.streamCollie.clusters()).size shouldBe 0
+    result(configurator.serviceCollie.streamCollie.clusters()).size shouldBe 0
 
     // stop the same streamApp cluster will only return the previous object
     result(accessStream.stop(props.key))

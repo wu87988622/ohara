@@ -18,7 +18,7 @@ package com.island.ohara.agent.ssh
 
 import java.util
 
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.agent.{ServiceCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -99,7 +99,7 @@ class TestVerifyNode extends OharaTest with Matchers {
     tags = Map.empty
   )
 
-  private[this] val collie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(Seq(node))).build
+  private[this] val collie = ServiceCollie.builderOfSsh.nodeCollie(NodeCollie(Seq(node))).build
 
   @Test
   def happyCase(): Unit = {

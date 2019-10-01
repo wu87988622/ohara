@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.ServiceCollie
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -29,26 +29,26 @@ import scala.concurrent.{ExecutionContext, Future}
 object NodeRoute {
   private[this] lazy val LOG = Logger(NodeRoute.getClass)
 
-  private[this] def updateServices(node: Node)(implicit clusterCollie: ClusterCollie,
+  private[this] def updateServices(node: Node)(implicit serviceCollie: ServiceCollie,
                                                executionContext: ExecutionContext): Future[Node] =
     updateServices(Seq(node)).map(_.head)
 
-  private[this] def updateServices(nodes: Seq[Node])(implicit clusterCollie: ClusterCollie,
+  private[this] def updateServices(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
                                                      executionContext: ExecutionContext): Future[Seq[Node]] =
-    clusterCollie.fetchServices(nodes).recover {
+    serviceCollie.fetchServices(nodes).recover {
       case e: Throwable =>
         LOG.error("failed to seek cluster information", e)
         nodes
     }
 
-  private[this] def hookOfGet(implicit clusterCollie: ClusterCollie,
+  private[this] def hookOfGet(implicit serviceCollie: ServiceCollie,
                               executionContext: ExecutionContext): HookOfGet[Node] = updateServices(_)
 
-  private[this] def hookOfList(implicit clusterCollie: ClusterCollie,
+  private[this] def hookOfList(implicit serviceCollie: ServiceCollie,
                                executionContext: ExecutionContext): HookOfList[Node] =
     Future.traverse(_)(updateServices)
 
-  private[this] def hookOfCreation(implicit clusterCollie: ClusterCollie,
+  private[this] def hookOfCreation(implicit serviceCollie: ServiceCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, Node] =
     (creation: Creation) =>
       updateServices(
@@ -63,7 +63,7 @@ object NodeRoute {
           tags = creation.tags
         ))
 
-  private[this] def HookOfUpdating(implicit clusterCollie: ClusterCollie,
+  private[this] def HookOfUpdating(implicit serviceCollie: ServiceCollie,
                                    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, Node] =
     (key: ObjectKey, update: Updating, previous: Option[Node]) =>
       updateServices(
@@ -80,7 +80,7 @@ object NodeRoute {
         ))
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     clusterCollie: ClusterCollie,
+                                     serviceCollie: ServiceCollie,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store
       .get[Node](key)
@@ -94,7 +94,7 @@ object NodeRoute {
         }
       }.getOrElse(Future.unit))
 
-  def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
+  def apply(implicit store: DataStore, serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     route[Creation, Updating, Node](
       root = NODES_PREFIX_PATH,
       hookOfCreation = hookOfCreation,

@@ -18,8 +18,8 @@ package com.island.ohara.agent
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
-import com.island.ohara.agent.k8s.{K8SClient, K8SClusterCollieImpl}
-import com.island.ohara.agent.ssh.ClusterCollieImpl
+import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
+import com.island.ohara.agent.ssh.ServiceCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
@@ -41,7 +41,7 @@ import scala.util.Try
   * However, it is ok to keep global instance of collie if they have dump close().
   * Currently, default implementation is based on ssh and docker command. It is simple but slow.
   */
-trait ClusterCollie extends Releasable {
+trait ServiceCollie extends Releasable {
 
   /**
     * create a collie for zookeeper cluster
@@ -143,8 +143,8 @@ trait ClusterCollie extends Releasable {
   def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]]
 }
 
-object ClusterCollie {
-  val LOG = Logger("ClusterCollie")
+object ServiceCollie {
+  val LOG = Logger(classOf[ServiceCollie])
 
   /**
     * the default implementation uses ssh and docker command to manage all clusters.
@@ -158,7 +158,7 @@ object ClusterCollie {
 
   import scala.concurrent.duration._
 
-  class SshBuilder private[ClusterCollie] extends Builder[ClusterCollie] {
+  class SshBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var cacheTimeout: Duration = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
@@ -181,10 +181,10 @@ object ClusterCollie {
     }
 
     /**
-      * We don't return ClusterCollieImpl since it is a private implementation
+      * We don't return ServiceCollieImpl since it is a private implementation
       * @return
       */
-    override def build: ClusterCollie = new ClusterCollieImpl(
+    override def build: ServiceCollie = new ServiceCollieImpl(
       cacheTimeout = Objects.requireNonNull(cacheTimeout),
       nodeCollie = Objects.requireNonNull(nodeCollie),
       cacheThreadPool =
@@ -200,7 +200,7 @@ object ClusterCollie {
     */
   def builderOfK8s(): K8shBuilder = new K8shBuilder
 
-  class K8shBuilder private[ClusterCollie] extends Builder[ClusterCollie] {
+  class K8shBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var k8sClient: K8SClient = _
 
@@ -215,10 +215,10 @@ object ClusterCollie {
     }
 
     /**
-      * We don't return ClusterCollieImpl since it is a private implementation
+      * We don't return ServiceCollieImpl since it is a private implementation
       * @return
       */
-    override def build: ClusterCollie = new K8SClusterCollieImpl(
+    override def build: ServiceCollie = new K8SServiceCollieImpl(
       nodeCollie = Objects.requireNonNull(nodeCollie),
       k8sClient = Objects.requireNonNull(k8sClient)
     )

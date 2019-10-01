@@ -22,7 +22,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{
   BrokerCollie,
-  ClusterCollie,
+  ServiceCollie,
   Collie,
   NodeCollie,
   StreamCollie,
@@ -461,7 +461,7 @@ package object route {
     implicit store: DataStore,
     meterCache: MeterCache,
     collie: Collie[Status],
-    clusterCollie: ClusterCollie,
+    serviceCollie: ServiceCollie,
     zookeeperCollie: ZookeeperCollie,
     brokerCollie: BrokerCollie,
     workerCollie: WorkerCollie,
@@ -524,7 +524,7 @@ package object route {
     implicit store: DataStore,
     meterCache: MeterCache,
     collie: Collie[Status],
-    clusterCollie: ClusterCollie,
+    serviceCollie: ServiceCollie,
     zookeeperCollie: ZookeeperCollie,
     brokerCollie: BrokerCollie,
     workerCollie: WorkerCollie,
@@ -633,7 +633,7 @@ package object route {
     * 3) port should not conflict
     *
     * @param nodeCollie nodeCollie instance
-    * @param clusterCollie clusterCollie instance
+    * @param serviceCollie serviceCollie instance
     * @param req cluster creation request
     * @param executionContext execution context
     * @tparam Cluster type of request
@@ -641,7 +641,7 @@ package object route {
     */
   private[route] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](nodeCollie: NodeCollie, req: Cluster)(
     implicit executionContext: ExecutionContext,
-    clusterCollie: ClusterCollie,
+    serviceCollie: ServiceCollie,
     store: DataStore,
     zookeeperCollie: ZookeeperCollie,
     brokerCollie: BrokerCollie,
@@ -651,7 +651,7 @@ package object route {
     // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
     nodeCollie
       .nodes(req.nodeNames)
-      .flatMap(clusterCollie.images)
+      .flatMap(serviceCollie.images)
       // check the docker images
       .map { nodesImages =>
         nodesImages

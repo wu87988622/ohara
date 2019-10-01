@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ClusterState, Collie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ServiceState, Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.setting.ObjectKey
@@ -100,8 +100,8 @@ private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](no
     finally _forceRemoveCount.incrementAndGet()
 
   // In fake mode, the cluster state should be running since we add "running containers" always
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
-    Some(ClusterState.RUNNING)
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
+    Some(ServiceState.RUNNING)
 
   def forceRemoveCount: Int = _forceRemoveCount.get()
 }

@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.ServiceCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
@@ -31,13 +31,13 @@ import scala.concurrent.ExecutionContext
 
 object ContainerRoute {
 
-  def apply(implicit clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
+  def apply(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     path(CONTAINER_PREFIX_PATH / Segment)({ clusterName =>
       parameter(GROUP_KEY ?) {
         groupOption =>
           get {
             complete(
-              clusterCollie
+              serviceCollie
                 .clusters()
                 .map(_.filter(_._1.key == ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), clusterName)).map {
                   case (cluster, containers) =>

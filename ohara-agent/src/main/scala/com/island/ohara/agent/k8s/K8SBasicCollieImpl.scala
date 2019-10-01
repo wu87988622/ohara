@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.{ClusterState, Collie, NodeCollie}
+import com.island.ohara.agent.{ServiceState, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -96,16 +96,16 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](no
       .map(_.flatten)
   }
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
     if (containers.isEmpty) None
     else {
       // we use a "pod" as a container of ohara cluster, so it is more easy to define a cluster state than docker
       // since a "pod" in k8s is actually an application with multiple containers...
-      if (containers.exists(_.state == K8sContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
-      else if (containers.exists(_.state == K8sContainerState.FAILED.name)) Some(ClusterState.FAILED)
-      else if (containers.exists(_.state == K8sContainerState.PENDING.name)) Some(ClusterState.PENDING)
+      if (containers.exists(_.state == K8sContainerState.RUNNING.name)) Some(ServiceState.RUNNING)
+      else if (containers.exists(_.state == K8sContainerState.FAILED.name)) Some(ServiceState.FAILED)
+      else if (containers.exists(_.state == K8sContainerState.PENDING.name)) Some(ServiceState.PENDING)
       // All Containers in the Pod have terminated in success, BUT it is still failed :(
-      else if (containers.exists(_.state == K8sContainerState.SUCCEEDED.name)) Some(ClusterState.FAILED)
-      else Some(ClusterState.UNKNOWN)
+      else if (containers.exists(_.state == K8sContainerState.SUCCEEDED.name)) Some(ServiceState.FAILED)
+      else Some(ServiceState.UNKNOWN)
     }
 }

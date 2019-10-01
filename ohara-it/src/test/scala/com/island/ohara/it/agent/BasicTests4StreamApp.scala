@@ -19,7 +19,7 @@ package com.island.ohara.it.agent
 import java.io.File
 import java.util.concurrent.ExecutionException
 
-import com.island.ohara.agent.ClusterState
+import com.island.ohara.agent.ServiceState
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
@@ -184,7 +184,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // since we use the same name for cluster state
     await(() => {
       val res = result(access.get(stream.key))
-      res.state.isDefined && res.state.get == ClusterState.FAILED.name &&
+      res.state.isDefined && res.state.get == ServiceState.FAILED.name &&
       // only 1 instance, dead nodes are equal to all nodes
       res.deadNodes == res.nodeNames &&
       res.nodeNames.size == 1
@@ -228,7 +228,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // jar should be parse-able
     log.info(s"[testRunSimpleStreamApp] get definition from $jar")
-    val definition = result(configurator.clusterCollie.streamCollie.loadDefinition(jar.toURI.toURL))
+    val definition = result(configurator.serviceCollie.streamCollie.loadDefinition(jar.toURI.toURL))
     definition.isDefined shouldBe true
     definition.get.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
     log.info(s"[testRunSimpleStreamApp] get definition from $jar...done")
@@ -276,7 +276,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     result(access.start(stream.key))
     await(() => {
       val res = result(access.get(stream.key))
-      res.state.isDefined && res.state.get == ClusterState.RUNNING.name
+      res.state.isDefined && res.state.get == ServiceState.RUNNING.name
     })
     log.info(s"[testRunSimpleStreamApp] stream start [${stream.key}]...done")
 
@@ -370,7 +370,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     result(access.start(stream.key))
     await(() => {
       val res = result(access.get(stream.key))
-      res.state.isDefined && res.state.get == ClusterState.RUNNING.name
+      res.state.isDefined && res.state.get == ServiceState.RUNNING.name
     })
 
     result(access.get(stream.key)).nodeNames shouldBe nodes.map(_.hostname).toSet

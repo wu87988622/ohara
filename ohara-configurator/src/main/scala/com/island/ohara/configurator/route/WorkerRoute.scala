@@ -55,11 +55,11 @@ object WorkerRoute {
 
   private[this] def HookOfUpdating(
     implicit fileStore: FileStore,
-    clusterCollie: ClusterCollie,
+    serviceCollie: ServiceCollie,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, WorkerClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[WorkerClusterInfo]) =>
-      clusterCollie.workerCollie
+      serviceCollie.workerCollie
         .clusters()
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
@@ -96,7 +96,7 @@ object WorkerRoute {
                                 meterCache: MeterCache,
                                 brokerCollie: BrokerCollie,
                                 workerCollie: WorkerCollie,
-                                clusterCollie: ClusterCollie,
+                                serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
       (for {
@@ -134,7 +134,7 @@ object WorkerRoute {
                 s"statusTopicName:${workerClusterInfo.statusTopicName} is used by wk cluster:${cluster.name}")
             }
 
-            clusterCollie.workerCollie.creator
+            serviceCollie.workerCollie.creator
               .settings(workerClusterInfo.settings)
               .name(workerClusterInfo.name)
               .group(workerClusterInfo.group)
@@ -166,7 +166,7 @@ object WorkerRoute {
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
-            clusterCollie: ClusterCollie,
+            serviceCollie: ServiceCollie,
             nodeCollie: NodeCollie,
             fileStore: FileStore,
             executionContext: ExecutionContext): server.Route =

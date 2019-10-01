@@ -126,25 +126,25 @@ class TestCollie extends OharaTest with Matchers {
     }
     val fakeRunning = new FakeCollie(NodeCollie(Seq(node1)), containers)
     Await.result(fakeRunning.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
-      ClusterState.RUNNING.name)
+      ServiceState.RUNNING.name)
 
     // case : some containers are failed but one running => cluster running
     val fakeRunning1 =
       new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.DEAD.name))
     Await.result(fakeRunning1.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
-      ClusterState.RUNNING.name)
+      ServiceState.RUNNING.name)
 
     // case : some containers are failed but one running => cluster running
     val fakeRunning2 =
       new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.EXITED.name))
     Await.result(fakeRunning2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
-      ClusterState.RUNNING.name)
+      ServiceState.RUNNING.name)
 
     // case : one container is pending => cluster pending
     val fakePending =
       new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.CREATED.name))
     Await.result(fakePending.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
-      ClusterState.PENDING.name)
+      ServiceState.PENDING.name)
 
     // case : all containers are dead => cluster failed
     val containers2 = (0 until 5).map { index =>
@@ -163,18 +163,18 @@ class TestCollie extends OharaTest with Matchers {
       )
     }
     val fakeFailed = new FakeCollie(NodeCollie(Seq(node1)), containers2)
-    Await.result(fakeFailed.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(ClusterState.FAILED.name)
+    Await.result(fakeFailed.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(ServiceState.FAILED.name)
 
     // case : some containers are exit but others are dead => cluster failed
     val fakeFailed1 =
       new FakeCollie(NodeCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.EXITED.name))
     Await.result(fakeFailed1.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
-      ClusterState.FAILED.name)
+      ServiceState.FAILED.name)
 
     // case : some containers is running but others are dead => cluster running
     val fakeFailed2 =
       new FakeCollie(NodeCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.RUNNING.name))
     Await.result(fakeFailed2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
-      ClusterState.RUNNING.name)
+      ServiceState.RUNNING.name)
   }
 }

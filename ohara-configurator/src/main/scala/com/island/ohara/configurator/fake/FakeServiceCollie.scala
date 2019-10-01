@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.agent.{ServiceCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.configurator.store.DataStore
@@ -27,11 +27,11 @@ import scala.util.Try
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[configurator] class FakeClusterCollie(nodeCollie: NodeCollie,
+private[configurator] class FakeServiceCollie(nodeCollie: NodeCollie,
                                               store: DataStore,
                                               bkConnectionProps: String,
                                               wkConnectionProps: String)
-    extends ClusterCollie {
+    extends ServiceCollie {
 
   def this(nodeCollie: NodeCollie, store: DataStore) {
     this(nodeCollie, store, null, null)

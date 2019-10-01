@@ -24,13 +24,13 @@ import com.island.ohara.client.Enum
   * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
   * Note: you should not assume these states as containers state. A cluster failed doesn't mean container failed.
   */
-abstract sealed class ClusterState(val name: String)
-object ClusterState extends Enum[ClusterState] {
-  case object PENDING extends ClusterState("PENDING")
+abstract sealed class ServiceState(val name: String)
+object ServiceState extends Enum[ServiceState] {
+  case object PENDING extends ServiceState("PENDING")
 
-  case object RUNNING extends ClusterState("RUNNING")
+  case object RUNNING extends ServiceState("RUNNING")
 
-  case object FAILED extends ClusterState("FAILED")
+  case object FAILED extends ServiceState("FAILED")
 
-  case object UNKNOWN extends ClusterState("UNKNOWN")
+  case object UNKNOWN extends ServiceState("UNKNOWN")
 }

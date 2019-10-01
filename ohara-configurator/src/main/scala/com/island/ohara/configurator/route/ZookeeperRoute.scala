@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceCollie, NodeCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -39,10 +39,10 @@ object ZookeeperRoute {
       ))
 
   private[this] def HookOfUpdating(
-    implicit clusterCollie: ClusterCollie,
+    implicit serviceCollie: ServiceCollie,
     executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, ZookeeperClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
-      clusterCollie.zookeeperCollie.clusters().map { clusters =>
+      serviceCollie.zookeeperCollie.clusters().map { clusters =>
         if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
           throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
         else
@@ -65,14 +65,14 @@ object ZookeeperRoute {
     }
 
   private[this] def hookOfStart(implicit store: DataStore,
-                                clusterCollie: ClusterCollie,
+                                serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
       store
         .value[ZookeeperClusterInfo](key)
         .flatMap(
           zkClusterInfo =>
-            clusterCollie.zookeeperCollie.creator
+            serviceCollie.zookeeperCollie.creator
               .settings(zkClusterInfo.settings)
               .name(zkClusterInfo.name)
               .group(zkClusterInfo.group)
@@ -109,7 +109,7 @@ object ZookeeperRoute {
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
-            clusterCollie: ClusterCollie,
+            serviceCollie: ServiceCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[ZookeeperClusterInfo, ZookeeperClusterStatus, Creation, Updating](

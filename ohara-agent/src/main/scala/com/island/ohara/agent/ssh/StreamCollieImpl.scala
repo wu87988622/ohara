@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{ClusterCache, NoSuchClusterException, NodeCollie, StreamCollie}
+import com.island.ohara.agent.{ServiceCache, NoSuchClusterException, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
@@ -26,7 +26,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
+private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[StreamClusterStatus](node, dockerCache, clusterCache)
     with StreamCollie {
 

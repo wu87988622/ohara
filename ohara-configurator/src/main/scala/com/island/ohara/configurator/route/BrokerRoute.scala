@@ -44,10 +44,10 @@ object BrokerRoute {
 
   private[this] def HookOfUpdating(
     implicit zookeeperCollie: ZookeeperCollie,
-    clusterCollie: ClusterCollie,
+    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, BrokerClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[BrokerClusterInfo]) =>
-      clusterCollie.brokerCollie
+      serviceCollie.brokerCollie
         .clusters()
         .flatMap { clusters =>
           if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
@@ -75,7 +75,7 @@ object BrokerRoute {
   private[this] def hookOfStart(implicit store: DataStore,
                                 meterCache: MeterCache,
                                 brokerCollie: BrokerCollie,
-                                clusterCollie: ClusterCollie,
+                                serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
       (for {
@@ -89,7 +89,7 @@ object BrokerRoute {
             if (conflictBrokerClusters.nonEmpty)
               throw new IllegalArgumentException(
                 s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}")
-            clusterCollie.brokerCollie.creator
+            serviceCollie.brokerCollie.creator
               .settings(brokerClusterInfo.settings)
               .name(brokerClusterInfo.name)
               .group(brokerClusterInfo.group)
@@ -132,7 +132,7 @@ object BrokerRoute {
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
-            clusterCollie: ClusterCollie,
+            serviceCollie: ServiceCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[BrokerClusterInfo, BrokerClusterStatus, Creation, Updating](

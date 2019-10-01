@@ -26,7 +26,7 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
+private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[BrokerClusterStatus](node, dockerCache, clusterCache)
     with BrokerCollie {
 

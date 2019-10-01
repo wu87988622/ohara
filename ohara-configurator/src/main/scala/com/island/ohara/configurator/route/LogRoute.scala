@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.ServiceCollie
 import com.island.ohara.client.configurator.v0.BrokerApi._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.LogApi._
@@ -58,7 +58,7 @@ object LogRoute {
         )
     })
 
-  def apply(implicit collie: ClusterCollie, executionContext: ExecutionContext): server.Route =
+  def apply(implicit collie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LOG_PREFIX_PATH / Segment / Segment) {
       case (clusterPrefix, clusterName) =>
         parameter(GROUP_KEY ?) { groupOption =>

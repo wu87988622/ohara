@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.ServiceCollie
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
@@ -65,14 +65,14 @@ class TestConfiguratorBuilder extends OharaTest with Matchers {
       case (numberOfBrokers, numberOfWorkers) =>
         val configurator = Configurator.builder.fake(numberOfBrokers, numberOfWorkers).build()
         try {
-          result(configurator.clusterCollie.brokerCollie.clusters()).size shouldBe numberOfBrokers
-          result(configurator.clusterCollie.workerCollie.clusters()).size shouldBe numberOfWorkers
-          result(configurator.clusterCollie.clusters())
+          result(configurator.serviceCollie.brokerCollie.clusters()).size shouldBe numberOfBrokers
+          result(configurator.serviceCollie.workerCollie.clusters()).size shouldBe numberOfWorkers
+          result(configurator.serviceCollie.clusters())
           // one broker generates one zk cluster
           .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
           val nodes = result(configurator.store.values[Node]())
           nodes.isEmpty shouldBe false
-          result(configurator.clusterCollie.clusters())
+          result(configurator.serviceCollie.clusters())
             .flatMap(_._2.map(_.nodeName))
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
         } finally configurator.close()
@@ -87,16 +87,16 @@ class TestConfiguratorBuilder extends OharaTest with Matchers {
   @Test
   def createFakeConfiguratorWithoutClusters(): Unit = {
     val configurator = Configurator.builder.fake(0, 0).build()
-    try result(configurator.clusterCollie.clusters()).size shouldBe 0
+    try result(configurator.serviceCollie.clusters()).size shouldBe 0
     finally configurator.close()
   }
 
   @Test
-  def reassignClusterCollieAfterFake(): Unit =
+  def reassignServiceCollieAfterFake(): Unit =
     an[IllegalArgumentException] should be thrownBy Configurator.builder
     // in fake mode, a fake collie will be created
       .fake(1, 1)
-      .clusterCollie(MockitoSugar.mock[ClusterCollie])
+      .serviceCollie(MockitoSugar.mock[ServiceCollie])
       .build()
 
   @Test
@@ -106,9 +106,9 @@ class TestConfiguratorBuilder extends OharaTest with Matchers {
     .build()
 
   @Test
-  def reassignClusterCollie(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .clusterCollie(MockitoSugar.mock[ClusterCollie])
-    .clusterCollie(MockitoSugar.mock[ClusterCollie])
+  def reassignServiceCollie(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
+    .serviceCollie(MockitoSugar.mock[ServiceCollie])
+    .serviceCollie(MockitoSugar.mock[ServiceCollie])
     .build()
 
   @Test

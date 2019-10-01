@@ -23,9 +23,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
 // accessible to configurator
-private[ohara] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
+private[ohara] class K8SServiceCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
-    with ClusterCollie {
+    with ServiceCollie {
 
   override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient)
 

@@ -220,7 +220,7 @@ trait Collie[T <: ClusterStatus] {
     * @param containers container list
     * @return the cluster state
     */
-  protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState]
+  protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState]
 
   /**
     * return the short service name

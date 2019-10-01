@@ -261,7 +261,7 @@ class TestZookeeperRoute extends OharaTest with Matchers {
 
   @Test
   def testForceStop(): Unit = {
-    val initialCount = configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount
+    val initialCount = configurator.serviceCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount
     val name = CommonUtils.randomString(10)
     // graceful stop
     val zk = result(
@@ -270,7 +270,7 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     result(zookeeperApi.start(zk.key))
     result(zookeeperApi.stop(zk.key))
     result(zookeeperApi.delete(zk.key))
-    configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount shouldBe initialCount
+    configurator.serviceCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount shouldBe initialCount
 
     // force stop
     val zk2 = result(
@@ -279,7 +279,7 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     result(zookeeperApi.start(zk2.key))
     result(zookeeperApi.forceStop(zk2.key))
     result(zookeeperApi.delete(zk2.key))
-    configurator.clusterCollie.zookeeperCollie
+    configurator.serviceCollie.zookeeperCollie
       .asInstanceOf[FakeZookeeperCollie]
       .forceRemoveCount shouldBe initialCount + 1
   }

@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
+import com.island.ohara.agent.ServiceCache.{RequestKey, Service}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.OharaTest
@@ -30,7 +30,7 @@ import org.scalatest.Matchers
 import spray.json.JsValue
 
 import scala.concurrent.duration._
-class TestClusterCache extends OharaTest with Matchers {
+class TestServiceCache extends OharaTest with Matchers {
 
   @Test
   def testRequestKey(): Unit = {
@@ -53,7 +53,7 @@ class TestClusterCache extends OharaTest with Matchers {
     val containerInfo1 = fakeContainerInfo()
     val fetchCount = new AtomicInteger(0)
     val refreshCount = new AtomicInteger(0)
-    val cache = ClusterCache.builder
+    val cache = ServiceCache.builder
       .supplier(() => {
         refreshCount.incrementAndGet()
         Map(clusterInfo0 -> Seq(containerInfo0), clusterInfo1 -> Seq(containerInfo1))
@@ -79,7 +79,7 @@ class TestClusterCache extends OharaTest with Matchers {
     val containerInfo1 = fakeContainerInfo()
     val fetchCount = new AtomicInteger(0)
     val refreshCount = new AtomicInteger(0)
-    val cache = ClusterCache.builder
+    val cache = ServiceCache.builder
       .supplier(() => {
         refreshCount.incrementAndGet()
         Map(clusterInfo0 -> Seq(containerInfo0), clusterInfo1 -> Seq(containerInfo1))
@@ -100,7 +100,7 @@ class TestClusterCache extends OharaTest with Matchers {
 
   @Test
   def failToOperateAfterClose(): Unit = {
-    val cache = ClusterCache.builder.supplier(() => Map.empty).frequency(1000 seconds).build
+    val cache = ServiceCache.builder.supplier(() => Map.empty).frequency(1000 seconds).build
     cache.close()
 
     an[IllegalStateException] should be thrownBy cache.snapshot
@@ -111,7 +111,7 @@ class TestClusterCache extends OharaTest with Matchers {
   def testGet(): Unit = {
     val clusterInfo0 = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo0 = fakeContainerInfo()
-    val cache = ClusterCache.builder
+    val cache = ServiceCache.builder
       .supplier(() => {
         Map(clusterInfo0 -> Seq(containerInfo0))
       })
@@ -129,7 +129,7 @@ class TestClusterCache extends OharaTest with Matchers {
   @Test
   def testLazyRemove(): Unit = {
     val count = new AtomicInteger(0)
-    val cache = ClusterCache.builder
+    val cache = ServiceCache.builder
       .supplier(() => {
         count.incrementAndGet()
         Map.empty
@@ -176,7 +176,7 @@ class TestClusterCache extends OharaTest with Matchers {
 
       override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
     }
-    val cache = ClusterCache.builder
+    val cache = ServiceCache.builder
       .supplier(() => {
         count.incrementAndGet()
         Map(cachedClusterInfo -> Seq.empty)

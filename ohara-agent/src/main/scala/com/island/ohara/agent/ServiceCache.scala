@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import java.util.Objects
 
-import com.island.ohara.agent.ClusterCache.Service
+import com.island.ohara.agent.ServiceCache.Service
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ClusterStatus
@@ -43,7 +43,7 @@ import scala.concurrent.duration.{Duration, _}
   * does not create an new key-value pair. Also, the latter key will replace the older one. For example, adding a cluster info having different
   * port. will replace the older cluster info, and then you will get the new cluster info when calling snapshot method.
   */
-trait ClusterCache extends Releasable {
+trait ServiceCache extends Releasable {
 
   /**
     * @return the cached data
@@ -82,7 +82,7 @@ trait ClusterCache extends Releasable {
   def remove(key: ObjectKey, service: Service): Unit
 }
 
-object ClusterCache {
+object ServiceCache {
 
   sealed abstract class Service
   object Service extends Enum[Service] {
@@ -107,7 +107,7 @@ object ClusterCache {
     override def toString: String = s"name:${ObjectKey.toJsonString(key)}, service:$service"
   }
 
-  class Builder private[ClusterCache] extends com.island.ohara.common.pattern.Builder[ClusterCache] {
+  class Builder private[ServiceCache] extends com.island.ohara.common.pattern.Builder[ServiceCache] {
     private[this] var frequency: Duration = 5 seconds
     private[this] var lazyRemove: Duration = 0 seconds
     private[this] var supplier: () => Map[ClusterStatus, Seq[ContainerInfo]] = _
@@ -146,9 +146,9 @@ object ClusterCache {
       Objects.requireNonNull(supplier)
     }
 
-    override def build: ClusterCache = {
+    override def build: ServiceCache = {
       checkArguments()
-      new ClusterCache {
+      new ServiceCache {
         private[this] val cache = RefreshableCache
           .builder[RequestKey, (ClusterStatus, Seq[ContainerInfo])]()
           .supplier(() =>

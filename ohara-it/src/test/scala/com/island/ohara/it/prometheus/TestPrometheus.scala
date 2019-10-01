@@ -22,7 +22,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.agent.{ServiceCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
@@ -43,14 +43,14 @@ class TestPrometheus extends IntegrationTest with Matchers {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   private[this] var node: Node = _
   private[this] var nodeCollie: NodeCollie = _
-  private[this] var clusterCollie: ClusterCollie = _
+  private[this] var serviceCollie: ServiceCollie = _
 
   @Before
   def check(): Unit = if (nodes.isEmpty) skipTest(s"no available nodes are passed from env variables")
   else {
     node = nodes.head
     nodeCollie = NodeCollie(Seq(node))
-    clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(nodeCollie).build()
+    serviceCollie = ServiceCollie.builderOfSsh.nodeCollie(nodeCollie).build()
     val client =
       DockerClient.builder.user(node._user).password(node._password).hostname(node.hostname).port(node._port).build
     try {
@@ -65,15 +65,15 @@ class TestPrometheus extends IntegrationTest with Matchers {
   def testExporter(): Unit = {
     startZK(zkDesc => {
       assertClusterKeys(
-        () => result(clusterCollie.zookeeperCollie.clusters()).keys.map(_.key).toSeq,
-        () => result(clusterCollie.zookeeperCollie.containers(zkDesc.key)),
+        () => result(serviceCollie.zookeeperCollie.clusters()).keys.map(_.key).toSeq,
+        () => result(serviceCollie.zookeeperCollie.containers(zkDesc.key)),
         zkDesc.key
       )
       startBroker(
         zkDesc.key,
         (exporterPort, bkCluster) => {
-          assertClusterKeys(() => result(clusterCollie.brokerCollie.clusters()).keys.map(_.key).toSeq,
-                            () => result(clusterCollie.brokerCollie.containers(zkDesc.key)),
+          assertClusterKeys(() => result(serviceCollie.brokerCollie.clusters()).keys.map(_.key).toSeq,
+                            () => result(serviceCollie.brokerCollie.containers(zkDesc.key)),
                             bkCluster.key)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
@@ -99,7 +99,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val electionPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
     val clientPort = CommonUtils.availablePort()
-    val zookeeperCollie = clusterCollie.zookeeperCollie
+    val zookeeperCollie = serviceCollie.zookeeperCollie
 
     try f(
       result(
@@ -121,7 +121,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val clusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
-    val brokerCollie = clusterCollie.brokerCollie
+    val brokerCollie = serviceCollie.brokerCollie
 
     try f(
       exporterPort,

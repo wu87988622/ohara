@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceState, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
@@ -57,7 +57,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
             .map(_._2.map(_.nodeName))
             .getOrElse(Set.empty),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ClusterState.RUNNING.name),
+          state = Some(ServiceState.RUNNING.name),
           error = None
         ),
         creation.imageName,

@@ -387,7 +387,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testForceDelete(): Unit = {
-    val initialCount = configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount
+    val initialCount = configurator.serviceCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount
 
     // graceful delete
     val wk0 = result(
@@ -396,14 +396,14 @@ class TestWorkerRoute extends OharaTest with Matchers {
     result(workerApi.start(wk0.key))
     result(workerApi.stop(wk0.key))
     result(workerApi.delete(wk0.key))
-    configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
+    configurator.serviceCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
     val wk1 = result(workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(workerApi.start(wk1.key))
     result(workerApi.forceStop(wk1.key))
     result(workerApi.delete(wk1.key))
-    configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
+    configurator.serviceCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
   @Test
@@ -415,7 +415,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
     val configurator = Configurator.builder.fake(numberOfCluster, 1).build()
-    try result(configurator.clusterCollie.workerCollie.clusters()).keys
+    try result(configurator.serviceCollie.workerCollie.clusters()).keys
       .foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
     finally configurator.close()
   }

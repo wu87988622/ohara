@@ -17,7 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ClusterCache, ClusterState, Collie, NodeCollie}
+import com.island.ohara.agent.{ServiceCache, ServiceState, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie: NodeCollie,
                                                                      dockerCache: DockerClientCache,
-                                                                     clusterCache: ClusterCache)
+                                                                     clusterCache: ServiceCache)
     extends Collie[T] {
 
   final override def clusterWithAllContainers()(
@@ -113,20 +113,20 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie:
     }
   }
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
     if (containers.isEmpty) None
     else {
       // one of the containers in pending state means cluster pending
-      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ClusterState.PENDING)
+      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ServiceState.PENDING)
       // not pending, if one of the containers in running state means cluster running (even other containers are in
       // restarting, paused, exited or dead state
-      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
+      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ServiceState.RUNNING)
       // since cluster(collie) is a collection of long running containers,
       // we could assume cluster failed if containers are run into "exited" or "dead" state
       else if (containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
-        Some(ClusterState.FAILED)
+        Some(ServiceState.FAILED)
       // we set failed state is ok here
       // since there are too many cases that we could not handle for now, we should open the door for whitelist only
-      else Some(ClusterState.FAILED)
+      else Some(ServiceState.FAILED)
     }
 }
