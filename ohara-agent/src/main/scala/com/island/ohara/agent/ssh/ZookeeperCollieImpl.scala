@@ -17,13 +17,13 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.{ClusterCache, NodeCollie, ZookeeperCollie}
-import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
+
 import scala.concurrent.{ExecutionContext, Future}
 private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[ZookeeperClusterInfo](node, dockerCache, clusterCache)
+    extends BasicCollieImpl[ZookeeperClusterStatus](node, dockerCache, clusterCache)
     with ZookeeperCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
@@ -55,12 +55,11 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
         None
     })
 
-  override protected def postCreateZookeeperCluster(clusterInfo: ClusterInfo,
-                                                    successfulContainers: Seq[ContainerInfo]): Unit = {
-    clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
-  }
+  override protected def postCreate(clusterStatus: ZookeeperClusterStatus,
+                                    successfulContainers: Seq[ContainerInfo]): Unit =
+    clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
 
-  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support remove node from a running cluster"))

@@ -72,7 +72,7 @@ trait ClusterNameHolder extends Releasable {
   override def close(): Unit = release(
     clusterKeys = usedClusterKeys.toSet,
     excludedNodes = Set.empty,
-    closeThisHolder = false
+    finalClose = true
   )
 
   /**
@@ -82,16 +82,16 @@ trait ClusterNameHolder extends Releasable {
     * @param excludedNodes nodes to keep the containers
     */
   def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String]): Unit =
-    release(clusterKeys = clusterKeys, excludedNodes = excludedNodes, closeThisHolder = false)
+    release(clusterKeys = clusterKeys, excludedNodes = excludedNodes, finalClose = false)
 
   /**
     * remove all containers belonging to input clusters. The argument "excludedNodes" enable you to remove a part of
     * containers from input clusters.
     * @param clusterKeys clusters to remove
     * @param excludedNodes nodes to keep the containers
-    * @param closeThisHolder true if this name holder should be closed as well
+    * @param finalClose true if this name holder should be closed as well
     */
-  protected def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String], closeThisHolder: Boolean): Unit
+  protected def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean): Unit
 }
 
 object ClusterNameHolder {
@@ -108,8 +108,12 @@ object ClusterNameHolder {
     * @return name holder
     */
   def apply(nodes: Seq[Node]): ClusterNameHolder =
-    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], _: Boolean) =>
-      if (!KEEP_CONTAINERS)
+    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean) =>
+      /**
+        * Some IT need to close containers so we don't obstruct them form "releasing".
+        * However, the final close is still controlled by the global flag.
+        */
+      if (!finalClose || !KEEP_CONTAINERS)
         nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
           val client =
             DockerClient.builder
@@ -148,8 +152,12 @@ object ClusterNameHolder {
     * @return name holder
     */
   def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder =
-    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], closeThisHolder: Boolean) =>
-      if (!KEEP_CONTAINERS)
+    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean) =>
+      /**
+        * Some IT need to close containers so we don't obstruct them form "releasing".
+        * However, the final close is still controlled by the global flag.
+        */
+      if (!finalClose || !KEEP_CONTAINERS)
         Await
           .result(client.containers(), 30 seconds)
           .filter(container =>

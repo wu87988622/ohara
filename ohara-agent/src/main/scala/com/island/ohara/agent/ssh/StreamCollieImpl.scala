@@ -17,18 +17,17 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.{ClusterCache, NoSuchClusterException, NodeCollie, StreamCollie}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[StreamClusterInfo](node, dockerCache, clusterCache)
+    extends BasicCollieImpl[StreamClusterStatus](node, dockerCache, clusterCache)
     with StreamCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
@@ -68,10 +67,11 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
         None
     })
 
-  override protected def postCreateCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit =
-    clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
+  override protected def postCreate(clusterStatus: StreamClusterStatus,
+                                    successfulContainers: Seq[ContainerInfo]): Unit =
+    clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
 
-  override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
+  override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support remove node from a running cluster"))
 
@@ -82,7 +82,7 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
       clusterCache.snapshot
-        .filter(_._1.isInstanceOf[BrokerClusterInfo])
+        .filter(_._1.isInstanceOf[BrokerClusterStatus])
         .find(_._1.key == clusterKey)
         .map(_._2)
         .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterKey doesn't exist.")))

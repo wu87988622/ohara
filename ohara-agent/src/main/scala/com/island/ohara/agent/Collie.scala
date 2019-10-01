@@ -21,7 +21,7 @@ import java.util.Objects
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest}
+import com.island.ohara.client.configurator.v0.{ClusterRequest, ClusterStatus}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
   * @tparam T cluster description
   */
-trait Collie[T <: ClusterInfo] {
+trait Collie[T <: ClusterStatus] {
 
   /**
     * remove whole cluster by specified key. The process, mostly, has a graceful shutdown
@@ -169,25 +169,22 @@ trait Collie[T <: ClusterInfo] {
     */
   final def removeNode(key: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters().flatMap(
-      _.find(_._1.key == key)
-        .filter(_._1.nodeNames.contains(nodeName))
-        .filter(_._2.exists(_.nodeName == nodeName))
-        .fold(Future.successful(false)) {
-          case (cluster, runningContainers) =>
-            runningContainers.size match {
-              case 1 =>
-                Future.failed(new IllegalArgumentException(
-                  s"cluster [$key] is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
-              case _ =>
-                doRemoveNode(
-                  cluster,
-                  runningContainers
-                    .find(_.nodeName == nodeName)
-                    .getOrElse(throw new IllegalArgumentException(
-                      s"This should not be happen!!! $nodeName doesn't exist on cluster:$key"))
-                )
-            }
-        })
+      _.find(_._1.key == key).filter(_._2.exists(_.nodeName == nodeName)).fold(Future.successful(false)) {
+        case (cluster, runningContainers) =>
+          runningContainers.size match {
+            case 1 =>
+              Future.failed(new IllegalArgumentException(
+                s"cluster [$key] is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+            case _ =>
+              doRemoveNode(
+                cluster,
+                runningContainers
+                  .find(_.nodeName == nodeName)
+                  .getOrElse(throw new IllegalArgumentException(
+                    s"This should not be happen!!! $nodeName doesn't exist on cluster:$key"))
+              )
+          }
+      })
 
   /**
     * do the remove actually. Normally, the sub-class doesn't need to check the existence of removed node.
@@ -247,6 +244,15 @@ trait Collie[T <: ClusterInfo] {
     * @return ip address or hostname (if you do nothing to it)
     */
   protected def resolveHostName(hostname: String): String = CommonUtils.address(hostname)
+
+  /**
+    * parse the status of cluster from the containers
+    * @param key cluster key
+    * @param containers cluster's containers
+    * @return cluster status
+    */
+  protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[T]
 }
 
 object Collie {

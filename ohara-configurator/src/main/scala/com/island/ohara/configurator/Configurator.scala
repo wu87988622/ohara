@@ -28,10 +28,10 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
+import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.configurator.{ConfiguratorApiInfo, Data}
 import com.island.ohara.common.data.Serializer
@@ -184,14 +184,26 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
             Map.empty[String, Seq[Meter]]
         }
         clusters.keys
-          .map {
-            case cluster: BrokerClusterInfo =>
-              cluster -> swallow(() => brokerToMeters(cluster), s"broker:${cluster.name}")
-            case cluster: WorkerClusterInfo =>
-              cluster -> swallow(() => workerToMeters(cluster), s"worker:${cluster.name}")
-            case cluster: StreamClusterInfo =>
-              cluster -> swallow(() => streamAppToMeters(cluster), s"streamapp:${cluster.name}")
-            case clusterInfo: ClusterInfo => clusterInfo -> Map.empty[String, Seq[Meter]]
+          .flatMap {
+            case status: BrokerClusterStatus =>
+              Await
+                .result(store.get[BrokerClusterInfo](status.key), cacheTimeout * 5)
+                // we have to load the runtime information to fetch the metrics
+                .map(_.update(status))
+                .map(cluster => cluster -> swallow(() => brokerToMeters(cluster), s"broker:${cluster.name}"))
+            case status: WorkerClusterStatus =>
+              Await
+                .result(store.get[WorkerClusterInfo](status.key), cacheTimeout * 5)
+                // we have to load the runtime information to fetch the metrics
+                .map(_.update(status))
+                .map(cluster => cluster -> swallow(() => workerToMeters(cluster), s"worker:${cluster.name}"))
+            case status: StreamClusterStatus =>
+              Await
+                .result(store.get[StreamClusterInfo](status.key), cacheTimeout * 5)
+                // we have to load the runtime information to fetch the metrics
+                .map(_.update(status))
+                .map(cluster => cluster -> swallow(() => streamAppToMeters(cluster), s"streamapp:${cluster.name}"))
+            case _: ClusterStatus => None
           }
           .toSeq
           .toMap

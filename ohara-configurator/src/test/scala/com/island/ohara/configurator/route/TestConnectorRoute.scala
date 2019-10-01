@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
@@ -36,9 +36,10 @@ class TestConnectorRoute extends OharaTest with Matchers {
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] var defaultWk: WorkerClusterInfo = _
+  private[this] var defaultWk: WorkerClusterStatus = _
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+
   @Before
   def setup(): Unit = {
     defaultWk = result(configurator.clusterCollie.workerCollie.clusters().map(_.keys.headOption))

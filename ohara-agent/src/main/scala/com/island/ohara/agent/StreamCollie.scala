@@ -22,10 +22,9 @@ import java.util.Objects
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
-import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
+import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo, StreamClusterStatus}
+import com.island.ohara.client.configurator.v0.{Definition, FileInfoApi, StreamApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -41,14 +40,14 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling stream cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait StreamCollie extends Collie[StreamClusterInfo] {
+trait StreamCollie extends Collie[StreamClusterStatus] {
   private[this] val LOG = Logger(classOf[StreamCollie])
 
   override def creator: StreamCollie.ClusterCreator =
     (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
-        if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.key == creation.key))
+        if (clusters.keys.exists(_.key == creation.key))
           Future.failed(
             new UnsupportedOperationException(s"Streamapp cluster does NOT support to add new nodes at runtime"))
         else {
@@ -114,11 +113,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                               // StreamDefUtils offers the helper method to turn them back.
                               case _ => CommonUtils.toEnvString(v.toString)
                             })
-                        }
-                        // we convert all settings to specific string in order to fetch all settings from
-                        // container env quickly. Also, the specific string enable us to pick up the "true" settings
-                        // from envs since there are many system-defined settings in container envs.
-                          + toEnvString(creation.settings),
+                        },
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName
                       )
@@ -142,21 +137,19 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                   )
                   .map {
                     case (successfulContainers, definition) =>
-                      val nodeNames = creation.nodeNames ++ nodes.keySet.map(_.hostname)
                       val state = toClusterState(successfulContainers).map(_.name)
-                      val clusterInfo = StreamClusterInfo(
-                        settings =
-                          StreamApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
-                        definition = definition,
-                        // no state means cluster is NOT running so we cleanup the dead nodes
-                        aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
-                        // We do not care the user parameters since it's stored in configurator already
-                        state = state,
-                        metrics = Metrics.EMPTY,
-                        error = None,
-                        lastModified = CommonUtils.current()
+                      postCreate(
+                        new StreamClusterStatus(
+                          group = creation.group,
+                          name = creation.name,
+                          definition = definition,
+                          // no state means cluster is NOT running so we cleanup the dead nodes
+                          aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
+                          state = state,
+                          error = None
+                        ),
+                        successfulContainers
                       )
-                      postCreateCluster(clusterInfo, successfulContainers)
                   }
             }
         }
@@ -190,7 +183,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
       val classpath = System.getProperty("java.class.path")
       val command =
         s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_DEFINITION
-          .key()}=${jarUrl.toString} ${StreamCollie.CONFIG_KEY}"""
+          .key()}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)
       Some(Definition(className, StreamDefUtils.ofJson(result.split("=")(1)).values.asScala))
@@ -201,31 +194,22 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
         None
     }
 
-  private[agent] def toStreamCluster(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
-    // get the first running container, or first non-running container if not found
-    val creation = StreamApi.access.request
-      .settings(seekSettings(containers.head.environments))
-      // The nodeNames is NOT able to updated at runtime but we prefer consistent code for all cluster services
-      .nodeNames(
-        containers
-          .map(_.environments)
-          .map(envs => StreamApi.access.request.settings(seekSettings(envs)).creation)
-          .flatMap(_.nodeNames)
-          .toSet)
-      .creation
-    loadDefinition(creation.jarInfo.get.url).map { definition =>
-      StreamClusterInfo(
-        settings = creation.settings,
+  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[StreamClusterStatus] = {
+    // TODO: remove this hard-code if we are in dynamical world ... by chia
+    val fileInfo = FileInfoApi.FILE_INFO_JSON_FORMAT.read(
+      CommonUtils.fromEnvString(containers.head.environments(StreamDefUtils.JAR_INFO_DEFINITION.key())).parseJson)
+    loadDefinition(fileInfo.url).map { definition =>
+      new StreamClusterStatus(
+        group = key.group(),
+        name = key.name(),
         // we don't care the runtime definitions; it's saved to store already
         definition = definition,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-        metrics = Metrics.EMPTY,
         state = toClusterState(containers).map(_.name),
-        error = None,
-        lastModified = CommonUtils.current()
+        error = None
       )
     }
   }
@@ -252,7 +236,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                           jmxPort: Int,
                           jarInfo: FileInfo): Future[Unit]
 
-  protected def postCreateCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: StreamClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default do nothing
   }
 

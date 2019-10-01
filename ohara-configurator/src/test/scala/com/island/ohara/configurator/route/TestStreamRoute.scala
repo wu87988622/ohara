@@ -154,8 +154,6 @@ class TestStreamRoute extends OharaTest with Matchers {
     // get the stream clusters information by clusterCache
     val cluster = result(configurator.clusterCollie.streamCollie.clusters())
     cluster.size shouldBe 1
-    // jmx port should be positive
-    cluster.head._1.jmxPort should not be 0
 
     // start the same streamApp cluster will get the previous stream cluster
     result(accessStream.start(props.key))

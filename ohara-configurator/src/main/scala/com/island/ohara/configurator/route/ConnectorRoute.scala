@@ -75,6 +75,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }.getOrElse(connectorConfig))
 
   private[this] def hookOfGet(implicit workerCollie: WorkerCollie,
+                              store: DataStore,
                               executionContext: ExecutionContext,
                               meterCache: MeterCache): HookOfGet[ConnectorDescription] =
     (connectorDescription: ConnectorDescription) =>
@@ -83,6 +84,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     }
 
   private[this] def hookOfList(implicit workerCollie: WorkerCollie,
+                               store: DataStore,
                                executionContext: ExecutionContext,
                                meterCache: MeterCache): HookOfList[ConnectorDescription] =
     (connectorDescriptions: Seq[ConnectorDescription]) =>
@@ -100,6 +102,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     }
 
   private[this] def HookOfUpdating(implicit workerCollie: WorkerCollie,
+                                   store: DataStore,
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfUpdating[Creation, Updating, ConnectorDescription] =
     (key: ObjectKey, update: Updating, previous: Option[ConnectorDescription]) =>
@@ -136,6 +139,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
+                                     meterCache: MeterCache,
                                      workerCollie: WorkerCollie,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store
@@ -159,6 +163,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }.getOrElse(Future.unit))
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                meterCache: MeterCache,
                                 adminCleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
                                 workerCollie: WorkerCollie,
@@ -195,6 +200,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     }
 
   private[this] def hookOfStop(implicit store: DataStore,
+                               meterCache: MeterCache,
                                workerCollie: WorkerCollie,
                                executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
@@ -209,6 +215,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     }
 
   private[this] def hookOfPause(implicit store: DataStore,
+                                meterCache: MeterCache,
                                 workerCollie: WorkerCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
@@ -224,6 +231,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     }
 
   private[this] def hookOfResume(implicit store: DataStore,
+                                 meterCache: MeterCache,
                                  workerCollie: WorkerCollie,
                                  executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>

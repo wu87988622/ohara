@@ -20,13 +20,13 @@ import java.util.concurrent.{ExecutorService, Executors}
 
 import com.island.ohara.agent.k8s.{K8SClient, K8SClusterCollieImpl}
 import com.island.ohara.agent.ssh.ClusterCollieImpl
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
+import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.util.Releasable
@@ -71,7 +71,7 @@ trait ClusterCollie extends Releasable {
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of all clusters
     */
-  def clusters()(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+  def clusters()(implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
     for {
       zkMap <- zookeeperCollie.clusters()
       bkMap <- brokerCollie.clusters()
@@ -100,33 +100,33 @@ trait ClusterCollie extends Releasable {
             NodeService(
               name = NodeApi.ZOOKEEPER_SERVICE_NAME,
               clusterKeys = clusters
-                .filter(_.isInstanceOf[ZookeeperClusterInfo])
-                .map(_.asInstanceOf[ZookeeperClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
+                .filter(_.isInstanceOf[ZookeeperClusterStatus])
+                .map(_.asInstanceOf[ZookeeperClusterStatus])
+                .filter(_.aliveNodes.contains(node.name))
                 .map(_.key)
             ),
             NodeService(
               name = NodeApi.BROKER_SERVICE_NAME,
               clusterKeys = clusters
-                .filter(_.isInstanceOf[BrokerClusterInfo])
-                .map(_.asInstanceOf[BrokerClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
+                .filter(_.isInstanceOf[BrokerClusterStatus])
+                .map(_.asInstanceOf[BrokerClusterStatus])
+                .filter(_.aliveNodes.contains(node.name))
                 .map(_.key)
             ),
             NodeService(
               name = NodeApi.WORKER_SERVICE_NAME,
               clusterKeys = clusters
-                .filter(_.isInstanceOf[WorkerClusterInfo])
-                .map(_.asInstanceOf[WorkerClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
+                .filter(_.isInstanceOf[WorkerClusterStatus])
+                .map(_.asInstanceOf[WorkerClusterStatus])
+                .filter(_.aliveNodes.contains(node.name))
                 .map(_.key)
             ),
             NodeService(
               name = NodeApi.STREAM_SERVICE_NAME,
               clusterKeys = clusters
-                .filter(_.isInstanceOf[StreamClusterInfo])
-                .map(_.asInstanceOf[StreamClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
+                .filter(_.isInstanceOf[StreamClusterStatus])
+                .map(_.asInstanceOf[StreamClusterStatus])
+                .filter(_.aliveNodes.contains(node.name))
                 .map(_.key)
             )
           )

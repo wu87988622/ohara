@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.configurator.fake.FakeWorkerClient
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,6 +34,8 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
 
   def apply(implicit brokerCollie: BrokerCollie,
             adminCleaner: AdminCleaner,
+            meterCache: MeterCache,
+            store: DataStore,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext): server.Route = pathPrefix(QUERY_PREFIX_PATH) {
     path(RDB_PREFIX_PATH) {

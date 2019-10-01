@@ -20,8 +20,8 @@ import java.util.Objects
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, Definition, WorkerApi}
+import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo, WorkerClusterStatus}
+import com.island.ohara.client.configurator.v0.{BrokerApi, Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -31,7 +31,7 @@ import spray.json.JsString
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-trait WorkerCollie extends Collie[WorkerClusterInfo] {
+trait WorkerCollie extends Collie[WorkerClusterStatus] {
 
   override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
 
@@ -50,10 +50,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
     implicit val exec: ExecutionContext = executionContext
     clusters().flatMap(clusters => {
       clusters
-        .filter(_._1.isInstanceOf[WorkerClusterInfo])
-        .map {
-          case (cluster, containers) => cluster.asInstanceOf[WorkerClusterInfo] -> containers
-        }
         .find(_._1.key == creation.key)
         .map(_._2)
         .map(containers =>
@@ -151,11 +147,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                         // define the urls as string list so as to simplify the script for worker
                           + (WorkerCollie.JAR_URLS_KEY -> creation.jarInfos
                             .map(_.url.toURI.toASCIIString)
-                            .mkString(","))
-                        // we convert all settings to specific string in order to fetch all settings from
-                        // container env quickly. Also, the specific string enable us to pick up the "true" settings
-                        // from envs since there are many system-defined settings in container envs.
-                          + toEnvString(creation.settings),
+                            .mkString(",")),
                         hostname = containerName
                       )
                       doCreator(executionContext, containerName, containerInfo, node, route)
@@ -170,22 +162,22 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
               .map(_.flatten.toSeq)
               .map {
                 successfulContainers =>
-                  val nodeNames = creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(
-                    _.hostname)
                   val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
-                  val clusterInfo = WorkerClusterInfo(
-                    settings =
-                      WorkerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
-                    connectors = Seq.empty,
-                    // no state means cluster is NOT running so we cleanup the dead nodes
-                    aliveNodes = state
-                      .map(_ => (successfulContainers.map(_.nodeName) ++ existNodes.values.map(_.hostname)).toSet)
-                      .getOrElse(Set.empty),
-                    state = state,
-                    error = None,
-                    lastModified = CommonUtils.current()
+                  postCreate(
+                    new WorkerClusterStatus(
+                      group = creation.group,
+                      name = creation.name,
+                      // the worker is not ready so there is not available connectors now :)
+                      connectors = Seq.empty,
+                      // no state means cluster is NOT running so we cleanup the dead nodes
+                      aliveNodes = state
+                        .map(_ => (successfulContainers.map(_.nodeName) ++ existNodes.values.map(_.hostname)).toSet)
+                        .getOrElse(Set.empty),
+                      state = state,
+                      error = None
+                    ),
+                    successfulContainers
                   )
-                  postCreateWorkerCluster(clusterInfo, successfulContainers)
               }
         }
     })
@@ -225,7 +217,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
   /**
     * After the worker container creates complete, you maybe need to do other things.
     */
-  protected def postCreateWorkerCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: WorkerClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing
   }
 
@@ -246,30 +238,21 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }.toSeq
 
-  private[agent] def toWorkerCluster(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val creation = WorkerApi.access.request
-      .settings(seekSettings(containers.head.environments))
-      // the nodeNames is able to updated at runtime so the first container may have out-of-date info of nodeNames
-      // we don't compare all containers. Instead, we just merge all node names from all containers. It is more simple.
-      .nodeNames(
-        containers
-          .map(_.environments)
-          .map(envs => WorkerApi.access.request.settings(seekSettings(envs)).creation)
-          .flatMap(_.nodeNames)
-          .toSet)
-      .creation
-    connectors(containers.map(c => s"${c.nodeName}:${creation.clientPort}").mkString(",")).map { connectors =>
-      WorkerClusterInfo(
-        settings = creation.settings,
+  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[WorkerClusterStatus] = {
+    // TODO: remove this hard-code if we are in dynamical world ... by chia
+    val clientPort = containers.head.environments("clientPort").toInt
+    connectors(containers.map(c => s"${c.nodeName}:$clientPort").mkString(",")).map { connectors =>
+      new WorkerClusterStatus(
+        group = key.group(),
+        name = key.name(),
         connectors = connectors,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
-        error = None,
-        lastModified = CommonUtils.current()
+        error = None
       )
     }
   }

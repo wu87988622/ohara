@@ -16,15 +16,14 @@
 
 package com.island.ohara.configurator.fake
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
 
 import com.island.ohara.agent.{ClusterState, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, WorkerApi}
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.NodeApi
+import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
@@ -32,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps: String)
-    extends FakeCollie[WorkerClusterInfo](node)
+    extends FakeCollie[WorkerClusterStatus](node)
     with WorkerCollie {
 
   override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
@@ -42,38 +41,27 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
   /**
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
     */
-  private[this] val fakeClientCache = new ConcurrentHashMap[WorkerClusterInfo, FakeWorkerClient]
+  private[this] val fakeClientCache = new ConcurrentSkipListMap[WorkerClusterInfo, FakeWorkerClient](
+    (o1: WorkerClusterInfo, o2: WorkerClusterInfo) => o1.key.compareTo(o2.key))
   override def creator: WorkerCollie.ClusterCreator = (_, creation) =>
     Future.successful(
       addCluster(
-        WorkerClusterInfo(
-          settings = WorkerApi.access.request
-            .settings(creation.settings)
-            .nodeNames(creation.nodeNames ++ clusterCache.asScala
-              .find(_._1.key == creation.key)
-              .map(_._1.nodeNames)
-              .getOrElse(Set.empty))
-            .creation
-            .settings,
+        new WorkerClusterStatus(
+          group = creation.group,
+          name = creation.name,
           connectors = FakeWorkerClient.localConnectorDefinitions,
           aliveNodes = creation.nodeNames ++ clusterCache.asScala
             .find(_._1.key == creation.key)
-            .map(_._1.nodeNames)
+            .map(_._2.map(_.nodeName))
             .getOrElse(Set.empty),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
-          error = None,
-          lastModified = CommonUtils.current()
-        )))
-
-  override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = Future
-    .successful(
-      addCluster(
-        previousCluster
-          .newNodeNames(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
-          .asInstanceOf[WorkerClusterInfo]))
-    .map(_ => true)
+          error = None
+        ),
+        creation.imageName,
+        creation.nodeNames,
+        creation.ports
+      ))
 
   override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
     if (wkConnectionProps == null) {

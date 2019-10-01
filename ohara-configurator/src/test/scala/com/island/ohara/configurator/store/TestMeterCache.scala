@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.MeterCache.RequestKey
 import org.junit.Test
@@ -31,12 +32,12 @@ class TestMeterCache extends OharaTest with Matchers {
   @Test
   def testRequestKey(): Unit = {
     val key = RequestKey(
-      name = CommonUtils.randomString(),
+      key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()),
       service = CommonUtils.randomString()
     )
 
     key shouldBe key
-    key should not be key.copy(name = CommonUtils.randomString())
+    key should not be key.copy(key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
     key should not be key.copy(service = CommonUtils.randomString())
   }
 

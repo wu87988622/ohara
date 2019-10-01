@@ -16,17 +16,14 @@
 
 package com.island.ohara.it.agent.k8s
 
-import java.util.concurrent.TimeUnit
-
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.k8s.{K8SClient, K8sContainerState}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.agent.ClusterNameHolder
@@ -51,7 +48,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Before
   def before(): Unit = if (nodes.size < 2) skipTest("TestK8SSimpleCollie requires two nodes at least")
 
-  private[this] def waitZookeeperCluster(clusterKey: ObjectKey): ZookeeperClusterInfo = {
+  private[this] def waitZookeeperCluster(clusterKey: ObjectKey): ZookeeperClusterStatus = {
     await(() => result(clusterCollie.zookeeperCollie.clusters()).exists(_._1.key == clusterKey))
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
@@ -63,7 +60,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(clusterCollie.zookeeperCollie.cluster(clusterKey))._1
   }
 
-  private[this] def waitBrokerCluster(clusterKey: ObjectKey): BrokerClusterInfo = {
+  private[this] def waitBrokerCluster(clusterKey: ObjectKey): BrokerClusterStatus = {
     await(() => result(clusterCollie.brokerCollie.clusters()).exists(_._1.key == clusterKey))
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
@@ -75,7 +72,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(clusterCollie.brokerCollie.cluster(clusterKey))._1
   }
 
-  private[this] def waitWorkerCluster(clusterKey: ObjectKey): WorkerClusterInfo = {
+  private[this] def waitWorkerCluster(clusterKey: ObjectKey): WorkerClusterStatus = {
     await(() => result(clusterCollie.workerCollie.clusters()).exists(_._1.key == clusterKey))
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
@@ -110,7 +107,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val peerPort: Int = CommonUtils.availablePort()
     val electionPort: Int = CommonUtils.availablePort()
 
-    val zookeeperClusterInfo =
+    val zookeeperClusterStatus =
       createZookeeperCollie(zookeeperCollie,
                             nameHolder.generateClusterKey(),
                             firstNode,
@@ -118,16 +115,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                             peerPort,
                             electionPort)
 
-    intercept[UnsupportedOperationException] {
-      result(zookeeperCollie.creator.settings(zookeeperClusterInfo.settings).nodeName(secondNode).create())
-    }.getMessage shouldBe "zookeeper collie doesn't support to add node to a running cluster"
-
-    zookeeperClusterInfo.nodeNames.size shouldBe 1
-    zookeeperClusterInfo.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
-    zookeeperClusterInfo.clientPort shouldBe clientPort
-    zookeeperClusterInfo.peerPort shouldBe peerPort
-    zookeeperClusterInfo.electionPort shouldBe electionPort
-
+    zookeeperClusterStatus.aliveNodes shouldBe Set(firstNode)
   }
 
   @Test
@@ -150,18 +138,15 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val brokerClientPort = CommonUtils.availablePort()
     val brokerExporterPort = CommonUtils.availablePort()
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
-    val brokerClusterInfo: BrokerClusterInfo = createBrokerCollie(brokerCollie,
-                                                                  nameHolder.generateClusterKey(),
-                                                                  firstNode,
-                                                                  brokerClientPort,
-                                                                  brokerExporterPort,
-                                                                  zk.key)
+    val brokerClusterStatus = createBrokerCollie(brokerCollie,
+                                                 nameHolder.generateClusterKey(),
+                                                 firstNode,
+                                                 brokerClientPort,
+                                                 brokerExporterPort,
+                                                 zk.key)
 
     //Check broker info
-    brokerClusterInfo.clientPort shouldBe brokerClientPort
-    brokerClusterInfo.zookeeperClusterKey shouldBe zk.key
-    brokerClusterInfo.connectionProps shouldBe s"$firstNode:$brokerClientPort"
-
+    brokerClusterStatus.aliveNodes shouldBe Set(firstNode)
   }
 
   @Test
@@ -195,21 +180,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create worker cluster service
     val workerCollie: WorkerCollie = clusterCollie.workerCollie
     val workerClientPort: Int = CommonUtils.availablePort()
-    val workerClusterInfo: WorkerClusterInfo =
+    val workerClusterStatus =
       createWorkerCollie(workerCollie,
                          nameHolder.generateClusterKey(),
                          firstNode,
                          workerClientPort,
                          brokerClusterInfo.key)
-    workerClusterInfo.brokerClusterKey shouldBe brokerClusterInfo.key
-    workerClusterInfo.clientPort shouldBe workerClientPort
-    workerClusterInfo.connectionProps shouldBe s"$firstNode:$workerClientPort"
+    workerClusterStatus.aliveNodes shouldBe Set(firstNode)
 
     // Confirm pod name is a common format
-    val wkPodName = Await.result(workerCollie.cluster(workerClusterInfo.key), TIMEOUT)._2.head.name
+    val wkPodName = Await.result(workerCollie.cluster(workerClusterStatus.key), TIMEOUT)._2.head.name
     val wkPodNameFieldSize = wkPodName.split("-").length
     val expectWKPodNameField =
-      Collie.format("k8soccl", workerClusterInfo.group, workerClusterInfo.name, "wk").split("-")
+      Collie.format("k8soccl", workerClusterStatus.group, workerClusterStatus.name, "wk").split("-")
     wkPodNameFieldSize shouldBe expectWKPodNameField.size
 
   }
@@ -239,21 +222,15 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
 
-    val brokerClusterInfo1: BrokerClusterInfo =
+    val brokerClusterStatus1 =
       createBrokerCollie(brokerCollie, brokerClusterKey, firstNode, brokerClientPort, brokerExporterPort, zk.key)
 
     //Test add broker node
-    val brokerClusterInfo2: BrokerClusterInfo =
+    val brokerClusterStatus2 =
       createBrokerCollie(brokerCollie, brokerClusterKey, secondNode, brokerClientPort, brokerExporterPort, zk.key)
 
-    brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
-    brokerClusterInfo2.connectionProps should include(s"$secondNode:$brokerClientPort")
-    brokerClusterInfo2.connectionProps should include(s"$firstNode:$brokerClientPort")
-
-    brokerClusterInfo2.zookeeperClusterKey shouldBe zk.key
-    brokerClusterInfo1.clientPort shouldBe brokerClientPort
-    brokerClusterInfo2.clientPort shouldBe brokerClientPort
-
+    brokerClusterStatus1.aliveNodes shouldBe Set(firstNode)
+    brokerClusterStatus2.aliveNodes shouldBe Set(firstNode, secondNode)
   }
 
   @Test
@@ -279,7 +256,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val brokerExporterPort = CommonUtils.availablePort()
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
 
-    val brokerClusterInfo: BrokerClusterInfo =
+    val brokerClusterStatus =
       createBrokerCollie(brokerCollie,
                          nameHolder.generateClusterKey(),
                          firstNode,
@@ -291,15 +268,13 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val workerClusterKey = nameHolder.generateClusterKey()
     val workerCollie: WorkerCollie = clusterCollie.workerCollie
     val workerClientPort: Int = CommonUtils.availablePort()
-    val workerClusterInfo1: WorkerClusterInfo =
-      createWorkerCollie(workerCollie, workerClusterKey, firstNode, workerClientPort, brokerClusterInfo.key)
+    val workerClusterStatus1 =
+      createWorkerCollie(workerCollie, workerClusterKey, firstNode, workerClientPort, brokerClusterStatus.key)
     //Test add worker node
-    val workerClusterInfo2: WorkerClusterInfo =
-      createWorkerCollie(workerCollie, workerClusterKey, secondNode, workerClientPort, brokerClusterInfo.key)
-    brokerClusterInfo.connectionProps shouldBe s"$firstNode:$brokerClientPort"
-    workerClusterInfo1.connectionProps shouldBe s"$firstNode:$workerClientPort"
-    workerClusterInfo2.connectionProps should include(s"$secondNode:$workerClientPort")
-    workerClusterInfo2.connectionProps should include(s"$firstNode:$workerClientPort")
+    val workerClusterStatus2 =
+      createWorkerCollie(workerCollie, workerClusterKey, secondNode, workerClientPort, brokerClusterStatus.key)
+    workerClusterStatus1.aliveNodes shouldBe Set(firstNode)
+    workerClusterStatus2.aliveNodes shouldBe Set(firstNode, secondNode)
   }
 
   @Test
@@ -339,56 +314,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     await(() => !Await.result(k8sClient.containers(), TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
     result(brokerCollie.cluster(brokerClusterInfo.key))._2.size shouldBe 1
   }
-
-  @Test
-  def testRemoveWorkerNode(): Unit = {
-    val firstNode: String = nodeNames.head
-    val secondNode: String = nodeNames.last
-
-    //Create zookeeper cluster for start broker service
-    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
-    val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
-    val workerCollie: WorkerCollie = clusterCollie.workerCollie
-    val zkClientPort: Int = CommonUtils.availablePort()
-    val zkPeerPort: Int = CommonUtils.availablePort()
-    val zkElectionPort: Int = CommonUtils.availablePort()
-    val zk = createZookeeperCollie(zookeeperCollie,
-                                   nameHolder.generateClusterKey(),
-                                   firstNode,
-                                   zkClientPort,
-                                   zkPeerPort,
-                                   zkElectionPort)
-    //Create broker cluster service
-    val brokerClientPort = CommonUtils.availablePort()
-    val brokerExporterPort = CommonUtils.availablePort()
-    val brokerClusterInfo = createBrokerCollie(brokerCollie,
-                                               nameHolder.generateClusterKey(),
-                                               firstNode,
-                                               brokerClientPort,
-                                               brokerExporterPort,
-                                               zk.key)
-    //Create worker cluster service
-    val workerClientPort: Int = CommonUtils.availablePort()
-
-    val workerClusterInfo =
-      createWorkerCollie(workerCollie,
-                         nameHolder.generateClusterKey(),
-                         firstNode,
-                         workerClientPort,
-                         brokerClusterInfo.key)
-    val firstContainerName: String = result(workerCollie.cluster(workerClusterInfo.key))._2.head.hostname
-
-    result(workerCollie.creator.settings(workerClusterInfo.settings).nodeName(secondNode).create())
-    // wait a period for k8s get latest pods information
-    TimeUnit.SECONDS.sleep(10)
-    result(workerCollie.cluster(workerClusterInfo.key))._2.size shouldBe 2
-    result(workerCollie.removeNode(workerClusterInfo.key, firstNode))
-
-    val k8sClient: K8SClient = EnvTestingUtils.k8sClient()
-    await(() => !Await.result(k8sClient.containers(), TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
-    result(workerCollie.cluster(workerClusterInfo.key))._2.size shouldBe 1
-  }
-
   @Test
   def testClusters(): Unit = {
     val firstNode: String = nodeNames.head
@@ -510,16 +435,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val peerPort: Int = CommonUtils.availablePort()
     val electionPort: Int = CommonUtils.availablePort()
 
-    val zookeeperClusterInfo =
+    val zookeeperClusterStatus =
       createZookeeperCollie(zookeeperCollie, key, nodeNames.head, clientPort, peerPort, electionPort)
 
     // create zookeeper should be ok
-    zookeeperClusterInfo.key shouldBe key
-    zookeeperClusterInfo.nodeNames.size shouldBe 1
-    zookeeperClusterInfo.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
-    zookeeperClusterInfo.clientPort shouldBe clientPort
-    zookeeperClusterInfo.peerPort shouldBe peerPort
-    zookeeperClusterInfo.electionPort shouldBe electionPort
+    zookeeperClusterStatus.key shouldBe key
   }
 
   private[this] def createZookeeperCollie(zookeeperCollie: ZookeeperCollie,
@@ -527,7 +447,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                           nodeName: String,
                                           clientPort: Int,
                                           peerPort: Int,
-                                          electionPort: Int): ZookeeperClusterInfo = {
+                                          electionPort: Int): ZookeeperClusterStatus = {
     result(
       zookeeperCollie.creator
         .key(clusterKey)
@@ -544,7 +464,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                        nodeName: String,
                                        clientPort: Int,
                                        exporterPort: Int,
-                                       zookeeperClusterKey: ObjectKey): BrokerClusterInfo = {
+                                       zookeeperClusterKey: ObjectKey): BrokerClusterStatus = {
     result(
       brokerCollie.creator
         .key(clusterKey)
@@ -560,7 +480,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                        clusterKey: ObjectKey,
                                        nodeName: String,
                                        clientPort: Int,
-                                       brokerClusterKey: ObjectKey): WorkerClusterInfo = {
+                                       brokerClusterKey: ObjectKey): WorkerClusterStatus = {
     result(
       workerCollie.creator
         .key(clusterKey)

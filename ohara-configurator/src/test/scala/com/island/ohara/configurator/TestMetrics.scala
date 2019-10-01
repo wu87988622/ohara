@@ -134,19 +134,19 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, sink.key).create())
 
-    pipeline.objects.filter(_.name == sink.name).head.metrics.meters.size shouldBe 0
+    pipeline.objects.filter(_.key == sink.key).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(sink.key))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == sink.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     result(connectorApi.stop(sink.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == sink.name).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
   }
 
@@ -170,29 +170,29 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, source.key).create())
 
-    pipeline.objects.filter(_.name == source.name).head.metrics.meters.size shouldBe 0
+    pipeline.objects.filter(_.key == source.key).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(source.key))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == source.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == topic.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == topic.key).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     result(connectorApi.stop(source.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == source.name).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
 
     // remove topic
     result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
-    CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.name == topic.name),
+    CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.key == topic.key),
                       java.time.Duration.ofSeconds(30))
     assertNoMetricsForTopic(topic.name)
   }
@@ -220,18 +220,18 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .flows(Seq(Flow(t1.key, Set(stream.key)), Flow(stream.key, Set(t2.key))))
         .create())
 
-    pipeline.objects.filter(_.name == stream.name).head.metrics.meters.size shouldBe 0
+    pipeline.objects.filter(_.key == stream.key).head.metrics.meters.size shouldBe 0
 
     result(streamApi.start(stream.key))
     // the streamApp is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == stream.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     result(streamApi.stop(stream.key))
     // the stream is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == stream.name).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
 
     jar.deleteOnExit()

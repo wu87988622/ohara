@@ -20,8 +20,8 @@ import java.util.Objects
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{Creation, ZookeeperClusterInfo}
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.ZookeeperApi
+import com.island.ohara.client.configurator.v0.ZookeeperApi.{Creation, ZookeeperClusterStatus}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsString
@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
+trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
 
   override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
 
@@ -48,7 +48,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
   override def creator: ZookeeperCollie.ClusterCreator = (executionContext, creation) => {
     implicit val exec: ExecutionContext = executionContext
     clusters().flatMap(clusters => {
-      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.key == creation.key))
+      if (clusters.keys.exists(_.key == creation.key))
         Future.failed(
           new UnsupportedOperationException(s"zookeeper collie doesn't support to add node to a running cluster"))
       else
@@ -105,11 +105,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                         // each zookeeper instance needs an unique id to identify
                       } + (ZookeeperApi.ZK_ID_KEY -> index.toString)
                       // zookeeper cluster will use this setting to communicate to each other zookeeper instance
-                        + (ZookeeperApi.SERVERS_KEY -> zkServers)
-                      // we convert all settings to specific string in order to fetch all settings from
-                      // container env quickly. Also, the specific string enable us to pick up the "true" settings
-                      // from envs since there are many system-defined settings in container envs.
-                        + toEnvString(creation.settings),
+                        + (ZookeeperApi.SERVERS_KEY -> zkServers),
                       // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
                       // Note: We should assign "node" name to the container hostname directly here to avoid some
                       // dns problem. For example, we may want to connect to zk to dig something issue and assign
@@ -124,21 +120,19 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                       }
                 })
                 .map(_.flatten.toSeq)
-                .map {
-                  successfulContainers =>
-                    val nodeNames = creation.nodeNames ++ nodes.keySet.map(_.hostname)
-                    val state = toClusterState(successfulContainers).map(_.name)
-                    val clusterInfo = ZookeeperClusterInfo(
-                      settings =
-                        ZookeeperApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
+                .map { successfulContainers =>
+                  val state = toClusterState(successfulContainers).map(_.name)
+                  postCreate(
+                    new ZookeeperClusterStatus(
+                      group = creation.group,
+                      name = creation.name,
                       // no state means cluster is NOT running so we cleanup the dead nodes
                       aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
-                      // We do not care the user parameters since it's stored in configurator already
                       state = state,
-                      error = None,
-                      lastModified = CommonUtils.current()
-                    )
-                    postCreateZookeeperCluster(clusterInfo, successfulContainers)
+                      error = None
+                    ),
+                    successfulContainers
+                  )
                 }
           }
     })
@@ -162,7 +156,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
                           node: Node,
                           route: Map[String, String]): Future[Unit]
 
-  protected def postCreateZookeeperCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: ZookeeperClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing
   }
 
@@ -172,31 +166,19 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
         node.name -> CommonUtils.address(node.name)
     }
 
-  private[agent] def toZookeeperCluster(key: ObjectKey,
-                                        containers: Seq[ContainerInfo]): Future[ZookeeperClusterInfo] = {
-    val creation = ZookeeperApi.access.request
-      .settings(seekSettings(containers.head.environments))
-      // The nodeNames is NOT able to updated at runtime but we prefer consistent code for all cluster services
-      .nodeNames(
-        containers
-          .map(_.environments)
-          .map(envs => ZookeeperApi.access.request.settings(seekSettings(envs)).creation)
-          .flatMap(_.nodeNames)
-          .toSet)
-      .creation
+  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[ZookeeperClusterStatus] =
     Future.successful(
-      ZookeeperClusterInfo(
-        settings = creation.settings,
+      new ZookeeperClusterStatus(
+        group = key.group(),
+        name = key.name(),
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-        // We do not care the user parameters since it's stored in configurator already
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
-        error = None,
-        lastModified = CommonUtils.current()
+        error = None
       ))
-  }
 }
 
 object ZookeeperCollie {

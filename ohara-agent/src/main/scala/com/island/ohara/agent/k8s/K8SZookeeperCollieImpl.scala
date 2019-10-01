@@ -19,14 +19,13 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[ZookeeperClusterInfo](node, k8sClient)
+    extends K8SBasicCollieImpl[ZookeeperClusterStatus](node, k8sClient)
     with ZookeeperCollie {
   private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 
@@ -63,11 +62,7 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
       .map(_ => Unit)
   }
 
-  override protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    toZookeeperCluster(key, containers)
-
-  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))

@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterState, Collie, NoSuchClusterException, NodeCollie}
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -29,22 +29,40 @@ import com.island.ohara.common.util.CommonUtils
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
-private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag](nodeCollie: NodeCollie) extends Collie[T] {
+private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](nodeCollie: NodeCollie)
+    extends Collie[T] {
   protected val clusterCache =
-    new ConcurrentSkipListMap[T, Seq[ContainerInfo]]((o1: T, o2: T) => o1.name.compare(o2.name))
-  def addCluster(cluster: T): T = {
+    new ConcurrentSkipListMap[T, Seq[ContainerInfo]]((o1: T, o2: T) => o1.key.compareTo(o2.key))
+
+  override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    val containers = clusterCache.get(previousCluster)
+    if (containers == null) Future.successful(false)
+    else {
+      clusterCache.put(previousCluster, containers.filter(_.name != beRemovedContainer.name))
+      Future.successful(true)
+    }
+  }
+
+  /**
+    * update the in-memory cluster status and container infos
+    * @param cluster cluster status
+    * @param nodeNames node names
+    * @return cluster status
+    */
+  private[configurator] def addCluster(cluster: T, imageName: String, nodeNames: Set[String], ports: Set[Int]): T = {
     val FAKE_KIND_NAME = "FAKE"
-    def genContainers(cluster: T): Seq[ContainerInfo] = cluster.nodeNames.map { nodeName =>
+    def genContainers(cluster: T): Seq[ContainerInfo] = nodeNames.map { nodeName =>
       ContainerInfo(
         nodeName = nodeName,
         id = CommonUtils.randomString(10),
-        imageName = cluster.imageName,
+        imageName = imageName,
         created = "unknown",
         state = ContainerState.RUNNING.name,
         FAKE_KIND_NAME,
         name = CommonUtils.randomString(10),
         size = "unknown",
-        portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)).toSeq)),
+        portMappings = Seq(PortMapping("fake host", ports.map(p => PortPair(p, p)).toSeq)),
         environments = Map.empty,
         hostname = CommonUtils.randomString(10)
       )

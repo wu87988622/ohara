@@ -16,8 +16,7 @@
 
 package com.island.ohara.configurator.store
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
 
@@ -42,8 +41,6 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
   override def state: Option[String] = None
 
   override def error: Option[String] = None
-
-  override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
   override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
 }

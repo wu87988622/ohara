@@ -73,7 +73,7 @@ class TestConfiguratorBuilder extends OharaTest with Matchers {
           val nodes = result(configurator.store.values[Node]())
           nodes.isEmpty shouldBe false
           result(configurator.clusterCollie.clusters())
-            .flatMap(_._1.nodeNames)
+            .flatMap(_._2.map(_.nodeName))
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
         } finally configurator.close()
     }

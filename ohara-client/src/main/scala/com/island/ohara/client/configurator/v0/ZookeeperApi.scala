@@ -16,7 +16,6 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -125,12 +124,34 @@ object ZookeeperApi {
       .requireBindPort(ELECTION_PORT_KEY)
       .refine
 
+  /**
+    * There is no extra information for a running zookeeper cluster :)
+    */
+  class ZookeeperClusterStatus(val group: String,
+                               val name: String,
+                               val aliveNodes: Set[String],
+                               val state: Option[String],
+                               val error: Option[String])
+      extends ClusterStatus
+
   final case class ZookeeperClusterInfo private[ZookeeperApi] (settings: Map[String, JsValue],
                                                                aliveNodes: Set[String],
                                                                lastModified: Long,
                                                                state: Option[String],
                                                                error: Option[String])
       extends ClusterInfo {
+
+    /**
+      * update the runtime information for this cluster info
+      * @param status runtime information
+      * @return a updated cluster info
+      */
+    def update(status: ZookeeperClusterStatus): ZookeeperClusterInfo = copy(
+      aliveNodes = status.aliveNodes,
+      state = status.state,
+      error = status.error,
+      lastModified = CommonUtils.current()
+    )
 
     /**
       * reuse the parser from Creation.
@@ -151,9 +172,6 @@ object ZookeeperApi {
     def clientPort: Int = settings.clientPort
     def peerPort: Int = settings.peerPort
     def electionPort: Int = settings.electionPort
-
-    // TODO: expose the metrics for zk
-    override def metrics: Metrics = Metrics.EMPTY
   }
 
   /**

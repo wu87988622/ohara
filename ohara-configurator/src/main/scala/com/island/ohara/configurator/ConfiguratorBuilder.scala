@@ -21,10 +21,10 @@ import java.util.Objects
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -177,8 +177,35 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       store.addIfAbsent[BrokerClusterInfo](bkCluster)
       store.addIfAbsent[WorkerClusterInfo](wkCluster)
 
-      collie.brokerCollie.addCluster(bkCluster)
-      collie.workerCollie.addCluster(wkCluster)
+      collie.brokerCollie.addCluster(
+        new BrokerClusterStatus(
+          group = bkCluster.group,
+          name = bkCluster.name,
+          // TODO: we should check the supported arguments by the running broker images
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+          aliveNodes = bkCluster.nodeNames,
+          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+          state = Some(ClusterState.RUNNING.name),
+          error = None
+        ),
+        bkCluster.imageName,
+        bkCluster.nodeNames,
+        bkCluster.ports
+      )
+      collie.workerCollie.addCluster(
+        new WorkerClusterStatus(
+          group = wkCluster.group,
+          name = wkCluster.name,
+          connectors = wkCluster.connectors,
+          aliveNodes = wkCluster.nodeNames,
+          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+          state = Some(ClusterState.RUNNING.name),
+          error = None
+        ),
+        wkCluster.imageName,
+        wkCluster.nodeNames,
+        wkCluster.ports
+      )
       clusterCollie(collie)
     }
 
@@ -207,68 +234,121 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       val collie = new FakeClusterCollie(createCollie(), store)
 
       import scala.concurrent.ExecutionContext.Implicits.global
-      val zkClusters = (0 until numberOfBrokerCluster).map { index =>
+      val zkCreations = (0 until numberOfBrokerCluster).map { index =>
         val nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
+        val creation = ZookeeperApi.access.request
+          .name(s"$zkClusterNamePrefix$index")
+          .imageName(s"fakeImage$index")
+          .nodeNames(nodeNames)
+          .creation
         collie.zookeeperCollie.addCluster(
-          ZookeeperClusterInfo(
-            settings = ZookeeperApi.access.request
-              .name(s"$zkClusterNamePrefix$index")
-              .imageName(s"fakeImage$index")
-              .nodeNames(nodeNames)
-              .creation
-              .settings,
+          new ZookeeperClusterStatus(
+            group = creation.group,
+            name = creation.name,
             aliveNodes = nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
-            error = None,
-            lastModified = CommonUtils.current()
-          ))
+            error = None
+          ),
+          creation.imageName,
+          creation.nodeNames,
+          creation.ports
+        )
+        creation
       }
 
       // add broker cluster
-      val bkClusters = zkClusters.zipWithIndex.map {
-        case (zkCluster, index) =>
+      val bkCreations = zkCreations.zipWithIndex.map {
+        case (zkCreation, index) =>
+          val creation = BrokerApi.access.request
+            .name(s"$bkClusterNamePrefix$index")
+            .imageName(s"fakeImage$index")
+            .zookeeperClusterKey(zkCreation.key)
+            .nodeNames(zkCreation.nodeNames)
+            .creation
           collie.brokerCollie.addCluster(
-            BrokerClusterInfo(
-              settings = BrokerApi.access.request
-                .name(s"$bkClusterNamePrefix$index")
-                .imageName(s"fakeImage$index")
-                .zookeeperClusterKey(zkCluster.key)
-                .nodeNames(zkCluster.nodeNames)
-                .creation
-                .settings,
-              aliveNodes = zkCluster.nodeNames,
+            new BrokerClusterStatus(
+              group = creation.group,
+              name = creation.name,
+              // TODO: we should check the supported arguments by the running broker images
+              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+              aliveNodes = zkCreation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING.name),
-              error = None,
-              lastModified = CommonUtils.current(),
-              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-            ))
+              error = None
+            ),
+            creation.imageName,
+            creation.nodeNames,
+            creation.ports
+          )
+          creation
       }
 
-      val wkClusters = (0 until numberOfWorkerCluster).map { _ =>
-        val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
+      val wkCreations = (0 until numberOfWorkerCluster).map { _ =>
+        val bkCreation = bkCreations((Math.random() % bkCreations.size).asInstanceOf[Int])
+        val creation =
+          WorkerApi.access.request.brokerClusterKey(bkCreation.key).nodeNames(bkCreation.nodeNames).creation
         collie.workerCollie.addCluster(
-          WorkerClusterInfo(
-            settings =
-              WorkerApi.access.request.brokerClusterKey(bkCluster.key).nodeNames(bkCluster.nodeNames).creation.settings,
+          new WorkerClusterStatus(
+            group = creation.group,
+            name = creation.name,
             connectors = FakeWorkerClient.localConnectorDefinitions,
-            aliveNodes = bkCluster.nodeNames,
+            aliveNodes = bkCreation.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
-            error = None,
-            lastModified = CommonUtils.current()
-          ))
+            error = None
+          ),
+          creation.imageName,
+          creation.nodeNames,
+          creation.ports
+        )
+        creation
       }
 
       //TODO: we need to add data into store to use the APIs
       //TODO: refactor this if cluster data could be stored automatically...by Sam
-      zkClusters.foreach(store.addIfAbsent[ZookeeperClusterInfo])
-      bkClusters.foreach(store.addIfAbsent[BrokerClusterInfo])
-      wkClusters.foreach(store.addIfAbsent[WorkerClusterInfo])
+      zkCreations
+        .map(
+          creation =>
+            ZookeeperClusterInfo(
+              settings = creation.settings,
+              aliveNodes = creation.nodeNames,
+              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+              state = Some(ClusterState.RUNNING.name),
+              error = None,
+              lastModified = CommonUtils.current()
+          ))
+        .foreach(store.addIfAbsent[ZookeeperClusterInfo])
+      bkCreations
+        .map(
+          creation =>
+            BrokerClusterInfo(
+              settings = creation.settings,
+              // TODO: we should check the supported arguments by the running broker images
+              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+              aliveNodes = creation.nodeNames,
+              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+              state = Some(ClusterState.RUNNING.name),
+              error = None,
+              lastModified = CommonUtils.current()
+          ))
+        .foreach(store.addIfAbsent[BrokerClusterInfo])
+      wkCreations
+        .map(
+          creation =>
+            WorkerClusterInfo(
+              settings = creation.settings,
+              connectors = FakeWorkerClient.localConnectorDefinitions,
+              aliveNodes = creation.nodeNames,
+              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+              state = Some(ClusterState.RUNNING.name),
+              error = None,
+              lastModified = CommonUtils.current()
+          ))
+        .foreach(store.addIfAbsent[WorkerClusterInfo])
 
       // fake nodes
-      zkClusters
+      zkCreations
         .flatMap(_.nodeNames)
         // DON'T add duplicate nodes!!!
         .toSet[String]

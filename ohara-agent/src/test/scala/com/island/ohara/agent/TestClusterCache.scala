@@ -20,9 +20,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
-import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -174,8 +173,6 @@ class TestClusterCache extends OharaTest with Matchers {
       override def state: Option[String] = None
 
       override def error: Option[String] = None
-
-      override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
       override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
     }

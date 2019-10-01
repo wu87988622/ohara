@@ -222,6 +222,7 @@ private[configurator] object StreamRoute {
         .map(assertParameters)
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                meterCache: MeterCache,
                                 fileStore: FileStore,
                                 streamCollie: StreamCollie,
                                 cleaner: AdminCleaner,
@@ -302,14 +303,16 @@ private[configurator] object StreamRoute {
 
   def apply(implicit store: DataStore,
             nodeCollie: NodeCollie,
+            zookeeperCollie: ZookeeperCollie,
+            brokerCollie: BrokerCollie,
+            workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
             cleaner: AdminCleaner,
-            brokerCollie: BrokerCollie,
             fileStore: FileStore,
             meterCache: MeterCache,
             executionContext: ExecutionContext): server.Route =
-    clusterRoute(
+    clusterRoute[StreamClusterInfo, StreamClusterStatus, Creation, Updating](
       root = STREAM_PREFIX_PATH,
       metricsKey = Some(STREAM_APP_GROUP),
       hookOfCreation = hookOfCreation,

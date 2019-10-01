@@ -18,14 +18,14 @@ package com.island.ohara.agent
 
 import java.util.Objects
 
-import com.island.ohara.client.Enum
 import com.island.ohara.agent.ClusterCache.Service
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.Enum
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.cache.RefreshableCache
 import com.island.ohara.common.setting.ObjectKey
@@ -39,7 +39,7 @@ import scala.concurrent.duration.{Duration, _}
   * is a simple cache which storing the cluster information in local memory. The cache shines at getter method however
   * the side-effect is that the stuff from getter may be out-of-date. But, in most use cases we bear it well.
   *
-  * Noted that the comparison of key (ClusterInfo) consists of only ObjectKey and service type. Adding a cluster info having different node names
+  * Noted that the comparison of key (ClusterStatus) consists of only ObjectKey and service type. Adding a cluster info having different node names
   * does not create an new key-value pair. Also, the latter key will replace the older one. For example, adding a cluster info having different
   * port. will replace the older cluster info, and then you will get the new cluster info when calling snapshot method.
   */
@@ -48,7 +48,7 @@ trait ClusterCache extends Releasable {
   /**
     * @return the cached data
     */
-  def snapshot: Map[ClusterInfo, Seq[ContainerInfo]]
+  def snapshot: Map[ClusterStatus, Seq[ContainerInfo]]
 
   /**
     * The inner time-based auto-refresher is enough to most use cases. However, we are always in a situation that we should
@@ -57,22 +57,22 @@ trait ClusterCache extends Releasable {
     */
   def requestUpdate(): Unit
 
-  def get(clusterInfo: ClusterInfo): Seq[ContainerInfo]
+  def get(clusterInfo: ClusterStatus): Seq[ContainerInfo]
 
   /**
     * add data to cache.
-    * Noted, the key(ClusterInfo) you added will replace the older one in calling this method..
+    * Noted, the key(ClusterStatus) you added will replace the older one in calling this method..
     *
     * @param clusterInfo cluster info
     * @param containers containers
     */
-  def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo])
+  def put(clusterInfo: ClusterStatus, containers: Seq[ContainerInfo])
 
   /**
     * remove the cached cluster data
     * @param clusterInfo cluster info
     */
-  def remove(clusterInfo: ClusterInfo): Unit
+  def remove(clusterInfo: ClusterStatus): Unit
 
   /**
     * remove the cached cluster data
@@ -110,7 +110,7 @@ object ClusterCache {
   class Builder private[ClusterCache] extends com.island.ohara.common.pattern.Builder[ClusterCache] {
     private[this] var frequency: Duration = 5 seconds
     private[this] var lazyRemove: Duration = 0 seconds
-    private[this] var supplier: () => Map[ClusterInfo, Seq[ContainerInfo]] = _
+    private[this] var supplier: () => Map[ClusterStatus, Seq[ContainerInfo]] = _
 
     @Optional("default value is 5 seconds")
     def frequency(frequency: Duration): Builder = {
@@ -136,7 +136,7 @@ object ClusterCache {
       * @param supplier supplier
       * @return this builder
       */
-    def supplier(supplier: () => Map[ClusterInfo, Seq[ContainerInfo]]): Builder = {
+    def supplier(supplier: () => Map[ClusterStatus, Seq[ContainerInfo]]): Builder = {
       this.supplier = Objects.requireNonNull(supplier)
       this
     }
@@ -150,7 +150,7 @@ object ClusterCache {
       checkArguments()
       new ClusterCache {
         private[this] val cache = RefreshableCache
-          .builder[RequestKey, (ClusterInfo, Seq[ContainerInfo])]()
+          .builder[RequestKey, (ClusterStatus, Seq[ContainerInfo])]()
           .supplier(() =>
             supplier().map {
               case (clusterInfo, containers) => key(clusterInfo) -> (clusterInfo -> containers)
@@ -161,18 +161,18 @@ object ClusterCache {
 
         override def close(): Unit = Releasable.close(cache)
 
-        override def snapshot: Map[ClusterInfo, Seq[ContainerInfo]] = cache.snapshot().asScala.toMap.values.toMap
+        override def snapshot: Map[ClusterStatus, Seq[ContainerInfo]] = cache.snapshot().asScala.toMap.values.toMap
 
         override def requestUpdate(): Unit = cache.requestUpdate()
 
-        private def key(clusterInfo: ClusterInfo): RequestKey = RequestKey(
+        private def key(clusterInfo: ClusterStatus): RequestKey = RequestKey(
           key = clusterInfo.key,
           service = clusterInfo match {
-            case _: ZookeeperClusterInfo => Service.ZOOKEEPER
-            case _: BrokerClusterInfo    => Service.BROKER
-            case _: WorkerClusterInfo    => Service.WORKER
-            case _: StreamClusterInfo    => Service.STREAM
-            case _                       => Service.UNKNOWN
+            case _: ZookeeperClusterStatus => Service.ZOOKEEPER
+            case _: BrokerClusterStatus    => Service.BROKER
+            case _: WorkerClusterStatus    => Service.WORKER
+            case _: StreamClusterStatus    => Service.STREAM
+            case _                         => Service.UNKNOWN
           },
           createdTime = CommonUtils.current()
         )
@@ -183,23 +183,23 @@ object ClusterCache {
           createdTime = CommonUtils.current()
         )
 
-        override def get(clusterInfo: ClusterInfo): Seq[ContainerInfo] = {
+        override def get(clusterInfo: ClusterStatus): Seq[ContainerInfo] = {
           val containers = cache.get(key(clusterInfo))
           if (containers.isPresent) cache.get(key(clusterInfo)).get()._2
           else Seq.empty
         }
 
-        override def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo]): Unit = {
+        override def put(clusterInfo: ClusterStatus, containers: Seq[ContainerInfo]): Unit = {
           val k = key(clusterInfo)
           // we have to remove key-value first since cluster cache replace the key by a RequestKey which only compare the name and service.
-          // Hence, the new key (ClusterInfo) doesn't replace the older one.
+          // Hence, the new key (ClusterStatus) doesn't replace the older one.
           cache.remove(k)
           cache.put(k, (clusterInfo, containers))
         }
 
         override def remove(objectKey: ObjectKey, service: Service): Unit = cache.remove(key(objectKey, service))
 
-        override def remove(clusterInfo: ClusterInfo): Unit = cache.remove(key(clusterInfo))
+        override def remove(clusterInfo: ClusterStatus): Unit = cache.remove(key(clusterInfo))
       }
     }
   }

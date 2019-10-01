@@ -265,8 +265,9 @@ class TestTopicRoute extends OharaTest with Matchers {
 
     val topic = result(topicApi.request.name(topicName).create())
 
-    val topicAdmin = configurator.clusterCollie.brokerCollie
-      .topicAdmin(result(configurator.clusterCollie.brokerCollie.clusters()).head._1)
+    val brokerClusterInfo = result(
+      BrokerApi.access.hostname(configurator.hostname).port(configurator.port).get(topic.brokerClusterKey))
+    val topicAdmin = configurator.clusterCollie.brokerCollie.topicAdmin(brokerClusterInfo)
     try {
       topicAdmin.delete(topic.key)
       // the topic is removed but we don't throw exception.

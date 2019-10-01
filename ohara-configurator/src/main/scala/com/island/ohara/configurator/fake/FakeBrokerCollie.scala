@@ -16,15 +16,14 @@
 
 package com.island.ohara.configurator.fake
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
 
 import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
 
@@ -32,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps: String)
-    extends FakeCollie[BrokerClusterInfo](node)
+    extends FakeCollie[BrokerClusterStatus](node)
     with BrokerCollie {
 
   override def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
@@ -42,39 +41,29 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
   /**
     * cache all topics info in-memory so we should keep instance for each fake cluster.
     */
-  private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
+  private[this] val fakeAdminCache = new ConcurrentSkipListMap[BrokerClusterInfo, FakeTopicAdmin](
+    (o1: BrokerClusterInfo, o2: BrokerClusterInfo) => o1.key.compareTo(o2.key))
 
   override def creator: BrokerCollie.ClusterCreator = (_, creation) =>
     Future.successful(
       addCluster(
-        BrokerClusterInfo(
-          settings = BrokerApi.access.request
-            .settings(creation.settings)
-            .nodeNames(creation.nodeNames ++ clusterCache.asScala
-              .find(_._1.key == creation.key)
-              .map(_._1.nodeNames)
-              .getOrElse(Set.empty))
-            .creation
-            .settings,
+        new BrokerClusterStatus(
+          group = creation.group,
+          name = creation.name,
+          // TODO: we should check the supported arguments by the running broker images
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
           aliveNodes = creation.nodeNames ++ clusterCache.asScala
             .find(_._1.key == creation.key)
-            .map(_._1.nodeNames)
+            .map(_._2.map(_.nodeName))
             .getOrElse(Set.empty),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
-          error = None,
-          lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-        )))
-
-  override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = Future
-    .successful(
-      addCluster(
-        previousCluster
-          .newNodeNames(previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName))
-          .asInstanceOf[BrokerClusterInfo]))
-    .map(_ => true)
+          error = None
+        ),
+        creation.imageName,
+        creation.nodeNames,
+        creation.ports
+      ))
 
   override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin =
     if (bkConnectionProps == null) {

@@ -20,9 +20,9 @@ import java.util.concurrent.{ExecutorService, TimeUnit}
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 
@@ -51,7 +51,7 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
   override val streamCollie: StreamCollie = new StreamCollieImpl(nodeCollie, dockerCache, clusterCache)
 
   private[this] def doClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
+    implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(Future
       .traverse(_) { node =>
@@ -67,7 +67,7 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
     .flatMap { allContainers =>
       def parse(
         serviceName: String,
-        f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+        f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterStatus]): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
         Future
           .sequence(
             allContainers
@@ -83,10 +83,10 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
           .map(_.toMap)
 
       for {
-        zkMap <- parse(ZookeeperApi.ZOOKEEPER_SERVICE_NAME, zookeeperCollie.toZookeeperCluster)
-        bkMap <- parse(BrokerApi.BROKER_SERVICE_NAME, brokerCollie.toBrokerCluster)
-        wkMap <- parse(WorkerApi.WORKER_SERVICE_NAME, workerCollie.toWorkerCluster)
-        streamMap <- parse(StreamApi.STREAM_SERVICE_NAME, streamCollie.toStreamCluster)
+        zkMap <- parse(ZookeeperApi.ZOOKEEPER_SERVICE_NAME, zookeeperCollie.toStatus)
+        bkMap <- parse(BrokerApi.BROKER_SERVICE_NAME, brokerCollie.toStatus)
+        wkMap <- parse(WorkerApi.WORKER_SERVICE_NAME, workerCollie.toStatus)
+        streamMap <- parse(StreamApi.STREAM_SERVICE_NAME, streamCollie.toStatus)
       } yield zkMap ++ bkMap ++ wkMap ++ streamMap
     }
 

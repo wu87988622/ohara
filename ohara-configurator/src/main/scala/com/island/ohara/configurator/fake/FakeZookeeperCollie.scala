@@ -19,15 +19,13 @@ package com.island.ohara.configurator.fake
 import com.island.ohara.agent.{ClusterState, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtils
-
-import scala.concurrent.{ExecutionContext, Future}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeZookeeperCollie(node: NodeCollie)
-    extends FakeCollie[ZookeeperClusterInfo](node)
+    extends FakeCollie[ZookeeperClusterStatus](node)
     with ZookeeperCollie {
   override def creator: ZookeeperCollie.ClusterCreator = (_, creation) =>
     if (clusterCache.asScala.exists(_._1.key == creation.key))
@@ -35,16 +33,20 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     else
       Future.successful(
         addCluster(
-          ZookeeperClusterInfo(
-            settings = creation.settings,
+          new ZookeeperClusterStatus(
+            group = creation.group,
+            name = creation.name,
             aliveNodes = creation.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
-            error = None,
-            lastModified = CommonUtils.current()
-          )))
+            error = None
+          ),
+          creation.imageName,
+          creation.nodeNames,
+          creation.ports
+        ))
 
-  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))

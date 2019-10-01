@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
@@ -73,21 +73,22 @@ object BrokerRoute {
       }
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                meterCache: MeterCache,
+                                brokerCollie: BrokerCollie,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
-      store
-        .value[BrokerClusterInfo](key)
-        .flatMap(brokerClusterInfo => clusterCollie.clusters().map(_.keys.toSeq).map(_ -> brokerClusterInfo))
+      (for {
+        bkInfo <- store.value[BrokerClusterInfo](key)
+        bks <- runningBrokerClusters()
+      } yield (bkInfo, bks))
         .flatMap {
-          case (clusters, brokerClusterInfo) =>
-            val sameZkNameClusters = clusters
-              .filter(_.isInstanceOf[BrokerClusterInfo])
-              .map(_.asInstanceOf[BrokerClusterInfo])
-              .filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
-            if (sameZkNameClusters.nonEmpty)
+          case (brokerClusterInfo, runningBrokerClusters) =>
+            val conflictBrokerClusters =
+              runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
+            if (conflictBrokerClusters.nonEmpty)
               throw new IllegalArgumentException(
-                s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${sameZkNameClusters.head.name}")
+                s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}")
             clusterCollie.brokerCollie.creator
               .settings(brokerClusterInfo.settings)
               .name(brokerClusterInfo.name)
@@ -104,31 +105,37 @@ object BrokerRoute {
         .map(_ => Unit)
 
   private[this] def hookBeforeStop(implicit store: DataStore,
-                                   clusterCollie: ClusterCollie,
+                                   meterCache: MeterCache,
+                                   workerCollie: WorkerCollie,
+                                   streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _: String, _: Map[String, String]) =>
-      store
-        .value[BrokerClusterInfo](key)
-        .flatMap(
-          brokerClusterInfo =>
-            clusterCollie.workerCollie
-              .clusters()
-              .map(
-                _.keys
-                  .find(_.brokerClusterKey == brokerClusterInfo.key)
-                  .map(cluster =>
-                    throw new IllegalArgumentException(
-                      s"you can't remove broker cluster:${brokerClusterInfo.name} since it is used by worker cluster:${cluster.name}"))
-            ))
+      (for {
+        bkInfo <- store.value[BrokerClusterInfo](key)
+        wks <- runningWorkerClusters()
+        sts <- runningStreamClusters()
+      } yield (bkInfo, wks, sts)).map {
+        case (brokerClusterInfo, runningWorkerClusters, runningStreamClusters) =>
+          val conflictWks = runningWorkerClusters.filter(_.brokerClusterKey == brokerClusterInfo.key)
+          if (conflictWks.nonEmpty)
+            throw new IllegalArgumentException(
+              s"you can't remove broker cluster:$key since it is used by worker cluster:${conflictWks.mkString(",")}")
+          val conflictStreams = runningStreamClusters.filter(_.brokerClusterKey == brokerClusterInfo.key)
+          if (conflictStreams.nonEmpty)
+            throw new IllegalArgumentException(
+              s"you can't remove broker cluster:$key since it is used by stream cluster:${conflictStreams.mkString(",")}")
+    }
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,
+            workerCollie: WorkerCollie,
+            streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
-    clusterRoute(
+    clusterRoute[BrokerClusterInfo, BrokerClusterStatus, Creation, Updating](
       root = BROKER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,

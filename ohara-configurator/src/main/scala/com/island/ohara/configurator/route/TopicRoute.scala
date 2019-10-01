@@ -23,14 +23,7 @@ import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.route.hook.{
-  HookBeforeDelete,
-  HookOfAction,
-  HookOfCreation,
-  HookOfGet,
-  HookOfList,
-  HookOfUpdating
-}
+import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
@@ -109,19 +102,17 @@ private[configurator] object TopicRoute {
 
   private[this] def hookOfGet(implicit meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
+                              store: DataStore,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
-    brokerCollie.cluster(topicInfo.brokerClusterKey).flatMap {
-      case (cluster, _) => updateState(cluster, topicInfo)
-  }
+    store.value[BrokerClusterInfo](topicInfo.brokerClusterKey).flatMap(updateState(_, topicInfo))
 
   private[this] def hookOfList(implicit meterCache: MeterCache,
                                brokerCollie: BrokerCollie,
+                               store: DataStore,
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) =>
-      Future.traverse(topicInfos) { response =>
-        brokerCollie.cluster(response.brokerClusterKey).flatMap {
-          case (cluster, _) => updateState(cluster, response)
-        }
+      Future.traverse(topicInfos) { topicInfo =>
+        store.value[BrokerClusterInfo](topicInfo.brokerClusterKey).flatMap(updateState(_, topicInfo))
     }
 
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
@@ -140,7 +131,9 @@ private[configurator] object TopicRoute {
     }
 
   private[this] def HookOfUpdating(implicit adminCleaner: AdminCleaner,
+                                   meterCache: MeterCache,
                                    brokerCollie: BrokerCollie,
+                                   store: DataStore,
                                    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, TopicInfo] =
     (key: ObjectKey, update: Updating, previous: Option[TopicInfo]) =>
       previous
@@ -174,6 +167,7 @@ private[configurator] object TopicRoute {
       }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
+                                     meterCache: MeterCache,
                                      adminCleaner: AdminCleaner,
                                      brokerCollie: BrokerCollie,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
@@ -203,6 +197,7 @@ private[configurator] object TopicRoute {
       })
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                meterCache: MeterCache,
                                 adminCleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction =
@@ -223,6 +218,7 @@ private[configurator] object TopicRoute {
         })
 
   private[this] def hookOfStop(implicit store: DataStore,
+                               meterCache: MeterCache,
                                adminCleaner: AdminCleaner,
                                brokerCollie: BrokerCollie,
                                executionContext: ExecutionContext): HookOfAction =

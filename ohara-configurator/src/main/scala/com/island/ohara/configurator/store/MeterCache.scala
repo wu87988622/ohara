@@ -27,6 +27,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.cache.RefreshableCache
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.duration._
@@ -41,13 +42,13 @@ object MeterCache {
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[store] case class RequestKey(name: String, service: String) {
+  private[store] case class RequestKey(key: ObjectKey, service: String) {
     override def equals(obj: Any): Boolean = obj match {
-      case another: RequestKey => another.name == name && another.service == service
+      case another: RequestKey => another.key == key && another.service == service
       case _                   => false
     }
-    override def hashCode(): Int = 31 * name.hashCode + service.hashCode
-    override def toString: String = s"name:$name, service:$service"
+    override def hashCode(): Int = 31 * key.hashCode + service.hashCode
+    override def toString: String = s"key:$key, service:$service"
   }
 
   class Builder private[MeterCache] extends com.island.ohara.common.pattern.Builder[MeterCache] {
@@ -80,7 +81,7 @@ object MeterCache {
         .build()
 
       private[this] def key(clusterInfo: ClusterInfo): RequestKey = RequestKey(
-        name = clusterInfo.name,
+        key = clusterInfo.key,
         service = clusterInfo match {
           case _: ZookeeperClusterInfo => "zk"
           case _: BrokerClusterInfo    => "bk"

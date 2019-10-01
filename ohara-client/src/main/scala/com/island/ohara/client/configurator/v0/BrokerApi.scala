@@ -18,7 +18,6 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -139,6 +138,14 @@ object BrokerApi {
       .requireBindPort(JMX_PORT_KEY)
       .refine
 
+  class BrokerClusterStatus(val group: String,
+                            val name: String,
+                            val topicSettingDefinitions: Seq[SettingDef],
+                            val aliveNodes: Set[String],
+                            val state: Option[String],
+                            val error: Option[String])
+      extends ClusterStatus
+
   final case class BrokerClusterInfo private[BrokerApi] (settings: Map[String, JsValue],
                                                          aliveNodes: Set[String],
                                                          lastModified: Long,
@@ -146,6 +153,19 @@ object BrokerApi {
                                                          error: Option[String],
                                                          topicSettingDefinitions: Seq[SettingDef])
       extends ClusterInfo {
+
+    /**
+      * update the runtime information for this cluster info
+      * @param status runtime information
+      * @return a updated cluster info
+      */
+    def update(status: BrokerClusterStatus): BrokerClusterInfo = copy(
+      topicSettingDefinitions = status.topicSettingDefinitions,
+      aliveNodes = status.aliveNodes,
+      state = status.state,
+      error = status.error,
+      lastModified = CommonUtils.current()
+    )
 
     /**
       * reuse the parser from Creation.
@@ -174,8 +194,6 @@ object BrokerApi {
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
-    // TODO: expose the metrics for bk
-    override def metrics: Metrics = Metrics.EMPTY
   }
 
   /**

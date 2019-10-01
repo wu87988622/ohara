@@ -52,9 +52,20 @@ abstract class IntegrationTest {
     */
   protected def assertCluster(clusters: () => Seq[ClusterInfo],
                               containers: () => Seq[ContainerInfo],
-                              clusterKey: ObjectKey): Unit = await(() =>
+                              clusterKey: ObjectKey): Unit =
+    assertClusterKeys(() => clusters().map(_.key), containers, clusterKey)
+
+  /**
+    * the creation of cluster is async so you need to wait the cluster to build.
+    * @param clusterKeys clusters
+    * @param containers containers
+    * @param clusterKey cluster key
+    */
+  protected def assertClusterKeys(clusterKeys: () => Seq[ObjectKey],
+                                  containers: () => Seq[ContainerInfo],
+                                  clusterKey: ObjectKey): Unit = await(() =>
     try {
-      clusters().map(_.key).contains(clusterKey) &&
+      clusterKeys().contains(clusterKey) &&
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
       // It is ok to filter container via RUNNING state.

@@ -128,6 +128,7 @@ private[configurator] object PipelineRoute {
   private[this] def toAbstract(obj: Data)(implicit brokerCollie: BrokerCollie,
                                           workerCollie: WorkerCollie,
                                           streamCollie: StreamCollie,
+                                          store: DataStore,
                                           adminCleaner: AdminCleaner,
                                           executionContext: ExecutionContext,
                                           meterCache: MeterCache): Future[ObjectAbstract] = obj match {
@@ -140,7 +141,7 @@ private[configurator] object PipelineRoute {
         case (cluster, admin) => toAbstract(data, cluster, admin)
       }
     case data: StreamClusterInfo =>
-      streamCollie.cluster(data.key).map(_._1).flatMap(toAbstract(data, _))
+      streamCollie.cluster(data.key).map(_._1).map(data.update).flatMap(toAbstract(data, _))
     case _ => toAbstract(obj, None)
   }
 

@@ -20,8 +20,7 @@ import com.island.ohara.agent.fake.FakeK8SClient
 import com.island.ohara.agent.{Collie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -68,29 +67,24 @@ class TestK8SBasicCollieImpl extends OharaTest with Matchers {
     val nodeCollie = NodeCollie(nodes)
     val k8sClient = new FakeK8SClient(true, None, containerName)
 
-    val k8sBasicCollieImpl: K8SBasicCollieImpl[ZookeeperClusterInfo] =
-      new K8SBasicCollieImpl[ZookeeperClusterInfo](nodeCollie, k8sClient) {
-        override protected def toClusterDescription(objectKey: ObjectKey, containers: Seq[ContainerInfo])(
-          implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-          Future.successful(
-            ZookeeperClusterInfo(
-              settings = ZookeeperApi.access.request
-                .name(objectKey.name())
-                .group(objectKey.group())
-                .imageName(containers.head.imageName)
-                .nodeNames(nodes.map(_.name).toSet)
-                .creation
-                .settings,
-              aliveNodes = nodes.map(_.name).toSet,
-              state = None,
-              error = None,
-              lastModified = 0
-            ))
+    val k8sBasicCollieImpl: K8SBasicCollieImpl[ZookeeperClusterStatus] =
+      new K8SBasicCollieImpl[ZookeeperClusterStatus](nodeCollie, k8sClient) {
 
         override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")
 
         override def serviceName: String = tmpServiceName
+
+        override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+          implicit executionContext: ExecutionContext): Future[ZookeeperClusterStatus] =
+          Future.successful(
+            new ZookeeperClusterStatus(
+              group = key.group(),
+              name = key.name(),
+              aliveNodes = nodes.map(_.name).toSet,
+              state = None,
+              error = None
+            ))
       }
 
     val containers = k8sBasicCollieImpl.clusterWithAllContainers()(Implicits.global)

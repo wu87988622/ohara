@@ -18,10 +18,10 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus, Creation}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, TopicApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -32,7 +32,7 @@ import spray.json.JsString
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-trait BrokerCollie extends Collie[BrokerClusterInfo] {
+trait BrokerCollie extends Collie[BrokerClusterStatus] {
 
   override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
 
@@ -51,10 +51,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
     implicit val exec: ExecutionContext = executionContext
     clusters().flatMap(clusters => {
       clusters
-        .filter(_._1.isInstanceOf[BrokerClusterInfo])
-        .map {
-          case (cluster, containers) => cluster.asInstanceOf[BrokerClusterInfo] -> containers
-        }
         .find(_._1.key == creation.key)
         .map(_._2)
         .map(containers =>
@@ -164,11 +160,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
                         // expose the borker hostname for zookeeper to register
                           + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> node.hostname)
                         // jmx exporter host name
-                          + (BrokerApi.JMX_HOSTNAME_KEY -> node.hostname)
-                        // we convert all settings to specific string in order to fetch all settings from
-                        // container env quickly. Also, the specific string enable us to pick up the "true" settings
-                        // from envs since there are many system-defined settings in container envs.
-                          + toEnvString(creation.settings),
+                          + (BrokerApi.JMX_HOSTNAME_KEY -> node.hostname),
                         hostname = containerName
                       )
                       doCreator(executionContext, containerName, containerInfo, node, route)
@@ -183,23 +175,20 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
               .map(_.flatten.toSeq)
               .map {
                 successfulContainers =>
-                  val nodeNames = creation.nodeNames ++ existNodes.keySet.map(_.hostname) ++ newNodes.keySet.map(
-                    _.hostname)
                   val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
-                  val clusterInfo = BrokerClusterInfo(
-                    // combine the 1) node names from creation and 2) the running nodes
-                    settings =
-                      BrokerApi.access.request.settings(creation.settings).nodeNames(nodeNames).creation.settings,
+                  val status = new BrokerClusterStatus(
+                    group = creation.group,
+                    name = creation.name,
+                    // TODO: we should check the supported arguments by the running broker images
+                    topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
                     // no state means cluster is NOT running so we cleanup the dead nodes
                     aliveNodes = state
                       .map(_ => (successfulContainers.map(_.nodeName) ++ existNodes.values.map(_.hostname)).toSet)
                       .getOrElse(Set.empty),
                     state = state,
-                    error = None,
-                    lastModified = CommonUtils.current(),
-                    topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+                    error = None
                   )
-                  postCreateBrokerCluster(clusterInfo, successfulContainers)
+                  postCreate(status, successfulContainers)
               }
         }
     })
@@ -243,10 +232,10 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
   /**
     * After creating the broker, need to processor other things
-    * @param clusterInfo broker cluster information
+    * @param clusterStatus broker cluster information
     * @param successfulContainers successful created containers
     */
-  protected def postCreateBrokerCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: BrokerClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing
   }
 
@@ -266,31 +255,21 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
   }.toSeq
 
-  private[agent] def toBrokerCluster(key: ObjectKey, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
-    val creation = BrokerApi.access.request
-      .settings(seekSettings(containers.head.environments))
-      // the nodeNames is able to updated at runtime so the first container may have out-of-date info of nodeNames
-      // we don't compare all containers. Instead, we just merge all node names from all containers. It is more simple.
-      .nodeNames(
-        containers
-          .map(_.environments)
-          .map(envs => BrokerApi.access.request.settings(seekSettings(envs)).creation)
-          .flatMap(_.nodeNames)
-          .toSet)
-      .creation
+  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[BrokerClusterStatus] =
     Future.successful(
-      BrokerClusterInfo(
-        settings = creation.settings,
+      new BrokerClusterStatus(
+        group = key.group(),
+        name = key.name(),
+        // TODO: we should check the supported arguments by the running broker images
+        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
-        error = None,
-        lastModified = CommonUtils.current(),
-        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+        error = None
       ))
-  }
 
   /**
     * In creation progress, broker has to check the existence of zookeeper and then fetch something important from zookeeper

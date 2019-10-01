@@ -15,13 +15,13 @@
  */
 
 package com.island.ohara.configurator.route
-import com.island.ohara.agent.{BrokerCollie, Collie, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent.{BrokerCollie, Collie, NoSuchClusterException, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -34,12 +34,6 @@ import scala.reflect.ClassTag
   */
 private[route] object CollieUtils {
 
-  // TODO: remove this stale method
-  def topicAdmin(clusterName: String)(implicit brokerCollie: BrokerCollie,
-                                      cleaner: AdminCleaner,
-                                      executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
-    topicAdmin(ObjectKey.of(GROUP_DEFAULT, clusterName))
-
   /**
     * Create a topic admin according to passed cluster name.
     * Noted: if target cluster doesn't exist, an future with exception will return
@@ -47,11 +41,17 @@ private[route] object CollieUtils {
     * @return cluster info and topic admin
     */
   def topicAdmin(clusterKey: ObjectKey)(implicit brokerCollie: BrokerCollie,
+                                        meterCache: MeterCache,
+                                        store: DataStore,
                                         cleaner: AdminCleaner,
                                         executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
-    brokerCollie.cluster(clusterKey).map {
-      case (c, _) => (c, cleaner.add(brokerCollie.topicAdmin(c)))
-    }
+    runningBrokerClusters()
+      .map(
+        _.find(_.key == clusterKey)
+          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterKey is not a running cluster")))
+      .map { clusterInfo =>
+        (clusterInfo, cleaner.add(brokerCollie.topicAdmin(clusterInfo)))
+      }
 
   /**
     * find the single running zookeeper cluster. Otherwise, it throws exception
@@ -60,8 +60,7 @@ private[route] object CollieUtils {
     * @return key of single running zookeeper cluster
     */
   def singleZookeeperCluster()(implicit collie: ZookeeperCollie,
-                               executionContext: ExecutionContext): Future[ObjectKey] =
-    singleCluster[ZookeeperClusterInfo]
+                               executionContext: ExecutionContext): Future[ObjectKey] = singleCluster()
 
   /**
     * find the single running broker cluster. Otherwise, it throws exception
@@ -70,7 +69,7 @@ private[route] object CollieUtils {
     * @return key of single running broker cluster
     */
   def singleBrokerCluster()(implicit collie: BrokerCollie, executionContext: ExecutionContext): Future[ObjectKey] =
-    singleCluster[BrokerClusterInfo]
+    singleCluster()
 
   /**
     * find the single running worker cluster. Otherwise, it throws exception
@@ -79,7 +78,7 @@ private[route] object CollieUtils {
     * @return key of single running worker cluster
     */
   def singleWorkerCluster()(implicit collie: WorkerCollie, executionContext: ExecutionContext): Future[ObjectKey] =
-    singleCluster[WorkerClusterInfo]
+    singleCluster()
 
   /**
     * The mechanism has three phases.
@@ -90,7 +89,7 @@ private[route] object CollieUtils {
     * @tparam Req cluster type
     * @return matched cluster name
     */
-  private[this] def singleCluster[Req <: ClusterInfo: ClassTag]()(
+  private[this] def singleCluster[Req <: ClusterStatus: ClassTag]()(
     implicit collie: Collie[Req],
     executionContext: ExecutionContext): Future[ObjectKey] =
     collie.clusters().map { clusters =>
@@ -112,13 +111,22 @@ private[route] object CollieUtils {
     */
   def workerClient(clusterKey: ObjectKey)(
     implicit workerCollie: WorkerCollie,
+    meterCache: MeterCache,
+    store: DataStore,
     executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] =
-    workerCollie.cluster(clusterKey).map {
-      case (c, _) => (c, workerCollie.workerClient(c))
-    }
+    runningWorkerClusters()
+      .map(
+        _.find(_.key == clusterKey)
+          .filter(_.state.nonEmpty)
+          .getOrElse(throw new NoSuchClusterException(s"$clusterKey is not a running cluster")))
+      .map { clusterInfo =>
+        (clusterInfo, workerCollie.workerClient(clusterInfo))
+      }
 
   def both[T](workerClusterKey: ObjectKey)(
     implicit brokerCollie: BrokerCollie,
+    meterCache: MeterCache,
+    store: DataStore,
     cleaner: AdminCleaner,
     workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
@@ -128,4 +136,5 @@ private[route] object CollieUtils {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
         }
     }
+
 }

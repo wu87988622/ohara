@@ -19,10 +19,11 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.ClusterCollie
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi._
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
@@ -43,10 +44,11 @@ object ContainerRoute {
                     ContainerGroup(
                       clusterKey = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), clusterName),
                       clusterType = cluster match {
-                        case _: ZookeeperClusterInfo => "zookeeper"
-                        case _: BrokerClusterInfo    => "broker"
-                        case _: WorkerClusterInfo    => "worker"
-                        case _                       => "unknown"
+                        case _: ZookeeperClusterStatus => "zookeeper"
+                        case _: BrokerClusterStatus    => "broker"
+                        case _: WorkerClusterStatus    => "worker"
+                        case _: StreamClusterStatus    => "stream"
+                        case _                         => "unknown"
                       },
                       containers = containers
                     )

@@ -23,9 +23,9 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -64,15 +64,17 @@ class TestPrometheus extends IntegrationTest with Matchers {
   @Test
   def testExporter(): Unit = {
     startZK(zkDesc => {
-      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq,
-                    () => result(clusterCollie.zookeeperCollie.containers(zkDesc.key)),
-                    zkDesc.key)
+      assertClusterKeys(
+        () => result(clusterCollie.zookeeperCollie.clusters()).keys.map(_.key).toSeq,
+        () => result(clusterCollie.zookeeperCollie.containers(zkDesc.key)),
+        zkDesc.key
+      )
       startBroker(
         zkDesc.key,
         (exporterPort, bkCluster) => {
-          assertCluster(() => result(clusterCollie.brokerCollie.clusters()).keys.toSeq,
-                        () => result(clusterCollie.brokerCollie.containers(zkDesc.key)),
-                        bkCluster.key)
+          assertClusterKeys(() => result(clusterCollie.brokerCollie.clusters()).keys.map(_.key).toSeq,
+                            () => result(clusterCollie.brokerCollie.containers(zkDesc.key)),
+                            bkCluster.key)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
           val url = "http://" + node.hostname + ":" + exporterPort + "/metrics"
@@ -92,7 +94,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
   }
 
 //  val clientPort = CommonUtils.availablePort()
-  def startZK(f: ZookeeperClusterInfo => Unit): Unit = {
+  def startZK(f: ZookeeperClusterStatus => Unit): Unit = {
     val clusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
     val electionPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
@@ -115,7 +117,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     finally result(zookeeperCollie.remove(clusterKey))
   }
 
-  def startBroker(zkClusterKey: ObjectKey, f: (Int, BrokerClusterInfo) => Unit): Unit = {
+  def startBroker(zkClusterKey: ObjectKey, f: (Int, BrokerClusterStatus) => Unit): Unit = {
     val clusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()

@@ -20,11 +20,10 @@ import java.net.URL
 
 import com.island.ohara.agent.{ClusterState, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
+import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
@@ -35,7 +34,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeStreamCollie(node: NodeCollie)
-    extends FakeCollie[StreamClusterInfo](node)
+    extends FakeCollie[StreamClusterStatus](node)
     with StreamCollie {
 
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
@@ -55,19 +54,22 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
       else
         Future.successful(
           addCluster(
-            StreamApi.StreamClusterInfo(
-              settings = creation.settings,
+            new StreamClusterStatus(
+              group = creation.group,
+              name = creation.name,
               // convert to list in order to be serializable
               definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING.name),
-              error = None,
-              metrics = Metrics.EMPTY,
-              lastModified = CommonUtils.current()
-            )))
+              error = None
+            ),
+            creation.imageName,
+            creation.nodeNames,
+            creation.ports
+          ))
 
-  override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
+  override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))

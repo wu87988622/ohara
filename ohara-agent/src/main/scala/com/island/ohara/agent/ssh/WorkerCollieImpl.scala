@@ -17,23 +17,22 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
 import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[WorkerClusterInfo](node, dockerCache, clusterCache)
+    extends BasicCollieImpl[WorkerClusterStatus](node, dockerCache, clusterCache)
     with WorkerCollie {
 
-  override protected def postCreateWorkerCluster(clusterInfo: ClusterInfo,
-                                                 successfulContainers: Seq[ContainerInfo]): Unit = {
-    clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
-  }
+  override protected def postCreate(workerClusterStatus: WorkerClusterStatus,
+                                    successfulContainers: Seq[ContainerInfo]): Unit =
+    clusterCache.put(workerClusterStatus, clusterCache.get(workerClusterStatus) ++ successfulContainers)
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,
@@ -83,7 +82,7 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
       clusterCache.snapshot
-        .filter(_._1.isInstanceOf[BrokerClusterInfo])
+        .filter(_._1.isInstanceOf[BrokerClusterStatus])
         .find(_._1.key == classKey)
         .map(_._2)
         .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey doesn't exist. other broker clusters")))

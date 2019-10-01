@@ -20,18 +20,27 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
+import com.island.ohara.agent.{
+  BrokerCollie,
+  ClusterCollie,
+  Collie,
+  NodeCollie,
+  StreamCollie,
+  WorkerCollie,
+  ZookeeperCollie
+}
 import com.island.ohara.client.configurator.Data
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
+import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
 import com.island.ohara.client.configurator.v0.{
+  BasicCreation,
   ClusterCreation,
   ClusterInfo,
+  ClusterStatus,
   ClusterUpdating,
-  BasicCreation,
   ErrorApi,
   OharaJsonFormat
 }
@@ -441,6 +450,7 @@ package object route {
     * @return route
     */
   private[route] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
+                                  Status <: ClusterStatus,
                                   Creation <: ClusterCreation,
                                   Update <: ClusterUpdating](root: String,
                                                              metricsKey: Option[String],
@@ -450,20 +460,24 @@ package object route {
                                                              hookBeforeStop: HookOfAction)(
     implicit store: DataStore,
     meterCache: MeterCache,
-    collie: Collie[Cluster],
+    collie: Collie[Status],
     clusterCollie: ClusterCollie,
+    zookeeperCollie: ZookeeperCollie,
+    brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
     nodeCollie: NodeCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Update],
     rm2: RootJsonFormat[Cluster],
     executionContext: ExecutionContext): server.Route =
-    clusterRoute[Cluster, Creation, Update](
+    clusterRoute[Cluster, Status, Creation, Update](
       root = root,
       hookOfCreation = hookOfCreation,
       HookOfUpdating = HookOfUpdating,
-      hookOfGet = updateState[Cluster](_, metricsKey),
-      hookOfList = (clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState(_, metricsKey)),
-      hookBeforeDelete = hookBeforeDelete[Cluster](metricsKey),
+      hookOfGet = updateState[Cluster, Status](_, metricsKey),
+      hookOfList = (clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState[Cluster, Status](_, metricsKey)),
+      hookBeforeDelete = hookBeforeDelete[Cluster, Status](metricsKey),
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )
@@ -497,6 +511,7 @@ package object route {
     * @return route
     */
   private[this] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
+                                 Status <: ClusterStatus,
                                  Creation <: ClusterCreation,
                                  Update <: ClusterUpdating](root: String,
                                                             hookOfCreation: HookOfCreation[Creation, Cluster],
@@ -507,8 +522,13 @@ package object route {
                                                             hookOfStart: HookOfAction,
                                                             hookBeforeStop: HookOfAction)(
     implicit store: DataStore,
-    collie: Collie[Cluster],
+    meterCache: MeterCache,
+    collie: Collie[Status],
     clusterCollie: ClusterCollie,
+    zookeeperCollie: ZookeeperCollie,
+    brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
     nodeCollie: NodeCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Update],
@@ -532,7 +552,7 @@ package object route {
                   // this cluster already exists, return OK
                   Future.unit
                 } else {
-                  checkResourcesConflict(nodeCollie, clusterCollie, req).flatMap(_ => hookOfStart(key, subName, params))
+                  checkResourcesConflict(nodeCollie, req).flatMap(_ => hookOfStart(key, subName, params))
                 }
               }
           }
@@ -619,10 +639,15 @@ package object route {
     * @tparam Cluster type of request
     * @return clusters that fitted the requires
     */
-  private[route] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](
-    nodeCollie: NodeCollie,
+  private[route] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](nodeCollie: NodeCollie, req: Cluster)(
+    implicit executionContext: ExecutionContext,
     clusterCollie: ClusterCollie,
-    req: Cluster)(implicit executionContext: ExecutionContext): Future[Unit] =
+    store: DataStore,
+    zookeeperCollie: ZookeeperCollie,
+    brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    meterCache: MeterCache): Future[Unit] =
     // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
     nodeCollie
       .nodes(req.nodeNames)
@@ -635,7 +660,16 @@ package object route {
           .map(_.name)
           .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:${req.imageName}"))
       }
-      .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
+      .flatMap { _ =>
+        for {
+          zks <- runningZookeeperClusters()
+          bks <- runningBrokerClusters()
+          wks <- runningWorkerClusters()
+          ss <- runningStreamClusters()
+        } yield zks ++ bks ++ wks ++ ss
+      }
+      // the non-running clusters should NOT block other clusters since they are NOT using the resources.
+      .map(_.filter(_.state.nonEmpty))
       .flatMap { clusters =>
         def serviceName(cluster: ClusterInfo): String = cluster match {
           case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.key}"
@@ -666,9 +700,46 @@ package object route {
         Future.unit
       }
 
-  private[this] def updateState[Cluster <: ClusterInfo: ClassTag](cluster: Cluster, metricsKey: Option[String])(
+  def runningZookeeperClusters()(implicit meterCache: MeterCache,
+                                 store: DataStore,
+                                 collie: ZookeeperCollie,
+                                 executionContext: ExecutionContext): Future[Seq[ZookeeperClusterInfo]] =
+    clusters[ZookeeperClusterInfo, ZookeeperClusterStatus]()
+
+  def runningBrokerClusters()(implicit meterCache: MeterCache,
+                              store: DataStore,
+                              collie: BrokerCollie,
+                              executionContext: ExecutionContext): Future[Seq[BrokerClusterInfo]] =
+    clusters[BrokerClusterInfo, BrokerClusterStatus]()
+
+  def runningWorkerClusters()(implicit meterCache: MeterCache,
+                              store: DataStore,
+                              collie: WorkerCollie,
+                              executionContext: ExecutionContext): Future[Seq[WorkerClusterInfo]] =
+    clusters[WorkerClusterInfo, WorkerClusterStatus]()
+
+  def runningStreamClusters()(implicit meterCache: MeterCache,
+                              store: DataStore,
+                              collie: StreamCollie,
+                              executionContext: ExecutionContext): Future[Seq[StreamClusterInfo]] =
+    clusters[StreamClusterInfo, StreamClusterStatus]()
+
+  /**
+    * return the running clusters. All runtime information is up-to-date.
+    */
+  private[this] def clusters[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus]()(
     implicit meterCache: MeterCache,
-    collie: Collie[Cluster],
+    store: DataStore,
+    collie: Collie[Status],
+    executionContext: ExecutionContext): Future[Seq[Cluster]] = store
+    .values[Cluster]()
+    .flatMap(clusters => Future.sequence(clusters.map(cluster => updateState[Cluster, Status](cluster, None))))
+    .map(_.filter(_.state.nonEmpty))
+
+  private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus](cluster: Cluster,
+                                                                                           metricsKey: Option[String])(
+    implicit meterCache: MeterCache,
+    collie: Collie[Status],
     executionContext: ExecutionContext): Future[Cluster] =
     collie
       .clusters()
@@ -676,17 +747,19 @@ package object route {
         _.keys
           .find(_.key == cluster.key)
           .map {
-            case c: ZookeeperClusterInfo =>
-              c.copy(settings = cluster.settings)
-            case c: BrokerClusterInfo =>
-              c.copy(settings = cluster.settings)
-            case c: WorkerClusterInfo =>
-              c.copy(settings = cluster.settings)
-            case c: StreamClusterInfo =>
-              c.copy(
-                settings = cluster.settings,
-                metrics = Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
-              )
+            // the casting is a bit ugly but it is safe since we use the type-binding to restrict the input collie
+            case status: ZookeeperClusterStatus =>
+              cluster.asInstanceOf[ZookeeperClusterInfo].update(status)
+            case status: BrokerClusterStatus =>
+              cluster.asInstanceOf[BrokerClusterInfo].update(status)
+            case status: WorkerClusterStatus =>
+              cluster.asInstanceOf[WorkerClusterInfo].update(status)
+            case status: StreamClusterStatus =>
+              cluster
+                .asInstanceOf[StreamClusterInfo]
+                .update(status)
+                .copy(metrics =
+                  Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty)))
           }
           .getOrElse {
             // no running cluster. It means no state and no dead nodes.
@@ -727,11 +800,11 @@ package object route {
           .asInstanceOf[Cluster]
       )
 
-  private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag](metricsKey: Option[String])(
-    implicit store: DataStore,
-    meterCache: MeterCache,
-    collie: Collie[Cluster],
-    executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
+  private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus](
+    metricsKey: Option[String])(implicit store: DataStore,
+                                meterCache: MeterCache,
+                                collie: Collie[Status],
+                                executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store.get[Cluster](key).flatMap {
       _.fold(Future.unit) { info =>
         updateState(info, metricsKey).flatMap { data =>

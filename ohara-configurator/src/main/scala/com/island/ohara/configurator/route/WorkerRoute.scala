@@ -18,7 +18,6 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.setting.ObjectKey
@@ -94,42 +93,43 @@ object WorkerRoute {
       }
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                meterCache: MeterCache,
+                                brokerCollie: BrokerCollie,
+                                workerCollie: WorkerCollie,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
-      store
-        .value[WorkerClusterInfo](key)
-        .flatMap { data =>
-          clusterCollie.clusters().map(_.keys.toSeq).map(_ -> data)
-        }
+      (for {
+        wkInfo <- store.value[WorkerClusterInfo](key)
+        bks <- runningBrokerClusters()
+        wks <- runningWorkerClusters()
+      } yield (wkInfo, bks, wks))
         .flatMap {
-          case (clusters, workerClusterInfo) =>
-            val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
-
+          case (workerClusterInfo, runningBrokerClusters, runningWorkerClusters) =>
             // check broker cluster
-            if (!clusters.filter(_.isInstanceOf[BrokerClusterInfo]).exists(_.key == workerClusterInfo.brokerClusterKey))
+            if (!runningBrokerClusters.exists(_.key == workerClusterInfo.brokerClusterKey))
               throw new NoSuchClusterException(s"broker cluster:${workerClusterInfo.brokerClusterKey} doesn't exist")
 
             // check group id
-            wkClusters.find(_.groupId == workerClusterInfo.groupId).foreach { cluster =>
+            runningWorkerClusters.find(_.groupId == workerClusterInfo.groupId).foreach { cluster =>
               throw new IllegalArgumentException(
                 s"group id:${workerClusterInfo.groupId} is used by wk cluster:${cluster.name}")
             }
 
             // check setting topic
-            wkClusters.find(_.configTopicName == workerClusterInfo.configTopicName).foreach { cluster =>
+            runningWorkerClusters.find(_.configTopicName == workerClusterInfo.configTopicName).foreach { cluster =>
               throw new IllegalArgumentException(
                 s"configTopicName:${workerClusterInfo.configTopicName} is used by wk cluster:${cluster.name}")
             }
 
             // check offset topic
-            wkClusters.find(_.offsetTopicName == workerClusterInfo.offsetTopicName).foreach { cluster =>
+            runningWorkerClusters.find(_.offsetTopicName == workerClusterInfo.offsetTopicName).foreach { cluster =>
               throw new IllegalArgumentException(
                 s"offsetTopicName:${workerClusterInfo.offsetTopicName} is used by wk cluster:${cluster.name}")
             }
 
             // check status topic
-            wkClusters.find(_.statusTopicName == workerClusterInfo.statusTopicName).foreach { cluster =>
+            runningWorkerClusters.find(_.statusTopicName == workerClusterInfo.statusTopicName).foreach { cluster =>
               throw new IllegalArgumentException(
                 s"statusTopicName:${workerClusterInfo.statusTopicName} is used by wk cluster:${cluster.name}")
             }
@@ -162,13 +162,15 @@ object WorkerRoute {
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,
+            zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
+            streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             fileStore: FileStore,
             executionContext: ExecutionContext): server.Route =
-    clusterRoute(
+    clusterRoute[WorkerClusterInfo, WorkerClusterStatus, Creation, Updating](
       root = WORKER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,

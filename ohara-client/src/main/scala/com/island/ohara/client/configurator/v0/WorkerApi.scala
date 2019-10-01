@@ -19,7 +19,6 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.FileInfoApi._
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -176,6 +175,14 @@ object WorkerApi {
       .requireBindPort(JMX_PORT_KEY)
       .refine
 
+  class WorkerClusterStatus(val group: String,
+                            val name: String,
+                            val connectors: Seq[Definition],
+                            val aliveNodes: Set[String],
+                            val state: Option[String],
+                            val error: Option[String])
+      extends ClusterStatus
+
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
                                                      connectors: Seq[Definition],
                                                      aliveNodes: Set[String],
@@ -183,6 +190,19 @@ object WorkerApi {
                                                      state: Option[String],
                                                      error: Option[String])
       extends ClusterInfo {
+
+    /**
+      * update the runtime information for this cluster info
+      * @param status runtime information
+      * @return a updated cluster info
+      */
+    def update(status: WorkerClusterStatus): WorkerClusterInfo = copy(
+      connectors = status.connectors,
+      aliveNodes = status.aliveNodes,
+      state = status.state,
+      error = status.error,
+      lastModified = CommonUtils.current()
+    )
 
     /**
       * reuse the parser from Creation.
@@ -224,9 +244,6 @@ object WorkerApi {
     override def ports: Set[Int] = settings.ports
 
     override def kind: String = WORKER_SERVICE_NAME
-
-    // TODO: expose the metrics for wk
-    override def metrics: Metrics = Metrics.EMPTY
   }
 
   /**

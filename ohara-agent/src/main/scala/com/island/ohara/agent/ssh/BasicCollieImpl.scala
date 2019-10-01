@@ -18,16 +18,16 @@ package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterCache, ClusterState, Collie, NodeCollie}
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: NodeCollie,
-                                                                   dockerCache: DockerClientCache,
-                                                                   clusterCache: ClusterCache)
+private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie: NodeCollie,
+                                                                     dockerCache: DockerClientCache,
+                                                                     clusterCache: ClusterCache)
     extends Collie[T] {
 
   final override def clusterWithAllContainers()(
@@ -108,10 +108,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
     implicit executionContext: ExecutionContext): Future[Boolean] = {
     nodeCollie.node(beRemovedContainer.nodeName).map { node =>
       dockerCache.exec(node, _.stop(beRemovedContainer.name))
-      clusterCache.put(
-        previousCluster.newNodeNames(previousCluster.nodeNames.filter(_ != beRemovedContainer.nodeName)),
-        clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name)
-      )
+      clusterCache.put(previousCluster, clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name))
       true
     }
   }

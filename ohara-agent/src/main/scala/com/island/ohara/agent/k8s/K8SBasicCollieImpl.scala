@@ -17,19 +17,16 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.{ClusterState, Collie, NodeCollie}
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: NodeCollie,
-                                                                            k8sClient: K8SClient)
+private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie: NodeCollie,
+                                                                              k8sClient: K8SClient)
     extends Collie[T] {
-
-  protected def toClusterDescription(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[T]
 
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
@@ -74,7 +71,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
           case (objectKey, value) => objectKey -> value.map(_._2)
         }
         .map {
-          case (objectKey, containers) => toClusterDescription(objectKey, containers).map(_ -> containers)
+          case (objectKey, containers) => toStatus(objectKey, containers).map(_ -> containers)
         }
         .toSeq
     })

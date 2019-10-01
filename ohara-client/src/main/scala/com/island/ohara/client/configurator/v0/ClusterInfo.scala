@@ -18,17 +18,22 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import spray.json.JsValue
 
 /**
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
   * information".
   */
-trait ClusterInfo extends Data {
+trait ClusterInfo extends ClusterStatus with Data {
+
+  /**
+    * override the key to avoid conflict of double inheritance.
+    */
+  override def key: ObjectKey = ObjectKey.of(group, name)
 
   /**
     * @return docker image name used to build container for this cluster
@@ -56,28 +61,6 @@ trait ClusterInfo extends Data {
     *         of dead nodes is equal to (the number of node names) - (the number of alive nodes)
     */
   def deadNodes: Set[String] = if (state.isEmpty) Set.empty else nodeNames -- aliveNodes
-
-  /**
-    * @return the state of this cluster. None means the cluster is not running
-    */
-  def state: Option[String]
-
-  /**
-    * the nodes do run the containers of cluster.
-    * @return a collection of node names
-    */
-  def aliveNodes: Set[String]
-
-  /**
-    * @return the error message of this cluster.
-    */
-  def error: Option[String]
-
-  /**
-    * the metrics of this cluster. Noted that only stream cluster is able to fetch the metrics.
-    * @return metrics
-    */
-  def metrics: Metrics
 
   /**
     * @return the settings to set up this cluster. This is the raw data of settings.

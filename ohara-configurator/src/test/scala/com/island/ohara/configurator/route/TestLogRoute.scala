@@ -75,8 +75,10 @@ class TestLogRoute extends OharaTest with Matchers {
     val file = result(fileApi.request.file(CommonUtils.createTempJar(CommonUtils.randomString(10))).upload())
     val fromTopic = result(topicApi.request.create())
     result(topicApi.start(fromTopic.key))
+    result(topicApi.get(fromTopic.key)).state should not be None
     val toTopic = result(topicApi.request.create())
     result(topicApi.start(toTopic.key))
+    result(topicApi.get(toTopic.key)).state should not be None
     val nodeNames = result(zkApi.list()).head.nodeNames
     val cluster = result(
       streamApi.request

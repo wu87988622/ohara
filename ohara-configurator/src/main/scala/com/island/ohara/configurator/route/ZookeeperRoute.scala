@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -85,30 +85,34 @@ object ZookeeperRoute {
               .create())
         .map(_ => Unit)
 
-  private[this] def hookBeforeStop(
-    implicit store: DataStore,
-    clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): HookOfAction = (key: ObjectKey, _: String, _: Map[String, String]) =>
-    store
-      .value[ZookeeperClusterInfo](key)
-      .flatMap(zkClusterInfo =>
-        clusterCollie.brokerCollie
-          .clusters()
-          .map(
-            _.keys
-              .find(_.zookeeperClusterKey == zkClusterInfo.key)
-              .map(cluster =>
-                throw new IllegalArgumentException(
-                  s"you can't remove zookeeper cluster:${zkClusterInfo.key} since it is used by broker cluster:${cluster.name}"))
-        ))
+  private[this] def hookBeforeStop(implicit store: DataStore,
+                                   meterCache: MeterCache,
+                                   brokerCollie: BrokerCollie,
+                                   executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _: String, _: Map[String, String]) =>
+      store
+        .value[ZookeeperClusterInfo](key)
+        // find out hte running broker cluster which is using this zookeeper cluster
+        .flatMap { zookeeperClusterInfo =>
+          runningBrokerClusters()
+            .map(_.filter(_.zookeeperClusterKey == zookeeperClusterInfo.key))
+            .map(_.filter(_.state.nonEmpty))
+        }
+        .map(usedBks =>
+          if (usedBks.nonEmpty)
+            throw new IllegalArgumentException(
+              s"you can't remove zookeeper cluster:$key since it is used by broker cluster:${usedBks.mkString(",")}"))
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
+            brokerCollie: BrokerCollie,
+            workerCollie: WorkerCollie,
+            streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
-    clusterRoute(
+    clusterRoute[ZookeeperClusterInfo, ZookeeperClusterStatus, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,

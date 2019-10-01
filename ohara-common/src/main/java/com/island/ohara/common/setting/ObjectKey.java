@@ -27,7 +27,14 @@ import java.util.stream.Collectors;
  * ohara-client to ohara-kafka on account of ConnectorFormatter. Otherwise, the suitable place is
  * ohara-client ...
  */
-public interface ObjectKey {
+public interface ObjectKey extends Comparable<ObjectKey> {
+
+  @Override
+  default int compareTo(ObjectKey another) {
+    int rval = group().compareTo(another.group());
+    if (rval != 0) return rval;
+    return name().compareTo(another.name());
+  }
 
   /**
    * @param group group

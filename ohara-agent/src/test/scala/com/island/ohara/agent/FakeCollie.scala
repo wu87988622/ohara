@@ -17,9 +17,8 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
@@ -73,6 +72,10 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
     }
 
   override def serviceName: String = "fake"
+
+  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[FakeCollieClusterInfo] =
+    throw new UnsupportedOperationException("this is fake stuff :(")
 }
 
 case class FakeCollieClusterInfo(objectKey: ObjectKey, nodeNames: Set[String], state: Option[String])
@@ -94,8 +97,6 @@ case class FakeCollieClusterInfo(objectKey: ObjectKey, nodeNames: Set[String], s
   override def tags: Map[String, JsValue] = Map.empty
 
   override def error: Option[String] = None
-
-  override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
   override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
 }
