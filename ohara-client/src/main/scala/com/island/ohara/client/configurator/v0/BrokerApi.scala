@@ -54,9 +54,6 @@ object BrokerApi {
     */
   private[ohara] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
 
-  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2731)
-  private[this] val ZOOKEEPER_CLUSTER_NAME_KEY: String = "zookeeperClusterName"
-
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 
     /**
@@ -117,14 +114,8 @@ object BrokerApi {
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
     def jmxPort: Option[Int] = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
 
-    // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2731)
-    private[this] def zookeeperClusterName: Option[String] =
-      noJsNull(settings).get(ZOOKEEPER_CLUSTER_NAME_KEY).map(_.convertTo[String])
-
-    def zookeeperClusterKey: Option[ObjectKey] = noJsNull(settings)
-      .get(ZOOKEEPER_CLUSTER_KEY_KEY)
-      .map(_.convertTo[ObjectKey])
-      .orElse(zookeeperClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+    def zookeeperClusterKey: Option[ObjectKey] =
+      noJsNull(settings).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
   }
 
   implicit val BROKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =

@@ -156,7 +156,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
-    val zookeeperClusterName = CommonUtils.randomString()
+    val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
@@ -167,7 +167,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       |    "clientPort": $clientPort,
       |    "exporterPort": $exporterPort,
       |    "jmxPort": $jmxPort,
-      |    "zookeeperClusterName": "$zookeeperClusterName",
+      |    "zookeeperClusterKey": ${zkKey.toString},
       |    "nodeNames": ["$nodeName"]
       |  }
       """.stripMargin.parseJson)
@@ -177,7 +177,7 @@ class TestBrokerApi extends OharaTest with Matchers {
     creation2.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation2.nodeNames.size shouldBe 1
     creation2.nodeNames.head shouldBe nodeName
-    creation2.zookeeperClusterKey.get.name() shouldBe zookeeperClusterName
+    creation2.zookeeperClusterKey.get.name() shouldBe zkKey.name()
     creation2.clientPort shouldBe clientPort
     creation2.exporterPort shouldBe exporterPort
     creation2.jmxPort shouldBe jmxPort
@@ -481,17 +481,6 @@ class TestBrokerApi extends OharaTest with Matchers {
   }
 
   @Test
-  def testStaleBrokerClusterName(): Unit = {
-    val name = CommonUtils.randomString()
-    BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "zookeeperClusterName": "$name",
-      |    "nodeNames": ["n1"]
-      |  }
-      """.stripMargin.parseJson).zookeeperClusterKey.get shouldBe ObjectKey.of(GROUP_DEFAULT, name)
-  }
-
-  @Test
   def testDefaultUpdate(): Unit = {
     val data = access.name(CommonUtils.randomString(10)).updating
     data.imageName.isEmpty shouldBe true
@@ -514,7 +503,7 @@ class TestBrokerApi extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "name",
-      |    "zookeeperClusterName": "",
+      |    "zookeeperClusterKey": "",
       |    "nodeNames": ["a0"]
       |  }
       """.stripMargin.parseJson)
@@ -591,5 +580,11 @@ class TestBrokerApi extends OharaTest with Matchers {
       topicSettingDefinitions = Seq.empty
     )
     cluster.connectionProps should not include "nn"
+  }
+
+  @Test
+  def testZookeeperClusterKey(): Unit = {
+    val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    access.nodeName("n").zookeeperClusterKey(zkKey).creation.zookeeperClusterKey.get shouldBe zkKey
   }
 }
