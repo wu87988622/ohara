@@ -98,7 +98,7 @@ public class SettingDef implements JsonObject, Serializable {
     /** { "group": "g", "name":" n" } */
     OBJECT_KEY,
     /** [ { "group": "g", "name":" n" } ] */
-    TOPIC_KEYS,
+    OBJECT_KEYS,
     /**
      * TAGS is a flexible type accepting a json representation. For example:
      *
@@ -315,10 +315,10 @@ public class SettingDef implements JsonObject, Serializable {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
-        case TOPIC_KEYS:
+        case OBJECT_KEYS:
           try {
             if (TopicKey.toTopicKeys(String.valueOf(trueValue)).isEmpty())
-              throw new OharaConfigException("TOPIC_KEYS can't be empty!!!");
+              throw new OharaConfigException("OBJECT_KEYS can't be empty!!!");
           } catch (Exception e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }

@@ -159,7 +159,7 @@ Topic String
 TopicKey List
    .. code-block:: java
 
-      SettingDef.builder().key("topicKeys").reference(Reference.TOPIC).valueType(Type.TOPIC_KEYS).build();
+      SettingDef.builder().key("topicKeys").reference(Reference.TOPIC).valueType(Type.OBJECT_KEYS).build();
 
    which means the request should "accept topic list of **TopicKey** type"
 
@@ -443,17 +443,16 @@ In a custom application, you should check the request contains both fields.
      }
    }
 
-Type.TOPIC_KEYS
-^^^^^^^^^^^^^^^
+Type.OBJECT_KEYS
+^^^^^^^^^^^^^^^^
 
-Topic key represents a format of **com.island.ohara.common.setting.TopicKey** for ohara topics.
-It consists "group" and "name" fields.
+OBJECT_KEYS represents a list of **com.island.ohara.common.setting.Obj**.
 Note the type of the plural char "s". It means the request value should pass a array.
 
 .. code-block::json
 
    {
-     "topicKeys": [{
+     "objectKeys": [{
        "group": "default",
        "name": "t1"
      }]

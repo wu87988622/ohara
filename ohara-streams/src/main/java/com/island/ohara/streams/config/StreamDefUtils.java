@@ -127,7 +127,7 @@ public final class StreamDefUtils {
           .reference(SettingDef.Reference.TOPIC)
           .displayName("From topic of data consuming from")
           .documentation("The topic name of this streamApp should consume from")
-          .valueType(Type.TOPIC_KEYS)
+          .valueType(Type.OBJECT_KEYS)
           .build();
 
   public static final SettingDef TO_TOPIC_KEYS_DEFINITION =
@@ -138,7 +138,7 @@ public final class StreamDefUtils {
           .reference(SettingDef.Reference.TOPIC)
           .displayName("To topic of data produce to")
           .documentation("The topic name of this streamApp should produce to")
-          .valueType(Type.TOPIC_KEYS)
+          .valueType(Type.OBJECT_KEYS)
           .build();
 
   public static final SettingDef JMX_PORT_DEFINITION =

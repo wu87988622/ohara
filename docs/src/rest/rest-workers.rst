@@ -624,7 +624,7 @@ Example Response
                      "displayName":"Topics",
                      "internal":false,
                      "documentation":"the topics used by connector",
-                     "valueType":"TOPIC_KEYS",
+                     "valueType":"OBJECT_KEYS",
                      "tableKeys":[
 
                      ],

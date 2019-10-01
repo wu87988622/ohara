@@ -100,7 +100,7 @@ public final class ConnectorDefUtils {
       SettingDef.builder()
           .displayName("Topics")
           .key("topicKeys")
-          .valueType(Type.TOPIC_KEYS)
+          .valueType(Type.OBJECT_KEYS)
           .documentation("the topics used by connector")
           .reference(Reference.TOPIC)
           .group(CORE_GROUP)
@@ -256,7 +256,7 @@ public final class ConnectorDefUtils {
       case STRING:
       case DURATION:
       case TABLE:
-      case TOPIC_KEYS:
+      case OBJECT_KEYS:
       case OBJECT_KEY:
       case TAGS:
         return ConfigDef.Type.STRING;

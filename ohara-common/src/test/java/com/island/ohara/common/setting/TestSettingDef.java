@@ -286,7 +286,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.TOPIC_KEYS)
+            .valueType(SettingDef.Type.OBJECT_KEYS)
             .build();
     // pass
     def.checker()
