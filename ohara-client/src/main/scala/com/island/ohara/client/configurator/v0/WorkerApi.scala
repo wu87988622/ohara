@@ -39,8 +39,6 @@ object WorkerApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
   private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
-  // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2731)
-  private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val CLIENT_PORT_KEY = "clientPort"
   private[this] val JMX_PORT_KEY = "jmxPort"
   private[this] val GROUP_ID_KEY = "groupId"
@@ -133,13 +131,7 @@ object WorkerApi {
     private[WorkerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[WorkerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
     override def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
-    // TODO: remove this stale method (see https://github.com/oharastream/ohara/issues/2731)
-    private[this] def brokerClusterName: Option[String] =
-      noJsNull(settings).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String])
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings)
-      .get(BROKER_CLUSTER_KEY_KEY)
-      .map(_.convertTo[ObjectKey])
-      .orElse(brokerClusterName.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
     def jmxPort: Option[Int] = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
     def groupId: Option[String] = noJsNull(settings).get(GROUP_ID_KEY).map(_.convertTo[String])

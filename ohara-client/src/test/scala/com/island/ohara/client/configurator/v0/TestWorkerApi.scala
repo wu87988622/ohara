@@ -476,4 +476,10 @@ class TestWorkerApi extends OharaTest with Matchers {
     )
     cluster.connectionProps should not include "nn"
   }
+
+  @Test
+  def testBrokerClusterKey(): Unit = {
+    val bkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    accessApi.nodeName("n").brokerClusterKey(bkKey).creation.brokerClusterKey.get shouldBe bkKey
+  }
 }
