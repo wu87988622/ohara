@@ -131,7 +131,7 @@ const StreamApp = props => {
 
     const params = {
       ...values,
-      jarKey: { group: streamJarGroup, name: values.jarKey },
+      jarKey: { group: streamJarGroup, name: values.jarKey.name },
       name: streamAppName,
       instances,
       from: fromKey,
