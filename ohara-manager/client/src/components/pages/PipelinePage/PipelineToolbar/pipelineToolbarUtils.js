@@ -64,7 +64,21 @@ export const createConnector = async params => {
         group,
       });
 
-      if (!response.data.isSuccess) return; // failed to create
+      const {
+        data: { isSuccess, result },
+      } = response;
+
+      // Failed to create, the error will be coming from configurator, so
+      // we won't throw any message here
+      if (!isSuccess) return;
+
+      // Jar without defs, don't allow it to be added into the pipeline graph
+      if (!result.definition) {
+        showMessage(
+          `Your stream jar doesn't contain any definitions! Please use a valid stream jar`,
+        );
+        return;
+      }
 
       connectorName = newStreamName;
     } catch (error) {
