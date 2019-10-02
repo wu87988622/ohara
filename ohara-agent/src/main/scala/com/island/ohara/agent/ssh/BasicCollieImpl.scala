@@ -86,8 +86,16 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie:
       .flatMap(
         Future.traverse(_)(
           // form: PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
-          dockerCache
-            .exec(_, _.containers(name => Collie.objectKeyOfContainerName(name) == key && name.contains(serviceName)))))
+          dockerCache.exec(
+            _,
+            _.containers(
+              name =>
+                // the prefix check must be at first condition since the following conversion assumes the container name
+                // follow our format.
+                name.startsWith(PREFIX_KEY)
+                  && Collie.objectKeyOfContainerName(name) == key
+                  && name.contains(serviceName))
+          )))
       .map(_.flatten)
       .flatMap { containers =>
         Future
