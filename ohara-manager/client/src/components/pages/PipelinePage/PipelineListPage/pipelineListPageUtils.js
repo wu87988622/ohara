@@ -16,7 +16,8 @@
 
 export const addPipelineStatus = (pipelines = []) => {
   const updatedPipeline = pipelines.reduce((acc, pipeline) => {
-    const { objects } = pipeline;
+    // Topics are ommited here
+    const objects = pipeline.objects.filter(object => object.kind !== 'topic');
     const status = objects.filter(object => Boolean(object.state));
 
     let updatedStatus = '';
