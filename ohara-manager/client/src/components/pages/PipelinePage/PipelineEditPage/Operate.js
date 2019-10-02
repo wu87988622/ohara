@@ -36,8 +36,6 @@ const Operate = props => {
     tags: { workerClusterName },
   } = pipeline;
 
-  const streamGroup = workerClusterName;
-
   const makeRequest = (action, connectors) => {
     const { sources, sinks, streams } = getConnectors(connectors);
     const _connectors = sources.concat(sinks);
@@ -51,7 +49,7 @@ const Operate = props => {
       );
 
       streamsPromises = streams.map(stream =>
-        streamApi.startStreamApp(streamGroup, stream),
+        streamApi.startStreamApp(pipelineGroup, stream),
       );
     } else {
       connectorPromises = _connectors.map(connector =>
@@ -59,7 +57,7 @@ const Operate = props => {
       );
 
       streamsPromises = streams.map(stream =>
-        streamApi.stopStreamApp(streamGroup, stream),
+        streamApi.stopStreamApp(pipelineGroup, stream),
       );
     }
 
