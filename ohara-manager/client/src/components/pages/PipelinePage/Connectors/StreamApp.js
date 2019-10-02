@@ -63,8 +63,6 @@ const StreamApp = props => {
       if (result) {
         const { settings, definition } = result;
 
-        if (!definition) return;
-
         const { from, to } = settings;
         const state = get(result, 'state', null);
         const fromTopic = get(from, '[0].name', '');
