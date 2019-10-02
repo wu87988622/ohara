@@ -44,7 +44,10 @@ const setup = () => {
   cy.createBroker({
     name: brokerClusterName,
     nodeNames: [nodeName],
-    zookeeperClusterName,
+    zookeeperClusterKey: {
+      group: 'default',
+      name: zookeeperClusterName,
+    },
     tags: {
       name: brokerClusterName,
     },
@@ -61,7 +64,7 @@ describe('Broker API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createBroker', () => {
-    const { brokerClusterName } = setup();
+    const { brokerClusterName, zookeeperClusterName } = setup();
 
     cy.get('@createBroker').then(response => {
       const {
@@ -76,6 +79,7 @@ describe('Broker API', () => {
         state,
         imageName,
         tags,
+        zookeeperClusterKey,
       } = result.settings;
 
       expect(isSuccess).to.eq(true);
@@ -90,11 +94,13 @@ describe('Broker API', () => {
       expect(state).to.be.undefined;
       expect(imageName).to.be.a('string');
       expect(tags.name).to.eq(brokerClusterName);
+      expect(zookeeperClusterKey.group).to.eq('default');
+      expect(zookeeperClusterKey.name).to.eq(zookeeperClusterName);
     });
   });
 
   it('fetchBroker', () => {
-    const { brokerClusterName } = setup();
+    const { brokerClusterName, zookeeperClusterName } = setup();
 
     cy.fetchBroker(brokerClusterName).then(response => {
       const {
@@ -109,6 +115,7 @@ describe('Broker API', () => {
         state,
         imageName,
         tags,
+        zookeeperClusterKey,
       } = result.settings;
 
       expect(isSuccess).to.eq(true);
@@ -122,6 +129,8 @@ describe('Broker API', () => {
       expect(state).to.be.undefined;
       expect(imageName).to.be.a('string');
       expect(tags.name).to.eq(brokerClusterName);
+      expect(zookeeperClusterKey.group).to.eq('default');
+      expect(zookeeperClusterKey.name).to.eq(zookeeperClusterName);
     });
   });
 
@@ -130,13 +139,19 @@ describe('Broker API', () => {
 
     const paramsOne = {
       name: generate.serviceName({ prefix: 'broker' }),
-      zookeeperClusterName,
+      zookeeperClusterKey: {
+        group: 'default',
+        name: zookeeperClusterName,
+      },
       nodeNames: [nodeName],
     };
 
     const paramsTwo = {
       name: generate.serviceName({ prefix: 'broker' }),
-      zookeeperClusterName,
+      zookeeperClusterKey: {
+        group: 'default',
+        name: zookeeperClusterName,
+      },
       nodeNames: [nodeName],
     };
 

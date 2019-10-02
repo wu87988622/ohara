@@ -47,7 +47,10 @@ const setup = () => {
   cy.createBroker({
     name: brokerClusterName,
     nodeNames: [nodeName],
-    zookeeperClusterName,
+    zookeeperClusterKey: {
+      group: 'default',
+      name: zookeeperClusterName,
+    },
   });
 
   cy.startBroker(brokerClusterName);

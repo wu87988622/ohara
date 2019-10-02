@@ -59,9 +59,9 @@ export const createWorker = async params => {
     });
 
     const data = {
+      ...params,
       name: params.name,
       jmxPort: params.jmxPort,
-      brokerClusterName: params.brokerClusterName,
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
       jars,

@@ -48,7 +48,6 @@ const PipelineEditPage = props => {
   const [connectors, setConnectors] = useState([]);
   const [freePorts, setFreePorts] = useState([]);
   const [nodeNames, setNodeNames] = useState([]);
-  const [workerGroup, setWorkerGroup] = useState('default');
   const [brokerClusterName, setBrokerClusterName] = useState('');
 
   const { showMessage } = useSnackbar();
@@ -119,8 +118,7 @@ const PipelineEditPage = props => {
         );
         setNodeNames(get(worker, 'settings.nodeNames', []));
         setConnectors(worker.connectors);
-        setBrokerClusterName(worker.settings.brokerClusterName);
-        setWorkerGroup(worker.settings.group);
+        setBrokerClusterName(worker.settings.brokerClusterKey.name);
       }
     };
 
@@ -272,7 +270,6 @@ const PipelineEditPage = props => {
             topics={topics}
             isLoading={isLoading}
             workerClusterName={workerClusterName}
-            workerGroup={workerGroup}
             brokerClusterName={brokerClusterName}
             connectors={connectors}
           />

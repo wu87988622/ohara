@@ -488,7 +488,7 @@ export const handleSave = async (props, values, showMessage) => {
 
   const workerClusterKey = {
     group: 'default',
-    name: values.workerClusterKey,
+    name: workerClusterName,
   };
 
   const _values = changeToken({
@@ -555,7 +555,7 @@ export const getDisplayValue = ({
   }
 
   // We only want to display key `name` for users
-  const keyTypes = ['JAR_KEY', 'CONNECTOR_KEY'];
+  const keyTypes = ['OBJECT_KEY'];
 
   if (keyTypes.includes(valueType)) {
     return configValue.name;

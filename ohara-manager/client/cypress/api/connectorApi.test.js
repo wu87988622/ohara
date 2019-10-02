@@ -44,7 +44,10 @@ const setup = () => {
 
   cy.createBroker({
     name: brokerClusterName,
-    zookeeperClusterName,
+    zookeeperClusterKey: {
+      group: 'default',
+      name: zookeeperClusterName,
+    },
     nodeNames: [nodeName],
   });
 
@@ -52,7 +55,10 @@ const setup = () => {
 
   cy.createWorker({
     name: workerClusterName,
-    brokerClusterName,
+    brokerClusterKey: {
+      group: 'default',
+      name: brokerClusterName,
+    },
     nodeNames: [nodeName],
   });
 
@@ -172,7 +178,10 @@ describe('Connector API', () => {
         'tasks.max': 1,
         topicKeys: [{ group: 'default', name: topicName }],
         version: '0.8.0-SNAPSHOT',
-        workerClusterName,
+        workerClusterKey: {
+          group: 'default',
+          name: workerClusterName,
+        },
       },
     };
 

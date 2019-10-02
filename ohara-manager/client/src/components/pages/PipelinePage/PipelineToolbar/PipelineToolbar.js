@@ -45,7 +45,6 @@ const PipelineToolbar = props => {
     updateGraph,
     topics,
     graph,
-    workerGroup,
   } = props;
 
   useEffect(() => {
@@ -211,7 +210,6 @@ const PipelineToolbar = props => {
               workerClusterName={workerClusterName}
               handleClose={handleModalClose}
               pipelineGroup={pipelineGroup}
-              workerGroup={workerGroup}
             />
           )}
         </div>
@@ -283,7 +281,6 @@ PipelineToolbar.propTypes = {
   topics: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
   workerClusterName: PropTypes.string.isRequired,
-  workerGroup: PropTypes.string.isRequired,
   brokerClusterName: PropTypes.string.isRequired,
 };
 

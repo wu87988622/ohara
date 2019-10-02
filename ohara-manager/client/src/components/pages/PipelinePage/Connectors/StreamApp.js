@@ -118,7 +118,7 @@ const StreamApp = props => {
       toTopic = [];
     }
 
-    const { workerClusterName, brokerCluterName } = props.pipeline.tags;
+    const { workerClusterName, brokerClusterName } = props.pipeline.tags;
     const topicGroup = workerClusterName;
     const streamJarGroup = workerClusterName;
     const fromKey = isEmpty(fromTopic)
@@ -136,56 +136,63 @@ const StreamApp = props => {
       instances,
       from: fromKey,
       to: toKey,
-      brokerCluterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     };
 
-    const res = await streamApi.updateProperty({
-      group: streamGroup,
-      name: streamAppName,
-      params,
-    });
-    const isSuccess = get(res, 'data.isSuccess', false);
+    try {
+      const response = await streamApi.updateProperty({
+        group: streamGroup,
+        name: streamAppName,
+        params,
+      });
+      const isSuccess = get(response, 'data.isSuccess', false);
 
-    if (isSuccess) {
-      const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppName));
+      if (isSuccess) {
+        const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppName));
 
-      // To topic update
-      if (!isFromUpdate) {
-        const currStreamApp = findByGraphName(graph, streamAppName);
-        const toUpdate = { ...currStreamApp, to: toTopic };
-        updateGraph({ update: toUpdate, dispatcher: { name: 'STREAM_APP' } });
-      } else {
-        // From topic update
-        let currFromTopic = findByGraphName(graph, values.from);
-
-        let fromUpdate;
-        if (currFromTopic) {
-          fromUpdate = [...new Set([...currFromTopic.to, streamAppName])];
+        // To topic update
+        if (!isFromUpdate) {
+          const currStreamApp = findByGraphName(graph, streamAppName);
+          const toUpdate = { ...currStreamApp, to: toTopic };
+          updateGraph({ update: toUpdate, dispatcher: { name: 'STREAM_APP' } });
         } else {
-          if (prevFromTopic) {
-            fromUpdate = prevFromTopic.to.filter(t => t !== streamAppName);
+          // From topic update
+          let currFromTopic = findByGraphName(graph, values.from);
+
+          let fromUpdate;
+          if (currFromTopic) {
+            fromUpdate = [...new Set([...currFromTopic.to, streamAppName])];
           } else {
-            fromUpdate = [];
+            if (prevFromTopic) {
+              fromUpdate = prevFromTopic.to.filter(t => t !== streamAppName);
+            } else {
+              fromUpdate = [];
+            }
+            currFromTopic = prevFromTopic;
           }
-          currFromTopic = prevFromTopic;
-        }
-        let update;
-        if (!currFromTopic) {
-          update = { ...currFromTopic };
-        } else {
-          update = {
-            ...currFromTopic,
-            to: fromUpdate,
-          };
-        }
+          let update;
+          if (!currFromTopic) {
+            update = { ...currFromTopic };
+          } else {
+            update = {
+              ...currFromTopic,
+              to: fromUpdate,
+            };
+          }
 
-        updateGraph({
-          dispatcher: { name: 'STREAM_APP' },
-          update,
-          isFromTopic: true,
-          streamAppName,
-        });
+          updateGraph({
+            dispatcher: { name: 'STREAM_APP' },
+            update,
+            isFromTopic: true,
+            streamAppName,
+          });
+        }
       }
+    } catch (error) {
+      showMessage(error.message);
     }
   };
 
@@ -244,31 +251,46 @@ const StreamApp = props => {
   };
 
   const triggerStreamApp = async action => {
-    let res;
+    let response;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamApi.startStreamApp(streamGroup, streamAppName);
+      try {
+        response = await streamApi.startStreamApp(streamGroup, streamAppName);
+      } catch (error) {
+        showMessage(error.message);
+      }
     } else {
-      res = await streamApi.stopStreamApp(streamGroup, streamAppName);
+      try {
+        response = await streamApi.stopStreamApp(streamGroup, streamAppName);
+      } catch (error) {
+        showMessage(error.message);
+      }
     }
 
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const isSuccess = get(response, 'data.isSuccess', false);
     handleTriggerConnectorResponse(action, isSuccess);
   };
 
   const handleTriggerConnectorResponse = async (action, isSuccess) => {
     if (!isSuccess) return;
 
-    const response = await streamApi.fetchProperty(streamGroup, streamAppName);
-    const state = get(response, 'data.result.state', null);
-    const { graph, updateGraph } = props;
+    try {
+      const response = await streamApi.fetchProperty(
+        streamGroup,
+        streamAppName,
+      );
+      const state = get(response, 'data.result.state', null);
+      const { graph, updateGraph } = props;
 
-    setState({ state });
-    const currStreamApp = findByGraphName(graph, streamAppName);
-    const update = { ...currStreamApp, state };
-    updateGraph({ update, dispatcher: { name: 'STREAM_APP' } });
+      setState(state);
+      const currStreamApp = findByGraphName(graph, streamAppName);
+      const update = { ...currStreamApp, state };
+      updateGraph({ update, dispatcher: { name: 'STREAM_APP' } });
 
-    if (action === STREAM_APP_ACTIONS.start) {
-      if (!isNull(state)) showMessage(MESSAGES.STREAM_APP_START_SUCCESS);
+      if (action === STREAM_APP_ACTIONS.start) {
+        if (!isNull(state)) showMessage(MESSAGES.STREAM_APP_START_SUCCESS);
+      }
+    } catch (error) {
+      showMessage(error.message);
     }
   };
 
@@ -348,7 +370,7 @@ StreamApp.propTypes = {
     ).isRequired,
     tags: PropTypes.shape({
       workerClusterName: PropTypes.string.isRequired,
-      brokerCluterName: PropTypes.string.isRequired,
+      brokerClusterName: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
   updateGraph: PropTypes.func.isRequired,

@@ -96,7 +96,9 @@ const PipelineListPage = props => {
     const { history, match } = props;
     const { name: pipelineName, workspace: workerClusterName } = values;
     const {
-      settings: { brokerClusterName },
+      settings: {
+        brokerClusterKey: { name: brokerClusterName },
+      },
     } = workers.find(worker => worker.settings.name === workerClusterName);
 
     const params = {

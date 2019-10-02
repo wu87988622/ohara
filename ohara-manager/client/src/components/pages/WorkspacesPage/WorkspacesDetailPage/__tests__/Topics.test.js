@@ -42,7 +42,10 @@ describe('<Topics />', () => {
       worker: {
         settings: {
           name: generate.name(),
-          brokerClusterName,
+          brokerClusterKey: {
+            name: generate.name(),
+            brokerClusterName,
+          },
         },
       },
     };
@@ -207,7 +210,10 @@ describe('<Topics />', () => {
       worker: {
         settings: {
           name: generate.name(),
-          brokerClusterName,
+          brokerClusterKey: {
+            name: generate.name(),
+            brokerClusterName,
+          },
         },
       },
     };
@@ -246,6 +252,7 @@ describe('<Topics />', () => {
     const { getByTestId, getByText } = await renderWithProvider(
       <Topics {...props} />,
     );
+
     const topic = getByTestId(topics[0].name);
 
     fireEvent.click(topic);

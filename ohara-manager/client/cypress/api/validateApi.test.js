@@ -41,7 +41,10 @@ const setup = () => {
 
   cy.createBroker({
     name: brokerClusterName,
-    zookeeperClusterName,
+    zookeeperClusterKey: {
+      group: 'default',
+      name: zookeeperClusterName,
+    },
     nodeNames: [nodeName],
   });
 
@@ -49,7 +52,10 @@ const setup = () => {
 
   cy.createWorker({
     name: workerClusterName,
-    brokerClusterName,
+    brokerClusterKey: {
+      group: 'default',
+      name: brokerClusterName,
+    },
     nodeNames: [nodeName],
   });
 
@@ -107,7 +113,10 @@ describe('Validate API', () => {
         ...params,
         'connector.class': connector.className,
         topicKeys: [{ group: workerClusterName, name: topicName }],
-        workerClusterName,
+        workerClusterKey: {
+          group: 'default',
+          name: workerClusterName,
+        },
         'jio.binding.port': generate.port(),
       };
 

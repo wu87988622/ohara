@@ -306,7 +306,10 @@ const WorkerNewModal = props => {
 
     const brokerPostParams = {
       name: brokerClusterName,
-      zookeeperClusterName: zookeeperName,
+      zookeeperClusterKey: {
+        group: 'default',
+        name: zookeeperName,
+      },
       clientPort: generate.port(),
       exporterPort: generate.port(),
       jmxPort: generate.port(),
@@ -334,7 +337,10 @@ const WorkerNewModal = props => {
       jarKeys,
       jmxPort: generate.port(),
       clientPort: generate.port(),
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
       groupId: generate.serviceName(),
       configTopicName: generate.serviceName(),
       offsetTopicName: generate.serviceName(),
