@@ -55,7 +55,10 @@ describe('<Overview />', () => {
         clientPort: generate.port(),
         jmxPort: generate.port(),
         nodeNames: [generate.serviceName()],
-        brokerClusterName,
+        brokerClusterKey: {
+          group: 'deafult',
+          name: brokerClusterName,
+        },
         imageName: generate.name(),
         tags: {
           broker: {

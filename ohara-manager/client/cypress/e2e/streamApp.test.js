@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import * as generate from '../../src/utils/generate';
 
-describe.skip('StreamApp', () => {
+describe('StreamApp', () => {
   before(() => {
     cy.removeWorkers();
     cy.addWorker();
@@ -37,7 +37,7 @@ describe.skip('StreamApp', () => {
       prefix: 'pipeline',
       length: 5,
     });
-    const streamAppName = generate.serviceName({ prefix: 'stream' });
+    const streamAppName = generate.serviceName({ prefix: 'stream', length: 5 });
 
     cy.addTopic(fromTopicName);
     cy.addTopic(toTopicName);
@@ -85,6 +85,8 @@ describe.skip('StreamApp', () => {
       .click()
       .wait('@putPipeline');
 
+    cy.wait(1000);
+
     cy.getByTestId('toolbar-topics')
       .click({ force: true })
       .getByText('Please select...')
@@ -94,6 +96,8 @@ describe.skip('StreamApp', () => {
       .getByText('ADD')
       .click()
       .wait('@putPipeline');
+
+    cy.wait(1000);
 
     cy.getByText(streamAppName)
       .click({ force: true })

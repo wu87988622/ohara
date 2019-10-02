@@ -42,26 +42,31 @@ const setup = () => {
   cy.createBroker({
     name: brokerClusterName,
     nodeNames: [nodeName],
-    zookeeperClusterName,
+    zookeeperClusterKey: {
+      group: 'default',
+      name: zookeeperClusterName,
+    },
   });
 
   cy.startBroker(brokerClusterName);
 
-  const jarKeys = cy.createJar('ohara-it-source.jar').then(res => {
-    const { data } = res;
-    return {
-      name: data.result.name,
-      group: data.result.group,
-    };
-  });
-
   cy.createWorker({
     name: workerClusterName,
     nodeNames: [nodeName],
-    jarKeys,
-    brokerClusterName,
+    jarKeys: [],
+    brokerClusterKey: {
+      group: 'default',
+      name: brokerClusterName,
+    },
     tags: {
-      name: workerClusterName,
+      broker: {
+        imageName: generate.name(),
+        name: brokerClusterName,
+      },
+      zookeeper: {
+        imageName: generate.name(),
+        name: zookeeperClusterName,
+      },
     },
   }).as('createWorker');
 
@@ -86,20 +91,33 @@ describe('Worker API', () => {
         data: { isSuccess, result },
       } = response;
 
+      const {
+        name,
+        clientPort,
+        nodeNames,
+        jarKeys,
+        configTopicName,
+        offsetTopicName,
+        statusTopicName,
+        imageName,
+        tags,
+      } = result.settings;
+
       expect(isSuccess).to.eq(true);
 
-      expect(result.settings.name).to.eq(workerClusterName);
-      expect(result.settings.clientPort).to.be.a('number');
-      expect(result.settings.nodeNames)
-        .to.be.a('array')
+      expect(name).to.eq(workerClusterName);
+      expect(clientPort).to.be.a('number');
+      expect(nodeNames)
+        .to.be.an('array')
         .that.have.lengthOf(1);
-      expect(result.connectors).to.be.a('array');
-      expect(result.settings.jarInfos).to.be.a('array');
-      expect(result.settings.configTopicName).to.be.a('string');
-      expect(result.settings.offsetTopicName).to.be.a('string');
-      expect(result.settings.statusTopicName).to.be.a('string');
-      expect(result.settings.imageName).to.be.a('string');
-      expect(result.settings.tags.name).to.eq(workerClusterName);
+      expect(jarKeys).to.be.an('array');
+      expect(configTopicName).to.be.a('string');
+      expect(offsetTopicName).to.be.a('string');
+      expect(statusTopicName).to.be.a('string');
+      expect(imageName).to.be.a('string');
+      expect(result.connectors).to.be.an('array');
+      expect(tags.zookeeper).to.be.an('object');
+      expect(tags.broker).to.be.an('object');
     });
   });
 
@@ -111,15 +129,33 @@ describe('Worker API', () => {
         data: { isSuccess, result },
       } = response;
 
+      const {
+        name,
+        clientPort,
+        nodeNames,
+        jarKeys,
+        configTopicName,
+        offsetTopicName,
+        statusTopicName,
+        imageName,
+        tags,
+      } = result.settings;
+
       expect(isSuccess).to.eq(true);
 
-      expect(result.settings.name).to.eq(workerClusterName);
-      expect(result.settings.clientPort).to.be.a('number');
-      expect(result.settings.nodeNames).to.be.a('array');
-      expect(result.connectors).to.be.a('array');
-      expect(result.settings.jarInfos).to.be.a('array');
-      expect(result.settings.imageName).to.be.a('string');
-      expect(result.settings.tags.name).to.eq(workerClusterName);
+      expect(name).to.eq(workerClusterName);
+      expect(clientPort).to.be.a('number');
+      expect(nodeNames)
+        .to.be.an('array')
+        .that.have.lengthOf(1);
+      expect(jarKeys).to.be.an('array');
+      expect(configTopicName).to.be.a('string');
+      expect(offsetTopicName).to.be.a('string');
+      expect(statusTopicName).to.be.a('string');
+      expect(imageName).to.be.a('string');
+      expect(result.connectors).to.be.an('array');
+      expect(tags.zookeeper).to.be.an('object');
+      expect(tags.broker).to.be.an('object');
     });
   });
 
@@ -128,13 +164,19 @@ describe('Worker API', () => {
 
     const paramsOne = {
       name: generate.serviceName({ prefix: 'worker' }),
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
       nodeNames: [nodeName],
     };
 
     const paramsTwo = {
       name: generate.serviceName({ prefix: 'worker' }),
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
       nodeNames: [nodeName],
     };
 

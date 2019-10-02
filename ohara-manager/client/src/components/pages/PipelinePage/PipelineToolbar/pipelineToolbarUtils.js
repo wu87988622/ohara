@@ -37,7 +37,7 @@ export const createConnector = async params => {
     updateGraph,
     connector,
     brokerClusterName,
-    workerClusterKey,
+    workerClusterName,
     newConnectorName,
     newStreamName,
     showMessage,
@@ -57,7 +57,10 @@ export const createConnector = async params => {
       const response = await createProperty({
         jarKey: connector.jarKey,
         name: newStreamName,
-        brokerClusterName,
+        brokerClusterKey: {
+          group: 'default',
+          name: brokerClusterName,
+        },
         group,
       });
 
@@ -72,7 +75,10 @@ export const createConnector = async params => {
       const response = await connectorApi.createConnector({
         name: newConnectorName,
         'connector.class': className,
-        workerClusterKey,
+        workerClusterKey: {
+          group: 'default',
+          name: workerClusterName,
+        },
         group,
       });
 

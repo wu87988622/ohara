@@ -48,7 +48,10 @@ const setup = () => {
   cy.createBroker({
     name: brokerClusterName,
     nodeNames: [nodeName],
-    zookeeperClusterName,
+    zookeeperClusterKey: {
+      group: 'default',
+      name: zookeeperClusterName,
+    },
   });
 
   cy.startBroker(brokerClusterName);
@@ -56,7 +59,10 @@ const setup = () => {
   cy.createWorker({
     name: workerClusterName,
     nodeNames: [nodeName],
-    brokerClusterName,
+    brokerClusterKey: {
+      group: 'default',
+      name: brokerClusterName,
+    },
   }).as('createWorker');
 
   cy.startWorker(workerClusterName);
@@ -102,7 +108,10 @@ describe('Stream property API', () => {
           name: response.data.result.name,
           group: response.data.result.group,
         },
-        brokerClusterName,
+        brokerClusterKey: {
+          group: 'default',
+          name: brokerClusterName,
+        },
         name: streamName,
         tags: {
           name: streamName,
@@ -119,12 +128,15 @@ describe('Stream property API', () => {
 
         expect(settings).to.be.an('object');
         expect(settings.tags.name).to.eq(settings.name);
+        expect(settings.brokerClusterKey).to.be.an('object');
+        expect(settings.brokerClusterKey.name).to.eq(brokerClusterName);
+        expect(settings.brokerClusterKey.group).to.eq('default');
       });
     });
   });
 
   it('fetchProperty', () => {
-    const { streamName, streamGroup } = setup();
+    const { streamName, streamGroup, brokerClusterName } = setup();
 
     cy.fetchProperty(streamGroup, streamName).then(response => {
       const {
@@ -136,11 +148,14 @@ describe('Stream property API', () => {
 
       expect(settings).to.be.an('object');
       expect(settings.tags.name).to.eq(settings.name);
+      expect(settings.brokerClusterKey).to.be.an('object');
+      expect(settings.brokerClusterKey.name).to.eq(brokerClusterName);
+      expect(settings.brokerClusterKey.group).to.eq('default');
     });
   });
 
   it('updateProperty', () => {
-    const { streamName, streamGroup } = setup();
+    const { streamName, streamGroup, brokerClusterName } = setup();
 
     const params = {
       name: streamName,
@@ -162,6 +177,9 @@ describe('Stream property API', () => {
 
       expect(settings).to.be.a('object');
       expect(settings.tags.name).to.eq(settings.name);
+      expect(settings.brokerClusterKey).to.be.an('object');
+      expect(settings.brokerClusterKey.name).to.eq(brokerClusterName);
+      expect(settings.brokerClusterKey.group).to.eq('default');
     });
   });
 

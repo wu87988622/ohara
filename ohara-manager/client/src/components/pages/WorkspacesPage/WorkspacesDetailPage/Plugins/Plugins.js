@@ -121,7 +121,7 @@ const Plugins = props => {
     { id: 'name', label: 'File name' },
     { id: 'size', label: 'File size(KB)' },
     { id: 'lastModified', label: 'Last modified' },
-    { id: 'loaded', label: 'Loaded' },
+    { id: 'loaded', label: 'Loaded', sortable: false },
     { id: 'action', label: 'Action', sortable: false },
   ];
 

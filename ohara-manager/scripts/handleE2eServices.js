@@ -114,7 +114,10 @@ exports.createServices = async ({
 
     await axios.post(brokerUrl, {
       name: brokerClusterName,
-      zookeeperClusterName,
+      zookeeperClusterKey: {
+        group: 'default',
+        name: zookeeperClusterName,
+      },
       nodeNames: [nodeHost],
     });
 
@@ -126,7 +129,10 @@ exports.createServices = async ({
 
     await axios.post(workerUrl, {
       name: workerClusterName,
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
       nodeNames: [nodeHost],
       tags: {
         broker: {

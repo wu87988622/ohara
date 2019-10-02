@@ -233,8 +233,8 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(streams)) {
       streams.forEach(stream => {
-        const { group, state, settings } = stream;
-        const { name } = settings;
+        const { state, settings } = stream;
+        const { name, group } = settings;
 
         if (!isUndefined(state)) {
           cy.stopStreamApp(group, name);
@@ -259,8 +259,8 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(topics)) {
       topics.forEach(topic => {
-        const { group, state, settings } = topic;
-        const { name } = settings;
+        const { state, settings } = topic;
+        const { name, group } = settings;
 
         if (!isUndefined(state)) {
           cy.stopTopic(group, name);
@@ -335,6 +335,15 @@ Cypress.Commands.add('deleteAllServices', () => {
         }
 
         cy.deleteZookeeper(name);
+      });
+    }
+  });
+
+  cy.fetchNodes().then(response => {
+    const { result: nodes } = response.data;
+    if (!isEmpty(nodes)) {
+      nodes.forEach(node => {
+        cy.request('DELETE', `api/nodes/${node.name}`);
       });
     }
   });

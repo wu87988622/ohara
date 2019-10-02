@@ -71,7 +71,6 @@ const props = {
   resetCurrentTopic: jest.fn(),
   workerClusterName: generate.serviceName(),
   brokerClusterName: generate.serviceName(),
-  workerGroup: 'default',
   connectors: [
     {
       className: '',

@@ -130,7 +130,10 @@ Overview.propTypes = {
   worker: PropTypes.shape({
     settings: PropTypes.shape({
       imageName: PropTypes.string.isRequired,
-      brokerClusterName: PropTypes.string.isRequired,
+      brokerClusterKey: PropTypes.shape({
+        group: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+      }).isRequired,
       name: PropTypes.string.isRequired,
       tags: PropTypes.object,
     }),

@@ -49,7 +49,10 @@ Cypress.Commands.add('addWorker', params => {
     .as('broker');
 
   cy.get('@broker').then(broker => {
-    cy.request('GET', `api/zookeepers/${broker.settings.zookeeperClusterName}`)
+    cy.request(
+      'GET',
+      `api/zookeepers/${broker.settings.zookeeperClusterKey.name}`,
+    )
       .then(res => res.body)
       .as('zookeepers');
   });
@@ -58,7 +61,10 @@ Cypress.Commands.add('addWorker', params => {
     cy.get('@broker').then(broker => {
       cy.request('POST', 'api/workers', {
         name: workerName,
-        brokerClusterName: broker.settings.name,
+        brokerClusterKey: {
+          name: broker.settings.name,
+          group: 'default',
+        },
         jarKeys,
         groupId: generate.id(),
         nodeNames: [nodeName],
@@ -127,7 +133,9 @@ Cypress.Commands.add(
       const workers = res.body;
       const currentWorkerName = workerName;
       const {
-        settings: { brokerClusterName },
+        settings: {
+          brokerClusterKey: { name: brokerClusterName },
+        },
       } = workers.find(worker => worker.settings.name === currentWorkerName);
 
       const topicGroup = `${Cypress.env('WORKER_NAME')}`;

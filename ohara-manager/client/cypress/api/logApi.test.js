@@ -42,7 +42,10 @@ describe('Log API', () => {
     cy.createBroker({
       name: brokerClusterName,
       nodeNames: [nodeName],
-      zookeeperClusterName,
+      zookeeperClusterKey: {
+        group: 'default',
+        name: zookeeperClusterName,
+      },
     });
 
     cy.startBroker(brokerClusterName);
@@ -50,7 +53,10 @@ describe('Log API', () => {
     cy.createWorker({
       name: workerClusterName,
       nodeNames: [nodeName],
-      brokerClusterName,
+      brokerClusterKey: {
+        group: 'default',
+        name: brokerClusterName,
+      },
     });
 
     cy.startWorker(workerClusterName);

@@ -228,9 +228,12 @@ Topics.propTypes = {
   }).isRequired,
   worker: PropTypes.shape({
     settings: PropTypes.shape({
-      brokerClusterName: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
-    }).isRequired,
+      brokerClusterKey: PropTypes.shape({
+        group: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+      }).isRequired,
+    }),
   }).isRequired,
 };
 

@@ -52,8 +52,8 @@ export const createBroker = async params => {
   try {
     const url = `/api/brokers`;
     const data = {
+      ...params,
       name: params.name,
-      zookeeperClusterName: params.zookeeperClusterName,
       nodeNames: params.nodeNames || [],
       clientPort: params.clientPort,
       exporterPort: params.exporterPort,
