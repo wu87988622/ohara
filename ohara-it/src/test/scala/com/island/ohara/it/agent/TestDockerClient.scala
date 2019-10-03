@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.agent
 
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
@@ -224,6 +225,20 @@ class TestDockerClient extends IntegrationTest with Matchers {
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
       client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
     } finally client.forceRemove(name)
+  }
+
+  @Test
+  def testAddConfigs(): Unit = runTest { client =>
+    val name: String = CommonUtils.randomString()
+    val configs = (for (i <- 0 to 10) yield i.toString -> CommonUtils.randomString(i)).toMap
+
+    try {
+      client.addConfig(name, configs) shouldBe name
+      client.inspectConfig(name).keys.forall(configs.contains) shouldBe true
+
+      client.removeConfig(name) shouldBe true
+      an[IOException] should be thrownBy client.inspectConfig(name)
+    } finally client.forceRemoveConfig(name)
   }
 
   @Test

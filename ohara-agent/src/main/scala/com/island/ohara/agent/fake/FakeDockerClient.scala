@@ -30,6 +30,7 @@ import scala.collection.JavaConverters._
 private[agent] class FakeDockerClient(nodeName: String) extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
   private[this] val FAKE_KIND_NAME: String = "FAKE"
+  private[this] val cacheConfigs = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedContainers = new ConcurrentHashMap[String, ContainerInfo]()
 
   override def containerNames(): Seq[ContainerName] =
@@ -104,6 +105,27 @@ private[agent] class FakeDockerClient(nodeName: String) extends ReleaseOnce with
   override def verify(): Boolean = true
 
   override def log(name: String): String = s"fake docker log for $name"
+
+  override def addConfig(name: String, configs: Map[String, String]): String = {
+    cacheConfigs.put(name, configs)
+    name
+  }
+
+  override def inspectConfig(name: String): Map[String, String] = {
+    val res = cacheConfigs.get(name)
+    if (res == null) {
+      throw new IllegalArgumentException(s"the required configs of $name not found!")
+    }
+    res
+  }
+
+  override def removeConfig(name: String): Boolean = {
+    val res = cacheConfigs.remove(name)
+    if (res == null) false
+    else true
+  }
+
+  override def forceRemoveConfig(name: String): Boolean = removeConfig(name)
 
   override def containerInspector(containerName: String): ContainerInspector = containerInspector(containerName, false)
 

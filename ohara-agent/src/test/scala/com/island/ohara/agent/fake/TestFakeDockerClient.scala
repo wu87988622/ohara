@@ -68,4 +68,21 @@ class TestFakeDockerClient extends OharaTest with Matchers {
 
     result(fake.containers()).size shouldBe 0
   }
+
+  @Test
+  def testAddConfigs(): Unit = {
+    val configs = (for (i <- 1 to 10) yield i.toString -> CommonUtils.randomString()).toMap
+    // using generate name
+    val n1 = fake.addConfig(configs)
+    // using specific name
+    val n2 = fake.addConfig(CommonUtils.randomString(), configs)
+
+    n1 should not be n2
+    configs.keySet.forall(fake.inspectConfig(n1).contains) shouldBe true
+    fake.inspectConfig(n1).keySet.forall(fake.inspectConfig(n2).contains) shouldBe true
+
+    // remove a config list
+    fake.removeConfig(n1)
+    an[Exception] should be thrownBy fake.inspectConfig(n1)
+  }
 }

@@ -118,6 +118,45 @@ trait DockerClient extends Releasable {
 
   def imageNames(): Seq[String]
 
+  /**
+    * add config list to docker. We will generate a name for you.
+    *
+    * @param configs the config list map
+    * @return created name
+    */
+  def addConfig(configs: Map[String, String]): String = addConfig(CommonUtils.randomString(), configs)
+
+  /**
+    * add config list to docker.
+    * Note: The name here must have at least two characters
+    *
+    * @param configs the config list map
+    * @return created name
+    */
+  def addConfig(name: String, configs: Map[String, String]): String
+
+  /**
+    * remove the required config list by name
+    * @param name the created name
+    * @return the remove operation is successful or not
+    */
+  def removeConfig(name: String): Boolean
+
+  /**
+    * remove the required config list without gracefully
+    * @param name the created name
+    * @return the remove operation is successful or not
+    */
+  def forceRemoveConfig(name: String): Boolean
+
+  /**
+    * get the config list pairs by specific name.
+    *
+    * @param name the config list name
+    * @return config list pairs
+    */
+  def inspectConfig(name: String): Map[String, String]
+
   def containerInspector(containerName: String): ContainerInspector
 }
 

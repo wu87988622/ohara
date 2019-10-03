@@ -25,10 +25,10 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 
 private[docker] object DockerClientImpl {
   private val LOG = Logger(classOf[DockerClientImpl])
@@ -283,6 +283,38 @@ private[docker] class DockerClientImpl(nodeName: String, port: Int, user: String
     .execute(s"docker container logs $name")
     .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
     .getOrElse(throw new IllegalArgumentException(s"no response from $nodeName"))
+
+  // Pure docker command doesn't allow us to using "docker config" operations to handle config setting.
+  // Hopefully, we could use the "--label" architecture to handle the key-value pairs without
+  // actually using the volume structure, which will be introduced in the future...by Sam
+  override def addConfig(name: String, configs: Map[String, String]): String = agent
+    .execute(
+      Seq(
+        s"docker volume create",
+        s"${configs.map { case (k, v) => s"--label $k=$v" }.mkString(" ")}",
+        name
+      ).filter(_.nonEmpty).mkString(" "))
+    .map(msg => if (msg.contains("receive error message:")) throw new IllegalArgumentException(msg) else msg)
+    .getOrElse(throw new IllegalArgumentException(s"Adding config but got no response. What happened?"))
+    .trim()
+
+  override def inspectConfig(name: String): Map[String, String] = agent
+    .execute(s"docker volume inspect --format '{{json .Labels}}' $name")
+    .getOrElse(throw new IllegalArgumentException(s"The required name [$name] has no configs"))
+    .parseJson
+    .convertTo[Map[String, String]]
+
+  override def removeConfig(name: String): Boolean = agent
+    .execute(
+      s"docker volume rm $name"
+    )
+    .fold(false)(_ => true)
+
+  override def forceRemoveConfig(name: String): Boolean = agent
+    .execute(
+      s"docker volume rm -f $name"
+    )
+    .fold(false)(_ => true)
 
   override def containerInspector(containerName: String): ContainerInspector = containerInspector(containerName, false)
 
