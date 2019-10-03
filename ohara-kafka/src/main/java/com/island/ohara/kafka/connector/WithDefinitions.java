@@ -19,9 +19,19 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.setting.SettingDef;
 import java.util.List;
 
-/** An interface to declare it has definitions. */
-@FunctionalInterface
 public interface WithDefinitions {
+
   /** @return a unmodifiable collection of definitions */
   List<SettingDef> definitions();
+
+  /**
+   * the "column" describes the serialization ruleS of input/output data. However, not all
+   * connectors count on it. Keeping a complicated but useless definition is weird to users. Hence,
+   * we offer a way to "remove" it from connectors.
+   *
+   * @return true if your connector counts on column. Otherwise, false.
+   */
+  default boolean needColumnDefinition() {
+    return true;
+  }
 }

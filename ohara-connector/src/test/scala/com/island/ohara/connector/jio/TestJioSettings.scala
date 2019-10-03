@@ -17,9 +17,11 @@
 package com.island.ohara.connector.jio
 
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 class TestJioSettings extends OharaTest with Matchers {
 
   @Test
@@ -53,4 +55,12 @@ class TestJioSettings extends OharaTest with Matchers {
     BINDING_PATH_DEFINITION.key() shouldBe BINDING_PATH_KEY
     BINDING_PATH_DEFINITION.defaultValue() shouldBe BINDING_PATH_DEFAULT
   }
+
+  @Test
+  def jsonInHaveNoColumns(): Unit =
+    new JsonIn().definitions().asScala.find(_ == ConnectorDefUtils.COLUMNS_DEFINITION) shouldBe None
+
+  @Test
+  def jsonOutHaveNoColumns(): Unit =
+    new JsonOut().definitions().asScala.find(_ == ConnectorDefUtils.COLUMNS_DEFINITION) shouldBe None
 }

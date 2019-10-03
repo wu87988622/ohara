@@ -38,7 +38,7 @@ final class ConnectorUtils {
   }
 
   static List<SettingDef> toSettingDefinitions(
-      List<SettingDef> settingDefinitions, ConnectorVersion version) {
+      List<SettingDef> settingDefinitions, ConnectorVersion version, boolean needColumnDefinition) {
     return Stream.of(
             settingDefinitions,
             Arrays.asList(
@@ -46,6 +46,9 @@ final class ConnectorUtils {
                 copy(version.revision(), ConnectorDefUtils.REVISION_DEFINITION),
                 copy(version.author(), ConnectorDefUtils.AUTHOR_DEFINITION)))
         .flatMap(Collection::stream)
+        .filter(
+            definition ->
+                needColumnDefinition || definition != ConnectorDefUtils.COLUMNS_DEFINITION)
         .collect(Collectors.toList());
   }
 

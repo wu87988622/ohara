@@ -55,4 +55,6 @@ class JsonOut extends RowSinkConnector {
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
   override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
+
+  override def needColumnDefinition(): Boolean = false
 }
