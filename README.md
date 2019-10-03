@@ -9,7 +9,7 @@
 
 Ohara is an scalable streaming platform, that allows users to easily organized their input, output, and streaming applications with an clean and comprehensive GUI.
 
-The streaming application ([StreamApp](https://ohara.readthedocs.io/en/latest/custom_streamapp.html)) contains the business logic defined by the user. By combining the applications with the default FTP, JDBC, HDFS, or [custom](https://ohara.readthedocs.io/en/latest/custom_connector.html) connectors, an user can construct a scalable pipeline with full control.
+The streaming application ([StreamApp](https://ohara.readthedocs.io/en/0.8/custom_streamapp.html)) contains the business logic defined by the user. By combining the applications with the default FTP, JDBC, HDFS, or [custom](https://ohara.readthedocs.io/en/0.8/custom_connector.html) connectors, an user can construct a scalable pipeline with full control.
 
 Ohara provides an architecture to scale, so the users can focus on their business logic and their main applications.
 
@@ -17,7 +17,7 @@ Ohara provides an architecture to scale, so the users can focus on their busines
 
 ----
 
-## [Ohara Documentation](https://ohara.readthedocs.io/en/latest)
+## [Ohara Documentation](https://ohara.readthedocs.io/en/0.8)
 
 ----
 
