@@ -24,6 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object LogApi {
   val LOG_PREFIX_PATH: String = "logs"
+  val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
   case class NodeLog(hostname: String, value: String)
   implicit val NODE_LOG_FORMAT: RootJsonFormat[NodeLog] = new RootJsonFormat[NodeLog] {
@@ -63,6 +64,9 @@ object LogApi {
 
     def log4StreamCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.STREAMS_PREFIX_PATH, clusterKey))
+
+    def log4Configurator()(implicit executionContext: ExecutionContext): Future[ClusterLog] =
+      exec.get[ClusterLog, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
   }
 
   def access: Access = new Access

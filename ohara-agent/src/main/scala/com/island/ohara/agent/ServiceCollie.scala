@@ -21,7 +21,7 @@ import java.util.concurrent.{ExecutorService, Executors}
 import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import com.island.ohara.agent.ssh.ServiceCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
@@ -141,6 +141,31 @@ trait ServiceCollie extends Releasable {
     * @return succeed report in string. Or try with exception
     */
   def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]]
+
+  /**
+    * list all containers from the hosted nodes
+    * @param executionContext thread pool
+    * @return active containers
+    */
+  def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]]
+
+  /**
+    * get the log of specific container name
+    * @param name container name
+    * @param executionContext thread pool
+    * @return log or NoSuchElementException
+    */
+  def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] = logs().map(
+    _.find(_._1.name == name)
+      .map(e => e._1 -> e._2)
+      .getOrElse(throw new NoSuchElementException(s"container:$name is not existed!!!")))
+
+  /**
+    * list all container and log from hosted nodes
+    * @param executionContext thread pool
+    * @return container and log
+    */
+  def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]]
 }
 
 object ServiceCollie {

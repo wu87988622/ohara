@@ -21,7 +21,7 @@ import java.util.Objects
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.DockerClientImpl._
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping, PortPair}
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
@@ -164,8 +164,24 @@ private[docker] class DockerClientImpl(nodeName: String, port: Int, user: String
         networkDriver = networkDriver
       ))
 
-  override def containerNames(): Seq[String] =
-    agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
+  override def containerNames(): Seq[ContainerName] =
+    agent
+      .execute("docker ps -a --format \"{{.ID}}\t{{.Names}}\\t{{.Image}}\"")
+      .map(_.split("\n").toSeq)
+      .map(_.map { line =>
+        val items = line.split("\t")
+        if (items.size != 3)
+          throw new IllegalArgumentException(
+            s"""invalid format:$line from docker with format \"{{.ID}}\t{{.Names}}\t{{.Image}}\"""")
+        else
+          new ContainerName(
+            id = items(0),
+            name = items(1),
+            imageName = items(2),
+            nodeName = nodeName
+          )
+      })
+      .getOrElse(Seq.empty)
 
   override def activeContainers(nameFilter: String => Boolean)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = listContainers(nameFilter, true)

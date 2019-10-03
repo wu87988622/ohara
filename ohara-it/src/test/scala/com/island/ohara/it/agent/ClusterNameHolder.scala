@@ -125,18 +125,19 @@ object ClusterNameHolder {
           try client
             .containerNames()
             .filter(containerName =>
-              clusterKey.exists(key => containerName.contains(key.group()) && containerName.contains(key.name())))
+              clusterKey.exists(key =>
+                containerName.name.contains(key.group()) && containerName.name.contains(key.name())))
             .foreach { containerName =>
               try {
                 println(s"[-----------------------------------$containerName-----------------------------------]")
-                val containerLogs = try client.log(containerName)
+                val containerLogs = try client.log(containerName.name)
                 catch {
                   case e: Throwable =>
                     s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
                 }
                 println(containerLogs)
                 println("[------------------------------------------------------------------------------------]")
-                client.forceRemove(containerName)
+                client.forceRemove(containerName.name)
                 LOG.info(s"succeed to remove container $containerName")
               } catch {
                 case e: Throwable =>

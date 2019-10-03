@@ -16,7 +16,8 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.{ServiceCollie, NodeCollie}
+import com.island.ohara.agent.{NodeCollie, ServiceCollie}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.configurator.store.DataStore
@@ -61,4 +62,10 @@ private[configurator] class FakeServiceCollie(nodeCollie: NodeCollie,
 
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
     Future.successful(Try(s"This is fake mode so we didn't test connection actually..."))
+
+  override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
+    Future.successful(Seq.empty)
+
+  override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+    Future.successful(Map.empty)
 }

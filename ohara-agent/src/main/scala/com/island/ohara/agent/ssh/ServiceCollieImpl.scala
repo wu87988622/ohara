@@ -20,7 +20,7 @@ import java.util.concurrent.{ExecutorService, TimeUnit}
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
@@ -127,10 +127,37 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
           // 1) is there hello-world image?
           // 2) did we succeed to run hello-world container?
           if (!checkImage()) throw new IllegalStateException(s"Failed to download $helloWorldImage image")
-          else if (dockerClient.containerNames().contains(name)) s"succeed to run $helloWorldImage on ${node.name}"
+          else if (dockerClient.containerNames().map(_.name).contains(name))
+            s"succeed to run $helloWorldImage on ${node.name}"
           else throw new IllegalStateException(s"failed to run container $helloWorldImage")
         } finally try dockerClient.forceRemove(name)
         finally dockerClient.close()
       }
     }
+
+  override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
+    nodeCollie.nodes().map(_.flatMap(dockerCache.exec(_, _.containerNames())))
+
+  override def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] =
+    logs(_.name == name).map(_.head)
+
+  override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+    logs(_ => true)
+
+  private[this] def logs(filter: ContainerName => Boolean)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+    nodeCollie
+      .nodes()
+      .map(
+        _.flatMap(node =>
+          dockerCache.exec(
+            node,
+            client =>
+              client.containerNames().filter(filter).flatMap { containerName =>
+                try Some((containerName, client.log(containerName.name)))
+                catch {
+                  case _: Throwable => None
+                }
+            }
+        )).toMap)
 }

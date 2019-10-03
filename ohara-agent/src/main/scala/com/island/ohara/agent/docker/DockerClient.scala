@@ -17,7 +17,7 @@
 package com.island.ohara.agent.docker
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 
@@ -45,7 +45,7 @@ trait DockerClient extends Releasable {
   /**
     * @return a collection of running docker containers
     */
-  def activeContainers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+  def activeContainers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     containers.map(_.filter(_.state == ContainerState.RUNNING.name))
 
   /**
@@ -58,12 +58,12 @@ trait DockerClient extends Releasable {
   /**
     * @return all containers' name
     */
-  def containerNames(): Seq[String]
+  def containerNames(): Seq[ContainerName]
 
   /**
     * @return a collection of docker containers
     */
-  def containers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = containers(_ => true)
+  def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = containers(_ => true)
 
   /**
     * the filter is used to reduce the possible communication across ssh.

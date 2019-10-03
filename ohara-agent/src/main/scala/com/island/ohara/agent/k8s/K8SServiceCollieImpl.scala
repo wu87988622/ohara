@@ -17,8 +17,10 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.ReleaseOnce
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
@@ -57,4 +59,26 @@ private[ohara] class K8SServiceCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
           Failure(
             new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}"))
       })
+
+  override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
+    k8sClient
+      .containers()
+      .map(
+        _.map(
+          container =>
+            new ContainerName(
+              id = container.id,
+              name = container.name,
+              imageName = container.imageName,
+              nodeName = container.nodeName
+          )))
+
+  override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+    containerNames()
+      .flatMap(containerNames =>
+        Future.sequence(containerNames.map { containerName =>
+          k8sClient.log(containerName.name).map(containerName -> _)
+        }))
+      .map(_.toMap)
+
 }

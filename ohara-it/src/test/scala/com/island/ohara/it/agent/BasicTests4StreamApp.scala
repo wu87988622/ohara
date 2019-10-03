@@ -172,7 +172,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       } else {
         val client =
           DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-        try node -> client.containerNames().filter(name => name.contains(properties.name))
+        try node -> client.containerNames().map(_.name).filter(name => name.contains(properties.name))
         finally client.close()
       }
     }

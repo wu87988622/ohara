@@ -66,3 +66,28 @@ Example Response
       ]
     }
 
+
+get the log of Configurator
+---------------------------
+
+*GET /v0/logs/configurator*
+
+Example Response
+  .. code-block:: json
+
+    {
+      "clusterKey": {
+        "group": "N/A",
+        "name": "abc"
+      },
+      "logs": [
+        {
+          "hostname": "node00",
+          "value": "2019-04-15 02:13:33,168 [myid:] - INFO [main:QuorumPeerConfig@136"
+        }
+      ]
+    }
+
+.. note::
+  the Configurator MUST run on docker container and the node hosting Configurator MUST be added to Configurator via
+  :ref:`Node APIs <rest-nodes>`

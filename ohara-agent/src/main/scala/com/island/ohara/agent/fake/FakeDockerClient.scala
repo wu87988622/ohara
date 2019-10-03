@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.{ContainerCreator, ContainerState, DockerClient, NetworkDriver}
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -32,7 +32,17 @@ private[agent] class FakeDockerClient(nodeName: String) extends ReleaseOnce with
   private[this] val FAKE_KIND_NAME: String = "FAKE"
   private[this] val cachedContainers = new ConcurrentHashMap[String, ContainerInfo]()
 
-  override def containerNames(): Seq[String] = cachedContainers.keys.asScala.toSeq
+  override def containerNames(): Seq[ContainerName] =
+    cachedContainers.keys.asScala
+      .map(
+        n =>
+          new ContainerName(
+            id = "unknown",
+            name = n,
+            imageName = "unknown",
+            nodeName = CommonUtils.hostname()
+        ))
+      .toSeq
 
   private[this] def listContainers(nameFilter: String => Boolean): Future[Seq[ContainerInfo]] =
     Future.successful(

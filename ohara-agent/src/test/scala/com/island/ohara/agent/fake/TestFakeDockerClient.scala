@@ -48,7 +48,7 @@ class TestFakeDockerClient extends OharaTest with Matchers {
   }
   @Test
   def testFakeClient(): Unit = {
-    result(fake.containers).size shouldBe 1
+    result(fake.containers()).size shouldBe 1
 
     fake.imageNames().head shouldBe "fake_image"
 
@@ -66,6 +66,6 @@ class TestFakeDockerClient extends OharaTest with Matchers {
 
     fake.remove(containerName)
 
-    result(fake.containers).size shouldBe 0
+    result(fake.containers()).size shouldBe 0
   }
 }

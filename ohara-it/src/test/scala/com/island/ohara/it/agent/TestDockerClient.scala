@@ -73,7 +73,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
   @Test
   def testList(): Unit = runTest { client =>
     val name = CommonUtils.randomString(10)
-    client.containerNames().contains(name) shouldBe false
+    client.containerNames().map(_.name).contains(name) shouldBe false
     client
       .containerCreator()
       .name(name)
@@ -82,9 +82,9 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
     val container = client.container(name)
-    try client.containerNames().contains(container.name) shouldBe true
+    try client.containerNames().map(_.name).contains(container.name) shouldBe true
     finally client.forceRemove(container.name)
-    client.containerNames().contains(container.name) shouldBe false
+    client.containerNames().map(_.name).contains(container.name) shouldBe false
   }
 
   @Test
@@ -113,7 +113,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
       .create()
     try {
-      client.containerNames().contains(name) shouldBe true
+      client.containerNames().map(_.name).contains(name) shouldBe true
       TimeUnit.SECONDS.sleep(3)
       client.container(name).state shouldBe ContainerState.EXITED.name
     } finally client.forceRemove(name)

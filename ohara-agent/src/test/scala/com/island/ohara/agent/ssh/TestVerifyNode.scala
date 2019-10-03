@@ -77,7 +77,8 @@ class TestVerifyNode extends OharaTest with Matchers {
         override def belong(cmd: String): Boolean = cmd.contains("docker ps -a")
         override def execute(cmd: String): util.List[String] = if (messageWhenFailToPs != null)
           throw new IllegalArgumentException(messageWhenFailToPs)
-        else util.Collections.singletonList(containerName)
+        // the format used by DockerClientImpl is {{.ID}}\t{{.Names}}\t{{.Image}}
+        else util.Collections.singletonList(s"${CommonUtils.randomString(10)}\t$containerName\tunknown/unknown:unknown")
       },
       new CommandHandler {
         override def belong(cmd: String): Boolean = cmd.contains("docker rm -f")
