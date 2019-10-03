@@ -226,7 +226,18 @@ const StreamApp = props => {
 
     const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
 
-    const updatedFlows = flows.filter(flow => flow.from.name !== streamAppName);
+    const updatedFlows = flows
+      .filter(flow => flow.from.name !== streamAppName)
+      .map(flow => {
+        // Remove stream app to connection
+        if (flow.to[0] && flow.to[0].name === streamAppName) {
+          return {
+            ...flow,
+            to: [],
+          };
+        }
+        return flow;
+      });
 
     const pipelineResponse = await pipelineApi.updatePipeline({
       name: pipelineName,
