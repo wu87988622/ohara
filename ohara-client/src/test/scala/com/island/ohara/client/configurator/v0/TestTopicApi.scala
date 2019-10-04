@@ -154,4 +154,41 @@ class TestTopicApi extends OharaTest with Matchers {
       .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
       .creation
+
+  @Test
+  def negativeReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
+    TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+                                           |{
+                                           |  "$NUMBER_OF_REPLICATIONS_KEY": -1
+                                           |}
+       """.stripMargin.parseJson)
+  }.getMessage should include("negative")
+
+  @Test
+  def negativePartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
+    TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+                                           |{
+                                           |  "$NUMBER_OF_PARTITIONS_KEY": -1
+                                           |}
+       """.stripMargin.parseJson)
+  }.getMessage should include("negative")
+
+  @Test
+  def negativeReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
+    TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
+                                           |{
+                                           |  "$NUMBER_OF_REPLICATIONS_KEY": -1
+                                           |}
+       """.stripMargin.parseJson)
+  }.getMessage should include("negative")
+
+  @Test
+  def negativePartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
+    TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
+                                           |{
+                                           |  "$NUMBER_OF_PARTITIONS_KEY": -1
+                                           |}
+       """.stripMargin.parseJson)
+  }.getMessage should include("negative")
+
 }
