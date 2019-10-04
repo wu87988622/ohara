@@ -19,7 +19,7 @@
 4. Enter `<node_user>` in the **User** field.
 5. Enter `<node_password>` in the **Password** field.
 6. Click <kbd>TEST CONNECTION</kbd>.
-7. If the connection has been successful, click <kbd>SAVE</kbd>.
+7. If the connection has been successful, click <kbd>ADD</kbd>.
 8. Repeat the above steps as many times **until you have added three nodes**. 
 
 **Create a new workspace:**
@@ -27,54 +27,54 @@
 1. On the Workspaces page, click the <kbd>NEW WORKSPACE</kbd> button.
 2. Enter “wk01” in the **Name** field.
 3. Select nodes:
-    1. Click the <kbd>Add node</kbd> button.
-    2. Click the checkbox to select all nodes, and then click <kbd>Add</kbd>.
+    1. Click the checkbox to select all nodes
 4. Add plugins:
-    1. Click the <kbd>Add plugin</kbd> button.
-    2. Click <kbd>Choose file</kbd> to browse to the location of your plugin file `postgresql-9.1-901-1.jdbc4.jar`, click the file, and click <kbd>Open</kbd>. (Click [here](https://repo1.maven.org/maven2/postgresql/postgresql/9.1-901-1.jdbc4/postgresql-9.1-901-1.jdbc4.jar) to download)
-    3. Click postgresql-9.1-901-1.jdbc4.jar.
-5. Click <kbd>Add</kbd>.
+    1. Click the <kbd>NEW PLUGIN</kbd> button.
+    2. Click the `postgresql-9.1-901-1.jdbc4.jar` file, and click <kbd>Open</kbd>. (Click [here](https://repo1.maven.org/maven2/postgresql/postgresql/9.1-901-1.jdbc4/postgresql-9.1-901-1.jdbc4.jar) to download)
+    3. Click the checkbox to select postgresql-9.1-901-1.jdbc4.jar.
+5. Click <kbd>ADD</kbd>.
 
 ## Create new topic into the workspace
 
 **Add topics into workspace:**
 
 1. On the **Workspaces** > **wk01** > **TOPICS** tab, click the <kbd>NEW TOPIC</kbd> button.
-2. Enter “T3” in the **Topic name** field and enter default value in other fields, click <kbd>Save</kbd>.
+2. Enter “t3” in the **Topic name** field and enter default value in other fields, click <kbd>ADD</kbd>.
  
 ## Create a new pipeline, add a jdbc source connector, topics and a ftp sink connector
-1. On the **Pipelines** page, click the <kbd>New pipeline</kbd> button.
-2. Enter “second_pipeline” in the **Pipeline name** field, select “wk01” at the Workspace name field, click <kbd>Add</kbd>.
-3. Click the **Add a source connector icon**, select the **com.island.ohara.connector.jdbc.source.JDBCSourceConnector** item, click <kbd>Add</kbd>.
-4. Enter “jdbc_source” in the **Connector name** field, click <kbd>Add</kbd> button.
-5. Click the **Add a topic** icon, select the **T3** item, click <kbd>Add</kbd>.
-6. Click the **Add a sink connector** icon, select the **com.island.ohara.connector.ftp.FtpSink** item, click <kbd>Add</kbd> button.
-7. Enter “ftp_sink” in the **Connector name** field, click <kbd>Add</kbd> button.
+1. On the **Pipelines** page, click the <kbd>NEW PIPELINE</kbd> button.
+2. Enter “secondpipeline” in the **Pipeline name** field, select “wk01” at the Workspace name field, click <kbd>ADD</kbd>.
+3. Click the **Add a source connector** icon, select the **com.island.ohara.connector.jdbc.source.JDBCSourceConnector** item, click <kbd>ADD</kbd>.
+4. Enter “jdbcsource” in the **myconnector** field, click <kbd>ADD</kbd> button.
+5. Click the **Add a topic** icon, select the **t3** item, click <kbd>ADD</kbd>.
+6. Click the **Add a sink connector** icon, select the **com.island.ohara.connector.ftp.FtpSink** item, click <kbd>ADD</kbd> button.
+7. Enter “ftpsink” in the **Connector name** field, click <kbd>ADD</kbd> button.
 
 ## 連接 JDBC source -> Topic -> FTP sink
-**Setup the jdbc_source connector:**
+**Setup the jdbcsource connector:**
 
-1. On the **second_pipeline** page, click the **jdbc_source** object in pipeline graph.
+1. On the **secondpipeline** page, click the **jdbcsource** object in pipeline graph.
 2. Select the **COMMON** tab, enter the following in the fields.
     1. Enter “<jdbc_url>” (jdbc url for PostgreSQL server) in the **jdbc url** field.
     2. Enter `database_username` in the **user name** field.
     3. Enter `database_password` in the **password** field.
     4. Enter “person_data” in the **table name** field.
     5. Enter “timestamp” in the **timestamp column name** field.
-    6. Enter 10 to **Flush Size**.
-3. Select the **CORE** tab, select the **TT** option in the **Topics** field.
+    6. Enter 10 to **JDBC flush Size**.
+3. Select the **CORE** tab, select the **t3** option in the **Topics** field.
 
 **Setup the ftp_sink connector:**
 
-1. Click the **ftp_sink** object in pipeline graph.
+1. Click the **ftpsink** object in pipeline graph.
 2. Select the **COMMON** tab, enter the following in the fields.
     1. Enter “/demo/output” in the **output folder** field.
-    2. Click the **write header** checkbox, make it checked.
-    3. Enter `<ftp_server_ip>` in the **hostname of ftp server** field.
-    4. Enter `<ftp_server_port>` in the **port of ftp server** field.
-    5. Enter `ftp_username` in the **user of ftp server** field.
-    6. Enter `ftp_password` in the **password of ftp server** field.
-4. Select the **CORE** tab, select the **TT** option int the **Topics** field.
+    2. Enter 10 to **Flush Size**.
+    3. Click the **File Need Header** checkbox, make it checked.
+    4. Enter `<ftp_server_ip>` in the **Hostname of FTP Server** field.
+    5. Enter `<ftp_server_port>` in the **Port of FTP Server** field.
+    6. Enter `ftp_username` in the **User of FTP Server** field.
+    7. Enter `ftp_password` in the **Password of FTP Server** field.
+4. Select the **CORE** tab, select the **t3** option int the **Topics** field.
 
 ## Prepare the required output folder on the FTP server
 1. Open a terminal, login to FTP server.
@@ -137,8 +137,8 @@ postgres=# select * from person_data;
 ..........
 ```
 [How to create table and insert data?](#how-to-create-table-and-insert-data)
-## Start all connectors on the second_pipeline page
-1. On the **second_pipeline** page.
+## Start all connectors on the secondpipeline page
+1. On the **secondpipeline** page.
 2. Click the **Start pipeline** icon.
 ## Verify which test data was successfully dumped to FTP server
 1. Open a terminal, login to FTP server.
@@ -147,20 +147,20 @@ $ ftp `ftp_server_ip`
 Name: `ftp_username`
 Password: `ftp_password`
 ```
-2. list all result CSV files in **/demo/output/defult-T3/partition0** folder.
+2. list all result CSV files in **/demo/output/wk01-t3/partition0** folder.
 ```
-$ ftp ls /demo/output/defult-T3/partition0
-/demo/output//default-T3/partition0/default-T3-0-000000000.csv
+$ ftp ls /demo/output/wk01-t3/partition0
+/demo/output/wk01-t3/partition0/wk01-t3-0-000000000.csv
 ```
 3. get the CSV file from ftp server to local.
 ```
-$ ftp cd /demo/output/defult-T3/partition0
-$ ftp get default-T3-0-000000000.csv ./default-T3-0-000000000.csv
+$ ftp cd /demo/output/wk01-t3/wk01
+$ ftp get wk01-t3-0-000000000.csv ./wk01-t3-0-000000000.csv
 $ ftp bye
 ```
-4. View the content of **default-T3-0-000000000.csv**.
+4. View the content of **wk01-t3-0-000000000.csv**.
 ```
-$ cat default-T3-0-000000000.csv
+$ cat wk01-t3-0-000000000.csv
 index,name,age,id,timestamp
 1,Sam,33,H123378803,2019-03-08 18:52:00.0
 2,Jay,25,A159330943,2019-03-08 18:53:00.0
