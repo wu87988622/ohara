@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-const validate = values => {
-  const errors = {};
+import { get } from 'lodash';
 
-  if (!values.name) {
-    errors.name = 'Required field';
-  } else if (values.name.match(/[^0-9a-z]/g)) {
-    errors.name = 'You only can use lower case letters and numbers';
-  } else if (values.name.length > 20) {
-    errors.name = 'Must be between 1 and 20 characters long';
+const nameValidate = params => {
+  const { values, key } = params;
+  let errors = {};
+
+  if (!get(values, key)) {
+    errors = { [key]: 'Required field' };
+  } else if (get(values, key).match(/[^0-9a-z]/g)) {
+    errors = { [key]: 'You only can use lower case letters and numbers' };
+  } else if (get(values, key).length > 20) {
+    errors = { [key]: 'Must be between 1 and 20 characters long' };
   }
   return errors;
 };
 
-export default validate;
+export { nameValidate };

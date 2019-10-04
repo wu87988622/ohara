@@ -26,6 +26,7 @@ import { InputField } from 'components/common/Mui/Form';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import { nameValidate } from 'utils/validate';
 
 const TopicNewModal = props => {
   const [isSaving, setIsSaving] = useState(false);
@@ -53,9 +54,16 @@ const TopicNewModal = props => {
       },
       group: `${worker.settings.name}`,
     });
+
+    const isSuccess = get(topicRes(), 'data.isSuccess', false);
+    if (!isSuccess) {
+      handleClose();
+      return;
+    }
+
     await startTopic(`/${values.name}/start?group=${worker.settings.name}`);
     setIsSaving(false);
-    const isSuccess = get(topicRes(), 'data.isSuccess', false);
+
     if (isSuccess) {
       setTimeout(form.reset);
       showMessage(MESSAGES.TOPIC_CREATION_SUCCESS);
@@ -68,6 +76,7 @@ const TopicNewModal = props => {
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
+      validate={values => nameValidate({ values, key: 'name' })}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
