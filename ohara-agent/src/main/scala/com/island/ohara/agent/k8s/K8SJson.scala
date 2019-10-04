@@ -164,6 +164,9 @@ object K8SJson {
   final case class CreatePod(apiVersion: String, kind: String, metadata: CreatePodMetadata, spec: CreatePodSpec)
   implicit val CREATEPOD_FORMAT: RootJsonFormat[CreatePod] = jsonFormat4(CreatePod)
 
+  final case class ConfigMap(apiVersion: String, kind: String, data: Map[String, String], metadata: Metadata)
+  implicit val CONFIGMAP_FORMAT: RootJsonFormat[ConfigMap] = jsonFormat4(ConfigMap)
+
   //for create container result
 
   final case class CreatePodResultMetaData(name: String, uid: String, creationTimestamp: String)

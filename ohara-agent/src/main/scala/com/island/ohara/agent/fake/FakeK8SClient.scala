@@ -16,12 +16,17 @@
 
 package com.island.ohara.agent.fake
 
+import java.util.concurrent.ConcurrentHashMap
+
 import com.island.ohara.agent.k8s.{K8SClient, K8SJson, K8SStatusInfo, Report}
-import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, WorkerApi, ZookeeperApi}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], containerName: String) extends K8SClient {
+  private[this] val cachedConfigs = new ConcurrentHashMap[String, Map[String, String]]()
+
   override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
     Future.successful {
       Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT)
@@ -60,6 +65,21 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
 
   override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] =
     Future.successful(Seq.empty)
+
+  override def addConfig(name: String, configs: Map[String, String])(
+    implicit executionContext: ExecutionContext): Future[String] =
+    Future.successful {
+      cachedConfigs.put(name, configs)
+      name
+    }
+
+  override def removeConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.successful(cachedConfigs.remove(name)).map(_ => true)
+  override def forceRemoveConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.successful(cachedConfigs.remove(name)).map(_ => true)
+
+  override def inspectConfig(name: String)(implicit executionContext: ExecutionContext): Future[Map[String, String]] =
+    Future.successful(cachedConfigs.get(name))
 
   override def containerCreator()(implicit executionContext: ExecutionContext): K8SClient.ContainerCreator =
     throw new UnsupportedOperationException("FakeK8SClient not support containerCreator function")

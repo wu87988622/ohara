@@ -16,11 +16,13 @@
 
 package com.island.ohara.agent.k8s
 
+import java.text.SimpleDateFormat
 import java.util.Objects
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.island.ohara.agent.k8s.K8SClient.ContainerCreator
 import com.island.ohara.agent.k8s.K8SJson.{
+  ConfigMap,
   Container,
   CreatePod,
   CreatePodContainer,
@@ -35,6 +37,7 @@ import com.island.ohara.agent.k8s.K8SJson.{
   K8SErrorResponse,
   K8SNodeInfo,
   K8SPodInfo,
+  Metadata,
   NodeItems
 }
 import com.island.ohara.client.{Enum, HttpExecutor}
@@ -59,6 +62,12 @@ trait K8SClient {
   def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
   def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
   def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report]
+  def addConfig(name: String, configs: Map[String, String])(implicit executionContext: ExecutionContext): Future[String]
+  def addConfig(configs: Map[String, String])(implicit executionContext: ExecutionContext): Future[String] =
+    addConfig(CommonUtils.randomString(), configs)
+  def removeConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def forceRemoveConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def inspectConfig(name: String)(implicit executionContext: ExecutionContext): Future[Map[String, String]]
 }
 
 object K8SClient {
@@ -124,6 +133,38 @@ object K8SClient {
                 .head)
           Report(nodeName, isK8SNode, statusInfo)
         }
+
+      override def addConfig(name: String, configs: Map[String, String])(
+        implicit executionContext: ExecutionContext): Future[String] = {
+        val request = ConfigMap("v1",
+                                "ConfigMap",
+                                configs,
+                                Metadata(CommonUtils.randomString(),
+                                         name,
+                                         new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(CommonUtils.current)))
+        HttpExecutor.SINGLETON
+          .post[ConfigMap, ConfigMap, K8SErrorResponse](s"$k8sApiServerURL/namespaces/default/configmaps", request)
+          .map(_.metadata.name)
+      }
+
+      override def removeConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+        removeConfig(name, false)
+      override def forceRemoveConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+        removeConfig(name, true)
+
+      private[this] def removeConfig(name: String, isForce: Boolean)(
+        implicit executionContext: ExecutionContext): Future[Boolean] = {
+        var url = s"$k8sApiServerURL/namespaces/default/configmaps/$name"
+        if (isForce) url += "?gracePeriodSeconds=0"
+        HttpExecutor.SINGLETON.delete[K8SErrorResponse](url).map(_ => true)
+      }
+
+      override def inspectConfig(name: String)(
+        implicit executionContext: ExecutionContext): Future[Map[String, String]] = {
+        HttpExecutor.SINGLETON
+          .get[ConfigMap, K8SErrorResponse](s"$k8sApiServerURL/namespaces/default/configmaps/$name")
+          .map(_.data)
+      }
 
       override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
         removePod(name, true)

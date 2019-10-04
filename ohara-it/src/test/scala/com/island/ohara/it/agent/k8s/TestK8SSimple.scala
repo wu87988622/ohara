@@ -45,6 +45,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
   private[this] var k8sApiServerURL: String = _
   private[this] var nodeServerNames: Seq[String] = _
+  private[this] var k8sClient: K8SClient = _
 
   @Before
   def before(): Unit = {
@@ -55,6 +56,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     }
     k8sApiServerURL = TestK8SSimple.API_SERVER_URL.get
     nodeServerNames = EnvTestingUtils.k8sNodes().map(_.hostname)
+    k8sClient = K8SClient(k8sApiServerURL)
 
     val uuid: String = TestK8SSimple.uuid
 
@@ -78,10 +80,8 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testK8SClientContainer(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
-
     val containers: Seq[ContainerInfo] = result(
-      k8sClient.containers().map(c => c.filter(_.name.equals(TestK8SSimple.uuid))))
+      k8sClient.containers().map(c => c.filter(info => info.name.equals(TestK8SSimple.uuid))))
     val containerSize: Int = containers.size
     containerSize shouldBe 1
     val container: ContainerInfo = containers.head
@@ -96,14 +96,13 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testK8SClientRemoveContainer(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
     val podName: String = UUID.randomUUID().toString + "-pod123"
 
     try {
       //Create Pod for test delete
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
       val containers: Seq[ContainerInfo] =
-        result(k8sClient.containers().map(cs => cs.filter(_.hostname.equals(podName))))
+        result(k8sClient.containers().map(cs => cs.filter(info => info.hostname.equals(podName))))
       containers.size shouldBe 1
     } finally {
       //Remove a container
@@ -113,29 +112,24 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testK8SClientForceRemoveContainer(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
     val podName: String = UUID.randomUUID().toString + "-pod123"
 
     try {
       //Create Pod for test delete
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
-      val containers: Seq[ContainerInfo] =
-        result(k8sClient.containers().map(cs => cs.filter(_.hostname.equals(podName))))
-      containers.size shouldBe 1
+      result(k8sClient.containers().map(cs => cs.filter(info => info.hostname.equals(podName)))).size shouldBe 1
     } finally {
       //Remove a container
       result(k8sClient.forceRemove(podName)).name shouldBe podName
-      val removeContainers: Seq[ContainerInfo] =
-        result(k8sClient.containers().map(cs => cs.filter(_.hostname.equals(podName))))
+      // wait a little time
       Thread.sleep(1000L)
-      removeContainers.size shouldBe 0
+      result(k8sClient.containers().map(cs => cs.filter(info => info.hostname.equals(podName)))).size shouldBe 0
     }
   }
 
   @Test
   def testK8SClientlog(): Unit = {
     //Must confirm to microk8s is running
-    val k8sClient = K8SClient(k8sApiServerURL)
     val podName: String = s"zookeeper-${CommonUtils.randomString(10)}"
     try {
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
@@ -164,7 +158,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   @Test
   def testK8SClientCreator(): Unit = {
     val containerName: String = s"zookeeper-container-${CommonUtils.randomString(10)}"
-    val k8sClient = K8SClient(k8sApiServerURL)
     try {
       val result: Future[Option[ContainerInfo]] =
         k8sClient
@@ -190,7 +183,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testK8SImages(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
     val images: Seq[String] = result(k8sClient.images(nodeServerNames.last)).map(x => x.split(":").head)
     //After installed K8S, created k8s.gcr.io/kube-proxy and k8s.gcr.io/pause two docker image.
     images.size >= 2 shouldBe true
@@ -198,7 +190,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testSlaveNode(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
     val k8sNode: Boolean = result(k8sClient.checkNode(nodeServerNames.last)).isK8SNode
     k8sNode shouldBe true
 
@@ -208,7 +199,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testNodeHealth(): Unit = {
-    val k8sClient = K8SClient(k8sApiServerURL)
     val oharaIt03: Boolean =
       result(k8sClient.checkNode(nodeServerNames.head)).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
     oharaIt03 shouldBe true
@@ -220,6 +210,27 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     val oharaIt08: Boolean =
       result(k8sClient.checkNode("ohara-it-08")).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
     oharaIt08 shouldBe false
+  }
+
+  @Test
+  def testAddConfig(): Unit = {
+    val configs = (for (i <- 1 to 10) yield i.toString -> CommonUtils.randomString()).toMap
+    val name = CommonUtils.randomString()
+
+    // specific name for config
+    result(k8sClient.addConfig(name, configs)) shouldBe name
+
+    // random name for config
+    val name2 = result(k8sClient.addConfig(configs))
+    name2 should not be name
+
+    result(k8sClient.inspectConfig(name)).keySet.forall(configs.keySet.contains) shouldBe true
+    result(k8sClient.removeConfig(name)) shouldBe true
+
+    // after remove, the configmap should not exist
+    an[IllegalArgumentException] should be thrownBy result(k8sClient.inspectConfig(name))
+
+    result(k8sClient.forceRemoveConfig(name2))
   }
 }
 
@@ -252,26 +263,26 @@ object TestK8SSimple {
                      |  "apiVersion": "v1",
                      |  "kind": "Pod",
                      |  "metadata": {
-                     |    "name": "${podName}"
+                     |    "name": "$podName"
                      |  },
                      |  "spec": {
-                     |    "hostname": "${podName}",
+                     |    "hostname": "$podName",
                      |    "containers": [
                      |      {
-                     |        "name": "${podName}",
+                     |        "name": "$podName",
                      |        "image": "${ZookeeperApi.IMAGE_NAME_DEFAULT}",
                      |        "ports": [
                      |          {
-                     |            "containerPort": ${ZK_CLIENT_PORT},
-                     |            "hostPort": ${ZK_CLIENT_PORT}
+                     |            "containerPort": $ZK_CLIENT_PORT,
+                     |            "hostPort": $ZK_CLIENT_PORT
                      |          },
                      |          {
-                     |            "containerPort": ${ZK_ELECTION_PORT},
-                     |            "hostPort": ${ZK_ELECTION_PORT}
+                     |            "containerPort": $ZK_ELECTION_PORT,
+                     |            "hostPort": $ZK_ELECTION_PORT
                      |          },
                      |          {
-                     |            "containerPort": ${ZK_PEER_PORT},
-                     |            "hostPort": ${ZK_PEER_PORT}
+                     |            "containerPort": $ZK_PEER_PORT,
+                     |            "hostPort": $ZK_PEER_PORT
                      |          }
                      |        ],
                      |        "env": [
@@ -281,15 +292,15 @@ object TestK8SSimple {
                      |          },
                      |          {
                      |            "name": "ZK_ELECTION_PORT",
-                     |            "value": "${ZK_ELECTION_PORT}"
+                     |            "value": "$ZK_ELECTION_PORT"
                      |          },
                      |          {
                      |            "name": "ZK_CLIENT_PORT",
-                     |            "value": "${ZK_CLIENT_PORT}"
+                     |            "value": "$ZK_CLIENT_PORT"
                      |          },
                      |          {
                      |            "name": "ZK_PEER_PORT",
-                     |            "value": "${ZK_PEER_PORT}"
+                     |            "value": "$ZK_PEER_PORT"
                      |          }
                      |        ]
                      |      }
