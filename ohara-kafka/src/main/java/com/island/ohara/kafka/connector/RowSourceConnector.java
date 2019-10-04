@@ -124,7 +124,8 @@ public abstract class RowSourceConnector extends SourceConnector implements With
                 ConnectorDefUtils.DEFINITIONS_DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
-        _version());
+        _version(),
+        needColumnDefinition());
   }
 
   @Override

@@ -52,4 +52,6 @@ class JsonIn extends RowSourceConnector {
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
   override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
+
+  override def needColumnDefinition(): Boolean = false
 }
