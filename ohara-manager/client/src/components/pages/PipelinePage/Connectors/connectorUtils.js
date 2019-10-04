@@ -219,6 +219,7 @@ export const changeKeySeparator = key => {
 export const useFetchConnectors = props => {
   const [state, setState] = useState(null);
   const [configs, setConfigs] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const { group } = props.pipeline;
   const { connectorName } = props.match.params;
 
@@ -226,9 +227,8 @@ export const useFetchConnectors = props => {
     const fetchConnector = async () => {
       const res = await connectorApi.fetchConnector(group, connectorName);
       const result = get(res, 'data.result', null);
-
       if (result) {
-        const { settings } = result;
+        const { settings, tasksStatus } = result;
         const { topicKeys } = settings;
         const state = get(result, 'state', null);
         const topicName = get(topicKeys, '[0].name', '');
@@ -246,7 +246,7 @@ export const useFetchConnectors = props => {
           topicKeys: topicName,
           workerClusterKey,
         };
-
+        setTasks(tasksStatus);
         setConfigs(configs);
         setState(state);
       }
@@ -254,8 +254,7 @@ export const useFetchConnectors = props => {
 
     fetchConnector();
   }, [connectorName, group]);
-
-  return [state, setState, configs, setConfigs];
+  return [state, setState, configs, setConfigs, tasks];
 };
 
 export const useTopics = props => {

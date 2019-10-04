@@ -290,7 +290,13 @@ const PipelineEditPage = props => {
                 updateHasRunningServices={updateHasRunningServices}
               />
 
-              <NodeNames {...props} graph={graph} nodeNames={nodeNames} />
+              <NodeNames
+                {...props}
+                graph={graph}
+                nodeNames={nodeNames}
+                updateGraph={updateGraph}
+                pipeline={pipeline}
+              />
 
               <Metrics {...props} graph={graph} updateGraph={updateGraph} />
 
