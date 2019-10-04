@@ -230,7 +230,7 @@ export const useFetchConnectors = props => {
       if (result) {
         const { settings } = result;
         const { topicKeys } = settings;
-        const state = get(result, 'state', null);
+        const state = get(result, 'status.state', null);
         const topicName = get(topicKeys, '[0].name', '');
 
         const _settings = changeToken({
