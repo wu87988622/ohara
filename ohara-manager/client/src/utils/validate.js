@@ -17,16 +17,17 @@
 import { get } from 'lodash';
 
 const nameValidate = params => {
-  const { values, key } = params;
+  const { values, keys = [] } = params;
   let errors = {};
-
-  if (!get(values, key)) {
-    errors = { [key]: 'Required field' };
-  } else if (get(values, key).match(/[^0-9a-z]/g)) {
-    errors = { [key]: 'You only can use lower case letters and numbers' };
-  } else if (get(values, key).length > 20) {
-    errors = { [key]: 'Must be between 1 and 20 characters long' };
-  }
+  keys.forEach(key => {
+    if (!get(values, key)) {
+      errors[key] = 'Required field';
+    } else if (get(values, key).match(/[^0-9a-z]/g)) {
+      errors[key] = 'You only can use lower case letters and numbers';
+    } else if (get(values, key).length > 20) {
+      errors[key] = 'Must be between 1 and 20 characters long';
+    }
+  });
   return errors;
 };
 

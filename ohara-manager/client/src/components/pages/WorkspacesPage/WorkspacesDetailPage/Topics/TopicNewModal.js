@@ -76,7 +76,7 @@ const TopicNewModal = props => {
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
-      validate={values => nameValidate({ values, key: 'name' })}
+      validate={values => nameValidate({ values, key: ['name'] })}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
