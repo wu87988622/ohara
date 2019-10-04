@@ -57,7 +57,11 @@ const TopicNewModal = props => {
 
     const isSuccess = get(topicRes(), 'data.isSuccess', false);
     if (!isSuccess) {
+      setTimeout(form.reset);
+      showMessage('Topic failed to establish!');
+      props.onConfirm();
       handleClose();
+      setIsSaving(false);
       return;
     }
 
@@ -76,7 +80,7 @@ const TopicNewModal = props => {
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
-      validate={values => nameValidate({ values, key: ['name'] })}
+      validate={values => nameValidate({ values, keys: ['name'] })}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
