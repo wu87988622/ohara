@@ -418,7 +418,7 @@ const WorkerNewModal = props => {
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
-      validate={values => nameValidate({ values, key: 'name' })}
+      validate={values => nameValidate({ values, keys: ['name'] })}
       render={({
         handleSubmit,
         form,
