@@ -35,7 +35,7 @@ import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import useCreateServices from './useCreateServices';
-import validate from './validate';
+import { nameValidate } from 'utils/validate';
 import { Progress } from 'components/common/Mui/Feedback';
 import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
@@ -418,7 +418,7 @@ const WorkerNewModal = props => {
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
-      validate={validate}
+      validate={values => nameValidate({ values, keys: ['name'] })}
       render={({
         handleSubmit,
         form,
