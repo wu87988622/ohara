@@ -31,7 +31,7 @@ else
   dockerMajorVersion="$(cut -d'.' -f1 <<<"$dockerVersion")"
   major=$((dockerMajorVersion))
 
-  //Check docer version
+  # check docer version
   if [[ $major < 17 ]]
   then
     echo "Your docker version is too old, please upgrade your docker version to 17+"
