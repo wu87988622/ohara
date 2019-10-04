@@ -51,7 +51,7 @@ const ColumnTable = props => {
 
   const handleNewRow = values => {
     const { handleColumnChange, parentValues } = props;
-    const { columnName, newColumnName, types: currType } = values;
+    const { columnName, newColumnName, dataType: currType } = values;
 
     handleColumnChange({ parentValues, columnName, newColumnName, currType });
     handleNewRowModalClose();
