@@ -47,7 +47,6 @@ const PipelineEditPage = props => {
   const [pipelineTopics, setPipelineTopics] = useState([]);
   const [connectors, setConnectors] = useState([]);
   const [freePorts, setFreePorts] = useState([]);
-  const [nodeNames, setNodeNames] = useState([]);
   const [brokerClusterName, setBrokerClusterName] = useState('');
 
   const { showMessage } = useSnackbar();
@@ -116,7 +115,6 @@ const PipelineEditPage = props => {
             freePort.toString(),
           ),
         );
-        setNodeNames(get(worker, 'settings.nodeNames', []));
         setConnectors(worker.connectors);
         setBrokerClusterName(worker.settings.brokerClusterKey.name);
       }
@@ -290,7 +288,12 @@ const PipelineEditPage = props => {
                 updateHasRunningServices={updateHasRunningServices}
               />
 
-              <NodeNames {...props} graph={graph} nodeNames={nodeNames} />
+              <NodeNames
+                {...props}
+                graph={graph}
+                updateGraph={updateGraph}
+                pipeline={pipeline}
+              />
 
               <Metrics {...props} graph={graph} updateGraph={updateGraph} />
 
