@@ -21,12 +21,13 @@ import { isEmpty } from 'lodash';
 import NodeNameList from './NodeNameList';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import { Box } from './styles';
+import * as utils from '../../Connectors/connectorUtils';
 
 const NodeNames = props => {
   // If it's an empty canvas don't render anything
   if (isEmpty(props.graph)) return null;
 
-  const { graph, match, nodeNames } = props;
+  const { graph, match } = props;
 
   const { connectorName } = match.params;
   const currentConnector = graph.find(g => g.name === connectorName);
@@ -38,7 +39,13 @@ const NodeNames = props => {
   ) {
     return null;
   }
+  let tasks = [];
+  if (currentConnector.state === 'RUNNING') {
+    [, , , , tasks] = utils.useFetchConnectors(props);
+  }
 
+  const nodeNames = tasks.map(task => task.nodeName);
+  if (nodeNames.length === 0) return null;
   return (
     <Box>
       <NodeNameList connectorName={connectorName} nodeNames={nodeNames} />
