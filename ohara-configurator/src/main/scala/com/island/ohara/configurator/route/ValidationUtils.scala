@@ -29,8 +29,7 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
-import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNull, JsNumber, JsString}
+import spray.json.{JsNull, JsObject, JsValue}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -43,9 +42,7 @@ object ValidationUtils {
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_RDB_PREFIX_PATH,
-    ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields.map {
-      case (k, v) => (k, v.convertTo[String])
-    },
+    ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
     taskCount
   ).map {
     _.filter(_.isInstanceOf[RdbValidationReport]).map(_.asInstanceOf[RdbValidationReport])
@@ -56,9 +53,7 @@ object ValidationUtils {
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_HDFS_PREFIX_PATH,
-    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields.map {
-      case (k, v) => (k, v.convertTo[String])
-    },
+    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
     taskCount
   ).map {
     _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
@@ -69,23 +64,7 @@ object ValidationUtils {
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_FTP_PREFIX_PATH,
-    ValidationApi.FTP_VALIDATION_JSON_FORMAT
-      .write(request)
-      .asJsObject
-      .fields
-      .map {
-        case (k, v) =>
-          v match {
-            case s: JsString => Some((k, s.value))
-            // port is Int type
-            case n: JsNumber => Some((k, n.value.toString))
-            // worker cluster name is useless here
-            case JsNull => None
-            case _      => throw new IllegalArgumentException("what is this??")
-          }
-      }
-      .flatten
-      .toMap,
+    ValidationApi.FTP_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
     taskCount
   ).map {
     _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
@@ -103,7 +82,7 @@ object ValidationUtils {
   private[this] def run(workerClient: WorkerClient,
                         topicAdmin: TopicAdmin,
                         target: String,
-                        settings: Map[String, String],
+                        settings: Map[String, JsValue],
                         taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Any]] = {
     val requestId: String = CommonUtils.randomString()
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
@@ -113,11 +92,17 @@ object ValidationUtils {
       .className("com.island.ohara.connector.validation.Validator")
       .numberOfTasks(taskCount)
       .topicKey(ValidationApi.INTERNAL_TOPIC_KEY)
-      .settings(
-        settings ++ Map(
-          ValidationApi.REQUEST_ID -> requestId,
-          ValidationApi.TARGET -> target
-        ))
+      .settings(Map(
+        ValidationApi.SETTINGS_KEY -> JsObject(settings.filter {
+          case (_, value) =>
+            value match {
+              case JsNull => false
+              case _      => true
+            }
+        }).toString(),
+        ValidationApi.REQUEST_ID -> requestId,
+        ValidationApi.TARGET_KEY -> target
+      ))
       .threadPool(executionContext)
       .create()
       .map { _ =>

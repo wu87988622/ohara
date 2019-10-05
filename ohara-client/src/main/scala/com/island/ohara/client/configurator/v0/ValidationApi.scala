@@ -27,7 +27,14 @@ import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
-  val TARGET = "target"
+
+  /**
+    * this key points to the settings passed by user. Those settings are converted to a "single" string and then it is
+    * submitted to kafka to run the Validator. Kafka doesn't support various type of json so we have to transfer data
+    * via pure string.
+    */
+  val SETTINGS_KEY = "settings"
+  val TARGET_KEY = "target"
   val VALIDATION_PREFIX_PATH: String = "validate"
   // TODO: We should use a temporary topic instead of fixed topic...by chia
   val INTERNAL_TOPIC_KEY: TopicKey = TopicKey.of(GROUP_DEFAULT, "_Validator_topic")
@@ -89,7 +96,7 @@ object ValidationApi {
 
   val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"
 
-  implicit val SETTING_INFO_JSON_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
+  private[this] implicit val SETTING_INFO_JSON_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
     import spray.json._
     override def write(obj: SettingInfo): JsValue = obj.toJsonString.parseJson
 
