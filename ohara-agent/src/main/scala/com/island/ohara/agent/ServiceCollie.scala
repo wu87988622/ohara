@@ -29,7 +29,8 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStat
 import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -93,46 +94,61 @@ trait ServiceCollie extends Releasable {
     * @return updated nodes
     */
   def fetchServices(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
-    clusters().map(_.keys.toSeq).map { clusters =>
-      nodes.map { node =>
-        node.copy(
-          services = Seq(
-            NodeService(
-              name = NodeApi.ZOOKEEPER_SERVICE_NAME,
-              clusterKeys = clusters
-                .filter(_.isInstanceOf[ZookeeperClusterStatus])
-                .map(_.asInstanceOf[ZookeeperClusterStatus])
-                .filter(_.aliveNodes.contains(node.name))
-                .map(_.key)
-            ),
-            NodeService(
-              name = NodeApi.BROKER_SERVICE_NAME,
-              clusterKeys = clusters
-                .filter(_.isInstanceOf[BrokerClusterStatus])
-                .map(_.asInstanceOf[BrokerClusterStatus])
-                .filter(_.aliveNodes.contains(node.name))
-                .map(_.key)
-            ),
-            NodeService(
-              name = NodeApi.WORKER_SERVICE_NAME,
-              clusterKeys = clusters
-                .filter(_.isInstanceOf[WorkerClusterStatus])
-                .map(_.asInstanceOf[WorkerClusterStatus])
-                .filter(_.aliveNodes.contains(node.name))
-                .map(_.key)
-            ),
-            NodeService(
-              name = NodeApi.STREAM_SERVICE_NAME,
-              clusterKeys = clusters
-                .filter(_.isInstanceOf[StreamClusterStatus])
-                .map(_.asInstanceOf[StreamClusterStatus])
-                .filter(_.aliveNodes.contains(node.name))
-                .map(_.key)
+    clusters()
+      .map(_.keys.toSeq)
+      .flatMap(clusters =>
+        configuratorContainerName().map(clusters -> Some(_)).recover {
+          case _: NoSuchElementException => clusters -> None
+      })
+      .map {
+        case (clusters, configuratorContainerOption) =>
+          nodes.map { node =>
+            node.copy(
+              services = Seq(
+                NodeService(
+                  name = NodeApi.ZOOKEEPER_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[ZookeeperClusterStatus])
+                    .map(_.asInstanceOf[ZookeeperClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                ),
+                NodeService(
+                  name = NodeApi.BROKER_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[BrokerClusterStatus])
+                    .map(_.asInstanceOf[BrokerClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                ),
+                NodeService(
+                  name = NodeApi.WORKER_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[WorkerClusterStatus])
+                    .map(_.asInstanceOf[WorkerClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                ),
+                NodeService(
+                  name = NodeApi.STREAM_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[StreamClusterStatus])
+                    .map(_.asInstanceOf[StreamClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                )
+              ) ++ configuratorContainerOption
+                .map(
+                  container =>
+                    Seq(
+                      NodeService(
+                        name = NodeApi.CONFIGURATOR_SERVICE_NAME,
+                        clusterKeys = Seq(ObjectKey.of("N/A", container.name))
+                      )))
+                .getOrElse(Seq.empty)
             )
-          )
-        )
+          }
       }
-    }
 
   /**
     * Verify the node are available to be used in collie.
@@ -148,6 +164,40 @@ trait ServiceCollie extends Releasable {
     * @return active containers
     */
   def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]]
+
+  /**
+    * get the container name of configurator.
+    * Noted: the configurator MUST be on the nodes hosted by this collie. Otherwise, the returned future will contain
+    * a NoSuchElementException.
+    * @param executionContext thread pool
+    * @return container name or exception
+    */
+  def configuratorContainerName()(implicit executionContext: ExecutionContext): Future[ContainerName] = {
+
+    /**
+      * docker id appear in following files.
+      * 1) /proc/1/cpuset
+      * 2) hostname
+      * however, the hostname of container is overridable so we pick up first file.
+      */
+    val containerId = try {
+      import scala.sys.process._
+      val output = "cat /proc/1/cpuset".!!
+      val index = output.lastIndexOf("/")
+      if (index >= 0) output.substring(index + 1) else output
+    } catch {
+      case _: Throwable => CommonUtils.hostname()
+    }
+    containerNames().map(names =>
+      names
+      // docker accept a part of id in querying so we "may" get a part of id
+      // Either way, we don't want to miss the container so the "startWith" is our solution to compare the "sub" id
+        .find(cn => cn.id.startsWith(containerId) || containerId.startsWith(cn.id))
+        .getOrElse(throw new NoSuchElementException(
+          s"failed to find out the Configurator:$containerId from hosted nodes:${names.map(_.nodeName).mkString(".")}." +
+            s" Noted: Your Configurator MUST run on docker container and the host node must be added." +
+            s" existent containers:${names.map(n => s"${n.id}/${n.imageName}}").mkString(",")}")))
+  }
 
   /**
     * get the log of specific container name

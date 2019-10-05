@@ -46,6 +46,7 @@ object NodeApi {
   val BROKER_SERVICE_NAME: String = "broker"
   val WORKER_SERVICE_NAME: String = "connect-worker"
   val STREAM_SERVICE_NAME: String = "streamapp"
+  val CONFIGURATOR_SERVICE_NAME: String = "configurator"
 
   case class Updating(port: Option[Int],
                       user: Option[String],

@@ -16,19 +16,16 @@
 
 package com.island.ohara.it.client
 
-import com.island.ohara.client.configurator.v0.LogApi
+import com.island.ohara.client.configurator.v0.NodeApi
 import org.junit.Test
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestQueryConfiguratorLog extends WithRemoteConfigurator {
-
+class TestListNode extends WithRemoteConfigurator {
   @Test
   def test(): Unit = {
-    val log = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator())
-    log.clusterKey.name() shouldBe configuratorContainerName
-    log.logs.size shouldBe 1
-    log.logs.head.hostname shouldBe configuratorHostname
-    log.logs.head.value.length should not be 0
+    val services = result(NodeApi.access.hostname(configuratorHostname).port(configuratorPort).list()).head.services
+    services should not be Seq.empty
+    services.find(_.name == NodeApi.CONFIGURATOR_SERVICE_NAME) should not be None
   }
 }

@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator.route
-import com.island.ohara.agent.{BrokerCollie, Collie, NoSuchClusterException, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
