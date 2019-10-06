@@ -50,5 +50,5 @@ class Validator extends SourceConnector {
     // do nothing
   }
   override def config(): ConfigDef =
-    new ConfigDef().define(ValidationApi.TARGET, Type.STRING, null, Importance.HIGH, "target type")
+    new ConfigDef().define(ValidationApi.TARGET_KEY, Type.STRING, null, Importance.HIGH, "target type")
 }

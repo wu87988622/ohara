@@ -34,7 +34,7 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceRecord, SourceTask}
-import spray.json.{JsObject, JsString}
+import spray.json.{JsObject, _}
 
 import scala.collection.JavaConverters._
 class ValidatorTask extends SourceTask {
@@ -115,8 +115,8 @@ class ValidatorTask extends SourceTask {
     finally ftp.close()
   }
 
-  private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
-  private[this] def information = require(ValidationApi.TARGET) match {
+  private[this] def toJsObject: JsObject = props(ValidationApi.SETTINGS_KEY).parseJson.asJsObject
+  private[this] def information = require(ValidationApi.TARGET_KEY) match {
     case ValidationApi.VALIDATION_HDFS_PREFIX_PATH => ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(toJsObject)
     case ValidationApi.VALIDATION_RDB_PREFIX_PATH  => ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(toJsObject)
     case ValidationApi.VALIDATION_FTP_PREFIX_PATH  => ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(toJsObject)
