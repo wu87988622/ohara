@@ -32,6 +32,7 @@ import com.island.ohara.kafka.Consumer
 import spray.json.{JsNull, JsObject, JsValue}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationUtils {
@@ -115,34 +116,20 @@ object ValidationUtils {
           .keySerializer(Serializer.STRING)
           .valueSerializer(Serializer.OBJECT)
           .build()
-        var count = 0
-        var stop = false
-        try Iterator
-          .continually(
-            client
-              .poll(if (stop) java.time.Duration.ofMillis(0) else java.time.Duration.ofMillis(TIMEOUT.toMillis),
-                    taskCount)
-              .asScala
-              .filter(_.key().isPresent)
-              .filter(_.key().get.equals(requestId))
-              .filter(_.value().isPresent)
-              .map(_.value().get())
-              .toList)
-          .takeWhile { rs =>
-            // we can stop the loop if all messages are received. Otherwise, we will pay a "large" cost to wait nothing ...
-            if (stop) false
-            else {
-              if (count >= taskCount) stop = true
-              try rs.nonEmpty
-              finally count += rs.size
-            }
-          }
-          .flatten
-          .toList
-        finally Releasable.close(client)
+
+        val buffer: mutable.Buffer[Any] = mutable.Buffer[Any]()
+        try while (buffer.size < taskCount) {
+          client
+            .poll(java.time.Duration.ofMillis(TIMEOUT.toMillis))
+            .asScala
+            .filter(_.key().isPresent)
+            .filter(_.key().get.equals(requestId))
+            .filter(_.value().isPresent)
+            .map(_.value().get())
+            .foreach(buffer += _)
+        } finally Releasable.close(client)
+        buffer
       }
-      .flatMap { r =>
-        workerClient.delete(connectorKey).map(_ => r)
-      }
+      .flatMap(r => workerClient.delete(connectorKey).map(_ => r))
   }
 }
