@@ -211,15 +211,28 @@ Client:
     $ yarn test:e2e:open
 
   **Electron mode(headless)**: since we're running our E2E tests on CI under this mode. You might often want
-  to run your tests in this mode on your local machine as well.
+  to run your tests in this mode locally as well.
 
   .. code-block:: console
 
     $ yarn test:e2e:ci --configurator http://host:port/v0
 
   .. note::
-    Before running in this mode we advise that you run ``yarn setup`` prior to the tests as
-    the dev server is not running, so you might have stale build asserts in your build directory
+    1. Before running in this mode we advise that you run ``yarn setup`` prior to the tests as
+       the dev server is not running, so you might have stale build asserts in your build directory
+
+    2. You also need to create a **cypress.env.json** under the `/ohara-manager/client/`, these are the config
+       that Cypress will be using when running tests:
+
+      .. code-block:: json
+
+        {
+          "nodeHost": "ohara-dev-01",
+          "nodePort": 22,
+          "nodeUser": "nodeUserName",
+          "nodePass": "nodePassword",
+          "servicePrefix": "prPrefix"
+        }
 
 Linting
 ^^^^^^^
