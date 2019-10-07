@@ -93,10 +93,11 @@ class ValidatorTask extends SourceTask {
       hostname = hostname,
       message = "succeed to fetch table information from database",
       pass = true,
-      rdbInfo = RdbInfo(
-        client.databaseType,
-        client.tables()
-      )
+      rdbInfo = Some(
+        RdbInfo(
+          client.databaseType,
+          client.tables()
+        ))
     )
     finally client.close()
   }

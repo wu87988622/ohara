@@ -91,7 +91,7 @@ object ValidationApi {
   final case class ValidationReport(hostname: String, message: String, pass: Boolean, lastModified: Long)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat4(ValidationReport)
 
-  final case class RdbValidationReport(hostname: String, message: String, pass: Boolean, rdbInfo: RdbInfo)
+  final case class RdbValidationReport(hostname: String, message: String, pass: Boolean, rdbInfo: Option[RdbInfo])
   implicit val RDB_VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[RdbValidationReport] = jsonFormat4(RdbValidationReport)
 
   val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"

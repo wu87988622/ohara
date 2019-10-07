@@ -68,7 +68,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         hostname = CommonUtils.hostname,
         message = "a fake report",
         pass = true,
-        rdbInfo = RdbInfo(
+        rdbInfo = Some(RdbInfo(
           name = "fake database",
           tables = Seq(
             RdbTable(
@@ -81,7 +81,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                 pk = true
               ))
             ))
-        )
+        ))
     )))
 
   def apply(implicit brokerCollie: BrokerCollie,

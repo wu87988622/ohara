@@ -51,7 +51,7 @@ package object validation extends Matchers {
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
-    reports.foreach(_.rdbInfo.tables.isEmpty shouldBe false)
+    reports.foreach(_.rdbInfo.get.tables.isEmpty shouldBe false)
   } finally checkActiveConnectors(workerClient)
 
   private[this] def checkActiveConnectors(workerClient: WorkerClient)(
