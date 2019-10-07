@@ -30,6 +30,7 @@ import { ListLoader } from 'components/common/Loader';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { Table } from './styles';
 import { InputField } from 'components/common/Mui/Form';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 const PipelineNewConnector = forwardRef((props, ref) => {
   const { activeConnector, connectors, enableAddButton } = props;
@@ -55,6 +56,7 @@ const PipelineNewConnector = forwardRef((props, ref) => {
       activeConnector: connector,
       pipelineGroup,
       workerClusterName,
+      graph,
     } = props;
 
     utils.createConnector({
@@ -63,6 +65,7 @@ const PipelineNewConnector = forwardRef((props, ref) => {
       newConnectorName,
       workerClusterName,
       showMessage,
+      graph,
       group: pipelineGroup,
     });
 
@@ -127,6 +130,7 @@ PipelineNewConnector.propTypes = {
   handleClose: PropTypes.func.isRequired,
   pipelineGroup: PropTypes.string.isRequired,
   workerClusterName: PropTypes.string.isRequired,
+  graph: PropTypes.arrayOf(graphPropType).isRequired,
   activeConnector: PropTypes.object,
 };
 

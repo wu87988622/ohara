@@ -35,6 +35,7 @@ import { LoaderWrapper } from './styles';
 import { InputField } from 'components/common/Mui/Form';
 import { Warning } from 'components/common/Messages';
 import { Select } from 'components/common/Mui/Form';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 const PipelineNewStream = forwardRef((props, ref) => {
   const [newStreamName, setNewStreamName] = useState('');
@@ -51,6 +52,7 @@ const PipelineNewStream = forwardRef((props, ref) => {
     updateGraph,
     pipelineGroup,
     brokerClusterName,
+    graph,
   } = props;
   const jarGroup = workerClusterName;
 
@@ -100,6 +102,7 @@ const PipelineNewStream = forwardRef((props, ref) => {
       newStreamName,
       brokerClusterName,
       showMessage,
+      graph,
       group: pipelineGroup,
     });
 
@@ -184,6 +187,7 @@ PipelineNewStream.propTypes = {
   handleClose: PropTypes.func.isRequired,
   pipelineGroup: PropTypes.string.isRequired,
   brokerClusterName: PropTypes.string.isRequired,
+  graph: PropTypes.arrayOf(graphPropType).isRequired,
 };
 
 export default PipelineNewStream;

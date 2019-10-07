@@ -51,10 +51,20 @@ describe('createConnector()', () => {
     });
   });
 
-  it('updates a custom connector', async () => {
+  it('updates a connector', async () => {
     const customConnectorClassName = generate.name();
     const typeName = 'source';
     const connectorName = 'testConnector';
+    const graph = [
+      {
+        name: 'a',
+      },
+      {
+        name: 'b',
+      },
+    ];
+
+    const showMessage = jest.fn();
 
     const connector = {
       className: customConnectorClassName,
@@ -70,7 +80,13 @@ describe('createConnector()', () => {
 
     connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
 
-    await createConnector({ updateGraph, connector, newConnectorName });
+    await createConnector({
+      updateGraph,
+      connector,
+      newConnectorName,
+      graph,
+      showMessage,
+    });
 
     expect(updateGraph).toHaveBeenCalledTimes(1);
     expect(updateGraph).toHaveBeenCalledWith({

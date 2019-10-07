@@ -42,17 +42,29 @@ export const createConnector = async params => {
     newStreamName,
     showMessage,
     group,
+    graph,
   } = params;
 
   const { typeName } = connector;
-
   const className = getClassName(connector);
+
   let connectorName;
 
   if (typeName === 'topic') {
     // Topic is created beforehand therefore, a name is already exist.
     connectorName = connector.name;
   } else if (typeName === 'stream') {
+    const isNameTaken = graph.some(
+      g => g.name === newStreamName || newConnectorName,
+    );
+
+    if (isNameTaken) {
+      showMessage(
+        'The stream name is already taken, please use a different name!',
+      );
+      return;
+    }
+
     try {
       const response = await createProperty({
         jarKey: connector.jarKey,
@@ -85,6 +97,17 @@ export const createConnector = async params => {
       showMessage(error.message);
     }
   } else if (typeName === 'source' || typeName === 'sink') {
+    const isNameTaken = graph.some(
+      g => g.name === newStreamName || g.name === newConnectorName,
+    );
+
+    if (isNameTaken) {
+      showMessage(
+        'The connector name is already taken, please use a different name!',
+      );
+      return;
+    }
+
     try {
       const response = await connectorApi.createConnector({
         name: newConnectorName,
