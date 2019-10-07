@@ -557,7 +557,7 @@ export const getDisplayValue = ({
   const keyTypes = ['OBJECT_KEY'];
 
   if (keyTypes.includes(valueType)) {
-    return configValue.name;
+    return configValue.name || configValue;
   }
 
   // handle other types normally here

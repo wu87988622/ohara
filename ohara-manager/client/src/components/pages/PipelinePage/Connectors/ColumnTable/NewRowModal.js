@@ -28,14 +28,16 @@ const NewRowModal = props => {
   return (
     <Form
       onSubmit={handleConfirmClick}
-      initialValues={{ types: 'STRING' }}
-      render={({ handleSubmit, form, pristine, submitting }) => {
+      initialValues={{}}
+      render={({ handleSubmit, form, pristine, submitting, values }) => {
+        const incomplete = Object.keys(values).length !== 3;
+
         return (
           <Dialog
             title="New row"
             open={isActive}
             maxWidth="xs"
-            confirmDisabled={pristine || submitting}
+            confirmDisabled={pristine || submitting || incomplete}
             handleConfirm={values => {
               handleSubmit(values);
               form.reset();
