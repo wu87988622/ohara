@@ -19,7 +19,7 @@
 5. Enter `<node_password>` in the **Password** field.
 6. Click <kbd>TEST CONNECTION</kbd> to test your connection.
 7. If the test passes, click <kbd>ADD</kbd>.
-8. Repeat the above steps to add **three nodes**. 
+8. Repeat the above steps to add **three nodes**.
 
 **Create a new workspace:**
 
@@ -33,16 +33,15 @@
 **Add two topics:**
 
 1. On the **Workspaces** > **wk00** > **TOPICS** tab, click the <kbd>NEW TOPIC</kbd> button.
-2. Enter “t1” in the **Topic name** field and enter default value in other fields, click <kbd>Save</kbd>.
-3. Enter “t2” in the **Topic name** field and enter default value in other fields, click <kbd>Save</kbd>.
+2. Enter “t1” in the **Topic name** field and enter default value in other fields, click <kbd>ADD</kbd>.
+3. Enter “t2” in the **Topic name** field and enter default value in other fields, click <kbd>ADD</kbd>.
 
 **Add a stream jar:**
 
 1. On the **Workspaces** > **wk00** > **STREAM JARS** tab, click the <kbd>NEW JAR</kbd> button.
 2. Browse to the location of your jar file `ohara-streamapp.jar`, click the file, and click <kbd>Open</kbd>.
-> if You don't know how to build a stream app jar, see this [link](#how-to-get-ohara-streamappjar) for how
+   > if You don't know how to build a stream app jar, see this [link](#how-to-get-ohara-streamappjar) for how
 
- 
 ## Create a new pipeline, add some connectors, topics and a stream app
 
 1. On the **Pipelines** list page, click the <kbd>NEW PIPELINE</kbd> button.
@@ -62,13 +61,13 @@
 
 1. On the **firstpipeline** page, click the **ftpsource** graph in the pipeline graph.
 2. Select the **COMMON** tab and fill out the following config:
-    1. Enter “/demo/input” in the **Input Folder** field.
-    2. Enter “/demo/completed” in the **Completed Folder** field.
-    3. Enter “/demo/error” in the **Error Folder** field.
-    4. Enter `<ftp_server_ip>` in the **Hostname of Ftp Server** field.
-    5. Enter `<ftp_server_port>` in the **Port of Ftp Server** field.
-    6. Enter `ftp_username` in the **User of Ftp Server** field.
-    7. Enter `ftp_password` in the **Password of Ftp Server** field.
+   1. Enter “/demo/input” in the **Input Folder** field.
+   2. Enter “/demo/completed” in the **Completed Folder** field.
+   3. Enter “/demo/error” in the **Error Folder** field.
+   4. Enter `<ftp_server_ip>` in the **Hostname of Ftp Server** field.
+   5. Enter `<ftp_server_port>` in the **Port of Ftp Server** field.
+   6. Enter `ftp_username` in the **User of Ftp Server** field.
+   7. Enter `ftp_password` in the **Password of Ftp Server** field.
 3. Select the **CORE** tab and choose **t1** from the **Topics** dropdown.
 
 **Set up **dumb** stream app:**
@@ -83,21 +82,24 @@
 
 1. Click the **hdfssink** graph in the pipeline graph.
 2. Select the **COMMON** tab and fill out the following config:
-    1. Enter “/data“ in the Output Folder field
-    2. Change **Flush Size** value from “1000” to “5”
-    3. Check the **File Need Header** checkbox
-    4. Enter “hdfs://`<hdfs_host>`:`<hdfs_port>`” in the **HDSF URL** field
+   1. Enter “/data“ in the Output Folder field
+   2. Change **Flush Size** value from “1000” to “5”
+   3. Check the **File Need Header** checkbox
+   4. Enter “hdfs://`<hdfs_host>`:`<hdfs_port>`” in the **HDSF URL** field
 3. Select the **CORE** tab and choose **t2** from the **Topics** dropdown.
 
 ## Prepare the required folders and test data on the FTP server
 
 1. Open a terminal, login to FTP server (or use a FTP client of your choice)
+
 ```
 $ ftp `ftp_server_ip`
 Name: `ftp_username`
 Password: `ftp_password`
 ```
+
 2. Create the following folders on your FTP server
+
 ```
 ftp> mkdir demo
 ftp> cd demo
@@ -106,6 +108,7 @@ ftp> mkdir completed
 ftp> mkdir error
 ftp> bye
 ```
+
 3. Copy the test file `demo.csv` to **demo/input** folder. See this [link](#how-to-create-democsv) to create demo CSV files
 
 ## Start all connectors and stream app
@@ -117,6 +120,7 @@ ftp> bye
 
 1. Open a terminal and ssh to HDFS server.
 2. List all CSV files in **/data/wk00-t2/partition0** folder:
+
 ```sh
 $ hdfs dfs -ls /data/wk00-t2/partition0
 
@@ -125,6 +129,7 @@ $ hdfs dfs -ls /data/wk00-t2/partition0
 ```
 
 3. View the content of **part-000000000-000000005.csv**:
+
 ```sh
 $ hdfs dfs -cat /data/wk00-t2/partition0/part-000000000-000000005.csv
 
@@ -134,7 +139,9 @@ ID,NAME,CREATE_AT
 ```
 
 ## How to create demo.csv?
+
 1. Create the txt copy the date save to demo.csv
+
 ```
 ID,NAME,CREATE_AT
 1,ohara1,2019-03-01 00:00:01
@@ -145,22 +152,27 @@ ID,NAME,CREATE_AT
 ```
 
 ## How to get ohara-streamapp.jar?
+
 Open a new terminal from your machine and go to Ohara's source folder.
+
 ```sh
 cd ohara/
 ```
 
 Then `cd` to StreamApp DumbStreamApp source folder.
+
 ```sh
 cd ohara-it/src/main/scala/com/island/ohara/it/streamapp/
 ```
 
-Use Vi to edit __DumbStreamApp.scala__
+Use Vi to edit **DumbStreamApp.scala**
+
 ```sh
 vi DumbStreamApp.scala
 ```
 
 Enter "I" key from your keyboard to activate the "INSERT" mode
+
 ```
 -- INSERT --
 ```
@@ -179,6 +191,7 @@ class DumbStreamApp extends StreamApp {
 ```
 
 To
+
 ```java
 /*
  * Copyright 2019 is-land
@@ -232,6 +245,7 @@ class DumbStreamApp extends StreamApp {
 ```
 
 Press "Esc" key to leave the insert mode and enter `:wq` to save and exit from this file:
+
 ```
 :wq
 ```
@@ -244,6 +258,7 @@ gradle clean :ohara-it:jar -PskipManager
 ```
 
 Go to streamapp jar folder and list the jars that you have
+
 ```sh
 cd ohara-it/build/libs/ && ls
 
