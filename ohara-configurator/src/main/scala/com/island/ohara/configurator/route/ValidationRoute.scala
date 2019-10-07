@@ -94,47 +94,36 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     pathPrefix(VALIDATION_PREFIX_PATH) {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
-        verify = (req: HdfsValidation) =>
-          req.workerClusterKey
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleWorkerCluster())
-            .flatMap(CollieUtils.both)
-            .flatMap {
-              case (_, topicAdmin, _, workerClient) =>
-                workerClient match {
-                  case _: FakeWorkerClient => fakeReport()
-                  case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-                }
+        verify = (req: HdfsValidation) => {
+          CollieUtils.both(req.workerClusterKey).flatMap {
+            case (_, topicAdmin, _, workerClient) =>
+              workerClient match {
+                case _: FakeWorkerClient => fakeReport()
+                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              }
           }
+        }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (req: RdbValidation) =>
-          req.workerClusterKey
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleWorkerCluster())
-            .flatMap(CollieUtils.both)
-            .flatMap {
-              case (_, topicAdmin, _, workerClient) =>
-                workerClient match {
-                  case _: FakeWorkerClient => fakeJdbcReport()
-                  case _ =>
-                    ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-                }
-          }
+          CollieUtils.both(req.workerClusterKey).flatMap {
+            case (_, topicAdmin, _, workerClient) =>
+              workerClient match {
+                case _: FakeWorkerClient => fakeJdbcReport()
+                case _ =>
+                  ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              }
+        }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (req: FtpValidation) =>
-          req.workerClusterKey
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleWorkerCluster())
-            .flatMap(CollieUtils.both)
-            .flatMap {
-              case (_, topicAdmin, _, workerClient) =>
-                workerClient match {
-                  case _: FakeWorkerClient => fakeReport()
-                  case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-                }
-          }
+          CollieUtils.both(req.workerClusterKey).flatMap {
+            case (_, topicAdmin, _, workerClient) =>
+              workerClient match {
+                case _: FakeWorkerClient => fakeReport()
+                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              }
+        }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
         verify = (req: NodeValidation) =>

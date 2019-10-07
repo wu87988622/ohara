@@ -40,17 +40,21 @@ The parameters of request are shown below:
 #. port (**int**) — ftp server port
 #. user (**string**) — account of ftp server
 #. password (**string**) — password of ftp server
-#. workerClusterName (**string**) — the target cluster used to validate this connection
+#. workerClusterKey (**object**) — the target cluster used to validate this connection
 
 Example Request
   .. code-block:: json
 
-     {
-       "hostname": "node00",
-       "port": 22,
-       "user": "user",
-       "password": "pwd"
-     }
+    {
+      "hostname": "node00",
+      "port": 22,
+      "user": "user",
+      "password": "pwd",
+      "workerClusterKey": {
+        "group": "default",
+        "name": "wk"
+      }
+    }
 
   .. note::
 
@@ -69,13 +73,17 @@ JSON response shown below.
 Example Request
   .. code-block:: json
 
-     [
-       {
-         "hostname": "node00",
-         "message": "succeed to connector to ftp server",
-         "pass": true
-       }
-     ]
+    [
+      {
+        "hostname": "node00",
+        "message": "succeed to connector to ftp server",
+        "pass": true,
+        "workerClusterKey": {
+          "group": "default",
+          "name": "wk"
+        }
+      }
+    ]
 
 
 Validate the JDBC connection
@@ -88,19 +96,20 @@ The parameters of request are shown below:
 #. url (**string**) — jdbc url
 #. user (**string**) — account of db server
 #. password (**string**) — password of db server
-#. workerClusterName (**string**) — the target cluster used to validate this connection
+#. workerClusterKey (**object**) — the target cluster used to validate this connection
 
 Example Response
   .. code-block:: json
 
-     {
-       "url": "jdbc://",
-       "user": "user",
-       "password": "pwd",
-       "tableNames": [
-         "table0", "table1"
-       ]
-     }
+    {
+      "url": "jdbc://",
+      "user": "user",
+      "password": "pwd",
+      "workerClusterKey": {
+        "group": "default",
+        "name": "wk"
+      }
+    }
 
   .. note::
      Ohara picks up the single worker cluster directly when you ignore the
@@ -136,14 +145,18 @@ Validate the HDFS connection
 The parameters of request are shown below.
 
 #. uri (**string**) — hdfs url
-#. workerClusterName (**string**) — the target cluster used to validate this connection
+#. workerClusterKey (**object**) — the target cluster used to validate this connection
 
 Example Request
   .. code-block:: json
 
-     {
-       "uri": "file://"
-     }
+    {
+      "uri": "file://",
+      "workerClusterKey": {
+        "group": "default",
+        "name": "wk"
+      }
+    }
 
   .. note::
     Ohara picks up the single worker cluster directly when you ignore the

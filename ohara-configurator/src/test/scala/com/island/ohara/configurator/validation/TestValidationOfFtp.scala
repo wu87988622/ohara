@@ -16,61 +16,41 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.FtpValidation
-import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
-import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.route.ValidationUtils
-import com.island.ohara.testing.With3Brokers3Workers
-import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import com.island.ohara.client.configurator.v0.ValidationApi
+import com.island.ohara.common.util.CommonUtils
+import org.junit.Test
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
-class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
-  private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
+class TestValidationOfFtp extends WithConfigurator {
   private[this] val ftpServer = testUtil.ftpServer
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
-  @Before
-  def setup(): Unit = Await
-    .result(workerClient.plugins(), 10 seconds)
-    .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
+  private[this] def request =
+    ValidationApi.access.hostname(configuratorHostname).port(configuratorPort).ftpRequest
 
   @Test
   def goodCase(): Unit =
     assertSuccess(
-      workerClient,
-      ValidationUtils.run(
-        workerClient,
-        topicAdmin,
-        FtpValidation(hostname = ftpServer.hostname,
-                      port = ftpServer.port,
-                      user = ftpServer.user,
-                      password = ftpServer.password,
-                      workerClusterKey = None),
-        NUMBER_OF_TASKS
-      )
+      result(
+        request
+          .hostname(ftpServer.hostname)
+          .port(ftpServer.port)
+          .user(ftpServer.user)
+          .password(ftpServer.password())
+          .workerClusterKey(workerClusterKey)
+          .verify())
     )
 
   @Test
   def basCase(): Unit =
     assertFailure(
-      workerClient,
-      ValidationUtils.run(
-        workerClient,
-        topicAdmin,
-        FtpValidation(
-          hostname = ftpServer.hostname,
-          port = ftpServer.port,
-          user = CommonUtils.randomString(10),
-          password = ftpServer.password,
-          workerClusterKey = None
-        ),
-        NUMBER_OF_TASKS
-      )
+      result(
+        request
+          .hostname(ftpServer.hostname)
+          .port(ftpServer.port)
+          .user(ftpServer.user)
+          .password(CommonUtils.randomString())
+          .workerClusterKey(workerClusterKey)
+          .verify())
     )
-  @After
-  def tearDown(): Unit = Releasable.close(topicAdmin)
 }

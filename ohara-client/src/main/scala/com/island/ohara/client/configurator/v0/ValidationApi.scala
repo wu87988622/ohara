@@ -45,7 +45,7 @@ object ValidationApi {
   val REQUEST_ID = "requestId"
 
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
-  final case class HdfsValidation private[ValidationApi] (uri: String, workerClusterKey: Option[ObjectKey])
+  final case class HdfsValidation private[ValidationApi] (uri: String, workerClusterKey: ObjectKey)
   implicit val HDFS_VALIDATION_JSON_FORMAT: OharaJsonFormat[HdfsValidation] =
     JsonRefiner[HdfsValidation].format(jsonFormat2(HdfsValidation)).rejectEmptyString().refine
 
@@ -57,7 +57,7 @@ object ValidationApi {
   final case class RdbValidation private[ohara] (url: String,
                                                  user: String,
                                                  password: String,
-                                                 workerClusterKey: Option[ObjectKey])
+                                                 workerClusterKey: ObjectKey)
   implicit val RDB_VALIDATION_JSON_FORMAT: OharaJsonFormat[RdbValidation] =
     JsonRefiner[RdbValidation].format(jsonFormat4(RdbValidation)).rejectEmptyString().refine
 
@@ -66,7 +66,7 @@ object ValidationApi {
                                                          port: Int,
                                                          user: String,
                                                          password: String,
-                                                         workerClusterKey: Option[ObjectKey])
+                                                         workerClusterKey: ObjectKey)
 
   implicit val FTP_VALIDATION_JSON_FORMAT: OharaJsonFormat[FtpValidation] = JsonRefiner[FtpValidation]
     .format(jsonFormat5(FtpValidation))
@@ -269,7 +269,7 @@ object ValidationApi {
 
       override private[v0] def validation: HdfsValidation = HdfsValidation(
         uri = CommonUtils.requireNonEmpty(uri),
-        workerClusterKey = Option(workerClusterKey)
+        workerClusterKey = Objects.requireNonNull(workerClusterKey)
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
@@ -308,7 +308,7 @@ object ValidationApi {
         url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        workerClusterKey = Option(workerClusterKey)
+        workerClusterKey = Objects.requireNonNull(workerClusterKey)
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]] =
@@ -342,7 +342,7 @@ object ValidationApi {
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        workerClusterKey = Option(workerClusterKey)
+        workerClusterKey = Objects.requireNonNull(workerClusterKey)
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =

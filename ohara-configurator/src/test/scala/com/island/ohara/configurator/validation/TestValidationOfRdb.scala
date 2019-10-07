@@ -17,29 +17,17 @@
 package com.island.ohara.configurator.validation
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
+import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
-import com.island.ohara.common.util.Releasable
-import com.island.ohara.configurator.route.ValidationUtils
-import com.island.ohara.testing.With3Brokers3Workers
-import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import com.island.ohara.common.util.CommonUtils
+import org.junit.Test
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
-class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
-  private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
+class TestValidationOfRdb extends WithConfigurator {
   private[this] val rdb = testUtil.dataBase
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
-
-  @Before
-  def setup(): Unit =
-    Await
-      .result(workerClient.plugins(), 10 seconds)
-      .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
+  private[this] def request =
+    ValidationApi.access.hostname(configuratorHostname).port(configuratorPort).rdbRequest
 
   @Test
   def goodCase(): Unit = {
@@ -47,15 +35,18 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
     try client.createTable("table", Seq(RdbColumn("v0", "integer", true)))
     finally client.close()
     assertJdbcSuccess(
-      workerClient,
-      ValidationUtils.run(
-        workerClient,
-        topicAdmin,
-        RdbValidation(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterKey = None),
-        NUMBER_OF_TASKS
-      )
+      result(request.jdbcUrl(rdb.url).user(rdb.user).password(rdb.password).workerClusterKey(workerClusterKey).verify())
     )
   }
-  @After
-  def tearDown(): Unit = Releasable.close(topicAdmin)
+
+  @Test
+  def badCase(): Unit = assertJdbcFailure(
+    result(
+      request
+        .jdbcUrl(rdb.url)
+        .user(rdb.user)
+        .password(CommonUtils.randomString())
+        .workerClusterKey(workerClusterKey)
+        .verify())
+  )
 }

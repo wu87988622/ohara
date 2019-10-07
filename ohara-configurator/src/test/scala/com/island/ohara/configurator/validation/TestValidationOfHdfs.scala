@@ -16,49 +16,23 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.HdfsValidation
-import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
-import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.Releasable
-import com.island.ohara.configurator.route.ValidationUtils
-import com.island.ohara.testing.With3Brokers3Workers
-import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import com.island.ohara.client.configurator.v0.ValidationApi
+import org.junit.Test
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
-class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
-  private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
-
-  @Before
-  def setup(): Unit =
-    Await
-      .result(workerClient.plugins(), 10 seconds)
-      .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
+class TestValidationOfHdfs extends WithConfigurator {
+  private[this] def request =
+    ValidationApi.access.hostname(configuratorHostname).port(configuratorPort).hdfsRequest
 
   @Test
   def goodCase(): Unit =
     assertSuccess(
-      workerClient,
-      ValidationUtils.run(
-        workerClient,
-        topicAdmin,
-        // workerClusterKey is useless here, and we put a random key to test the "key" type does not break the validation.
-        HdfsValidation(uri = "file:///tmp", workerClusterKey = Some(ObjectKey.of("default", "unknown"))),
-        NUMBER_OF_TASKS
-      )
+      result(request.uri("file:///tmp").workerClusterKey(workerClusterKey).verify())
     )
 
   @Test
   def badCase(): Unit = assertFailure(
-    workerClient,
-    ValidationUtils
-      .run(workerClient, topicAdmin, HdfsValidation(uri = "hdfs:///tmp", workerClusterKey = None), NUMBER_OF_TASKS)
+    result(request.uri("hdfs:///tmp").workerClusterKey(workerClusterKey).verify())
   )
-
-  @After
-  def tearDown(): Unit = Releasable.close(topicAdmin)
 }

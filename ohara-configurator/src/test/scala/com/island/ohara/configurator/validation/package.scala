@@ -17,44 +17,41 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ValidationApi.{RdbValidationReport, ValidationReport}
-import com.island.ohara.client.kafka.WorkerClient
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 package object validation extends Matchers {
   val NUMBER_OF_TASKS = 3
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+  def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
-  def assertFailure(workerClient: WorkerClient, f: Future[Seq[ValidationReport]])(
-    implicit executionContext: ExecutionContext): Unit = try {
-    val reports = result(f)
+  def assertFailure(reports: Seq[ValidationReport]): Unit = {
     reports.size should be >= NUMBER_OF_TASKS
-    reports.isEmpty shouldBe false
-    reports.map(_.message).foreach(_.nonEmpty shouldBe true)
+    reports.size should not be 0
+    reports.map(_.message).foreach(_.length should not be 0)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
-  } finally checkActiveConnectors(workerClient)
+  }
 
-  def assertSuccess(workerClient: WorkerClient, f: Future[Seq[ValidationReport]])(
-    implicit executionContext: ExecutionContext): Unit = try {
-    val reports = result(f)
+  def assertSuccess(reports: Seq[ValidationReport]): Unit = {
     reports.size should be >= NUMBER_OF_TASKS
-    reports.isEmpty shouldBe false
-    reports.map(_.message).foreach(_.nonEmpty shouldBe true)
+    reports.size should not be 0
+    reports.map(_.message).foreach(_.length should not be 0)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
-  } finally checkActiveConnectors(workerClient)
+  }
 
-  def assertJdbcSuccess(workerClient: WorkerClient, f: Future[Seq[RdbValidationReport]])(
-    implicit executionContext: ExecutionContext): Unit = try {
-    val reports = result(f)
+  def assertJdbcSuccess(reports: Seq[RdbValidationReport]): Unit = {
     reports.size should be >= NUMBER_OF_TASKS
-    reports.isEmpty shouldBe false
-    reports.map(_.message).foreach(_.nonEmpty shouldBe true)
+    reports.size should not be 0
+    reports.map(_.message).foreach(_.length should not be 0)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
-    reports.foreach(_.rdbInfo.get.tables.isEmpty shouldBe false)
-  } finally checkActiveConnectors(workerClient)
+    reports.foreach(_.rdbInfo.get.tables.size should not be 0)
+  }
 
-  private[this] def checkActiveConnectors(workerClient: WorkerClient)(
-    implicit executionContext: ExecutionContext): Unit =
-    Await.result(workerClient.activeConnectors, 10 seconds).size shouldBe 0
+  def assertJdbcFailure(reports: Seq[RdbValidationReport]): Unit = {
+    reports.size should be >= NUMBER_OF_TASKS
+    reports.size should not be 0
+    reports.map(_.message).foreach(_.length should not be 0)
+    reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
+    reports.foreach(_.rdbInfo shouldBe None)
+  }
 }

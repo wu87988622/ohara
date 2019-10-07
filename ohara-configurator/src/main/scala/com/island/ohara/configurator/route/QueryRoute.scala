@@ -69,7 +69,7 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
                             url = query.url,
                             user = query.user,
                             password = query.password,
-                            workerClusterKey = Some(workerCluster.key)
+                            workerClusterKey = workerCluster.key
                           ),
                           1
                         )

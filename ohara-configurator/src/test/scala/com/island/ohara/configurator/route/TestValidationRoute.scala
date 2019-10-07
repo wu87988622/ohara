@@ -58,6 +58,7 @@ class TestValidationRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .hdfsRequest
         .uri("file:///tmp")
+        .workerClusterKey(wkCluster.key)
         .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
@@ -84,6 +85,7 @@ class TestValidationRoute extends OharaTest with Matchers {
         .jdbcUrl("fake_url")
         .user("fake_user")
         .password("fake_password")
+        .workerClusterKey(wkCluster.key)
         .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
@@ -114,6 +116,7 @@ class TestValidationRoute extends OharaTest with Matchers {
         .port(22)
         .user("fake_user")
         .password("fake_password")
+        .workerClusterKey(wkCluster.key)
         .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)

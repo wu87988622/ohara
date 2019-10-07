@@ -37,7 +37,11 @@ class TestValidationApi extends OharaTest with Matchers {
          |   "hostname": \"$hostname\",
          |   "user": \"$user\",
          |   "password": \"$password\",
-         |   "port": $port
+         |   "port": $port,
+         |   "workerClusterKey": {
+         |     "group": "g",
+         |     "name": "n"
+         |   }
          | }
        """.stripMargin
 
@@ -54,13 +58,15 @@ class TestValidationApi extends OharaTest with Matchers {
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     val port = CommonUtils.availablePort()
+    val workerClusterName = CommonUtils.randomString()
     val json =
       s"""
          | {
          |   "hostname": \"$hostname\",
          |   "user": \"$user\",
          |   "password": \"$password\",
-         |   "port": \"$port\"
+         |   "port": \"$port\",
+         |   "workerClusterKey": "$workerClusterName"
          | }
        """.stripMargin
 
@@ -69,6 +75,7 @@ class TestValidationApi extends OharaTest with Matchers {
     request.user shouldBe user
     request.password shouldBe password
     request.port shouldBe port
+    request.workerClusterKey.name shouldBe workerClusterName
   }
 
   @Test
@@ -133,15 +140,7 @@ class TestValidationApi extends OharaTest with Matchers {
     validation.port shouldBe port
     validation.user shouldBe user
     validation.password shouldBe password
-    validation.workerClusterKey.get shouldBe workerClusterKey
-
-    ValidationApi.access.ftpRequest
-      .hostname(hostname)
-      .port(port)
-      .user(user)
-      .password(password)
-      .validation
-      .workerClusterKey shouldBe None
+    validation.workerClusterKey shouldBe workerClusterKey
   }
 
   @Test
@@ -162,9 +161,7 @@ class TestValidationApi extends OharaTest with Matchers {
     val validation = ValidationApi.access.hdfsRequest.uri(uri).workerClusterKey(workerClusterKey).validation
 
     validation.uri shouldBe uri
-    validation.workerClusterKey.get shouldBe workerClusterKey
-
-    ValidationApi.access.hdfsRequest.uri(uri).validation.workerClusterKey shouldBe None
+    validation.workerClusterKey shouldBe workerClusterKey
   }
 
   @Test
@@ -209,9 +206,7 @@ class TestValidationApi extends OharaTest with Matchers {
     validation.url shouldBe url
     validation.user shouldBe user
     validation.password shouldBe password
-    validation.workerClusterKey.get shouldBe workerClusterKey
-
-    ValidationApi.access.rdbRequest.jdbcUrl(url).user(user).password(password).validation.workerClusterKey shouldBe None
+    validation.workerClusterKey shouldBe workerClusterKey
   }
 
   @Test
@@ -263,11 +258,11 @@ class TestValidationApi extends OharaTest with Matchers {
   @Test
   def testParseHdfsValidation(): Unit = {
     val uri = CommonUtils.randomString()
-    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "uri": "$uri"
          |  }
-      """.stripMargin.parseJson).uri shouldBe uri
+      """.stripMargin.parseJson)
 
     val workerClusterName = CommonUtils.randomString()
     ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(s"""
@@ -275,7 +270,7 @@ class TestValidationApi extends OharaTest with Matchers {
          |    "uri": "$uri",
          |    "workerClusterKey": "$workerClusterName"
          |  }
-      """.stripMargin.parseJson).workerClusterKey.get.name() shouldBe workerClusterName
+      """.stripMargin.parseJson).workerClusterKey.name() shouldBe workerClusterName
   }
 
   @Test
@@ -300,17 +295,13 @@ class TestValidationApi extends OharaTest with Matchers {
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val rdbValidation = ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "url": "$url",
          |    "user": "$user",
          |    "password": "$password"
          |  }
       """.stripMargin.parseJson)
-
-    rdbValidation.url shouldBe url
-    rdbValidation.user shouldBe user
-    rdbValidation.password shouldBe password
 
     val workerClusterName = CommonUtils.randomString()
     ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(s"""
@@ -320,7 +311,7 @@ class TestValidationApi extends OharaTest with Matchers {
          |    "password": "$password",
          |    "workerClusterKey": "$workerClusterName"
          |  }
-      """.stripMargin.parseJson).workerClusterKey.get.name() shouldBe workerClusterName
+      """.stripMargin.parseJson).workerClusterKey.name() shouldBe workerClusterName
   }
 
   @Test
@@ -368,7 +359,7 @@ class TestValidationApi extends OharaTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val ftpValidation = ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "hostname": "$hostname",
          |    "port": $port,
@@ -376,11 +367,6 @@ class TestValidationApi extends OharaTest with Matchers {
          |    "password": "$password"
          |  }
       """.stripMargin.parseJson)
-
-    ftpValidation.hostname shouldBe hostname
-    ftpValidation.port shouldBe port
-    ftpValidation.user shouldBe user
-    ftpValidation.password shouldBe password
 
     val workerClusterName = CommonUtils.randomString()
     ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
@@ -391,7 +377,7 @@ class TestValidationApi extends OharaTest with Matchers {
          |    "password": "$password",
          |    "workerClusterKey": "$workerClusterName"
          |  }
-      """.stripMargin.parseJson).workerClusterKey.get.name() shouldBe workerClusterName
+      """.stripMargin.parseJson).workerClusterKey.name() shouldBe workerClusterName
   }
 
   @Test
@@ -400,12 +386,14 @@ class TestValidationApi extends OharaTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
+    val workerClusterName = CommonUtils.randomString()
     val ftpValidation = ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "hostname": "$hostname",
          |    "port": "$port",
          |    "user": "$user",
-         |    "password": "$password"
+         |    "password": "$password",
+         |    "workerClusterKey": "$workerClusterName"
          |  }
       """.stripMargin.parseJson)
 
