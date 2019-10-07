@@ -60,7 +60,7 @@ NodeNames.propTypes = {
       connectorName: PropTypes.string,
     }).isRequired,
   }).isRequired,
-  nodeNames: PropTypes.array.isRequired,
+  nodeNames: PropTypes.array,
 };
 
 export default NodeNames;
