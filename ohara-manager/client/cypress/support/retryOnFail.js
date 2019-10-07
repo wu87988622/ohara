@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-const integrationFolderName = Cypress.config('integrationFolder')
-  .split('/')
-  .pop();
+const isE2eTest = Cypress.config('integrationFolder').includes('e2e');
 
 // Enable cypress to retry on fail end-to-end test
-if (integrationFolderName === 'e2e') {
+if (isE2eTest) {
   require('cypress-plugin-retries');
   Cypress.env('RETRIES', 3);
 }
