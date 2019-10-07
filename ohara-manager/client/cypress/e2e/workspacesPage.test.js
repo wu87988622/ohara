@@ -181,7 +181,10 @@ describe('WorkspacesPage', () => {
       .click()
       .url()
       .should('include', '/nodes')
-      .getByTestId('workspace-tab')
+      .getByText('NEW NODE')
+      .should('have.length', 1);
+
+    cy.getByTestId('workspace-tab')
       .within(() => {
         cy.getByText('OVERVIEW').click();
       })
@@ -189,22 +192,30 @@ describe('WorkspacesPage', () => {
       .click()
       .url()
       .should('include', '/topics')
-      .getByTestId('workspace-tab')
+      .getByText('NEW TOPIC')
+      .should('have.length', 1);
+
+    cy.getByTestId('workspace-tab')
       .within(() => {
         cy.getByText('OVERVIEW').click();
       })
       .getByTestId('overview-streamapps-link')
       .click()
       .url()
-      .should('include', '/streamapps')
-      .getByTestId('workspace-tab')
+      .should('include', '/streamjars')
+      .getByText('NEW JAR')
+      .should('have.length', 1);
+
+    cy.getByTestId('workspace-tab')
       .within(() => {
         cy.getByText('OVERVIEW').click();
       })
       .getByTestId('overview-plugins-link')
       .click()
       .url()
-      .should('include', '/plugins');
+      .should('include', '/plugins')
+      .getByText('ADD PLUGIN')
+      .should('have.length', 1);
   });
 
   it('should display the overview info', () => {

@@ -20,8 +20,10 @@ import styled from 'styled-components';
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import { Route } from 'react-router-dom';
+import { Route, Redirect, Switch } from 'react-router-dom';
 
+import * as URLS from 'constants/urls';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import Topics from './Topics';
 import StreamApp from './StreamApp/StreamApp';
 import Nodes from './Node/Nodes';
@@ -34,6 +36,7 @@ const StyledTabs = styled(Tabs)`
 
 const MuiTabs = props => {
   const [value, setValue] = React.useState(0);
+  const { showMessage } = useSnackbar();
 
   const tabArray = ['overview', 'nodes', 'topics', 'streamjars', 'plugins'];
   const { workspaceName } = props.match.params;
@@ -67,23 +70,35 @@ const MuiTabs = props => {
         <Tab label="STREAM JARS" />
         <Tab label="PLUGINS" />
       </StyledTabs>
-      <Route
-        path={`${baseUrl}/overview`}
-        render={() => <Overview {...props} />}
-      />
-      <Route
-        path={`${baseUrl}/nodes`}
-        render={() => <Nodes workspaceName={workspaceName} />}
-      />
-      <Route path={`${baseUrl}/topics`} render={() => <Topics {...props} />} />
-      <Route
-        path={`${baseUrl}/streamjars`}
-        render={() => <StreamApp workspaceName={workspaceName} />}
-      />
-      <Route
-        path={`${baseUrl}/plugins`}
-        render={() => <Plugins {...props} />}
-      />
+      <Switch>
+        <Route
+          path={`${baseUrl}/overview`}
+          render={() => <Overview {...props} />}
+        />
+        <Route
+          path={`${baseUrl}/nodes`}
+          render={() => <Nodes workspaceName={workspaceName} />}
+        />
+        <Route
+          path={`${baseUrl}/topics`}
+          render={() => <Topics {...props} />}
+        />
+        <Route
+          path={`${baseUrl}/streamjars`}
+          render={() => <StreamApp workspaceName={workspaceName} />}
+        />
+        <Route
+          path={`${baseUrl}/plugins`}
+          render={() => <Plugins {...props} />}
+        />
+        <Route
+          path={`${baseUrl}/*`}
+          render={() => {
+            showMessage('Ooops, the page you are looking for does not exist!');
+            return <Redirect to={URLS.WORKSPACES} />;
+          }}
+        />
+      </Switch>
     </Paper>
   );
 };
