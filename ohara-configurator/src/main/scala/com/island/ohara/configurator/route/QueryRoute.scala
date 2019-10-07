@@ -75,7 +75,10 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
                         )
                         .map { reports =>
                           if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
-                          reports.head.rdbInfo
+                          reports
+                            .find(_.rdbInfo.isDefined)
+                            .map(_.rdbInfo.get)
+                            .getOrElse(throw new IllegalStateException("failed to query table via ohara.Validator"))
                         }
                   }
               })

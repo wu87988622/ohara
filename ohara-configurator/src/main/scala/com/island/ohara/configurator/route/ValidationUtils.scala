@@ -45,7 +45,18 @@ object ValidationUtils {
     ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
     taskCount
   ).map {
-    _.filter(_.isInstanceOf[RdbValidationReport]).map(_.asInstanceOf[RdbValidationReport])
+    _.flatMap {
+      case r: RdbValidationReport => Some(r)
+      case r: ValidationReport =>
+        Some(
+          RdbValidationReport(
+            hostname = r.hostname,
+            message = r.message,
+            pass = r.pass,
+            rdbInfo = None
+          ))
+      case _ => None
+    }
   }
 
   def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: HdfsValidation, taskCount: Int)(

@@ -87,7 +87,7 @@ class TestValidationRoute extends OharaTest with Matchers {
         .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
-    report.foreach(_.rdbInfo.tables.isEmpty shouldBe false)
+    report.foreach(_.rdbInfo.get.tables.isEmpty shouldBe false)
   }
 
   @Test
@@ -198,7 +198,7 @@ class TestValidationRoute extends OharaTest with Matchers {
   @Test
   def testFakeJdbcReport(): Unit = result(ValidationRoute.fakeJdbcReport()).foreach { report =>
     report.pass shouldBe true
-    report.rdbInfo.tables.isEmpty shouldBe false
+    report.rdbInfo.get.tables.isEmpty shouldBe false
   }
 
   @After
