@@ -32,7 +32,7 @@ import {
   Btn,
   Icon,
   RightCol,
-  Ul,
+  StyledDialogContent,
   LoaderWrapper,
 } from './styles';
 
@@ -78,7 +78,7 @@ const Header = () => {
             <ListLoader />
           </LoaderWrapper>
         ) : (
-          <Ul data-testid="info-list">
+          <StyledDialogContent data-testid="info-list">
             <li>
               <span className="item">Mode:</span>
               <span className="content">{mode}</span>
@@ -95,7 +95,7 @@ const Header = () => {
               <span className="item">Build date:</span>
               <span className="content">{date}</span>
             </li>
-          </Ul>
+          </StyledDialogContent>
         )}
       </Dialog>
       <HeaderWrapper>

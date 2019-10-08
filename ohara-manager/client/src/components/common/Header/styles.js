@@ -15,6 +15,7 @@
  */
 
 import styled from 'styled-components';
+import DialogContent from '@material-ui/core/DialogContent';
 import { NavLink } from 'react-router-dom';
 
 export const StyledHeader = styled.div`
@@ -101,7 +102,7 @@ export const RightCol = styled.div`
   margin-left: auto;
 `;
 
-export const Ul = styled.ul`
+export const StyledDialogContent = styled(DialogContent)`
   padding: 22px 25px;
 
   li {

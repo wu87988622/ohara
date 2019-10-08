@@ -27,6 +27,10 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import DrabblePaper from './DrabblePaper';
 
+const StyledDialogTitle = styled(DialogTitle)`
+  cursor: move;
+`;
+
 const ButtonWrapper = styled.div`
   position: relative;
 `;
@@ -71,7 +75,7 @@ const AlertDialog = props => {
       PaperComponent={DrabblePaper}
     >
       <div data-testid={testId}>
-        <DialogTitle>{title}</DialogTitle>
+        <StyledDialogTitle>{title}</StyledDialogTitle>
         <DialogContent>
           <StyledContentText>{content}</StyledContentText>
         </DialogContent>
