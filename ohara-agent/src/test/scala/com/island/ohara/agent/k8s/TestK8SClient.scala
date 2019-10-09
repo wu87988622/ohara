@@ -17,11 +17,14 @@
 package com.island.ohara.agent.k8s
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
 import com.island.ohara.agent.k8s.K8SJson._
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -29,12 +32,8 @@ import org.scalatest.Matchers
 import spray.json._
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestK8SClient extends OharaTest with Matchers {
 
   @Test
@@ -273,7 +272,7 @@ class TestK8SClient extends OharaTest with Matchers {
                            |{"items": [
                            |    {
                            |      "metadata": {
-                           |        "name": "${nodeName}"
+                           |        "name": "$nodeName"
                            |      },
                            |      "status": {
                            |        "conditions": [
@@ -314,7 +313,7 @@ class TestK8SClient extends OharaTest with Matchers {
     val createPodResult = s"""
                              |{
                              |  "metadata": {
-                             |    "name": "${podName}",
+                             |    "name": "$podName",
                              |    "uid": "aaaaaaaaaaaa",
                              |    "creationTimestamp": "2019-05-13 00:00:00"
                              |  },
@@ -326,8 +325,8 @@ class TestK8SClient extends OharaTest with Matchers {
 
     // test json serialization
     val k8sNodeInfo: K8SNodeInfo = K8SNODEINFO_JSON_FORMAT.read(nodesResponse.parseJson)
-    k8sNodeInfo.items(0).metadata.name shouldBe "ohara-it-02"
-    k8sNodeInfo.items(0).status.images.size shouldBe 1
+    k8sNodeInfo.items.head.metadata.name shouldBe "ohara-it-02"
+    k8sNodeInfo.items.head.status.images.size shouldBe 1
 
     // test communication
     toServer {
@@ -338,8 +337,8 @@ class TestK8SClient extends OharaTest with Matchers {
       } ~
         path("namespaces" / "default" / "pods") {
           post {
-            entity(as[CreatePod]) { createPod =>
-              createPod.spec.containers(0).imagePullPolicy shouldBe expectImagePullPolicy
+            entity(as[Pod]) { createPod =>
+              createPod.spec.get.containers.head.imagePullPolicy shouldBe Some(expectImagePullPolicy)
               complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, createPodResult)))
             }
           }
@@ -416,7 +415,7 @@ class TestK8SClient extends OharaTest with Matchers {
       } ~
         path("namespaces" / "default" / "pods") {
           post {
-            entity(as[CreatePod]) { _ =>
+            entity(as[Pod]) { _ =>
               complete(
                 HttpResponse(status = StatusCodes.BadRequest,
                              entity = HttpEntity(ContentTypes.`application/json`, resultMessage)))
@@ -469,7 +468,7 @@ class TestK8SClient extends OharaTest with Matchers {
 
     // test communication
     toServer {
-      path("pods") {
+      path("namespaces" / "default" / "pods") {
         get {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, podsInfo)))
         }

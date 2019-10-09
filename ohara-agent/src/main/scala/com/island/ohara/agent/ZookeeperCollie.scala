@@ -34,6 +34,10 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
 
+  // the required files for zookeeper
+  private[agent] val zooCfgPath: String = "/home/ohara/default/conf/zoo.cfg"
+  private[agent] val myIdPath: String = "/home/ohara/default/data/myid"
+
   override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
 
   /**
@@ -60,7 +64,10 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
               // add route in order to make zk node can connect to each other.
               val route: Map[String, String] = routeInfo(nodes)
 
-              val zkServers: String = nodes.keys.map(_.name).mkString(" ")
+              val zkServers = nodes.keys.map(_.name).zipWithIndex.map {
+                case (nodeName, index) =>
+                  s"server.$index=$nodeName:${creation.peerPort}:${creation.electionPort}"
+              }
               // ssh connection is slow so we submit request by multi-thread
               Future
                 .sequence(nodes.zipWithIndex.map {
@@ -102,17 +109,29 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                             // save the json string for all settings
                             case _ => CommonUtils.toEnvString(v.toString)
                           })
-                        // each zookeeper instance needs an unique id to identify
-                      } + (ZookeeperApi.ZK_ID_KEY -> index.toString)
-                      // zookeeper cluster will use this setting to communicate to each other zookeeper instance
-                        + (ZookeeperApi.SERVERS_KEY -> zkServers),
+                      },
                       // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
                       // Note: We should assign "node" name to the container hostname directly here to avoid some
                       // dns problem. For example, we may want to connect to zk to dig something issue and assign
                       // node name here can save our life to solve the connection problem...
                       hostname = node.name
                     )
-                    doCreator(executionContext, containerName, containerInfo, node, route)
+                    // Construct the required configs for current container
+                    val configFiles = Map(
+                      zooCfgPath -> {
+                        Seq(
+                          s"${ZookeeperApi.TICK_TIME_KEY}=2000",
+                          s"${ZookeeperApi.INIT_LIMIT_KEY}=10",
+                          s"${ZookeeperApi.SYNC_LIMIT_KEY}=5",
+                          s"${ZookeeperApi.MAX_CLIENT_CNXNS_KEY}=60",
+                          s"${ZookeeperApi.CLIENT_PORT_KEY}=${creation.clientPort}",
+                          s"${ZookeeperApi.DATA_DIR_KEY}=${myIdPath.substring(0, myIdPath.lastIndexOf("/"))}"
+                        ) ++ zkServers
+                      }.mkString(","),
+                      myIdPath -> Seq(index.toString).mkString(",")
+                    )
+                    val arguments = configFiles.flatMap { case (k, v) => Seq("--file", s"$k=$v") }.toSeq
+                    doCreator(executionContext, containerName, containerInfo, node, route, arguments)
                       .map(_ => Some(containerInfo))
                       .recover {
                         case _: Throwable =>
@@ -154,7 +173,8 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
-                          route: Map[String, String]): Future[Unit]
+                          route: Map[String, String],
+                          arguments: Seq[String]): Future[Unit]
 
   protected def postCreate(clusterStatus: ZookeeperClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing

@@ -16,32 +16,13 @@
 
 package com.island.ohara.agent.k8s
 
-import java.text.SimpleDateFormat
 import java.util.Objects
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.island.ohara.agent.k8s.K8SClient.ContainerCreator
-import com.island.ohara.agent.k8s.K8SJson.{
-  ConfigMap,
-  Container,
-  CreatePod,
-  CreatePodContainer,
-  CreatePodEnv,
-  CreatePodLabel,
-  CreatePodMetadata,
-  CreatePodNodeSelector,
-  CreatePodPortMapping,
-  CreatePodResult,
-  CreatePodSpec,
-  HostAliases,
-  K8SErrorResponse,
-  K8SNodeInfo,
-  K8SPodInfo,
-  Metadata,
-  NodeItems
-}
-import com.island.ohara.client.{Enum, HttpExecutor}
+import com.island.ohara.agent.k8s.K8SJson._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.{Enum, HttpExecutor}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
@@ -82,30 +63,31 @@ object K8SClient {
     new K8SClient() with SprayJsonSupport {
       override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
         HttpExecutor.SINGLETON
-          .get[K8SPodInfo, K8SErrorResponse](s"$k8sApiServerURL/pods")
-          .map(podInfo =>
-            podInfo.items.map(item => {
-              val containerInfo: Container = item.spec.containers.head
-              val phase = item.status.phase
-              val hostIP = item.status.hostIP
+          .get[PodList, K8SErrorResponse](s"$k8sApiServerURL/namespaces/default/pods")
+          .map(podList =>
+            podList.items.map(pod => {
+              val spec: PodSpec = pod.spec.getOrElse(
+                throw new RuntimeException(s"the container doesn't have spec : ${pod.metadata.name}"))
+              val containerInfo: Container = spec.containers.head
+              val phase = pod.status.map(_.phase).getOrElse("Unknown")
+              val hostIP = pod.status.fold("Unknown")(_.hostIP.getOrElse("Unknown"))
               ContainerInfo(
-                item.spec.nodeName.getOrElse("Unknown"),
-                item.metadata.uid,
+                spec.nodeName.getOrElse("Unknown"),
+                pod.metadata.uid.getOrElse("Unknown"),
                 containerInfo.image,
-                item.metadata.creationTimestamp,
+                pod.metadata.creationTimestamp.getOrElse("Unknown"),
                 K8sContainerState.all
                   .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
                   .getOrElse(K8sContainerState.UNKNOWN)
                   .name,
                 K8S_KIND_NAME,
-                item.metadata.name,
+                pod.metadata.name,
                 "Unknown",
                 Seq(
-                  PortMapping(
-                    hostIP.getOrElse("Unknown"),
-                    containerInfo.ports.getOrElse(Seq()).map(x => PortPair(x.hostPort.getOrElse(0), x.containerPort)))),
+                  PortMapping(hostIP,
+                              containerInfo.ports.getOrElse(Seq()).map(x => PortPair(x.hostPort, x.containerPort)))),
                 containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
-                item.spec.hostname.getOrElse("")
+                spec.hostname
               )
             }))
 
@@ -139,9 +121,7 @@ object K8SClient {
         val request = ConfigMap("v1",
                                 "ConfigMap",
                                 configs,
-                                Metadata(CommonUtils.randomString(),
-                                         name,
-                                         new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(CommonUtils.current)))
+                                Metadata(uid = None, name = name, labels = None, creationTimestamp = None))
         HttpExecutor.SINGLETON
           .post[ConfigMap, ConfigMap, K8SErrorResponse](s"$k8sApiServerURL/namespaces/default/configmaps", request)
           .map(_.metadata.name)
@@ -309,53 +289,61 @@ object K8SClient {
             this
           }
 
-          override def create(): Future[Option[ContainerInfo]] =
+          override def create(): Future[Option[ContainerInfo]] = {
+            // required fields
+            CommonUtils.requireNonEmpty(nodeName)
+            CommonUtils.requireNonEmpty(hostname)
+            CommonUtils.requireNonEmpty(domainName)
+            CommonUtils.requireNonEmpty(imageName)
+            CommonUtils.requireNonEmpty(labelName)
+
             nodeNameIPInfo
               .map { ipInfo =>
-                CreatePodSpec(
-                  CreatePodNodeSelector(nodeName),
-                  hostname, //hostname is container name
-                  domainName,
-                  ipInfo ++ routes.map { case (host, ip) => HostAliases(ip, Seq(host)) },
-                  Seq(
-                    CreatePodContainer(labelName,
-                                       imageName,
-                                       envs.map(x => CreatePodEnv(x._1, x._2)).toSeq,
-                                       ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq,
-                                       imagePullPolicy,
-                                       command,
-                                       args)),
-                  restartPolicy
+                PodSpec(
+                  nodeSelector = Some(NodeSelector(nodeName)),
+                  hostname = hostname, //hostname is container name
+                  subdomain = Some(domainName),
+                  hostAliases = Some(ipInfo ++ routes.map { case (host, ip) => HostAliases(ip, Seq(host)) }),
+                  containers = Seq(Container(
+                    name = labelName,
+                    image = imageName,
+                    env = if (envs.isEmpty) None else Some(envs.map(x => EnvVar(x._1, Some(x._2))).toSeq),
+                    ports = if (ports.isEmpty) None else Some(ports.map(x => ContainerPort(x._1, x._2)).toSeq),
+                    imagePullPolicy = Some(imagePullPolicy),
+                    volumeMounts = None,
+                    command = if (command.isEmpty) None else Some(command),
+                    args = if (args.isEmpty) None else Some(args)
+                  )),
+                  restartPolicy = Some(restartPolicy),
+                  nodeName = None,
+                  volumes = None
                 )
               }
-              .map(podSpec => { //name is pod name
-                val request = CreatePod("v1", "Pod", CreatePodMetadata(name, CreatePodLabel(labelName)), podSpec)
-                HttpExecutor.SINGLETON.post[CreatePod, CreatePodResult, K8SErrorResponse](
-                  s"$k8sApiServerURL/namespaces/default/pods",
-                  request)
+              .flatMap(podSpec => { //name is pod name
+                val request = Pod(Metadata(None, name, Some(Label(labelName)), None), Some(podSpec), None)
+                HttpExecutor.SINGLETON.post[Pod, Pod, K8SErrorResponse](s"$k8sApiServerURL/namespaces/default/pods",
+                                                                        request)
               })
-              .flatMap(
-                _.map(createPodResult => {
-                  Option(
-                    ContainerInfo(
-                      nodeName,
-                      createPodResult.metadata.uid,
-                      imageName,
-                      createPodResult.metadata.creationTimestamp,
-                      K8sContainerState.all
-                        .find(s => createPodResult.status.phase.toLowerCase.contains(s.name.toLowerCase))
-                        .getOrElse(K8sContainerState.UNKNOWN)
-                        .name,
-                      K8S_KIND_NAME,
-                      createPodResult.metadata.name,
-                      "Unknown",
-                      ports.map(x => PortMapping(hostname, Seq(PortPair(x._1, x._2)))).toSeq,
-                      envs,
-                      hostname
-                    ))
-                })
-              )
-
+              .map(pod => {
+                Option(
+                  ContainerInfo(
+                    nodeName = nodeName,
+                    id = pod.metadata.uid.getOrElse("Unknown"),
+                    imageName = imageName,
+                    created = pod.metadata.creationTimestamp.getOrElse("Unknown"),
+                    state = K8sContainerState.all
+                      .find(s => pod.status.fold(false)(_.phase.toLowerCase.contains(s.name.toLowerCase)))
+                      .getOrElse(K8sContainerState.UNKNOWN)
+                      .name,
+                    kind = K8S_KIND_NAME,
+                    name = pod.metadata.name,
+                    size = "Unknown",
+                    portMappings = ports.map(x => PortMapping(hostname, Seq(PortPair(x._1, x._2)))).toSeq,
+                    environments = envs,
+                    hostname = hostname
+                  ))
+              })
+          }
         }
 
       private[this] def removePod(name: String, isForce: Boolean)(

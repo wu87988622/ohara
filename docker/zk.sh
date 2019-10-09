@@ -15,67 +15,52 @@
 # limitations under the License.
 #
 
-if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
-  if [[ -f "$ZOOKEEPER_HOME/bin/zookeeper_version" ]]; then
-    echo "zookeeper $(cat "$ZOOKEEPER_HOME/bin/zookeeper_version")"
-  else
-    echo "zookeeper: unknown"
-  fi
+# parsing arguments
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -v|--version)
+    if [[ -f "$ZOOKEEPER_HOME/bin/zookeeper_version" ]]; then
+      echo "zookeeper $(cat "$ZOOKEEPER_HOME/bin/zookeeper_version")"
+    else
+      echo "zookeeper: unknown"
+    fi
     if [[ -f "$ZOOKEEPER_HOME/bin/ohara_version" ]]; then
-    echo "ohara $(cat "$ZOOKEEPER_HOME/bin/ohara_version")"
-  else
-    echo "ohara: unknown"
-  fi
-  exit
-fi
+      echo "ohara $(cat "$ZOOKEEPER_HOME/bin/ohara_version")"
+    else
+      echo "ohara: unknown"
+    fi
+    exit
+    ;;
+    -f|--file)
+    FILE_DATA+=("$2")
+    shift
+    shift
+    ;;
+  esac
+done
+
+# parsing files
+## we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
+## the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
+for f in "${FILE_DATA[@]}"; do
+  key=${f%%=*}
+  value=${f#*=}
+  dir=$(dirname "$key")
+
+  [ -d $dir ] || mkdir -p $dir
+
+  IFS=',' read -ra VALUES <<< "$value"
+  for i in "${VALUES[@]}"; do
+    echo "-- save line : \"$i\" to $key"
+    echo "$i" >> $key
+  done
+done
 
 if [[ -z "$ZOOKEEPER_HOME" ]];then
   echo "$ZOOKEEPER_HOME is required!!!"
   exit 2
 fi
-
-CONFIG=$ZOOKEEPER_HOME/conf/zoo.cfg
-if [[ -f "$CONFIG" ]]; then
-  echo "$CONFIG already exists!!!"
-  exit 2
-fi
-
-# default setting
-echo "tickTime=2000" >> "$CONFIG"
-echo "initLimit=10" >> "$CONFIG"
-echo "syncLimit=5" >> "$CONFIG"
-echo "maxClientCnxns=60" >> "$CONFIG"
-
-if [[ -z "$clientPort" ]]; then
-  clientPort=2181
-fi
-echo "clientPort=$clientPort" >> "$CONFIG"
-
-if [[ -z "$dataDir" ]]; then
-  dataDir="/tmp/zookeeper/data"
-fi
-echo "dataDir=$dataDir" >> "$CONFIG"
-mkdir -p $dataDir
-
-if [[ -z "$peerPort" ]]; then
-  peerPort=2888
-fi
-
-if [[ -z "$electionPort" ]]; then
-  electionPort=3888
-fi
-
-if [[ -n "$servers" ]]; then
-  serverIndex=0
-  for server in $servers; do
-    echo "server.$serverIndex=$server:$peerPort:$electionPort" >> "$CONFIG"
-    serverIndex=$((serverIndex+1))
-  done
-fi
-
-if [[ -z "$zkId" ]]; then
-  zkId=0
-fi
-echo "$zkId" > "$dataDir/myid"
 
 exec $ZOOKEEPER_HOME/bin/zkServer.sh start-foreground $ZOOKEEPER_HOME/conf/zoo.cfg

@@ -69,17 +69,6 @@ class TestContainerRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testGetContainersOfZookeeperCluster(): Unit = {
-    val containerGroups = result(containerApi.get(zkClusterKey))
-    containerGroups.size should not be 0
-    containerGroups.foreach(group => {
-      group.clusterKey shouldBe zkClusterKey
-      group.clusterType shouldBe "zookeeper"
-      group.containers.size should not be 0
-    })
-  }
-
-  @Test
   def testGetContainersOfBrokerCluster(): Unit = {
     val containerGroups = result(containerApi.get(bkClusterKey))
     containerGroups.size should not be 0

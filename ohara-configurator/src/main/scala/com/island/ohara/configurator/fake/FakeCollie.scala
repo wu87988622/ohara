@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ServiceState, Collie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{Collie, NoSuchClusterException, NodeCollie, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.setting.ObjectKey

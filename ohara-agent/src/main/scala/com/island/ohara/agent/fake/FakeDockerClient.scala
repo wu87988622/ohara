@@ -16,8 +16,8 @@
 
 package com.island.ohara.agent.fake
 
-import java.util.{Date, Objects}
 import java.util.concurrent.ConcurrentHashMap
+import java.util.{Date, Objects}
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.{ContainerCreator, ContainerState, DockerClient, NetworkDriver}
@@ -25,8 +25,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 private[agent] class FakeDockerClient(nodeName: String) extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
   private[this] val FAKE_KIND_NAME: String = "FAKE"

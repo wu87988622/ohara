@@ -27,8 +27,8 @@ import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestZookeeperRoute extends OharaTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()

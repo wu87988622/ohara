@@ -40,17 +40,19 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
   override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful {
       Seq(
-        ContainerInfo("node1",
-                      "0000",
-                      "fakeimage",
-                      "2019-05-21 00:00:00",
-                      "running",
-                      "unknow",
-                      containerName,
-                      "0",
-                      Seq.empty,
-                      Map.empty,
-                      "host1"))
+        ContainerInfo(
+          nodeName = "node1",
+          id = "0000",
+          imageName = "fakeimage",
+          created = "2019-05-21 00:00:00",
+          state = "running",
+          kind = "unknow",
+          name = containerName,
+          size = "0",
+          portMappings = Seq.empty,
+          environments = Map.empty,
+          hostname = "host1"
+        ))
     }
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =

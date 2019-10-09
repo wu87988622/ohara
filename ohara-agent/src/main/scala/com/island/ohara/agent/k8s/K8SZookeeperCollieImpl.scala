@@ -33,7 +33,8 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
-                                   route: Map[String, String]): Future[Unit] = {
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
@@ -52,6 +53,7 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
       .domainName(K8S_DOMAIN_NAME)
       .envs(containerInfo.environments)
       .name(containerInfo.name)
+      .args(arguments)
       .threadPool(executionContext)
       .create()
       .recover {

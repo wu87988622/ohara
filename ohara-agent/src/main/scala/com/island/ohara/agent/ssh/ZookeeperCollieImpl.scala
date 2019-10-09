@@ -16,12 +16,13 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{ServiceCache, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{NodeCollie, ServiceCache, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 
 import scala.concurrent.{ExecutionContext, Future}
+
 private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[ZookeeperClusterStatus](node, dockerCache, clusterCache)
     with ZookeeperCollie {
@@ -30,19 +31,23 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
-                                   route: Map[String, String]): Future[Unit] =
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
-        node,
-        _.containerCreator()
-          .imageName(containerInfo.imageName)
-          .portMappings(
-            containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
-          .hostname(containerInfo.hostname)
-          .envs(containerInfo.environments)
-          .name(containerInfo.name)
-          .route(route)
-          .create()
+        node, { client =>
+          client
+            .containerCreator()
+            .imageName(containerInfo.imageName)
+            .portMappings(
+              containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+            .hostname(containerInfo.hostname)
+            .envs(containerInfo.environments)
+            .name(containerInfo.name)
+            .route(route)
+            .command(arguments.mkString(" "))
+            .create()
+        }
       )
     } catch {
       case e: Throwable =>

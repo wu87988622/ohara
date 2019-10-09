@@ -23,31 +23,89 @@ import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJs
 
 object K8SJson {
   //for show container information
-  final case class EnvInfo(name: String, value: Option[String])
-  implicit val ENVINFO_JSON_FORM: RootJsonFormat[EnvInfo] = jsonFormat2(EnvInfo)
+  final case class EnvVar(name: String, value: Option[String])
+  implicit val ENVINFO_JSON_FORM: RootJsonFormat[EnvVar] = jsonFormat2(EnvVar)
 
-  final case class PortInfo(hostPort: Option[Int], containerPort: Int)
-  implicit val PORTINFO_JSON_FORMAT: RootJsonFormat[PortInfo] = jsonFormat2(PortInfo)
+  final case class ContainerPort(hostPort: Int, containerPort: Int)
+  implicit val PORTINFO_JSON_FORMAT: RootJsonFormat[ContainerPort] = jsonFormat2(ContainerPort)
 
-  final case class Container(image: String, name: String, ports: Option[Seq[PortInfo]], env: Option[Seq[EnvInfo]])
-  implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat4(Container)
+  final case class VolumeMount(name: String, mountPath: String)
+  implicit val VOLUME_MOUNT_JSON_FORMAT: RootJsonFormat[VolumeMount] = jsonFormat2(VolumeMount)
 
-  final case class Spec(nodeName: Option[String], containers: Seq[Container], hostname: Option[String])
-  implicit val SPEC_JSON_FORMAT: RootJsonFormat[Spec] = jsonFormat3(Spec)
+  implicit val IMAGE_PULL_POLICY_FORMAT: RootJsonFormat[ImagePullPolicy] = new RootJsonFormat[ImagePullPolicy] {
+    override def read(json: JsValue): ImagePullPolicy = ImagePullPolicy.forName(json.convertTo[String])
 
-  final case class Metadata(uid: String, name: String, creationTimestamp: String)
-  implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat3(Metadata)
+    override def write(obj: ImagePullPolicy): JsValue = JsString(obj.toString)
+  }
+
+  final case class Container(name: String,
+                             image: String,
+                             ports: Option[Seq[ContainerPort]],
+                             env: Option[Seq[EnvVar]],
+                             imagePullPolicy: Option[ImagePullPolicy],
+                             volumeMounts: Option[Seq[VolumeMount]],
+                             command: Option[Seq[String]],
+                             args: Option[Seq[String]])
+  implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat8(Container)
+
+  final case class ConfigMapVolumeSource(name: String)
+  implicit val CONFIGMAP_VOLUME_SOURCE_JSON_FORMAT: RootJsonFormat[ConfigMapVolumeSource] = jsonFormat1(
+    ConfigMapVolumeSource)
+
+  final case class Volume(name: String, configMap: Option[ConfigMapVolumeSource])
+  implicit val VOLUME_JSON_FORMAT: RootJsonFormat[Volume] = jsonFormat2(Volume)
+
+  implicit val RESTART_POLICY_JSON_FORMAT: RootJsonFormat[RestartPolicy] = new RootJsonFormat[RestartPolicy] {
+    override def read(json: JsValue): RestartPolicy = RestartPolicy.forName(json.convertTo[String])
+
+    override def write(obj: RestartPolicy): JsValue = JsString(obj.toString)
+  }
+
+  final case class HostAliases(ip: String, hostnames: Seq[String])
+  implicit val HOST_ALIASES_FORMAT: RootJsonFormat[HostAliases] = jsonFormat2(HostAliases)
+
+  final case class Label(name: String)
+  implicit val CREATEPOD_LABEL_FORMAT: RootJsonFormat[Label] = jsonFormat1(Label)
+
+  final case class NodeSelector(hostname: String)
+  implicit val CREATEPOD_NODESELECTOR_FORMAT: RootJsonFormat[NodeSelector] =
+    new RootJsonFormat[NodeSelector] {
+      override def read(json: JsValue): NodeSelector =
+        json.asJsObject.getFields("kubernetes.io/hostname") match {
+          case Seq(JsString(hostname)) =>
+            NodeSelector(hostname)
+          case other: Any =>
+            throw DeserializationException(s"${classOf[NodeSelector].getSimpleName} expected but $other")
+        }
+
+      override def write(obj: NodeSelector) = JsObject(
+        "kubernetes.io/hostname" -> JsString(obj.hostname)
+      )
+    }
+
+  final case class PodSpec(nodeSelector: Option[NodeSelector],
+                           hostname: String,
+                           hostAliases: Option[Seq[HostAliases]],
+                           subdomain: Option[String],
+                           nodeName: Option[String],
+                           containers: Seq[Container],
+                           restartPolicy: Option[RestartPolicy],
+                           volumes: Option[Seq[Volume]])
+  implicit val SPEC_JSON_FORMAT: RootJsonFormat[PodSpec] = jsonFormat8(PodSpec)
+
+  final case class Metadata(uid: Option[String], name: String, labels: Option[Label], creationTimestamp: Option[String])
+  implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat4(Metadata)
 
   final case class Status(phase: String, hostIP: Option[String])
   implicit val STATUS_JSON_FORMAT: RootJsonFormat[Status] = jsonFormat2(Status)
 
-  final case class Items(metadata: Metadata, spec: Spec, status: Status)
-  implicit val ITEMS_JSON_FORMAT: RootJsonFormat[Items] = jsonFormat3(Items)
+  final case class Pod(metadata: Metadata, spec: Option[PodSpec], status: Option[Status])
+  implicit val ITEMS_JSON_FORMAT: RootJsonFormat[Pod] = jsonFormat3(Pod)
 
-  final case class K8SPodInfo(items: Seq[Items])
-  implicit val K8SPODINFO_JSON_FORMAT: RootJsonFormat[K8SPodInfo] = jsonFormat1(K8SPodInfo)
+  final case class PodList(items: Seq[Pod])
+  implicit val K8SPODINFO_JSON_FORMAT: RootJsonFormat[PodList] = jsonFormat1(PodList)
 
-  //for show node infomation
+  //for show node information
 
   final case class NodeAddresses(nodeType: String, nodeAddress: String)
   implicit val NODE_HOSTINFO_FORMAT: RootJsonFormat[NodeAddresses] =
@@ -99,86 +157,8 @@ object K8SJson {
   final case class K8SNodeInfo(items: Seq[NodeItems])
   implicit val K8SNODEINFO_JSON_FORMAT: RootJsonFormat[K8SNodeInfo] = jsonFormat1(K8SNodeInfo)
 
-  //for create container
-  final case class CreatePodPortMapping(containerPort: Int, hostPort: Int)
-  implicit val CREATEPOD_PORT_MAPPING_FORMAT: RootJsonFormat[CreatePodPortMapping] = jsonFormat2(CreatePodPortMapping)
-
-  final case class CreatePodEnv(name: String, value: String)
-  implicit val CREATEPOD_ENV_FORMAT: RootJsonFormat[CreatePodEnv] = jsonFormat2(CreatePodEnv)
-
-  implicit val IMAGE_PULL_POLICY_FORMAT: RootJsonFormat[ImagePullPolicy] = new RootJsonFormat[ImagePullPolicy] {
-    override def read(json: JsValue): ImagePullPolicy = ImagePullPolicy.forName(json.convertTo[String])
-
-    override def write(obj: ImagePullPolicy): JsValue = JsString(obj.toString)
-  }
-
-  final case class CreatePodContainer(name: String,
-                                      image: String,
-                                      env: Seq[CreatePodEnv],
-                                      ports: Seq[CreatePodPortMapping],
-                                      imagePullPolicy: ImagePullPolicy,
-                                      command: Seq[String],
-                                      args: Seq[String])
-
-  implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = jsonFormat7(CreatePodContainer)
-
-  final case class CreatePodNodeSelector(hostname: String)
-  implicit val CREATEPOD_NODESELECTOR_FORMAT: RootJsonFormat[CreatePodNodeSelector] =
-    new RootJsonFormat[CreatePodNodeSelector] {
-      override def read(json: JsValue): CreatePodNodeSelector =
-        json.asJsObject.getFields("kubernetes.io/hostname") match {
-          case Seq(JsString(hostname)) =>
-            CreatePodNodeSelector(hostname)
-          case other: Any =>
-            throw DeserializationException(s"${classOf[CreatePodNodeSelector].getSimpleName} expected but $other")
-        }
-
-      override def write(obj: CreatePodNodeSelector) = JsObject(
-        "kubernetes.io/hostname" -> JsString(obj.hostname)
-      )
-    }
-
-  final case class HostAliases(ip: String, hostnames: Seq[String])
-  implicit val HOST_ALIASES_FORMAT: RootJsonFormat[HostAliases] = jsonFormat2(HostAliases)
-
-  final case class CreatePodSpec(nodeSelector: CreatePodNodeSelector,
-                                 hostname: String,
-                                 subdomain: String,
-                                 hostAliases: Seq[HostAliases],
-                                 containers: Seq[CreatePodContainer],
-                                 restartPolicy: RestartPolicy)
-
-  implicit val RESTART_POLICY_JSON_FORMAT: RootJsonFormat[RestartPolicy] = new RootJsonFormat[RestartPolicy] {
-    override def read(json: JsValue): RestartPolicy = RestartPolicy.forName(json.convertTo[String])
-
-    override def write(obj: RestartPolicy): JsValue = JsString(obj.toString)
-  }
-  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat6(CreatePodSpec)
-
-  final case class CreatePodLabel(name: String)
-  implicit val CREATEPOD_LABEL_FORMAT: RootJsonFormat[CreatePodLabel] = jsonFormat1(CreatePodLabel)
-
-  final case class CreatePodMetadata(name: String, labels: CreatePodLabel)
-  implicit val CREATEPOD_METADATA_FORMAT: RootJsonFormat[CreatePodMetadata] = jsonFormat2(CreatePodMetadata)
-
-  final case class CreatePod(apiVersion: String, kind: String, metadata: CreatePodMetadata, spec: CreatePodSpec)
-  implicit val CREATEPOD_FORMAT: RootJsonFormat[CreatePod] = jsonFormat4(CreatePod)
-
   final case class ConfigMap(apiVersion: String, kind: String, data: Map[String, String], metadata: Metadata)
   implicit val CONFIGMAP_FORMAT: RootJsonFormat[ConfigMap] = jsonFormat4(ConfigMap)
-
-  //for create container result
-
-  final case class CreatePodResultMetaData(name: String, uid: String, creationTimestamp: String)
-  implicit val CREATEPOD_RESULT_METADATA_FORMAT: RootJsonFormat[CreatePodResultMetaData] = jsonFormat3(
-    CreatePodResultMetaData)
-
-  final case class CreatePodResultStatus(phase: String)
-  implicit val CREATEPOD_RESULT_STATUS_FORMAT: RootJsonFormat[CreatePodResultStatus] = jsonFormat1(
-    CreatePodResultStatus)
-
-  final case class CreatePodResult(metadata: CreatePodResultMetaData, status: CreatePodResultStatus)
-  implicit val CREATEPOD_RESULT_FORMAT: RootJsonFormat[CreatePodResult] = jsonFormat2(CreatePodResult)
 
   //for error
   final case class K8SErrorResponse(message: String) extends HttpExecutor.Error

@@ -41,6 +41,11 @@ object ZookeeperApi {
   private[this] val PEER_PORT_KEY = "peerPort"
   private[this] val ELECTION_PORT_KEY = "electionPort"
   // export these variables to collie for creating
+  private[ohara] val TICK_TIME_KEY = "tickTime"
+  private[ohara] val INIT_LIMIT_KEY = "initLimit"
+  private[ohara] val SYNC_LIMIT_KEY = "syncLimit"
+  private[ohara] val MAX_CLIENT_CNXNS_KEY = "maxClientCnxns"
+
   private[ohara] val ZK_ID_KEY = "zkId"
   private[ohara] val SERVERS_KEY = "servers"
   private[ohara] val DATA_DIR_KEY = "dataDir"

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.{ServiceState, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{NodeCollie, ServiceState, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
@@ -55,7 +55,8 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] =
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] =
     throw new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 
   override protected def nodeCollie: NodeCollie = node
