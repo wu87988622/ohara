@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -31,10 +32,22 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 abstract class Access[Res] private[v0] (prefixPath: String)(implicit rm: RootJsonFormat[Res])
     extends BasicAccess(prefixPath) {
+
   def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.get[Res, ErrorApi.Error](url(key))
+
   def delete(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.delete[ErrorApi.Error](url(key))
+
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](url)
+
+  /**
+    * this is not a public method since we encourage users to call Query to set up parameters via fluent pattern.
+    * @param request request
+    * @param executionContext thread pool
+    * @return results
+    */
+  protected def list(request: QueryRequest)(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
+    if (request.raw.isEmpty) list() else exec.get[Seq[Res], ErrorApi.Error](url(request))
 }

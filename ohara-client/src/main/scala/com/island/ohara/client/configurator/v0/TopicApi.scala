@@ -19,7 +19,7 @@ import java.util.Objects
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.Enum
-import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.client.kafka.TopicAdmin.PartitionInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.SettingDef.{Reference, Type}
@@ -28,7 +28,7 @@ import com.island.ohara.common.util.CommonUtils
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.record.Records
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -307,6 +307,7 @@ object TopicApi {
 
   abstract sealed class TopicState(val name: String) extends Serializable
   object TopicState extends Enum[TopicState] {
+    case object NONE extends TopicState("NONE")
     case object RUNNING extends TopicState("RUNNING")
   }
 
@@ -323,6 +324,30 @@ object TopicApi {
                        state: Option[TopicState],
                        lastModified: Long)
       extends Data {
+
+    import spray.json._
+    override protected def matched(key: String, value: String): Boolean = key match {
+      case "state" =>
+        state.exists(_.name.toLowerCase == value.toLowerCase) || (state.isEmpty && value.toLowerCase == TopicState.NONE.name.toLowerCase)
+      case _ =>
+        settings.get(key).exists {
+          // it is impossible to have JsNull since our json format does a great job :)
+          case JsString(s)  => s == value
+          case JsNumber(i)  => i == BigDecimal(value)
+          case JsBoolean(b) => b == value.toBoolean
+          case js: JsArray =>
+            value.parseJson match {
+              case other: JsArray => other == js
+              case _              => false
+            }
+          case js: JsObject =>
+            value.parseJson match {
+              case other: JsObject => other == js
+              case _               => false
+            }
+          case _ => false
+        }
+    }
 
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
@@ -380,7 +405,7 @@ object TopicApi {
   /**
     * used to generate the payload and url for POST/PUT request.
     */
-  trait Request {
+  sealed trait Request {
     private[this] val settings: mutable.Map[String, JsValue] = mutable.Map()
 
     /**
@@ -461,9 +486,23 @@ object TopicApi {
     def update()(implicit executionContext: ExecutionContext): Future[TopicInfo]
   }
 
+  sealed trait Query extends BasicQuery[TopicInfo] {
+    def state(value: TopicState): Query = set("state", value.name)
+
+    def brokerClusterKey(key: ObjectKey): Query = set(BROKER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(key))
+
+    // TODO: there are a lot of settings which is worth of having parameters ... by chia
+  }
+
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[TopicInfo](TOPICS_PREFIX_PATH) {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
+
+    def query: Query = new Query {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] = list(request)
+    }
+
     def request: Request = new Request {
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
@@ -477,6 +516,7 @@ object TopicApi {
           updating
         )
     }
+
   }
 
   def access: Access = new Access

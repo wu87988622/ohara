@@ -145,7 +145,17 @@ Example Response
 list all topics properties
 --------------------------
 
-*GET /v0/topics*
+*GET /v0/topics?${key}=${value}*
+
+the accepted query keys are listed below.
+#. group
+#. name
+#. state
+#. tags
+#. key in settings
+
+  .. note::
+    Using "NONE" represents the nonexistence of state.
 
 Example Response
   .. code-block:: json
@@ -169,6 +179,7 @@ Example Response
         }
       }
     ]
+
 
 
 delete a topic properties

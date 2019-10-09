@@ -36,4 +36,36 @@ trait Data {
   def lastModified: Long
   def kind: String
   def tags: Map[String, JsValue]
+
+  /**
+    * compare the fields of sub instance.
+    * @param key field name
+    * @param value field value
+    * @return true if it is matched. otherwise, false
+    */
+  protected def matched(key: String, value: String): Boolean = false
+
+  import spray.json._
+
+  /**
+    * by default, the query compare only "name", "group", "tags" and lastModified.
+    * @param request query request
+    * @return true if the query matches this object. otherwise, false
+    */
+  final def matched(request: QueryRequest): Boolean = request.raw.forall {
+    case (key, value) =>
+      key match {
+        case "name" => value == name
+        case "group" =>
+          value == group
+        case "tags"         => value.parseJson.asJsObject == JsObject(tags)
+        case "lastModified" => value.toLong == lastModified
+
+        /**
+          * this field belongs to sub class so we count on the implementation of sub class.
+          */
+        case _ =>
+          matched(key, value)
+      }
+  }
 }

@@ -25,7 +25,7 @@ import com.island.ohara.configurator.Configurator
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -437,6 +437,61 @@ class TestTopicRoute extends OharaTest with Matchers {
       case (k, v) =>
         topic.settings(k) shouldBe v
     }
+  }
+
+  @Test
+  def testGroupFilter(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val topic = result(topicApi.request.group(group).create())
+    (0 until 3).foreach(_ => result(topicApi.request.create()))
+
+    val topics = result(topicApi.query.group(group).execute())
+    topics.size shouldBe 1
+    topics.head.key shouldBe topic.key
+
+    result(topicApi.query.group(group).state(TopicState.RUNNING).execute()).size shouldBe 0
+  }
+
+  @Test
+  def testTagsFilter(): Unit = {
+    val tags = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val topic = result(topicApi.request.tags(tags).create())
+    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    val topics = result(topicApi.query.tags(tags).execute())
+    topics.size shouldBe 1
+    topics.head.key shouldBe topic.key
+
+    result(topicApi.query.tags(tags).state(TopicState.RUNNING).execute()).size shouldBe 0
+  }
+
+  @Test
+  def testStateFilter(): Unit = {
+    val topic = result(topicApi.request.create())
+    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    result(topicApi.start(topic.key))
+    val topics = result(topicApi.query.state(TopicState.RUNNING).execute())
+    topics.size shouldBe 1
+    topics.head.key shouldBe topic.key
+
+    result(topicApi.query.group(CommonUtils.randomString()).state(TopicState.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.group(topic.group).state(TopicState.RUNNING).execute()).size shouldBe 1
+    result(topicApi.query.state(TopicState.NONE).execute()).size shouldBe 3
+  }
+
+  @Test
+  def testBrokerClusterKeyFilter(): Unit = {
+    val bkKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
+    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    val topics = result(topicApi.query.brokerClusterKey(bkKey).execute())
+    topics.size shouldBe 1
+    topics.head.key shouldBe topic.key
   }
 
   @After

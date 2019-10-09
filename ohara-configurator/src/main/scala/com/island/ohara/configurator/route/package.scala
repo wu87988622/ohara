@@ -22,14 +22,14 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{
   BrokerCollie,
-  ServiceCollie,
   Collie,
   NodeCollie,
+  ServiceCollie,
   StreamCollie,
   WorkerCollie,
   ZookeeperCollie
 }
-import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
@@ -156,7 +156,19 @@ package object route {
         post(entity(as[Creation]) { creation =>
           complete(hookOfCreation(creation).flatMap(res => store.addIfAbsent(res)))
         }) ~
-          get(complete(store.values[Res]().flatMap(hookOfList(_))))
+          get {
+            parameterMap { params =>
+              complete(
+                store
+                  .values[Res]()
+                  .flatMap(hookOfList(_))
+                  .map(_.filter(_.matched(QueryRequest(params.filter {
+                    // the empty stuff causes false always since there is nothing matched to "empty"
+                    // hence, we remove them from parameters for careless users :)
+                    case (key, value) => key.nonEmpty && value.nonEmpty
+                  })))))
+            }
+          }
       } ~ path(Segment) { name =>
         parameter(GROUP_KEY ?) { groupOption =>
           val key =

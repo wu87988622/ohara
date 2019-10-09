@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.ConfiguratorApiInfo
+import com.island.ohara.client.configurator.{ConfiguratorApiInfo, QueryRequest}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
@@ -63,25 +63,17 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   protected final def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](url(key, action))
 
-  private[this] def toString(params: Map[String, String]): String = {
-    val paramString = params
-      .map {
-        case (key, value) => s"$key=$value"
-      }
-      .mkString("&")
-    if (paramString.nonEmpty) s"&$paramString"
-    else paramString
-  }
+  private[this] def toString(params: Map[String, String]): String = params
+    .map {
+      case (key, value) => s"$key=$value"
+    }
+    .mkString("&")
 
   /**
-    * used by START, STOP, PAUSE and RESUME requests.
-    * the form is shown below:
-    * url/${key.name}?group=${key.group}&param0=${param0}
-    * @param key object key
+    * url?param0=${param0}
     * @return url string
     */
-  protected final def url(key: ObjectKey, params: Map[String, String]): String =
-    s"$url/${key.name}?$GROUP_KEY=${key.group}${toString(params)}"
+  protected final def url(request: QueryRequest): String = s"$url?${toString(request.raw)}"
 
   /**
     * used by START, STOP, PAUSE and RESUME requests.
@@ -92,5 +84,7 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     * @return url string
     */
   protected final def url(key: ObjectKey, postFix: String, params: Map[String, String] = Map.empty): String =
-    s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?$GROUP_KEY=${key.group}${toString(params)}"
+    if (params.nonEmpty)
+      s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?$GROUP_KEY=${key.group}&${toString(params)}"
+    else s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?$GROUP_KEY=${key.group}"
 }
