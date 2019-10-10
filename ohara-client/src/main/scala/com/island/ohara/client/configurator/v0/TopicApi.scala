@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.{Data, QueryRequest}
-import com.island.ohara.client.kafka.TopicAdmin.PartitionInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
@@ -28,7 +27,7 @@ import com.island.ohara.common.util.CommonUtils
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.record.Records
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -315,6 +314,13 @@ object TopicApi {
     override def read(json: JsValue): TopicState = TopicState.forName(json.convertTo[String].toUpperCase)
     override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
+
+  final case class PartitionInfo(index: Int,
+                                 leaderNode: String,
+                                 replicaNodes: Set[String],
+                                 inSyncReplicaNodes: Set[String],
+                                 beginningOffset: Long,
+                                 endOffset: Long)
 
   implicit val TOPIC_PARTITION_FORMAT: RootJsonFormat[PartitionInfo] = jsonFormat6(PartitionInfo)
 

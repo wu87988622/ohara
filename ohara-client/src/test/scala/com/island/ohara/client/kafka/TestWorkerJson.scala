@@ -29,12 +29,12 @@ class TestWorkerJson extends OharaTest with Matchers {
 
   @Test
   def testValidatedValue(): Unit = {
-    val validatedValue = ValidatedValue(
+    val validatedValue = KafkaValidatedValue(
       name = CommonUtils.randomString(5),
       value = Some("String"),
       errors = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
     )
-    VALIDATED_VALUE_FORMAT.read(VALIDATED_VALUE_FORMAT.write(validatedValue)) shouldBe validatedValue
+    KAFKA_VALIDATED_VALUE_FORMAT.read(KAFKA_VALIDATED_VALUE_FORMAT.write(validatedValue)) shouldBe validatedValue
   }
 
   @Test
@@ -42,7 +42,7 @@ class TestWorkerJson extends OharaTest with Matchers {
     val name = CommonUtils.randomString(5)
     val value = CommonUtils.randomString(5)
     val error = CommonUtils.randomString(5)
-    val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
+    val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                |{
                                                |  "name":"$name",
                                                |  "value":"$value",
@@ -58,7 +58,7 @@ class TestWorkerJson extends OharaTest with Matchers {
   def testValidatedValueFromStringWithoutValue(): Unit = {
     val name = CommonUtils.randomString(5)
     val error = CommonUtils.randomString(5)
-    val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
+    val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
                                                         |  "errors":["$error", "$error"]
@@ -73,7 +73,7 @@ class TestWorkerJson extends OharaTest with Matchers {
   def testValidatedValueFromStringWithEmptyValue(): Unit = {
     val name = CommonUtils.randomString(5)
     val error = CommonUtils.randomString(5)
-    val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
+    val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
                                                         |  "value":"",
@@ -89,7 +89,7 @@ class TestWorkerJson extends OharaTest with Matchers {
   def testValidatedValueFromStringWithNullValue(): Unit = {
     val name = CommonUtils.randomString(5)
     val error = CommonUtils.randomString(5)
-    val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
+    val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
                                                         |  "value":null,
@@ -104,12 +104,12 @@ class TestWorkerJson extends OharaTest with Matchers {
   @Test
   def testCreation(): Unit = {
     val creation = Creation.of(CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString())
-    creation shouldBe CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(creation))
+    creation shouldBe KAFKA_CREATION_JSON_FORMAT.read(KAFKA_CREATION_JSON_FORMAT.write(creation))
   }
 
   @Test
   def testValidation(): Unit = {
     val validation = Validation.of(Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
-    validation shouldBe VALIDATION_JSON_FORMAT.read(VALIDATION_JSON_FORMAT.write(validation))
+    validation shouldBe KAFKA_VALIDATION_JSON_FORMAT.read(KAFKA_VALIDATION_JSON_FORMAT.write(validation))
   }
 }

@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.kafka.WorkerJson.Plugin
+import com.island.ohara.client.kafka.WorkerJson.KafkaPlugin
 import com.island.ohara.common.data.DataType
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
@@ -60,7 +60,7 @@ object InfoApi {
     * @param plugin connector plugin
     * @return ConnectorVersion
     */
-  def toConnectorVersion(plugin: Plugin): ConnectorVersion = {
+  def toConnectorVersion(plugin: KafkaPlugin): ConnectorVersion = {
     val (version, revision) = try {
       // see com.island.ohara.kafka.connection.Version for the format from "kafka's version"
       val index = plugin.version.lastIndexOf("_")

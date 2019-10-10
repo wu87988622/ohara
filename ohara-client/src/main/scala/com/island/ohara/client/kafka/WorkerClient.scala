@@ -97,7 +97,7 @@ trait WorkerClient {
     * remote server. Furthermore, connectors list only sub class from ohara's connectors
     * @return async future containing connector details
     */
-  def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]]
+  def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]]
 
   /**
     * list ohara's connector.
@@ -131,20 +131,21 @@ trait WorkerClient {
     * @param connectorKey connector's key
     * @return status of connector
     */
-  def status(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
+  def status(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo]
 
   /**
     * @param connectorKey connector's key
     * @return configuration of connector
     */
-  def config(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorConfig]
+  def config(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig]
 
   /**
     * @param connectorKey connector's key
     * @param id task's id
     * @return task status
     */
-  def taskStatus(connectorKey: ConnectorKey, id: Int)(implicit executionContext: ExecutionContext): Future[TaskStatus]
+  def taskStatus(connectorKey: ConnectorKey, id: Int)(
+    implicit executionContext: ExecutionContext): Future[KafkaTaskStatus]
 
   /**
     * Check whether a connector name is used in creating connector (even if the connector fails to start, this method
@@ -241,7 +242,7 @@ object WorkerClient {
         implicit val exec: ExecutionContext = executionContext
         retry(
           () =>
-            HttpExecutor.SINGLETON.post[Creation, ConnectorCreationResponse, Error](
+            HttpExecutor.SINGLETON.post[Creation, KafkaConnectorCreationResponse, KafkaError](
               s"http://$workerAddress/connectors",
               creation
           ),
@@ -250,11 +251,11 @@ object WorkerClient {
       }
 
       override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$connectorName"),
+        retry(() => HttpExecutor.SINGLETON.delete[KafkaError](s"http://$workerAddress/connectors/$connectorName"),
               s"delete $connectorName")
 
-      override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
-        () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
+      override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] = retry(
+        () => HttpExecutor.SINGLETON.get[Seq[KafkaPlugin], KafkaError](s"http://$workerAddress/connector-plugins"),
         s"fetch plugins $workerAddress")
 
       override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[Definition]] =
@@ -275,45 +276,45 @@ object WorkerClient {
           .map(_.filter(_.definitions.nonEmpty))
 
       override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
-        () => HttpExecutor.SINGLETON.get[Seq[String], Error](s"http://$workerAddress/connectors"),
+        () => HttpExecutor.SINGLETON.get[Seq[String], KafkaError](s"http://$workerAddress/connectors"),
         "fetch active connectors")
 
       override def connectionProps: String = _workerAddress.mkString(",")
 
       override def status(connectorKey: ConnectorKey)(
-        implicit executionContext: ExecutionContext): Future[ConnectorInfo] = retry(
+        implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] = retry(
         () =>
-          HttpExecutor.SINGLETON.get[ConnectorInfo, Error](
+          HttpExecutor.SINGLETON.get[KafkaConnectorInfo, KafkaError](
             s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/status"),
         s"status of $connectorKey"
       )
 
       override def config(connectorKey: ConnectorKey)(
-        implicit executionContext: ExecutionContext): Future[ConnectorConfig] = retry(
+        implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig] = retry(
         () =>
-          HttpExecutor.SINGLETON.get[ConnectorConfig, Error](
+          HttpExecutor.SINGLETON.get[KafkaConnectorConfig, KafkaError](
             s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/config"),
         s"config of $connectorKey"
       )
 
       override def taskStatus(connectorKey: ConnectorKey, id: Int)(
-        implicit executionContext: ExecutionContext): Future[TaskStatus] =
+        implicit executionContext: ExecutionContext): Future[KafkaTaskStatus] =
         retry(
           () =>
-            HttpExecutor.SINGLETON.get[TaskStatus, Error](
+            HttpExecutor.SINGLETON.get[KafkaTaskStatus, KafkaError](
               s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/tasks/$id/status"),
           s"status of $connectorKey/$id"
         )
       override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
         retry(() =>
                 HttpExecutor.SINGLETON
-                  .put[Error](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/pause"),
+                  .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/pause"),
               s"pause $connectorKey")
 
       override def resume(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
         retry(() =>
                 HttpExecutor.SINGLETON
-                  .put[Error](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/resume"),
+                  .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/resume"),
               s"resume $connectorKey")
 
       override def connectorValidator(): Validator =
@@ -326,7 +327,7 @@ object WorkerClient {
                   "I'm sorry for this error. However, please fill the topics" +
                     "for your validation request in order to test other settings. This prerequisite is introduced by kafka 2.x")
               HttpExecutor.SINGLETON
-                .put[Validation, ConfigInfos, Error](
+                .put[Validation, ConfigInfos, KafkaError](
                   s"http://$workerAddress/connector-plugins/${validation.className()}/config/validate",
                   validation)
                 .map(SettingInfo.of)
@@ -351,7 +352,7 @@ object WorkerClient {
   /**
     * a base class used to collect the setting from source/sink connector when creating
     */
-  trait Creator extends com.island.ohara.common.pattern.Creator[Future[ConnectorCreationResponse]] {
+  trait Creator extends com.island.ohara.common.pattern.Creator[Future[KafkaConnectorCreationResponse]] {
     private[this] val connectorFormatter = ConnectorFormatter.of()
     private[this] var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
@@ -475,7 +476,7 @@ object WorkerClient {
       *
       * @return this one
       */
-    override def create(): Future[ConnectorCreationResponse] =
+    override def create(): Future[KafkaConnectorCreationResponse] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = connectorFormatter.requestOfCreation()
@@ -486,7 +487,8 @@ object WorkerClient {
       *
       * @return response
       */
-    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[ConnectorCreationResponse]
+    protected def doCreate(executionContext: ExecutionContext,
+                           creation: Creation): Future[KafkaConnectorCreationResponse]
   }
 
   trait Validator {

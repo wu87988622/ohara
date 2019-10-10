@@ -22,7 +22,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
-import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.client.kafka.TopicAdmin.KafkaTopicInfo
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
@@ -61,7 +61,7 @@ private[configurator] object StreamRoute {
     * @param streamClusterInfo streamApp data
     */
   private[this] def assertParameters(streamClusterInfo: StreamClusterInfo,
-                                     topicInfos: Seq[TopicInfo]): StreamClusterInfo = {
+                                     topicInfos: Seq[KafkaTopicInfo]): StreamClusterInfo = {
     def checkStoppedTopics(topicKeys: Set[TopicKey], prefix: String): Unit = {
       CommonUtils.requireNonEmpty(topicKeys.asJava, () => s"$prefix topics can't be empty")
       // check the from/to topic size equals one

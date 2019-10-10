@@ -21,7 +21,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.client.kafka.WorkerJson.{ConnectorCreationResponse, ConnectorTaskId, _}
+import com.island.ohara.client.kafka.WorkerJson.{KafkaConnectorCreationResponse, KafkaConnectorTaskId, _}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
@@ -46,7 +46,7 @@ class Test873 extends OharaTest with Matchers {
       CommonUtils.randomString() -> CommonUtils.randomString()
     )
     val tasks = Seq(
-      ConnectorTaskId(
+      KafkaConnectorTaskId(
         connector = CommonUtils.randomString(),
         task = 10
       )
@@ -56,7 +56,7 @@ class Test873 extends OharaTest with Matchers {
         post {
           entity(as[Creation]) { req =>
             complete(
-              ConnectorCreationResponse(
+              KafkaConnectorCreationResponse(
                 name = req.name(),
                 config = req.configs().asScala.toMap,
                 tasks = tasks

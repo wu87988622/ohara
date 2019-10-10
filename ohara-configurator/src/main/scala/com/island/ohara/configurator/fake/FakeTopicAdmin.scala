@@ -19,7 +19,7 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.kafka.TopicAdmin
-import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.client.kafka.TopicAdmin.KafkaTopicInfo
 import com.island.ohara.common.setting.TopicKey
 
 import scala.concurrent.Future
@@ -29,7 +29,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
 
   override val connectionProps: String = "Unknown"
 
-  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
+  private[this] val cachedTopics = new ConcurrentHashMap[String, KafkaTopicInfo]()
 
   override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
     val previous = cachedTopics.get(topicKey.topicNameOnKafka())
@@ -37,12 +37,21 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       Future.failed(new NoSuchElementException(
         s"the topic:${topicKey.topicNameOnKafka()} doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"))
     else {
-      cachedTopics.put(topicKey.topicNameOnKafka(), previous.copy(numberOfPartitions = numberOfPartitions))
+      cachedTopics.put(
+        topicKey.topicNameOnKafka(),
+        new KafkaTopicInfo(
+          name = previous.name,
+          numberOfPartitions = numberOfPartitions,
+          numberOfReplications = previous.numberOfReplications,
+          partitionInfos = previous.partitionInfos,
+          configs = previous.configs
+        )
+      )
       Future.unit
     }
   }
 
-  override def topics(): Future[Seq[TopicAdmin.TopicInfo]] =
+  override def topics(): Future[Seq[TopicAdmin.KafkaTopicInfo]] =
     Future.successful {
       cachedTopics.values().asScala.toSeq
     }
@@ -51,7 +60,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
     if (cachedTopics.contains(topicKey.topicNameOnKafka()))
       Future.failed(new IllegalArgumentException(s"${topicKey.topicNameOnKafka()} already exists!"))
     else {
-      val topicInfo = TopicInfo(
+      val topicInfo = new KafkaTopicInfo(
         name = topicKey.topicNameOnKafka(),
         numberOfPartitions = numberOfPartitions,
         numberOfReplications = numberOfReplications,

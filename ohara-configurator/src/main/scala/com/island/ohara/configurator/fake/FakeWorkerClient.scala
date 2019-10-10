@@ -25,12 +25,12 @@ import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.Validator
 import com.island.ohara.client.kafka.WorkerJson.{
-  ConnectorConfig,
-  ConnectorCreationResponse,
-  ConnectorInfo,
-  ConnectorStatus,
-  Plugin,
-  TaskStatus
+  KafkaConnectorConfig,
+  KafkaConnectorCreationResponse,
+  KafkaConnectorInfo,
+  KafkaConnectorStatus,
+  KafkaPlugin,
+  KafkaTaskStatus
 }
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.kafka.connector.json._
@@ -57,7 +57,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
       import scala.collection.JavaConverters._
       cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
       cachedConnectorsState.put(creation.name(), State.RUNNING)
-      Future.successful(ConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
+      Future.successful(KafkaConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
     }
   }
 
@@ -67,36 +67,38 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     else Future.successful(())
     finally cachedConnectorsState.remove(connectorName)
   // TODO; does this work? by chia
-  override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] =
-    Future.successful(cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq)
+  override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] =
+    Future.successful(cachedConnectors.keys.asScala.map(KafkaPlugin(_, "unknown", "unknown")).toSeq)
   override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] =
     Future.successful(cachedConnectors.keys.asScala.toSeq)
   override def connectionProps: String = "Unknown"
-  override def status(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
+  override def status(connectorKey: ConnectorKey)(
+    implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] =
     if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
       Future.failed(new IllegalArgumentException(s"Connector:${connectorKey.connectorNameOnKafka()} doesn't exist"))
     else
       Future.successful(
-        ConnectorInfo(
+        KafkaConnectorInfo(
           connectorKey.connectorNameOnKafka(),
-          ConnectorStatus(cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "fake id", None),
-          Seq.empty))
+          KafkaConnectorStatus(cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "fake id", None),
+          Seq.empty
+        ))
 
   override def config(connectorKey: ConnectorKey)(
-    implicit executionContext: ExecutionContext): Future[ConnectorConfig] = {
+    implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig] = {
     val map = cachedConnectors.get(connectorKey.connectorNameOnKafka())
     if (map == null)
       Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
-    else Future.successful(map.toJson.convertTo[ConnectorConfig])
+    else Future.successful(map.toJson.convertTo[KafkaConnectorConfig])
   }
 
   override def taskStatus(connectorKey: ConnectorKey, id: Int)(
-    implicit executionContext: ExecutionContext): Future[TaskStatus] =
+    implicit executionContext: ExecutionContext): Future[KafkaTaskStatus] =
     if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
       Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
     else
       Future.successful(
-        TaskStatus(0, cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "worker_id", None))
+        KafkaTaskStatus(0, cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "worker_id", None))
 
   override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
     if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))

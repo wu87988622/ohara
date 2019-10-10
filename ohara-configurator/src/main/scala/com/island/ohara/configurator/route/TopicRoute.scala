@@ -77,7 +77,15 @@ private[configurator] object TopicRoute {
           .map {
             case (partitions, state) =>
               topicInfo.copy(
-                partitionInfos = partitions,
+                partitionInfos = partitions.map(partition =>
+                  PartitionInfo(
+                    index = partition.index,
+                    leaderNode = partition.leaderNode,
+                    replicaNodes = partition.replicaNodes,
+                    inSyncReplicaNodes = partition.inSyncReplicaNodes,
+                    beginningOffset = partition.beginningOffset,
+                    endOffset = partition.endOffset
+                )),
                 state = state,
                 metrics = metrics(brokerClusterInfo, topicInfo.key.topicNameOnKafka)
               )

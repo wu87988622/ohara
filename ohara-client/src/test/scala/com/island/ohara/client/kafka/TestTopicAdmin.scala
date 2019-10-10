@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.client.kafka.TopicAdmin.KafkaTopicInfo
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -33,7 +33,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
   private[this] val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
   private[this] val GROUP = "topic_group"
 
-  private[this] def waitAndGetTopicInfo(topicKey: TopicKey): TopicInfo = {
+  private[this] def waitAndGetTopicInfo(topicKey: TopicKey): KafkaTopicInfo = {
     // wait the topic to be available
     CommonUtils.await(
       () =>
@@ -65,7 +65,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     topic.numberOfPartitions shouldBe numberOfPartitions
     topic.numberOfReplications shouldBe numberOfReplications
 
-    result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get shouldBe topic
+    result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()) should not be None
 
     result(topicAdmin.delete(topicKey)) shouldBe true
 

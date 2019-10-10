@@ -53,7 +53,7 @@ trait TopicAdmin extends Releasable {
     * list all topics
     * @return topics information
     */
-  def topics(): Future[Seq[TopicAdmin.TopicInfo]]
+  def topics(): Future[Seq[TopicAdmin.KafkaTopicInfo]]
 
   /**
     * check the existence of topic on remote broker cluster
@@ -137,14 +137,14 @@ object TopicAdmin {
 
     private[this] def toTopicInfo(topicDescription: TopicDescription,
                                   configs: Map[String, String],
-                                  offsets: TopicPartitionOffsets): TopicInfo = {
+                                  offsets: TopicPartitionOffsets): KafkaTopicInfo = {
 
-      TopicInfo(
+      new KafkaTopicInfo(
         name = topicDescription.name(),
         numberOfPartitions = topicDescription.partitions().size(),
         numberOfReplications = topicDescription.partitions().get(0).replicas().size().asInstanceOf[Short],
         partitionInfos = topicDescription.partitions().asScala.map { kafkaPartition =>
-          PartitionInfo(
+          new KafkaPartitionInfo(
             index = kafkaPartition.partition(),
             leaderNode = kafkaPartition.leader().host(),
             replicaNodes = kafkaPartition.replicas().asScala.map(_.host()).toSet,
@@ -167,7 +167,7 @@ object TopicAdmin {
       config.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, CommonUtils.randomString())
       val consumer =
         new KafkaConsumer[Array[Byte], Array[Byte]](config, new ByteArrayDeserializer, new ByteArrayDeserializer)
-      TopicPartitionOffsets(try {
+      new TopicPartitionOffsets(try {
         consumer
           .listTopics()
           .asScala
@@ -192,9 +192,9 @@ object TopicAdmin {
       } finally Releasable.close(consumer))
     }
 
-    override def topics(): Future[Seq[TopicInfo]] = try {
+    override def topics(): Future[Seq[KafkaTopicInfo]] = try {
       val allOffsets = topicOffsets()
-      val promise = Promise[Seq[TopicInfo]]
+      val promise = Promise[Seq[KafkaTopicInfo]]
       unwrap(
         () =>
           admin
@@ -301,7 +301,7 @@ object TopicAdmin {
     * used by internal process.
     * @param offsets raw offsets
     */
-  private[this] case class TopicPartitionOffsets(offsets: Map[String, Map[Int, (Long, Long)]]) {
+  private[this] class TopicPartitionOffsets(val offsets: Map[String, Map[Int, (Long, Long)]]) {
 
     private[this] def offset(topicName: String, partition: Int): (Long, Long) = offsets
       .getOrElse(topicName, throw new NoSuchElementException(s"topic:$topicName does not exist"))
@@ -313,18 +313,18 @@ object TopicAdmin {
     def endOffset(topicName: String, partition: Int): Long = offset(topicName, partition)._2
   }
 
-  final case class PartitionInfo(index: Int,
-                                 leaderNode: String,
-                                 replicaNodes: Set[String],
-                                 inSyncReplicaNodes: Set[String],
-                                 beginningOffset: Long,
-                                 endOffset: Long)
+  final class KafkaPartitionInfo(val index: Int,
+                                 val leaderNode: String,
+                                 val replicaNodes: Set[String],
+                                 val inSyncReplicaNodes: Set[String],
+                                 val beginningOffset: Long,
+                                 val endOffset: Long)
 
-  final case class TopicInfo(name: String,
-                             numberOfPartitions: Int,
-                             numberOfReplications: Short,
-                             partitionInfos: Seq[PartitionInfo],
-                             configs: Map[String, String])
+  final class KafkaTopicInfo(val name: String,
+                             val numberOfPartitions: Int,
+                             val numberOfReplications: Short,
+                             val partitionInfos: Seq[KafkaPartitionInfo],
+                             val configs: Map[String, String])
 
   trait Creator extends com.island.ohara.common.pattern.Creator[Future[Unit]] {
     private[this] var topicKey: TopicKey = _
