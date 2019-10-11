@@ -57,18 +57,14 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
             .nodes(containers.map(_.nodeName).toSet)
             .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
         .getOrElse(Future.successful(Map.empty))
-        .flatMap(existNodes =>
-          nodeCollie
-            .nodes(creation.nodeNames)
-            .map(_.map(node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)).toMap)
-            .map((existNodes, _)))
+        .flatMap(existNodes => nodeCollie.nodes(creation.nodeNames).map((existNodes, _)))
         .map {
           case (existNodes, nodes) =>
             // the broker cluster should be defined in data creating phase already
             // here we just throw an exception for absent value to ensure everything works as expect
             (existNodes,
              // find the nodes which have not run the services
-             nodes.filterNot(n => existNodes.exists(_._1.hostname == n._1.hostname)),
+             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)),
              brokerContainers(
                creation.brokerClusterKey.getOrElse(
                  throw new RuntimeException("The broker cluser name should be define"))))
@@ -89,7 +85,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
 
                   val route = resolveHostNames(
                     (existNodes.keys.map(_.hostname)
-                      ++ newNodes.keys.map(_.hostname)
+                      ++ newNodes.map(_.hostname)
                       ++ brokerContainers.map(_.nodeName)).toSet
                     // make sure the worker can connect to configurator for downloading jars
                     // Normally, the jar host name should be resolvable by worker since
@@ -102,9 +98,9 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
 
                   // ssh connection is slow so we submit request by multi-thread
                   Future.sequence(newNodes.map {
-                    case (node, containerName) =>
+                    newNode =>
                       val containerInfo = ContainerInfo(
-                        nodeName = node.name,
+                        nodeName = newNode.name,
                         id = Collie.UNKNOWN,
                         imageName = creation.imageName,
                         created = Collie.UNKNOWN,
@@ -112,7 +108,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                         // other, it will be filtered later ...
                         state = ContainerState.RUNNING.name,
                         kind = Collie.UNKNOWN,
-                        name = containerName,
+                        name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                         size = Collie.UNKNOWN,
                         portMappings = Seq(
                           PortMapping(
@@ -140,17 +136,17 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                         } + (WorkerCollie.BROKERS_KEY -> brokers)
                         // the default hostname is container name and it is not exposed publicly.
                         // Hence, we have to set the jmx hostname to node name
-                          + (WorkerCollie.JMX_HOSTNAME_KEY -> node.hostname)
+                          + (WorkerCollie.JMX_HOSTNAME_KEY -> newNode.hostname)
                         // the sync mechanism in kafka needs to know each other location.
                         // the key controls the hostname exposed to other nodes.
-                          + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name)
+                          + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> newNode.name)
                         // define the urls as string list so as to simplify the script for worker
                           + (WorkerCollie.JAR_URLS_KEY -> creation.jarInfos
                             .map(_.url.toURI.toASCIIString)
                             .mkString(",")),
-                        hostname = containerName
+                        hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                       )
-                      doCreator(executionContext, containerName, containerInfo, node, route)
+                      doCreator(executionContext, containerInfo.name, containerInfo, newNode, route)
                         .map(_ => Some(containerInfo))
                         .recover {
                           case _: Throwable =>

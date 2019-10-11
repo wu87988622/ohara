@@ -77,16 +77,12 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
             }
             existNodes
         }
-        .flatMap(existNodes =>
-          nodeCollie
-            .nodes(creation.nodeNames)
-            .map(_.map(node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)).toMap)
-            .map((existNodes, _)))
+        .flatMap(existNodes => nodeCollie.nodes(creation.nodeNames).map((existNodes, _)))
         .map {
           case (existNodes, nodes) =>
             (existNodes,
              // find the nodes which have not run the services
-             nodes.filterNot(n => existNodes.exists(_._1.hostname == n._1.hostname)),
+             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)),
              zookeeperContainers(creation.zookeeperClusterKey.get))
         }
         .flatMap {
@@ -101,8 +97,8 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                     .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
                     .mkString(",")
 
-                  val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys
-                    .map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
+                  val route = resolveHostNames(
+                    (existNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
                   existNodes.foreach {
                     case (node, container) => hookOfNewRoute(node, container, route)
                   }
@@ -114,9 +110,9 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
 
                   // ssh connection is slow so we submit request by multi-thread
                   Future.sequence(newNodes.zipWithIndex.map {
-                    case ((node, containerName), index) =>
+                    case (newNode, index) =>
                       val containerInfo = ContainerInfo(
-                        nodeName = node.name,
+                        nodeName = newNode.name,
                         id = Collie.UNKNOWN,
                         imageName = creation.imageName,
                         created = Collie.UNKNOWN,
@@ -124,7 +120,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                         // other, it will be filtered later ...
                         state = ContainerState.RUNNING.name,
                         kind = Collie.UNKNOWN,
-                        name = containerName,
+                        name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                         size = Collie.UNKNOWN,
                         portMappings = Seq(PortMapping(
                           hostIp = Collie.UNKNOWN,
@@ -158,12 +154,12 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                         // connect to user defined zookeeper cluster
                           + (BrokerApi.ZOOKEEPERS_KEY -> zookeepers)
                         // expose the borker hostname for zookeeper to register
-                          + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> node.hostname)
+                          + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> newNode.hostname)
                         // jmx exporter host name
-                          + (BrokerApi.JMX_HOSTNAME_KEY -> node.hostname),
-                        hostname = containerName
+                          + (BrokerApi.JMX_HOSTNAME_KEY -> newNode.hostname),
+                        hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                       )
-                      doCreator(executionContext, containerName, containerInfo, node, route)
+                      doCreator(executionContext, containerInfo.name, containerInfo, newNode, route)
                         .map(_ => Some(containerInfo))
                         .recover {
                           case _: Throwable =>

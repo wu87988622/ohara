@@ -38,13 +38,13 @@ class TestK8SBasicCollieImpl extends OharaTest with Matchers {
   @Test
   def testClusterName(): Unit = {
     val group = CommonUtils.randomString(10)
-    val cluster1ContainerName = Collie.format(PREFIX_KEY, group, "cluster1", tmpServiceName)
+    val cluster1ContainerName = Collie.containerName(PREFIX_KEY, group, "cluster1", tmpServiceName)
     zookeeperClusterName(cluster1ContainerName) shouldBe "cluster1"
 
-    val cluster2ContainerName = Collie.format(PREFIX_KEY, group, "zk", tmpServiceName)
+    val cluster2ContainerName = Collie.containerName(PREFIX_KEY, group, "zk", tmpServiceName)
     zookeeperClusterName(cluster2ContainerName) shouldBe "zk"
 
-    val cluster3ContainerName = Collie.format(PREFIX_KEY, group, "zkzk", tmpServiceName)
+    val cluster3ContainerName = Collie.containerName(PREFIX_KEY, group, "zkzk", tmpServiceName)
     zookeeperClusterName(cluster3ContainerName) shouldBe "zkzk"
 
     val cluster4ContainerName = s"$PREFIX_KEY$DIVIDER$group${DIVIDER}zk$DIVIDER$tmpServiceName"

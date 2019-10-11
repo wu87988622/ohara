@@ -54,11 +54,6 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
           val jarInfo = creation.jarInfo.getOrElse(throw new RuntimeException("jarInfo should be defined"))
           nodeCollie
             .nodes(creation.nodeNames)
-            .map(
-              _.map(
-                node => node -> Collie.format(prefixKey, creation.group, creation.name, serviceName)
-              ).toMap
-            )
             // the broker cluster should be defined in data creating phase already
             // here we just throw an exception for absent value to ensure everything works as expect
             .flatMap(
@@ -72,7 +67,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
             .flatMap {
               case (nodes, brokerContainers) =>
                 val route = resolveHostNames(
-                  (nodes.map(_._1.hostname)
+                  (nodes.map(_.hostname)
                     ++ brokerContainers.map(_.nodeName)
                   // make sure the streamApp can connect to configurator
                     ++ Seq(jarInfo.url.getHost)).toSet
@@ -80,9 +75,9 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                 // ssh connection is slow so we submit request by multi-thread
                 Future
                   .sequence(nodes.map {
-                    case (node, containerName) =>
+                    newNode =>
                       val containerInfo = ContainerInfo(
-                        nodeName = node.name,
+                        nodeName = newNode.name,
                         id = Collie.UNKNOWN,
                         imageName = creation.imageName,
                         created = Collie.UNKNOWN,
@@ -90,7 +85,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                         // other, it will be filtered later ...
                         state = ContainerState.RUNNING.name,
                         kind = Collie.UNKNOWN,
-                        name = containerName,
+                        name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                         size = Collie.UNKNOWN,
                         portMappings = Seq(
                           PortMapping(
@@ -115,14 +110,18 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                             })
                         },
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
-                        hostname = containerName
+                        hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                       )
-                      doCreator(executionContext, containerName, containerInfo, node, route, creation.jmxPort, jarInfo)
-                        .map(_ => Some(containerInfo))
-                        .recover {
-                          case _: Throwable =>
-                            None
-                        }
+                      doCreator(executionContext,
+                                containerInfo.name,
+                                containerInfo,
+                                newNode,
+                                route,
+                                creation.jmxPort,
+                                jarInfo).map(_ => Some(containerInfo)).recover {
+                        case _: Throwable =>
+                          None
+                      }
                   })
                   .map(_.flatten.toSeq)
                   .flatMap(

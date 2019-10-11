@@ -192,7 +192,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val wkPodName = Await.result(workerCollie.cluster(workerClusterStatus.key), TIMEOUT)._2.head.name
     val wkPodNameFieldSize = wkPodName.split("-").length
     val expectWKPodNameField =
-      Collie.format("k8soccl", workerClusterStatus.group, workerClusterStatus.name, "wk").split("-")
+      Collie.containerName("k8soccl", workerClusterStatus.group, workerClusterStatus.name, "wk").split("-")
     wkPodNameFieldSize shouldBe expectWKPodNameField.size
 
   }

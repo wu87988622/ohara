@@ -177,4 +177,70 @@ class TestCollie extends OharaTest with Matchers {
     Await.result(fakeFailed2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.RUNNING.name)
   }
+
+  @Test
+  def dividerCannotBeUsedInCreatingContainerName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Collie
+      .containerName(Collie.DIVIDER, CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString())
+
+    an[IllegalArgumentException] should be thrownBy Collie
+      .containerName(CommonUtils.randomString(), Collie.DIVIDER, CommonUtils.randomString(), CommonUtils.randomString())
+
+    an[IllegalArgumentException] should be thrownBy Collie
+      .containerName(CommonUtils.randomString(), CommonUtils.randomString(), Collie.DIVIDER, CommonUtils.randomString())
+
+    an[IllegalArgumentException] should be thrownBy Collie
+      .containerName(CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString(), Collie.DIVIDER)
+  }
+
+  @Test
+  def dividerCannotBeUsedInCreatingHostname(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Collie.containerHostName(Collie.DIVIDER,
+                                                                             CommonUtils.randomString(),
+                                                                             CommonUtils.randomString(),
+                                                                             CommonUtils.randomString())
+
+    an[IllegalArgumentException] should be thrownBy Collie.containerHostName(CommonUtils.randomString(),
+                                                                             Collie.DIVIDER,
+                                                                             CommonUtils.randomString(),
+                                                                             CommonUtils.randomString())
+
+    an[IllegalArgumentException] should be thrownBy Collie.containerHostName(CommonUtils.randomString(),
+                                                                             CommonUtils.randomString(),
+                                                                             Collie.DIVIDER,
+                                                                             CommonUtils.randomString())
+
+    an[IllegalArgumentException] should be thrownBy Collie.containerHostName(CommonUtils.randomString(),
+                                                                             CommonUtils.randomString(),
+                                                                             CommonUtils.randomString(),
+                                                                             Collie.DIVIDER)
+  }
+
+  @Test
+  def testLengthOfHostname(): Unit = {
+    val s = Collie.containerHostName(CommonUtils.randomString(Collie.LENGTH_OF_CONTAINER_HOSTNAME),
+                                     CommonUtils.randomString(),
+                                     CommonUtils.randomString(),
+                                     CommonUtils.randomString())
+    s.length shouldBe Collie.LENGTH_OF_CONTAINER_HOSTNAME
+  }
+
+  @Test
+  def hostnameShouldNotStartWithDivider(): Unit = {
+    val s = Collie.containerHostName(
+      "a",
+      "b",
+      "c",
+      CommonUtils.randomString(
+        Collie.LENGTH_OF_CONTAINER_HOSTNAME - Collie.LENGTH_OF_CONTAINER_NAME_ID
+        // the length of other names
+          - 3
+        // the length of all DIVIDER
+          - 4
+        // this +1 makes length of hostname be 51 and the first "a" will be removed
+          + 1)
+    )
+    s.length shouldBe Collie.LENGTH_OF_CONTAINER_HOSTNAME - 1
+    s.startsWith(Collie.DIVIDER) shouldBe false
+  }
 }

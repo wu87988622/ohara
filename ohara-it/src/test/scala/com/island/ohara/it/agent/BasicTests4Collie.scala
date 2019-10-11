@@ -248,8 +248,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     log.info(s"get containers from zk:$clusterKey... done")
     container.nodeName shouldBe nodeName
     container.name.contains(clusterKey.name()) shouldBe true
-    // In ZookeeperCollie, we assign node name to "hostname" field to avoid dns problem
-    container.hostname.contains(nodeName) shouldBe true
     container.portMappings.head.portPairs.size shouldBe 3
     container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
     container.portMappings.head.portPairs.exists(_.containerPort == electionPort) shouldBe true
@@ -320,7 +318,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     result(bk_containers(clusterKey)).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
-      container.hostname.contains(clusterKey.name) shouldBe true
       container.portMappings.head.portPairs.size shouldBe 3
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
       container.environments.exists(_._2 == clientPort.toString) shouldBe true
@@ -546,7 +543,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     result(wk_containers(clusterKey)).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
-      container.hostname.contains(clusterKey.name) shouldBe true
       // [BEFORE] ServiceCollieImpl applies --network=host to all worker containers so there is no port mapping.
       // The following checks are disabled rather than deleted since it seems like a bug if we don't check the port mapping.
       // [AFTER] ServiceCollieImpl use bridge network now
@@ -678,7 +674,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   @Test
-  def testMultiZkClustersOnSingleNode(): Unit = {
+  def testMultiZkClustersOnSameNodes(): Unit = {
     if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
     val keys = (0 until numberOfClusters).map(_ => nameHolder.generateClusterKey())
     val zkClusters = keys.map { key =>
@@ -716,7 +712,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   @Test
-  def testMultiBkClustersOnSingleNode(): Unit = {
+  def testMultiBkClustersOnSameNodes(): Unit = {
     if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
     val zkKeys = (0 until numberOfClusters).map(_ => nameHolder.generateClusterKey())
     val bkKeys = (0 until numberOfClusters).map(_ => nameHolder.generateClusterKey())
@@ -750,7 +746,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   @Test
-  def testMultiWkClustersOnSingleNode(): Unit = {
+  def testMultiWkClustersOnSameNodes(): Unit = {
     if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
     val zkKey = nameHolder.generateClusterKey()
     val bkKey = nameHolder.generateClusterKey()

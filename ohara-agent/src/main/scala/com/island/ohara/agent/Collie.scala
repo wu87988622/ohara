@@ -266,6 +266,12 @@ object Collie {
   private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
 
   /**
+    * docker has limit on length of hostname.
+    * The max length of hostname is 63 and we try to keep flexibility for the future.
+    */
+  private[agent] val LENGTH_OF_CONTAINER_HOSTNAME: Int = 20
+
+  /**
     * generate unique name for the container.
     * It can be used in setting container's hostname and name
     * @param prefixKey environment prefix key
@@ -274,14 +280,39 @@ object Collie {
     * @param serviceName the service type name for current cluster
     * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
     */
-  def format(prefixKey: String, group: String, clusterName: String, serviceName: String): String =
+  def containerName(prefixKey: String, group: String, clusterName: String, serviceName: String): String = {
+    def rejectDivider(s: String): String = if (s.contains(DIVIDER))
+      throw new IllegalArgumentException(s"$DIVIDER is protected word!!! input:$s")
+    else s
+
     Seq(
-      prefixKey,
-      group,
-      clusterName,
-      serviceName,
+      rejectDivider(prefixKey),
+      rejectDivider(group),
+      rejectDivider(clusterName),
+      rejectDivider(serviceName),
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(DIVIDER)
+  }
+
+  /**
+    * generate unique host name for the container. the hostname, normally, is used internally so it is ok to generate
+    * a random string. However, we all hate to see something hard to read so the hostname is similar to container name.
+    * The main difference is that the length of hostname is shorter as the limit of hostname.
+    * @param prefixKey environment prefix key
+    * @param group cluster group
+    * @param clusterName cluster name
+    * @param serviceName the service type name for current cluster
+    * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
+    */
+  def containerHostName(prefixKey: String, group: String, clusterName: String, serviceName: String): String = {
+    val name = containerName(prefixKey, group, clusterName, serviceName)
+    if (name.length > LENGTH_OF_CONTAINER_HOSTNAME) {
+      val rval = name.substring(name.length - LENGTH_OF_CONTAINER_HOSTNAME)
+      // avoid creating name starting with "DIVIDER"
+      if (rval.startsWith(DIVIDER)) rval.substring(1)
+      else rval
+    } else name
+  }
 
   /**
     * a helper method to fetch the cluster key from container name
