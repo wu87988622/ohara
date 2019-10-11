@@ -19,6 +19,7 @@ package com.island.ohara.it.client
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
+import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before}
 import org.scalatest.Matchers
@@ -32,10 +33,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 abstract class WithRemoteConfigurator extends IntegrationTest with Matchers {
   private[this] val nodes = EnvTestingUtils.sshNodes()
   private[this] val node = nodes.head
+  private[this] val clusterNameHolder = ClusterNameHolder(nodes)
+  private[this] val configuratorContainerKey = clusterNameHolder.generateClusterKey()
 
   protected val configuratorHostname: String = node.hostname
   protected val configuratorPort: Int = CommonUtils.availablePort()
-  protected val configuratorContainerName: String = CommonUtils.randomString(10)
+
+  /**
+    * we have to combine the group and name in order to make name holder to delete related container.
+    */
+  protected val configuratorContainerName: String =
+    s"${configuratorContainerKey.group()}-${configuratorContainerKey.name()}"
 
   private[this] val dockerClient: DockerClient = DockerClient.builder
     .hostname(node.hostname)
@@ -78,7 +86,7 @@ abstract class WithRemoteConfigurator extends IntegrationTest with Matchers {
 
   @After
   def releaseConfigurator(): Unit = {
-    Releasable.close(() => dockerClient.forceRemove(configuratorContainerName))
     Releasable.close(dockerClient)
+    Releasable.close(clusterNameHolder)
   }
 }
