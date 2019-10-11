@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.Enum
-import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroups, TopicKey}
@@ -38,7 +38,8 @@ object ConnectorApi {
   private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
   private[this] val TOPIC_NAMES_KEY: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
-  private[v0] val CONNECTOR_CLASS_KEY: String = ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()
+  @VisibleForTesting
+  private[ohara] val CONNECTOR_CLASS_KEY: String = ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()
   @VisibleForTesting
   private[v0] val COLUMNS_KEY: String = ConnectorDefUtils.COLUMNS_DEFINITION.key()
   @VisibleForTesting
@@ -192,12 +193,16 @@ object ConnectorApi {
   /**
     * this is what we store in configurator
     */
-  final case class ConnectorDescription(settings: Map[String, JsValue],
-                                        status: Option[Status],
-                                        tasksStatus: Seq[Status],
-                                        metrics: Metrics,
-                                        lastModified: Long)
+  final case class ConnectorInfo(settings: Map[String, JsValue],
+                                 status: Option[Status],
+                                 tasksStatus: Seq[Status],
+                                 metrics: Metrics,
+                                 lastModified: Long)
       extends Data {
+
+    override protected def matched(key: String, value: String): Boolean = key match {
+      case _ => matchSetting(settings, key, value)
+    }
 
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
@@ -221,12 +226,12 @@ object ConnectorApi {
     override def tags: Map[String, JsValue] = settings.tags
   }
 
-  implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorDescription] =
-    new RootJsonFormat[ConnectorDescription] {
-      private[this] val format = jsonFormat5(ConnectorDescription)
-      override def read(json: JsValue): ConnectorDescription = format.read(json)
+  implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorInfo] =
+    new RootJsonFormat[ConnectorInfo] {
+      private[this] val format = jsonFormat5(ConnectorInfo)
+      override def read(json: JsValue): ConnectorInfo = format.read(json)
 
-      override def write(obj: ConnectorDescription): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
+      override def write(obj: ConnectorInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
     }
 
   /**
@@ -308,18 +313,27 @@ object ConnectorApi {
       * @param executionContext thread pool
       * @return created data
       */
-    def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription]
+    def create()(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
 
     /**
       * generate the PUT request
       * @param executionContext thread pool
       * @return updated/created data
       */
-    def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription]
+    def update()(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
+  }
+
+  sealed trait Query extends BasicQuery[ConnectorInfo] {
+    def setting(key: String, value: JsValue): Query = set(key, value match {
+      case JsString(s) => s
+      case _           => value.toString
+    })
+
+    // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
 
   class Access private[v0]
-      extends com.island.ohara.client.configurator.v0.Access[ConnectorDescription](CONNECTORS_PREFIX_PATH) {
+      extends com.island.ohara.client.configurator.v0.Access[ConnectorInfo](CONNECTORS_PREFIX_PATH) {
 
     /**
       * start to run a connector on worker cluster.
@@ -353,12 +367,17 @@ object ConnectorApi {
       */
     def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, RESUME_COMMAND)
 
-    def request: Request = new Request {
-      override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.post[Creation, ConnectorDescription, ErrorApi.Error](url, creation)
+    def query: Query = new Query {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[ConnectorInfo]] = list(request)
+    }
 
-      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] = {
-        exec.put[Updating, ConnectorDescription, ErrorApi.Error](
+    def request: Request = new Request {
+      override def create()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
+        exec.post[Creation, ConnectorInfo, ErrorApi.Error](url, creation)
+
+      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = {
+        exec.put[Updating, ConnectorInfo, ErrorApi.Error](
           url(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get)),
           updating)
       }

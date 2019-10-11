@@ -31,6 +31,8 @@ import scala.concurrent.{ExecutionContext, Future}
 trait BasicQuery[T] {
   private[this] val paras: mutable.Map[String, String] = mutable.Map[String, String]()
 
+  def name(value: String): BasicQuery.this.type = set("name", value)
+
   def group(value: String): BasicQuery.this.type = set("group", value)
 
   def tags(tags: Map[String, JsValue]): BasicQuery.this.type = set("tags", JsObject(tags).toString())

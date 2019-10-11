@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.store
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -194,7 +194,7 @@ class TestRocksDataStore extends OharaTest with Matchers {
 
     result(store.remove(ObjectKey.of(random(), random()))) shouldBe false
     result(store.remove[SimpleData](ObjectKey.of(random(), random()))) shouldBe false
-    result(store.remove[ConnectorDescription](ObjectKey.of(random(), random()))) shouldBe false
+    result(store.remove[ConnectorInfo](ObjectKey.of(random(), random()))) shouldBe false
 
     result(store.remove[SimpleData](ObjectKey.of(data1.group, data1.name))) shouldBe true
     store.size shouldBe 1
@@ -210,7 +210,7 @@ class TestRocksDataStore extends OharaTest with Matchers {
     result(store.remove(ObjectKey.of(data1.group, data1.name))) shouldBe false
     result(store.remove[SimpleData](ObjectKey.of(data1.group, "1234"))) shouldBe false
     result(store.remove[SimpleData](ObjectKey.of("1234", data1.name))) shouldBe false
-    result(store.remove[ConnectorDescription](ObjectKey.of(data1.group, data1.name))) shouldBe false
+    result(store.remove[ConnectorInfo](ObjectKey.of(data1.group, data1.name))) shouldBe false
 
     result(store.raws()).head.asInstanceOf[SimpleData] shouldBe data1
     result(store.raws(ObjectKey.of(data1.group, data1.name))).head.asInstanceOf[SimpleData] shouldBe data1

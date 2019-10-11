@@ -25,7 +25,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -383,6 +383,74 @@ class TestConnectorRoute extends OharaTest with Matchers {
     result(topicApi.start(topic.key))
     result(connectorApi.start(connectorDesc.key))
 
+  }
+
+  @Test
+  def testNameFilter(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val topic = result(topicApi.request.create())
+    val connectorInfo = result(
+      connectorApi.request.name(name).className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
+    (0 until 3).foreach(_ =>
+      result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
+    result(connectorApi.list).size shouldBe 4
+    val connectors = result(connectorApi.query.name(name).execute())
+    connectors.size shouldBe 1
+    connectors.head.key shouldBe connectorInfo.key
+  }
+
+  @Test
+  def testGroupFilter(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val topic = result(topicApi.request.create())
+    val connectorInfo = result(
+      connectorApi.request
+        .group(group)
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .topicKey(topic.key)
+        .create())
+    (0 until 3).foreach(_ =>
+      result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
+    result(connectorApi.list).size shouldBe 4
+    val connectors = result(connectorApi.query.group(group).execute())
+    connectors.size shouldBe 1
+    connectors.head.key shouldBe connectorInfo.key
+  }
+
+  @Test
+  def testTagsFilter(): Unit = {
+    val tags = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val topic = result(topicApi.request.create())
+    val connectorInfo = result(
+      connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).tags(tags).create())
+    (0 until 3).foreach(_ =>
+      result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
+    result(connectorApi.list).size shouldBe 4
+    val connectors = result(connectorApi.query.tags(tags).execute())
+    connectors.size shouldBe 1
+    connectors.head.key shouldBe connectorInfo.key
+  }
+
+  @Test
+  def testSettingFilter(): Unit = {
+    val topic = result(topicApi.request.create())
+    val connectorInfo = result(
+      connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink2").topicKey(topic.key).create())
+    (0 until 3).foreach(_ =>
+      result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
+    result(connectorApi.list).size shouldBe 4
+    val connectors = result(
+      connectorApi.query
+        .setting(ConnectorApi.CONNECTOR_CLASS_KEY, JsString("com.island.ohara.connector.ftp.FtpSink2"))
+        .execute())
+    connectors.size shouldBe 1
+    connectors.head.key shouldBe connectorInfo.key
   }
 
   @After

@@ -19,7 +19,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -39,7 +39,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
   private[this] lazy val LOG = Logger(PipelineRoute.getClass)
 
-  private[this] def toAbstract(data: ConnectorDescription, clusterInfo: WorkerClusterInfo, workerClient: WorkerClient)(
+  private[this] def toAbstract(data: ConnectorInfo, clusterInfo: WorkerClusterInfo, workerClient: WorkerClient)(
     implicit executionContext: ExecutionContext,
     meterCache: MeterCache): Future[ObjectAbstract] =
     workerClient
@@ -122,9 +122,9 @@ private[configurator] object PipelineRoute {
       kind = data.kind,
       // Just cast the input data to get the correct className
       className = data match {
-        case description: ConnectorDescription => Some(description.className)
-        case description: StreamClusterInfo    => description.definition.map(_.className)
-        case _                                 => None
+        case description: ConnectorInfo     => Some(description.className)
+        case description: StreamClusterInfo => description.definition.map(_.className)
+        case _                              => None
       },
       state = None,
       error = error,
@@ -140,7 +140,7 @@ private[configurator] object PipelineRoute {
                                           adminCleaner: AdminCleaner,
                                           executionContext: ExecutionContext,
                                           meterCache: MeterCache): Future[ObjectAbstract] = obj match {
-    case data: ConnectorDescription =>
+    case data: ConnectorInfo =>
       CollieUtils.workerClient(data.workerClusterKey).flatMap {
         case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
       }

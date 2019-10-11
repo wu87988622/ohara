@@ -213,6 +213,12 @@ list information of all connectors
 
 *GET /v0/connectors*
 
+the accepted query keys are listed below.
+#. group
+#. name
+#. tags
+#. key in settings
+
 Example Response
   .. code-block:: json
 

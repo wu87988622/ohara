@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.{Data, QueryRequest}
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -35,11 +35,14 @@ import scala.concurrent.{ExecutionContext, Future}
 object TopicApi {
   private[v0] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   private[v0] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
+  @VisibleForTesting
   private[ohara] val TOPICS_PREFIX_PATH: String = "topics"
 
   private[v0] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
   private[v0] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
-  private[v0] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
+
+  @VisibleForTesting
+  private[ohara] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
   private[this] val TAGS_KEY = "tags"
 
   /**
@@ -331,28 +334,10 @@ object TopicApi {
                        lastModified: Long)
       extends Data {
 
-    import spray.json._
     override protected def matched(key: String, value: String): Boolean = key match {
       case "state" =>
         state.exists(_.name.toLowerCase == value.toLowerCase) || (state.isEmpty && value.toLowerCase == TopicState.NONE.name.toLowerCase)
-      case _ =>
-        settings.get(key).exists {
-          // it is impossible to have JsNull since our json format does a great job :)
-          case JsString(s)  => s == value
-          case JsNumber(i)  => i == BigDecimal(value)
-          case JsBoolean(b) => b == value.toBoolean
-          case js: JsArray =>
-            value.parseJson match {
-              case other: JsArray => other == js
-              case _              => false
-            }
-          case js: JsObject =>
-            value.parseJson match {
-              case other: JsObject => other == js
-              case _               => false
-            }
-          case _ => false
-        }
+      case _ => matchSetting(settings, key, value)
     }
 
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
@@ -493,9 +478,15 @@ object TopicApi {
   }
 
   sealed trait Query extends BasicQuery[TopicInfo] {
+    import spray.json._
     def state(value: TopicState): Query = set("state", value.name)
 
-    def brokerClusterKey(key: ObjectKey): Query = set(BROKER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(key))
+    def brokerClusterKey(key: ObjectKey): Query = setting(BROKER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(key).parseJson)
+
+    def setting(key: String, value: JsValue): Query = set(key, value match {
+      case JsString(s) => s
+      case _           => value.toString
+    })
 
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }

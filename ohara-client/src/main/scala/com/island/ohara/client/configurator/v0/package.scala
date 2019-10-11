@@ -220,4 +220,30 @@ package object v0 {
     // the node names can't be empty
     .rejectEmpty()
     .toRefiner
+
+  /**
+    * there are many objects containing "settings", and it is filterable so we separate the related code for reusing.
+    *
+    * @param settings settings
+    * @param key key
+    * @param value string of json representation. Noted the string of json string is pure "string" (no quote)
+    * @return true if the key-value is matched. Otherwise, false
+    */
+  def matchSetting(settings: Map[String, JsValue], key: String, value: String): Boolean = settings.get(key).exists {
+    // it is impossible to have JsNull since our json format does a great job :)
+    case JsString(s)  => s == value
+    case JsNumber(i)  => i == BigDecimal(value)
+    case JsBoolean(b) => b == value.toBoolean
+    case js: JsArray =>
+      value.parseJson match {
+        case other: JsArray => other == js
+        case _              => false
+      }
+    case js: JsObject =>
+      value.parseJson match {
+        case other: JsObject => other == js
+        case _               => false
+      }
+    case _ => false
+  }
 }

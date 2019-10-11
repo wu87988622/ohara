@@ -126,7 +126,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def renderJsonWithoutAnyRequiredFields(): Unit = {
-    val response = ConnectorDescription(
+    val response = ConnectorInfo(
       settings = Map(
         CommonUtils.randomString() -> JsString(CommonUtils.randomString()),
         GROUP_KEY -> JsString(CommonUtils.randomString()),
@@ -144,7 +144,7 @@ class TestConnectorApi extends OharaTest with Matchers {
   @Test
   def renderJsonWithConnectorClass(): Unit = {
     val className = CommonUtils.randomString()
-    val response = ConnectorDescription(
+    val response = ConnectorInfo(
       settings = access.request.className(className).creation.settings,
       status = None,
       tasksStatus = Seq.empty,
