@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
-import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -140,9 +140,18 @@ object PipelineApi {
     def update()(implicit executionContext: ExecutionContext): Future[Pipeline]
   }
 
+  sealed trait Query extends BasicQuery[Pipeline] {
+    // TODO: there are a lot of settings which is worth of having parameters ... by chia
+  }
+
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Pipeline](PIPELINES_PREFIX_PATH) {
 
     def refresh(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, REFRESH_COMMAND)
+
+    def query: Query = new Query {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[Pipeline]] = list(request)
+    }
 
     def request: Request = new Request {
       private[this] var group: String = GROUP_DEFAULT

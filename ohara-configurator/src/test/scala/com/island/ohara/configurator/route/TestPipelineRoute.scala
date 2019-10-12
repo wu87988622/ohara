@@ -24,11 +24,11 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 // there are too many test cases in this file so we promote  it from small test to medium test
 class TestPipelineRoute extends OharaTest with Matchers {
@@ -394,6 +394,48 @@ class TestPipelineRoute extends OharaTest with Matchers {
     result(topicApi.start(topic.key))
 
     result(pipelineApi.get(pipeline.key)).objects.head.state.get shouldBe "RUNNING"
+  }
+
+  @Test
+  def testNameFilter(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val topic = result(topicApi.request.create())
+    val pipeline = result(pipelineApi.request.name(name).flow(Flow(topic.key, Set(topic.key))).create())
+    (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
+    result(pipelineApi.list).size shouldBe 4
+    val pipelines = result(pipelineApi.query.name(name).execute())
+    pipelines.size shouldBe 1
+    pipelines.head.key shouldBe pipeline.key
+  }
+
+  @Test
+  def testGroupFilter(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val topic = result(topicApi.request.create())
+    val pipeline = result(pipelineApi.request.group(group).flow(Flow(topic.key, Set(topic.key))).create())
+    (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
+    result(pipelineApi.list).size shouldBe 4
+    val pipelines = result(pipelineApi.query.group(group).execute())
+    pipelines.size shouldBe 1
+    pipelines.head.key shouldBe pipeline.key
+  }
+
+  @Test
+  def testTagsFilter(): Unit = {
+    val tags = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val topic = result(topicApi.request.create())
+    val pipeline = result(pipelineApi.request.tags(tags).flow(Flow(topic.key, Set(topic.key))).create())
+    (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
+    result(pipelineApi.list).size shouldBe 4
+    val pipelines = result(pipelineApi.query.tags(tags).execute())
+    pipelines.size shouldBe 1
+    pipelines.head.key shouldBe pipeline.key
   }
 
   @After

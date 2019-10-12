@@ -216,6 +216,7 @@ list information of all connectors
 the accepted query keys are listed below.
 #. group
 #. name
+#. lastModified
 #. tags
 #. key in settings
 

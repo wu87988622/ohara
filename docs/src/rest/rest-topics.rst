@@ -151,6 +151,7 @@ the accepted query keys are listed below.
 #. group
 #. name
 #. state
+#. lastModified
 #. tags
 #. key in settings
 

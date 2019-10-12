@@ -274,6 +274,12 @@ fetch status, metrics and log from backend clusters. If you have the
 name of pipeline, please use :ref:`GET <rest-pipelines-get>` to fetch details
 of **single** pipeline.
 
+the accepted query keys are listed below.
+#. group
+#. name
+#. lastModified
+#. tags
+
 Example Response
   .. code-block:: json
 
