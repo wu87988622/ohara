@@ -18,6 +18,8 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
+import com.island.ohara.client.configurator.QueryRequest
+import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -249,6 +251,12 @@ object BrokerApi {
 
   final class Access private[BrokerApi]
       extends ClusterAccess[Creation, Updating, BrokerClusterInfo](BROKER_PREFIX_PATH) {
+
+    override def query: Query[BrokerClusterInfo] = new Query[BrokerClusterInfo] {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[BrokerClusterInfo]] = list(request)
+    }
+
     def request: ExecutableRequest = new ExecutableRequest {
 
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)

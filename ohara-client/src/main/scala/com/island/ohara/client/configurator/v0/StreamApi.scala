@@ -17,6 +17,8 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.QueryRequest
+import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -351,6 +353,11 @@ object StreamApi {
 
   final class Access private[StreamApi]
       extends ClusterAccess[Creation, Updating, StreamClusterInfo](STREAM_PREFIX_PATH) {
+
+    override def query: Query[StreamClusterInfo] = new Query[StreamClusterInfo] {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[StreamClusterInfo]] = list(request)
+    }
 
     def request: ExecutableRequest = new ExecutableRequest {
 

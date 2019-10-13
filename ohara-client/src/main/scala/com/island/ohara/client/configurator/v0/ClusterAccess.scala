@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.setting.ObjectKey
-
+import ClusterAccess.Query
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -28,6 +28,8 @@ private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <
                       rm2: OharaJsonFormat[Updating],
                       rm3: OharaJsonFormat[Res])
     extends Access[Creation, Updating, Res](prefixPath) {
+
+  def query: Query[Res]
 
   final def addNode(objectKey: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](url(objectKey, nodeName))
@@ -65,4 +67,25 @@ private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <
     */
   final def forceStop(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](url(key = objectKey, postFix = STOP_COMMAND, params = Map(FORCE_KEY -> "true")))
+}
+
+object ClusterAccess {
+
+  /**
+    * the basic query for cluster APIs.
+    * @tparam Res cluster type
+    */
+  trait Query[Res <: ClusterInfo] extends BasicQuery[Res] {
+    import spray.json._
+
+    def state(value: String): Query.this.type = set("state", value)
+
+    def aliveNodes(value: Set[String]): Query.this.type =
+      set("aliveNodes", JsArray(value.map(JsString(_)).toVector).toString())
+
+    def setting(key: String, value: JsValue): Query.this.type = set(key, value match {
+      case JsString(s) => s
+      case _           => value.toString
+    })
+  }
 }

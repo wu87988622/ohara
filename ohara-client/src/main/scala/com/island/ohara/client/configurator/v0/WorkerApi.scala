@@ -18,6 +18,8 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
+import com.island.ohara.client.configurator.QueryRequest
+import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
@@ -349,6 +351,12 @@ object WorkerApi {
 
   final class Access private[WorkerApi]
       extends ClusterAccess[Creation, Updating, WorkerClusterInfo](WORKER_PREFIX_PATH) {
+
+    override def query: Query[WorkerClusterInfo] = new Query[WorkerClusterInfo] {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[WorkerClusterInfo]] = list(request)
+    }
+
     def request: ExecutableRequest = new ExecutableRequest {
 
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)

@@ -24,13 +24,14 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeBrokerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestBrokerRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
+  private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
@@ -473,6 +474,97 @@ class TestBrokerRoute extends OharaTest with Matchers {
     bk2.group shouldBe group
 
     result(brokerApi.list()).size shouldBe 4
+  }
+
+  @Test
+  def testNameFilter(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val zookeeper = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zookeeper.key))
+    val broker = result(brokerApi.request.name(name).nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
+    (0 until 3).foreach { _ =>
+      val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      result(zookeeperApi.start(zk.key))
+      result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
+    }
+    result(brokerApi.list()).size shouldBe 4
+    val brokers = result(brokerApi.query.name(name).execute())
+    brokers.size shouldBe 1
+    brokers.head.key shouldBe broker.key
+  }
+
+  @Test
+  def testGroupFilter(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val zookeeper = result(zookeeperApi.request.group(group).nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zookeeper.key))
+    val broker = result(brokerApi.request.group(group).nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
+    (0 until 3).foreach { _ =>
+      val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      result(zookeeperApi.start(zk.key))
+      result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
+    }
+    result(brokerApi.list()).size shouldBe 4
+    val brokers = result(brokerApi.query.group(group).execute())
+    brokers.size shouldBe 1
+    brokers.head.key shouldBe broker.key
+  }
+
+  @Test
+  def testTagsFilter(): Unit = {
+    val tags = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val zookeeper = result(zookeeperApi.request.tags(tags).nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zookeeper.key))
+    val broker = result(brokerApi.request.tags(tags).nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
+    (0 until 3).foreach { _ =>
+      val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      result(zookeeperApi.start(zk.key))
+      result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
+    }
+    result(brokerApi.list()).size shouldBe 4
+    val brokers = result(brokerApi.query.tags(tags).execute())
+    brokers.size shouldBe 1
+    brokers.head.key shouldBe broker.key
+  }
+
+  @Test
+  def testStateFilter(): Unit = {
+    val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zookeeper.key))
+    val broker = result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
+    result(brokerApi.start(broker.key))
+    (0 until 3).foreach { _ =>
+      val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      result(zookeeperApi.start(zk.key))
+      result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
+    }
+    result(brokerApi.list()).size shouldBe 4
+    val brokers = result(brokerApi.query.state("running").execute())
+    brokers.size shouldBe 1
+    brokers.head.key shouldBe broker.key
+  }
+
+  @Test
+  def testAliveNodesFilter(): Unit = {
+    val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zookeeper.key))
+    val broker = result(brokerApi.request.nodeName(nodeNames.head).zookeeperClusterKey(zookeeper.key).create())
+    result(brokerApi.start(broker.key))
+    (0 until 3).foreach { _ =>
+      val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      result(zookeeperApi.start(zk.key))
+      result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
+    }
+    result(brokerApi.list()).size shouldBe 4
+    val brokers = result(brokerApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    brokers.size shouldBe 1
+    brokers.head.key shouldBe broker.key
   }
 
   @After

@@ -175,6 +175,15 @@ list all broker clusters
 
 *GET /v0/brokers*
 
+the accepted query keys are listed below.
+#. group
+#. name
+#. lastModified
+#. tags
+#. state
+#. aliveNodes
+#. key in settings
+
 Example Response
   .. code-block:: json
 
