@@ -19,6 +19,8 @@ package com.island.ohara.client.configurator
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.{JsNull, JsValue, RootJsonFormat, _}
+
+import spray.json.DefaultJsonProtocol._
 package object v0 {
 
   /**
@@ -244,6 +246,25 @@ package object v0 {
         case other: JsObject => other == js
         case _               => false
       }
+    case _ => false
+  }
+
+  /**
+    * Compare the optional argument.
+    *
+    * Noted that it returns true if the optionString is empty and the query value is "none"
+    * Noted that the comparison is case-insensitive
+    * @param optionString option argument
+    * @param value query value
+    * @return true if matched. Otherwise, false
+    */
+  def matchOptionString(optionString: Option[String], value: String): Boolean =
+    optionString.exists(_.toLowerCase == value.toLowerCase) || (optionString.isEmpty && value.toLowerCase == "none")
+
+  def matchArray(array: Set[String], value: String): Boolean = value.parseJson match {
+    case JsArray(es) =>
+      if (es.forall(_.isInstanceOf[JsString])) es.map(_.convertTo[String]).toSet == array
+      else false
     case _ => false
   }
 }

@@ -52,7 +52,7 @@ trait Data {
     * @param request query request
     * @return true if the query matches this object. otherwise, false
     */
-  final def matched(request: QueryRequest): Boolean = request.raw.forall {
+  final def matched(request: QueryRequest): Boolean = try request.raw.forall {
     case (key, value) =>
       key match {
         case "name" => value == name
@@ -67,5 +67,11 @@ trait Data {
         case _ =>
           matched(key, value)
       }
+  } catch {
+
+    /**
+      * this means the key is not a part of data :(
+      */
+    case _: MatchError => false
   }
 }

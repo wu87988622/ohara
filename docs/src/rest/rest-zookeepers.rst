@@ -145,6 +145,15 @@ list all zookeeper clusters
 
 *GET /v0/zookeepers*
 
+the accepted query keys are listed below.
+#. group
+#. name
+#. lastModified
+#. tags
+#. state
+#. aliveNodes
+#. key in settings
+
 Example Response
   .. code-block:: json
 

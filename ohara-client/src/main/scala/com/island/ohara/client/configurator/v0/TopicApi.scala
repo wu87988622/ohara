@@ -335,9 +335,8 @@ object TopicApi {
       extends Data {
 
     override protected def matched(key: String, value: String): Boolean = key match {
-      case "state" =>
-        state.exists(_.name.toLowerCase == value.toLowerCase) || (state.isEmpty && value.toLowerCase == TopicState.NONE.name.toLowerCase)
-      case _ => matchSetting(settings, key, value)
+      case "state" => matchOptionString(state.map(_.name), value)
+      case _       => matchSetting(settings, key, value)
     }
 
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)

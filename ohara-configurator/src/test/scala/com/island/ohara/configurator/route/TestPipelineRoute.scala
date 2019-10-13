@@ -402,7 +402,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
     val topic = result(topicApi.request.create())
     val pipeline = result(pipelineApi.request.name(name).flow(Flow(topic.key, Set(topic.key))).create())
     (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
-    result(pipelineApi.list).size shouldBe 4
+    result(pipelineApi.list()).size shouldBe 4
     val pipelines = result(pipelineApi.query.name(name).execute())
     pipelines.size shouldBe 1
     pipelines.head.key shouldBe pipeline.key
@@ -414,7 +414,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
     val topic = result(topicApi.request.create())
     val pipeline = result(pipelineApi.request.group(group).flow(Flow(topic.key, Set(topic.key))).create())
     (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
-    result(pipelineApi.list).size shouldBe 4
+    result(pipelineApi.list()).size shouldBe 4
     val pipelines = result(pipelineApi.query.group(group).execute())
     pipelines.size shouldBe 1
     pipelines.head.key shouldBe pipeline.key
@@ -432,7 +432,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
     val topic = result(topicApi.request.create())
     val pipeline = result(pipelineApi.request.tags(tags).flow(Flow(topic.key, Set(topic.key))).create())
     (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
-    result(pipelineApi.list).size shouldBe 4
+    result(pipelineApi.list()).size shouldBe 4
     val pipelines = result(pipelineApi.query.tags(tags).execute())
     pipelines.size shouldBe 1
     pipelines.head.key shouldBe pipeline.key

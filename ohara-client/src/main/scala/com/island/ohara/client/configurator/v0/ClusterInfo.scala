@@ -81,4 +81,13 @@ trait ClusterInfo extends ClusterStatus with Data {
     case c: StreamClusterInfo =>
       c.copy(settings = StreamApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
   }
+
+  /**
+    * the default comparison for all clusters.
+    */
+  override protected def matched(key: String, value: String): Boolean = key match {
+    case "state"      => matchOptionString(state, value)
+    case "aliveNodes" => matchArray(aliveNodes, value)
+    case _            => matchSetting(settings, key, value)
+  }
 }

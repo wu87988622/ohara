@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -237,8 +238,29 @@ object ZookeeperApi {
     def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo]
   }
 
+  sealed trait Query extends BasicQuery[ZookeeperClusterInfo] {
+    import spray.json._
+
+    def state(value: String): Query = set("state", value)
+
+    def aliveNodes(value: Set[String]): Query = set("aliveNodes", JsArray(value.map(JsString(_)).toVector).toString())
+
+    def setting(key: String, value: JsValue): Query = set(key, value match {
+      case JsString(s) => s
+      case _           => value.toString
+    })
+
+    // TODO: there are a lot of settings which is worth of having parameters ... by chia
+  }
+
   final class Access private[ZookeeperApi]
       extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
+
+    def query: Query = new Query {
+      override protected def doExecute(request: QueryRequest)(
+        implicit executionContext: ExecutionContext): Future[Seq[ZookeeperClusterInfo]] = list(request)
+    }
+
     def request: ExecutableRequest = new ExecutableRequest {
 
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = post(creation)

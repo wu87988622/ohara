@@ -444,7 +444,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     val name = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(name).create())
     (0 until 3).foreach(_ => result(topicApi.request.create()))
-    result(topicApi.list).size shouldBe 4
+    result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.name(name).execute())
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
@@ -457,7 +457,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     val group = CommonUtils.randomString(10)
     val topic = result(topicApi.request.group(group).create())
     (0 until 3).foreach(_ => result(topicApi.request.create()))
-    result(topicApi.list).size shouldBe 4
+    result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.group(group).execute())
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
@@ -476,7 +476,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     )
     val topic = result(topicApi.request.tags(tags).create())
     (0 until 3).foreach(_ => result(topicApi.request.create()))
-    result(topicApi.list).size shouldBe 4
+    result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.tags(tags).execute())
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
@@ -488,7 +488,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   def testStateFilter(): Unit = {
     val topic = result(topicApi.request.create())
     (0 until 3).foreach(_ => result(topicApi.request.create()))
-    result(topicApi.list).size shouldBe 4
+    result(topicApi.list()).size shouldBe 4
     result(topicApi.start(topic.key))
     val topics = result(topicApi.query.state(TopicState.RUNNING).execute())
     topics.size shouldBe 1
@@ -504,7 +504,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     val bkKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
     (0 until 3).foreach(_ => result(topicApi.request.create()))
-    result(topicApi.list).size shouldBe 4
+    result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.brokerClusterKey(bkKey).execute())
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key

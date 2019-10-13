@@ -393,7 +393,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
       connectorApi.request.name(name).className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     (0 until 3).foreach(_ =>
       result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
-    result(connectorApi.list).size shouldBe 4
+    result(connectorApi.list()).size shouldBe 4
     val connectors = result(connectorApi.query.name(name).execute())
     connectors.size shouldBe 1
     connectors.head.key shouldBe connectorInfo.key
@@ -411,7 +411,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .create())
     (0 until 3).foreach(_ =>
       result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
-    result(connectorApi.list).size shouldBe 4
+    result(connectorApi.list()).size shouldBe 4
     val connectors = result(connectorApi.query.group(group).execute())
     connectors.size shouldBe 1
     connectors.head.key shouldBe connectorInfo.key
@@ -431,7 +431,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).tags(tags).create())
     (0 until 3).foreach(_ =>
       result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
-    result(connectorApi.list).size shouldBe 4
+    result(connectorApi.list()).size shouldBe 4
     val connectors = result(connectorApi.query.tags(tags).execute())
     connectors.size shouldBe 1
     connectors.head.key shouldBe connectorInfo.key
@@ -444,7 +444,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink2").topicKey(topic.key).create())
     (0 until 3).foreach(_ =>
       result(connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create()))
-    result(connectorApi.list).size shouldBe 4
+    result(connectorApi.list()).size shouldBe 4
     val connectors = result(
       connectorApi.query
         .setting(ConnectorApi.CONNECTOR_CLASS_KEY, JsString("com.island.ohara.connector.ftp.FtpSink2"))

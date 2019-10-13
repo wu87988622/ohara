@@ -24,7 +24,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeZookeeperCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -355,6 +355,72 @@ class TestZookeeperRoute extends OharaTest with Matchers {
         .nodeNames(nodeNames)
         .peerPort(1234)
         .update()).peerPort should not be info.peerPort
+  }
+
+  @Test
+  def testNameFilter(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val zookeeper = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
+    result(zookeeperApi.list()).size shouldBe 5
+    val zookeepers = result(zookeeperApi.query.name(name).execute())
+    zookeepers.size shouldBe 1
+    zookeepers.head.key shouldBe zookeeper.key
+  }
+
+  @Test
+  def testGroupFilter(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val zookeeper = result(zookeeperApi.request.group(group).nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
+    result(zookeeperApi.list()).size shouldBe 5
+    val zookeepers = result(zookeeperApi.query.group(group).execute())
+    zookeepers.size shouldBe 1
+    zookeepers.head.key shouldBe zookeeper.key
+  }
+
+  @Test
+  def testTagsFilter(): Unit = {
+    val tags = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val zookeeper = result(zookeeperApi.request.tags(tags).nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
+    result(zookeeperApi.list()).size shouldBe 5
+    val zookeepers = result(zookeeperApi.query.tags(tags).execute())
+    zookeepers.size shouldBe 1
+    zookeepers.head.key shouldBe zookeeper.key
+  }
+
+  @Test
+  def testStateFilter(): Unit = {
+    val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
+    result(zookeeperApi.list()).size shouldBe 5
+    result(zookeeperApi.start(zookeeper.key))
+    val zookeepers = result(zookeeperApi.query.state("running").execute())
+    zookeepers.size shouldBe 2
+    zookeepers.find(_.key == zookeeper.key) should not be None
+
+    result(zookeeperApi.query.group(CommonUtils.randomString()).state("running").execute()).size shouldBe 0
+    result(zookeeperApi.query.state("none").execute()).size shouldBe 3
+  }
+
+  @Test
+  def testAliveNodesFilter(): Unit = {
+    val zookeeper = result(zookeeperApi.request.nodeName(nodeNames.head).create())
+    (0 until 3).foreach(_ =>
+      result(zookeeperApi.request.nodeNames(nodeNames).create().flatMap(z => zookeeperApi.start(z.key))))
+    result(zookeeperApi.list()).size shouldBe 5
+    result(zookeeperApi.start(zookeeper.key))
+    val zookeepers = result(zookeeperApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    zookeepers.size shouldBe 1
+    zookeepers.head.key shouldBe zookeeper.key
+    result(zookeeperApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
   }
 
   @After
