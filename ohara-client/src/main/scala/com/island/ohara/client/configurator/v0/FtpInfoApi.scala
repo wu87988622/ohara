@@ -129,7 +129,8 @@ object FtpInfoApi {
     def update()(implicit executionContext: ExecutionContext): Future[FtpInfo]
   }
 
-  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[FtpInfo](FTP_PREFIX_PATH) {
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, FtpInfo](FTP_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
@@ -198,16 +199,9 @@ object FtpInfoApi {
             tags = Option(tags)
           )))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
-        exec.post[Creation, FtpInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
-        exec.put[Updating, FtpInfo, ErrorApi.Error](
-          url(ObjectKey.of(group, name)),
-          updating
-        )
+        put(ObjectKey.of(group, name), updating)
     }
   }
 

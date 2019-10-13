@@ -173,7 +173,8 @@ object NodeApi {
     def update()(implicit executionContext: ExecutionContext): Future[Node]
   }
 
-  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Node](NODES_PREFIX_PATH) {
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, Node](NODES_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] var hostname: String = _
       private[this] var port: Option[Int] = None
@@ -223,16 +224,9 @@ object NodeApi {
             tags = Option(tags)
           )))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[Node] =
-        exec.post[Creation, Node, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[Node] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =
-        exec.put[Updating, Node, ErrorApi.Error](
-          s"$url/${CommonUtils.requireNonEmpty(hostname)}",
-          updating
-        )
+        put(ObjectKey.of(GROUP_DEFAULT, hostname), updating)
     }
   }
 

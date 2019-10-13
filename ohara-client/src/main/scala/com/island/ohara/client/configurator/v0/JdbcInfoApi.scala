@@ -106,7 +106,8 @@ object JdbcInfoApi {
     def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo]
   }
 
-  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[JdbcInfo](JDBC_PREFIX_PATH) {
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, JdbcInfo](JDBC_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
@@ -167,16 +168,9 @@ object JdbcInfoApi {
             tags = Option(tags)
           )))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
-        exec.post[Creation, JdbcInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
-        exec.put[Updating, JdbcInfo, ErrorApi.Error](
-          url(ObjectKey.of(group, name)),
-          updating
-        )
+        put(ObjectKey.of(group, name), updating)
     }
   }
 

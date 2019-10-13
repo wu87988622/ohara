@@ -144,7 +144,8 @@ object PipelineApi {
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
 
-  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Pipeline](PIPELINES_PREFIX_PATH) {
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, Pipeline](PIPELINES_PREFIX_PATH) {
 
     def refresh(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, REFRESH_COMMAND)
 
@@ -198,16 +199,9 @@ object PipelineApi {
               tags = Option(tags)
             )))
 
-      override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] =
-        exec.post[Creation, Pipeline, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =
-        exec.put[Updating, Pipeline, ErrorApi.Error](
-          url(ObjectKey.of(group, name)),
-          updating
-        )
+        put(ObjectKey.of(group, name), updating)
     }
   }
 

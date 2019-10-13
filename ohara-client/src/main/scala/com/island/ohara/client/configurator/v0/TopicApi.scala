@@ -491,7 +491,8 @@ object TopicApi {
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
 
-  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[TopicInfo](TOPICS_PREFIX_PATH) {
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, TopicInfo](TOPICS_PREFIX_PATH) {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
 
@@ -502,16 +503,9 @@ object TopicApi {
 
     def request: Request = new Request {
 
-      override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-        exec.post[Creation, TopicInfo, ErrorApi.Error](
-          url,
-          creation
-        )
+      override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-        exec.put[Updating, TopicInfo, ErrorApi.Error](
-          url(TopicKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get)),
-          updating
-        )
+        put(TopicKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
     }
 
   }

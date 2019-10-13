@@ -122,7 +122,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       // test stop. the connector should be removed
       result(connectorApi.stop(sink.key))
       await(() => if (result(workerClient.nonExist(sink.key))) true else false)
-      result(connectorApi.get(sink.key)).status shouldBe None
+      await(() => result(connectorApi.get(sink.key)).status.isEmpty)
     } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
   }
 

@@ -30,8 +30,13 @@ import scala.concurrent.{ExecutionContext, Future}
   * @param rm formatter of response
   * @tparam Res type of Response
   */
-abstract class Access[Res] private[v0] (prefixPath: String)(implicit rm: RootJsonFormat[Res])
+abstract class Access[Creation <: BasicCreation, Updating, Res] private[v0] (prefixPath: String)(
+  implicit rm: RootJsonFormat[Creation],
+  rm1: RootJsonFormat[Updating],
+  rm2: RootJsonFormat[Res])
     extends BasicAccess(prefixPath) {
+
+  //-----------------------[Http Requests]-----------------------//
 
   def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.get[Res, ErrorApi.Error](url(key))
@@ -42,6 +47,13 @@ abstract class Access[Res] private[v0] (prefixPath: String)(implicit rm: RootJso
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](url)
 
+  //-----------------------[Http Helpers]-----------------------//
+  protected def post(creation: Creation)(implicit executionContext: ExecutionContext): Future[Res] =
+    exec.post[Creation, Res, ErrorApi.Error](url, creation)
+
+  protected def put(key: ObjectKey, updating: Updating)(implicit executionContext: ExecutionContext): Future[Res] =
+    exec.put[Updating, Res, ErrorApi.Error](url(key), updating)
+
   /**
     * this is not a public method since we encourage users to call Query to set up parameters via fluent pattern.
     * @param request request
@@ -49,5 +61,5 @@ abstract class Access[Res] private[v0] (prefixPath: String)(implicit rm: RootJso
     * @return results
     */
   protected def list(request: QueryRequest)(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
-    if (request.raw.isEmpty) list() else exec.get[Seq[Res], ErrorApi.Error](url(request))
+    if (request.raw.isEmpty) list() else exec.get[Seq[Res], ErrorApi.Error](s"$url?${toString(request.raw)}")
 }

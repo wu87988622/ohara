@@ -435,7 +435,7 @@ class TestStreamApi extends OharaTest with Matchers {
   @Test
   def requireFieldOnPropertyUpdate(): Unit = {
     // name is required
-    an[IllegalArgumentException] should be thrownBy result(accessRequest.jarKey(fakeJar).update())
+    an[NoSuchElementException] should be thrownBy result(accessRequest.jarKey(fakeJar).update())
 
     // no jar is ok
     accessRequest.name(CommonUtils.randomString(5)).updating

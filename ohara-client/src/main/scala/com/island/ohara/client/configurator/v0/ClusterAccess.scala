@@ -16,7 +16,6 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.setting.ObjectKey
-import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,20 +23,12 @@ import scala.concurrent.{ExecutionContext, Future}
   * the cluster-related data is different from normal data so we need another type of access.
   * @param prefixPath path to remote resource
   */
-private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Update <: ClusterUpdating, Res <: ClusterInfo](
-  prefixPath: String)(implicit rm1: OharaJsonFormat[Creation], rm2: OharaJsonFormat[Update], rm3: OharaJsonFormat[Res])
-    extends BasicAccess(prefixPath) {
+private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <: ClusterUpdating, Res <: ClusterInfo](
+  prefixPath: String)(implicit rm1: OharaJsonFormat[Creation],
+                      rm2: OharaJsonFormat[Updating],
+                      rm3: OharaJsonFormat[Res])
+    extends Access[Creation, Updating, Res](prefixPath) {
 
-  final def post(creation: Creation)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.post[Creation, Res, ErrorApi.Error](url, creation)
-  final def put(objectKey: ObjectKey, update: Update)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.put[Update, Res, ErrorApi.Error](url(objectKey), update)
-  final def get(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.get[Res, ErrorApi.Error](url(objectKey))
-  final def delete(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](url(objectKey))
-  final def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
-    exec.get[Seq[Res], ErrorApi.Error](url)
   final def addNode(objectKey: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](url(objectKey, nodeName))
   final def removeNode(objectKey: ObjectKey, nodeName: String)(

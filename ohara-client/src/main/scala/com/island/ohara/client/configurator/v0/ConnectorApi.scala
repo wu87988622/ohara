@@ -333,7 +333,7 @@ object ConnectorApi {
   }
 
   class Access private[v0]
-      extends com.island.ohara.client.configurator.v0.Access[ConnectorInfo](CONNECTORS_PREFIX_PATH) {
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, ConnectorInfo](CONNECTORS_PREFIX_PATH) {
 
     /**
       * start to run a connector on worker cluster.
@@ -373,14 +373,10 @@ object ConnectorApi {
     }
 
     def request: Request = new Request {
-      override def create()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
-        exec.post[Creation, ConnectorInfo, ErrorApi.Error](url, creation)
+      override def create()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = post(creation)
 
-      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = {
-        exec.put[Updating, ConnectorInfo, ErrorApi.Error](
-          url(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get)),
-          updating)
-      }
+      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
+        put(ConnectorKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
     }
   }
 

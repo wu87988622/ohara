@@ -354,13 +354,7 @@ object WorkerApi {
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-        put(
-          // for update request, we should use default group if it was absent
-          ObjectKey.of(
-            updating.group.getOrElse(GROUP_DEFAULT),
-            updating.name.getOrElse(throw new IllegalArgumentException("name is required in update request"))),
-          updating
-        )
+        put(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
     }
   }
 

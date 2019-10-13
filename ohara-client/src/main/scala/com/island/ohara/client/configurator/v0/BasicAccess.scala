@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.{ConfiguratorApiInfo, QueryRequest}
+import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
@@ -45,6 +45,17 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     this
   }
 
+  protected final def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.put[ErrorApi.Error](url(key, action))
+
+  //-----------------------[URL Helpers]-----------------------//
+
+  protected def toString(params: Map[String, String]): String = params
+    .map {
+      case (key, value) => s"$key=$value"
+    }
+    .mkString("&")
+
   /**
     * Compose the url with hostname, port, version and prefix
     * @return url string
@@ -59,21 +70,6 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     */
   protected final def url(key: ObjectKey): String =
     s"$url/${key.name}?$GROUP_KEY=${key.group}"
-
-  protected final def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](url(key, action))
-
-  private[this] def toString(params: Map[String, String]): String = params
-    .map {
-      case (key, value) => s"$key=$value"
-    }
-    .mkString("&")
-
-  /**
-    * url?param0=${param0}
-    * @return url string
-    */
-  protected final def url(request: QueryRequest): String = s"$url?${toString(request.raw)}"
 
   /**
     * used by START, STOP, PAUSE and RESUME requests.
