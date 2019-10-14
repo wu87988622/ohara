@@ -378,6 +378,15 @@ list information of streamApp cluster
 
 *GET /v0/stream*
 
+the accepted query keys are listed below.
+#. group
+#. name
+#. lastModified
+#. tags
+#. state
+#. aliveNodes
+#. key in settings
+
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
 
