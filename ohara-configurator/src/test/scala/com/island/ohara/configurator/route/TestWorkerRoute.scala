@@ -24,7 +24,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.{FakeWorkerClient, FakeWorkerCollie}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -467,6 +467,72 @@ class TestWorkerRoute extends OharaTest with Matchers {
     bk2.group shouldBe group
 
     result(workerApi.list()).size shouldBe 4
+  }
+
+  @Test
+  def testNameFilter(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val worker = result(workerApi.request.name(name).nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    result(workerApi.list()).size shouldBe 4
+    val workers = result(workerApi.query.name(name).execute())
+    workers.size shouldBe 1
+    workers.head.key shouldBe worker.key
+  }
+
+  @Test
+  def testGroupFilter(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val worker = result(workerApi.request.group(group).nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    result(workerApi.list()).size shouldBe 4
+    val workers = result(workerApi.query.group(group).execute())
+    workers.size shouldBe 1
+    workers.head.key shouldBe worker.key
+  }
+
+  @Test
+  def testTagsFilter(): Unit = {
+    val tags = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val worker = result(workerApi.request.tags(tags).nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    result(workerApi.list()).size shouldBe 4
+    val workers = result(workerApi.query.tags(tags).execute())
+    workers.size shouldBe 1
+    workers.head.key shouldBe worker.key
+  }
+
+  @Test
+  def testStateFilter(): Unit = {
+    val worker = result(workerApi.request.nodeNames(nodeNames).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    result(workerApi.list()).size shouldBe 4
+    result(workerApi.start(worker.key))
+    val workers = result(workerApi.query.state("running").execute())
+    workers.size shouldBe 1
+    workers.find(_.key == worker.key) should not be None
+
+    result(workerApi.query.group(CommonUtils.randomString()).state("running").execute()).size shouldBe 0
+    result(workerApi.query.state("none").execute()).size shouldBe 3
+  }
+
+  @Test
+  def testAliveNodesFilter(): Unit = {
+    val worker = result(workerApi.request.nodeName(nodeNames.head).create())
+    (0 until 3).foreach(_ =>
+      result(workerApi.request.nodeNames(nodeNames).create().flatMap(z => workerApi.start(z.key))))
+    result(workerApi.list()).size shouldBe 4
+    result(workerApi.start(worker.key))
+    val workers = result(workerApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    workers.size shouldBe 1
+    workers.head.key shouldBe worker.key
+    result(workerApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
   }
 
   @After

@@ -281,6 +281,15 @@ list all workers clusters
 
 *GET /v0/workers*
 
+the accepted query keys are listed below.
+#. group
+#. name
+#. lastModified
+#. tags
+#. state
+#. aliveNodes
+#. key in settings
+
 Example Response
   .. code-block:: json
 
