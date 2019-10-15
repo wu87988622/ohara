@@ -21,7 +21,7 @@ import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -105,7 +105,7 @@ public final class StreamDefinitions {
    *
    * @return config object list
    */
-  public List<SettingDef> values() {
+  public List<SettingDef> getSettingDefList() {
     return configDefs;
   }
 
@@ -113,30 +113,36 @@ public final class StreamDefinitions {
    * Get value from specific name. Note: This is a helper method for container environment.
    *
    * @param key config key
-   * @return value from container environment
+   * @return value from container environment, {@code Optional.empty()} if absent
    */
-  public String string(String key) {
-    return CommonUtils.fromEnvString(
-        Objects.requireNonNull(System.getenv(key), key + " could not be null"));
+  public Optional<String> string(String key) {
+    return Optional.ofNullable(System.getenv(key)).map(CommonUtils::fromEnvString);
   }
 
-  /** @return the name of this streamapp */
+  /** @return the name of this streamApp */
   public String name() {
-    return string(StreamDefUtils.NAME_DEFINITION.key());
+    return string(StreamDefUtils.NAME_DEFINITION.key())
+        .orElseThrow(() -> new RuntimeException("NAME_DEFINITION not found in env."));
   }
 
   /** @return brokers' connection props */
   public String brokerConnectionProps() {
-    return string(StreamDefUtils.BROKER_DEFINITION.key());
+    return string(StreamDefUtils.BROKER_DEFINITION.key())
+        .orElseThrow(() -> new RuntimeException("BROKER_DEFINITION not found in env."));
   }
 
   /** @return the keys of from topics */
   public List<TopicKey> fromTopicKeys() {
-    return TopicKey.toTopicKeys(string(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()));
+    return TopicKey.toTopicKeys(
+        string(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
+            .orElseThrow(
+                () -> new RuntimeException("FROM_TOPIC_KEYS_DEFINITION not found in env.")));
   }
 
   /** @return the keys of to topics */
   public List<TopicKey> toTopicKeys() {
-    return TopicKey.toTopicKeys(string(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()));
+    return TopicKey.toTopicKeys(
+        string(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
+            .orElseThrow(() -> new RuntimeException("TO_TOPIC_KEYS_DEFINITION not found in env.")));
   }
 }

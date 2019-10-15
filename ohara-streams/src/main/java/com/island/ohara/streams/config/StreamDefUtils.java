@@ -276,7 +276,7 @@ public final class StreamDefUtils {
           .collect(Collectors.toList());
 
   public static String toJson(StreamDefinitions definitions) {
-    return JsonUtils.toString(definitions.values());
+    return JsonUtils.toString(definitions.getSettingDefList());
   }
 
   public static StreamDefinitions ofJson(String json) {

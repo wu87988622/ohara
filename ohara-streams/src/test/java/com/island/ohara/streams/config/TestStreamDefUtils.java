@@ -19,7 +19,9 @@ package com.island.ohara.streams.config;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.streams.StreamTestUtils;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,7 +37,9 @@ public class TestStreamDefUtils extends OharaTest {
 
     Assert.assertEquals(StreamDefUtils.toJson(defaultConfig), StreamDefUtils.toJson(config));
     Assert.assertEquals(
-        "default config size not equal", config.values().size(), defaultConfig.values().size());
+        "default config size not equal",
+        config.getSettingDefList().size(),
+        defaultConfig.getSettingDefList().size());
 
     StreamDefinitions another =
         StreamDefinitions.with(
@@ -56,7 +60,9 @@ public class TestStreamDefUtils extends OharaTest {
     StreamDefinitions newConfigs =
         StreamDefinitions.with(SettingDef.builder().key(key).group(group).build());
 
-    Assert.assertEquals(newConfigs.values().size(), StreamDefinitions.create().values().size() + 1);
+    Assert.assertEquals(
+        newConfigs.getSettingDefList().size(),
+        StreamDefinitions.create().getSettingDefList().size() + 1);
     Assert.assertTrue(newConfigs.keys().contains(key));
 
     List<SettingDef> list = new ArrayList<>();
@@ -66,7 +72,8 @@ public class TestStreamDefUtils extends OharaTest {
         .forEach(i -> list.add(SettingDef.builder().key(String.valueOf(i)).group(group).build()));
     StreamDefinitions newConfigList = StreamDefinitions.withAll(list);
     Assert.assertEquals(
-        newConfigList.values().size(), StreamDefinitions.create().values().size() + 10);
+        newConfigList.getSettingDefList().size(),
+        StreamDefinitions.create().getSettingDefList().size() + 10);
     Assert.assertTrue(
         newConfigList
             .keys()
@@ -104,7 +111,7 @@ public class TestStreamDefUtils extends OharaTest {
   public void testForbiddenModifyDefs() {
     // we don't allow change the internal definitions, use with() or withAll() instead
     StreamDefinitions.create()
-        .values()
+        .getSettingDefList()
         .add(SettingDef.builder().key(CommonUtils.randomString()).build());
   }
 
@@ -112,5 +119,21 @@ public class TestStreamDefUtils extends OharaTest {
   public void testJarDefinition() {
     Assert.assertEquals(StreamDefUtils.JAR_KEY_DEFINITION.valueType(), SettingDef.Type.OBJECT_KEY);
     Assert.assertEquals(StreamDefUtils.JAR_KEY_DEFINITION.reference(), SettingDef.Reference.JAR);
+  }
+
+  @Test
+  public void testGetStringFromEnv() {
+    SettingDef settingDef = SettingDef.builder().key("aaa").build();
+    StreamDefinitions configs = StreamDefinitions.with(settingDef);
+    StreamTestUtils.setOharaEnv(Collections.singletonMap("aaa", "bbb"));
+
+    // should be defined in env
+    Assert.assertTrue(
+        "key: aaa not found in env!",
+        configs.string("aaa").isPresent() && configs.string("aaa").get().equals("bbb"));
+
+    // should not have such key in env
+    Assert.assertFalse(
+        "absent key should not have value", configs.string(CommonUtils.randomString()).isPresent());
   }
 }

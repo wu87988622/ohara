@@ -108,7 +108,9 @@ public class PageViewRegionExample extends StreamApp {
   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
     ostream
         .leftJoin(
-            streamDefinitions.string(joinTopicKey),
+            streamDefinitions
+                .string(joinTopicKey)
+                .orElseThrow(() -> new RuntimeException("joinTopicKey not found")),
             Conditions.create().add(Collections.singletonList(Pair.of("user", "user"))),
             (r1, r2) ->
                 Row.of(

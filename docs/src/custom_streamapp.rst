@@ -160,8 +160,11 @@ We provide two arguments in this method:
 
 #. StreamDefinitions - the definitions of ohara streamApp
 
-   from the definition you can use `StreamDefinitions.get()` to get the value you set
-   in :ref:`Stream update api <rest-stream-update-information>`.
+   from the definition you can use `StreamDefinitions.string()` to get the value from the :ref:`config method <streamapp-config-method>` .
+
+   .. note::
+      The return value is wrap in a Java object **Optional**, you need to decide whether the value is present
+      or not.
 
 For example:
 
@@ -172,7 +175,7 @@ For example:
     ostream
       .map(row -> Row.of(row.cell("name"), row.cell("age")))
       // use the previous defined definition in config()
-      .filter(row -> row.cell(streamDefinitions.string("filterName")).value() != null)
+      .filter(row -> row.cell(streamDefinitions.string("filterName").get()).value() != null)
       .map(row -> Row.of(Cell.of("name", row.cell("name").value().toString().toUpperCase())))
       .start();
    }

@@ -185,7 +185,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
           .key()}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)
-      Some(Definition(className, StreamDefUtils.ofJson(result.split("=")(1)).values.asScala))
+      Some(Definition(className, StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala))
     }.recover {
       case e: RuntimeException =>
         // We cannot parse the provided jar, return nothing and log it
