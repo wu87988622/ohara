@@ -49,17 +49,20 @@ export const fetchTopics = async () => {
 };
 
 export const createTopic = async params => {
-  const { name, numberOfPartitions, numberOfReplications, group } = params;
+  const {
+    name,
+    numberOfPartitions,
+    numberOfReplications,
+    group,
+    brokerClusterKey,
+  } = params;
 
   try {
     const data = {
       group,
       name,
       numberOfPartitions: toNumber(numberOfPartitions),
-      brokerClusterName: {
-        group: 'default',
-        name: params.brokerClusterName,
-      },
+      brokerClusterKey,
       numberOfReplications: toNumber(numberOfReplications),
       tags: params.tags,
     };

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{ConnectorApi, ObjectApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, ObjectApi, TopicApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -46,6 +46,8 @@ class TestObjectRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())
 
     var objs = result(objectApi.list())
@@ -61,6 +63,8 @@ class TestObjectRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())
 
     objs = result(objectApi.list())
@@ -119,6 +123,8 @@ class TestObjectRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())
 
     val objs = result(objectApi.list())

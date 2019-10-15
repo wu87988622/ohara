@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -41,6 +41,8 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create()
     )
 

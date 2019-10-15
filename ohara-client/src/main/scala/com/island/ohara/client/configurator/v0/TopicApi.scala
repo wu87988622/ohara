@@ -41,6 +41,9 @@ object TopicApi {
   private[v0] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
   private[v0] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
 
+  /**
+    * exposed to routes.
+    */
   @VisibleForTesting
   private[ohara] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
   private[this] val TAGS_KEY = "tags"
@@ -278,7 +281,7 @@ object TopicApi {
 
     def key: TopicKey = TopicKey.of(group, name)
 
-    def brokerClusterKey: Option[ObjectKey] = settings.brokerClusterKey
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
 
     def numberOfPartitions: Int = settings.numberOfPartitions.get
     def numberOfReplications: Short = settings.numberOfReplications.get
@@ -297,6 +300,7 @@ object TopicApi {
         override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
         override def write(obj: Creation): JsValue = JsObject(obj.settings)
       })
+      .requireKey(BROKER_CLUSTER_KEY_KEY)
       .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_PARTITIONS)
       .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
       .rejectEmptyString()
@@ -356,7 +360,7 @@ object TopicApi {
 
     override def tags: Map[String, JsValue] = settings.tags
 
-    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey
     def numberOfPartitions: Int = settings.numberOfPartitions
 
     def numberOfReplications: Short = settings.numberOfReplications

@@ -131,20 +131,23 @@ private[configurator] object TopicRoute {
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) => Future.traverse(topicInfos)(updateState)
 
-  private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
-    (creation: Creation) =>
-      creation.brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster()).map { clusterKey =>
+  private[this] def creationToTopicInfo(creation: Creation)(implicit brokerCollie: BrokerCollie,
+                                                            executionContext: ExecutionContext): Future[TopicInfo] =
+    brokerCollie.exist(creation.brokerClusterKey).map {
+      if (_)
         TopicInfo(
-          // the default custom configs is at first since it is able to be replaced by creation.
-          settings = TOPIC_CUSTOM_CONFIGS
-            ++ access.request.settings(creation.settings).brokerClusterKey(clusterKey).creation.settings,
+          settings = TOPIC_CUSTOM_CONFIGS ++ creation.settings,
           partitionInfos = Seq.empty,
           metrics = Metrics.EMPTY,
           state = None,
           lastModified = CommonUtils.current()
         )
+      else throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} does not exist")
     }
+
+  private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
+    creationToTopicInfo(_)
 
   private[this] def HookOfUpdating(implicit adminCleaner: AdminCleaner,
                                    meterCache: MeterCache,
@@ -152,13 +155,9 @@ private[configurator] object TopicRoute {
                                    store: DataStore,
                                    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, TopicInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[TopicInfo]) =>
-      previousOption
-        .map(_.brokerClusterKey)
-        .orElse(update.brokerClusterKey)
-        .map(Future.successful)
-        .getOrElse(CollieUtils.singleBrokerCluster())
-        .flatMap(CollieUtils.topicAdmin)
-        .flatMap {
+      if (previousOption.isEmpty) creationToTopicInfo(access.request.settings(update.settings).creation)
+      else
+        CollieUtils.topicAdmin(previousOption.get.brokerClusterKey).flatMap {
           case (cluster, client) =>
             client.topics().map(_.find(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).map {
               topicFromKafkaOption =>

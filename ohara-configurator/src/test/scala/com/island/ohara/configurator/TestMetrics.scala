@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
-import com.island.ohara.client.configurator.v0.{ConnectorApi, FileInfoApi, PipelineApi, StreamApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, FileInfoApi, PipelineApi, StreamApi, TopicApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Producer
@@ -50,7 +50,12 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testTopic(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString())
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(topic.key))
     val producer = Producer
       .builder()
@@ -85,7 +90,12 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testConnector(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString())
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(topic.key))
 
     val sink = result(
@@ -119,7 +129,12 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testPipeline(): Unit = {
     val topicName = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.name(topicName).create())
+    val topic = result(
+      topicApi.request
+        .name(topicName)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(topic.key))
 
     val sink = result(
@@ -153,7 +168,12 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testTopicMeterInPerfSource(): Unit = {
     val topicName = CommonUtils.randomString()
-    val topic = result(topicApi.request.name(topicName).create())
+    val topic = result(
+      topicApi.request
+        .name(topicName)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(topic.key))
 
     val source = result(
@@ -204,8 +224,18 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
     jarInfo.name shouldBe jar.getName
 
-    val t1 = result(topicApi.request.name(CommonUtils.randomString).create())
-    val t2 = result(topicApi.request.name(CommonUtils.randomString).create())
+    val t1 = result(
+      topicApi.request
+        .name(CommonUtils.randomString)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
+    val t2 = result(
+      topicApi.request
+        .name(CommonUtils.randomString)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(t1.key))
     result(topicApi.start(t2.key))
 

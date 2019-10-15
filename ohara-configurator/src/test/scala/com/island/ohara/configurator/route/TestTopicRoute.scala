@@ -25,7 +25,7 @@ import com.island.ohara.configurator.Configurator
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -34,16 +34,17 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   private[this] val configurator = Configurator.builder.fake(1, 0).build()
 
+  private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
+
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
 
   @Test
   def listTopicDeployedOnNonexistentCluster(): Unit = {
-    val topic = result(
+    // invalid broker cluster will throw exception
+    an[IllegalArgumentException] should be thrownBy result(
       topicApi.request.brokerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())).create())
-
-    result(topicApi.get(topic.key)).key shouldBe topic.key
   }
 
   @Test
@@ -58,6 +59,7 @@ class TestTopicRoute extends OharaTest with Matchers {
         .name(name)
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
+        .brokerClusterKey(result(brokerApi.list()).head.key)
         .create())
     response.name shouldBe name
     response.numberOfPartitions shouldBe numberOfPartitions
@@ -92,6 +94,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     result(
       topicApi.request
         .name(name)
+        .brokerClusterKey(result(brokerApi.list()).head.key)
         .create()
         .flatMap { topicInfo =>
           BrokerApi.access
@@ -105,15 +108,12 @@ class TestTopicRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def createTopicOnNonexistentCluster(): Unit = {
-    // we don't check the existence of broker cluster in creating properties
-    val topic = result(
+  def createTopicOnNonexistentCluster(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
       topicApi.request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .create())
-    an[IllegalArgumentException] should be thrownBy result(topicApi.start(topic.key))
-  }
 
   @Test
   def createTopicWithoutBrokerClusterName(): Unit = {
@@ -141,7 +141,7 @@ class TestTopicRoute extends OharaTest with Matchers {
         .create())
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk2.key))
 
-    an[IllegalArgumentException] should be thrownBy result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    an[DeserializationException] should be thrownBy result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bk2.key).create())
   }
@@ -182,7 +182,8 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def testPartitions(): Unit = {
-    val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic0 = result(
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
 
     // we can't reduce number of partitions
     an[IllegalArgumentException] should be thrownBy result(
@@ -198,7 +199,12 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def testReplications(): Unit = {
-    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).numberOfReplications(3).create())
+    val topicInfo = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .numberOfReplications(3)
+        .brokerClusterKey(result(brokerApi.list()).head.key)
+        .create())
     topicInfo.state shouldBe None
 
     result(topicApi.start(topicInfo.key))
@@ -216,10 +222,6 @@ class TestTopicRoute extends OharaTest with Matchers {
         .key(topicInfo.key)
         .numberOfReplications((topicInfo.numberOfReplications + 1).asInstanceOf[Short])
         .update())
-
-    // pass since we don't make changes on number of replications
-    result(
-      topicApi.request.name(CommonUtils.randomString(10)).numberOfReplications(topicInfo.numberOfReplications).create())
   }
 
   @Test
@@ -229,7 +231,9 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def duplicateUpdate(): Unit =
-    (0 to 10).foreach(_ => result(topicApi.request.name(CommonUtils.randomString()).update()))
+    (0 to 10).foreach(_ =>
+      result(
+        topicApi.request.name(CommonUtils.randomString()).brokerClusterKey(result(brokerApi.list()).head.key).update()))
 
   @Test
   def testUpdateNumberOfPartitions(): Unit = {
@@ -259,7 +263,12 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   private[this] def updatePartOfField(req: Request => Request, _expected: TopicInfo => TopicInfo): Unit = {
     val previous = result(
-      topicApi.request.name(CommonUtils.randomString()).numberOfReplications(1).numberOfPartitions(1).update())
+      topicApi.request
+        .name(CommonUtils.randomString())
+        .numberOfReplications(1)
+        .numberOfPartitions(1)
+        .brokerClusterKey(result(brokerApi.list()).head.key)
+        .create())
     val updated = result(req(topicApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
@@ -272,7 +281,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   def deleteAnTopicRemovedFromKafka(): Unit = {
     val topicName = CommonUtils.randomString(10)
 
-    val topic = result(topicApi.request.name(topicName).create())
+    val topic = result(topicApi.request.name(topicName).brokerClusterKey(result(brokerApi.list()).head.key).create())
 
     val brokerClusterInfo = result(
       BrokerApi.access.hostname(configurator.hostname).port(configurator.port).get(topic.brokerClusterKey))
@@ -290,7 +299,7 @@ class TestTopicRoute extends OharaTest with Matchers {
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val topicDesc = result(topicApi.request.tags(tags).create())
+    val topicDesc = result(topicApi.request.tags(tags).brokerClusterKey(result(brokerApi.list()).head.key).create())
     topicDesc.tags shouldBe tags
 
     val tags2 = Map(
@@ -311,13 +320,14 @@ class TestTopicRoute extends OharaTest with Matchers {
   def testCustomConfigs(): Unit = {
     val key = TopicConfig.SEGMENT_BYTES_CONFIG
     val value = 1024 * 1024
-    val topicDesc = result(topicApi.request.configs(Map(key -> value.toString)).create())
+    val topicDesc = result(
+      topicApi.request.configs(Map(key -> value.toString)).brokerClusterKey(result(brokerApi.list()).head.key).create())
     topicDesc.configs(key) shouldBe value.toString
   }
 
   @Test
   def testStartAndStop(): Unit = {
-    val topicDesc = result(topicApi.request.create())
+    val topicDesc = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     topicDesc.state shouldBe None
     result(topicApi.start(topicDesc.key))
     result(topicApi.get(topicDesc.key)).state should not be None
@@ -328,7 +338,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def testGroup(): Unit = {
     val group = CommonUtils.randomString(10)
-    val topicDesc = result(topicApi.request.group(group).create())
+    val topicDesc = result(topicApi.request.group(group).brokerClusterKey(result(brokerApi.list()).head.key).create())
     topicDesc.group shouldBe group
     result(topicApi.list()).size shouldBe 1
     result(topicApi.list()).exists(_.key == topicDesc.key) shouldBe true
@@ -338,19 +348,19 @@ class TestTopicRoute extends OharaTest with Matchers {
   def testCreateSameTopicAfterCreateWithoutAction(): Unit = {
     // This is the backward-compatibility test
     val name = CommonUtils.randomString()
-    val topic = result(topicApi.request.name(name).create())
+    val topic = result(topicApi.request.name(name).brokerClusterKey(result(brokerApi.list()).head.key).create())
     result(topicApi.get(topic.key)).name shouldBe name
 
     result(topicApi.delete(topic.key))
     result(topicApi.list()).size shouldBe 0
 
-    result(topicApi.request.name(name).create()).name shouldBe name
+    result(topicApi.request.name(name).brokerClusterKey(result(brokerApi.list()).head.key).create()).name shouldBe name
   }
 
   @Test
   def testCreateSameTopicAfterCreateWithAction(): Unit = {
     val name = CommonUtils.randomString()
-    val topic = result(topicApi.request.name(name).create())
+    val topic = result(topicApi.request.name(name).brokerClusterKey(result(brokerApi.list()).head.key).create())
     result(topicApi.start(topic.key))
     val res = result(topicApi.get(topic.key))
     res.name shouldBe name
@@ -363,7 +373,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     result(topicApi.list()).size shouldBe 0
 
     // pass
-    result(topicApi.request.name(name).create())
+    result(topicApi.request.name(name).brokerClusterKey(result(brokerApi.list()).head.key).create())
     result(topicApi.start(topic.key))
     result(topicApi.get(topic.key)).state.get shouldBe TopicState.RUNNING
 
@@ -373,7 +383,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def failToDeleteRunningTopic(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     result(topicApi.start(topic.key))
     an[IllegalArgumentException] should be thrownBy result(topicApi.delete(topic.key))
 
@@ -384,7 +394,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def stopTopicFromStoppingBrokerCluster(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
@@ -396,7 +406,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def stopTopicFromNonexistentBrokerCluster(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
@@ -410,7 +420,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def deleteTopicFromNonexistentBrokerCluster(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
     result(topicApi.start(topic.key))
 
@@ -421,7 +431,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def failToUpdateRunningTopic(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     result(topicApi.start(topic.key))
     an[IllegalArgumentException] should be thrownBy result(topicApi.request.key(topic.key).update())
 
@@ -432,7 +442,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def checkDefaultConfigs(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     TopicRoute.TOPIC_CUSTOM_CONFIGS.foreach {
       case (k, v) =>
         topic.settings(k) shouldBe v
@@ -442,8 +452,8 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def testNameFilter(): Unit = {
     val name = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.name(name).create())
-    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    val topic = result(topicApi.request.name(name).brokerClusterKey(result(brokerApi.list()).head.key).create())
+    (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create()))
     result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.name(name).execute())
     topics.size shouldBe 1
@@ -455,8 +465,8 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def testGroupFilter(): Unit = {
     val group = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.group(group).create())
-    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    val topic = result(topicApi.request.group(group).brokerClusterKey(result(brokerApi.list()).head.key).create())
+    (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create()))
     result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.group(group).execute())
     topics.size shouldBe 1
@@ -474,8 +484,8 @@ class TestTopicRoute extends OharaTest with Matchers {
       "d" -> JsArray(JsString("B")),
       "e" -> JsObject("a" -> JsNumber(123))
     )
-    val topic = result(topicApi.request.tags(tags).create())
-    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    val topic = result(topicApi.request.tags(tags).brokerClusterKey(result(brokerApi.list()).head.key).create())
+    (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create()))
     result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.tags(tags).execute())
     topics.size shouldBe 1
@@ -486,8 +496,8 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def testStateFilter(): Unit = {
-    val topic = result(topicApi.request.create())
-    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create()))
     result(topicApi.list()).size shouldBe 4
     result(topicApi.start(topic.key))
     val topics = result(topicApi.query.state(TopicState.RUNNING).execute())
@@ -501,13 +511,13 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def testBrokerClusterKeyFilter(): Unit = {
-    val bkKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val bkKey = result(brokerApi.list()).head.key
     val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
-    (0 until 3).foreach(_ => result(topicApi.request.create()))
+    (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create()))
     result(topicApi.list()).size shouldBe 4
     val topics = result(topicApi.query.brokerClusterKey(bkKey).execute())
-    topics.size shouldBe 1
-    topics.head.key shouldBe topic.key
+    topics.size shouldBe 4
+    topics.map(_.key) contains topic.key
   }
 
   @After

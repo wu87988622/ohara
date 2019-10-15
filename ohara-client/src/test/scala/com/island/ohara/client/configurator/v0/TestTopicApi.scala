@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -41,10 +42,16 @@ class TestTopicApi extends OharaTest with Matchers {
   def nullGroup(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.group(null)
 
   @Test
+  def brokerClusterKeyShouldBeRequired(): Unit = intercept[DeserializationException] {
+    TopicApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
+  }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_KEY)
+
+  @Test
   def ignoreNameOnCreation(): Unit = TopicApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
+    .brokerClusterKey(ObjectKey.of("fake", "fake"))
     .creation
     .name
     .length should not be 0
@@ -79,21 +86,9 @@ class TestTopicApi extends OharaTest with Matchers {
     val brokerClusterName = CommonUtils.randomString()
     val numberOfPartitions = 100
     val numberOfReplications = 10
-
-    val creation = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
-                                                           |{
-                                                           |}
-       """.stripMargin.parseJson)
-
-    creation.group shouldBe GROUP_DEFAULT
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
-    creation.brokerClusterKey shouldBe None
-    creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
-    creation.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
-
     val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
-    val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+    val creation = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
@@ -103,11 +98,11 @@ class TestTopicApi extends OharaTest with Matchers {
          |}
        """.stripMargin.parseJson)
 
-    creation2.group shouldBe group
-    creation2.name shouldBe name
-    creation2.brokerClusterKey.get.name() shouldBe brokerClusterName
-    creation2.numberOfPartitions shouldBe numberOfPartitions
-    creation2.numberOfReplications shouldBe numberOfReplications
+    creation.group shouldBe group
+    creation.name shouldBe name
+    creation.brokerClusterKey.name() shouldBe brokerClusterName
+    creation.numberOfPartitions shouldBe numberOfPartitions
+    creation.numberOfReplications shouldBe numberOfReplications
   }
 
   @Test

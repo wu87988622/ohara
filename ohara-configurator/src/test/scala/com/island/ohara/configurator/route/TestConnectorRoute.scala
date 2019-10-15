@@ -37,6 +37,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] var defaultWk: WorkerClusterStatus = _
+  private[this] var bkKey: ObjectKey = _
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
 
@@ -44,6 +45,8 @@ class TestConnectorRoute extends OharaTest with Matchers {
   def setup(): Unit = {
     defaultWk = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys.headOption))
       .getOrElse(throw new IllegalArgumentException("we expected at least one worker cluster, but none?"))
+
+    bkKey = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
   }
 
   @Test
@@ -142,7 +145,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def runConnectorWithoutSpecificCluster(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
 
     // absent worker cluster is ok since there is only one worker cluster
     val connector = result(
@@ -192,7 +195,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def testIdempotentPause(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
 
     val connector = result(
       ConnectorApi.access
@@ -212,7 +215,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def testIdempotentResume(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
 
     val connector = result(
       ConnectorApi.access
@@ -232,7 +235,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def testIdempotentStop(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
 
     val connector = result(
       ConnectorApi.access
@@ -252,7 +255,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def testIdempotentStart(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
 
     val connector = result(
       ConnectorApi.access
@@ -284,7 +287,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .nodeNames(bk.nodeNames)
         .create())
     result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.key))
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
 
     val response = result(
       connectorApi.request
@@ -362,7 +365,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def failToDeletePropertiesOfRunningConnector(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
     val connectorDesc = result(
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     result(topicApi.start(topic.key))
@@ -375,7 +378,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def failToRunConnectorWithStoppedTopic(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(bkKey).create())
     val connectorDesc = result(
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connectorDesc.key))
@@ -388,7 +391,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
   @Test
   def testNameFilter(): Unit = {
     val name = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
     val connectorInfo = result(
       connectorApi.request.name(name).className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).create())
     (0 until 3).foreach(_ =>
@@ -402,7 +405,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
   @Test
   def testGroupFilter(): Unit = {
     val group = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
     val connectorInfo = result(
       connectorApi.request
         .group(group)
@@ -426,7 +429,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
       "d" -> JsArray(JsString("B")),
       "e" -> JsObject("a" -> JsNumber(123))
     )
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
     val connectorInfo = result(
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink").topicKey(topic.key).tags(tags).create())
     (0 until 3).foreach(_ =>
@@ -439,7 +442,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   @Test
   def testSettingFilter(): Unit = {
-    val topic = result(topicApi.request.create())
+    val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
     val connectorInfo = result(
       connectorApi.request.className("com.island.ohara.connector.ftp.FtpSink2").topicKey(topic.key).create())
     (0 until 3).foreach(_ =>

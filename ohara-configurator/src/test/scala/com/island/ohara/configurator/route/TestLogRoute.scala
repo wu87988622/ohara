@@ -73,10 +73,10 @@ class TestLogRoute extends OharaTest with Matchers {
   @Test
   def fetchLogFromStream(): Unit = {
     val file = result(fileApi.request.file(CommonUtils.createTempJar(CommonUtils.randomString(10))).upload())
-    val fromTopic = result(topicApi.request.create())
+    val fromTopic = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(fromTopic.key))
     result(topicApi.get(fromTopic.key)).state should not be None
-    val toTopic = result(topicApi.request.create())
+    val toTopic = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(toTopic.key))
     result(topicApi.get(toTopic.key)).state should not be None
     val nodeNames = result(zkApi.list()).head.nodeNames

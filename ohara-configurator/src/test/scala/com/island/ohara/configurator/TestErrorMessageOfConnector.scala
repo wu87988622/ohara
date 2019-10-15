@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
-import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -39,7 +39,12 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def failToRun(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(topic.key))
     val connector = result(
       connectorApi.request
@@ -87,7 +92,12 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def succeedToRun(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     result(topicApi.start(topic.key))
 
     val connector = result(

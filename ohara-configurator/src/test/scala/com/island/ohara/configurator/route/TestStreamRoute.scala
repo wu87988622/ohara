@@ -133,8 +133,18 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(streamApi.request.name(streamAppName).fromTopicKey(from).toTopicKey(to).instances(nodeNames.size).update())
 
     // run topics
-    result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
-    result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
+    result(
+      topicApi.request
+        .key(from)
+        .brokerClusterKey(result(bkApi.list()).head.key)
+        .create()
+        .flatMap(info => topicApi.start(info.key)))
+    result(
+      topicApi.request
+        .key(to)
+        .brokerClusterKey(result(bkApi.list()).head.key)
+        .create()
+        .flatMap(info => topicApi.start(info.key)))
 
     result(streamApi.start(props.key))
     val res1 = result(streamApi.get(props.key))
@@ -233,8 +243,18 @@ class TestStreamRoute extends OharaTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(streamApi.start(stream.key))
 
     // run topics
-    result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
-    result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
+    result(
+      topicApi.request
+        .key(from)
+        .brokerClusterKey(result(bkApi.list()).head.key)
+        .create()
+        .flatMap(info => topicApi.start(info.key)))
+    result(
+      topicApi.request
+        .key(to)
+        .brokerClusterKey(result(bkApi.list()).head.key)
+        .create()
+        .flatMap(info => topicApi.start(info.key)))
 
     // after all required parameters are set, it is ok to run
     result(streamApi.start(stream.key))
@@ -311,8 +331,18 @@ class TestStreamRoute extends OharaTest with Matchers {
     val from = topicKey()
     val to = topicKey()
     // run topics
-    result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
-    result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
+    result(
+      topicApi.request
+        .key(from)
+        .brokerClusterKey(result(bkApi.list()).head.key)
+        .create()
+        .flatMap(info => topicApi.start(info.key)))
+    result(
+      topicApi.request
+        .key(to)
+        .brokerClusterKey(result(bkApi.list()).head.key)
+        .create()
+        .flatMap(info => topicApi.start(info.key)))
     val thrown1 = the[IllegalArgumentException] thrownBy result(
       streamApi.request
         .name(streamDesc.name)
@@ -496,8 +526,8 @@ class TestStreamRoute extends OharaTest with Matchers {
 
   @Test
   def testNameFilter(): Unit = {
-    val from = result(topicApi.request.create())
-    val to = result(topicApi.request.create())
+    val from = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val to = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val name = CommonUtils.randomString(10)
@@ -520,8 +550,8 @@ class TestStreamRoute extends OharaTest with Matchers {
 
   @Test
   def testGroupFilter(): Unit = {
-    val from = result(topicApi.request.create())
-    val to = result(topicApi.request.create())
+    val from = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val to = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val group = CommonUtils.randomString(10)
@@ -544,8 +574,8 @@ class TestStreamRoute extends OharaTest with Matchers {
 
   @Test
   def testTagsFilter(): Unit = {
-    val from = result(topicApi.request.create())
-    val to = result(topicApi.request.create())
+    val from = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val to = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val tags = Map(
@@ -574,8 +604,8 @@ class TestStreamRoute extends OharaTest with Matchers {
 
   @Test
   def testStateFilter(): Unit = {
-    val from = result(topicApi.request.create())
-    val to = result(topicApi.request.create())
+    val from = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val to = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val streamApp = result(
@@ -595,8 +625,8 @@ class TestStreamRoute extends OharaTest with Matchers {
 
   @Test
   def testAliveNodesFilter(): Unit = {
-    val from = result(topicApi.request.create())
-    val to = result(topicApi.request.create())
+    val from = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val to = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val streamApp = result(

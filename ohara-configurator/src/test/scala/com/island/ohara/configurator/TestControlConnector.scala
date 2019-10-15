@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -43,7 +43,12 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
 
     val sink = result(
       connectorApi.request
@@ -90,7 +95,12 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def testUpdateRunningConnector(): Unit = {
     val topicName = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.name(topicName).create())
+    val topic = result(
+      topicApi.request
+        .name(topicName)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -129,7 +139,12 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def deleteRunningConnector(): Unit = {
     val topicName = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.name(topicName).create())
+    val topic = result(
+      topicApi.request
+        .name(topicName)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -155,7 +170,12 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def testNodeName(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
 
     val sink = result(
       connectorApi.request
