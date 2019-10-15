@@ -240,21 +240,24 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     log.info(s"verify number of log... done")
     result(zk_logs(clusterKey)).foreach(log =>
       withClue(log) {
-        log.contains("exception") shouldBe false
+        log.toLowerCase().contains("exception") shouldBe false
         log.isEmpty shouldBe false
     })
     log.info(s"verify log of zk clusters... done")
-    val container = result(zk_containers(clusterKey)).head
+    result(zk_containers(clusterKey)).foreach { container =>
+      container.nodeName shouldBe nodeName
+      container.name.contains(clusterKey.name()) shouldBe true
+      container.name should not be container.hostname
+      container.name.length should be > container.hostname.length
+      container.portMappings.head.portPairs.size shouldBe 3
+      container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
+      container.portMappings.head.portPairs.exists(_.containerPort == electionPort) shouldBe true
+      container.portMappings.head.portPairs.exists(_.containerPort == peerPort) shouldBe true
+      container.environments.exists(_._2 == clientPort.toString) shouldBe true
+      container.environments.exists(_._2 == electionPort.toString) shouldBe true
+      container.environments.exists(_._2 == peerPort.toString) shouldBe true
+    }
     log.info(s"get containers from zk:$clusterKey... done")
-    container.nodeName shouldBe nodeName
-    container.name.contains(clusterKey.name()) shouldBe true
-    container.portMappings.head.portPairs.size shouldBe 3
-    container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
-    container.portMappings.head.portPairs.exists(_.containerPort == electionPort) shouldBe true
-    container.portMappings.head.portPairs.exists(_.containerPort == peerPort) shouldBe true
-    container.environments.exists(_._2 == clientPort.toString) shouldBe true
-    container.environments.exists(_._2 == electionPort.toString) shouldBe true
-    container.environments.exists(_._2 == peerPort.toString) shouldBe true
     result(zk_stop(clusterKey))
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
@@ -318,6 +321,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     result(bk_containers(clusterKey)).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
+      container.name should not be container.hostname
+      container.name.length should be > container.hostname.length
       container.portMappings.head.portPairs.size shouldBe 3
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
       container.environments.exists(_._2 == clientPort.toString) shouldBe true
@@ -325,7 +330,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     result(bk_logs(clusterKey)).size shouldBe 1
     result(bk_logs(clusterKey)).foreach(log =>
       withClue(log) {
-        log.contains("exception") shouldBe false
+        log.toLowerCase().contains("exception") shouldBe false
         log.isEmpty shouldBe false
     })
     log.info("[BROKER] verify:log done")
@@ -543,6 +548,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     result(wk_containers(clusterKey)).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
+      container.name should not be container.hostname
+      container.name.length should be > container.hostname.length
       // [BEFORE] ServiceCollieImpl applies --network=host to all worker containers so there is no port mapping.
       // The following checks are disabled rather than deleted since it seems like a bug if we don't check the port mapping.
       // [AFTER] ServiceCollieImpl use bridge network now

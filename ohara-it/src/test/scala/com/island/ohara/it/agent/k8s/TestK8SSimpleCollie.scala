@@ -342,7 +342,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         x =>
           x.name.contains(zkClusterKey1.group())
             && x.name.contains(zkClusterKey1.name())
-            && x.hostname == firstNode) shouldBe 1
+            && x.nodeName == firstNode) shouldBe 1
 
   }
 

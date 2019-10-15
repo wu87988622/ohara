@@ -41,11 +41,11 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .imageName(containerInfo.imageName)
       .portMappings(
         containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
-      // this hostname has a length limit that <=63
-      // see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
-      // we change the actual value to containerName here which is always <= 63 (prefix-group-name-service-hash)
-      // and it won't hurt the Ohara system or user since it is unused after setting...by Sam
-      .hostname(containerInfo.name)
+      /**
+        * the hostname of k8s/docker container has strict limit. Fortunately, we are aware of this issue and the hostname
+        * passed to this method is legal to k8s/docker. Hence, assigning the hostname is very safe to you :)
+        */
+      .hostname(containerInfo.hostname)
       .nodeName(node.name)
       .envs(containerInfo.environments)
       .labelName(OHARA_LABEL)
