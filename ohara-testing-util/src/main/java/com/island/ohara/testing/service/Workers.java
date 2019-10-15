@@ -18,6 +18,7 @@ package com.island.ohara.testing.service;
 
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
+import java.io.IOException;
 import java.net.BindException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -88,7 +89,12 @@ public interface Workers extends Releasable {
                       availablePorts.add(availablePort);
                       return connect;
                     } catch (ConnectException e) {
-                      if (!canRetry || !(e.getCause() instanceof BindException)) throw e;
+                      if (!canRetry
+                          // the binding error may be wrapped to IOException so we have to check the
+                          // error message.
+                          || !(e.getCause() instanceof IOException
+                              && e.getMessage().contains("Failed to bind"))
+                          || !(e.getCause() instanceof BindException)) throw e;
                     }
                   }
                 })
