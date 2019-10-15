@@ -16,6 +16,8 @@
 
 package com.island.ohara.connector.jdbc.source
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector._
 import org.slf4j.{Logger, LoggerFactory}
@@ -89,6 +91,10 @@ class JDBCSourceConnector extends RowSourceConnector {
       throw new IllegalArgumentException("Your column name input error, Please checkout your column name.")
   }
 
+  /**
+    * used to set the order of definitions.
+    */
+  private[this] val counter = new AtomicInteger(0)
   override protected def _definitions(): java.util.List[SettingDef] = Seq(
     SettingDef
       .builder()
@@ -96,6 +102,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .documentation("Connection database url")
       .valueType(SettingDef.Type.STRING)
       .key(DB_URL)
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -103,6 +110,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .documentation("Connection database user name")
       .valueType(SettingDef.Type.STRING)
       .key(DB_USERNAME)
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -110,6 +118,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .documentation("Connection database user password")
       .valueType(SettingDef.Type.PASSWORD)
       .key(DB_PASSWORD)
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -117,6 +126,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .documentation("write to topic from database table name")
       .valueType(SettingDef.Type.JDBC_TABLE)
       .key(DB_TABLENAME)
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -125,6 +135,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .valueType(SettingDef.Type.STRING)
       .key(DB_CATALOG_PATTERN)
       .optional()
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -133,6 +144,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .valueType(SettingDef.Type.STRING)
       .key(DB_SCHEMA_PATTERN)
       .optional()
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -141,6 +153,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .valueType(SettingDef.Type.STRING)
       .key(MODE)
       .optional(MODE_DEFAULT)
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -148,6 +161,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .documentation("Use a timestamp column to detect new and modified rows")
       .valueType(SettingDef.Type.STRING)
       .key(TIMESTAMP_COLUMN_NAME)
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -156,6 +170,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .valueType(SettingDef.Type.INT)
       .key(JDBC_FETCHDATA_SIZE)
       .optional(String.valueOf(JDBC_FETCHDATA_SIZE_DEFAULT))
+      .orderInGroup(counter.getAndIncrement())
       .build(),
     SettingDef
       .builder()
@@ -164,6 +179,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .valueType(SettingDef.Type.INT)
       .key(JDBC_FLUSHDATA_SIZE)
       .optional(String.valueOf(JDBC_FLUSHDATA_SIZE_DEFAULT))
+      .orderInGroup(counter.getAndIncrement())
       .build()
   ).asJava
 

@@ -25,7 +25,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.csv.CsvConnector._
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions._
 import com.island.ohara.kafka.connector.csv.CsvSinkConnector
 import com.island.ohara.kafka.Producer
 import com.island.ohara.testing.With3Brokers3Workers

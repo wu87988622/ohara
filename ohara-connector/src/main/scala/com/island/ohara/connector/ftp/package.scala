@@ -16,11 +16,18 @@
 
 package com.island.ohara.connector
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.csv.CsvConnector
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions
 
 package object ftp {
+
+  /**
+    * used to set the order of definitions.
+    */
+  private[this] val COUNTER = new AtomicInteger(0)
   val FTP_HOSTNAME_KEY = "ftp.hostname"
   val FTP_HOSTNAME_DEFINITION = SettingDef
     .builder()
@@ -28,6 +35,7 @@ package object ftp {
     .documentation("hostname of ftp server")
     .valueType(SettingDef.Type.STRING)
     .key(FTP_HOSTNAME_KEY)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val FTP_PORT_KEY = "ftp.port"
@@ -37,6 +45,7 @@ package object ftp {
     .documentation("port of ftp server")
     .valueType(SettingDef.Type.PORT)
     .key(FTP_PORT_KEY)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val FTP_USER_NAME_KEY = "ftp.user.name"
@@ -46,6 +55,7 @@ package object ftp {
     .documentation("user of ftp server. This account must have read/delete permission of input folder and error folder")
     .valueType(SettingDef.Type.STRING)
     .key(FTP_USER_NAME_KEY)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val FTP_PASSWORD_KEY = "ftp.user.password"
@@ -55,6 +65,7 @@ package object ftp {
     .documentation("password of ftp server")
     .valueType(SettingDef.Type.PASSWORD)
     .key(FTP_PASSWORD_KEY)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   /**
@@ -67,16 +78,19 @@ package object ftp {
     FTP_PASSWORD_DEFINITION
   )
 
-  @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String = CsvConnector.INPUT_FOLDER_KEY
-  @VisibleForTesting private[connector] val COMPLETED_FOLDER_KEY: String = CsvConnector.COMPLETED_FOLDER_KEY
-  @VisibleForTesting private[connector] val ERROR_FOLDER_KEY: String = CsvConnector.ERROR_FOLDER_KEY
-  @VisibleForTesting private[connector] val TOPICS_DIR_KEY: String = CsvConnector.TOPICS_DIR_KEY
-  @VisibleForTesting private[connector] val FLUSH_SIZE_KEY: String = CsvConnector.FLUSH_SIZE_KEY
-  @VisibleForTesting private[connector] val FLUSH_SIZE_DEFAULT: Int = CsvConnector.FLUSH_SIZE_DEFAULT
-  @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_KEY: String = CsvConnector.ROTATE_INTERVAL_MS_KEY
-  @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_DEFAULT: Long = CsvConnector.ROTATE_INTERVAL_MS_DEFAULT
-  @VisibleForTesting private[connector] val FILE_NEED_HEADER_KEY: String = CsvConnector.FILE_NEED_HEADER_KEY
-  @VisibleForTesting private[connector] val FILE_NEED_HEADER_DEFAULT: Boolean = CsvConnector.FILE_NEED_HEADER_DEFAULT
-  @VisibleForTesting private[connector] val FILE_ENCODE_KEY: String = CsvConnector.FILE_ENCODE_KEY
-  @VisibleForTesting private[connector] val FILE_ENCODE_DEFAULT: String = CsvConnector.FILE_ENCODE_DEFAULT
+  @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String = CsvConnectorDefinitions.INPUT_FOLDER_KEY
+  @VisibleForTesting private[connector] val COMPLETED_FOLDER_KEY: String = CsvConnectorDefinitions.COMPLETED_FOLDER_KEY
+  @VisibleForTesting private[connector] val ERROR_FOLDER_KEY: String = CsvConnectorDefinitions.ERROR_FOLDER_KEY
+  @VisibleForTesting private[connector] val TOPICS_DIR_KEY: String = CsvConnectorDefinitions.TOPICS_DIR_KEY
+  @VisibleForTesting private[connector] val FLUSH_SIZE_KEY: String = CsvConnectorDefinitions.FLUSH_SIZE_KEY
+  @VisibleForTesting private[connector] val FLUSH_SIZE_DEFAULT: Int = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
+  @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_KEY: String =
+    CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY
+  @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_DEFAULT: Long =
+    CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFAULT
+  @VisibleForTesting private[connector] val FILE_NEED_HEADER_KEY: String = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
+  @VisibleForTesting private[connector] val FILE_NEED_HEADER_DEFAULT: Boolean =
+    CsvConnectorDefinitions.FILE_NEED_HEADER_DEFAULT
+  @VisibleForTesting private[connector] val FILE_ENCODE_KEY: String = CsvConnectorDefinitions.FILE_ENCODE_KEY
+  @VisibleForTesting private[connector] val FILE_ENCODE_DEFAULT: String = CsvConnectorDefinitions.FILE_ENCODE_DEFAULT
 }

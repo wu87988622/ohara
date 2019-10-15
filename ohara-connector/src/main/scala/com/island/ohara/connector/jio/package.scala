@@ -16,9 +16,17 @@
 
 package com.island.ohara.connector
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.island.ohara.common.setting.SettingDef
+
 import scala.concurrent.duration._
 package object jio {
+
+  /**
+    * used to set the order of definitions.
+    */
+  private[this] val COUNTER = new AtomicInteger(0)
 
   val DATA_BUFFER_SIZE_KEY: String = "jio.data.buffer.size"
   val DATA_BUFFER_SIZE_DEFAULT: Int = 100
@@ -28,6 +36,7 @@ package object jio {
     .documentation("the maximum number of buffer data")
     .valueType(SettingDef.Type.INT)
     .optional(DATA_BUFFER_SIZE_DEFAULT)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
   val CLOSE_TIMEOUT_KEY: String = "jio.close.timeout"
   val CLOSE_TIMEOUT_DEFAULT: FiniteDuration = 30 seconds
@@ -37,6 +46,7 @@ package object jio {
     .documentation("the time to wait server to close all inner objects")
     .valueType(SettingDef.Type.DURATION)
     .optional(java.time.Duration.ofMillis(CLOSE_TIMEOUT_DEFAULT.toMillis))
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
   val BINDING_TIMEOUT_KEY: String = "jio.binding.timeout"
   val BINDING_TIMEOUT_DEFAULT: FiniteDuration = 30 seconds
@@ -46,6 +56,7 @@ package object jio {
     .documentation("the time to wait server to bind on specific port")
     .valueType(SettingDef.Type.DURATION)
     .optional(java.time.Duration.ofMillis(BINDING_TIMEOUT_DEFAULT.toMillis))
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
   val BINDING_PORT_KEY: String = "jio.binding.port"
   val BINDING_PORT_DEFINITION: SettingDef = SettingDef
@@ -53,6 +64,7 @@ package object jio {
     .key(BINDING_PORT_KEY)
     .documentation("the port used to set up the restful server")
     .valueType(SettingDef.Type.BINDING_PORT)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
   val BINDING_PATH_KEY: String = "jio.binding.path"
   val BINDING_PATH_DEFAULT: String = "data"
@@ -63,6 +75,7 @@ package object jio {
       "the path to url resource. For example, if you define the path=abc and port=11111, the url bound by JI connector is host:11111/abc")
     .valueType(SettingDef.Type.STRING)
     .optional(BINDING_PATH_DEFAULT)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   /**

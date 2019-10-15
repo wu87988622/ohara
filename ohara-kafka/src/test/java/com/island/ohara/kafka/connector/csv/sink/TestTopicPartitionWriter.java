@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector.csv.sink;
 
 import com.island.ohara.common.util.StreamUtils;
 import com.island.ohara.kafka.connector.RowSinkRecord;
-import com.island.ohara.kafka.connector.csv.CsvConnector;
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions;
 import com.island.ohara.kafka.connector.csv.WithMockStorage;
 import java.io.File;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvConnector.TOPICS_DIR_KEY, topicsDir.getPath());
+    props.put(CsvConnectorDefinitions.TOPICS_DIR_KEY, topicsDir.getPath());
     props.putAll(localProps);
     return props;
   }
@@ -52,7 +52,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testWrite() {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "10");
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "10");
     setUp();
 
     List<RowSinkRecord> records = createRecords(7);
@@ -72,7 +72,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testWriteOnSizeRotate() {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "3");
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "3");
 
     setUp();
 
@@ -89,8 +89,8 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testWriteOnTimeRotate() throws Exception {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "99999");
-    localProps.put(CsvConnector.ROTATE_INTERVAL_MS_KEY, "3000"); // 3 seconds
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "99999");
+    localProps.put(CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY, "3000"); // 3 seconds
 
     setUp();
 
@@ -119,7 +119,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testCommitFilename() {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "3");
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "3");
 
     setUp();
 

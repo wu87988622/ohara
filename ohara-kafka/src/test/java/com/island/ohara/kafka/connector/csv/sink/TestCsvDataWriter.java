@@ -19,7 +19,7 @@ package com.island.ohara.kafka.connector.csv.sink;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.TopicPartition;
-import com.island.ohara.kafka.connector.csv.CsvConnector;
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions;
 import com.island.ohara.kafka.connector.csv.WithMockStorage;
 import java.io.File;
 import java.util.*;
@@ -36,8 +36,8 @@ public class TestCsvDataWriter extends WithMockStorage {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvConnector.TOPICS_DIR_KEY, topicsDir.getPath());
-    props.put(CsvConnector.FILE_NEED_HEADER_KEY, "false");
+    props.put(CsvConnectorDefinitions.TOPICS_DIR_KEY, topicsDir.getPath());
+    props.put(CsvConnectorDefinitions.FILE_NEED_HEADER_KEY, "false");
     props.putAll(localProps);
     return props;
   }
@@ -50,7 +50,7 @@ public class TestCsvDataWriter extends WithMockStorage {
 
   @Test
   public void testWriteRecord() {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "3");
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "3");
 
     setUp();
     List<RowSinkRecord> sinkRecords = createRecords(7);
@@ -67,7 +67,7 @@ public class TestCsvDataWriter extends WithMockStorage {
 
   @Test
   public void testWriteRecordsSpanningMultipleParts() {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "10000");
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "10000");
     setUp();
     List<RowSinkRecord> sinkRecords = createRecords(11000);
 
@@ -81,7 +81,7 @@ public class TestCsvDataWriter extends WithMockStorage {
 
   @Test
   public void testCommitOnSizeRotation() {
-    localProps.put(CsvConnector.FLUSH_SIZE_KEY, "3");
+    localProps.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "3");
     setUp();
 
     List<RowSinkRecord> sinkRecords;

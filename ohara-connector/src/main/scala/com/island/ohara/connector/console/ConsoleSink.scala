@@ -38,19 +38,7 @@ class ConsoleSink extends RowSinkConnector {
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
   override protected def _definitions(): util.List[SettingDef] = Seq(
-    SettingDef
-      .builder()
-      .displayName("the frequence of printing data")
-      .key(CONSOLE_FREQUENCE)
-      .documentation(CONSOLE_FREQUENCE_DOC)
-      .optional(CONSOLE_FREQUENCE_DEFAULT.toString)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("the divider charset to distinguish each row")
-      .key(CONSOLE_ROW_DIVIDER)
-      .documentation(CONSOLE_ROW_DIVIDER_DOC)
-      .optional(CONSOLE_ROW_DIVIDER_DEFAULT)
-      .build()
+    CONSOLE_FREQUENCE_DEFINITION,
+    CONSOLE_ROW_DIVIDER_DEFINITION
   ).asJava
 }

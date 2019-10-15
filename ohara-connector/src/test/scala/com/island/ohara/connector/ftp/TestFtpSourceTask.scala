@@ -23,7 +23,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.csv.CsvConnector
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import com.island.ohara.kafka.connector.csv.source.CsvDataReader
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.testing.service.FtpServer
@@ -48,8 +48,8 @@ class TestFtpSourceTask extends OharaTest with Matchers {
   )
 
   private[this] val settings = props.toMap ++ Map(
-    CsvConnector.TASK_TOTAL_KEY -> "1",
-    CsvConnector.TASK_HASH_KEY -> "0"
+    CsvConnectorDefinitions.TASK_TOTAL_KEY -> "1",
+    CsvConnectorDefinitions.TASK_HASH_KEY -> "0"
   )
 
   @Before

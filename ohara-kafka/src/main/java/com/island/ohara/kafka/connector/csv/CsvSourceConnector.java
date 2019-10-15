@@ -16,8 +16,14 @@
 
 package com.island.ohara.kafka.connector.csv;
 
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.COMPLETED_FOLDER_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERROR_FOLDER_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_DEFINITION;
+
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.kafka.connector.RowSourceConnector;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,8 +50,8 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
         .mapToObj(
             index -> {
               Map<String, String> taskConfig = new HashMap<>(taskConfigs.get(index));
-              taskConfig.put(CsvConnector.TASK_TOTAL_KEY, String.valueOf(maxTasks));
-              taskConfig.put(CsvConnector.TASK_HASH_KEY, String.valueOf(index));
+              taskConfig.put(CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(maxTasks));
+              taskConfig.put(CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(index));
               return taskConfig;
             })
         .collect(Collectors.toList());
@@ -53,7 +59,13 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
 
   @Override
   public List<SettingDef> definitions() {
-    return Stream.of(CsvConnector.CSV_SOURCE_DEFINITIONS, super.definitions())
+    return Stream.of(
+            Arrays.asList(
+                INPUT_FOLDER_DEFINITION,
+                COMPLETED_FOLDER_DEFINITION,
+                ERROR_FOLDER_DEFINITION,
+                FILE_ENCODE_DEFINITION),
+            super.definitions())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

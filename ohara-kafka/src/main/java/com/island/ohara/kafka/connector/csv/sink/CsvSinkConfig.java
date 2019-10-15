@@ -16,14 +16,27 @@
 
 package com.island.ohara.kafka.connector.csv.sink;
 
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFAULT;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_NEED_HEADER_DEFAULT;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_NEED_HEADER_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FLUSH_SIZE_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFAULT;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.TOPICS_DIR_KEY;
+
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.kafka.connector.TaskSetting;
-import com.island.ohara.kafka.connector.csv.CsvConnector;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /** This class is used to define the configuration of CsvSinkTask. */
-public class CsvSinkConfig implements CsvConnector {
+public class CsvSinkConfig {
   private final int flushSize;
   private final long rotateIntervalMs;
   private final String topicsDir;

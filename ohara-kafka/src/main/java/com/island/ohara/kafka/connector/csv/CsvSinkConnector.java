@@ -16,8 +16,15 @@
 
 package com.island.ohara.kafka.connector.csv;
 
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_NEED_HEADER_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FLUSH_SIZE_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFINITION;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.TOPICS_DIR_DEFINITION;
+
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.kafka.connector.RowSinkConnector;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,7 +44,14 @@ import java.util.stream.Stream;
 public abstract class CsvSinkConnector extends RowSinkConnector {
   @Override
   public List<SettingDef> definitions() {
-    return Stream.of(CsvConnector.CSV_SINK_DEFINITIONS, super.definitions())
+    return Stream.of(
+            Arrays.asList(
+                TOPICS_DIR_DEFINITION,
+                FLUSH_SIZE_DEFINITION,
+                ROTATE_INTERVAL_MS_DEFINITION,
+                FILE_NEED_HEADER_DEFINITION,
+                FILE_ENCODE_DEFINITION),
+            super.definitions())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

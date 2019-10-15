@@ -16,6 +16,10 @@
 
 package com.island.ohara.kafka.connector.csv.source;
 
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.COMPLETED_FOLDER_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERROR_FOLDER_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_KEY;
+
 import com.google.common.collect.Iterators;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.util.CommonUtils;
@@ -46,9 +50,9 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvSourceConfig.INPUT_FOLDER_KEY, INPUT_FOLDER.toString());
-    props.put(CsvSourceConfig.COMPLETED_FOLDER_KEY, COMPLETED_FOLDER.toString());
-    props.put(CsvSourceConfig.ERROR_FOLDER_KEY, ERROR_FOLDER.toString());
+    props.put(INPUT_FOLDER_KEY, INPUT_FOLDER.toString());
+    props.put(COMPLETED_FOLDER_KEY, COMPLETED_FOLDER.toString());
+    props.put(ERROR_FOLDER_KEY, ERROR_FOLDER.toString());
     return props;
   }
 

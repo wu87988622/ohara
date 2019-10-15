@@ -16,9 +16,16 @@
 
 package com.island.ohara.connector
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.island.ohara.common.setting.SettingDef
 
 package object smb {
+
+  /**
+    * used to set the order of definitions.
+    */
+  private[this] val COUNTER = new AtomicInteger(0)
   val SMB_HOSTNAME_KEY: String = "smb.hostname"
   val SMB_HOSTNAME_DEFINITION: SettingDef = SettingDef
     .builder()
@@ -26,6 +33,7 @@ package object smb {
     .displayName("Hostname")
     .documentation("the hostname of SMB server")
     .valueType(SettingDef.Type.STRING)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val SMB_PORT_KEY: String = "smb.port"
@@ -35,6 +43,7 @@ package object smb {
     .displayName("Port")
     .documentation("the port of SMB server")
     .valueType(SettingDef.Type.PORT)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val SMB_USER_KEY: String = "smb.user"
@@ -45,6 +54,7 @@ package object smb {
     .documentation(
       "the username of SMB server. This account must have read/delete permission of input folder and error folder")
     .valueType(SettingDef.Type.STRING)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val SMB_PASSWORD_KEY: String = "smb.password"
@@ -54,6 +64,7 @@ package object smb {
     .displayName("Password")
     .documentation("the password of SMB server")
     .valueType(SettingDef.Type.PASSWORD)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   val SMB_SHARE_NAME_KEY: String = "smb.shareName"
@@ -63,6 +74,7 @@ package object smb {
     .displayName("Share Name")
     .documentation("the share name of SMB server")
     .valueType(SettingDef.Type.STRING)
+    .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
   /**

@@ -41,7 +41,7 @@ public abstract class CsvSinkTestBase extends OharaTest {
 
   protected Map<String, String> createProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(CsvConnector.FLUSH_SIZE_KEY, "3");
+    props.put(CsvConnectorDefinitions.FLUSH_SIZE_KEY, "3");
     return props;
   }
 

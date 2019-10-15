@@ -22,7 +22,7 @@ import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceTask, TaskSetting}
-import com.island.ohara.kafka.connector.csv.CsvConnector._
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions._
 import com.island.ohara.kafka.connector.csv.CsvSourceConnector
 
 import scala.collection.JavaConverters._

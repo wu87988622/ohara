@@ -16,17 +16,24 @@
 
 package com.island.ohara.kafka.connector.csv.source;
 
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.COMPLETED_FOLDER_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERROR_FOLDER_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFAULT;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_HASH_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_TOTAL_KEY;
+
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.TaskSetting;
-import com.island.ohara.kafka.connector.csv.CsvConnector;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class CsvSourceConfig implements CsvConnector {
+public class CsvSourceConfig {
   private int total;
   private int hash;
   private String inputFolder;

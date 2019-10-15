@@ -19,7 +19,7 @@ package com.island.ohara.it.connector.smb
 import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.connector.CsvSinkTestBase
 import com.island.ohara.connector.smb._
-import com.island.ohara.kafka.connector.csv.CsvConnector._
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions._
 import com.island.ohara.kafka.connector.csv.CsvSinkConnector
 import org.junit.AssumptionViolatedException
 

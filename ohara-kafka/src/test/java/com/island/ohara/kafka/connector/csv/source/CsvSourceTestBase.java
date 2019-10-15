@@ -24,7 +24,7 @@ import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.RowSourceRecord;
-import com.island.ohara.kafka.connector.csv.CsvConnector;
+import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -49,8 +49,8 @@ public abstract class CsvSourceTestBase extends OharaTest {
 
   protected Map<String, String> createProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(CsvConnector.TASK_TOTAL_KEY, String.valueOf(TASK_TOTAL));
-    props.put(CsvConnector.TASK_HASH_KEY, String.valueOf(TASK_HASH));
+    props.put(CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(TASK_TOTAL));
+    props.put(CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(TASK_HASH));
     props.put("topics", TOPIC);
     return props;
   }
