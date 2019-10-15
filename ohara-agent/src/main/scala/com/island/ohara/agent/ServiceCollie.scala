@@ -138,6 +138,7 @@ trait ServiceCollie extends Releasable {
                     .map(_.key)
                 )
               ) ++ configuratorContainerOption
+                .filter(_.nodeName == node.hostname)
                 .map(
                   container =>
                     Seq(
