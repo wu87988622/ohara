@@ -336,7 +336,15 @@ object Configurator {
         case Array(HOSTNAME_KEY, value) => configuratorBuilder.hostname(value)
         case Array(PORT_KEY, value)     => configuratorBuilder.port(value.toInt)
         case Array(K8S_KEY, value) =>
-          configuratorBuilder.k8sClient(K8SClient(value))
+          import scala.concurrent.ExecutionContext.Implicits.global
+          val client = K8SClient(value)
+          try if (Await.result(client.nodeNameIPInfo(), 30 seconds).isEmpty)
+            throw new IllegalArgumentException("your k8s clusters is empty!!!")
+          catch {
+            case e: Throwable =>
+              throw new IllegalArgumentException(s"unable to access k8s cluster:$value", e)
+          }
+          configuratorBuilder.k8sClient(client)
         case Array(FAKE_KEY, value) =>
           if (value.toBoolean) configuratorBuilder.fake()
         case _ =>
@@ -352,7 +360,7 @@ object Configurator {
     }
   }
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = try {
     if (args.length == 1 && args(0) == HELP_KEY) {
       println(USAGE)
       return
@@ -361,21 +369,21 @@ object Configurator {
 
     GLOBAL_CONFIGURATOR = configurator(args)
 
-    try {
-      LOG.info(
-        s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}")
-      LOG.info("enter ctrl+c to terminate the configurator")
-      while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
-        TimeUnit.SECONDS.sleep(2)
-        LOG.info(s"Current data size:${GLOBAL_CONFIGURATOR.size}")
-      }
-    } catch {
-      case _: InterruptedException => LOG.info("prepare to die")
-    } finally {
-      Releasable.close(GLOBAL_CONFIGURATOR)
-      GLOBAL_CONFIGURATOR = null
-      HttpExecutor.close()
+    LOG.info(
+      s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}")
+    LOG.info("enter ctrl+c to terminate the configurator")
+    while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
+      TimeUnit.SECONDS.sleep(2)
+      LOG.info(s"Current data size:${GLOBAL_CONFIGURATOR.size}")
     }
+  } finally {
+    Releasable.close(GLOBAL_CONFIGURATOR)
+    GLOBAL_CONFIGURATOR = null
+
+    /**
+      * the akka http executor is shared globally so we have to close it in this final block
+      */
+    HttpExecutor.close()
   }
 
   /**
