@@ -25,8 +25,11 @@ describe('getCurrTopicId()', () => {
     // set the target to the randomly generated topics
     const target = originals[2];
 
-    const topic = utils.getCurrTopicId({ originals, target: target.name });
-    expect(topic).toBe(target.name);
+    const topic = utils.getCurrTopicId({
+      originals,
+      target: target.settings,
+    });
+    expect(topic).toBe(target.settings.name);
   });
 
   it('returns an empty array if param originals is empty', () => {

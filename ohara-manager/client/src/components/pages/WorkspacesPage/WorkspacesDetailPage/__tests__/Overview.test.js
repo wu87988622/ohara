@@ -197,11 +197,10 @@ describe('<Overview />', () => {
 
   it('renders the correct topics content', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
-
-    getByText(topics[0].name);
-    const partitionValue = topics[0].numberOfPartitions;
+    getByText(topics[0].settings.name);
+    const partitionValue = topics[0].settings.numberOfPartitions;
     getByText(partitionValue.toString());
-    const replicaValue = topics[0].numberOfReplications;
+    const replicaValue = topics[0].settings.numberOfReplications;
     getByText(replicaValue.toString());
   });
 

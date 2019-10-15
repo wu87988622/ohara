@@ -35,9 +35,8 @@ const OverviewTopics = props => {
   const { data: topicsRes, isLoading: fetchingTopics } = useApi.useFetchApi(
     `${URL.TOPIC_URL}`,
   );
-
   const topics = get(topicsRes, 'data.result', []).filter(
-    topic => topic.group === `${workerName}`,
+    topic => topic.settings.group === `${workerName}`,
   );
 
   return (
@@ -60,21 +59,21 @@ const OverviewTopics = props => {
       >
         {topics.map(topic => {
           return (
-            <TableRow key={topic.name}>
+            <TableRow key={topic.settings.name}>
               <StyledTableCell component="th" scope="row">
-                {topic.name}
+                {topic.settings.name}
               </StyledTableCell>
               <StyledTableCell
                 align="left"
-                data-testid={`${topic.name}-nop-${topic.numberOfPartitions}`}
+                data-testid={`${topic.settings.name}-nop-${topic.settings.numberOfPartitions}`}
               >
-                {topic.numberOfPartitions}
+                {topic.settings.numberOfPartitions}
               </StyledTableCell>
               <StyledTableCell
                 align="right"
-                data-testid={`${topic.name}-nor-${topic.numberOfReplications}`}
+                data-testid={`${topic.settings.name}-nor-${topic.settings.numberOfReplications}`}
               >
-                {topic.numberOfReplications}
+                {topic.settings.numberOfReplications}
               </StyledTableCell>
             </TableRow>
           );

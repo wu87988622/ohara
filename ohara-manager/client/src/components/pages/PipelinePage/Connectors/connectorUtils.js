@@ -34,10 +34,10 @@ export const getCurrTopicId = ({ originals, target = '' }) => {
   if (isEmpty(originals) || isNull(target) || target === 'Please select...')
     return [];
 
-  const findByTopicName = ({ name }) => name === target;
-  const { name } = originals.find(findByTopicName);
+  const findByTopicName = ({ settings }) => settings === target;
+  const { settings } = originals.find(findByTopicName);
 
-  return name;
+  return settings.name;
 };
 
 export const getUpdatedTopic = ({

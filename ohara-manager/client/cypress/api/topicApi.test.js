@@ -92,10 +92,10 @@ describe('Topic API', () => {
         name,
         numberOfPartitions,
         numberOfReplications,
-        metrics,
         tags,
         group,
-      } = result;
+      } = result.settings;
+      const { metrics } = result;
 
       expect(isSuccess).to.eq(true);
 
@@ -121,10 +121,10 @@ describe('Topic API', () => {
         name,
         numberOfPartitions,
         numberOfReplications,
-        metrics,
         tags,
         group,
-      } = result;
+      } = result.settings;
+      const { metrics } = result;
 
       expect(isSuccess).to.eq(true);
 
@@ -173,7 +173,9 @@ describe('Topic API', () => {
       expect(isSuccess).to.eq(true);
 
       const topics = result.filter(
-        topic => topic.name === paramsOne.name || topic.name === paramsTwo.name,
+        topic =>
+          topic.settings.name === paramsOne.name ||
+          topic.settings.name === paramsTwo.name,
       );
 
       expect(topics.length).to.eq(2);

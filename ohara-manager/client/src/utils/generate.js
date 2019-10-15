@@ -63,16 +63,18 @@ export const topics = ({
     count--;
 
     const topic = {
-      name: serviceName(),
       lastModified: date.past(),
       metrics: {},
-      numberOfPartitions: number(),
-      numberOfReplications: number(),
-      brokerClusterKey: {
-        group: 'default',
-        name: brokerClusterName,
+      settings: {
+        name: serviceName(),
+        numberOfPartitions: number(),
+        numberOfReplications: number(),
+        brokerClusterKey: {
+          group: 'default',
+          name: brokerClusterName,
+        },
+        group: workspaceName,
       },
-      group: workspaceName,
     };
 
     topics.push(topic);

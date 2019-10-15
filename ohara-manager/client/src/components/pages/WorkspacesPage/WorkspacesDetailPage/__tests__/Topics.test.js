@@ -61,7 +61,7 @@ describe('<Topics />', () => {
         name: generate.name(),
         status: 'Stopped',
         objects: [
-          { kind: 'topic', name: topics[0].name },
+          { kind: 'topic', name: topics[0].settings.name },
           { kind: 'source', name: 'abc' },
         ],
         tags: { workerClusterName: props.worker.settings.name },
@@ -134,9 +134,9 @@ describe('<Topics />', () => {
     const usedByPipeline = getByTestId('topic-usedby').textContent;
     const lastModified = getByTestId('topic-lastModified').textContent;
 
-    expect(topicName).toBe(topics[0].name);
-    expect(partitions).toBe(topics[0].numberOfPartitions);
-    expect(replications).toBe(topics[0].numberOfReplications);
+    expect(topicName).toBe(topics[0].settings.name);
+    expect(partitions).toBe(topics[0].settings.numberOfPartitions);
+    expect(replications).toBe(topics[0].settings.numberOfReplications);
     expect(usedByPipeline).toBe(pipelines[0].name);
 
     // It's hard to assert the output date format since the topic last modified
@@ -255,7 +255,7 @@ describe('<Topics />', () => {
       <Topics {...props} />,
     );
 
-    const topic = getByTestId(topics[0].name);
+    const topic = getByTestId(topics[0].settings.name);
 
     fireEvent.click(topic);
     expect(getByText('Delete topic?')).toBeVisible(); // Ensure the modal is opened by getting it's title

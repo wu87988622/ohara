@@ -54,7 +54,7 @@ const Topics = props => {
   const { waitApi } = useApi.useWaitApi();
 
   const topics = get(topicsRes, 'data.result', []).filter(
-    topic => topic.group === `${worker.settings.name}`,
+    topic => topic.settings.group === `${worker.settings.name}`,
   );
 
   const headRows = [
@@ -124,17 +124,12 @@ const Topics = props => {
     const pipelines = get(pipelinesResponse, 'data.result', []);
     const usedByWhichPipeline = getUsedByPipeline(
       pipelines,
-      topic.name,
+      topic.settings.name,
       worker.settings.name,
     );
 
-    const {
-      name,
-      numberOfPartitions,
-      numberOfReplications,
-      metrics,
-      lastModified,
-    } = topic;
+    const { name, numberOfPartitions, numberOfReplications } = topic.settings;
+    const { metrics, lastModified } = topic;
     return {
       name,
       partitions: numberOfPartitions,

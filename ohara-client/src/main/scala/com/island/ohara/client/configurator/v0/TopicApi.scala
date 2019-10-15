@@ -373,24 +373,9 @@ object TopicApi {
       .map {
         case (key, value) => key -> value.convertTo[String]
       }
-
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
-    private[this] val format = jsonFormat5(TopicInfo)
-    override def read(json: JsValue): TopicInfo = format.read(json)
-
-    override def write(obj: TopicInfo): JsValue = JsObject(
-      format.write(obj).asJsObject.fields ++
-        // TODO: remove this stale fields ... by chia
-        Map(
-          GROUP_KEY -> JsString(obj.group),
-          NAME_KEY -> JsString(obj.name),
-          NUMBER_OF_PARTITIONS_KEY -> JsNumber(obj.numberOfPartitions),
-          NUMBER_OF_REPLICATIONS_KEY -> JsNumber(obj.numberOfReplications),
-          TAGS_KEY -> JsObject(obj.tags)
-        ))
-  }
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat5(TopicInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.
