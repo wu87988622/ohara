@@ -57,8 +57,6 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
             new StreamClusterStatus(
               group = creation.group,
               name = creation.name,
-              // convert to list in order to be serializable
-              definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ServiceState.RUNNING.name),
@@ -93,14 +91,12 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
     * @param executionContext thread pool
     * @return stream definition
     */
-  override def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Option[Definition]] =
-    super
-      .loadDefinition(jarUrl)
-      .recover {
-        case _: Throwable =>
-          Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)) // a serializable collection
-      }
-      .map(_.orElse(Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)))) // a serializable collection
+  override def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Definition] =
+    super.loadDefinition(jarUrl).recover {
+      case _: Throwable =>
+        Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)
+      // a serializable collection
+    }
 
   override protected def brokerContainers(clusterKey: ObjectKey)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =

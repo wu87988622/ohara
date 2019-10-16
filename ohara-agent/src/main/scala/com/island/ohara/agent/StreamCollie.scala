@@ -24,13 +24,12 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo, StreamClusterStatus}
-import com.island.ohara.client.configurator.v0.{Definition, FileInfoApi, StreamApi}
+import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.config.StreamDefUtils
-import com.typesafe.scalalogging.Logger
 import spray.json._
 
 import scala.collection.JavaConverters._
@@ -41,8 +40,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait StreamCollie extends Collie[StreamClusterStatus] {
-  private[this] val LOG = Logger(classOf[StreamCollie])
-
   override def creator: StreamCollie.ClusterCreator =
     (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
@@ -124,31 +121,19 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                       }
                   })
                   .map(_.flatten.toSeq)
-                  .flatMap(
-                    cs =>
-                      loadDefinition(
-                        creation.jarInfo
-                          .getOrElse(
-                            throw new RuntimeException("jarInfo should be defined")
-                          )
-                          .url
-                      ).map(definition => cs -> definition)
-                  )
-                  .map {
-                    case (successfulContainers, definition) =>
-                      val state = toClusterState(successfulContainers).map(_.name)
-                      postCreate(
-                        new StreamClusterStatus(
-                          group = creation.group,
-                          name = creation.name,
-                          definition = definition,
-                          // no state means cluster is NOT running so we cleanup the dead nodes
-                          aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
-                          state = state,
-                          error = None
-                        ),
-                        successfulContainers
-                      )
+                  .map { successfulContainers =>
+                    val state = toClusterState(successfulContainers).map(_.name)
+                    postCreate(
+                      new StreamClusterStatus(
+                        group = creation.group,
+                        name = creation.name,
+                        // no state means cluster is NOT running so we cleanup the dead nodes
+                        aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
+                        state = state,
+                        error = None
+                      ),
+                      successfulContainers
+                    )
                   }
             }
         }
@@ -176,7 +161,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
     * @return stream definition
     */
   //TODO : this workaround should be removed and use a new API instead in #2191...by Sam
-  def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Option[Definition]] =
+  def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Definition] =
     Future {
       import sys.process._
       val classpath = System.getProperty("java.class.path")
@@ -185,33 +170,27 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
           .key()}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)
-      Some(Definition(className, StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala))
+      Definition(className, StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala)
     }.recover {
-      case e: RuntimeException =>
+      case e: Throwable =>
         // We cannot parse the provided jar, return nothing and log it
-        LOG.warn(s"the provided jar url: [$jarUrl] could not be parsed, return default settings only.", e)
-        None
+        throw new IllegalArgumentException(
+          s"the provided jar url: [$jarUrl] could not be parsed, return default settings only.",
+          e)
     }
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[StreamClusterStatus] = {
-    // TODO: remove this hard-code if we are in dynamical world ... by chia
-    val fileInfo = FileInfoApi.FILE_INFO_JSON_FORMAT.read(
-      CommonUtils.fromEnvString(containers.head.environments(StreamDefUtils.JAR_INFO_DEFINITION.key())).parseJson)
-    loadDefinition(fileInfo.url).map { definition =>
+    implicit executionContext: ExecutionContext): Future[StreamClusterStatus] =
+    Future.successful(
       new StreamClusterStatus(
         group = key.group(),
         name = key.name(),
-        // we don't care the runtime definitions; it's saved to store already
-        definition = definition,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         state = toClusterState(containers).map(_.name),
         error = None
-      )
-    }
-  }
+      ))
 
   /**
     * Define nodeCollie by different environment

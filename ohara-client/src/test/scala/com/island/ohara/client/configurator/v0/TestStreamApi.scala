@@ -52,7 +52,7 @@ class TestStreamApi extends OharaTest with Matchers {
     val nodeNames = Set(CommonUtils.randomString())
     val streamClusterInfo = StreamClusterInfo(
       settings = StreamApi.access.request.jarKey(fakeJar).nodeNames(Set(CommonUtils.randomString())).creation.settings,
-      definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -86,7 +86,7 @@ class TestStreamApi extends OharaTest with Matchers {
         .tags(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
         .creation
         .settings,
-      definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -103,7 +103,7 @@ class TestStreamApi extends OharaTest with Matchers {
     info.jarKey shouldBe fakeJar
     info.fromTopicKeys shouldBe Set(fromTopicKey)
     info.toTopicKeys shouldBe Set(toTopicKey)
-    info.definition.isDefined && info.definition.get.definitions.size == 1 shouldBe true
+    info.definition.definitions.size == 1 shouldBe true
     info.tags.keys.size shouldBe 2
     // we initial exactlyOnce to be false
     info.exactlyOnce shouldBe false
@@ -589,7 +589,7 @@ class TestStreamApi extends OharaTest with Matchers {
     val res = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(
       StreamClusterInfo(
         settings = StreamApi.access.request.jarKey(fakeJar).name(name).creation.settings,
-        definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+        definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -641,7 +641,7 @@ class TestStreamApi extends OharaTest with Matchers {
   def testDeadNodes(): Unit = {
     val cluster = StreamClusterInfo(
       settings = StreamApi.access.request.jarKey(fakeJar).nodeNames(Set("n0", "n1")).creation.settings,
-      definition = None,
+      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,

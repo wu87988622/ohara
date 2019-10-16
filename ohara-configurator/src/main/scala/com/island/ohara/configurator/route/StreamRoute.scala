@@ -150,28 +150,24 @@ private[configurator] object StreamRoute {
           nodes =>
             fileStore
               .fileInfo(creation.jarKey)
-              .flatMap(info => streamCollie.loadDefinition(info.url).map((_, Option.empty[String])))
-              .recover {
-                case e: Throwable => (None, Some(e.getMessage))
-              }
-              .map {
-                case (definition, error) =>
-                  StreamClusterInfo(
-                    settings = {
-                      // In creation, we have to re-define the following value since they may changed:
-                      // 1) broker cluster name
-                      // 2) node name (This should be removed after #2288
-                      val req = access.request.settings(creation.settings).brokerClusterKey(bkKey)
-                      if (nodes.isDefined) req.nodeNames(nodes.get)
-                      req.creation.settings
-                    },
-                    definition = definition,
-                    aliveNodes = Set.empty,
-                    state = None,
-                    metrics = Metrics(Seq.empty),
-                    error = error,
-                    lastModified = CommonUtils.current()
-                  )
+              .flatMap(info => streamCollie.loadDefinition(info.url))
+              .map { definition =>
+                StreamClusterInfo(
+                  settings = {
+                    // In creation, we have to re-define the following value since they may changed:
+                    // 1) broker cluster name
+                    // 2) node name (This should be removed after #2288
+                    val req = access.request.settings(creation.settings).brokerClusterKey(bkKey)
+                    if (nodes.isDefined) req.nodeNames(nodes.get)
+                    req.creation.settings
+                  },
+                  definition = definition,
+                  aliveNodes = Set.empty,
+                  state = None,
+                  metrics = Metrics(Seq.empty),
+                  error = None,
+                  lastModified = CommonUtils.current()
+                )
               }
               .map(assertParameters))
     }
@@ -180,6 +176,7 @@ private[configurator] object StreamRoute {
     implicit nodeCollie: NodeCollie,
     brokerCollie: BrokerCollie,
     streamCollie: StreamCollie,
+    fileStore: FileStore,
     executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, StreamClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[StreamClusterInfo]) =>
       streamCollie.clusters
@@ -200,27 +197,34 @@ private[configurator] object StreamRoute {
             }
           )
         }
-        .map { update =>
-          StreamClusterInfo(
-            // 1) fill the previous settings (if exists)
-            // 2) overwrite previous settings by updated settings
-            // 3) fill the ignored settings by creation
-            settings = access.request
-              .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-              .settings(update.settings)
-              // the key is not in update's settings so we have to add it to settings
-              .name(key.name)
-              .group(key.group)
-              .creation
-              .settings,
-            definition = previousOption.flatMap(_.definition),
-            // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
-            aliveNodes = Set.empty,
-            state = None,
-            metrics = Metrics.EMPTY,
-            error = None,
-            lastModified = CommonUtils.current()
-          )
+        .flatMap { update =>
+          // 1) fill the previous settings (if exists)
+          // 2) overwrite previous settings by updated settings
+          // 3) fill the ignored settings by creation
+          val newCreation = access.request
+            .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+            .settings(update.settings)
+            // the key is not in update's settings so we have to add it to settings
+            .name(key.name)
+            .group(key.group)
+            .creation
+          // re-load the definitions since the jar key may be updated
+          fileStore.fileInfo(newCreation.jarKey).flatMap { fileInfo =>
+            streamCollie.loadDefinition(fileInfo.url).map(newCreation -> _)
+          }
+        }
+        .map {
+          case (creation, definitions) =>
+            StreamClusterInfo(
+              settings = creation.settings,
+              definition = definitions,
+              // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
+              aliveNodes = Set.empty,
+              state = None,
+              metrics = Metrics.EMPTY,
+              error = None,
+              lastModified = CommonUtils.current()
+            )
         }
         .map(assertParameters)
 
@@ -237,31 +241,29 @@ private[configurator] object StreamRoute {
         .map { info =>
           // check the values by definition
           //TODO move this to RouteUtils in #2191
-          info.definition.fold(throw new IllegalArgumentException("definition could not be empty")) { definition =>
-            var copy = info.settings
-            definition.definitions.foreach(
-              settingDef =>
-                // add the (key, defaultValue) to settings if absent
-                if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
-                  copy += settingDef.key() -> JsString(settingDef.defaultValue()))
-            info.settings
-              .map {
-                case (k, v) =>
-                  k -> (v match {
-                    case JsString(s) => s
-                    case _           => v.toString
-                  })
-              }
-              .foreach {
-                case (k, v) =>
-                  definition.definitions
-                    .find(_.key() == k)
-                    .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
-                      settingDef.checker().accept(v)
-                    }
-              }
-            info.copy(settings = copy)
-          }
+          var copy = info.settings
+          info.definition.definitions.foreach(
+            settingDef =>
+              // add the (key, defaultValue) to settings if absent
+              if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
+                copy += settingDef.key() -> JsString(settingDef.defaultValue()))
+          info.settings
+            .map {
+              case (k, v) =>
+                k -> (v match {
+                  case JsString(s) => s
+                  case _           => v.toString
+                })
+            }
+            .foreach {
+              case (k, v) =>
+                info.definition.definitions
+                  .find(_.key() == k)
+                  .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
+                    settingDef.checker().accept(v)
+                  }
+            }
+          info.copy(settings = copy)
         }
         .flatMap { streamClusterInfo =>
           CollieUtils

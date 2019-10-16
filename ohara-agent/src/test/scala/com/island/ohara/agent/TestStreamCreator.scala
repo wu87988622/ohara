@@ -44,7 +44,7 @@ class TestStreamCreator extends OharaTest with Matchers {
     Future.successful {
       StreamClusterInfo(
         settings = creation.settings,
-        definition = None,
+        definition = Definition("fake", Seq.empty),
         aliveNodes = Set.empty,
         metrics = Metrics.EMPTY,
         state = None,
@@ -176,7 +176,7 @@ class TestStreamCreator extends OharaTest with Matchers {
         .toTopicKey(topicKey())
         .creation
         .settings,
-      definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
       error = None,

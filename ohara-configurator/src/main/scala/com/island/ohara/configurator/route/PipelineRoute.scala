@@ -107,7 +107,7 @@ private[configurator] object PipelineRoute {
         group = data.group,
         name = data.name,
         kind = data.kind,
-        className = data.definition.map(_.className),
+        className = Some(data.definition.className),
         state = clusterInfo.state,
         error = None,
         metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
@@ -123,7 +123,7 @@ private[configurator] object PipelineRoute {
       // Just cast the input data to get the correct className
       className = data match {
         case description: ConnectorInfo     => Some(description.className)
-        case description: StreamClusterInfo => description.definition.map(_.className)
+        case description: StreamClusterInfo => Some(description.definition.className)
         case _                              => None
       },
       state = None,

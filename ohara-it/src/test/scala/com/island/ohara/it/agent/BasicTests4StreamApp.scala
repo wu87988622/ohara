@@ -229,8 +229,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // jar should be parse-able
     log.info(s"[testRunSimpleStreamApp] get definition from $jar")
     val definition = result(configurator.serviceCollie.streamCollie.loadDefinition(jar.toURI.toURL))
-    definition.isDefined shouldBe true
-    definition.get.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
+    definition.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
     log.info(s"[testRunSimpleStreamApp] get definition from $jar...done")
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()), () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))), bkKey)

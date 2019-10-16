@@ -43,7 +43,6 @@ class TestStreamRoute extends OharaTest with Matchers {
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
-  private[this] final val fakeKey: ObjectKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of(GROUP_DEFAULT, name)
 
@@ -57,6 +56,15 @@ class TestStreamRoute extends OharaTest with Matchers {
     nodeNames = result(configurator.nodeCollie.nodes()).map(_.name).toSet
 
     file.deleteOnExit()
+  }
+
+  @Test
+  def testUpdateJarKey(): Unit = {
+    val file = CommonUtils.createTempJar("empty_")
+    val fileInfo2 = result(fileApi.request.file(file).upload())
+    val streamApp = result(streamApi.request.jarKey(fileInfo.key).create())
+    streamApp.jarKey shouldBe fileInfo.key
+    result(streamApi.request.key(streamApp.key).jarKey(fileInfo2.key).update()).jarKey shouldBe fileInfo2.key
   }
 
   @Test
@@ -396,13 +404,13 @@ class TestStreamRoute extends OharaTest with Matchers {
   @Test
   def testMixNodeNameAndInstancesInCreation(): Unit = {
     an[IllegalArgumentException] should be thrownBy
-      result(streamApi.request.jarKey(fakeKey).nodeNames(nodeNames).instances(1).create())
+      result(streamApi.request.jarKey(fileInfo.key).nodeNames(nodeNames).instances(1).create())
 
     // pass
-    result(streamApi.request.jarKey(fakeKey).instances(1).create())
+    result(streamApi.request.jarKey(fileInfo.key).instances(1).create())
 
     // pass too
-    result(streamApi.request.jarKey(fakeKey).nodeNames(nodeNames).create())
+    result(streamApi.request.jarKey(fileInfo.key).nodeNames(nodeNames).create())
   }
 
   // TODO remove this test after #2288
@@ -490,7 +498,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(streamApi.request.name(info.name).group(info.group).nodeNames(nodeNames).update()).nodeNames shouldBe nodeNames
 
     // use different group will cause a create request
-    result(streamApi.request.name(info.name).group(CommonUtils.randomString(10)).jarKey(fakeKey).update()).jmxPort should not be info.jmxPort
+    result(streamApi.request.name(info.name).group(CommonUtils.randomString(10)).jarKey(fileInfo.key).update()).jmxPort should not be info.jmxPort
   }
 
   @Test

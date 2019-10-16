@@ -191,7 +191,6 @@ object StreamApi {
 
   class StreamClusterStatus(val group: String,
                             val name: String,
-                            val definition: Option[Definition],
                             val aliveNodes: Set[String],
                             val state: Option[String],
                             val error: Option[String])
@@ -209,7 +208,7 @@ object StreamApi {
     * @param lastModified this data change time
     */
   final case class StreamClusterInfo(settings: Map[String, JsValue],
-                                     definition: Option[Definition],
+                                     definition: Definition,
                                      aliveNodes: Set[String],
                                      state: Option[String],
                                      error: Option[String],
@@ -223,7 +222,6 @@ object StreamApi {
       * @return a updated cluster info
       */
     def update(status: StreamClusterStatus): StreamClusterInfo = copy(
-      definition = status.definition,
       aliveNodes = status.aliveNodes,
       state = status.state,
       error = status.error,
