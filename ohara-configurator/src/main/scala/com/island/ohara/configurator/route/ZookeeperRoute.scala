@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ServiceCollie, NodeCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceCollie, DataCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -113,7 +113,7 @@ object ZookeeperRoute {
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            nodeCollie: NodeCollie,
+            dataCollie: DataCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[ZookeeperClusterInfo, ZookeeperClusterStatus, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,

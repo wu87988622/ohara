@@ -21,6 +21,7 @@ import java.util.Objects
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.kafka.TopicAdmin.KafkaTopicInfo
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
@@ -96,24 +97,24 @@ private[configurator] object StreamRoute {
     * 1) If both instances and nodeNames were not defined, return empty
     * 2) If instances was defined and nodeNames was not empty, throw exception
     * 3) If instances was not defined but nodeNames is defined
-    * 3.1) If some nodes were not defined in nodeCollie, throw exception
+    * 3.1) If some nodes were not defined in dataCollie, throw exception
     * 3.2) return nodeNames
-    * 4) If instances is bigger than nodeCollie size, throw exception
-    * 5) Random pick node name from nodeCollie of instances size
+    * 4) If instances is bigger than dataCollie size, throw exception
+    * 5) Random pick node name from dataCollie of instances size
     *
     * @param nodeNamesOption node name list
     * @param instancesOption running instances
     * @param executionContext execution context
-    * @param nodeCollie node collie
+    * @param dataCollie node collie
     * @return actual node name list
     */
   private[this] def pickNodeNames(nodeNamesOption: Option[Set[String]], instancesOption: Option[Int])(
     implicit executionContext: ExecutionContext,
-    nodeCollie: NodeCollie): Future[Option[Set[String]]] =
-    nodeCollie.nodes().map(n => n.map(_.name)).map { all =>
+    dataCollie: DataCollie): Future[Option[Set[String]]] =
+    dataCollie.values[Node]().map(n => n.map(_.name)).map { all =>
       instancesOption.fold(
         // not define instances, use nodeNames instead
-        // If there were some nodes that nodeCollie doesn't contain, throw exception
+        // If there were some nodes that dataCollie doesn't contain, throw exception
         nodeNamesOption.fold[Option[Set[String]]](
           // both instances and nodeNames are not defined, return None
           None
@@ -122,7 +123,7 @@ private[configurator] object StreamRoute {
             // you are fine to going use it
             Some(nodeNames)
           else
-            // we find a node that is not belong to nodeCollie , throw error
+            // we find a node that is not belong to dataCollie , throw error
             throw new IllegalArgumentException(
               s"Some nodes could not be found, expected: $nodeNames, actual: $all"
             )
@@ -139,7 +140,7 @@ private[configurator] object StreamRoute {
     }
 
   private[this] def hookOfCreation(implicit fileStore: FileStore,
-                                   nodeCollie: NodeCollie,
+                                   dataCollie: DataCollie,
                                    brokerCollie: BrokerCollie,
                                    streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
@@ -173,7 +174,7 @@ private[configurator] object StreamRoute {
     }
 
   private[this] def HookOfUpdating(
-    implicit nodeCollie: NodeCollie,
+    implicit dataCollie: DataCollie,
     brokerCollie: BrokerCollie,
     streamCollie: StreamCollie,
     fileStore: FileStore,
@@ -307,7 +308,7 @@ private[configurator] object StreamRoute {
   private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
 
   def apply(implicit store: DataStore,
-            nodeCollie: NodeCollie,
+            dataCollie: DataCollie,
             zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,

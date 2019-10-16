@@ -53,11 +53,11 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
         .find(_._1.key == creation.key)
         .map(_._2)
         .map(containers =>
-          nodeCollie
-            .nodes(containers.map(_.nodeName).toSet)
+          dataCollie
+            .valuesByNames[Node](containers.map(_.nodeName).toSet)
             .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
         .getOrElse(Future.successful(Map.empty))
-        .flatMap(existNodes => nodeCollie.nodes(creation.nodeNames).map((existNodes, _)))
+        .flatMap(existNodes => dataCollie.valuesByNames[Node](creation.nodeNames).map((existNodes, _)))
         .map {
           case (existNodes, nodes) =>
             // the broker cluster should be defined in data creating phase already
@@ -179,10 +179,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     })
   }
 
-  /**
-    * Please implement nodeCollie
-    */
-  protected def nodeCollie: NodeCollie
+  protected def dataCollie: DataCollie
 
   /**
     * Implement prefix name for paltform

@@ -170,7 +170,7 @@ object WorkerRoute {
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            nodeCollie: NodeCollie,
+            dataCollie: DataCollie,
             fileStore: FileStore,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[WorkerClusterInfo, WorkerClusterStatus, Creation, Updating](

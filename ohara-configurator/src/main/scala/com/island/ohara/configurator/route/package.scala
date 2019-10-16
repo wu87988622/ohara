@@ -23,7 +23,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{
   BrokerCollie,
   Collie,
-  NodeCollie,
+  DataCollie,
   ServiceCollie,
   StreamCollie,
   WorkerCollie,
@@ -32,6 +32,7 @@ import com.island.ohara.agent.{
 import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
@@ -478,7 +479,7 @@ package object route {
     brokerCollie: BrokerCollie,
     workerCollie: WorkerCollie,
     streamCollie: StreamCollie,
-    nodeCollie: NodeCollie,
+    dataCollie: DataCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Update],
     rm2: RootJsonFormat[Cluster],
@@ -541,7 +542,7 @@ package object route {
     brokerCollie: BrokerCollie,
     workerCollie: WorkerCollie,
     streamCollie: StreamCollie,
-    nodeCollie: NodeCollie,
+    dataCollie: DataCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Update],
     rm2: RootJsonFormat[Cluster],
@@ -564,7 +565,7 @@ package object route {
                   // this cluster already exists, return OK
                   Future.unit
                 } else {
-                  checkResourcesConflict(nodeCollie, req).flatMap(_ => hookOfStart(key, subName, params))
+                  checkResourcesConflict(dataCollie, req).flatMap(_ => hookOfStart(key, subName, params))
                 }
               }
           }
@@ -644,14 +645,14 @@ package object route {
     * 2) name should not conflict
     * 3) port should not conflict
     *
-    * @param nodeCollie nodeCollie instance
+    * @param dataCollie dataCollie instance
     * @param serviceCollie serviceCollie instance
     * @param req cluster creation request
     * @param executionContext execution context
     * @tparam Cluster type of request
     * @return clusters that fitted the requires
     */
-  private[route] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](nodeCollie: NodeCollie, req: Cluster)(
+  private[route] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](dataCollie: DataCollie, req: Cluster)(
     implicit executionContext: ExecutionContext,
     serviceCollie: ServiceCollie,
     store: DataStore,
@@ -660,9 +661,9 @@ package object route {
     workerCollie: WorkerCollie,
     streamCollie: StreamCollie,
     meterCache: MeterCache): Future[Unit] =
-    // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
-    nodeCollie
-      .nodes(req.nodeNames)
+    // dataCollie.nodes(req.nodeNames) is used to check the existence of node names of request
+    dataCollie
+      .valuesByNames[Node](req.nodeNames)
       .flatMap(serviceCollie.images)
       // check the docker images
       .map { nodesImages =>

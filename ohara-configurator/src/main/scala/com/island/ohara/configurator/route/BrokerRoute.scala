@@ -140,7 +140,7 @@ object BrokerRoute {
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            nodeCollie: NodeCollie,
+            dataCollie: DataCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[BrokerClusterInfo, BrokerClusterStatus, Creation, Updating](
       root = BROKER_PREFIX_PATH,

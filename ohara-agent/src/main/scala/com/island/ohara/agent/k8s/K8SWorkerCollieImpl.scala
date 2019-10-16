@@ -25,8 +25,8 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[WorkerClusterStatus](node, k8sClient)
+private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
+    extends K8SBasicCollieImpl[WorkerClusterStatus](dataCollie, k8sClient)
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
 
@@ -69,13 +69,6 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
         _.find(_._1.key == classKey)
           .map(_._2)
           .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey does not exist")))
-
-  /**
-    * Please implement nodeCollie
-    *
-    * @return
-    */
-  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for paltform

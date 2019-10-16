@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.fake.FakeK8SClient
-import com.island.ohara.agent.{ServiceCollie, NodeCollie}
+import com.island.ohara.agent.{ServiceCollie, DataCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
@@ -32,7 +32,7 @@ import scala.util.{Failure, Success}
 
 class TestK8SClientVerify extends OharaTest with Matchers {
   private[this] val nodeCache = new ArrayBuffer[Node]()
-  private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
+  private[this] val dataCollie: DataCollie = DataCollie(nodeCache)
 
   private[this] def node: Node = Node(
     hostname = "ohara",
@@ -49,7 +49,7 @@ class TestK8SClientVerify extends OharaTest with Matchers {
   def testMockK8sClientVerifyNode1(): Unit = {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(true, "")), "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
         serviceCollie.verifyNode(node),
@@ -65,7 +65,7 @@ class TestK8SClientVerify extends OharaTest with Matchers {
   def testMockK8sClientVerifyNode2(): Unit = {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(false, "node failed.")), "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
         serviceCollie.verifyNode(node),
@@ -81,7 +81,7 @@ class TestK8SClientVerify extends OharaTest with Matchers {
   def testMockK8sClientVerifyNode3(): Unit = {
     val fakeK8SClient = new FakeK8SClient(false, Option(K8SStatusInfo(false, "failed")), "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
         serviceCollie.verifyNode(node),
@@ -97,7 +97,7 @@ class TestK8SClientVerify extends OharaTest with Matchers {
   def testMockK8SClientVerifyNode4(): Unit = {
     val fakeK8SClient = new FakeK8SClient(false, None, "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
         serviceCollie.verifyNode(

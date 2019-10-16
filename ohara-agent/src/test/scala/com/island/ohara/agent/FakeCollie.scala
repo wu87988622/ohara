@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
   * This class only support Collie abstract class logic test.
   * No real to implement
   */
-class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, containers: Seq[ContainerInfo])
+class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](dataCollie: DataCollie, containers: Seq[ContainerInfo])
     extends Collie[FakeCollieClusterInfo] {
 
   override protected def doRemoveNode(previousCluster: FakeCollieClusterInfo, beRemovedContainer: ContainerInfo)(

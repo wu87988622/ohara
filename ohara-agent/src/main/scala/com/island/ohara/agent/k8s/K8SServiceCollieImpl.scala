@@ -25,17 +25,17 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
 // accessible to configurator
-private[ohara] class K8SServiceCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
+private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient)
     extends ReleaseOnce
     with ServiceCollie {
 
-  override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient)
+  override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(dataCollie, k8sClient)
 
-  override val brokerCollie: BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, zookeeperCollie, k8sClient)
+  override val brokerCollie: BrokerCollie = new K8SBrokerCollieImpl(dataCollie, zookeeperCollie, k8sClient)
 
-  override val workerCollie: WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, brokerCollie, k8sClient)
+  override val workerCollie: WorkerCollie = new K8SWorkerCollieImpl(dataCollie, brokerCollie, k8sClient)
 
-  override val streamCollie: StreamCollie = new K8SStreamCollieImpl(nodeCollie, brokerCollie, k8sClient)
+  override val streamCollie: StreamCollie = new K8SStreamCollieImpl(dataCollie, brokerCollie, k8sClient)
 
   override protected def doClose(): Unit = {
     //Nothing

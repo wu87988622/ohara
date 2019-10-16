@@ -17,7 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ServiceCache, ServiceState, Collie, NodeCollie}
+import com.island.ohara.agent.{Collie, DataCollie, ServiceCache, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie: NodeCollie,
+private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](dataCollie: DataCollie,
                                                                      dockerCache: DockerClientCache,
                                                                      clusterCache: ServiceCache)
     extends Collie[T] {
@@ -60,8 +60,8 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie:
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future
       .traverse(containerInfos) { containerInfo =>
-        nodeCollie
-          .node(containerInfo.nodeName)
+        dataCollie
+          .value[Node](containerInfo.nodeName)
           .map(node =>
             dockerCache.exec(
               node,
@@ -81,8 +81,8 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie:
       }
 
   override def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    nodeCollie
-      .nodes()
+    dataCollie
+      .values[Node]()
       .flatMap(
         Future.traverse(_)(
           // form: PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
@@ -100,7 +100,7 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie:
       .flatMap { containers =>
         Future
           .sequence(containers.map { container =>
-            nodeCollie.node(container.nodeName).map { node =>
+            dataCollie.value[Node](container.nodeName).map { node =>
               container -> dockerCache.exec(node,
                                             client =>
                                               try client.log(container.name)
@@ -114,7 +114,7 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](nodeCollie:
 
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
-    nodeCollie.node(beRemovedContainer.nodeName).map { node =>
+    dataCollie.value[Node](beRemovedContainer.nodeName).map { node =>
       dockerCache.exec(node, _.stop(beRemovedContainer.name))
       clusterCache.put(previousCluster, clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name))
       true

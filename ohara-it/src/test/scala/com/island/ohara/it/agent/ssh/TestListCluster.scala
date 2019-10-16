@@ -34,10 +34,10 @@ class TestListCluster extends IntegrationTest with Matchers {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   private[this] val nameHolder = ClusterNameHolder(nodes)
 
-  private[this] val nodeCollie: NodeCollie = NodeCollie(nodes)
+  private[this] val dataCollie: DataCollie = DataCollie(nodes)
 
   private[this] val serviceCollie: ServiceCollie =
-    ServiceCollie.builderOfSsh.nodeCollie(nodeCollie).build()
+    ServiceCollie.builderOfSsh.dataCollie(dataCollie).build()
 
   @Before
   def setup(): Unit = if (nodes.size < 2) skipTest("please buy more servers to run this test")

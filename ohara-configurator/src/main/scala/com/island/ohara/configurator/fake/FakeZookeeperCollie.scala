@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.{NodeCollie, ServiceState, ZookeeperCollie}
+import com.island.ohara.agent.{DataCollie, ServiceState, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStat
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeZookeeperCollie(node: NodeCollie)
+private[configurator] class FakeZookeeperCollie(node: DataCollie)
     extends FakeCollie[ZookeeperClusterStatus](node)
     with ZookeeperCollie {
   override def creator: ZookeeperCollie.ClusterCreator = (_, creation) =>
@@ -59,7 +59,7 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
                                    arguments: Seq[String]): Future[Unit] =
     throw new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 
-  override protected def nodeCollie: NodeCollie = node
+  override protected def dataCollie: DataCollie = node
 
   override protected def prefixKey: String = "fakezookeeper"
 }

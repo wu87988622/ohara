@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{DataCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
@@ -24,8 +24,8 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[ZookeeperClusterStatus](node, k8sClient)
+private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SClient)
+    extends K8SBasicCollieImpl[ZookeeperClusterStatus](dataCollie, k8sClient)
     with ZookeeperCollie {
   private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 
@@ -66,8 +66,6 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
-
-  override protected def nodeCollie: NodeCollie = node
 
   override protected def prefixKey: String = PREFIX_KEY
 }

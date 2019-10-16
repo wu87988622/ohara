@@ -56,7 +56,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
         Future.failed(
           new UnsupportedOperationException(s"zookeeper collie doesn't support to add node to a running cluster"))
       else
-        nodeCollie.nodes(creation.nodeNames).flatMap {
+        dataCollie.valuesByNames[Node](creation.nodeNames).flatMap {
           newNodes =>
             // add route in order to make zk node can connect to each other.
             val route: Map[String, String] = newNodes.map(node => node.name -> CommonUtils.address(node.name)).toMap
@@ -166,11 +166,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
     })
   }
 
-  /**
-    * Please implement nodeCollie
-    * @return
-    */
-  protected def nodeCollie: NodeCollie
+  protected def dataCollie: DataCollie
 
   /**
     * The prefix name for platform

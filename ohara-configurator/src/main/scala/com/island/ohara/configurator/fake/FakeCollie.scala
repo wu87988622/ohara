@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{Collie, NoSuchClusterException, NodeCollie, ServiceState}
+import com.island.ohara.agent.{Collie, NoSuchClusterException, DataCollie, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.setting.ObjectKey
@@ -29,7 +29,7 @@ import com.island.ohara.common.util.CommonUtils
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
-private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](nodeCollie: NodeCollie)
+private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](dataCollie: DataCollie)
     extends Collie[T] {
   protected val clusterCache =
     new ConcurrentSkipListMap[T, Seq[ContainerInfo]]((o1: T, o2: T) => o1.key.compareTo(o2.key))

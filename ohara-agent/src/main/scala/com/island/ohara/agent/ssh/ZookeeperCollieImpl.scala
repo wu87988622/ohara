@@ -16,15 +16,17 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{NodeCollie, ServiceCache, ZookeeperCollie}
+import com.island.ohara.agent.{DataCollie, ServiceCache, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
-    extends BasicCollieImpl[ZookeeperClusterStatus](node, dockerCache, clusterCache)
+private class ZookeeperCollieImpl(val dataCollie: DataCollie,
+                                  dockerCache: DockerClientCache,
+                                  clusterCache: ServiceCache)
+    extends BasicCollieImpl[ZookeeperClusterStatus](dataCollie, dockerCache, clusterCache)
     with ZookeeperCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
@@ -68,8 +70,6 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
     implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support remove node from a running cluster"))
-
-  override protected def nodeCollie: NodeCollie = node
 
   override protected def prefixKey: String = PREFIX_KEY
 }

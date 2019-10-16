@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import java.net.URL
 
-import com.island.ohara.agent.{ServiceState, NodeCollie, StreamCollie}
+import com.island.ohara.agent.{ServiceState, DataCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
@@ -33,7 +33,7 @@ import com.island.ohara.streams.config.StreamDefUtils
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeStreamCollie(node: NodeCollie)
+private[configurator] class FakeStreamCollie(node: DataCollie)
     extends FakeCollie[StreamClusterStatus](node)
     with StreamCollie {
 
@@ -80,7 +80,7 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
                                    jmxPort: Int,
                                    jarInfo: FileInfo): Future[Unit] = Future.unit
 
-  override protected def nodeCollie: NodeCollie = node
+  override protected def dataCollie: DataCollie = node
 
   override protected def prefixKey: String = "fakestream"
 

@@ -26,8 +26,8 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
-    extends BasicCollieImpl[WorkerClusterStatus](node, dockerCache, clusterCache)
+private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
+    extends BasicCollieImpl[WorkerClusterStatus](dataCollie, dockerCache, clusterCache)
     with WorkerCollie {
 
   override protected def postCreate(workerClusterStatus: WorkerClusterStatus,
@@ -86,13 +86,6 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
         .find(_._1.key == classKey)
         .map(_._2)
         .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey doesn't exist. other broker clusters")))
-
-  /**
-    * Please implement nodeCollie
-    *
-    * @return
-    */
-  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for paltform

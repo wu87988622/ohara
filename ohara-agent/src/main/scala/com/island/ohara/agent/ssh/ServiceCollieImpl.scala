@@ -31,7 +31,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 // accessible to configurator
-private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
+private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataCollie, cacheThreadPool: ExecutorService)
     extends ReleaseOnce
     with ServiceCollie {
 
@@ -45,14 +45,14 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
     .lazyRemove(cacheTimeout)
     .build()
 
-  override val zookeeperCollie: ZookeeperCollie = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)
-  override val brokerCollie: BrokerCollie = new BrokerCollieImpl(nodeCollie, dockerCache, clusterCache)
-  override val workerCollie: WorkerCollie = new WorkerCollieImpl(nodeCollie, dockerCache, clusterCache)
-  override val streamCollie: StreamCollie = new StreamCollieImpl(nodeCollie, dockerCache, clusterCache)
+  override val zookeeperCollie: ZookeeperCollie = new ZookeeperCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val brokerCollie: BrokerCollie = new BrokerCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val workerCollie: WorkerCollie = new WorkerCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val streamCollie: StreamCollie = new StreamCollieImpl(dataCollie, dockerCache, clusterCache)
 
   private[this] def doClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] = nodeCollie
-    .nodes()
+    implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] = dataCollie
+    .values[Node]()
     .flatMap(Future
       .traverse(_) { node =>
         // multi-thread to seek all containers from multi-nodes
@@ -136,7 +136,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
     }
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
-    nodeCollie.nodes().map(_.flatMap(dockerCache.exec(_, _.containerNames())))
+    dataCollie.values[Node]().map(_.flatMap(dockerCache.exec(_, _.containerNames())))
 
   override def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] =
     logs(_.name == name).map(_.head)
@@ -146,18 +146,17 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
 
   private[this] def logs(filter: ContainerName => Boolean)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
-    nodeCollie
-      .nodes()
-      .map(
-        _.flatMap(node =>
-          dockerCache.exec(
-            node,
-            client =>
-              client.containerNames().filter(filter).flatMap { containerName =>
-                try Some((containerName, client.log(containerName.name)))
-                catch {
-                  case _: Throwable => None
-                }
-            }
-        )).toMap)
+    dataCollie
+      .values[Node]()
+      .map(_.flatMap(node =>
+        dockerCache.exec(
+          node,
+          client =>
+            client.containerNames().filter(filter).flatMap { containerName =>
+              try Some((containerName, client.log(containerName.name)))
+              catch {
+                case _: Throwable => None
+              }
+          }
+      )).toMap)
 }

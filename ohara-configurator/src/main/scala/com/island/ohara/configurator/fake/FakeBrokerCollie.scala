@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{BrokerCollie, ServiceState, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceState, NoSuchClusterException, DataCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
@@ -30,7 +30,7 @@ import com.island.ohara.metrics.kafka.TopicMeter
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps: String)
+private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps: String)
     extends FakeCollie[BrokerClusterStatus](node)
     with BrokerCollie {
 
@@ -85,12 +85,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     throw new UnsupportedOperationException("Fake broker doesn't support zookeeperCluster function")
 
-  /**
-    * Please setting nodeCollie to implement class
-    *
-    * @return
-    */
-  override protected def nodeCollie: NodeCollie = node
+  override protected def dataCollie: DataCollie = node
 
   /**
     * Implement prefix name for the platform

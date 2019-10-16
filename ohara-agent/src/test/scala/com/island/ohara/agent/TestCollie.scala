@@ -45,7 +45,7 @@ class TestCollie extends OharaTest with Matchers {
 
   @Test
   def testRemoveEmptyNode(): Unit = {
-    val fakeCollie = new FakeCollie(NodeCollie(Seq.empty), Seq.empty)
+    val fakeCollie = new FakeCollie(DataCollie(Seq.empty), Seq.empty)
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, "node1")
     Await.result(removeNode, TIMEOUT) shouldBe false
   }
@@ -56,7 +56,7 @@ class TestCollie extends OharaTest with Matchers {
     val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo("node2", "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
-    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val fakeCollie = new FakeCollie(DataCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, node1Name)
     Await.result(removeNode, TIMEOUT) shouldBe false
   }
@@ -67,7 +67,7 @@ class TestCollie extends OharaTest with Matchers {
     val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo(node1Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
-    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val fakeCollie = new FakeCollie(DataCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, node1Name)
     intercept[IllegalArgumentException] {
       Await.result(removeNode, TIMEOUT)
@@ -80,7 +80,7 @@ class TestCollie extends OharaTest with Matchers {
     val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo(node1Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
-    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val fakeCollie = new FakeCollie(DataCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, "node3")
     Await.result(removeNode, TIMEOUT) shouldBe false
   }
@@ -98,7 +98,7 @@ class TestCollie extends OharaTest with Matchers {
     val container2 =
       ContainerInfo(node2Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
 
-    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1, node2)), Seq(container1, container2))
+    val fakeCollie = new FakeCollie(DataCollie(Seq(node1, node2)), Seq(container1, container2))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, "node1")
     Await.result(removeNode, TIMEOUT) shouldBe true
   }
@@ -124,25 +124,25 @@ class TestCollie extends OharaTest with Matchers {
         hostname = s"xxx-$node1Name"
       )
     }
-    val fakeRunning = new FakeCollie(NodeCollie(Seq(node1)), containers)
+    val fakeRunning = new FakeCollie(DataCollie(Seq(node1)), containers)
     Await.result(fakeRunning.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.RUNNING.name)
 
     // case : some containers are failed but one running => cluster running
     val fakeRunning1 =
-      new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.DEAD.name))
+      new FakeCollie(DataCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.DEAD.name))
     Await.result(fakeRunning1.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.RUNNING.name)
 
     // case : some containers are failed but one running => cluster running
     val fakeRunning2 =
-      new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.EXITED.name))
+      new FakeCollie(DataCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.EXITED.name))
     Await.result(fakeRunning2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.RUNNING.name)
 
     // case : one container is pending => cluster pending
     val fakePending =
-      new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.CREATED.name))
+      new FakeCollie(DataCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.CREATED.name))
     Await.result(fakePending.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.PENDING.name)
 
@@ -162,18 +162,18 @@ class TestCollie extends OharaTest with Matchers {
         hostname = s"xxx-$node1Name"
       )
     }
-    val fakeFailed = new FakeCollie(NodeCollie(Seq(node1)), containers2)
+    val fakeFailed = new FakeCollie(DataCollie(Seq(node1)), containers2)
     Await.result(fakeFailed.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(ServiceState.FAILED.name)
 
     // case : some containers are exit but others are dead => cluster failed
     val fakeFailed1 =
-      new FakeCollie(NodeCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.EXITED.name))
+      new FakeCollie(DataCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.EXITED.name))
     Await.result(fakeFailed1.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.FAILED.name)
 
     // case : some containers is running but others are dead => cluster running
     val fakeFailed2 =
-      new FakeCollie(NodeCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.RUNNING.name))
+      new FakeCollie(DataCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.RUNNING.name))
     Await.result(fakeFailed2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
       ServiceState.RUNNING.name)
   }

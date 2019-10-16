@@ -21,6 +21,7 @@ import java.util.Objects
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
@@ -38,6 +39,7 @@ import org.rocksdb.RocksDBException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.reflect.ClassTag
 class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var hostname: String = _
   private[this] var port: Int = -1
@@ -389,19 +391,20 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     this
   }
 
-  private[configurator] def createCollie(): NodeCollie = {
+  private[configurator] def createCollie(): DataCollie = {
     val store = getOrCreateStore()
-    new NodeCollie {
-      override def node(hostname: String)(implicit executionContext: ExecutionContext): Future[Node] =
-        store.value[Node](NodeApi.key(hostname))
-      override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]()
+    new DataCollie {
+      override def value[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[T] =
+        store.value[T](key)
+      override def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]] =
+        store.values[T]()
     }
   }
 
   override def build(): Configurator = doOrReleaseObjects(
     new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(store = getOrCreateStore(),
                                                                                  fileStore = getOrCreateFileStore(),
-                                                                                 nodeCollie = createCollie(),
+                                                                                 dataCollie = createCollie(),
                                                                                  serviceCollie = getOrCreateCollie(),
                                                                                  k8sClient = Option(k8sClient)))
 
@@ -449,8 +452,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
   private[this] def getOrCreateCollie(): ServiceCollie = if (serviceCollie == null) {
     this.serviceCollie =
-      if (k8sClient == null) ServiceCollie.builderOfSsh.nodeCollie(createCollie()).build
-      else ServiceCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
+      if (k8sClient == null) ServiceCollie.builderOfSsh.dataCollie(createCollie()).build
+      else ServiceCollie.builderOfK8s().dataCollie(createCollie()).k8sClient(k8sClient).build()
     serviceCollie
   } else serviceCollie
 

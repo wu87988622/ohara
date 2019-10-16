@@ -53,7 +53,7 @@ import scala.concurrent.{Await, ExecutionContext}
   */
 class Configurator private[configurator] (val hostname: String, val port: Int)(implicit val store: DataStore,
                                                                                val fileStore: FileStore,
-                                                                               val nodeCollie: NodeCollie,
+                                                                               val dataCollie: DataCollie,
                                                                                val serviceCollie: ServiceCollie,
                                                                                val k8sClient: Option[K8SClient])
     extends ReleaseOnce

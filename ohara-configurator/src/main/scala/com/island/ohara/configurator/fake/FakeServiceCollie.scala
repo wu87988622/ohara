@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.{NodeCollie, ServiceCollie}
+import com.island.ohara.agent.{DataCollie, ServiceCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
@@ -28,23 +28,23 @@ import scala.util.Try
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[configurator] class FakeServiceCollie(nodeCollie: NodeCollie,
+private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
                                               store: DataStore,
                                               bkConnectionProps: String,
                                               wkConnectionProps: String)
     extends ServiceCollie {
 
-  def this(nodeCollie: NodeCollie, store: DataStore) {
-    this(nodeCollie, store, null, null)
+  def this(dataCollie: DataCollie, store: DataStore) {
+    this(dataCollie, store, null, null)
   }
 
-  override val zookeeperCollie: FakeZookeeperCollie = new FakeZookeeperCollie(nodeCollie)
+  override val zookeeperCollie: FakeZookeeperCollie = new FakeZookeeperCollie(dataCollie)
 
-  override val brokerCollie: FakeBrokerCollie = new FakeBrokerCollie(nodeCollie, bkConnectionProps)
+  override val brokerCollie: FakeBrokerCollie = new FakeBrokerCollie(dataCollie, bkConnectionProps)
 
-  override val workerCollie: FakeWorkerCollie = new FakeWorkerCollie(nodeCollie, wkConnectionProps)
+  override val workerCollie: FakeWorkerCollie = new FakeWorkerCollie(dataCollie, wkConnectionProps)
 
-  override val streamCollie: FakeStreamCollie = new FakeStreamCollie(nodeCollie)
+  override val streamCollie: FakeStreamCollie = new FakeStreamCollie(dataCollie)
 
   override def close(): Unit = {
     // do nothing

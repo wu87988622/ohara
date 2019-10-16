@@ -39,10 +39,10 @@ import scala.util.Try
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
   private[this] val nodeNames: Set[String] = nodes.map(_.hostname).toSet
-  private[this] val nodeCollie: NodeCollie = NodeCollie(nodes)
+  private[this] val dataCollie: DataCollie = DataCollie(nodes)
   private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
   private[this] val serviceCollie: ServiceCollie =
-    ServiceCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(EnvTestingUtils.k8sClient()).build()
+    ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(EnvTestingUtils.k8sClient()).build()
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   @Before

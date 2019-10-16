@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.fake.FakeK8SClient
-import com.island.ohara.agent.{Collie, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{Collie, DataCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
@@ -35,6 +35,7 @@ class TestK8SBasicCollieImpl extends OharaTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] val tmpServiceName = "zk"
+
   @Test
   def testClusterName(): Unit = {
     val group = CommonUtils.randomString(10)
@@ -64,11 +65,11 @@ class TestK8SBasicCollieImpl extends OharaTest with Matchers {
       tags = Map.empty
     )
     val nodes: Seq[Node] = Seq(node1)
-    val nodeCollie = NodeCollie(nodes)
+    val dataCollie = DataCollie(nodes)
     val k8sClient = new FakeK8SClient(true, None, containerName)
 
     val k8sBasicCollieImpl: K8SBasicCollieImpl[ZookeeperClusterStatus] =
-      new K8SBasicCollieImpl[ZookeeperClusterStatus](nodeCollie, k8sClient) {
+      new K8SBasicCollieImpl[ZookeeperClusterStatus](dataCollie, k8sClient) {
 
         override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")

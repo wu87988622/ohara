@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
@@ -53,7 +54,7 @@ class TestStreamRoute extends OharaTest with Matchers {
   def setup(): Unit = {
     val file = CommonUtils.createTempJar("empty_")
     fileInfo = result(fileApi.request.file(file).upload())
-    nodeNames = result(configurator.nodeCollie.nodes()).map(_.name).toSet
+    nodeNames = result(configurator.dataCollie.values[Node]()).map(_.name).toSet
 
     file.deleteOnExit()
   }

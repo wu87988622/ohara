@@ -22,7 +22,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.agent.{ServiceCollie, NodeCollie}
+import com.island.ohara.agent.{ServiceCollie, DataCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
@@ -42,15 +42,15 @@ class TestPrometheus extends IntegrationTest with Matchers {
 
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   private[this] var node: Node = _
-  private[this] var nodeCollie: NodeCollie = _
+  private[this] var dataCollie: DataCollie = _
   private[this] var serviceCollie: ServiceCollie = _
 
   @Before
   def check(): Unit = if (nodes.isEmpty) skipTest(s"no available nodes are passed from env variables")
   else {
     node = nodes.head
-    nodeCollie = NodeCollie(Seq(node))
-    serviceCollie = ServiceCollie.builderOfSsh.nodeCollie(nodeCollie).build()
+    dataCollie = DataCollie(Seq(node))
+    serviceCollie = ServiceCollie.builderOfSsh.dataCollie(dataCollie).build()
     val client =
       DockerClient.builder.user(node._user).password(node._password).hostname(node.hostname).port(node._port).build
     try {
@@ -110,7 +110,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .electionPort(electionPort)
           .peerPort(peerPort)
           .key(clusterKey)
-          .nodeName(result(nodeCollie.nodes()).head.name)
+          .nodeName(result(dataCollie.values[Node]()).head.name)
           .create()
           .flatMap(_ => zookeeperCollie.cluster(clusterKey).map(_._1))
       ))
@@ -133,7 +133,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .clientPort(clientPort)
           .exporterPort(exporterPort)
           .zookeeperClusterKey(zkClusterKey)
-          .nodeName(result(nodeCollie.nodes()).head.name)
+          .nodeName(result(dataCollie.values[Node]()).head.name)
           .create()
           .flatMap(_ => brokerCollie.cluster(clusterKey).map(_._1))
       )

@@ -49,8 +49,8 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
             new UnsupportedOperationException(s"Streamapp cluster does NOT support to add new nodes at runtime"))
         else {
           val jarInfo = creation.jarInfo.getOrElse(throw new RuntimeException("jarInfo should be defined"))
-          nodeCollie
-            .nodes(creation.nodeNames)
+          dataCollie
+            .valuesByNames[Node](creation.nodeNames)
             // the broker cluster should be defined in data creating phase already
             // here we just throw an exception for absent value to ensure everything works as expect
             .flatMap(
@@ -192,11 +192,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
         error = None
       ))
 
-  /**
-    * Define nodeCollie by different environment
-    * @return
-    */
-  protected def nodeCollie: NodeCollie
+  protected def dataCollie: DataCollie
 
   /**
     * Define prefixKey by different environment

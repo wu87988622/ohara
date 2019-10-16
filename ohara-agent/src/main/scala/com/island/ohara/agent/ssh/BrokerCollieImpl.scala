@@ -26,8 +26,8 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
-    extends BasicCollieImpl[BrokerClusterStatus](node, dockerCache, clusterCache)
+private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
+    extends BasicCollieImpl[BrokerClusterStatus](dataCollie, dockerCache, clusterCache)
     with BrokerCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
@@ -75,8 +75,6 @@ private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
         .find(_._1.key == zkClusterKey)
         .map(_._2)
         .getOrElse(throw new NoSuchClusterException(s"zookeeper:$zkClusterKey does not exist")))
-
-  override protected def nodeCollie: NodeCollie = node
 
   override protected def prefixKey: String = PREFIX_KEY
 

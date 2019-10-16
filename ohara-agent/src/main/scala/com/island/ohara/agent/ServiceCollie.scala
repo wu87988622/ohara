@@ -235,12 +235,12 @@ object ServiceCollie {
   import scala.concurrent.duration._
 
   class SshBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
-    private[this] var nodeCollie: NodeCollie = _
+    private[this] var dataCollie: DataCollie = _
     private[this] var cacheTimeout: Duration = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
 
-    def nodeCollie(nodeCollie: NodeCollie): SshBuilder = {
-      this.nodeCollie = Objects.requireNonNull(nodeCollie)
+    def dataCollie(dataCollie: DataCollie): SshBuilder = {
+      this.dataCollie = Objects.requireNonNull(dataCollie)
       this
     }
 
@@ -262,7 +262,7 @@ object ServiceCollie {
       */
     override def build: ServiceCollie = new ServiceCollieImpl(
       cacheTimeout = Objects.requireNonNull(cacheTimeout),
-      nodeCollie = Objects.requireNonNull(nodeCollie),
+      dataCollie = Objects.requireNonNull(dataCollie),
       cacheThreadPool =
         if (cacheThreadPool == null) Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
         else cacheThreadPool
@@ -277,11 +277,11 @@ object ServiceCollie {
   def builderOfK8s(): K8shBuilder = new K8shBuilder
 
   class K8shBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
-    private[this] var nodeCollie: NodeCollie = _
+    private[this] var dataCollie: DataCollie = _
     private[this] var k8sClient: K8SClient = _
 
-    def nodeCollie(nodeCollie: NodeCollie): K8shBuilder = {
-      this.nodeCollie = Objects.requireNonNull(nodeCollie)
+    def dataCollie(dataCollie: DataCollie): K8shBuilder = {
+      this.dataCollie = Objects.requireNonNull(dataCollie)
       this
     }
 
@@ -295,7 +295,7 @@ object ServiceCollie {
       * @return
       */
     override def build: ServiceCollie = new K8SServiceCollieImpl(
-      nodeCollie = Objects.requireNonNull(nodeCollie),
+      dataCollie = Objects.requireNonNull(dataCollie),
       k8sClient = Objects.requireNonNull(k8sClient)
     )
 

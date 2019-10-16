@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{ServiceState, NoSuchClusterException, NodeCollie, WorkerCollie}
+import com.island.ohara.agent.{ServiceState, NoSuchClusterException, DataCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
@@ -30,7 +30,7 @@ import com.island.ohara.metrics.basic.CounterMBean
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps: String)
+private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps: String)
     extends FakeCollie[WorkerClusterStatus](node)
     with WorkerCollie {
 
@@ -83,7 +83,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support brokerClusters function")
 
-  override protected def nodeCollie: NodeCollie = node
+  override protected def dataCollie: DataCollie = node
 
   override protected def prefixKey: String = "fakeworker"
 }
