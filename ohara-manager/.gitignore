@@ -11,5 +11,3 @@ yarn-error.log
 
 # Cypress
 /client/cypress.env.json
-/client/cypress/fixtures/plugin
-/client/cypress/fixtures/streamApp

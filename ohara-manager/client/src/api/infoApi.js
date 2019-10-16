@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
-
-import { handleError, axiosInstance } from './apiUtils';
+import { axiosInstance } from './apiUtils';
 
 export const fetchInfo = async () => {
   try {
-    const res = await axiosInstance.get('/api/info');
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const response = await axiosInstance.get('/api/info');
+    const { isSuccess } = response.data;
 
-    if (!isSuccess) {
-      handleError(res);
-    }
+    if (!isSuccess) throw new Error(response.errorMessage);
 
-    return res;
-  } catch (err) {
-    handleError(err);
+    return response;
+  } catch (error) {
+    throw new Error(error);
   }
 };

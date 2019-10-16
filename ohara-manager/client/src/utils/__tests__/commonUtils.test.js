@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import { isEmptyStr } from '../commonUtils';
+import { toNumber } from '../commonUtils';
 
-describe('isEmptyStr()', () => {
-  it('returns true if the given string is an empty string', () => {
-    expect(isEmptyStr('')).toBe(true);
-  });
-
-  it('returns false if the given string is not an empty string', () => {
-    expect(isEmptyStr('kjlf')).toBe(false);
+describe('toNumber()', () => {
+  it('converts string to number', () => {
+    expect(toNumber('1')).toBe(1);
   });
 });

@@ -14,7 +14,22 @@
  * limitations under the License.
  */
 
-import Table from './Table';
-import SortTable from './SortTable';
+describe('Info API', () => {
+  it('fetchInfo', () => {
+    cy.fetchInfo().then(response => {
+      const {
+        data: { isSuccess, result },
+      } = response;
 
-export { Table, SortTable };
+      const { mode, versionInfo } = result;
+      const { date, revision, version } = versionInfo;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(mode).to.eq('FAKE');
+      expect(date).to.be.a('string');
+      expect(revision).to.be.a('string');
+      expect(version).to.be.a('string');
+    });
+  });
+});

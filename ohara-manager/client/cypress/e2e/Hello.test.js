@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import Table from './Table';
-import SortTable from './SortTable';
-
-export { Table, SortTable };
+describe('Hello manager!', () => {
+  it('Visits and gets the page heading', () => {
+    cy.visit('/');
+    cy.findByText('Hello ohara manager!').should('exist');
+  });
+});

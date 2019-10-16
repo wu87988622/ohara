@@ -15,51 +15,7 @@
  */
 
 import axios from 'axios';
-import { isString, get, has, isEmpty, isUndefined } from 'lodash';
-
-export const handleError = error => {
-  if (isUndefined(error)) return; // prevent `undefined` error from throwing `Internal Server Error`
-
-  const message = get(error, 'data.errorMessage.message', null);
-  if (isString(message)) {
-    throw new Error(message);
-  }
-
-  const errorMessage = get(error, 'data.errorMessage', null);
-  if (isString(errorMessage)) {
-    throw new Error(errorMessage);
-  }
-
-  throw new Error(error || 'Internal Server Error');
-};
-
-export const handleConnectorValidationError = error => {
-  const { settings } = error;
-
-  const hasError = def => !isEmpty(def.value.errors);
-  const errors = settings.filter(hasError).map(def => {
-    return {
-      fieldName: def.definition.displayName,
-      errorMessage: def.value.errors.join(' '),
-    };
-  });
-
-  // There could be multiple validation errors, so we need to loop thru them and
-  // display respectively
-  const result = errors.map(
-    error => `${error.fieldName.toUpperCase()}: ${error.errorMessage}`,
-  );
-
-  return result;
-};
-
-export const handleNodeValidationError = error => {
-  const result = error
-    .filter(node => node.pass === false)
-    .map(node => `${node.hostname.toUpperCase()}: ${node.message}`);
-
-  return result;
-};
+import { has } from 'lodash';
 
 const createAxios = () => {
   const instance = axios.create({
@@ -91,25 +47,6 @@ const createAxios = () => {
   // Add a response interceptor
   instance.interceptors.response.use(
     response => {
-      // Validate API returns a slightly different response than
-      // any other API requests. So we're handling it with a few
-      // different handlers
-
-      if (response.config.url.includes('/validate')) {
-        const { data } = response;
-
-        const connectorError = data.errorCount > 0;
-
-        if (connectorError) {
-          return handleConnectorValidationError(data);
-        }
-
-        const nodeError = Array.isArray(data) && data.some(node => !node.pass);
-        if (nodeError) {
-          return handleNodeValidationError(data);
-        }
-      }
-
       return {
         data: {
           result: response.data,

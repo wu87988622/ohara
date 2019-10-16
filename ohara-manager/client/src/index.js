@@ -20,16 +20,12 @@ import App from 'App';
 import { ThemeProvider } from 'styled-components';
 import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
 
-import * as CSS_VARS from './theme/variables';
 import MuiTheme from './theme/muiTheme';
-import ErrorBoundary from 'components/common/ErrorBoundary';
 
 ReactDOM.render(
   <MuiThemeProvider theme={MuiTheme}>
-    <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
+    <ThemeProvider theme={MuiTheme}>
+      <App />
     </ThemeProvider>
   </MuiThemeProvider>,
   document.getElementById('root'),

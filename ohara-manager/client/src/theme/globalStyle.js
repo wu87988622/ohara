@@ -16,15 +16,6 @@
 
 import { createGlobalStyle } from 'styled-components';
 
-import {
-  blue,
-  blueHover,
-  lightGray,
-  whiteSmoke,
-  darkerBlue,
-  durationNormal,
-} from './variables';
-
 export default createGlobalStyle`
   @import url('https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700|Roboto:400,700,900');
   
@@ -32,27 +23,16 @@ export default createGlobalStyle`
     box-sizing: border-box;
   }
 
-  ::placeholder {
-    color: ${lightGray};
-  }
 
   body {
-    color: ${darkerBlue};
     padding: 0;
     margin: 0;
     font-family: Roboto, sans-serif;
-    background-color: ${whiteSmoke};
   }
 
   a {
-    transition: ${durationNormal} all;
     text-decoration: none;
-    color: ${blue};
     
-    &:hover {
-      transition: ${durationNormal} all;
-      color: ${blueHover}
-    }
   }
 
   ul, li {

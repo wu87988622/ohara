@@ -16,56 +16,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import InputLabel from '@material-ui/core/InputLabel';
 
-const LabelWrapper = styled.label`
-  color: ${props => props.theme.lightBlue};
-  width: ${props => props.width};
-  font-size: 13px;
-  margin: ${props => props.margin};
-  display: block;
-
-  .label-name {
-    margin-right: 4px;
-  }
-`;
-
-LabelWrapper.displayName = 'Label';
-
-const TooltipIcon = styled.span`
-  float: ${props => props.alignment};
-`;
-
-const Label = ({
-  children,
-  css = { margin: '0 0 8px', width: 'auto' },
-  tooltipString,
-  tooltipRender,
-  tooltipAlignment = 'left',
-  required = false,
-  ...rest
-}) => {
+const Label = ({ children, htmlFor, ...rest }) => {
   return (
-    <LabelWrapper {...css} {...rest}>
-      <span className="label-name">{children}</span>{' '}
-      {required && <span>*</span>}
-      {tooltipString && (
-        <TooltipIcon alignment={tooltipAlignment} data-tip={tooltipString}>
-          <i className="fas fa-info-circle" />
-        </TooltipIcon>
-      )}
-    </LabelWrapper>
+    <InputLabel {...rest} htmlFor={htmlFor ? htmlFor : undefined}>
+      {children}
+    </InputLabel>
   );
 };
 
 Label.propTypes = {
-  children: PropTypes.any,
-  css: PropTypes.object,
-  tooltipId: PropTypes.string,
-  tooltipString: PropTypes.string,
-  tooltipRender: PropTypes.any,
-  required: PropTypes.bool,
-  tooltipAlignment: PropTypes.string,
+  children: PropTypes.any.isRequired,
+  htmlFor: PropTypes.string,
 };
 
 export default Label;

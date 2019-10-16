@@ -43,28 +43,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   serverPort = serverPort === 0 ? commonUtils.randomPort() : serverPort;
 
   const defaultEnv = services.getDefaultEnv();
-  const envNodeHost = nodeHost ? nodeHost : defaultEnv.nodeHost;
-  const envNodePort = nodePort ? nodePort : defaultEnv.nodePort;
-  const envNodeUser = nodeUser ? nodeUser : defaultEnv.nodeUser;
-  const envNodePass = nodePass ? nodePass : defaultEnv.nodePass;
   const prefix = servicePrefix ? servicePrefix : defaultEnv.servicePrefix;
-
-  try {
-    await services.createServices({
-      configurator,
-      nodeHost: envNodeHost,
-      nodePort: envNodePort,
-      nodeUser: envNodeUser,
-      nodePass: envNodePass,
-      servicePrefix: prefix,
-    });
-  } catch (error) {
-    // Ignore the error, it's handle in the createServices function
-
-    // Since starting services failed, don't run the
-    // end to end tests at all
-    process.exit(1);
-  }
 
   // Start ohara manager server
   console.log(chalk.blue('Starting ohara manager server'));
@@ -171,8 +150,6 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     );
 
     killSubProcess();
-    await services.cleanServices(configurator, envNodeHost, prefix);
-
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);
   } catch (error) {

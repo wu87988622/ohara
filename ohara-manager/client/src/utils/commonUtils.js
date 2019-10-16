@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-export const isEmptyStr = val => val.length === 0;
-
-export const isEmptyArr = arr => arr.length === 0;
-
-export const sleep = ms => {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export const toNumber = value => {
+  return Number(value);
 };

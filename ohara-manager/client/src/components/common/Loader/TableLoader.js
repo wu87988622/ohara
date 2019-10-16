@@ -15,7 +15,13 @@
  */
 
 import React from 'react';
+import styled from 'styled-components';
 import ContentLoader from 'react-content-loader';
+import Paper from '@material-ui/core/Paper';
+
+const StyledPaper = styled(Paper)`
+  padding: 20px;
+`;
 
 const Loader = props => {
   const random = Math.random() * (1 - 0.7) + 0.7;
@@ -41,13 +47,15 @@ const Loader = props => {
 };
 
 const TableLoader = () => (
-  <div className="table-loader" data-testid="table-loader">
-    {Array(10)
-      .fill('')
-      .map((e, i) => (
-        <Loader key={i} style={{ opacity: Number(2 / i).toFixed(1) }} />
-      ))}
-  </div>
+  <StyledPaper>
+    <div className="table-loader" data-testid="table-loader">
+      {Array(10)
+        .fill('')
+        .map((e, i) => (
+          <Loader key={i} style={{ opacity: Number(2 / i).toFixed(1) }} />
+        ))}
+    </div>
+  </StyledPaper>
 );
 
 export default TableLoader;

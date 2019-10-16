@@ -15,6 +15,5 @@
  */
 
 import TableLoader from './TableLoader';
-import ListLoader from './ListLoader';
 
-export { TableLoader, ListLoader };
+export { TableLoader };

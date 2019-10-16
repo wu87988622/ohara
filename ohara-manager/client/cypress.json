@@ -9,7 +9,5 @@
   "video": true,
   "requestTimeout": 30000,
   "defaultCommandTimeout": 20000,
-  "watchForFileChanges": false,
-  "viewportWidth": 1200,
-  "viewportHeight": 1000
+  "watchForFileChanges": false
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import AppWrapper from './AppWrapper';
-import Box from './Box';
+import Container from './Container';
 
-export { AppWrapper, Box };
+export default Container;
