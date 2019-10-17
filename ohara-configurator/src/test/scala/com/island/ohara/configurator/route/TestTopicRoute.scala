@@ -34,6 +34,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   private[this] val configurator = Configurator.builder.fake(1, 0).build()
 
+  private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -516,6 +517,20 @@ class TestTopicRoute extends OharaTest with Matchers {
     val topics = result(topicApi.query.brokerClusterKey(bkKey).execute())
     topics.size shouldBe 4
     topics.map(_.key) contains topic.key
+  }
+
+  @Test
+  def failToRunOnStoppedCluster(): Unit = {
+    val zookeeper = result(zookeeperApi.request.nodeNames(brokerClusterInfo.nodeNames).create())
+    val broker = result(
+      brokerApi.request.nodeNames(brokerClusterInfo.nodeNames).zookeeperClusterKey(zookeeper.key).create())
+    result(zookeeperApi.start(zookeeper.key))
+
+    val topic = result(topicApi.request.brokerClusterKey(broker.key).create())
+    an[IllegalArgumentException] should be thrownBy result(topicApi.start(topic.key))
+
+    result(brokerApi.start(broker.key))
+    result(topicApi.start(topic.key))
   }
 
   @After

@@ -34,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object ConnectorApi {
 
   val CONNECTORS_PREFIX_PATH: String = "connectors"
-  private[this] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
+  private[v0] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
   private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
   private[this] val TOPIC_NAMES_KEY: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
@@ -116,6 +116,7 @@ object ConnectorApi {
       .rejectKeyword(TOPIC_NAMES_KEY)
       // CONNECTOR_KEY_KEY is internal keyword
       .rejectKeyword(CONNECTOR_KEY_KEY)
+      .requireKey(WORKER_CLUSTER_KEY_KEY)
       .requireKey(CONNECTOR_CLASS_KEY)
       .valueChecker(
         COLUMNS_KEY, {

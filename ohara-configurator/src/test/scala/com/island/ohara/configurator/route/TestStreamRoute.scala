@@ -367,6 +367,7 @@ class TestStreamRoute extends OharaTest with Matchers {
   def testBrokerClusterKey(): Unit = {
     val nodeNames = result(bkApi.list()).head.nodeNames
     val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
+    result(zkApi.start(zk.key))
     val bk = result(
       bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
     result(bkApi.start(bk.key))
@@ -454,6 +455,7 @@ class TestStreamRoute extends OharaTest with Matchers {
   def testCustomTagsShouldExistAfterRunning(): Unit = {
     val nodeNames = result(bkApi.list()).head.nodeNames
     val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
+    result(zkApi.start(zk.key))
     val bk = result(
       bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
     result(bkApi.start(bk.key))

@@ -32,6 +32,7 @@ import scala.concurrent.{Await, Future}
 class TestConnectorRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
+  private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -489,6 +490,25 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .execute())
     connectors.size shouldBe 1
     connectors.head.key shouldBe connectorInfo.key
+  }
+
+  @Test
+  def failToRunOnStoppedCluster(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(bkKey).create())
+    result(topicApi.start(topic.key))
+    val worker = result(
+      workerApi.request.nodeNames(brokerClusterInfo.nodeNames).brokerClusterKey(brokerClusterInfo.key).create())
+
+    val connector = result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .workerClusterKey(worker.key)
+        .create())
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.key))
+
+    result(workerApi.start(worker.key))
+    result(connectorApi.start(connector.key))
   }
 
   @After

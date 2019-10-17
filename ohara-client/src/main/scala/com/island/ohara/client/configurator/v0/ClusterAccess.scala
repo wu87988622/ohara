@@ -17,6 +17,8 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.setting.ObjectKey
 import ClusterAccess.Query
+import spray.json.RootJsonFormat
+
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -24,9 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * @param prefixPath path to remote resource
   */
 private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <: ClusterUpdating, Res <: ClusterInfo](
-  prefixPath: String)(implicit rm1: OharaJsonFormat[Creation],
-                      rm2: OharaJsonFormat[Updating],
-                      rm3: OharaJsonFormat[Res])
+  prefixPath: String)(implicit rm1: RootJsonFormat[Creation], rm2: RootJsonFormat[Updating], rm3: RootJsonFormat[Res])
     extends Access[Creation, Updating, Res](prefixPath) {
 
   def query: Query[Res]

@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{PropGroups, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, PropGroups, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -145,7 +145,7 @@ class TestConnectorApi extends OharaTest with Matchers {
   def renderJsonWithConnectorClass(): Unit = {
     val className = CommonUtils.randomString()
     val response = ConnectorInfo(
-      settings = access.request.className(className).creation.settings,
+      settings = access.request.className(className).workerClusterKey(ObjectKey.of("g", "m")).creation.settings,
       status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -183,6 +183,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def parsePropGroups(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
+      |    "$WORKER_CLUSTER_KEY_KEY": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
       |    "columns": [
       |      {
@@ -205,6 +209,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def parseStaleConfigs(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
           |  {
+          |    "$WORKER_CLUSTER_KEY_KEY": {
+          |      "group": "g",
+          |      "name": "n"
+          |    },
           |    "name": "ftpsource",
           |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
           |    "$COLUMNS_KEY": [
@@ -253,7 +261,12 @@ class TestConnectorApi extends OharaTest with Matchers {
 
   @Test
   def ignoreClassNameOnCreation(): Unit = intercept[DeserializationException] {
-    ConnectorApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
+    ConnectorApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .workerClusterKey(ObjectKey.of("default", "name"))
+      .creation
   }.getMessage should include(CONNECTOR_CLASS_KEY)
 
   @Test
@@ -262,6 +275,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .className(CommonUtils.randomString())
+    .workerClusterKey(ObjectKey.of("default", "name"))
     .creation
     .name
     .length should not be 0
@@ -328,7 +342,13 @@ class TestConnectorApi extends OharaTest with Matchers {
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
     )
     val creation =
-      ConnectorApi.access.request.name(name).className(className).topicKeys(topicKeys).settings(map).creation
+      ConnectorApi.access.request
+        .name(name)
+        .className(className)
+        .topicKeys(topicKeys)
+        .settings(map)
+        .workerClusterKey(ObjectKey.of("g", "n"))
+        .creation
     creation.name shouldBe name
     creation.className shouldBe className
     creation.topicKeys shouldBe topicKeys
@@ -341,6 +361,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def testDefaultNumberOfTasks(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
+      |    "$WORKER_CLUSTER_KEY_KEY": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "name": "ftpsource",
       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
       |  }
@@ -354,6 +378,10 @@ class TestConnectorApi extends OharaTest with Matchers {
     val order = 1
     val creation = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                             |  {
+                                            |    "$WORKER_CLUSTER_KEY_KEY": {
+                                            |      "group": "g",
+                                            |      "name": "n"
+                                            |    },
                                             |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
                                             |    "$COLUMNS_KEY": [
                                             |      {
@@ -374,6 +402,10 @@ class TestConnectorApi extends OharaTest with Matchers {
 
     val creation2 = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                        |  {
+                                                                       |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                       |      "group": "g",
+                                                                       |      "name": "n"
+                                                                       |    },
                                                                        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                        |    "$COLUMNS_KEY": [
                                                                        |      {
@@ -396,6 +428,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def emptyNameForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                   |      "group": "g",
+                                                                                                   |      "name": "n"
+                                                                                                   |    },
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
@@ -411,6 +447,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def emptyNewNameForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                   |      "group": "g",
+                                                                                                   |      "name": "n"
+                                                                                                   |    },
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
@@ -427,6 +467,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def negativeOrderForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                         |  {
+                                                        |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                        |      "group": "g",
+                                                        |      "name": "n"
+                                                        |    },
                                                         |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                         |    "$COLUMNS_KEY": [
                                                         |      {
@@ -443,6 +487,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def duplicateOrderForCreatingColumns(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                   |      "group": "g",
+                                                                                                   |      "name": "n"
+                                                                                                   |    },
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
@@ -465,6 +513,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def emptyNameForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                         |  {
+                                                                                                        |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                        |      "group": "g",
+                                                                                                        |      "name": "n"
+                                                                                                        |    },
                                                                                                         |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                         |    "$COLUMNS_KEY": [
                                                                                                         |      {
@@ -480,6 +532,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def emptyNewNameForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                   |      "group": "g",
+                                                                                                   |      "name": "n"
+                                                                                                   |    },
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
@@ -496,6 +552,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def negativeOrderForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                  |  {
+                                                                                                 |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                 |      "group": "g",
+                                                                                                 |      "name": "n"
+                                                                                                 |    },
                                                                                                  |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                  |    "$COLUMNS_KEY": [
                                                                                                  |      {
@@ -512,6 +572,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def duplicateOrderForUpdatingColumns(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
                                                                                                    |  {
+                                                                                                   |    "$WORKER_CLUSTER_KEY_KEY": {
+                                                                                                   |      "group": "g",
+                                                                                                   |      "name": "n"
+                                                                                                   |    },
                                                                                                    |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
                                                                                                    |    "$COLUMNS_KEY": [
                                                                                                    |      {
@@ -539,6 +603,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def parseTags(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
+      |    "$WORKER_CLUSTER_KEY_KEY": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
       |    "tags": {
       |      "a": "bb",
@@ -554,6 +622,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def parseNullTags(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
+      |    "$WORKER_CLUSTER_KEY_KEY": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
       |  }
       |     """.stripMargin.parseJson).tags shouldBe Map.empty
@@ -562,6 +634,10 @@ class TestConnectorApi extends OharaTest with Matchers {
   def parseConnectorKey(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
        |  {
+       |    "$WORKER_CLUSTER_KEY_KEY": {
+       |      "group": "g",
+       |      "name": "n"
+       |    },
        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
        |    "$CONNECTOR_KEY_KEY": {
        |      "group": "g",
@@ -577,6 +653,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     .request
     .group("abc")
     .className(CommonUtils.randomString())
+    .workerClusterKey(ObjectKey.of("g", "n"))
     .creation
     .group shouldBe "abc"
 
@@ -586,16 +663,21 @@ class TestConnectorApi extends OharaTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .className(CommonUtils.randomString())
+    .workerClusterKey(ObjectKey.of("g", "n"))
     .creation
     .group shouldBe GROUP_DEFAULT
 
   @Test
   def rejectTopicKeyword(): Unit = intercept[DeserializationException] {
     CONNECTOR_CREATION_FORMAT.read(s"""
-                                      |{
-                                      |  "connector.class": "aa",
-                                      |  "topics": []
-                                      |}
+                                      |  {
+                                      |    "$WORKER_CLUSTER_KEY_KEY": {
+                                      |      "group": "g",
+                                      |      "name": "n"
+                                      |    },
+                                      |    "connector.class": "aa",
+                                      |    "topics": []
+                                      |  }
       """.stripMargin.parseJson)
   }.getMessage should include("illegal word")
 }

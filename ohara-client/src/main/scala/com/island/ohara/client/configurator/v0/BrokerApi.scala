@@ -79,7 +79,7 @@ object BrokerApi {
     def exporterPort: Int = settings.exporterPort.get
     def clientPort: Int = settings.clientPort.get
     def jmxPort: Int = settings.jmxPort.get
-    def zookeeperClusterKey: Option[ObjectKey] = settings.zookeeperClusterKey
+    def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
   }
 
   /**
@@ -97,6 +97,7 @@ object BrokerApi {
       .requireBindPort(EXPORTER_PORT_KEY)
       .nullToRandomPort(JMX_PORT_KEY)
       .requireBindPort(JMX_PORT_KEY)
+      .requireKey(ZOOKEEPER_CLUSTER_KEY_KEY)
       .refine
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
@@ -186,21 +187,14 @@ object BrokerApi {
     def exporterPort: Int = settings.exporterPort
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
-    def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
+    def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey
   }
 
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[BrokerClusterInfo] =
-    JsonRefiner[BrokerClusterInfo]
-      .format(new RootJsonFormat[BrokerClusterInfo] {
-        private[this] val format = jsonFormat6(BrokerClusterInfo)
-        override def read(json: JsValue): BrokerClusterInfo = format.read(json)
-        override def write(obj: BrokerClusterInfo): JsValue =
-          JsObject(noJsNull(format.write(obj).asJsObject.fields))
-      })
-      .refine
+  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat6(
+    BrokerClusterInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.

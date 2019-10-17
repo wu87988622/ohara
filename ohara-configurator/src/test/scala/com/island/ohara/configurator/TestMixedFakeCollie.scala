@@ -51,18 +51,6 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       // our collie demands that all "processes" should use same port.
       nodes.size shouldBe 1
 
-      // there is no zk cluster so we can't add bk cluster
-      an[IllegalArgumentException] should be thrownBy Await.result(
-        BrokerApi.access
-          .hostname(configurator.hostname)
-          .port(configurator.port)
-          .request
-          .name(CommonUtils.randomString(10))
-          .nodeNames(nodes.map(_.name).toSet)
-          .create(),
-        20 seconds
-      )
-
       val zk = Await.result(
         ZookeeperApi.access
           .hostname(configurator.hostname)

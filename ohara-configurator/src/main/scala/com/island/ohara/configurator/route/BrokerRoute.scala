@@ -19,6 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -28,74 +29,68 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {
 
-  private[this] def hookOfCreation(implicit zookeeperCollie: ZookeeperCollie,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
-    (creation: Creation) =>
-      creation.zookeeperClusterKey.map(Future.successful).getOrElse(CollieUtils.singleZookeeperCluster()).map { zkKey =>
+  private[this] def creationToClusterInfo(
+    creation: Creation)(implicit store: DataStore, executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+    store.exist[ZookeeperClusterInfo](creation.zookeeperClusterKey).map {
+      if (_)
         BrokerClusterInfo(
-          settings = BrokerApi.access.request.settings(creation.settings).zookeeperClusterKey(zkKey).creation.settings,
+          settings = creation.settings,
           aliveNodes = Set.empty,
           state = None,
           error = None,
           lastModified = CommonUtils.current(),
           topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
         )
+      else throw new IllegalArgumentException(s"zookeeper cluster:${creation.zookeeperClusterKey} does not exist")
     }
 
+  private[this] def hookOfCreation(implicit store: DataStore,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
+    creationToClusterInfo(_)
+
   private[this] def HookOfUpdating(
-    implicit zookeeperCollie: ZookeeperCollie,
-    serviceCollie: ServiceCollie,
+    implicit store: DataStore,
+    brokerCollie: BrokerCollie,
     executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, BrokerClusterInfo] =
-    (key: ObjectKey, update: Updating, previousOption: Option[BrokerClusterInfo]) =>
-      serviceCollie.brokerCollie
-        .clusters()
-        .flatMap { clusters =>
-          if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
-            throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
-          update.zookeeperClusterKey
-            .orElse(previousOption.map(_.zookeeperClusterKey))
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleZookeeperCluster())
+    (key: ObjectKey, updating: Updating, previousOption: Option[BrokerClusterInfo]) =>
+      if (previousOption.isEmpty) creationToClusterInfo(BrokerApi.access.request.settings(updating.settings).creation)
+      else {
+        brokerCollie.exist(key).flatMap {
+          if (_) throw new IllegalArgumentException(s"You cannot update property on non-stopped broker cluster: $key")
+          else // 1) fill the previous settings (if exists)
+            // 2) overwrite previous settings by updated settings
+            // 3) fill the ignored settings by creation
+            creationToClusterInfo(
+              BrokerApi.access.request
+                .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+                .settings(updating.settings)
+                // the key is not in update's settings so we have to add it to settings
+                .key(key)
+                .creation)
         }
-        .map { zkKey =>
-          // 1) fill the previous settings (if exists)
-          // 2) overwrite previous settings by updated settings
-          // 3) fill the ignored settings by creation
-          BrokerClusterInfo(
-            settings = BrokerApi.access.request
-              .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-              .settings(update.settings)
-              .zookeeperClusterKey(zkKey)
-              // the key is not in update's settings so we have to add it to settings
-              .name(key.name)
-              .group(key.group)
-              .creation
-              .settings,
-            aliveNodes = Set.empty,
-            state = None,
-            error = None,
-            lastModified = CommonUtils.current(),
-            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-          )
-      }
+    }
 
   private[this] def hookOfStart(implicit store: DataStore,
                                 meterCache: MeterCache,
+                                zookeeperCollie: ZookeeperCollie,
                                 brokerCollie: BrokerCollie,
                                 serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
       (for {
         bkInfo <- store.value[BrokerClusterInfo](key)
+        zks <- runningZookeeperClusters()
         bks <- runningBrokerClusters()
-      } yield (bkInfo, bks))
+      } yield (bkInfo, zks, bks))
         .flatMap {
-          case (brokerClusterInfo, runningBrokerClusters) =>
+          case (brokerClusterInfo, runningZookeeperClusters, runningBrokerClusters) =>
             val conflictBrokerClusters =
               runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
             if (conflictBrokerClusters.nonEmpty)
               throw new IllegalArgumentException(
                 s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}")
+            if (!runningZookeeperClusters.exists(_.key == brokerClusterInfo.zookeeperClusterKey))
+              throw new IllegalArgumentException(s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is not running")
             serviceCollie.brokerCollie.creator
               .settings(brokerClusterInfo.settings)
               .name(brokerClusterInfo.name)

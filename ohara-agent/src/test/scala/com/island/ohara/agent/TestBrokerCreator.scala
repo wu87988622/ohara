@@ -134,6 +134,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
+      .zookeeperClusterKey(ObjectKey.of("default", "name"))
       .create(),
     5 seconds
   )

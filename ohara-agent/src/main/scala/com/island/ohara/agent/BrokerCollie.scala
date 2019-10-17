@@ -73,7 +73,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
 
                 checkValue(container.imageName, creation.imageName)
                 check(BrokerApi.CLIENT_PORT_KEY, creation.clientPort.toString)
-                check(BrokerApi.ZOOKEEPER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(creation.zookeeperClusterKey.get))
+                check(BrokerApi.ZOOKEEPER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(creation.zookeeperClusterKey))
             }
             existNodes
         }
@@ -83,14 +83,14 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
             (existNodes,
              // find the nodes which have not run the services
              nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)),
-             zookeeperContainers(creation.zookeeperClusterKey.get))
+             zookeeperContainers(creation.zookeeperClusterKey))
         }
         .flatMap {
           case (existNodes, newNodes, zkContainers) =>
             zkContainers
               .flatMap(zkContainers => {
                 if (zkContainers.isEmpty)
-                  throw new IllegalArgumentException(s"zookeeper:${creation.zookeeperClusterKey.get} does not exist")
+                  throw new IllegalArgumentException(s"zookeeper:${creation.zookeeperClusterKey} does not exist")
                 if (newNodes.isEmpty) Future.successful(Seq.empty)
                 else {
                   val zookeepers = zkContainers

@@ -131,9 +131,9 @@ private[configurator] object TopicRoute {
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) => Future.traverse(topicInfos)(updateState)
 
-  private[this] def creationToTopicInfo(creation: Creation)(implicit brokerCollie: BrokerCollie,
+  private[this] def creationToTopicInfo(creation: Creation)(implicit store: DataStore,
                                                             executionContext: ExecutionContext): Future[TopicInfo] =
-    brokerCollie.exist(creation.brokerClusterKey).map {
+    store.exist[BrokerClusterInfo](creation.brokerClusterKey).map {
       if (_)
         TopicInfo(
           settings = TOPIC_CUSTOM_CONFIGS ++ creation.settings,
@@ -142,10 +142,10 @@ private[configurator] object TopicRoute {
           state = None,
           lastModified = CommonUtils.current()
         )
-      else throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} is not running")
+      else throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} does not exist")
     }
 
-  private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
+  private[this] def hookOfCreation(implicit store: DataStore,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     creationToTopicInfo(_)
 
@@ -157,6 +157,7 @@ private[configurator] object TopicRoute {
     (key: ObjectKey, update: Updating, previousOption: Option[TopicInfo]) =>
       if (previousOption.isEmpty) creationToTopicInfo(access.request.settings(update.settings).creation)
       else
+        // we have to check whether topic is running on previous cluster
         CollieUtils.topicAdmin(previousOption.get.brokerClusterKey).flatMap {
           case (_, client) =>
             client.topics().map(_.exists(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).flatMap {

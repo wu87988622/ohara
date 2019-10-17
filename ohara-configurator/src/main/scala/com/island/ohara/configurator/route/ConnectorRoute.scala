@@ -21,6 +21,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook._
@@ -32,10 +33,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def creationToConnectorInfo(creation: Creation)(
-    implicit workerCollie: WorkerCollie,
-    executionContext: ExecutionContext): Future[ConnectorInfo] =
-    workerCollie.exist(creation.workerClusterKey).map {
+  private[this] def creationToConnectorInfo(
+    creation: Creation)(implicit store: DataStore, executionContext: ExecutionContext): Future[ConnectorInfo] =
+    store.exist[WorkerClusterInfo](creation.workerClusterKey).map {
       if (_)
         ConnectorInfo(
           settings = creation.settings,
@@ -45,7 +45,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           metrics = Metrics.EMPTY,
           lastModified = CommonUtils.current()
         )
-      else throw new IllegalArgumentException(s"worker cluster:${creation.workerClusterKey} is not running")
+      else throw new IllegalArgumentException(s"worker cluster:${creation.workerClusterKey} does not exist")
     }
 
   private[this] def updateState(connectorDescription: ConnectorInfo)(implicit executionContext: ExecutionContext,
@@ -96,7 +96,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                meterCache: MeterCache): HookOfList[ConnectorInfo] =
     (connectorDescriptions: Seq[ConnectorInfo]) => Future.sequence(connectorDescriptions.map(updateState))
 
-  private[this] def hookOfCreation(implicit workerCollie: WorkerCollie,
+  private[this] def hookOfCreation(implicit store: DataStore,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorInfo] =
     creationToConnectorInfo(_)
 
@@ -107,6 +107,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     (key: ObjectKey, updating: Updating, previousOption: Option[ConnectorInfo]) =>
       if (previousOption.isEmpty) creationToConnectorInfo(access.request.settings(updating.settings).creation)
       else {
+        // we have to check whether connector is running on previous cluster
         CollieUtils.workerClient(previousOption.get.workerClusterKey).flatMap {
           case (cluster, client) =>
             client
@@ -167,14 +168,15 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         CollieUtils
           .both(connectorDesc.workerClusterKey)
           .flatMap {
-            case (_, topicAdmin, cluster, wkClient) =>
-              topicAdmin.topics().map(topics => (cluster, wkClient, topics))
+            case (brokerClusterInfo, topicAdmin, _, wkClient) =>
+              topicAdmin.topics().map(topics => (brokerClusterInfo, wkClient, topics))
           }
           .flatMap {
-            case (_, wkClient, topicInfos) =>
+            case (brokerClusterInfo, wkClient, topicInfos) =>
               connectorDesc.topicKeys.foreach { key =>
                 if (!topicInfos.exists(_.name == key.topicNameOnKafka()))
-                  throw new NoSuchElementException(s"topic:$key is not running")
+                  throw new NoSuchElementException(
+                    s"topic:$key is not running on broker cluster:${brokerClusterInfo.key}")
               }
               if (connectorDesc.topicKeys.isEmpty) throw new IllegalArgumentException("topics are required")
               wkClient.exist(connectorDesc.key).flatMap {
