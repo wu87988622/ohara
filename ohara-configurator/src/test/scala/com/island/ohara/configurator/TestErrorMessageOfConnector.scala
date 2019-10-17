@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -34,6 +34,9 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -53,6 +56,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .setting("you_should_fail", JsBoolean(true))
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     result(connectorApi.start(connector.key))
@@ -106,6 +110,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     result(connectorApi.start(connector.key))

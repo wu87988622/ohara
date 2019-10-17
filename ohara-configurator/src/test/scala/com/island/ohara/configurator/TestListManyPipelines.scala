@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -29,6 +29,9 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
+
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
@@ -55,6 +58,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
         .className("com.island.ohara.connector.perf.PerfSource")
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     val pipelines = (0 until numberOfPipelines).map { _ =>

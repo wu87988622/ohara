@@ -62,7 +62,7 @@ class TestConnectorApi extends OharaTest with Matchers {
 
     creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
-    creation.workerClusterKey.get.name() shouldBe workerClusterName
+    creation.workerClusterKey.name() shouldBe workerClusterName
     creation.className shouldBe className
     creation.columns shouldBe Seq.empty
     creation.topicKeys shouldBe topicKeys
@@ -95,7 +95,7 @@ class TestConnectorApi extends OharaTest with Matchers {
        |}""".stripMargin.parseJson)
     creation2.group shouldBe group
     creation2.name shouldBe name
-    creation2.workerClusterKey.get.name() shouldBe workerClusterName
+    creation2.workerClusterKey.name() shouldBe workerClusterName
     creation2.className shouldBe className
     creation2.columns shouldBe Seq(column)
     creation.topicKeys shouldBe topicKeys

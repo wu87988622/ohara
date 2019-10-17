@@ -174,10 +174,8 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           entity(as[Creation])(
             req =>
               complete(
-                req.workerClusterKey
-                  .map(Future.successful)
-                  .getOrElse(CollieUtils.singleWorkerCluster())
-                  .flatMap(CollieUtils.workerClient)
+                CollieUtils
+                  .workerClient(req.workerClusterKey)
                   .flatMap {
                     case (cluster, workerClient) =>
                       workerClient

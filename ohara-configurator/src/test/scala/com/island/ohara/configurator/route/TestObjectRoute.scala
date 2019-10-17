@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, ObjectApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, ObjectApi, TopicApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -37,6 +37,9 @@ class TestObjectRoute extends OharaTest with Matchers {
   private[this] val initialSize = result(objectApi.list()).size
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
   @Test
   def testTopic(): Unit = {
@@ -83,6 +86,7 @@ class TestObjectRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.ftp.FtpSink")
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     var objs = result(objectApi.list())
@@ -97,6 +101,7 @@ class TestObjectRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.ftp.FtpSink")
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     objs = result(objectApi.list())
@@ -115,6 +120,7 @@ class TestObjectRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.ftp.FtpSink")
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     val topic = result(

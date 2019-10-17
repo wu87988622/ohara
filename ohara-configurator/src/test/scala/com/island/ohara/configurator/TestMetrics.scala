@@ -17,7 +17,15 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, FileInfoApi, PipelineApi, StreamApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{
+  BrokerApi,
+  ConnectorApi,
+  FileInfoApi,
+  PipelineApi,
+  StreamApi,
+  TopicApi,
+  WorkerApi
+}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Producer
@@ -40,6 +48,9 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
@@ -104,6 +115,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     sink.metrics.meters.size shouldBe 0
@@ -143,6 +155,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -184,6 +197,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .settings(Map("perf.batch" -> JsNumber(1),
                       "perf.frequence" -> JsString(java.time.Duration.ofSeconds(1).toString)))
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)

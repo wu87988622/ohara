@@ -93,31 +93,6 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .verify())
 
   @Test
-  def ignoreWorkerCluster(): Unit = {
-    val response = result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .connectorRequest
-        .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
-        .numberOfTasks(2)
-        .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-        .verify())
-    response.className.get() shouldBe classOf[DumbSink].getName
-    response.settings().size() should not be 0
-    response.numberOfTasks().get shouldBe 2
-    response.topicNamesOnKafka().size() shouldBe 1
-    response.author().isPresent shouldBe true
-    response.version().isPresent shouldBe true
-    response.revision().isPresent shouldBe true
-    // configurator auto-match a worker cluster for this validation.
-    response.workerClusterKey().get shouldBe wkCluster.key
-    response.connectorType().isPresent shouldBe true
-    response.errorCount() shouldBe 0
-  }
-
-  @Test
   def ignoreNumberOfTasks(): Unit = {
     val response = result(
       ValidationApi.access

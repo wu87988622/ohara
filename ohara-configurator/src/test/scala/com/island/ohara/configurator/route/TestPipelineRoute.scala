@@ -46,6 +46,9 @@ class TestPipelineRoute extends OharaTest with Matchers {
 
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testFlowAndObjects(): Unit = {
@@ -59,6 +62,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
     result(connectorApi.start(connector.key))
 
@@ -176,6 +180,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
@@ -198,6 +203,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     result(connectorApi.start(connector.key))
@@ -225,6 +231,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .className(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
     result(connectorApi.start(connector.key))
 
@@ -286,6 +293,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     val pipeline = result(
@@ -361,8 +369,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(className)
-        // unknown worker
-        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
+        .workerClusterKey(workerClusterInfo.key)
         .create())
     val pipeline = result(pipelineApi.request.flow(Flow(connector.key, Set(topic.key))).create())
     pipeline.objects.size shouldBe 2
@@ -374,7 +381,11 @@ class TestPipelineRoute extends OharaTest with Matchers {
     val topic = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
     val connector = result(
-      connectorApi.request.name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .workerClusterKey(workerClusterInfo.key)
+        .create())
     val pipeline = result(
       pipelineApi.request
       // the first flow contains the topic in "to"

@@ -142,7 +142,7 @@ private[configurator] object TopicRoute {
           state = None,
           lastModified = CommonUtils.current()
         )
-      else throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} does not exist")
+      else throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} is not running")
     }
 
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
@@ -158,31 +158,25 @@ private[configurator] object TopicRoute {
       if (previousOption.isEmpty) creationToTopicInfo(access.request.settings(update.settings).creation)
       else
         CollieUtils.topicAdmin(previousOption.get.brokerClusterKey).flatMap {
-          case (cluster, client) =>
-            client.topics().map(_.find(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).map {
-              topicFromKafkaOption =>
-                if (topicFromKafkaOption.isDefined)
-                  throw new IllegalStateException(
-                    s"the topic:$key is working now. Please stop it before updating the properties")
+          case (_, client) =>
+            client.topics().map(_.exists(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).flatMap {
+              try if (_)
+                throw new IllegalStateException(
+                  s"the topic:$key is working now. Please stop it before updating the properties")
+              else {
+
                 // 1) fill the previous settings (if exists)
                 // 2) overwrite previous settings by updated settings
                 // 3) fill the ignored settings by creation
-                try TopicInfo(
-                  settings = access.request
+                creationToTopicInfo(
+                  access.request
                     .settings(previousOption.map(_.settings).getOrElse(Map.empty))
                     .settings(update.settings)
-                    .brokerClusterKey(cluster.key)
                     // the key is not in update's settings so we have to add it to settings
                     .name(key.name)
                     .group(key.group)
-                    .creation
-                    .settings,
-                  partitionInfos = Seq.empty,
-                  metrics = Metrics.EMPTY,
-                  state = None,
-                  lastModified = CommonUtils.current()
-                )
-                finally Releasable.close(client)
+                    .creation)
+              } finally Releasable.close(client)
             }
       }
 

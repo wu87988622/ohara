@@ -86,7 +86,7 @@ object ConnectorApi {
     def className: String = settings.className.get
     def columns: Seq[Column] = settings.columns.get
     def numberOfTasks: Int = settings.numberOfTasks.get
-    def workerClusterKey: Option[ObjectKey] = settings.workerClusterKey
+    def workerClusterKey: ObjectKey = settings.workerClusterKey.get
     def topicKeys: Set[TopicKey] = settings.topicKeys.get
 
     override def group: String = settings.group.get
@@ -221,7 +221,7 @@ object ConnectorApi {
 
     def columns: Seq[Column] = settings.columns
     def numberOfTasks: Int = settings.numberOfTasks
-    def workerClusterKey: ObjectKey = settings.workerClusterKey.get
+    def workerClusterKey: ObjectKey = settings.workerClusterKey
     def topicKeys: Set[TopicKey] = settings.topicKeys
     override def tags: Map[String, JsValue] = settings.tags
   }

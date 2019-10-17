@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -41,6 +41,9 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
 
   private[this] def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), java.time.Duration.ofSeconds(20))
 
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+
   @Test
   def testNormalCase(): Unit = {
     val topic = result(
@@ -56,6 +59,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     // test idempotent start
@@ -107,6 +111,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
     // test start
     result(topicApi.start(topic.key))
@@ -151,6 +156,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
     // test start
     result(topicApi.start(topic.key))
@@ -183,6 +189,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
         .create())
 
     result(topicApi.start(topic.key))

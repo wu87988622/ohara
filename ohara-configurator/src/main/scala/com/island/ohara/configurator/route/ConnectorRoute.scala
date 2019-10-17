@@ -32,15 +32,21 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(request: Creation) =
-    ConnectorInfo(
-      settings = request.settings,
-      // we don't need to fetch connector from kafka since it has not existed in kafka.
-      status = None,
-      tasksStatus = Seq.empty,
-      metrics = Metrics.EMPTY,
-      lastModified = CommonUtils.current()
-    )
+  private[this] def creationToConnectorInfo(creation: Creation)(
+    implicit workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[ConnectorInfo] =
+    workerCollie.exist(creation.workerClusterKey).map {
+      if (_)
+        ConnectorInfo(
+          settings = creation.settings,
+          // we don't need to fetch connector from kafka since it has not existed in kafka.
+          status = None,
+          tasksStatus = Seq.empty,
+          metrics = Metrics.EMPTY,
+          lastModified = CommonUtils.current()
+        )
+      else throw new IllegalArgumentException(s"worker cluster:${creation.workerClusterKey} is not running")
+    }
 
   private[this] def updateState(connectorDescription: ConnectorInfo)(implicit executionContext: ExecutionContext,
                                                                      workerCollie: WorkerCollie,
@@ -92,50 +98,39 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] def hookOfCreation(implicit workerCollie: WorkerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorInfo] =
-    (creation: Creation) =>
-      creation.workerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleWorkerCluster()).map { key =>
-        toRes(new Creation(access.request.settings(creation.settings).workerClusterKey(key).creation.settings))
-    }
+    creationToConnectorInfo(_)
 
   private[this] def HookOfUpdating(implicit workerCollie: WorkerCollie,
                                    store: DataStore,
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfUpdating[Creation, Updating, ConnectorInfo] =
-    (key: ObjectKey, update: Updating, previous: Option[ConnectorInfo]) =>
-      // 1) find the connector (the connector may be nonexistent)
-      previous
-        .map { desc =>
-          CollieUtils.workerClient(desc.workerClusterKey).flatMap {
-            case (_, client) =>
-              client.activeConnectors().map(_.find(_ == desc.key.connectorNameOnKafka()))
-          }
+    (key: ObjectKey, updating: Updating, previousOption: Option[ConnectorInfo]) =>
+      if (previousOption.isEmpty) creationToConnectorInfo(access.request.settings(updating.settings).creation)
+      else {
+        CollieUtils.workerClient(previousOption.get.workerClusterKey).flatMap {
+          case (cluster, client) =>
+            client
+              .activeConnectors()
+              .map(_.contains(ConnectorKey.of(key.group(), key.name()).connectorNameOnKafka()))
+              .flatMap {
+                if (_)
+                  throw new IllegalStateException(
+                    "the connector is working now. Please stop it before updating the properties")
+                else
+                  // 1) fill the previous settings (if exists)
+                  // 2) overwrite previous settings by updated settings
+                  // 3) fill the ignored settings by creation
+                  creationToConnectorInfo(
+                    access.request
+                      .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+                      .settings(updating.settings)
+                      // the key is not in update's settings so we have to add it to settings
+                      .name(key.name)
+                      .group(key.group)
+                      .creation)
+              }
         }
-        .getOrElse(Future.successful(None))
-        .flatMap { connectorOnKafkaOption =>
-          // 2) throw exception if previous connector exist and is working
-          if (connectorOnKafkaOption.isDefined)
-            throw new IllegalStateException(
-              "the connector is working now. Please stop it before updating the properties")
-          // 3) locate the correct worker cluster name
-          update.workerClusterKey
-            .orElse(previous.map(_.workerClusterKey))
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleWorkerCluster())
-        }
-        .map { clusterName =>
-          toRes(
-            // 1) fill the previous settings (if exists)
-            // 2) overwrite previous settings by updated settings
-            // 3) fill the ignored settings by creation
-            access.request
-              .settings(previous.map(_.settings).getOrElse(Map.empty))
-              .settings(update.settings)
-              // the key is not in update's settings so we have to add it to settings
-              .name(key.name)
-              .group(key.group)
-              .workerClusterKey(clusterName)
-              .creation)
-      }
+    }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      meterCache: MeterCache,
