@@ -41,47 +41,42 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
     path(RDB_PREFIX_PATH) {
       post {
         entity(as[RdbQuery]) { query =>
-          complete(
-            query.workerClusterKey
-              .map(Future.successful)
-              .getOrElse(CollieUtils.singleWorkerCluster())
-              .flatMap(CollieUtils.both)
-              .flatMap {
-                case (_, topicAdmin, workerCluster, workerClient) =>
-                  workerClient match {
-                    case _: FakeWorkerClient =>
-                      val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
-                      try Future.successful(RdbInfo(
-                        client.databaseType,
-                        client.tableQuery
-                          .catalog(query.catalogPattern.orNull)
-                          .schema(query.schemaPattern.orNull)
-                          .tableName(query.tableName.orNull)
-                          .execute()
-                      ))
-                      finally client.close()
-                    case _ =>
-                      ValidationUtils
-                        .run(
-                          workerClient,
-                          topicAdmin,
-                          RdbValidation(
-                            url = query.url,
-                            user = query.user,
-                            password = query.password,
-                            workerClusterKey = workerCluster.key
-                          ),
-                          1
-                        )
-                        .map { reports =>
-                          if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
-                          reports
-                            .find(_.rdbInfo.isDefined)
-                            .map(_.rdbInfo.get)
-                            .getOrElse(throw new IllegalStateException("failed to query table via ohara.Validator"))
-                        }
-                  }
-              })
+          complete(CollieUtils.both(query.workerClusterKey).flatMap {
+            case (_, topicAdmin, workerCluster, workerClient) =>
+              workerClient match {
+                case _: FakeWorkerClient =>
+                  val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
+                  try Future.successful(RdbInfo(
+                    client.databaseType,
+                    client.tableQuery
+                      .catalog(query.catalogPattern.orNull)
+                      .schema(query.schemaPattern.orNull)
+                      .tableName(query.tableName.orNull)
+                      .execute()
+                  ))
+                  finally client.close()
+                case _ =>
+                  ValidationUtils
+                    .run(
+                      workerClient,
+                      topicAdmin,
+                      RdbValidation(
+                        url = query.url,
+                        user = query.user,
+                        password = query.password,
+                        workerClusterKey = workerCluster.key
+                      ),
+                      1
+                    )
+                    .map { reports =>
+                      if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
+                      reports
+                        .find(_.rdbInfo.isDefined)
+                        .map(_.rdbInfo.get)
+                        .getOrElse(throw new IllegalStateException("failed to query table via ohara.Validator"))
+                    }
+              }
+          })
         }
       }
     }

@@ -29,6 +29,7 @@ class TestQueryApi extends OharaTest with Matchers {
     val url = CommonUtils.randomString(10)
     val user = CommonUtils.randomString(10)
     val password = CommonUtils.randomString(10)
+    val workerClusterKey = ObjectKey.of("default", "wk")
     val query = QueryApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
@@ -36,12 +37,13 @@ class TestQueryApi extends OharaTest with Matchers {
       .jdbcUrl(url)
       .user(user)
       .password(password)
+      .workerClusterKey(workerClusterKey)
       .query
 
     query.url shouldBe url
     query.user shouldBe user
     query.password shouldBe password
-    query.workerClusterKey shouldBe None
+    query.workerClusterKey shouldBe workerClusterKey
     query.catalogPattern shouldBe None
     query.schemaPattern shouldBe None
     query.tableName shouldBe None
@@ -72,7 +74,7 @@ class TestQueryApi extends OharaTest with Matchers {
     query.url shouldBe url
     query.user shouldBe user
     query.password shouldBe password
-    query.workerClusterKey.get shouldBe workerClusterKey
+    query.workerClusterKey shouldBe workerClusterKey
     query.catalogPattern.get shouldBe catalogPattern
     query.schemaPattern.get shouldBe schemaPattern
     query.tableName.get shouldBe tableName
@@ -174,26 +176,10 @@ class TestQueryApi extends OharaTest with Matchers {
     query.url shouldBe url
     query.user shouldBe user
     query.password shouldBe password
-    query.workerClusterKey.get.name() shouldBe workerClusterName
+    query.workerClusterKey.name() shouldBe workerClusterName
     query.catalogPattern.get shouldBe catalogPattern
     query.schemaPattern.get shouldBe schemaPattern
     query.tableName.get shouldBe tableName
-
-    val query2 = QueryApi.RDB_QUERY_JSON_FORMAT.read(s"""
-                                                       |{
-                                                       |  "url": "$url",
-                                                       |  "user": "$user",
-                                                       |  "password": "$password"
-                                                       |}
-     """.stripMargin.parseJson)
-
-    query2.url shouldBe url
-    query2.user shouldBe user
-    query2.password shouldBe password
-    query2.workerClusterKey shouldBe None
-    query2.catalogPattern shouldBe None
-    query2.schemaPattern shouldBe None
-    query2.tableName shouldBe None
   }
 
   @Test

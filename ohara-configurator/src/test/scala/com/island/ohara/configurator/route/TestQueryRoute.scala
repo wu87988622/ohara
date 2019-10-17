@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.QueryApi
+import com.island.ohara.client.configurator.v0.{QueryApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
@@ -35,6 +35,9 @@ class TestQueryRoute extends OharaTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
+  private[this] val workerClusterInfo = result(
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+
   @Test
   def testQueryDb(): Unit = {
     val tableName = CommonUtils.randomString(10)
@@ -48,6 +51,7 @@ class TestQueryRoute extends OharaTest with Matchers {
           .jdbcUrl(db.url())
           .user(db.user())
           .password(db.password())
+          .workerClusterKey(workerClusterInfo.key)
           .query())
       r.name shouldBe "mysql"
       r.tables.isEmpty shouldBe true
@@ -74,6 +78,7 @@ class TestQueryRoute extends OharaTest with Matchers {
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
+            .workerClusterKey(workerClusterInfo.key)
             .query()))
 
       verify(
@@ -87,6 +92,7 @@ class TestQueryRoute extends OharaTest with Matchers {
             .password(db.password())
             .catalogPattern(db.databaseName)
             .tableName(tableName)
+            .workerClusterKey(workerClusterInfo.key)
             .query()))
       dbClient.dropTable(tableName)
     } finally dbClient.close()

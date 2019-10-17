@@ -152,10 +152,6 @@ Example Response
       }
     }
 
-  .. note::
-    Normally, you should define the "workerClusterKey" for your connector. However, Ohara Configurator will pick up a
-    worker cluster if the field is ignored and 2) there is only one running worker cluster in backend.
-
 update the settings of connector
 --------------------------------
 

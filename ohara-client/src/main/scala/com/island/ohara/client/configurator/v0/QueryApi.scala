@@ -39,7 +39,7 @@ object QueryApi {
 
   final case class RdbQuery private[QueryApi] (url: String,
                                                user: String,
-                                               workerClusterKey: Option[ObjectKey],
+                                               workerClusterKey: ObjectKey,
                                                password: String,
                                                catalogPattern: Option[String],
                                                schemaPattern: Option[String],
@@ -132,7 +132,7 @@ object QueryApi {
         url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        workerClusterKey = Option(workerClusterKey),
+        workerClusterKey = Objects.requireNonNull(workerClusterKey),
         catalogPattern = Option(catalogPattern).map(CommonUtils.requireNonEmpty),
         schemaPattern = Option(schemaPattern).map(CommonUtils.requireNonEmpty),
         tableName = Option(tableName).map(CommonUtils.requireNonEmpty)

@@ -147,9 +147,7 @@ public final class ConnectorDefUtils {
           .displayName("worker cluster")
           .key("workerClusterKey")
           .valueType(Type.OBJECT_KEY)
-          .documentation(
-              "the cluster name of running this connector."
-                  + "If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you")
+          .documentation("the cluster name of running this connector.")
           .reference(Reference.WORKER_CLUSTER)
           .group(CORE_GROUP)
           .optional()
