@@ -124,7 +124,6 @@ Example Response
           "clusterKeys": []
         }
       ],
-      "name": "node00",
       "hostname": "node00",
       "lastModified": 1569569857613,
       "tags": {},
@@ -187,7 +186,6 @@ Example Response
           "clusterKeys": []
         }
       ],
-      "name": "node00",
       "hostname": "node00",
       "lastModified": 1569569857613,
       "tags": {},
@@ -230,7 +228,6 @@ Example Response
             "clusterKeys": []
           }
         ],
-        "name": "node00",
         "hostname": "node00",
         "lastModified": 1569569857613,
         "tags": {},
@@ -289,7 +286,6 @@ Example Response
           "clusterKeys": []
         }
       ],
-      "name": "node00",
       "hostname": "node00",
       "lastModified": 1569569857613,
       "tags": {},

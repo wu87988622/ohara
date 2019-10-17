@@ -23,7 +23,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
@@ -79,19 +79,10 @@ object NodeApi {
       .withLengthLimit(LIMIT_OF_HOSTNAME_LENGTH)
       .toRefiner
       .nullToEmptyObject(TAGS_KEY)
-      .nullToAnotherValueOfKey("hostname", "name")
       .refine
 
   case class NodeService(name: String, clusterKeys: Seq[ObjectKey])
-  implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = new RootJsonFormat[NodeService] {
-    private[this] val format = jsonFormat2(NodeService)
-    override def read(json: JsValue): NodeService = format.read(json)
-    override def write(obj: NodeService): JsValue = JsObject(
-      format.write(obj).asJsObject.fields +
-        // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
-        ("clusterNames" -> JsArray(obj.clusterKeys.map(_.name()).map(JsString(_)).toVector))
-    )
-  }
+  implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
 
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
@@ -115,16 +106,7 @@ object NodeApi {
     override def kind: String = "node"
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = new RootJsonFormat[Node] {
-    private[this] val format = jsonFormat8(Node)
-    override def read(json: JsValue): Node = format.read(json)
-
-    // TODO: remove name from this object ... by chia
-    override def write(obj: Node): JsValue = {
-      val json = format.write(obj).asJsObject
-      json.copy(fields = json.fields ++ Map("name" -> JsString(obj.hostname)))
-    }
-  }
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat8(Node)
 
   /**
     * used to generate the payload and url for POST/PUT request.
