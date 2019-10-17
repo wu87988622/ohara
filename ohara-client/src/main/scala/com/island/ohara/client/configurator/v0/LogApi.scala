@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,26 +27,10 @@ object LogApi {
   val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
   case class NodeLog(hostname: String, value: String)
-  implicit val NODE_LOG_FORMAT: RootJsonFormat[NodeLog] = new RootJsonFormat[NodeLog] {
-    private[this] val format = jsonFormat2(NodeLog)
-    override def read(json: JsValue): NodeLog = format.read(json)
-    override def write(obj: NodeLog): JsValue = JsObject(
-      format.write(obj).asJsObject.fields +
-        // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
-        ("name" -> JsString(obj.hostname))
-    )
-  }
+  implicit val NODE_LOG_FORMAT: RootJsonFormat[NodeLog] = jsonFormat2(NodeLog)
 
   case class ClusterLog(clusterKey: ObjectKey, logs: Seq[NodeLog])
-  implicit val CLUSTER_LOG_FORMAT: RootJsonFormat[ClusterLog] = new RootJsonFormat[ClusterLog] {
-    private[this] val format = jsonFormat2(ClusterLog)
-    override def read(json: JsValue): ClusterLog = format.read(json)
-    override def write(obj: ClusterLog): JsValue = JsObject(
-      format.write(obj).asJsObject.fields +
-        // TODO: remove this stale field (see https://github.com/oharastream/ohara/issues/2769)
-        ("name" -> JsString(obj.clusterKey.name()))
-    )
-  }
+  implicit val CLUSTER_LOG_FORMAT: RootJsonFormat[ClusterLog] = jsonFormat2(ClusterLog)
 
   class Access extends BasicAccess(LOG_PREFIX_PATH) {
 
