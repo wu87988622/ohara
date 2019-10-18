@@ -19,7 +19,6 @@ const chalk = require('chalk');
 const axios = require('axios');
 const { isNumber } = require('lodash');
 
-const getProjectVersion = require('./getProjectVersion');
 const utils = require('./commonUtils');
 
 /* eslint-disable no-process-exit, no-console */
@@ -152,8 +151,7 @@ const getConfig = () => {
       })
       .help()
       .alias('help', 'h')
-      .version(getProjectVersion())
-      .alias('version', 'v')
+      .version(false) // Disable version info, see https://github.com/oharastream/ohara/issues/1892
       .check(argv => {
         const { configurator, port } = argv;
         validateUrl(configurator);
