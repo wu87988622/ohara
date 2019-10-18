@@ -14,18 +14,50 @@
  * limitations under the License.
  */
 
-import pink from '@material-ui/core/colors/pink';
-import amber from '@material-ui/core/colors/amber';
 import { createMuiTheme } from '@material-ui/core/styles';
 
 const MuiTheme = createMuiTheme({
   palette: {
     primary: {
+      50: '#E2F5FD',
+      100: '#B6E5FA',
+      200: '#87D4F6',
+      300: '#5DC3F2',
+      400: '#44B6EF',
+      500: '#36A9EC',
+      600: '#329BDD',
+      700: '#2D88C9',
+      800: '#2977B5',
+      900: '#215792',
       main: '#329BDD',
-      highlight: '#E3F2FB',
+      light: '#72CCFF',
+      dark: '#006DAB',
+      contrastText: '#FFFFFF',
     },
-    secondary: pink,
-    warning: amber,
+    success: {
+      main: '#00D68F',
+      light: '#61FFC0',
+      dark: '#00A361',
+      contrastText: '#FFFFFF',
+    },
+    info: {
+      main: '#329BDD',
+      light: '#72CCFF',
+      dark: '#006DAB',
+      contrastText: '#FFFFFF',
+    },
+    warning: {
+      main: '#FFAA00',
+      light: '#FFDC4A',
+      dark: '#C67B00',
+      contrastText: '#000000',
+    },
+    error: {
+      main: '#FF3D71',
+      light: '#FF769F',
+      dark: '#C60046',
+      contrastText: '#000000',
+    },
   },
 });
 

@@ -16,33 +16,25 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { create } from 'jss';
-import { StylesProvider, jssPreset } from '@material-ui/styles';
 
 import GlobalStyle from 'theme/globalStyle';
-
-//We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
-const jss = create({
-  ...jssPreset(),
-  insertionPoint: document.getElementById('jss-insertion-point'),
-});
+import Theme from 'components/Theme';
 
 const App = () => {
   return (
-    <StylesProvider jss={jss}>
-      <Router>
-        <React.Fragment>
-          <GlobalStyle />
-          <Switch>
-            <Route
-              exact
-              path="/"
-              component={() => <h1>Hello ohara manager!</h1>}
-            />
-          </Switch>
-        </React.Fragment>
-      </Router>
-    </StylesProvider>
+    <Router>
+      <>
+        <GlobalStyle />
+        <Switch>
+          <Route
+            exact
+            path="/"
+            component={() => <h1>Hello ohara manager!</h1>}
+          />
+          <Route exact path="/theme" component={Theme} />
+        </Switch>
+      </>
+    </Router>
   );
 };
 

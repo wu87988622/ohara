@@ -20,7 +20,6 @@ import MuiButton from '@material-ui/core/Button';
 
 const Button = props => {
   const {
-    text,
     className,
     component,
     color = 'primary',
@@ -29,6 +28,7 @@ const Button = props => {
     onClick,
     testId,
     disabled = false,
+    children,
   } = props;
 
   return (
@@ -42,13 +42,13 @@ const Button = props => {
       data-testid={testId}
       disabled={disabled}
     >
-      {text}
+      {children}
     </MuiButton>
   );
 };
 
 Button.propTypes = {
-  text: PropTypes.string.isRequired,
+  children: PropTypes.any.isRequired,
   size: PropTypes.string,
   className: PropTypes.string,
   color: PropTypes.string,

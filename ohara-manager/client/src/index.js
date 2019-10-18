@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import App from 'App';
 import { ThemeProvider } from 'styled-components';
-import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
+import {
+  ThemeProvider as MuiThemeProvider,
+  StylesProvider,
+} from '@material-ui/styles';
 
 import MuiTheme from './theme/muiTheme';
 
 ReactDOM.render(
-  <MuiThemeProvider theme={MuiTheme}>
-    <ThemeProvider theme={MuiTheme}>
-      <App />
-    </ThemeProvider>
-  </MuiThemeProvider>,
+  <StylesProvider injectFirst>
+    <MuiThemeProvider theme={MuiTheme}>
+      <ThemeProvider theme={MuiTheme}>
+        <StrictMode>
+          <App />
+        </StrictMode>
+      </ThemeProvider>
+    </MuiThemeProvider>
+  </StylesProvider>,
   document.getElementById('root'),
 );
