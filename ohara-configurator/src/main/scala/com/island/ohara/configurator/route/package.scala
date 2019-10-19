@@ -103,8 +103,8 @@ package object route {
                                                 metricsKey: Option[String],
                                                 hookOfCreation: HookOfCreation[Creation, Cluster],
                                                 hookOfUpdating: HookOfUpdating[Updating, Cluster],
-                                                hookOfStart: HookOfAction,
-                                                hookBeforeStop: HookOfAction)(
+                                                hookOfStart: HookOfAction[Cluster],
+                                                hookBeforeStop: HookOfAction[Cluster])(
     implicit store: DataStore,
     meterCache: MeterCache,
     collie: Collie[Status],
@@ -137,45 +137,41 @@ package object route {
       })
       .hookOfPutAction(
         START_COMMAND,
-        (key: ObjectKey, subName: String, params: Map[String, String]) =>
-          store.value[Cluster](key).flatMap { req =>
-            collie.exist(key).flatMap {
-              if (_) {
-                // this cluster already exists, return OK
-                Future.unit
-              } else {
-                checkResourcesConflict(dataCollie, req).flatMap(_ => hookOfStart(key, subName, params))
-              }
-            }
+        (clusterInfo: Cluster, subName: String, params: Map[String, String]) =>
+          collie.exist(clusterInfo.key).flatMap {
+            if (_) {
+              // this cluster already exists, return OK
+              Future.unit
+            } else
+              checkResourcesConflict(dataCollie, clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
         }
       )
       .hookOfPutAction(
         STOP_COMMAND,
-        (key: ObjectKey, subName: String, params: Map[String, String]) =>
-          hookBeforeStop(key, subName, params).flatMap(
+        (clusterInfo: Cluster, subName: String, params: Map[String, String]) =>
+          hookBeforeStop(clusterInfo, subName, params).flatMap(
             _ =>
               collie
                 .clusters()
                 .flatMap { clusters =>
-                  if (!clusters.map(_._1.key).exists(_ == key)) Future.unit
-                  else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(key)
-                  else collie.remove(key)
+                  if (!clusters.map(_._1.key).exists(_ == clusterInfo.key)) Future.unit
+                  else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
+                  else collie.remove(clusterInfo.key)
                 }
                 .flatMap(_ => Future.unit)
         )
       )
-      .hookOfFinalPutAction((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
-        store.value[Cluster](key).flatMap { cluster =>
-          // A BIT hard-code here to reuse the checker :(
-          rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))
-          collie.creator
-            .settings(cluster.settings)
-            .nodeName(nodeName)
-            .create()
-            // we have to update the nodeNames of stored cluster info. Otherwise, the following Get/List request
-            // will see the out-of-date nodeNames
-            .flatMap(_ => store.add(cluster.newNodeNames(cluster.nodeNames + nodeName)))
-            .flatMap(_ => Future.unit)
+      .hookOfFinalPutAction((clusterInfo: Cluster, nodeName: String, _: Map[String, String]) => {
+        // A BIT hard-code here to reuse the checker :(
+        rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))
+        collie.creator
+          .settings(clusterInfo.settings)
+          .nodeName(nodeName)
+          .create()
+          // we have to update the nodeNames of stored cluster info. Otherwise, the following Get/List request
+          // will see the out-of-date nodeNames
+          .flatMap(_ => store.add(clusterInfo.newNodeNames(clusterInfo.nodeNames + nodeName)))
+          .flatMap(_ => Future.unit)
       })
       .hookOfFinalDeleteAction((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
         store.get[Cluster](key).flatMap { clusterOption =>

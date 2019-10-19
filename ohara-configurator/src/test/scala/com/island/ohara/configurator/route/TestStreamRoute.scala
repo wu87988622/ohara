@@ -270,8 +270,10 @@ class TestStreamRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def duplicateStopStream(): Unit =
-    (0 to 10).foreach(index => result(streamApi.stop(ObjectKey.of(index.toString, index.toString))))
+  def duplicateStopStream(): Unit = {
+    val stream = result(streamApi.request.jarKey(fileInfo.key).nodeNames(nodeNames).create())
+    (0 to 10).foreach(index => result(streamApi.stop(stream.key)))
+  }
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =

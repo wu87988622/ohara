@@ -233,28 +233,24 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
-  private[this] def hookOfRefresh(implicit store: DataStore, executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
-      store.get[Pipeline](key).flatMap { pipelineOption =>
-        if (pipelineOption.isEmpty) Future.unit
-        else {
-          val pipeline = pipelineOption.get
-          val objKeys = pipeline.flows.flatMap(flow => flow.to + flow.from)
-          Future
-            .traverse(objKeys)(key => store.raws(key).map(objs => key -> objs.nonEmpty))
-            // filter the nonexistent objKeys
-            .map(_.filter(_._2).map(_._1).toSeq)
-            .map(
-              existedObjKeys =>
-                pipeline.copy(
-                  flows = pipeline.flows
-                  // remove the flow if the obj in "from" is nonexistent
-                    .filter(flow => existedObjKeys.contains(flow.from))
-                    // remove nonexistent obj from "to"
-                    .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))))
-            .flatMap(pipeline => store.add[Pipeline](pipeline))
-            .map(_ => Unit)
-        }
+  private[this] def hookOfRefresh(implicit store: DataStore,
+                                  executionContext: ExecutionContext): HookOfAction[Pipeline] =
+    (pipeline: Pipeline, _, _) => {
+      val objKeys = pipeline.flows.flatMap(flow => flow.to + flow.from)
+      Future
+        .traverse(objKeys)(key => store.raws(key).map(objs => key -> objs.nonEmpty))
+        // filter the nonexistent objKeys
+        .map(_.filter(_._2).map(_._1).toSeq)
+        .map(
+          existedObjKeys =>
+            pipeline.copy(
+              flows = pipeline.flows
+              // remove the flow if the obj in "from" is nonexistent
+                .filter(flow => existedObjKeys.contains(flow.from))
+                // remove nonexistent obj from "to"
+                .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))))
+        .flatMap(pipeline => store.add[Pipeline](pipeline))
+        .map(_ => Unit)
     }
 
   def apply(implicit brokerCollie: BrokerCollie,

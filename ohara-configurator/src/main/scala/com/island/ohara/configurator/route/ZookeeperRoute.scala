@@ -66,44 +66,35 @@ object ZookeeperRoute {
           )
     }
 
-  private[this] def hookOfStart(implicit store: DataStore,
-                                serviceCollie: ServiceCollie,
-                                executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
-      store
-        .value[ZookeeperClusterInfo](key)
-        .flatMap(
-          zkClusterInfo =>
-            serviceCollie.zookeeperCollie.creator
-              .settings(zkClusterInfo.settings)
-              .name(zkClusterInfo.name)
-              .group(zkClusterInfo.group)
-              .clientPort(zkClusterInfo.clientPort)
-              .electionPort(zkClusterInfo.electionPort)
-              .peerPort(zkClusterInfo.peerPort)
-              .imageName(zkClusterInfo.imageName)
-              .nodeNames(zkClusterInfo.nodeNames)
-              .threadPool(executionContext)
-              .create())
-        .map(_ => Unit)
+  private[this] def hookOfStart(implicit serviceCollie: ServiceCollie,
+                                executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
+    (zookeeperClusterInfo: ZookeeperClusterInfo, _, _) =>
+      serviceCollie.zookeeperCollie.creator
+        .settings(zookeeperClusterInfo.settings)
+        .name(zookeeperClusterInfo.name)
+        .group(zookeeperClusterInfo.group)
+        .clientPort(zookeeperClusterInfo.clientPort)
+        .electionPort(zookeeperClusterInfo.electionPort)
+        .peerPort(zookeeperClusterInfo.peerPort)
+        .imageName(zookeeperClusterInfo.imageName)
+        .nodeNames(zookeeperClusterInfo.nodeNames)
+        .threadPool(executionContext)
+        .create()
 
   private[this] def hookBeforeStop(implicit store: DataStore,
                                    meterCache: MeterCache,
                                    brokerCollie: BrokerCollie,
-                                   executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _: String, _: Map[String, String]) =>
-      store
-        .value[ZookeeperClusterInfo](key)
-        // find out hte running broker cluster which is using this zookeeper cluster
-        .flatMap { zookeeperClusterInfo =>
-          runningBrokerClusters()
-            .map(_.filter(_.zookeeperClusterKey == zookeeperClusterInfo.key))
-            .map(_.filter(_.state.nonEmpty))
-        }
-        .map(usedBks =>
-          if (usedBks.nonEmpty)
-            throw new IllegalArgumentException(
-              s"you can't remove zookeeper cluster:$key since it is used by broker cluster:${usedBks.mkString(",")}"))
+                                   executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
+    (zookeeperClusterInfo: ZookeeperClusterInfo, _: String, _: Map[String, String]) =>
+      runningBrokerClusters()
+        .map(_.filter(_.zookeeperClusterKey == zookeeperClusterInfo.key))
+        .map(_.filter(_.state.nonEmpty))
+        .map(
+          usedBks =>
+            if (usedBks.nonEmpty)
+              throw new IllegalArgumentException(
+                s"you can't remove zookeeper cluster:${zookeeperClusterInfo.key} since it is used by broker cluster:${usedBks
+                  .mkString(",")}"))
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

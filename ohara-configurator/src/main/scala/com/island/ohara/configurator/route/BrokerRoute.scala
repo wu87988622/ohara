@@ -74,15 +74,14 @@ object BrokerRoute {
                                 zookeeperCollie: ZookeeperCollie,
                                 brokerCollie: BrokerCollie,
                                 serviceCollie: ServiceCollie,
-                                executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
+                                executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
+    (brokerClusterInfo: BrokerClusterInfo, _, _) =>
       (for {
-        bkInfo <- store.value[BrokerClusterInfo](key)
         zks <- runningZookeeperClusters()
         bks <- runningBrokerClusters()
-      } yield (bkInfo, zks, bks))
+      } yield (zks, bks))
         .flatMap {
-          case (brokerClusterInfo, runningZookeeperClusters, runningBrokerClusters) =>
+          case (runningZookeeperClusters, runningBrokerClusters) =>
             val conflictBrokerClusters =
               runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
             if (conflictBrokerClusters.nonEmpty)
@@ -109,22 +108,23 @@ object BrokerRoute {
                                    meterCache: MeterCache,
                                    workerCollie: WorkerCollie,
                                    streamCollie: StreamCollie,
-                                   executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _: String, _: Map[String, String]) =>
+                                   executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
+    (brokerClusterInfo: BrokerClusterInfo, _: String, _: Map[String, String]) =>
       (for {
-        bkInfo <- store.value[BrokerClusterInfo](key)
         wks <- runningWorkerClusters()
         sts <- runningStreamClusters()
-      } yield (bkInfo, wks, sts)).map {
-        case (brokerClusterInfo, runningWorkerClusters, runningStreamClusters) =>
+      } yield (wks, sts)).map {
+        case (runningWorkerClusters, runningStreamClusters) =>
           val conflictWks = runningWorkerClusters.filter(_.brokerClusterKey == brokerClusterInfo.key)
           if (conflictWks.nonEmpty)
             throw new IllegalArgumentException(
-              s"you can't remove broker cluster:$key since it is used by worker cluster:${conflictWks.mkString(",")}")
+              s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWks
+                .mkString(",")}")
           val conflictStreams = runningStreamClusters.filter(_.brokerClusterKey == brokerClusterInfo.key)
           if (conflictStreams.nonEmpty)
             throw new IllegalArgumentException(
-              s"you can't remove broker cluster:$key since it is used by stream cluster:${conflictStreams.mkString(",")}")
+              s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreams
+                .mkString(",")}")
     }
 
   def apply(implicit store: DataStore,

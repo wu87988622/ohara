@@ -234,77 +234,70 @@ private[configurator] object StreamRoute {
                                 streamCollie: StreamCollie,
                                 cleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
-                                executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
-      store
-        .value[StreamClusterInfo](key)
-        .map { info =>
-          // check the values by definition
-          //TODO move this to RouteUtils in #2191
-          var copy = info.settings
-          info.definition.definitions.foreach(
-            settingDef =>
-              // add the (key, defaultValue) to settings if absent
-              if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
-                copy += settingDef.key() -> JsString(settingDef.defaultValue()))
-          info.settings
-            .map {
-              case (k, v) =>
-                k -> (v match {
-                  case JsString(s) => s
-                  case _           => v.toString
-                })
-            }
-            .foreach {
-              case (k, v) =>
-                info.definition.definitions
-                  .find(_.key() == k)
-                  .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
-                    settingDef.checker().accept(v)
-                  }
-            }
-          info.copy(settings = copy)
+                                executionContext: ExecutionContext): HookOfAction[StreamClusterInfo] =
+    (streamClusterInfo: StreamClusterInfo, _, _) => {
+      // check the values by definition
+      //TODO move this to RouteUtils in #2191
+      var copy = streamClusterInfo.settings
+      streamClusterInfo.definition.definitions.foreach(
+        settingDef =>
+          // add the (key, defaultValue) to settings if absent
+          if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
+            copy += settingDef.key() -> JsString(settingDef.defaultValue()))
+      streamClusterInfo.settings
+        .map {
+          case (k, v) =>
+            k -> (v match {
+              case JsString(s) => s
+              case _           => v.toString
+            })
         }
-        .flatMap { streamClusterInfo =>
-          CollieUtils
-            .topicAdmin(streamClusterInfo.brokerClusterKey)
-            .flatMap {
-              case (brokerClusterInfo, topicAdmin) =>
-                topicAdmin.topics().map { topicInfos =>
-                  try brokerClusterInfo -> topicInfos
-                  finally topicAdmin.close()
-                }
-            }
-            .map {
-              case (brokerClusterInfo, topicInfos) =>
-                assertParameters(streamClusterInfo, topicInfos)
-                brokerClusterInfo
-            }
-            .flatMap { brokerClusterInfo =>
-              fileStore.fileInfo(streamClusterInfo.jarKey).flatMap { fileInfo =>
-                streamCollie.creator
-                // these settings will send to container environment
-                // we convert all value to string for convenient
-                  .settings(streamClusterInfo.settings)
-                  .name(streamClusterInfo.name)
-                  .group(streamClusterInfo.group)
-                  .imageName(streamClusterInfo.imageName)
-                  .nodeNames(streamClusterInfo.nodeNames)
-                  .jarInfo(fileInfo)
-                  .brokerClusterKey(brokerClusterInfo.key)
-                  .connectionProps(brokerClusterInfo.connectionProps)
-                  // This is a temporary solution for "enable exactly once",
-                  // but we should change the behavior to not just "true or false"...by Sam
-                  .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
-                           JsString(streamClusterInfo.exactlyOnce.toString))
-                  .threadPool(executionContext)
-                  .create()
+        .foreach {
+          case (k, v) =>
+            streamClusterInfo.definition.definitions
+              .find(_.key() == k)
+              .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
+                settingDef.checker().accept(v)
               }
+        }
+      streamClusterInfo.copy(settings = copy)
+      CollieUtils
+        .topicAdmin(streamClusterInfo.brokerClusterKey)
+        .flatMap {
+          case (brokerClusterInfo, topicAdmin) =>
+            topicAdmin.topics().map { topicInfos =>
+              try brokerClusterInfo -> topicInfos
+              finally topicAdmin.close()
             }
         }
-        .map(_ => Unit)
+        .map {
+          case (brokerClusterInfo, topicInfos) =>
+            assertParameters(streamClusterInfo, topicInfos)
+            brokerClusterInfo
+        }
+        .flatMap { brokerClusterInfo =>
+          fileStore.fileInfo(streamClusterInfo.jarKey).flatMap { fileInfo =>
+            streamCollie.creator
+            // these settings will send to container environment
+            // we convert all value to string for convenient
+              .settings(streamClusterInfo.settings)
+              .name(streamClusterInfo.name)
+              .group(streamClusterInfo.group)
+              .imageName(streamClusterInfo.imageName)
+              .nodeNames(streamClusterInfo.nodeNames)
+              .jarInfo(fileInfo)
+              .brokerClusterKey(brokerClusterInfo.key)
+              .connectionProps(brokerClusterInfo.connectionProps)
+              // This is a temporary solution for "enable exactly once",
+              // but we should change the behavior to not just "true or false"...by Sam
+              .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(), JsString(streamClusterInfo.exactlyOnce.toString))
+              .threadPool(executionContext)
+              .create()
+          }
+        }
+    }
 
-  private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
+  private[this] def hookBeforeStop: HookOfAction[StreamClusterInfo] = (_, _, _) => Future.unit
 
   def apply(implicit store: DataStore,
             dataCollie: DataCollie,

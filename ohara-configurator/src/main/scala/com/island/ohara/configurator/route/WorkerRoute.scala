@@ -99,15 +99,14 @@ object WorkerRoute {
                                 brokerCollie: BrokerCollie,
                                 workerCollie: WorkerCollie,
                                 serviceCollie: ServiceCollie,
-                                executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
+                                executionContext: ExecutionContext): HookOfAction[WorkerClusterInfo] =
+    (workerClusterInfo: WorkerClusterInfo, _, _) =>
       (for {
-        wkInfo <- store.value[WorkerClusterInfo](key)
         bks <- runningBrokerClusters()
         wks <- runningWorkerClusters()
-      } yield (wkInfo, bks, wks))
+      } yield (bks, wks))
         .flatMap {
-          case (workerClusterInfo, runningBrokerClusters, runningWorkerClusters) =>
+          case (runningBrokerClusters, runningWorkerClusters) =>
             // check broker cluster
             if (!runningBrokerClusters.exists(_.key == workerClusterInfo.brokerClusterKey))
               throw new NoSuchClusterException(s"broker cluster:${workerClusterInfo.brokerClusterKey} doesn't exist")
@@ -160,7 +159,7 @@ object WorkerRoute {
         }
         .map(_ => Unit)
 
-  private[this] def hookBeforeStop: HookOfAction = (_, _, _) => Future.unit
+  private[this] def hookBeforeStop: HookOfAction[WorkerClusterInfo] = (_, _, _) => Future.unit
 
   def apply(implicit store: DataStore,
             meterCache: MeterCache,

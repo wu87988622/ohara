@@ -16,13 +16,11 @@
 
 package com.island.ohara.configurator.route.hook
 
-import com.island.ohara.common.setting.ObjectKey
-
 import scala.concurrent.Future
 
 /**
   * The basic interface of handling particular action
   */
-trait HookOfAction {
-  def apply(key: ObjectKey, subName: String, params: Map[String, String]): Future[Unit]
+trait HookOfAction[T] {
+  def apply(key: T, subName: String, params: Map[String, String]): Future[Unit]
 }

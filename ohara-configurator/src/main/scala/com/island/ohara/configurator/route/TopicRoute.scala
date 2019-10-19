@@ -215,44 +215,39 @@ private[configurator] object TopicRoute {
                                 meterCache: MeterCache,
                                 adminCleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
-                                executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
-      store
-        .value[TopicInfo](key)
-        .flatMap(topicInfo =>
-          CollieUtils.topicAdmin(topicInfo.brokerClusterKey).flatMap {
-            case (_, client) =>
-              client.exist(topicInfo.key).flatMap {
-                if (_) Future.unit
-                else
-                  createTopic(
-                    topicAdmin = client,
-                    topicInfo = topicInfo
-                  ).map(_ => Unit)
-              }
-        })
+                                executionContext: ExecutionContext): HookOfAction[TopicInfo] =
+    (topicInfo: TopicInfo, _, _) =>
+      CollieUtils.topicAdmin(topicInfo.brokerClusterKey).flatMap {
+        case (_, client) =>
+          client.exist(topicInfo.key).flatMap {
+            if (_) Future.unit
+            else
+              createTopic(
+                topicAdmin = client,
+                topicInfo = topicInfo
+              ).map(_ => Unit)
+          }
+    }
 
   private[this] def hookOfStop(implicit store: DataStore,
                                meterCache: MeterCache,
                                adminCleaner: AdminCleaner,
                                brokerCollie: BrokerCollie,
-                               executionContext: ExecutionContext): HookOfAction =
-    (key: ObjectKey, _, _) =>
-      store.value[TopicInfo](key).flatMap { topicInfo =>
-        CollieUtils
-          .topicAdmin(topicInfo.brokerClusterKey)
-          .flatMap {
-            case (_, client) =>
-              client.exist(topicInfo.key).flatMap {
-                if (_) client.delete(topicInfo.key).flatMap(_ => Future.unit)
-                else Future.unit
-              }
-          }
-          .recover {
-            case e: Throwable =>
-              LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
-          }
-    }
+                               executionContext: ExecutionContext): HookOfAction[TopicInfo] =
+    (topicInfo: TopicInfo, _, _) =>
+      CollieUtils
+        .topicAdmin(topicInfo.brokerClusterKey)
+        .flatMap {
+          case (_, client) =>
+            client.exist(topicInfo.key).flatMap {
+              if (_) client.delete(topicInfo.key).flatMap(_ => Future.unit)
+              else Future.unit
+            }
+        }
+        .recover {
+          case e: Throwable =>
+            LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
+      }
 
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
