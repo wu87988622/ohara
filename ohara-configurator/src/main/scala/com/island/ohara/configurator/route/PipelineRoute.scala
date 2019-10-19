@@ -213,13 +213,13 @@ private[configurator] object PipelineRoute {
           tags = creation.tags
         ))
 
-  private[this] def HookOfUpdating(implicit brokerCollie: BrokerCollie,
+  private[this] def hookOfUpdating(implicit brokerCollie: BrokerCollie,
                                    workerCollie: WorkerCollie,
                                    streamCollie: StreamCollie,
                                    adminCleaner: AdminCleaner,
                                    store: DataStore,
                                    executionContext: ExecutionContext,
-                                   meterCache: MeterCache): HookOfUpdating[Creation, Updating, Pipeline] =
+                                   meterCache: MeterCache): HookOfUpdating[Updating, Pipeline] =
     (key: ObjectKey, update: Updating, previous: Option[Pipeline]) =>
       updateObjects(
         Pipeline(
@@ -264,13 +264,13 @@ private[configurator] object PipelineRoute {
             store: DataStore,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    route[Creation, Updating, Pipeline](
-      root = PIPELINES_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete,
-      hookOfActions = Map(REFRESH_COMMAND -> hookOfRefresh)
-    )
+    RouteBuilder[Creation, Updating, Pipeline]()
+      .root(PIPELINES_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .hookOfGet(hookOfGet)
+      .hookOfList(hookOfList)
+      .hookBeforeDelete(hookBeforeDelete)
+      .hookOfPutAction(REFRESH_COMMAND, hookOfRefresh)
+      .build()
 }

@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.route.hook
 
 import com.island.ohara.client.configurator.Data
-import com.island.ohara.client.configurator.v0.BasicCreation
 import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.Future
@@ -28,9 +27,8 @@ import scala.concurrent.Future
   * Noted: the update request ought to create a new object if the input (group, key) are not associated to an existent object
   * (it means the previous is not defined).
   *
-  * @tparam Creation creation object
   * @tparam Res result to response
   */
-private[route] trait HookOfUpdating[Creation <: BasicCreation, Update, Res <: Data] {
+trait HookOfUpdating[Update, Res <: Data] {
   def apply(key: ObjectKey, update: Update, previous: Option[Res]): Future[Res]
 }

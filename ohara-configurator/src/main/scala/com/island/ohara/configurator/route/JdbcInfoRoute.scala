@@ -39,7 +39,7 @@ private[configurator] object JdbcInfoRoute {
         tags = creation.tags
       ))
 
-  private[this] def HookOfUpdating: HookOfUpdating[Creation, Updating, JdbcInfo] =
+  private[this] def hookOfUpdating: HookOfUpdating[Updating, JdbcInfo] =
     (key: ObjectKey, update: Updating, previous: Option[JdbcInfo]) =>
       Future.successful {
         previous.fold {
@@ -66,9 +66,9 @@ private[configurator] object JdbcInfoRoute {
     }
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    route[Creation, Updating, JdbcInfo](
-      root = JDBC_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating
-    )
+    RouteBuilder[Creation, Updating, JdbcInfo]()
+      .root(JDBC_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .build()
 }

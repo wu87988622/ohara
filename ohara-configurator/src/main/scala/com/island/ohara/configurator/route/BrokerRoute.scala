@@ -48,10 +48,9 @@ object BrokerRoute {
                                    executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
     creationToClusterInfo(_)
 
-  private[this] def HookOfUpdating(
-    implicit store: DataStore,
-    brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, BrokerClusterInfo] =
+  private[this] def hookOfUpdating(implicit store: DataStore,
+                                   brokerCollie: BrokerCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, BrokerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[BrokerClusterInfo]) =>
       if (previousOption.isEmpty) creationToClusterInfo(BrokerApi.access.request.settings(updating.settings).creation)
       else {
@@ -141,7 +140,7 @@ object BrokerRoute {
       root = BROKER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
+      hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

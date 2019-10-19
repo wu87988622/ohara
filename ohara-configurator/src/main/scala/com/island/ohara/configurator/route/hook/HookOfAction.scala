@@ -23,6 +23,6 @@ import scala.concurrent.Future
 /**
   * The basic interface of handling particular action
   */
-private[route] trait HookOfAction {
+trait HookOfAction {
   def apply(key: ObjectKey, subName: String, params: Map[String, String]): Future[Unit]
 }

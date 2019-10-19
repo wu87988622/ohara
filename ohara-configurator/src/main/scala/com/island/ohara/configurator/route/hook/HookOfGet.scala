@@ -25,6 +25,6 @@ import scala.concurrent.Future
   *
   * @tparam Res data
   */
-private[route] trait HookOfGet[Res <: Data] {
+trait HookOfGet[Res <: Data] {
   def apply(res: Res): Future[Res]
 }

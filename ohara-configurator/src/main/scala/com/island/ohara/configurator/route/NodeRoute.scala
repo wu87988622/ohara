@@ -63,8 +63,8 @@ object NodeRoute {
           tags = creation.tags
         ))
 
-  private[this] def HookOfUpdating(implicit serviceCollie: ServiceCollie,
-                                   executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, Node] =
+  private[this] def hookOfUpdating(implicit serviceCollie: ServiceCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, Node] =
     (key: ObjectKey, update: Updating, previous: Option[Node]) =>
       updateServices(
         Node(
@@ -95,13 +95,12 @@ object NodeRoute {
       }.getOrElse(Future.unit))
 
   def apply(implicit store: DataStore, serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
-    route[Creation, Updating, Node](
-      root = NODES_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete
-    )
-
+    RouteBuilder[Creation, Updating, Node]()
+      .root(NODES_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .hookOfGet(hookOfGet)
+      .hookOfList(hookOfList)
+      .hookBeforeDelete(hookBeforeDelete)
+      .build()
 }

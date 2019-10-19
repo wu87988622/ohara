@@ -100,10 +100,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorInfo] =
     creationToConnectorInfo(_)
 
-  private[this] def HookOfUpdating(implicit workerCollie: WorkerCollie,
+  private[this] def hookOfUpdating(implicit workerCollie: WorkerCollie,
                                    store: DataStore,
                                    executionContext: ExecutionContext,
-                                   meterCache: MeterCache): HookOfUpdating[Creation, Updating, ConnectorInfo] =
+                                   meterCache: MeterCache): HookOfUpdating[Updating, ConnectorInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ConnectorInfo]) =>
       if (previousOption.isEmpty) creationToConnectorInfo(access.request.settings(updating.settings).creation)
       else {
@@ -248,16 +248,16 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    route[Creation, Updating, ConnectorInfo](
-      root = CONNECTORS_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete,
-      hookOfStart = hookOfStart,
-      hookOfStop = hookOfStop,
-      hookOfPause = hookOfPause,
-      hookOfResume = hookOfResume
-    )
+    RouteBuilder[Creation, Updating, ConnectorInfo]()
+      .root(CONNECTORS_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .hookOfGet(hookOfGet)
+      .hookOfList(hookOfList)
+      .hookBeforeDelete(hookBeforeDelete)
+      .hookOfPutAction(START_COMMAND, hookOfStart)
+      .hookOfPutAction(STOP_COMMAND, hookOfStop)
+      .hookOfPutAction(PAUSE_COMMAND, hookOfPause)
+      .hookOfPutAction(RESUME_COMMAND, hookOfResume)
+      .build()
 }

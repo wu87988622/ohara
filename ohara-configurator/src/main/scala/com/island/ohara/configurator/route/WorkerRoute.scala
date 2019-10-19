@@ -53,11 +53,10 @@ object WorkerRoute {
           ))
     }
 
-  private[this] def HookOfUpdating(
-    implicit fileStore: FileStore,
-    serviceCollie: ServiceCollie,
-    brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, WorkerClusterInfo] =
+  private[this] def hookOfUpdating(implicit fileStore: FileStore,
+                                   serviceCollie: ServiceCollie,
+                                   brokerCollie: BrokerCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, WorkerClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[WorkerClusterInfo]) =>
       serviceCollie.workerCollie
         .clusters()
@@ -177,7 +176,7 @@ object WorkerRoute {
       root = WORKER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
+      hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

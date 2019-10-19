@@ -34,7 +34,7 @@ private[configurator] object HdfsInfoRoute {
                lastModified = CommonUtils.current(),
                tags = creation.tags))
 
-  private[this] def HookOfUpdating: HookOfUpdating[Creation, Updating, HdfsInfo] =
+  private[this] def hookOfUpdating: HookOfUpdating[Updating, HdfsInfo] =
     (key: ObjectKey, update: Updating, previous: Option[HdfsInfo]) =>
       Future.successful {
         previous.fold {
@@ -58,9 +58,9 @@ private[configurator] object HdfsInfoRoute {
     }
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    route[Creation, Updating, HdfsInfo](
-      root = HDFS_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating
-    )
+    RouteBuilder[Creation, Updating, HdfsInfo]()
+      .root(HDFS_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .build()
 }

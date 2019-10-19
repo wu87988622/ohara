@@ -149,11 +149,11 @@ private[configurator] object TopicRoute {
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     creationToTopicInfo(_)
 
-  private[this] def HookOfUpdating(implicit adminCleaner: AdminCleaner,
+  private[this] def hookOfUpdating(implicit adminCleaner: AdminCleaner,
                                    meterCache: MeterCache,
                                    brokerCollie: BrokerCollie,
                                    store: DataStore,
-                                   executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, TopicInfo] =
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, TopicInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[TopicInfo]) =>
       if (previousOption.isEmpty) creationToTopicInfo(access.request.settings(update.settings).creation)
       else
@@ -259,14 +259,14 @@ private[configurator] object TopicRoute {
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
             executionContext: ExecutionContext): server.Route =
-    route[Creation, Updating, TopicInfo](
-      root = TOPICS_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete,
-      hookOfStart = hookOfStart,
-      hookOfStop = hookOfStop
-    )
+    RouteBuilder[Creation, Updating, TopicInfo]()
+      .root(TOPICS_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .hookOfGet(hookOfGet)
+      .hookOfList(hookOfList)
+      .hookBeforeDelete(hookBeforeDelete)
+      .hookOfPutAction(START_COMMAND, hookOfStart)
+      .hookOfPutAction(STOP_COMMAND, hookOfStop)
+      .build()
 }

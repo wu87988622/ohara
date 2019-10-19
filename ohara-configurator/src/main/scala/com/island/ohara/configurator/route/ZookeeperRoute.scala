@@ -38,9 +38,8 @@ object ZookeeperRoute {
         lastModified = CommonUtils.current()
       ))
 
-  private[this] def HookOfUpdating(
-    implicit serviceCollie: ServiceCollie,
-    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, ZookeeperClusterInfo] =
+  private[this] def hookOfUpdating(implicit serviceCollie: ServiceCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, ZookeeperClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
       serviceCollie.zookeeperCollie.clusters().map { clusters =>
         if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
@@ -119,7 +118,7 @@ object ZookeeperRoute {
       root = ZOOKEEPER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
+      hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

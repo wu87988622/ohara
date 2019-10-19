@@ -40,7 +40,7 @@ private[configurator] object FtpInfoRoute {
         tags = creation.tags
       ))
 
-  private[this] def HookOfUpdating: HookOfUpdating[Creation, Updating, FtpInfo] =
+  private[this] def hookOfUpdating: HookOfUpdating[Updating, FtpInfo] =
     (key: ObjectKey, update: Updating, previous: Option[FtpInfo]) =>
       Future.successful(previous.fold {
         FtpInfo(
@@ -67,9 +67,9 @@ private[configurator] object FtpInfoRoute {
       })
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    route[Creation, Updating, FtpInfo](
-      root = FTP_PREFIX_PATH,
-      hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating
-    )
+    RouteBuilder[Creation, Updating, FtpInfo]()
+      .root(FTP_PREFIX_PATH)
+      .hookOfCreation(hookOfCreation)
+      .hookOfUpdating(hookOfUpdating)
+      .build()
 }

@@ -173,12 +173,11 @@ private[configurator] object StreamRoute {
               .map(assertParameters))
     }
 
-  private[this] def HookOfUpdating(
-    implicit dataCollie: DataCollie,
-    brokerCollie: BrokerCollie,
-    streamCollie: StreamCollie,
-    fileStore: FileStore,
-    executionContext: ExecutionContext): HookOfUpdating[Creation, Updating, StreamClusterInfo] =
+  private[this] def hookOfUpdating(implicit dataCollie: DataCollie,
+                                   brokerCollie: BrokerCollie,
+                                   streamCollie: StreamCollie,
+                                   fileStore: FileStore,
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, StreamClusterInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[StreamClusterInfo]) =>
       streamCollie.clusters
         .flatMap { clusters =>
@@ -322,7 +321,7 @@ private[configurator] object StreamRoute {
       root = STREAM_PREFIX_PATH,
       metricsKey = Some(STREAM_APP_GROUP),
       hookOfCreation = hookOfCreation,
-      HookOfUpdating = HookOfUpdating,
+      hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

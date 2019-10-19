@@ -27,6 +27,6 @@ import scala.concurrent.Future
   * @tparam Creation creation object
   * @tparam Res result to response
   */
-private[route] trait HookOfCreation[Creation <: BasicCreation, Res <: Data] {
+trait HookOfCreation[Creation <: BasicCreation, Res <: Data] {
   def apply(creation: Creation): Future[Res]
 }
