@@ -63,14 +63,17 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
         creation.ports
       ))
 
-  override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
-    if (wkConnectionProps == null) {
-      if (!clusterCache.containsKey(cluster))
-        throw new NoSuchClusterException(s"worker cluster:$cluster does not exist")
-      val fake = FakeWorkerClient()
-      val r = fakeClientCache.putIfAbsent(cluster, fake)
-      if (r == null) fake else r
-    } else WorkerClient.builder.connectionProps(wkConnectionProps).build
+  override def workerClient(cluster: WorkerClusterInfo)(
+    implicit executionContext: ExecutionContext): Future[WorkerClient] =
+    Future.successful {
+      if (wkConnectionProps == null) {
+        if (!clusterCache.containsKey(cluster))
+          throw new NoSuchClusterException(s"worker cluster:$cluster does not exist")
+        val fake = FakeWorkerClient()
+        val r = fakeClientCache.putIfAbsent(cluster, fake)
+        if (r == null) fake else r
+      } else WorkerClient.builder.connectionProps(wkConnectionProps).build
+    }
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerName: String,

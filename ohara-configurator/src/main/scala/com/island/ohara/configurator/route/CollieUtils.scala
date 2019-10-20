@@ -118,9 +118,7 @@ private[route] object CollieUtils {
         _.find(_.key == clusterKey)
           .filter(_.state.nonEmpty)
           .getOrElse(throw new NoSuchClusterException(s"$clusterKey is not a running cluster")))
-      .map { clusterInfo =>
-        (clusterInfo, workerCollie.workerClient(clusterInfo))
-      }
+      .flatMap(clusterInfo => workerCollie.workerClient(clusterInfo).map(clusterInfo -> _))
 
   def both[T](workerClusterKey: ObjectKey)(
     implicit brokerCollie: BrokerCollie,

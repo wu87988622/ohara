@@ -217,10 +217,12 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
   /**
     * Create a worker client according to passed cluster.
     * Noted: this method is placed at collie so as to enable fake collie be available to route.
-    * @param cluster target cluster
+    * @param workerClusterInfo target cluster
     * @return worker client
     */
-  def workerClient(cluster: WorkerClusterInfo): WorkerClient = WorkerClient(cluster.connectionProps)
+  def workerClient(workerClusterInfo: WorkerClusterInfo)(
+    implicit executionContext: ExecutionContext): Future[WorkerClient] =
+    cluster(workerClusterInfo.key).map(_ => WorkerClient(workerClusterInfo.connectionProps))
 
   /**
     * Get all counter beans from specific worker cluster

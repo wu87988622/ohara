@@ -127,11 +127,11 @@ package object route {
       .hookBeforeDelete((key: ObjectKey) =>
         store.get[Cluster](key).flatMap {
           _.fold(Future.unit) { info =>
-            updateState[Cluster, Status](info, metricsKey).flatMap { data =>
-              if (data.state.isEmpty) Future.unit
-              else
-                Future.failed(new RuntimeException(
-                  s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key"))
+            updateState[Cluster, Status](info, metricsKey).map(_.state).map {
+              case None => Unit
+              case Some(_) =>
+                throw new IllegalArgumentException(
+                  s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key")
             }
           }
       })

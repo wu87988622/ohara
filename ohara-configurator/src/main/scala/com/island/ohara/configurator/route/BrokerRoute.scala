@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
@@ -49,58 +50,55 @@ object BrokerRoute {
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(implicit store: DataStore,
-                                   brokerCollie: BrokerCollie,
+                                   objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, BrokerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[BrokerClusterInfo]) =>
-      if (previousOption.isEmpty) creationToClusterInfo(BrokerApi.access.request.settings(updating.settings).creation)
-      else {
-        brokerCollie.exist(key).flatMap {
-          if (_) throw new IllegalArgumentException(s"You cannot update property on non-stopped broker cluster: $key")
-          else // 1) fill the previous settings (if exists)
+      previousOption match {
+        case None => creationToClusterInfo(BrokerApi.access.request.settings(updating.settings).creation)
+        case Some(previous) =>
+          objectChecker.checkList.brokerCluster(previous.key, STOPPED).check().flatMap { _ =>
+            // 1) fill the previous settings (if exists)
             // 2) overwrite previous settings by updated settings
             // 3) fill the ignored settings by creation
             creationToClusterInfo(
               BrokerApi.access.request
-                .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+                .settings(previous.settings)
                 .settings(updating.settings)
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation)
-        }
+          }
     }
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                objectChecker: ObjectChecker,
                                 meterCache: MeterCache,
-                                zookeeperCollie: ZookeeperCollie,
                                 brokerCollie: BrokerCollie,
                                 serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
     (brokerClusterInfo: BrokerClusterInfo, _, _) =>
-      (for {
-        zks <- runningZookeeperClusters()
-        bks <- runningBrokerClusters()
-      } yield (zks, bks))
-        .flatMap {
-          case (runningZookeeperClusters, runningBrokerClusters) =>
-            val conflictBrokerClusters =
-              runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
-            if (conflictBrokerClusters.nonEmpty)
-              throw new IllegalArgumentException(
-                s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}")
-            if (!runningZookeeperClusters.exists(_.key == brokerClusterInfo.zookeeperClusterKey))
-              throw new IllegalArgumentException(s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is not running")
-            serviceCollie.brokerCollie.creator
-              .settings(brokerClusterInfo.settings)
-              .name(brokerClusterInfo.name)
-              .group(brokerClusterInfo.group)
-              .clientPort(brokerClusterInfo.clientPort)
-              .exporterPort(brokerClusterInfo.exporterPort)
-              .jmxPort(brokerClusterInfo.jmxPort)
-              .zookeeperClusterKey(brokerClusterInfo.zookeeperClusterKey)
-              .imageName(brokerClusterInfo.imageName)
-              .nodeNames(brokerClusterInfo.nodeNames)
-              .threadPool(executionContext)
-              .create()
+      objectChecker.checkList
+        .zookeeperCluster(brokerClusterInfo.zookeeperClusterKey, RUNNING)
+        .check()
+        .flatMap(_ => runningBrokerClusters())
+        .flatMap { runningBrokerClusters =>
+          val conflictBrokerClusters =
+            runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
+          if (conflictBrokerClusters.nonEmpty)
+            throw new IllegalArgumentException(
+              s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}")
+          serviceCollie.brokerCollie.creator
+            .settings(brokerClusterInfo.settings)
+            .name(brokerClusterInfo.name)
+            .group(brokerClusterInfo.group)
+            .clientPort(brokerClusterInfo.clientPort)
+            .exporterPort(brokerClusterInfo.exporterPort)
+            .jmxPort(brokerClusterInfo.jmxPort)
+            .zookeeperClusterKey(brokerClusterInfo.zookeeperClusterKey)
+            .imageName(brokerClusterInfo.imageName)
+            .nodeNames(brokerClusterInfo.nodeNames)
+            .threadPool(executionContext)
+            .create()
         }
         .map(_ => Unit)
 
@@ -128,6 +126,7 @@ object BrokerRoute {
     }
 
   def apply(implicit store: DataStore,
+            objectChecker: ObjectChecker,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,

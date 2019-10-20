@@ -16,13 +16,14 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
+import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi._
-import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
+import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
@@ -101,24 +102,6 @@ private[configurator] object TopicRoute {
         )
     }
 
-  private[this] def createTopic(topicAdmin: TopicAdmin, topicInfo: TopicInfo)(
-    implicit executionContext: ExecutionContext): Future[TopicInfo] =
-    topicAdmin.creator
-      .topicKey(topicInfo.key)
-      .numberOfPartitions(topicInfo.numberOfPartitions)
-      .numberOfReplications(topicInfo.numberOfReplications)
-      .configs(topicInfo.configs)
-      .create()
-      .map { _ =>
-        try topicInfo.copy(
-          // the topic is just created so we don't fetch the "empty" metrics actually.
-          metrics = Metrics.EMPTY,
-          state = Some(TopicState.RUNNING),
-          lastModified = CommonUtils.current(),
-        )
-        finally topicAdmin.close()
-      }
-
   private[this] def hookOfGet(implicit meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
                               store: DataStore,
@@ -149,107 +132,98 @@ private[configurator] object TopicRoute {
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     creationToTopicInfo(_)
 
-  private[this] def hookOfUpdating(implicit adminCleaner: AdminCleaner,
-                                   meterCache: MeterCache,
-                                   brokerCollie: BrokerCollie,
+  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
                                    store: DataStore,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, TopicInfo] =
     (key: ObjectKey, update: Updating, previousOption: Option[TopicInfo]) =>
-      if (previousOption.isEmpty) creationToTopicInfo(access.request.settings(update.settings).creation)
-      else
-        // we have to check whether topic is running on previous cluster
-        CollieUtils.topicAdmin(previousOption.get.brokerClusterKey).flatMap {
-          case (_, client) =>
-            client.topics().map(_.exists(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).flatMap {
-              try if (_)
-                throw new IllegalStateException(
-                  s"the topic:$key is working now. Please stop it before updating the properties")
-              else {
-
-                // 1) fill the previous settings (if exists)
-                // 2) overwrite previous settings by updated settings
-                // 3) fill the ignored settings by creation
-                creationToTopicInfo(
-                  access.request
-                    .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-                    .settings(update.settings)
-                    // the key is not in update's settings so we have to add it to settings
-                    .name(key.name)
-                    .group(key.group)
-                    .creation)
-              } finally Releasable.close(client)
+      previousOption match {
+        case None => creationToTopicInfo(access.request.settings(update.settings).creation)
+        case Some(previous) =>
+          objectChecker.checkList
+          // we don't support to update a running topic
+            .topic(previous.key, STOPPED)
+            .check()
+            .flatMap { _ =>
+              // 1) fill the previous settings (if exists)
+              // 2) overwrite previous settings by updated settings
+              // 3) fill the ignored settings by creation
+              creationToTopicInfo(
+                access.request
+                  .settings(previous.settings)
+                  .settings(update.settings)
+                  // the key is not in update's settings so we have to add it to settings
+                  .name(key.name)
+                  .group(key.group)
+                  .creation)
             }
-      }
+    }
 
-  private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     meterCache: MeterCache,
-                                     adminCleaner: AdminCleaner,
-                                     brokerCollie: BrokerCollie,
+  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    store
-      .get[TopicInfo](key)
-      .flatMap(_.fold(Future.unit) { topicInfo =>
-        CollieUtils
-          .topicAdmin(topicInfo.brokerClusterKey)
-          .flatMap {
-            case (_, client) =>
-              client.exist(topicInfo.key).flatMap {
-                if (_)
-                  try Future.failed(
-                    new IllegalStateException(s"the topic:${topicInfo.key} is running. Please stop it first"))
-                  finally Releasable.close(client)
-                else
-                  try Future.unit
-                  finally Releasable.close(client)
-              }
-          }
-          .recover {
-            case e: NoSuchClusterException =>
-              LOG.warn(
-                s"the cluster:${topicInfo.brokerClusterKey} doesn't exist!!! just remove topic from configurator",
-                e)
-          }
-      })
+    objectChecker.checkList
+      .topic(TopicKey.of(key.group(), key.name()), STOPPED)
+      .check()
+      .recover {
+        // the duplicate deletes are legal to ohara
+        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+      }
+      .map(_ => Unit)
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                objectChecker: ObjectChecker,
                                 meterCache: MeterCache,
                                 adminCleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction[TopicInfo] =
     (topicInfo: TopicInfo, _, _) =>
-      CollieUtils.topicAdmin(topicInfo.brokerClusterKey).flatMap {
-        case (_, client) =>
-          client.exist(topicInfo.key).flatMap {
-            if (_) Future.unit
-            else
-              createTopic(
-                topicAdmin = client,
-                topicInfo = topicInfo
-              ).map(_ => Unit)
-          }
-    }
+      objectChecker.checkList
+        .topic(topicInfo.key)
+        .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
+        .check()
+        .map(_.topicInfos.head)
+        .flatMap {
+          case (topicInfo, condition) =>
+            condition match {
+              case RUNNING => Future.unit
+              case STOPPED =>
+                CollieUtils.topicAdmin(topicInfo.brokerClusterKey).map(_._2).flatMap { topicAdmin =>
+                  topicAdmin.creator
+                    .topicKey(topicInfo.key)
+                    .numberOfPartitions(topicInfo.numberOfPartitions)
+                    .numberOfReplications(topicInfo.numberOfReplications)
+                    .configs(topicInfo.configs)
+                    .create()
+                    .flatMap(_ =>
+                      try Future.unit
+                      finally Releasable.close(topicAdmin))
+                }
+            }
+      }
 
   private[this] def hookOfStop(implicit store: DataStore,
+                               objectChecker: ObjectChecker,
                                meterCache: MeterCache,
                                adminCleaner: AdminCleaner,
                                brokerCollie: BrokerCollie,
                                executionContext: ExecutionContext): HookOfAction[TopicInfo] =
     (topicInfo: TopicInfo, _, _) =>
-      CollieUtils
-        .topicAdmin(topicInfo.brokerClusterKey)
-        .flatMap {
-          case (_, client) =>
-            client.exist(topicInfo.key).flatMap {
-              if (_) client.delete(topicInfo.key).flatMap(_ => Future.unit)
-              else Future.unit
-            }
-        }
-        .recover {
-          case e: Throwable =>
-            LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
-      }
+      objectChecker.checkList.topic(topicInfo.key).check().map(_.topicInfos.head).flatMap {
+        case (topicInfo, condition) =>
+          condition match {
+            case STOPPED => Future.unit
+            case RUNNING =>
+              CollieUtils.topicAdmin(topicInfo.brokerClusterKey).map(_._2).flatMap { topicAdmin =>
+                topicAdmin
+                  .delete(topicInfo.key)
+                  .flatMap(_ =>
+                    try Future.unit
+                    finally Releasable.close(topicAdmin))
+              }
+          }
+    }
 
   def apply(implicit store: DataStore,
+            objectChecker: ObjectChecker,
             adminCleaner: AdminCleaner,
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
