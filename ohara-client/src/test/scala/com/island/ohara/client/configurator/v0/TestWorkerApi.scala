@@ -328,6 +328,9 @@ class TestWorkerApi extends OharaTest with Matchers {
   def parseClientPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "clientPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -335,6 +338,9 @@ class TestWorkerApi extends OharaTest with Matchers {
 
     val thrown2 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "clientPort": -9
       |  }
       |  """.stripMargin.parseJson)
@@ -342,6 +348,9 @@ class TestWorkerApi extends OharaTest with Matchers {
 
     val thrown3 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "clientPort": 99999
       |  }
       |  """.stripMargin.parseJson)
@@ -382,6 +391,9 @@ class TestWorkerApi extends OharaTest with Matchers {
   def parseJmxPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "jmxPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -389,6 +401,9 @@ class TestWorkerApi extends OharaTest with Matchers {
 
     val thrown2 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "jmxPort": -9
       |  }
       |  """.stripMargin.parseJson)
@@ -396,6 +411,9 @@ class TestWorkerApi extends OharaTest with Matchers {
 
     val thrown3 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "jmxPort": 99999
       |  }
       |  """.stripMargin.parseJson)

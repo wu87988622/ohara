@@ -34,5 +34,11 @@ trait OharaJsonFormat[T] extends RootJsonFormat[T] {
     * @param key input key
     * @param value input value
     */
-  def check[Value <: JsValue](key: String, value: Value): Value
+  def check[Value <: JsValue](key: String, value: Value): Value = check(Map(key -> value))(key).asInstanceOf[Value]
+
+  /**
+    * verify the input keys and values. It always pass if the input keys are not associated to any check rule.
+    * @param fields keys and values
+    */
+  def check(fields: Map[String, JsValue]): Map[String, JsValue]
 }

@@ -1202,7 +1202,7 @@ class TestJsonRefiner extends OharaTest with Matchers {
   def testRejectKeyword(): Unit =
     an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)
-      .rejectKeyword("abc")
+      .rejectKey("abc")
       .refine
       .read(s"""
                |{

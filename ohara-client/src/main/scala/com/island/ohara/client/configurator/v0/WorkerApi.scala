@@ -109,7 +109,7 @@ object WorkerApi {
       })
       .rejectNegativeNumber()
       // number of config topic's partition is always be 1
-      .rejectKeyword(CONFIG_TOPIC_PARTITIONS_KEY)
+      .rejectKey(CONFIG_TOPIC_PARTITIONS_KEY)
       .nullToRandomPort(CLIENT_PORT_KEY)
       .requireBindPort(CLIENT_PORT_KEY)
       .nullToRandomPort(JMX_PORT_KEY)

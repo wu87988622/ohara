@@ -113,9 +113,9 @@ object ConnectorApi {
       .nullToEmptyArray(TOPIC_KEYS_KEY)
       // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
       // to users to save their life :)
-      .rejectKeyword(TOPIC_NAMES_KEY)
+      .rejectKey(TOPIC_NAMES_KEY)
       // CONNECTOR_KEY_KEY is internal keyword
-      .rejectKeyword(CONNECTOR_KEY_KEY)
+      .rejectKey(CONNECTOR_KEY_KEY)
       .requireKey(WORKER_CLUSTER_KEY_KEY)
       .requireKey(CONNECTOR_CLASS_KEY)
       .valueChecker(
@@ -174,9 +174,9 @@ object ConnectorApi {
     })
     // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
     // to users to save their life :)
-    .rejectKeyword(TOPIC_NAMES_KEY)
+    .rejectKey(TOPIC_NAMES_KEY)
     // CONNECTOR_KEY_KEY is internal keyword
-    .rejectKeyword(CONNECTOR_KEY_KEY)
+    .rejectKey(CONNECTOR_KEY_KEY)
     .rejectEmptyString()
     .valueChecker(
       COLUMNS_KEY, {

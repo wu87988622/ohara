@@ -29,6 +29,8 @@ import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject
   * 2) convert the null to the value of another key
   * 3) convert the null to default value
   * 4) value check
+  *
+  * Noted: the keys having checker MUST exist. otherwise, DeserializationException will be thrown to interrupt the serialization.
   * @tparam T scala object type
   */
 trait JsonRefiner[T] {
@@ -92,14 +94,6 @@ trait JsonRefiner[T] {
     */
   def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefiner[T]
 
-  /**
-    * set the default number for input keys. The default value will be added into json request if the associated key is nonexistent.
-    * @param key key
-    * @param defaultValue default value
-    * @return this refiner
-    */
-  protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T]
-
   //-------------------------[more checks]-------------------------//
 
   /**
@@ -134,9 +128,10 @@ trait JsonRefiner[T] {
     */
   def stringSumLengthLimit(keys: Set[String], sumLengthLimit: Int): JsonRefiner[T] =
     // check the keys should exist in request
-    requireKeys(keys).allValuesChecker(
-      keys, { values =>
-        val sum = values.map {
+    requireKeys(keys).valuesChecker(
+      keys,
+      fields => {
+        val sum = fields.values.map {
           case s: JsString => s.value.length
           case _           => throw DeserializationException(s"we only support length checking for string value")
         }.sum
@@ -176,10 +171,10 @@ trait JsonRefiner[T] {
       case _ => // we don't care for other types
     }
   )
-  def rejectKeyword(keyword: String): JsonRefiner[T] = valueChecker(
-    keyword, {
+  def rejectKey(key: String): JsonRefiner[T] = valueChecker(
+    key, {
       case JsNull => // nothing
-      case _      => throw DeserializationException(s"""the \"$keyword\" is a illegal word!!!""")
+      case _      => throw DeserializationException(s"""the \"$key\" is a illegal word!!!""")
     }
   )
 
@@ -320,25 +315,8 @@ trait JsonRefiner[T] {
     * @param checker checker
     * @return this refiner
     */
-  def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
-
-  /**
-    * add your custom check for a set of keys' values.
-    * Noted: We don't guarantee the order of each (key, value) pair since this method is intend
-    * to do an "aggregation" check, like sum or length check.
-    *
-    * @param keys keys
-    * @param checkers checkers
-    * @return this refiner
-    */
-  def allValuesChecker(keys: Set[String], checkers: Seq[JsValue] => Unit): JsonRefiner[T]
-
-  /**
-    * add your custom check for all keys
-    * @param checker checker
-    * @return this refiner
-    */
-  def keysChecker(checker: Set[String] => Unit): JsonRefiner[T]
+  def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] =
+    valuesChecker(Set(CommonUtils.requireNonEmpty(key)), vs => checker(vs.head._2))
 
   //-------------------------[more conversion]-------------------------//
 
@@ -361,6 +339,29 @@ trait JsonRefiner[T] {
       case s: JsValue => s
     }
   )
+
+  //-------------------------[protected methods]-------------------------//
+
+  protected def keysChecker(checker: Set[String] => Unit): JsonRefiner[T]
+
+  /**
+    * set the default number for input keys. The default value will be added into json request if the associated key is nonexistent.
+    * @param key key
+    * @param defaultValue default value
+    * @return this refiner
+    */
+  protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T]
+
+  /**
+    * add your custom check for a set of keys' values.
+    * Noted: We don't guarantee the order of each (key, value) pair since this method is intend
+    * to do an "aggregation" check, like sum or length check.
+    *
+    * @param keys keys
+    * @param checkers checkers
+    * @return this refiner
+    */
+  protected def valuesChecker(keys: Set[String], checkers: Map[String, JsValue] => Unit): JsonRefiner[T]
 
   protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T]
 
@@ -487,9 +488,8 @@ object JsonRefiner {
   def apply[T]: JsonRefiner[T] = new JsonRefiner[T] {
     private[this] var format: RootJsonFormat[T] = _
     private[this] var valueConverters: Map[String, JsValue => JsValue] = Map.empty
-    private[this] var valueCheckers: Map[String, JsValue => Unit] = Map.empty
-    private[this] var allvaluesCheckers: Map[Set[String], Seq[JsValue] => Unit] = Map.empty
     private[this] var keyCheckers: Seq[Set[String] => Unit] = Seq.empty
+    private[this] var valuesCheckers: Map[Set[String], Map[String, JsValue] => Unit] = Map.empty
     private[this] var nullToJsValue: Map[String, () => JsValue] = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
@@ -500,21 +500,15 @@ object JsonRefiner {
       this.format = Objects.requireNonNull(format)
       this
     }
-
-    override def keysChecker(checker: Set[String] => Unit): JsonRefiner[T] = {
+    override protected def keysChecker(checker: Set[String] => Unit): JsonRefiner[T] = {
       this.keyCheckers = this.keyCheckers ++ Seq(checker)
       this
     }
 
-    override def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] = {
-      if (valueCheckers.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"""the \"$key\" already has checker""")
-      this.valueCheckers = this.valueCheckers ++ Map(key -> Objects.requireNonNull(checker))
-      this
-    }
-
-    override def allValuesChecker(keys: Set[String], checkers: Seq[JsValue] => Unit): JsonRefiner[T] = {
-      this.allvaluesCheckers = this.allvaluesCheckers ++ Map(keys -> Objects.requireNonNull(checkers))
+    override protected def valuesChecker(keys: Set[String], checkers: Map[String, JsValue] => Unit): JsonRefiner[T] = {
+      if (valuesCheckers.contains(keys))
+        throw new IllegalArgumentException(s"""the \"$keys\" already has checker""")
+      this.valuesCheckers = this.valuesCheckers ++ Map(keys -> Objects.requireNonNull(checkers))
       this
     }
 
@@ -562,7 +556,7 @@ object JsonRefiner {
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
       new OharaJsonFormat[T] {
 
-        override def check[Value <: JsValue](key: String, value: Value): Value = {
+        private[this] def checkGlobalCondition(key: String, value: JsValue): Unit = {
           def checkEmptyString(k: String, s: JsString): Unit =
             if (s.value.isEmpty)
               throw DeserializationException(s"""the value of \"$k\" can't be empty string!!!""", fieldNames = List(k))
@@ -601,10 +595,6 @@ object JsonRefiner {
 
           // 3) check empty array
           if (_rejectEmptyArray) checkJsValueForEmptyArray(key, value)
-
-          // 4) custom check
-          valueCheckers.get(key).foreach(_.apply(value))
-          value
         }
 
         override def read(json: JsValue): T = json match {
@@ -648,22 +638,35 @@ object JsonRefiner {
                 key -> fields.getOrElse(key, defaultValue())
             }
 
-            // 4) check the value
-            fields.foreach {
-              case (k, v) => check(k, v)
-            }
-
-            // 5) check the keys
+            // 3) check the keys existence
+            // this check is excluded from step.4 since the check is exposed publicly, And it does care for key-value only.
             keyCheckers.foreach(_(fields.keySet))
 
-            // 6) check the values of specific keys
-            allvaluesCheckers.foreach {
-              case (keys, f) => f(fields.filter(field => keys.contains(field._1)).values.toSeq)
-            }
+            // 4) check the fields
+            fields = check(fields)
+
             format.read(JsObject(fields))
           case _ => format.read(json)
         }
         override def write(obj: T): JsValue = format.write(obj)
+
+        override def check(fields: Map[String, JsValue]): Map[String, JsValue] = {
+
+          // 1) check global condition
+          fields.foreach {
+            case (k, v) => checkGlobalCondition(k, v)
+          }
+
+          // 2) custom checks
+          valuesCheckers.foreach {
+            case (keys, checker) =>
+              // we don't run the check if the keys are not matched
+              val matchedFields = fields.filter(e => keys.contains(e._1))
+              if (matchedFields.size == keys.size) checker(matchedFields)
+          }
+
+          fields
+        }
       }
     }
   }

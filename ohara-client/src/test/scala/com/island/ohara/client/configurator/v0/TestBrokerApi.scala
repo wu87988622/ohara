@@ -263,6 +263,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": ["n"],
       |    "name": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -277,6 +278,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": ["n"],
       |    "imageName": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -366,6 +368,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "clientPort": 0
       |  }
       """.stripMargin.parseJson)
@@ -377,6 +382,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "clientPort": -9
       |  }
       """.stripMargin.parseJson)
@@ -388,6 +396,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "clientPort": 99999
       |  }
       """.stripMargin.parseJson)
@@ -444,6 +455,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "exporterPort": 0
       |  }
       """.stripMargin.parseJson)
@@ -455,6 +469,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "exporterPort": -9
       |  }
       """.stripMargin.parseJson)
@@ -466,6 +483,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "exporterPort": 99999
       |  }
       """.stripMargin.parseJson)
@@ -518,6 +538,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "jmxPort": 0
       |  }
       """.stripMargin.parseJson)
@@ -529,6 +552,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "jmxPort": -9
       |  }
       """.stripMargin.parseJson)
@@ -540,6 +566,9 @@ class TestBrokerApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "jmxPort": 99999
       |  }
       """.stripMargin.parseJson)

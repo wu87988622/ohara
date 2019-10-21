@@ -340,6 +340,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseNameField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "name": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -350,6 +354,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseGroupField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "group": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -360,6 +368,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseImageNameField(): Unit = {
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "imageName": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -392,6 +404,10 @@ class TestStreamApi extends OharaTest with Matchers {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "${CommonUtils.randomString(10)}",
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -401,6 +417,10 @@ class TestStreamApi extends OharaTest with Matchers {
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "${CommonUtils.randomString(10)}",
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": -99
       |  }
       |  """.stripMargin.parseJson)
@@ -410,6 +430,10 @@ class TestStreamApi extends OharaTest with Matchers {
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "${CommonUtils.randomString(10)}",
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": 999999
       |  }
       |  """.stripMargin.parseJson)
@@ -418,18 +442,28 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def parseInstancesField(): Unit = {
-    an[DeserializationException] should be thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "instances": 0
-      |  }
-      |  """.stripMargin.parseJson)
-    // negative instances
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "instances": -99
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown.getMessage should include("the \"-99\" of \"instances\" can't be either negative or zero!!!")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "jarKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "instances": 0
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("instances")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "jarKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "instances": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("instances")
   }
 
   @Test
@@ -457,6 +491,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseImageNameFieldOnUpdate(): Unit = {
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "imageName": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -467,6 +505,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseFromFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "from": [""]
       |  }
       |  """.stripMargin.parseJson)
@@ -477,6 +519,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseFromFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "from": [""]
       |  }
       |  """.stripMargin.parseJson)
@@ -487,6 +533,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseToFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "to": [""]
       |  }
       |  """.stripMargin.parseJson)
@@ -497,6 +547,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseToFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "to": [""]
       |  }
       |  """.stripMargin.parseJson)
@@ -507,6 +561,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseJmxPortFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -514,6 +572,10 @@ class TestStreamApi extends OharaTest with Matchers {
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": -9
       |  }
       |  """.stripMargin.parseJson)
@@ -521,6 +583,10 @@ class TestStreamApi extends OharaTest with Matchers {
 
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": 99999
       |  }
       |  """.stripMargin.parseJson)
@@ -531,12 +597,20 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseInstancesFieldOnUpdate(): Unit = {
     an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "instances": 0
       |  }
       |  """.stripMargin.parseJson)
 
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "instances": -9
       |  }
       |  """.stripMargin.parseJson)
@@ -547,6 +621,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseNodeNamesFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -566,6 +644,10 @@ class TestStreamApi extends OharaTest with Matchers {
   def parseNodeNamesFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -573,6 +655,10 @@ class TestStreamApi extends OharaTest with Matchers {
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
       |  {
+      |    "jarKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": []
       |  }
       |  """.stripMargin.parseJson)

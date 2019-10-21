@@ -207,6 +207,9 @@ class TestZookeeperApi extends OharaTest with Matchers {
   def parseNameField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "name": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -217,6 +220,9 @@ class TestZookeeperApi extends OharaTest with Matchers {
   def parseImageNameField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "nodeNames": [
+      |      "node"
+      |    ],
       |    "imageName": ""
       |  }
       |  """.stripMargin.parseJson)

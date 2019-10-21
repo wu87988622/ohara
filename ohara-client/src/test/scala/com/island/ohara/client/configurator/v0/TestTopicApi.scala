@@ -153,72 +153,104 @@ class TestTopicApi extends OharaTest with Matchers {
   @Test
   def negativeReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_REPLICATIONS_KEY": -1
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_REPLICATIONS_KEY": -1
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def negativePartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_PARTITIONS_KEY": -1
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_PARTITIONS_KEY": -1
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def negativeReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_REPLICATIONS_KEY": -1
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_REPLICATIONS_KEY": -1
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def negativePartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_PARTITIONS_KEY": -1
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_PARTITIONS_KEY": -1
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def zeroReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_REPLICATIONS_KEY": 0
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_REPLICATIONS_KEY": 0
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def zeroPartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_PARTITIONS_KEY": 0
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_PARTITIONS_KEY": 0
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def zeroReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_REPLICATIONS_KEY": 0
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_REPLICATIONS_KEY": 0
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 
   @Test
   def zeroPartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |{
-                                           |  "$NUMBER_OF_PARTITIONS_KEY": 0
-                                           |}
+                                           |  {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "$NUMBER_OF_PARTITIONS_KEY": 0
+                                           |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
 }
