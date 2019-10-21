@@ -82,7 +82,7 @@ Quick start guide
 
   .. code-block:: console
 
-    $ yarn start --configurator http://host:port/v0
+    $ yarn start --configurator ${http://host:port/v0}
 
 
   Note that the configurator option is **required**, and you should have
@@ -112,7 +112,7 @@ Server:
 
   .. code-block:: console
 
-     $ yarn start --configurator http://host:port/v0
+     $ yarn start --configurator ${http://host:port/v0}
 
   .. note::
     Note that the ``--configurator`` argument is required, you should
@@ -123,7 +123,7 @@ Server:
 
   .. code-block:: console
 
-    $ yarn start --configurator http://host:port/v0 --port 1234
+    $ yarn start --configurator ${http://host:port/v0} --port ${1234}
 
   After starting the server, visit ``http://localhost:${PORT}`` in your
   browser.
@@ -152,76 +152,74 @@ Client:
 
   The dev server will then start at ``http://localhost:7777``
 
-Test
-^^^^
+Testing
+^^^^^^^
 
-You can run both the **Server** and **Client** unit tests with a single
-npm script:
+Unit test:
+  
+  You can run **Client** unit test with a single npm script:
 
-.. code-block:: console
+  .. code-block:: console
 
-  $ yarn test
+    $ yarn test
 
-You can also run them separately as:
-
-Server:
-
-  Make sure you’re in the ohara-manager root, and use the following commands:
-
-  Run the test and stay in Jest watch mode
+  Please note that this is a one-off run command, often when you're in the development, you would run test and stay in Jest’s watch mode which reloads the test once you save your changes:
 
   .. code-block:: console
 
     $ yarn test:watch
 
-  Generate a test coverage report
-  The coverage reports can be found in ``ohara-manager/coverage/``
+  Generate test coverage reports, the coverage reports can be found in ``ohara-manager/client/coverage/``
 
   .. code-block:: console
 
     $ yarn test:coverage
 
-Client:
 
-  Run the tests and stay in Jest’s watch mode
+API test:
+
+  We're using Cypress to test our RESTful API, this ensures our backend API is always compatible with Ohara
+  manager and won't break our UI (ideally). You can run the test in different modes:
+
+  **GUI mode**: this will open Cypress test runner, you can then run your test manually through the UI.
+   
+  .. code-block:: console
+
+    $ yarn test:api:open
+
+  **Electron mode(headless)**: since we're running our API test on CI under this mode. You might often want
+  to run your tests in this mode locally as well.
 
   .. code-block:: console
 
-    $ yarn test:client
+    $ yarn test:api:ci --configurator ${http://host:port/v0 --port 0}
+  
+  .. note::
+    1. Our API test can **ONLY** be running in fake mode Configurator.
+    2. The `--port 0` means randomly choose a port for this test run
 
-  Generate test coverage reports
-  The coverage reports can be found in ``ohara-manager/client/coverage/``
+End-to-End test:
 
-  .. code-block:: console
+  Just like API test, our End-to-End test also runs in two different modes:
 
-    $ yarn test:client:coverage
-
-  We also have a npm script that runs both the **client** server and unit tests together:
-
-  .. code-block:: console
-
-    $ yarn dev:client
-
-  **Client** also has End-to-End tests, you can run them via the following command:
-
-  **GUI mode**: this will open cypress test runner, you can then run your test manually through the UIs.
+  **GUI mode**: this will open Cypress test runner, you can then run your test manually through the UI.
 
   .. code-block:: console
 
     $ yarn test:e2e:open
 
-  **Electron mode(headless)**: since we're running our E2E tests on CI under this mode. You might often want
+  **Electron mode(headless)**: since we're running our E2E test on CI under this mode. You might often want
   to run your tests in this mode locally as well.
 
   .. code-block:: console
 
-    $ yarn test:e2e:ci --configurator http://host:port/v0
+    $ yarn test:e2e:ci --configurator ${http://host:port/v0}
 
   .. note::
     1. Before running in this mode we advise that you run ``yarn setup`` prior to the tests as
        the dev server is not running, so you might have stale build asserts in your build directory
 
-    2. You also need to create a **cypress.env.json** under the `/ohara-manager/client/`, these are the config
+    2. You also need to create a **cypress.env.json** under the ``/ohara-manager/client/``, these are the config
        that Cypress will be using when running tests:
 
       .. code-block:: json
@@ -233,6 +231,8 @@ Client:
           "nodePass": "nodePassword",
           "servicePrefix": "prPrefix"
         }
+    
+    3. Unlike API test, the test should run in production environment 
 
 Linting
 ^^^^^^^
@@ -249,7 +249,7 @@ Linting
 
     .. code-block:: console
 
-      $ yarn start --configurator http://host:port/v0
+      $ yarn start --configurator ${http://host:port/v0}
 
     This will start the server with ``nodemon`` and run the linting script whenever nodemon reloads.
 
@@ -278,11 +278,6 @@ Format
 
   - You can ignore files or folders when running ``yarn format`` by
     editing the ``.prettierignore`` in the Ohara-manager root.
-
-  .. note::
-   Note that ``node_modules`` is ignore by default so you don’t need to
-   add that in the ``.prettierignore``
-
 
 Build
 ^^^^^
@@ -336,27 +331,44 @@ Ohara manager image
 
   .. code-block:: console
 
-    $ yarn start:prod --configurator http://host:port/v0
+    $ yarn start:prod --configurator ${http://host:port/v0}
 
 
 CI server integration
 ^^^^^^^^^^^^^^^^^^^^^
 
-  In order to work with Graddle on Jenkins, Ohara manager provides a few
-  npm scripts as the following:
+  In order to run tests on Jenkins, Ohara manager provides a few npm scripts that are used in Gradle, these scripts generate test reports in `/ohara-manager/test-reports` which can be consumed by Jenkins to determine if a test passes or not, you will sometimes need to run these commands locally if you edit related npm scripts in Ohara manager or want to reproduce fail build on CI: 
 
-  Run tests on CI:
+  Unit test:
 
-  .. code-block:: console
+    .. code-block:: console
 
-    $ yarn test
+      $ gradle test
 
-  -  Run all tests including the **Server** and the **Client** unit tests.
-     The test reports can be found in ``ohara-manager/test-reports/``
+    -  Run **Client**'s unit tests. The test reports can be found in ``ohara-manager/test-reports/``
 
-  -  Note you should run ``yarn setup`` to ensure that all necessary
-     packages are installed prior to running tests.
+  API test:
 
+    .. code-block:: console
+
+      $ gradle api -Pohara.manager.api.configurator=${http://host:port/v0}
+
+  End-to-End test:
+
+    .. code-block:: console
+
+      $ gradle e2e -Pohara.manager.e2e.port=5050 -Pohara.manager.e2e.configurator=${http://host:port/v0}-Pohara.manager.e2e.nodeHost=${slaveNodeName} -Pohara.manager.e2e.nodePort=${slaveNodePort} -Pohara.manager.e2e.nodeUser=${slaveNodeUsername} -Pohara.manager.e2e.nodePass=${slaveNodePassword} -Pohara.it.container.prefix=${pullRequestNumber}
+
+  Let's take a close look at these options:
+    - ``-Pohara.manager.e2e.port=5050``: start Ohara manager at this port in the test run
+    - ``-Pohara.manager.e2e.configurator=${http://host:port/v0}``: Configurator URL, Ohara manager will hit this API endpoint when running test
+    - ``-Pohara.manager.e2e.nodeHost=${slaveNodeName}``: K8s' slave node, the services started in the test will be deploy on this node
+    - ``-Pohara.manager.e2e.nodePort=${slaveNodePort}``: port of the given node
+    - ``-Pohara.manager.e2e.nodeUser=${slaveNodeUsername}``: username of the given node
+    - ``-Pohara.manager.e2e.nodePass=${slaveNodePassword}``: password of the given node
+    - ``-Pohara.it.container.prefix=${pullRequestNumber}``: pull request number of this test run, this prefix is used by Jenkins to do the cleanup after the test is done
+  
+  There are more gradle tasks that are not listed in the above, you can view them in ``/ohara-manager/build.gradle``
 
 Clean
 ^^^^^
@@ -379,9 +391,8 @@ Clean
 Prepush
 ^^^^^^^
 
-  We also provide a npm script to run all the tests (both client and
-  server unit tests and e2e tests) lint, and format all the JS files with.
-  **Ideally, you’d run this before pushing your code to the remote repo:**
+  We also provide a npm script to run Client's unit test, linting, and format all the JavaScript files with.
+  **Ideally, you'd run this before pushing your code to the remote repo:**
 
   .. code-block:: console
 
@@ -523,9 +534,9 @@ Having issues?
 
      ::
 
-        --configurator: we're not able to connect to http://host:port/v0
+        --configurator: we're not able to connect to ${http://host:port/v0}
 
-        Please make sure your Configurator is running at http://host:port/v0
+        Please make sure your Configurator is running at ${http://host:port/v0}
 
         [nodemon] app crashed - waiting for file changes before starting...
 
