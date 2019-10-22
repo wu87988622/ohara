@@ -19,7 +19,7 @@
 const execa = require('execa');
 const chalk = require('chalk');
 
-const mergeE2eReports = require('./mergeE2eReports');
+const mergeReports = require('./mergeReports');
 const copyJars = require('./copyJars');
 const utils = require('./scriptsUtils');
 const commonUtils = require('../utils/commonUtils');
@@ -59,11 +59,7 @@ const run = async (apiRoot, serverPort = 5050) => {
   console.log(chalk.blue('Running API tests with Cypress'));
   cypress = execa(
     'yarn',
-    [
-      'test:api:run',
-      '--config',
-      `baseUrl=http://localhost:${serverPort},integrationFolder=cypress/api`,
-    ],
+    ['test:api:run', '--config', `baseUrl=http://localhost:${serverPort}`],
     {
       cwd: 'client',
       stdio: 'inherit',
@@ -82,7 +78,7 @@ const run = async (apiRoot, serverPort = 5050) => {
   } catch (err) {
     console.log(chalk.red(err.message));
   } finally {
-    await mergeE2eReports('clientApi');
+    await mergeReports('clientApi');
   }
 
   try {

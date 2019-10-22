@@ -28,4 +28,27 @@
 // the project's config changing)
 
 // in plugins/index.js
-module.exports = () => {};
+const fs = require('fs');
+const path = require('path');
+
+module.exports = (on, config) => {
+  const configFile = process.env.CYPRESS_CONFIG_FILE;
+  const configForEnviroment = getConfigurationByFile(configFile);
+
+  // we overwrite default config by cypress.{api|e2e}.json file
+  let newConfig = Object.assign({}, config, configForEnviroment);
+
+  // if we don't define baseUrl yet, use default: localhost:3000
+  if (!newConfig.baseUrl) newConfig.baseUrl = 'http://localhost:3000';
+
+  return newConfig;
+};
+
+function getConfigurationByFile(file) {
+  const pathToConfigFile = path.resolve(
+    './cypress',
+    'configs',
+    `cypress.${file}.json`,
+  );
+  return JSON.parse(fs.readFileSync(pathToConfigFile, 'utf-8'));
+}

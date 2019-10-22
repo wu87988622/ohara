@@ -29,7 +29,7 @@ const { mergeFiles } = require('junit-report-merger');
 const getFiles = () => {
   const files = readdirSync('./test-reports');
   return files
-    .filter(file => file.includes('e2eReport-'))
+    .filter(file => file.includes('Report-'))
     .map(file => path.resolve(`./test-reports/${file}`)); // we need the full path!
 };
 
@@ -52,7 +52,7 @@ const merge = ({ reportDistPath, filesToBeMerged, reject, resolve }) => {
   });
 };
 
-const mergeE2eReports = fileName =>
+const mergeReports = fileName =>
   // Return a promise here so we can await it later
   new Promise((resolve, reject) => {
     const files = getFiles();
@@ -77,4 +77,4 @@ const mergeE2eReports = fileName =>
     }
   });
 
-module.exports = mergeE2eReports;
+module.exports = mergeReports;

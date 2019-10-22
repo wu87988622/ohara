@@ -18,7 +18,7 @@ const execa = require('execa');
 const yargs = require('yargs');
 const chalk = require('chalk');
 
-const mergeE2eReports = require('./mergeE2eReports');
+const mergeReports = require('./mergeReports');
 const copyJars = require('./copyJars');
 const services = require('./handleE2eServices');
 const utils = require('./scriptsUtils');
@@ -141,7 +141,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   } catch (err) {
     console.log(chalk.red(err.message));
   } finally {
-    await mergeE2eReports('clientE2e');
+    await mergeReports('clientE2e');
   }
 
   try {

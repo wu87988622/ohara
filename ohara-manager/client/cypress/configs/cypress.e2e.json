@@ -1,0 +1,14 @@
+{
+  "reporter": "junit",
+  "integrationFolder": "cypress/e2e",
+  "reporterOptions": {
+    "mochaFile": "../test-reports/e2eReport-[hash].xml",
+    "toConsole": true
+  },
+  "screenshotsFolder": "cypress/screenshots/e2e",
+  "video": true,
+  "videosFolder": "cypress/videos/e2e",
+  "requestTimeout": 30000,
+  "defaultCommandTimeout": 20000,
+  "watchForFileChanges": false
+}

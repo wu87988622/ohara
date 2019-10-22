@@ -1,13 +1,1 @@
-{
-  "baseUrl": "http://localhost:3000/",
-  "reporter": "junit",
-  "integrationFolder": "./cypress/e2e",
-  "reporterOptions": {
-    "mochaFile": "../test-reports/e2eReport-[hash].xml",
-    "toConsole": true
-  },
-  "video": true,
-  "requestTimeout": 30000,
-  "defaultCommandTimeout": 20000,
-  "watchForFileChanges": false
-}
+{}

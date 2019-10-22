@@ -1,0 +1,14 @@
+{
+  "reporter": "junit",
+  "integrationFolder": "cypress/api",
+  "reporterOptions": {
+    "mochaFile": "../test-reports/apiReport-[hash].xml",
+    "toConsole": true
+  },
+  "screenshotsFolder": "cypress/screenshots/api",
+  "video": true,
+  "videosFolder": "cypress/videos/api",
+  "requestTimeout": 5000,
+  "defaultCommandTimeout": 5000,
+  "watchForFileChanges": false
+}
