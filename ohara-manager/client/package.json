@@ -12,7 +12,7 @@
     "lint": "eslint --max-warnings 0 src cypress",
     "lint:ci": "cross-env CI=true eslint --max-warnings 0 src cypress",
     "vet": "yarn audit",
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test --env=jsdom --passWithNoTests",
     "test:watch": "yarn test",
     "test:report": "cross-env CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage --watchAll=false",

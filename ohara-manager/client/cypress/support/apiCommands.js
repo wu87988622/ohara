@@ -14,6 +14,33 @@
  * limitations under the License.
  */
 
-import { fetchInfo } from '../../src/api/infoApi';
+import { isEmpty } from 'lodash';
 
+import { fetchInfo } from '../../src/api/infoApi';
+import * as nodeApi from '../../src/api/nodeApi';
+
+// Info API
 Cypress.Commands.add('fetchInfo', () => fetchInfo());
+
+// Node API
+Cypress.Commands.add('fetchNodes', () => nodeApi.fetchNodes());
+Cypress.Commands.add('fetchNode', params => nodeApi.fetchNode(params));
+Cypress.Commands.add('createNode', params => nodeApi.createNode(params));
+Cypress.Commands.add('updateNode', params => nodeApi.updateNode(params));
+Cypress.Commands.add('deleteNode', params => nodeApi.deleteNode(params));
+
+// Utility commands
+Cypress.Commands.add('deleteAllServices', () => {
+  // delete all nodes
+  cy.fetchNodes().then(response => {
+    const { result: nodes } = response.data;
+    if (!isEmpty(nodes)) {
+      nodes
+        // since there may have other nodes data exist (by configurator),
+        // we should remove the generate nodes by us only.
+        // TODO: remove this line after we handle the service part
+        .filter(node => node.hostname.startsWith('node'))
+        .forEach(node => cy.deleteNode(node));
+    }
+  });
+});

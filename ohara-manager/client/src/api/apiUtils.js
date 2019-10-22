@@ -15,7 +15,23 @@
  */
 
 import axios from 'axios';
-import { has } from 'lodash';
+import { isString, get, has, isUndefined } from 'lodash';
+
+export const handleError = error => {
+  if (isUndefined(error)) return; // prevent `undefined` error from throwing `Internal Server Error`
+
+  const message = get(error, 'data.errorMessage.message', null);
+  if (isString(message)) {
+    throw new Error(message);
+  }
+
+  const errorMessage = get(error, 'data.errorMessage', null);
+  if (isString(errorMessage)) {
+    throw new Error(errorMessage);
+  }
+
+  throw new Error(error || 'Internal Server Error');
+};
 
 const createAxios = () => {
   const instance = axios.create({
