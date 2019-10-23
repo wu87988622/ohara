@@ -17,6 +17,7 @@
 package com.island.ohara.configurator.route
 
 import java.io.{File, FileOutputStream}
+import java.nio.file.Files
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, FileInfoApi, StreamApi, TopicApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
@@ -30,7 +31,7 @@ import spray.json.{JsNumber, JsString}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-class TestFileRoute extends OharaTest with Matchers {
+class TestFileInfoRoute extends OharaTest with Matchers {
 
   private[this] val configurator: Configurator = Configurator.builder.fake().build()
   private[this] val streamApi: StreamApi.Access =
@@ -47,6 +48,7 @@ class TestFileRoute extends OharaTest with Matchers {
   }
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("40 seconds"))
+
   @Test
   def testUpload(): Unit = {
     // upload jar to random group
@@ -81,20 +83,22 @@ class TestFileRoute extends OharaTest with Matchers {
 
   @Test
   def testUploadWithNewName(): Unit = {
-    val tagsList = Seq(
-      Map("a" -> JsString("b")),
-      Map("b" -> JsNumber(123)),
-    )
+    val name = CommonUtils.randomString()
     val file = tmpFile(CommonUtils.randomString(10).getBytes)
-    tagsList.foreach { tags =>
-      result(fileApi.request.file(file).tags(tags).upload())
-    }
+    val fileInfo = result(fileApi.request.file(file).name(name).upload())
     result(fileApi.list()).size shouldBe 1
-    val fileInfo = result(fileApi.list()).head
     fileInfo.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-    fileInfo.name shouldBe file.getName
+    fileInfo.name shouldBe name
     fileInfo.size shouldBe file.length()
-    fileInfo.tags shouldBe tagsList.last
+  }
+
+  @Test
+  def failToDuplicateUpload(): Unit = {
+    val file = tmpFile(CommonUtils.randomString(10).getBytes)
+    result(fileApi.request.file(file).upload())
+    intercept[IllegalArgumentException] {
+      result(fileApi.request.file(file).upload())
+    }.getMessage should include("exist")
   }
 
   @Test
@@ -113,7 +117,7 @@ class TestFileRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testDeleteJarUsedInStreamApp(): Unit = {
+  def testDeleteJarUsedByStreamApp(): Unit = {
     val data = CommonUtils.randomString(10).getBytes
     val name = CommonUtils.randomString(10)
     val f = tmpFile(data)
@@ -146,7 +150,7 @@ class TestFileRoute extends OharaTest with Matchers {
         .create())
     // cannot delete a used jar
     val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.key))
-    thrown.getMessage should include(StreamApi.STREAM_SERVICE_NAME)
+    thrown.getMessage should include("stream cluster")
 
     result(streamApi.delete(streamInfo.key))
     // delete is ok after remove property
@@ -196,6 +200,19 @@ class TestFileRoute extends OharaTest with Matchers {
 
     result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).delete(wk.key))
     result(fileApi.delete(jar.key))
+  }
+
+  @Test
+  def testDownload(): Unit = {
+    val data = CommonUtils.randomString(10).getBytes
+    val f = tmpFile(data)
+    val jar = result(fileApi.request.file(f).upload())
+    val input = jar.url.openStream()
+    val tempFile = CommonUtils.createTempJar(CommonUtils.randomString(10))
+    if (tempFile.exists()) tempFile.delete() shouldBe true
+    try Files.copy(input, tempFile.toPath)
+    finally input.close()
+    tempFile.length() shouldBe jar.size
   }
 
   @After

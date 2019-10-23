@@ -37,7 +37,6 @@ import com.island.ohara.client.configurator.{ConfiguratorApiInfo, Data}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Mode
-import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
@@ -52,7 +51,6 @@ import scala.concurrent.{Await, ExecutionContext}
   *
   */
 class Configurator private[configurator] (val hostname: String, val port: Int)(implicit val store: DataStore,
-                                                                               val fileStore: FileStore,
                                                                                val dataCollie: DataCollie,
                                                                                val serviceCollie: ServiceCollie,
                                                                                val k8sClient: Option[K8SClient])
@@ -234,9 +232,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       ZookeeperRoute.apply,
       BrokerRoute.apply,
       WorkerRoute.apply,
-      FileRoute.apply,
-      // the route of downloading jar is moved to jar store so we have to mount it manually.
-      fileStore.route,
+      FileInfoRoute.apply(hostname, port),
       LogRoute.apply,
       ObjectRoute.apply,
       ContainerRoute.apply
@@ -296,7 +292,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
         log.error("failed to terminate all running threads!!!")
     }
     Releasable.close(serviceCollie)
-    Releasable.close(fileStore)
     Releasable.close(store)
     Releasable.close(adminCleaner)
     log.info(s"succeed to close Ohara Configurator. elapsed:${CommonUtils.current() - start} ms")

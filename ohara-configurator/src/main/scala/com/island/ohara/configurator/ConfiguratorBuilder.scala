@@ -33,7 +33,6 @@ import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.fake._
-import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
 import org.rocksdb.RocksDBException
 
@@ -45,7 +44,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var port: Int = -1
   private[this] var homeFolder: String = _
   private[this] var store: DataStore = _
-  private[this] var fileStore: FileStore = _
   private[this] var serviceCollie: ServiceCollie = _
   private[this] var k8sClient: K8SClient = _
 
@@ -403,7 +401,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
   override def build(): Configurator = doOrReleaseObjects(
     new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(store = getOrCreateStore(),
-                                                                                 fileStore = getOrCreateFileStore(),
                                                                                  dataCollie = createCollie(),
                                                                                  serviceCollie = getOrCreateCollie(),
                                                                                  k8sClient = Option(k8sClient)))
@@ -440,16 +437,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       else throw e
   } else store
 
-  private[this] def getOrCreateFileStore(): FileStore = if (fileStore == null) {
-    fileStore = FileStore.builder
-      .homeFolder(folder("jars"))
-      .hostname(getOrCreateHostname())
-      .port(getOrCreatePort())
-      .acceptedExtensions(Set("jar"))
-      .build()
-    fileStore
-  } else fileStore
-
   private[this] def getOrCreateCollie(): ServiceCollie = if (serviceCollie == null) {
     this.serviceCollie =
       if (k8sClient == null) ServiceCollie.builderOfSsh.dataCollie(createCollie()).build
@@ -481,8 +468,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[configurator] def cleanup(): Unit = {
     Releasable.close(store)
     store = null
-    Releasable.close(fileStore)
-    fileStore = null
     Releasable.close(serviceCollie)
     serviceCollie = null
     k8sClient = null

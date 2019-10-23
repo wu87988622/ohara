@@ -38,6 +38,8 @@ package object v0 {
     */
   val NAME_KEY: String = "name"
 
+  val LAST_MODIFIED_KEY: String = "lastModified"
+
   /**
     * Noted: there are other two definition having "tags""
     * 1) ConnectorDefUtils.TAGS_DEFINITION

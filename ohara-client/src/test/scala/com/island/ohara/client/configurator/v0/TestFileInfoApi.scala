@@ -17,11 +17,14 @@
 package com.island.ohara.client.configurator.v0
 
 import java.io.File
+import java.net.URL
 
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestFileInfoApi extends OharaTest with Matchers {
@@ -60,4 +63,25 @@ class TestFileInfoApi extends OharaTest with Matchers {
 
   @Test
   def emptyTags(): Unit = access.request.tags(Map.empty)
+
+  @Test
+  def bytesMustBeEmptyAfterSerialization(): Unit = {
+    val bytes = CommonUtils.randomString().getBytes()
+    val fileInfo = new FileInfo(
+      group = CommonUtils.randomString(),
+      name = CommonUtils.randomString(),
+      lastModified = CommonUtils.current(),
+      bytes = bytes,
+      url = new URL("http://localhost:1345/v0"),
+      tags = Map("a" -> JsString("b"))
+    )
+
+    val copy = FileInfoApi.FILE_INFO_JSON_FORMAT.read(FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo))
+    copy.group shouldBe fileInfo.group
+    copy.name shouldBe fileInfo.name
+    copy.lastModified shouldBe fileInfo.lastModified
+    copy.bytes shouldBe Array.empty
+    copy.url shouldBe fileInfo.url
+    copy.tags shouldBe fileInfo.tags
+  }
 }

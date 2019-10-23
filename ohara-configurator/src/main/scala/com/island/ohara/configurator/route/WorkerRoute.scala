@@ -18,24 +18,24 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
 
-  private[this] def hookOfCreation(implicit fileStore: FileStore,
+  private[this] def hookOfCreation(implicit store: DataStore,
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
     (creation: Creation) =>
       creation.brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster()).flatMap { bkKey =>
         Future
-          .traverse(creation.jarKeys)(fileStore.fileInfo)
+          .traverse(creation.jarKeys)(store.value[FileInfo])
           .map(_.toSeq)
           .map(jarInfos =>
             WorkerClusterInfo(
@@ -53,7 +53,7 @@ object WorkerRoute {
           ))
     }
 
-  private[this] def hookOfUpdating(implicit fileStore: FileStore,
+  private[this] def hookOfUpdating(implicit store: DataStore,
                                    serviceCollie: ServiceCollie,
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, WorkerClusterInfo] =
@@ -70,7 +70,7 @@ object WorkerRoute {
         }
         .flatMap { bkKey =>
           // use PUT as creation request
-          Future.traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo).map(_.toSeq).map { jarInfos =>
+          Future.traverse(update.jarKeys.getOrElse(Set.empty))(store.value[FileInfo]).map(_.toSeq).map { jarInfos =>
             // 1) fill the previous settings (if exists)
             // 2) overwrite previous settings by updated settings
             // 3) fill the ignored settings by creation
@@ -171,7 +171,6 @@ object WorkerRoute {
             streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
             dataCollie: DataCollie,
-            fileStore: FileStore,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[WorkerClusterInfo, WorkerClusterStatus, Creation, Updating](
       root = WORKER_PREFIX_PATH,

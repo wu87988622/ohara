@@ -29,7 +29,6 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInf
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.ObjectChecker.ChickList
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import com.island.ohara.configurator.store.DataStore
@@ -296,10 +295,7 @@ object ObjectChecker {
     case object STOPPED extends Condition
   }
 
-  def apply()(implicit store: DataStore,
-              serviceCollie: ServiceCollie,
-              fileStore: FileStore,
-              adminCleaner: AdminCleaner): ObjectChecker =
+  def apply()(implicit store: DataStore, serviceCollie: ServiceCollie, adminCleaner: AdminCleaner): ObjectChecker =
     new ObjectChecker {
 
       override def checkList: ChickList = new ChickList {
@@ -450,8 +446,8 @@ object ObjectChecker {
           } else Future.traverse(requiredConnectors.keySet)(checkConnector).map(_.flatten.toMap)
 
         private[this] def checkFiles()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
-          if (requireAllFiles) fileStore.fileInfos()
-          else Future.traverse(requiredFiles)(fileStore.fileInfo).map(_.toSeq)
+          if (requireAllFiles) store.values[FileInfo]()
+          else Future.traverse(requiredFiles)(store.value[FileInfo]).map(_.toSeq)
 
         private[this] def checkNodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
           if (requireAllNodes) store.values[Node]()

@@ -112,10 +112,10 @@ class TestStreamCreator extends OharaTest with Matchers {
 
   private[this] def fileInfo: FileInfo = fileInfo(new URL("http://abc/aaa.jar"))
 
-  private[this] def fileInfo(url: URL): FileInfo = FileInfo(
+  private[this] def fileInfo(url: URL): FileInfo = new FileInfo(
     group = CommonUtils.randomString(),
     name = CommonUtils.randomString(),
-    size = 1000,
+    bytes = Array.empty,
     url = url,
     lastModified = CommonUtils.current(),
     tags = Map.empty
@@ -163,11 +163,11 @@ class TestStreamCreator extends OharaTest with Matchers {
     val info = StreamClusterInfo(
       settings = StreamApi.access.request
         .nodeNames(Set("n0"))
-        .jarInfo(FileInfo(
+        .jarInfo(new FileInfo(
           group = CommonUtils.randomString(5),
           name = CommonUtils.randomString(5),
           url = new URL("http://localhost:12345/in.jar"),
-          size = 1000,
+          bytes = Array.empty,
           lastModified = CommonUtils.current(),
           tags = Map.empty
         ))

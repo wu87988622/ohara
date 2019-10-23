@@ -62,15 +62,15 @@ import scala.reflect.ClassTag
 trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     extends com.island.ohara.common.pattern.Builder[server.Route] {
   private[this] var root: String = _
-  private[this] var hookOfCreation: HookOfCreation[Creation, Res] = _
-  private[this] var hookOfUpdating: HookOfUpdating[Updating, Res] = _
+  private[this] var customPost: Option[() => Route] = None
+  private[this] var hookOfCreation: Option[HookOfCreation[Creation, Res]] = None
+  private[this] var hookOfUpdating: Option[HookOfUpdating[Updating, Res]] = None
   private[this] var hookOfGet: HookOfGet[Res] = (res: Res) => Future.successful(res)
   private[this] var hookOfList: HookOfList[Res] = (res: Seq[Res]) => Future.successful(res)
   private[this] var hookBeforeDelete: HookBeforeDelete = (_: ObjectKey) => Future.successful(Unit)
-  private[this] val hookOfPutActions: mutable.Map[String, HookOfAction[Res]] = mutable.Map[String, HookOfAction[Res]]()
+  private[this] val hookOfPutActions = mutable.Map[String, HookOfAction[Res]]()
   private[this] var hookOfFinalPutAction: Option[HookOfAction[Res]] = None
-  private[this] val hookOfDeleteActions: mutable.Map[String, HookOfAction[ObjectKey]] =
-    mutable.Map[String, HookOfAction[ObjectKey]]()
+  private[this] val hookOfDeleteActions = mutable.Map[String, HookOfAction[ObjectKey]]()
   private[this] var hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]] = None
 
   def root(root: String): RouteBuilder[Creation, Updating, Res] = {
@@ -78,13 +78,25 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     this
   }
 
-  def hookOfCreation(hookOfCreation: HookOfCreation[Creation, Res]): RouteBuilder[Creation, Updating, Res] = {
-    this.hookOfCreation = Objects.requireNonNull(hookOfCreation)
+  @Optional("default route is redirected to error response")
+  def customPost(customPost: () => Route): RouteBuilder[Creation, Updating, Res] = {
+    if (hookOfCreation.isDefined)
+      throw new IllegalArgumentException("you can't define both of customPost and hookOfCreation")
+    this.customPost = Some(customPost)
     this
   }
 
+  @Optional("default route is redirected to error response")
+  def hookOfCreation(hookOfCreation: HookOfCreation[Creation, Res]): RouteBuilder[Creation, Updating, Res] = {
+    if (customPost.isDefined)
+      throw new IllegalArgumentException("you can't define both of customPost and hookOfCreation")
+    this.hookOfCreation = Some(hookOfCreation)
+    this
+  }
+
+  @Optional("default route is redirected to error response")
   def hookOfUpdating(hookOfUpdating: HookOfUpdating[Updating, Res]): RouteBuilder[Creation, Updating, Res] = {
-    this.hookOfUpdating = Objects.requireNonNull(hookOfUpdating)
+    this.hookOfUpdating = Some(hookOfUpdating)
     this
   }
 
@@ -134,8 +146,9 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
 
   override def build(): Route = doBuild(
     root = CommonUtils.requireNonEmpty(root),
-    hookOfCreation = Objects.requireNonNull(hookOfCreation),
-    hookOfUpdating = Objects.requireNonNull(hookOfUpdating),
+    customPost = customPost,
+    hookOfCreation = hookOfCreation,
+    hookOfUpdating = hookOfUpdating,
     hookOfGet = Objects.requireNonNull(hookOfGet),
     hookOfList = Objects.requireNonNull(hookOfList),
     hookBeforeDelete = Objects.requireNonNull(hookBeforeDelete),
@@ -146,8 +159,9 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   )
 
   protected def doBuild(root: String,
-                        hookOfCreation: HookOfCreation[Creation, Res],
-                        hookOfUpdating: HookOfUpdating[Updating, Res],
+                        customPost: Option[() => Route],
+                        hookOfCreation: Option[HookOfCreation[Creation, Res]],
+                        hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
                         hookOfList: HookOfList[Res],
                         hookOfGet: HookOfGet[Res],
                         hookBeforeDelete: HookBeforeDelete,
@@ -170,8 +184,9 @@ object RouteBuilder {
     rm2: RootJsonFormat[Res],
     executionContext: ExecutionContext): RouteBuilder[Creation, Updating, Res] =
     (root: String,
-     hookOfCreation: HookOfCreation[Creation, Res],
-     hookOfUpdating: HookOfUpdating[Updating, Res],
+     customPost: Option[() => Route],
+     hookOfCreation: Option[HookOfCreation[Creation, Res]],
+     hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
      hookOfList: HookOfList[Res],
      hookOfGet: HookOfGet[Res],
      hookBeforeDelete: HookBeforeDelete,
@@ -181,9 +196,13 @@ object RouteBuilder {
      hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]]) =>
       pathPrefix(root) {
         pathEnd {
-          post(entity(as[Creation]) { creation =>
-            complete(hookOfCreation(creation).flatMap(res => store.addIfAbsent(res)))
-          }) ~
+          customPost
+            .map(_.apply())
+            .getOrElse(post(entity(as[Creation]) { creation =>
+              hookOfCreation
+                .map(hook => complete(hook(creation).flatMap(res => store.addIfAbsent(res))))
+                .getOrElse(routeToOfficialUrl(s"/$root"))
+            })) ~
             get {
               parameterMap { params =>
                 complete(
@@ -212,11 +231,18 @@ object RouteBuilder {
               put(
                 entity(as[Updating])(
                   update =>
-                    complete(
-                      store
-                        .get[Res](key)
-                        .flatMap(previous => hookOfUpdating(key = key, update = update, previous = previous))
-                        .flatMap(store.add))))
+                    hookOfUpdating
+                      .map(
+                        hook =>
+                          complete(
+                            store
+                              .get[Res](key)
+                              .flatMap(previous => hook(key = key, update = update, previous = previous))
+                              .flatMap(store.add)))
+                      .getOrElse(routeToOfficialUrl(s"/$root/${key.name}?${key.group()}"))
+                )
+              )
+
           }
         }
       } ~ pathPrefix(root / Segment / Segment) {
