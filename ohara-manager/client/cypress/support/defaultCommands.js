@@ -18,6 +18,7 @@ import { isEmpty } from 'lodash';
 
 import { fetchInfo } from '../../src/api/infoApi';
 import * as nodeApi from '../../src/api/nodeApi';
+import * as fileApi from '../../src/api/fileApi';
 
 // Info API
 Cypress.Commands.add('fetchInfo', () => fetchInfo());
@@ -29,7 +30,34 @@ Cypress.Commands.add('createNode', params => nodeApi.createNode(params));
 Cypress.Commands.add('updateNode', params => nodeApi.updateNode(params));
 Cypress.Commands.add('deleteNode', params => nodeApi.deleteNode(params));
 
+// File API
+Cypress.Commands.add('fetchFiles', group => fileApi.fetchFiles(group));
+Cypress.Commands.add('fetchFile', params => fileApi.fetchFile(params));
+Cypress.Commands.add('uploadFile', params => fileApi.uploadFile(params));
+Cypress.Commands.add('updateFile', params => fileApi.updateFile(params));
+Cypress.Commands.add('deleteFile', params => fileApi.deleteFile(params));
+
 // Utility commands
+Cypress.Commands.add('createJar', (jarName, jarGroup) => {
+  cy.fixture(`plugin/${jarName}`, 'base64')
+    .then(Cypress.Blob.base64StringToBlob)
+    .then(blob => {
+      const type = 'application/java-archive';
+      const testFile = new File([blob], jarName, { type });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      blob = dataTransfer.files;
+      const params = {
+        file: blob[0],
+        group: jarGroup,
+        tags: {
+          name: jarName,
+        },
+      };
+      return cy.uploadFile(params);
+    });
+});
+
 Cypress.Commands.add('deleteAllServices', () => {
   // delete all nodes
   cy.fetchNodes().then(response => {
@@ -41,6 +69,13 @@ Cypress.Commands.add('deleteAllServices', () => {
         // TODO: remove this line after we handle the service part
         .filter(node => node.hostname.startsWith('node'))
         .forEach(node => cy.deleteNode(node));
+    }
+  });
+  // delete all files
+  cy.fetchFiles().then(response => {
+    const { result: fileInfos } = response.data;
+    if (!isEmpty(fileInfos)) {
+      fileInfos.forEach(fileInfo => cy.deleteFile(fileInfo));
     }
   });
 });

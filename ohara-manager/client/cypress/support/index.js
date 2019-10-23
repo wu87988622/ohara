@@ -29,6 +29,6 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-import './apiCommands';
+import './defaultCommands';
 import './e2eCommands';
 import './retryOnFail';

@@ -17,7 +17,7 @@
 import faker from 'faker';
 
 const { system, random, lorem, internet, date } = faker;
-const { fileName: name } = system;
+const { commonFileName } = system;
 const { uuid: id, number, alphaNumeric: revision } = random;
 const { paragraph: message, word } = lorem;
 const { domainName, ip, userName, url, password } = internet;
@@ -26,7 +26,7 @@ export const port = ({ min = 5000, max = 65535 } = {}) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export const serviceName = ({ length = 10, prefix } = {}) => {
+export const name = ({ length = 10, prefix } = {}) => {
   let name = '';
   const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -44,7 +44,7 @@ export const serverHost = () => {
 };
 
 export {
-  name,
+  commonFileName,
   id,
   message,
   domainName,

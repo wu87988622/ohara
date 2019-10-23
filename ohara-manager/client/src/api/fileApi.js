@@ -18,9 +18,10 @@ import { get } from 'lodash';
 
 import { axiosInstance } from './apiUtils';
 
-export const fetchNodes = async () => {
+export const fetchFiles = async group => {
   try {
-    const res = await axiosInstance.get(`/api/nodes`);
+    const url = group ? `/api/files?group=${group}` : `/api/files`;
+    const res = await axiosInstance.get(url);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) throw new Error(res.errorMessage);
@@ -31,9 +32,11 @@ export const fetchNodes = async () => {
   }
 };
 
-export const fetchNode = async params => {
+export const fetchFile = async params => {
   try {
-    const res = await axiosInstance.get(`/api/nodes/${params.hostname}`);
+    const res = await axiosInstance.get(
+      `/api/files/${params.name}?group=${params.group}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) throw new Error(res.errorMessage);
@@ -44,39 +47,30 @@ export const fetchNode = async params => {
   }
 };
 
-export const createNode = async params => {
+export const deleteFile = async params => {
   try {
-    const url = `/api/nodes`;
+    const res = await axiosInstance.delete(
+      `/api/files/${params.name}?group=${params.group}`,
+    );
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) throw new Error(res.errorMessage);
+
+    return res;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+export const updateFile = async params => {
+  try {
     const data = {
-      hostname: params.hostname,
-      port: params.port,
-      user: params.user,
-      password: params.password,
-    };
-
-    const res = await axiosInstance.post(url, data);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) throw new Error(res.errorMessage);
-
-    return res;
-  } catch (error) {
-    throw new Error(error);
-  }
-};
-
-export const updateNode = async params => {
-  try {
-    const url = `/api/nodes/${params.hostname}`;
-    const data = {
-      hostname: params.hostname,
-      port: params.port,
-      user: params.user,
-      password: params.password,
       tags: params.tags,
     };
-
-    const res = await axiosInstance.put(url, data);
+    const res = await axiosInstance.put(
+      `/api/files/${params.name}?group=${params.group}`,
+      data,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) throw new Error(res.errorMessage);
@@ -87,11 +81,20 @@ export const updateNode = async params => {
   }
 };
 
-export const deleteNode = async params => {
+export const uploadFile = async params => {
   try {
-    const url = `/api/nodes/${params.hostname}`;
+    const url = `/api/files`;
+    let formData = new FormData();
+    formData.append('file', params.file);
+    formData.append('group', params.group);
+    formData.append('tags', JSON.stringify(params.tags));
 
-    const res = await axiosInstance.delete(url);
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data',
+      },
+    };
+    const res = await axiosInstance.post(url, formData, config);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) throw new Error(res.errorMessage);
