@@ -86,6 +86,8 @@ class TestLogRoute extends OharaTest with Matchers {
         .fromTopicKey(fromTopic.key)
         .toTopicKey(toTopic.key)
         .jarKey(file.key)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())
     result(streamApi.start(cluster.key))
     val clusterLogs = result(logApi.log4StreamCluster(cluster.key))

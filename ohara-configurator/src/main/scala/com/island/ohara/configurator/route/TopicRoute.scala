@@ -18,7 +18,9 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -55,89 +57,112 @@ private[configurator] object TopicRoute {
     * @return updated topic info
     */
   private[this] def updateState(topicInfo: TopicInfo)(implicit meterCache: MeterCache,
-                                                      store: DataStore,
+                                                      adminCleaner: AdminCleaner,
+                                                      objectChecker: ObjectChecker,
                                                       brokerCollie: BrokerCollie,
-                                                      executionContext: ExecutionContext): Future[TopicInfo] = store
-    .value[BrokerClusterInfo](topicInfo.brokerClusterKey)
-    .flatMap(c => brokerCollie.topicAdmin(c).map(_ -> c))
-    .flatMap {
-      case (topicAdmin, brokerClusterInfo) =>
-        topicAdmin
-          .exist(topicInfo.key)
-          .flatMap(
-            if (_)
-              topicAdmin
-                .topics()
-                .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
-                .map(_.partitionInfos -> Some(TopicState.RUNNING))
-            else Future.successful(Seq.empty -> None))
-          // pre-close topic admin
-          .map(v =>
-            try v
-            finally Releasable.close(topicAdmin))
-          .map {
-            case (partitions, state) =>
-              topicInfo.copy(
-                partitionInfos = partitions.map(partition =>
-                  PartitionInfo(
-                    index = partition.index,
-                    leaderNode = partition.leaderNode,
-                    replicaNodes = partition.replicaNodes,
-                    inSyncReplicaNodes = partition.inSyncReplicaNodes,
-                    beginningOffset = partition.beginningOffset,
-                    endOffset = partition.endOffset
-                )),
-                state = state,
-                metrics = metrics(brokerClusterInfo, topicInfo.key.topicNameOnKafka)
-              )
-          }
-    }
-    .recover {
-      case e: Throwable =>
-        LOG.debug(s"failed to fetch stats for $topicInfo", e)
-        topicInfo.copy(
-          partitionInfos = Seq.empty,
-          metrics = Metrics.EMPTY,
-          state = None
-        )
-    }
+                                                      executionContext: ExecutionContext): Future[TopicInfo] =
+    objectChecker.checkList
+      .topic(topicInfo.key)
+      .check()
+      .map(_.topicInfos.head._2)
+      .flatMap {
+        case STOPPED =>
+          Future.successful(
+            topicInfo.copy(
+              partitionInfos = Seq.empty,
+              metrics = Metrics.EMPTY,
+              state = None
+            ))
+        case RUNNING =>
+          objectChecker.checkList
+            .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
+            .check()
+            .map(_.runningBrokers.head)
+            .flatMap { brokerClusterInfo =>
+              brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add).flatMap { topicAdmin =>
+                topicAdmin
+                  .exist(topicInfo.key)
+                  .flatMap(
+                    if (_)
+                      topicAdmin
+                        .topics()
+                        .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
+                        .map(_.partitionInfos -> Some(TopicState.RUNNING))
+                    else Future.successful(Seq.empty -> None))
+                  // pre-close topic admin
+                  .map(try _
+                  finally Releasable.close(topicAdmin))
+                  .map {
+                    case (partitions, state) =>
+                      topicInfo.copy(
+                        partitionInfos = partitions.map(partition =>
+                          PartitionInfo(
+                            index = partition.index,
+                            leaderNode = partition.leaderNode,
+                            replicaNodes = partition.replicaNodes,
+                            inSyncReplicaNodes = partition.inSyncReplicaNodes,
+                            beginningOffset = partition.beginningOffset,
+                            endOffset = partition.endOffset
+                        )),
+                        state = state,
+                        metrics = metrics(brokerClusterInfo, topicInfo.key.topicNameOnKafka)
+                      )
+                  }
+              }
+            }
+      }
+      .recover {
+        case e: Throwable =>
+          LOG.debug(s"failed to fetch stats for $topicInfo", e)
+          topicInfo.copy(
+            partitionInfos = Seq.empty,
+            metrics = Metrics.EMPTY,
+            state = None
+          )
+      }
 
   private[this] def hookOfGet(implicit meterCache: MeterCache,
+                              adminCleaner: AdminCleaner,
+                              objectChecker: ObjectChecker,
                               brokerCollie: BrokerCollie,
-                              store: DataStore,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
     updateState(topicInfo)
 
   private[this] def hookOfList(implicit meterCache: MeterCache,
+                               adminCleaner: AdminCleaner,
+                               objectChecker: ObjectChecker,
                                brokerCollie: BrokerCollie,
-                               store: DataStore,
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) => Future.traverse(topicInfos)(updateState)
 
-  private[this] def creationToTopicInfo(creation: Creation)(implicit store: DataStore,
+  private[this] def creationToTopicInfo(creation: Creation)(implicit objectChecker: ObjectChecker,
                                                             executionContext: ExecutionContext): Future[TopicInfo] =
-    store.exist[BrokerClusterInfo](creation.brokerClusterKey).map {
-      if (_)
-        TopicInfo(
-          settings = TOPIC_CUSTOM_CONFIGS ++ creation.settings,
-          partitionInfos = Seq.empty,
-          metrics = Metrics.EMPTY,
-          state = None,
-          lastModified = CommonUtils.current()
-        )
-      else throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} does not exist")
+    objectChecker.checkList.brokerCluster(creation.brokerClusterKey).check().map { _ =>
+      TopicInfo(
+        settings = TOPIC_CUSTOM_CONFIGS ++ creation.settings,
+        partitionInfos = Seq.empty,
+        metrics = Metrics.EMPTY,
+        state = None,
+        lastModified = CommonUtils.current()
+      )
     }
 
-  private[this] def hookOfCreation(implicit store: DataStore,
+  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     creationToTopicInfo(_)
 
   private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   store: DataStore,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, TopicInfo] =
-    (key: ObjectKey, update: Updating, previousOption: Option[TopicInfo]) =>
+    (key: ObjectKey, updating: Updating, previousOption: Option[TopicInfo]) =>
       previousOption match {
-        case None => creationToTopicInfo(access.request.settings(update.settings).creation)
+        case None =>
+          creationToTopicInfo(
+            access.request
+              .settings(updating.settings)
+              // the key is not in update's settings so we have to add it to settings
+              .name(key.name)
+              .group(key.group)
+              .creation)
         case Some(previous) =>
           objectChecker.checkList
           // we don't support to update a running topic
@@ -150,7 +175,7 @@ private[configurator] object TopicRoute {
               creationToTopicInfo(
                 access.request
                   .settings(previous.settings)
-                  .settings(update.settings)
+                  .settings(updating.settings)
                   // the key is not in update's settings so we have to add it to settings
                   .name(key.name)
                   .group(key.group)
@@ -158,20 +183,39 @@ private[configurator] object TopicRoute {
             }
     }
 
+  private[this] def checkConflict(topicInfo: TopicInfo,
+                                  connectorInfos: Seq[ConnectorInfo],
+                                  streamClusterInfos: Seq[StreamClusterInfo]): Unit = {
+    val conflictConnectors = connectorInfos.filter(_.topicKeys.contains(topicInfo.key))
+    if (conflictConnectors.nonEmpty)
+      throw new IllegalArgumentException(
+        s"topic:${topicInfo.key} is used by running connectors:${conflictConnectors.map(_.key).mkString(",")}")
+    val conflictStreamApps =
+      streamClusterInfos.filter(s => s.fromTopicKeys.contains(topicInfo.key) || s.toTopicKeys.contains(topicInfo.key))
+    if (conflictStreamApps.nonEmpty)
+      throw new IllegalArgumentException(
+        s"topic:${topicInfo.key} is used by running streamApps:${conflictStreamApps.map(_.key).mkString(",")}")
+  }
+
   private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     objectChecker.checkList
       .topic(TopicKey.of(key.group(), key.name()), STOPPED)
+      .allConnectors()
+      .allStreamApps()
       .check()
+      .map { report =>
+        checkConflict(report.topicInfos.head._1, report.connectorInfos.keys.toSeq, report.streamClusterInfos.keys.toSeq)
+        Unit
+      }
       .recover {
         // the duplicate deletes are legal to ohara
         case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+        case e: Throwable                                           => throw e
       }
       .map(_ => Unit)
 
-  private[this] def hookOfStart(implicit store: DataStore,
-                                objectChecker: ObjectChecker,
-                                meterCache: MeterCache,
+  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 adminCleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction[TopicInfo] =
@@ -180,13 +224,13 @@ private[configurator] object TopicRoute {
         .topic(topicInfo.key)
         .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
         .check()
-        .map(_.topicInfos.head)
+        .map(report => (report.topicInfos.head._2, report.runningBrokers.head))
         .flatMap {
-          case (topicInfo, condition) =>
+          case (condition, brokerClusterInfo) =>
             condition match {
               case RUNNING => Future.unit
               case STOPPED =>
-                CollieUtils.topicAdmin(topicInfo.brokerClusterKey).map(_._2).flatMap { topicAdmin =>
+                brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add).flatMap { topicAdmin =>
                   topicAdmin.creator
                     .topicKey(topicInfo.key)
                     .numberOfPartitions(topicInfo.numberOfPartitions)
@@ -200,27 +244,39 @@ private[configurator] object TopicRoute {
             }
       }
 
-  private[this] def hookOfStop(implicit store: DataStore,
-                               objectChecker: ObjectChecker,
-                               meterCache: MeterCache,
+  private[this] def hookOfStop(implicit objectChecker: ObjectChecker,
                                adminCleaner: AdminCleaner,
                                brokerCollie: BrokerCollie,
                                executionContext: ExecutionContext): HookOfAction[TopicInfo] =
     (topicInfo: TopicInfo, _, _) =>
-      objectChecker.checkList.topic(topicInfo.key).check().map(_.topicInfos.head).flatMap {
-        case (topicInfo, condition) =>
-          condition match {
-            case STOPPED => Future.unit
-            case RUNNING =>
-              CollieUtils.topicAdmin(topicInfo.brokerClusterKey).map(_._2).flatMap { topicAdmin =>
-                topicAdmin
-                  .delete(topicInfo.key)
-                  .flatMap(_ =>
-                    try Future.unit
-                    finally Releasable.close(topicAdmin))
-              }
-          }
-    }
+      objectChecker.checkList
+        .allConnectors()
+        .allStreamApps()
+        .topic(topicInfo.key)
+        .check()
+        .map(report => (report.topicInfos.head._2, report.runningConnectors, report.runningStreamApps))
+        .flatMap {
+          case (condition, runningConnectors, runningStreamApps) =>
+            condition match {
+              case STOPPED => Future.unit
+              case RUNNING =>
+                checkConflict(topicInfo, runningConnectors, runningStreamApps)
+                objectChecker.checkList
+                // topic is running so the related broker MUST be running
+                  .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
+                  .check()
+                  .map(_.runningBrokers.head)
+                  .flatMap(brokerCollie.topicAdmin)
+                  .map(adminCleaner.add)
+                  .flatMap { topicAdmin =>
+                    topicAdmin
+                      .delete(topicInfo.key)
+                      .flatMap(_ =>
+                        try Future.unit
+                        finally Releasable.close(topicAdmin))
+                  }
+            }
+      }
 
   def apply(implicit store: DataStore,
             objectChecker: ObjectChecker,

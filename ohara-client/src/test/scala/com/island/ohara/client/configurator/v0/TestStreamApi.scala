@@ -51,7 +51,14 @@ class TestStreamApi extends OharaTest with Matchers {
   def testClone(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
     val streamClusterInfo = StreamClusterInfo(
-      settings = StreamApi.access.request.jarKey(fakeJar).nodeNames(Set(CommonUtils.randomString())).creation.settings,
+      settings = StreamApi.access.request
+        .jarKey(fakeJar)
+        .nodeNames(Set(CommonUtils.randomString()))
+        .fromTopicKey(topicKey(CommonUtils.randomString()))
+        .toTopicKey(topicKey(CommonUtils.randomString()))
+        .brokerClusterKey(ObjectKey.of("group", "n"))
+        .creation
+        .settings,
       definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
@@ -84,6 +91,7 @@ class TestStreamApi extends OharaTest with Matchers {
         .toTopicKey(toTopicKey)
         .jarKey(fakeJar)
         .tags(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+        .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
         .settings,
       definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
@@ -105,8 +113,6 @@ class TestStreamApi extends OharaTest with Matchers {
     info.toTopicKeys shouldBe Set(toTopicKey)
     info.definition.definitions.size == 1 shouldBe true
     info.tags.keys.size shouldBe 2
-    // we initial exactlyOnce to be false
-    info.exactlyOnce shouldBe false
   }
 
   @Test
@@ -129,7 +135,11 @@ class TestStreamApi extends OharaTest with Matchers {
     // default value
     accessRequest
       .name(CommonUtils.randomString(5))
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
       .jarKey(fakeJar)
+      .nodeName(CommonUtils.randomString())
+      .brokerClusterKey(ObjectKey.of("group", "n"))
       .creation
       .imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
   }
@@ -145,7 +155,15 @@ class TestStreamApi extends OharaTest with Matchers {
     an[NullPointerException] should be thrownBy accessRequest.fromTopicKeys(null)
 
     // default from field will be empty
-    accessRequest.name(CommonUtils.randomString(5)).jarKey(fakeJar).creation.fromTopicKeys shouldBe Set.empty
+    accessRequest
+      .name(CommonUtils.randomString(5))
+      .jarKey(fakeJar)
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .brokerClusterKey(ObjectKey.of("group", "n"))
+      .nodeName("node")
+      .creation
+      .fromTopicKeys should not be Set.empty
   }
 
   @Test
@@ -153,7 +171,15 @@ class TestStreamApi extends OharaTest with Matchers {
     an[NullPointerException] should be thrownBy accessRequest.toTopicKeys(null)
 
     // default to field will be empty
-    accessRequest.name(CommonUtils.randomString(5)).jarKey(fakeJar).creation.toTopicKeys shouldBe Set.empty
+    accessRequest
+      .name(CommonUtils.randomString(5))
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .brokerClusterKey(ObjectKey.of("group", "n"))
+      .jarKey(fakeJar)
+      .nodeName("node")
+      .creation
+      .toTopicKeys should not be Set.empty
   }
 
   @Test
@@ -162,16 +188,16 @@ class TestStreamApi extends OharaTest with Matchers {
     an[IllegalArgumentException] should be thrownBy accessRequest.jmxPort(-1)
 
     // default value
-    CommonUtils.requireConnectionPort(accessRequest.jarKey(fakeJar).name(CommonUtils.randomString(5)).creation.jmxPort)
-  }
-
-  @Test
-  def instancesFieldCheck(): Unit = {
-    an[IllegalArgumentException] should be thrownBy accessRequest.instances(0)
-    an[IllegalArgumentException] should be thrownBy accessRequest.instances(-1)
-
-    // default instances is None
-    accessRequest.name(CommonUtils.randomString(5)).jarKey(fakeJar).creation.instances shouldBe None
+    CommonUtils.requireConnectionPort(
+      accessRequest
+        .jarKey(fakeJar)
+        .name(CommonUtils.randomString(5))
+        .nodeName(CommonUtils.randomString())
+        .fromTopicKey(topicKey(CommonUtils.randomString()))
+        .toTopicKey(topicKey(CommonUtils.randomString()))
+        .brokerClusterKey(ObjectKey.of("group", "n"))
+        .creation
+        .jmxPort)
   }
 
   @Test
@@ -181,7 +207,15 @@ class TestStreamApi extends OharaTest with Matchers {
     accessRequest.nodeNames(Set.empty)
 
     // default value
-    accessRequest.name(CommonUtils.randomString(5)).jarKey(fakeJar).creation.nodeNames shouldBe Set.empty
+    accessRequest
+      .name(CommonUtils.randomString(5))
+      .jarKey(fakeJar)
+      .nodeName(CommonUtils.randomString())
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .brokerClusterKey(ObjectKey.of("group", "n"))
+      .creation
+      .nodeNames should not be Set.empty
   }
 
   @Test
@@ -192,35 +226,60 @@ class TestStreamApi extends OharaTest with Matchers {
   @Test
   def requireFieldOnPropertyCreation(): Unit = {
     // jarKey is required
-    an[DeserializationException] should be thrownBy accessRequest.name(CommonUtils.randomString(5)).creation
+    an[DeserializationException] should be thrownBy accessRequest
+      .name(CommonUtils.randomString(5))
+      .nodeName(CommonUtils.randomString())
+      .creation
   }
 
   @Test
   def testMinimumCreation(): Unit = {
-    val creationApi = accessRequest.jarKey(fakeJar).creation
+    val creationApi = accessRequest
+      .jarKey(fakeJar)
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .brokerClusterKey(ObjectKey.of("group", "n"))
+      .nodeName(CommonUtils.randomString())
+      .creation
 
     creationApi.name.nonEmpty shouldBe true
     creationApi.group shouldBe GROUP_DEFAULT
     creationApi.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationApi.jarKey shouldBe fakeJar
-    creationApi.fromTopicKeys shouldBe Set.empty
-    creationApi.toTopicKeys shouldBe Set.empty
+    creationApi.fromTopicKeys should not be Set.empty
+    creationApi.toTopicKeys should not be Set.empty
     creationApi.jmxPort should not be 0
-    creationApi.instances shouldBe None
-    creationApi.nodeNames shouldBe Set.empty
+    creationApi.nodeNames should not be Set.empty
     creationApi.tags shouldBe Map.empty
 
     val creationJson = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                   |  {
-                                                  |    "jarKey": ${fakeJar.toJson}
+                                                  |    "jarKey": ${fakeJar.toJson},
+                                                  |    "from": [
+                                                  |      {
+                                                  |        "group": "g",
+                                                  |        "name": "g"
+                                                  |      }
+                                                  |    ],
+                                                  |    "to": [
+                                                  |      {
+                                                  |        "group": "n",
+                                                  |        "name": "n"
+                                                  |      }
+                                                  |    ],
+                                                  |    "nodeNames": ["nn"],
+                                                  |    "jarKey": ${fakeJar.toJson},
+                                                  |    "brokerClusterKey": {
+                                                  |      "group": "g",
+                                                  |      "name": "n"
+                                                  |    }
                                                   |  }
      """.stripMargin.parseJson)
     creationJson.name.nonEmpty shouldBe true
     creationJson.group shouldBe GROUP_DEFAULT
     creationJson.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationJson.jmxPort should not be 0
-    creationJson.instances shouldBe None
-    creationJson.nodeNames shouldBe Set.empty
+    creationJson.nodeNames should not be Set.empty
     creationJson.tags shouldBe Map.empty
 
     creationApi.settings.keys.size shouldBe creationJson.settings.keys.size
@@ -233,7 +292,6 @@ class TestStreamApi extends OharaTest with Matchers {
     val from = topicKey()
     val to = topicKey()
     val jmxPort = CommonUtils.availablePort()
-    val instances = CommonUtils.randomString().length
     val nodeNames = Set(CommonUtils.randomString())
     val creation = accessRequest
       .name(name)
@@ -242,8 +300,8 @@ class TestStreamApi extends OharaTest with Matchers {
       .fromTopicKey(from)
       .toTopicKey(to)
       .jmxPort(jmxPort)
-      .instances(instances)
       .nodeNames(nodeNames)
+      .brokerClusterKey(ObjectKey.of("group", "n"))
       .creation
 
     creation.name shouldBe name
@@ -252,7 +310,6 @@ class TestStreamApi extends OharaTest with Matchers {
     creation.fromTopicKeys shouldBe Set(from)
     creation.toTopicKeys shouldBe Set(to)
     creation.jmxPort shouldBe jmxPort
-    creation.instances shouldBe Some(instances)
     creation.nodeNames shouldBe nodeNames
   }
 
@@ -260,7 +317,15 @@ class TestStreamApi extends OharaTest with Matchers {
   def testExtraSettingInCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val name2 = JsString(CommonUtils.randomString(10))
-    val creation = accessRequest.name(name).jarKey(fakeJar).settings(Map("name" -> name2)).creation
+    val creation = accessRequest
+      .name(name)
+      .jarKey(fakeJar)
+      .settings(Map("name" -> name2))
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .brokerClusterKey(ObjectKey.of("group", "n"))
+      .nodeName("node")
+      .creation
 
     // settings() has higher priority than name()
     creation.name shouldBe name2.value
@@ -286,7 +351,11 @@ class TestStreamApi extends OharaTest with Matchers {
       |      }
       |    ],
       |    "nodeNames": ["$nodeName"],
-      |    "jarKey": ${fakeJar.toJson}
+      |    "jarKey": ${fakeJar.toJson},
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    }
       |  }
       |  """.stripMargin.parseJson)
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
@@ -296,7 +365,6 @@ class TestStreamApi extends OharaTest with Matchers {
     creation.fromTopicKeys shouldBe Set(from)
     creation.toTopicKeys shouldBe Set(to)
     creation.jmxPort should not be 0
-    creation.instances shouldBe None
     creation.nodeNames shouldBe Set(nodeName)
 
     val name = CommonUtils.randomString(10)
@@ -316,7 +384,11 @@ class TestStreamApi extends OharaTest with Matchers {
        |      }
        |    ],
        |    "nodeNames": ["$nodeName"],
-       |    "jarKey": ${fakeJar.toJson}
+       |    "jarKey": ${fakeJar.toJson},
+       |    "brokerClusterKey": {
+       |      "group": "g",
+       |      "name": "n"
+       |    }
        |  }
        |  """.stripMargin.parseJson)
     creation2.name shouldBe name
@@ -325,14 +397,30 @@ class TestStreamApi extends OharaTest with Matchers {
     creation.fromTopicKeys shouldBe Set(from)
     creation.toTopicKeys shouldBe Set(to)
     creation2.jmxPort should not be 0
-    creation2.instances shouldBe None
     creation.nodeNames shouldBe Set(nodeName)
   }
 
   @Test
   def testDefaultName(): Unit = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
        |  {
-       |    "jarKey": ${fakeJar.toJson}
+       |    "jarKey": ${fakeJar.toJson},
+       |    "nodeNames": ["n"],
+       |    "brokerClusterKey": {
+       |      "group": "g",
+       |      "name": "n"
+       |    },
+       |    "from": [
+       |      {
+       |        "group": "g",
+       |        "name": "n"
+       |      }
+       |    ],
+       |    "to": [
+       |      {
+       |        "group": "g",
+       |        "name": "n"
+       |      }
+       |    ]
        |  }
      """.stripMargin.parseJson).name.nonEmpty shouldBe true
 
@@ -344,7 +432,24 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "name": ""
+      |    "name": "",
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"name\" can't be empty string")
@@ -358,7 +463,24 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "group": ""
+      |    "group": "",
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"group\" can't be empty string")
@@ -372,7 +494,24 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "imageName": ""
+      |    "imageName": "",
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown.getMessage should include("the value of \"imageName\" can't be empty string")
@@ -386,13 +525,47 @@ class TestStreamApi extends OharaTest with Matchers {
     StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name",
-      |    "jarKey": ${fakeJar.toJson}
+      |    "jarKey": ${fakeJar.toJson},
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "jarKey": ""
+      |    "jarKey": "",
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"jarKey\" can't be empty string")
@@ -408,7 +581,24 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "jmxPort": 0
+      |    "jmxPort": 0,
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
@@ -421,7 +611,24 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "jmxPort": -99
+      |    "jmxPort": -99,
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-99\"")
@@ -434,36 +641,27 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "jmxPort": 999999
+      |    "jmxPort": 999999,
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535)")
-  }
-
-  @Test
-  def parseInstancesField(): Unit = {
-    intercept[DeserializationException] {
-      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                    |  {
-                                                    |    "jarKey": {
-                                                    |      "group": "g",
-                                                    |      "name": "n"
-                                                    |    },
-                                                    |    "instances": 0
-                                                    |  }
-                                                    |  """.stripMargin.parseJson)
-    }.getMessage should include("instances")
-    intercept[DeserializationException] {
-      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                    |  {
-                                                    |    "jarKey": {
-                                                    |      "group": "g",
-                                                    |      "name": "n"
-                                                    |    },
-                                                    |    "instances": -1
-                                                    |  }
-                                                    |  """.stripMargin.parseJson)
-    }.getMessage should include("instances")
   }
 
   @Test
@@ -483,7 +681,6 @@ class TestStreamApi extends OharaTest with Matchers {
     data.settings.contains(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()) shouldBe false
     data.settings.contains(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()) shouldBe false
     data.settings.contains(StreamDefUtils.JMX_PORT_DEFINITION.key()) shouldBe false
-    data.settings.contains(StreamDefUtils.INSTANCES_DEFINITION.key()) shouldBe false
     data.settings.contains(StreamDefUtils.NODE_NAMES_DEFINITION.key()) shouldBe false
   }
 
@@ -495,7 +692,24 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "imageName": ""
+      |    "imageName": "",
+      |    "nodeNames": ["n"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown.getMessage should include("the value of \"imageName\" can't be empty string")
@@ -509,7 +723,20 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "from": [""]
+      |    "nodeNames": [
+      |      "n"
+      |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [""],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"from\" can't be empty string")
@@ -537,7 +764,15 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "to": [""]
+      |    "to": [""],
+      |    "nodeNames": [
+      |      "n"
+      |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [""]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"to\" can't be empty string")
@@ -594,30 +829,6 @@ class TestStreamApi extends OharaTest with Matchers {
   }
 
   @Test
-  def parseInstancesFieldOnUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "instances": 0
-      |  }
-      |  """.stripMargin.parseJson)
-
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "instances": -9
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown.getMessage should include("the \"-9\" of \"instances\" can't be either negative or zero!!!")
-  }
-
-  @Test
   def parseNodeNamesFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
@@ -625,19 +836,26 @@ class TestStreamApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
-      |    "nodeNames": ""
+      |    "nodeNames": "",
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
+      |    "from": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
-
-    // create with an empty array is ok
-    // TODO : this should be removed after #2288
-    StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": ${fakeJar.toJson},
-      |    "nodeNames": []
-      |  }
-      |  """.stripMargin.parseJson)
   }
 
   @Test
@@ -667,14 +885,30 @@ class TestStreamApi extends OharaTest with Matchers {
 
   @Test
   def ignoreNameOnCreation(): Unit =
-    accessRequest.jarKey(fakeJar).creation.name.length should not be 0
+    accessRequest
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .jarKey(fakeJar)
+      .nodeName(CommonUtils.randomString())
+      .brokerClusterKey(ObjectKey.of("group", "n"))
+      .creation
+      .name
+      .length should not be 0
 
   @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString(5)
     val res = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(
       StreamClusterInfo(
-        settings = StreamApi.access.request.jarKey(fakeJar).name(name).creation.settings,
+        settings = StreamApi.access.request
+          .fromTopicKey(topicKey(CommonUtils.randomString()))
+          .toTopicKey(topicKey(CommonUtils.randomString()))
+          .brokerClusterKey(ObjectKey.of("group", "n"))
+          .jarKey(fakeJar)
+          .name(name)
+          .nodeName(CommonUtils.randomString())
+          .creation
+          .settings,
         definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
         aliveNodes = Set.empty,
         state = None,
@@ -700,7 +934,13 @@ class TestStreamApi extends OharaTest with Matchers {
     val fromTopicKey = topicKey(CommonUtils.randomString())
     val toTopicKey = topicKey(CommonUtils.randomString())
     val r1 =
-      accessRequest.fromTopicKey(fromTopicKey).toTopicKey(toTopicKey).jarKey(fakeJar).creation
+      accessRequest
+        .fromTopicKey(fromTopicKey)
+        .toTopicKey(toTopicKey)
+        .jarKey(fakeJar)
+        .brokerClusterKey(ObjectKey.of("group", "n"))
+        .nodeName(CommonUtils.randomString())
+        .creation
 
     val r2 = accessRequest
       .fromTopicKey(fromTopicKey)
@@ -719,14 +959,27 @@ class TestStreamApi extends OharaTest with Matchers {
   def testBrokerClusterKey(): Unit = {
     val bkName = CommonUtils.randomString()
     val bkGroup = CommonUtils.randomString()
-    val r1 = accessRequest.brokerClusterKey(ObjectKey.of(bkGroup, bkName)).jarKey(fakeJar).creation
-    r1.brokerClusterKey.get.name() shouldBe bkName
+    val r1 = accessRequest
+      .brokerClusterKey(ObjectKey.of(bkGroup, bkName))
+      .jarKey(fakeJar)
+      .fromTopicKey(topicKey(CommonUtils.randomString()))
+      .toTopicKey(topicKey(CommonUtils.randomString()))
+      .nodeName(CommonUtils.randomString())
+      .creation
+    r1.brokerClusterKey.name() shouldBe bkName
   }
 
   @Test
   def testDeadNodes(): Unit = {
     val cluster = StreamClusterInfo(
-      settings = StreamApi.access.request.jarKey(fakeJar).nodeNames(Set("n0", "n1")).creation.settings,
+      settings = StreamApi.access.request
+        .jarKey(fakeJar)
+        .nodeNames(Set("n0", "n1"))
+        .fromTopicKey(topicKey(CommonUtils.randomString()))
+        .toTopicKey(topicKey(CommonUtils.randomString()))
+        .brokerClusterKey(ObjectKey.of("group", "n"))
+        .creation
+        .settings,
       definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set("n0"),
       state = Some("running"),

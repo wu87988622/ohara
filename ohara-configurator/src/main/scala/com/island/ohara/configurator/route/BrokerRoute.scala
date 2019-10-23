@@ -19,42 +19,50 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
+import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
+import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {
 
-  private[this] def creationToClusterInfo(
-    creation: Creation)(implicit store: DataStore, executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    store.exist[ZookeeperClusterInfo](creation.zookeeperClusterKey).map {
-      if (_)
-        BrokerClusterInfo(
-          settings = creation.settings,
-          aliveNodes = Set.empty,
-          state = None,
-          error = None,
-          lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-        )
-      else throw new IllegalArgumentException(s"zookeeper cluster:${creation.zookeeperClusterKey} does not exist")
+  private[this] def creationToClusterInfo(creation: Creation)(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+    objectChecker.checkList.nodes(creation.nodeNames).zookeeperCluster(creation.zookeeperClusterKey).check().map { _ =>
+      BrokerClusterInfo(
+        settings = creation.settings,
+        aliveNodes = Set.empty,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current(),
+        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+      )
     }
 
-  private[this] def hookOfCreation(implicit store: DataStore,
+  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
     creationToClusterInfo(_)
 
-  private[this] def hookOfUpdating(implicit store: DataStore,
-                                   objectChecker: ObjectChecker,
+  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, BrokerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[BrokerClusterInfo]) =>
       previousOption match {
-        case None => creationToClusterInfo(BrokerApi.access.request.settings(updating.settings).creation)
+        case None =>
+          creationToClusterInfo(
+            BrokerApi.access.request
+              .settings(updating.settings)
+              // the key is not in update's settings so we have to add it to settings
+              .name(key.name)
+              .group(key.group)
+              .creation)
         case Some(previous) =>
           objectChecker.checkList.brokerCluster(previous.key, STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
@@ -102,28 +110,61 @@ object BrokerRoute {
         }
         .map(_ => Unit)
 
-  private[this] def hookBeforeStop(implicit store: DataStore,
-                                   meterCache: MeterCache,
-                                   workerCollie: WorkerCollie,
-                                   streamCollie: StreamCollie,
+  private[this] def checkConflict(brokerClusterInfo: BrokerClusterInfo,
+                                  workerClusterInfos: Seq[WorkerClusterInfo],
+                                  streamClusterInfos: Seq[StreamClusterInfo],
+                                  topicInfos: Seq[TopicInfo]): Unit = {
+    val conflictWorkers = workerClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
+    if (conflictWorkers.nonEmpty)
+      throw new IllegalArgumentException(
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers
+          .mkString(",")}")
+    val conflictStreamApps = streamClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
+    if (conflictStreamApps.nonEmpty)
+      throw new IllegalArgumentException(
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreamApps
+          .mkString(",")}")
+    val conflictTopics = topicInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
+    if (conflictTopics.nonEmpty)
+      throw new IllegalArgumentException(
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreamApps
+          .mkString(",")}")
+  }
+
+  private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
     (brokerClusterInfo: BrokerClusterInfo, _: String, _: Map[String, String]) =>
-      (for {
-        wks <- runningWorkerClusters()
-        sts <- runningStreamClusters()
-      } yield (wks, sts)).map {
-        case (runningWorkerClusters, runningStreamClusters) =>
-          val conflictWks = runningWorkerClusters.filter(_.brokerClusterKey == brokerClusterInfo.key)
-          if (conflictWks.nonEmpty)
-            throw new IllegalArgumentException(
-              s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWks
-                .mkString(",")}")
-          val conflictStreams = runningStreamClusters.filter(_.brokerClusterKey == brokerClusterInfo.key)
-          if (conflictStreams.nonEmpty)
-            throw new IllegalArgumentException(
-              s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreams
-                .mkString(",")}")
-    }
+      objectChecker.checkList
+        .allWorkers()
+        .allStreamApps()
+        .allTopics()
+        .check()
+        .map(report => (report.runningWorkers, report.runningStreamApps, report.runningTopics))
+        .map {
+          case (workerClusterInfos, streamClusterInfos, topicInfos) =>
+            checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
+      }
+
+  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
+                                     executionContext: ExecutionContext): HookBeforeDelete = key =>
+    objectChecker.checkList
+      .allWorkers()
+      .allStreamApps()
+      .allTopics()
+      .brokerCluster(key, STOPPED)
+      .check()
+      .map(report =>
+        (report.brokerClusterInfos.head._1, report.runningWorkers, report.runningStreamApps, report.runningTopics))
+      .map {
+        case (brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos) =>
+          checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
+      }
+      .recover {
+        // the duplicate deletes are legal to ohara
+        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+        case e: Throwable                                           => throw e
+      }
+      .map(_ => Unit)
 
   def apply(implicit store: DataStore,
             objectChecker: ObjectChecker,
@@ -141,6 +182,7 @@ object BrokerRoute {
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
-      hookBeforeStop = hookBeforeStop
+      hookBeforeStop = hookBeforeStop,
+      hookBeforeDelete = hookBeforeDelete
     )
 }

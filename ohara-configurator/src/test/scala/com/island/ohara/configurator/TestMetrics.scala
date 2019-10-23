@@ -52,6 +52,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
+  private[this] val nodeNames = workerClusterInfo.nodeNames
+
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
@@ -224,11 +226,9 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       java.time.Duration.ofSeconds(20))
 
     // remove topic
-    result(topicApi.stop(topic.key))
-    result(topicApi.delete(topic.key))
-    CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.key == topic.key),
+    result(connectorApi.delete(source.key))
+    CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.key == source.key),
                       java.time.Duration.ofSeconds(30))
-    assertNoMetricsForTopic(topic.name)
   }
 
   @Test
@@ -254,7 +254,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     result(topicApi.start(t2.key))
 
     val stream = result(
-      streamApi.request.jarKey(jarInfo.key).instances(1).fromTopicKey(t1.key).toTopicKey(t2.key).create())
+      streamApi.request
+        .jarKey(jarInfo.key)
+        .fromTopicKey(t1.key)
+        .toTopicKey(t2.key)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .nodeNames(nodeNames)
+        .create())
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 

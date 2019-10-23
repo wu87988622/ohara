@@ -21,7 +21,6 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
@@ -35,52 +34,65 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def creationToConnectorInfo(
-    creation: Creation)(implicit store: DataStore, executionContext: ExecutionContext): Future[ConnectorInfo] =
-    store.exist[WorkerClusterInfo](creation.workerClusterKey).map {
-      if (_)
-        ConnectorInfo(
-          settings = creation.settings,
-          // we don't need to fetch connector from kafka since it has not existed in kafka.
-          status = None,
-          tasksStatus = Seq.empty,
-          metrics = Metrics.EMPTY,
-          lastModified = CommonUtils.current()
-        )
-      else throw new IllegalArgumentException(s"worker cluster:${creation.workerClusterKey} does not exist")
+  private[this] def creationToConnectorInfo(creation: Creation)(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext): Future[ConnectorInfo] =
+    objectChecker.checkList.workerCluster(creation.workerClusterKey).topics(creation.topicKeys).check().map { _ =>
+      ConnectorInfo(
+        settings = creation.settings,
+        // we don't need to fetch connector from kafka since it has not existed in kafka.
+        status = None,
+        tasksStatus = Seq.empty,
+        metrics = Metrics.EMPTY,
+        lastModified = CommonUtils.current()
+      )
     }
 
-  private[this] def updateState(connectorDescription: ConnectorInfo)(implicit executionContext: ExecutionContext,
-                                                                     workerCollie: WorkerCollie,
-                                                                     store: DataStore,
-                                                                     meterCache: MeterCache): Future[ConnectorInfo] =
-    CollieUtils
-      .workerClient(connectorDescription.workerClusterKey)
+  private[this] def updateState(connectorInfo: ConnectorInfo)(implicit executionContext: ExecutionContext,
+                                                              workerCollie: WorkerCollie,
+                                                              objectChecker: ObjectChecker,
+                                                              meterCache: MeterCache): Future[ConnectorInfo] =
+    objectChecker.checkList
+      .workerCluster(connectorInfo.workerClusterKey)
+      .check()
+      .map(_.workerClusterInfos.head)
       .flatMap {
-        case (cluster, workerClient) =>
-          workerClient.status(connectorDescription.key).map { connectorInfoFromKafka =>
-            connectorDescription.copy(
-              status = Some(Status(
-                state = State.forName(connectorInfoFromKafka.connector.state),
-                error = connectorInfoFromKafka.connector.trace,
-                nodeName = connectorInfoFromKafka.connector.workerHostname
-              )),
-              tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
-                Status(
-                  state = State.forName(taskStatus.state),
-                  error = taskStatus.trace,
-                  nodeName = taskStatus.workerHostname
-                )
-              },
-              metrics =
-                Metrics(meterCache.meters(cluster).getOrElse(connectorDescription.key.connectorNameOnKafka, Seq.empty))
-            )
+        case (workerClusterInfo, condition) =>
+          condition match {
+            case STOPPED =>
+              Future.successful(
+                connectorInfo.copy(
+                  status = None,
+                  tasksStatus = Seq.empty,
+                  metrics = Metrics.EMPTY
+                ))
+            case RUNNING =>
+              workerCollie.workerClient(workerClusterInfo).flatMap { workerClient =>
+                workerClient.status(connectorInfo.key).map { connectorInfoFromKafka =>
+                  connectorInfo.copy(
+                    status = Some(Status(
+                      state = State.forName(connectorInfoFromKafka.connector.state),
+                      error = connectorInfoFromKafka.connector.trace,
+                      nodeName = connectorInfoFromKafka.connector.workerHostname
+                    )),
+                    tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
+                      Status(
+                        state = State.forName(taskStatus.state),
+                        error = taskStatus.trace,
+                        nodeName = taskStatus.workerHostname
+                      )
+                    },
+                    metrics = Metrics(
+                      meterCache.meters(workerClusterInfo).getOrElse(connectorInfo.key.connectorNameOnKafka, Seq.empty))
+                  )
+                }
+              }
           }
       }
       .recover {
         case e: Throwable =>
-          LOG.debug(s"failed to fetch stats for $connectorDescription", e)
-          connectorDescription.copy(
+          LOG.debug(s"failed to fetch stats for $connectorInfo", e)
+          connectorInfo.copy(
             status = None,
             tasksStatus = Seq.empty,
             metrics = Metrics.EMPTY
@@ -88,26 +100,32 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
 
   private[this] def hookOfGet(implicit workerCollie: WorkerCollie,
-                              store: DataStore,
+                              objectChecker: ObjectChecker,
                               executionContext: ExecutionContext,
                               meterCache: MeterCache): HookOfGet[ConnectorInfo] = updateState
 
   private[this] def hookOfList(implicit workerCollie: WorkerCollie,
-                               store: DataStore,
+                               objectChecker: ObjectChecker,
                                executionContext: ExecutionContext,
                                meterCache: MeterCache): HookOfList[ConnectorInfo] =
     (connectorDescriptions: Seq[ConnectorInfo]) => Future.sequence(connectorDescriptions.map(updateState))
 
-  private[this] def hookOfCreation(implicit store: DataStore,
+  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorInfo] =
     creationToConnectorInfo(_)
 
   private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   store: DataStore,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, ConnectorInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ConnectorInfo]) =>
       previousOption match {
-        case None => creationToConnectorInfo(access.request.settings(updating.settings).creation)
+        case None =>
+          creationToConnectorInfo(
+            access.request
+              .settings(updating.settings)
+              // the key is not in update's settings so we have to add it to settings
+              .name(key.name)
+              .group(key.group)
+              .creation)
         case Some(previous) =>
           objectChecker.checkList.connector(previous.key, STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
@@ -135,9 +153,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
       .map(_ => Unit)
 
-  private[this] def hookOfStart(implicit store: DataStore,
-                                objectChecker: ObjectChecker,
-                                meterCache: MeterCache,
+  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 workerCollie: WorkerCollie,
                                 executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
@@ -146,78 +162,77 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         .topics(connectorInfo.topicKeys, RUNNING)
         .workerCluster(connectorInfo.workerClusterKey, RUNNING)
         .check()
-        .map(_.connectorInfos.head)
+        .map(report => (report.connectorInfos.head._2, report.runningWorkers.head, report.runningTopics))
         .flatMap {
-          case (connectorInfo, condition) =>
+          case (condition, workerClusterInfo, topicInfos) =>
             condition match {
               case RUNNING => Future.unit
               case STOPPED =>
-                CollieUtils.workerClient(connectorInfo.workerClusterKey).map {
-                  case (_, wkClient) =>
-                    wkClient
-                      .connectorCreator()
-                      .settings(connectorInfo.plain)
-                      // always override the name
-                      .connectorKey(connectorInfo.key)
-                      .threadPool(executionContext)
-                      .topicKeys(connectorInfo.topicKeys)
-                      .create()
-                      .map(_ => Unit)
+                topicInfos.filter(_.brokerClusterKey != workerClusterInfo.brokerClusterKey).foreach { topicInfo =>
+                  throw new IllegalArgumentException(
+                    s"Connector app counts on broker cluster:${workerClusterInfo.brokerClusterKey} " +
+                      s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
+                }
+                workerCollie.workerClient(workerClusterInfo).map {
+                  _.connectorCreator()
+                    .settings(connectorInfo.plain)
+                    // always override the name
+                    .connectorKey(connectorInfo.key)
+                    .threadPool(executionContext)
+                    .topicKeys(connectorInfo.topicKeys)
+                    .create()
+                    .map(_ => Unit)
                 }
             }
       }
 
-  private[this] def hookOfStop(implicit store: DataStore,
-                               objectChecker: ObjectChecker,
-                               meterCache: MeterCache,
+  private[this] def hookOfStop(implicit objectChecker: ObjectChecker,
                                workerCollie: WorkerCollie,
                                executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
-      objectChecker.checkList.connector(connectorInfo.key).check().map(_.connectorInfos.head).flatMap {
-        case (connectorInfo, condition) =>
-          condition match {
-            case STOPPED => Future.unit
-            case RUNNING =>
-              CollieUtils.workerClient(connectorInfo.workerClusterKey).map {
-                case (_, wkClient) => wkClient.delete(connectorInfo.key)
-              }
-          }
+      objectChecker.checkList.connector(connectorInfo.key).check().map(_.connectorInfos.head._2).flatMap {
+        case STOPPED => Future.unit
+        case RUNNING =>
+          objectChecker.checkList
+            .workerCluster(connectorInfo.workerClusterKey, RUNNING)
+            .check()
+            .map(_.runningWorkers.head)
+            .flatMap(workerCollie.workerClient)
+            .flatMap(workerClient => workerClient.delete(connectorInfo.key))
     }
 
-  private[this] def hookOfPause(implicit store: DataStore,
-                                objectChecker: ObjectChecker,
-                                meterCache: MeterCache,
+  private[this] def hookOfPause(implicit objectChecker: ObjectChecker,
                                 workerCollie: WorkerCollie,
                                 executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList
+        .workerCluster(connectorInfo.workerClusterKey, RUNNING)
         .connector(connectorInfo.key, RUNNING)
         .check()
-        .flatMap(_ => CollieUtils.workerClient(connectorInfo.workerClusterKey))
-        .map {
-          case (_, wkClient) =>
-            wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
-              case State.PAUSED.name => Future.unit
-              case _                 => wkClient.pause(connectorInfo.key).map(_ => Unit)
-            }
+        .map(_.runningWorkers.head)
+        .flatMap(workerCollie.workerClient)
+        .map { wkClient =>
+          wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
+            case State.PAUSED.name => Future.unit
+            case _                 => wkClient.pause(connectorInfo.key).map(_ => Unit)
+          }
       }
 
-  private[this] def hookOfResume(implicit store: DataStore,
-                                 objectChecker: ObjectChecker,
-                                 meterCache: MeterCache,
+  private[this] def hookOfResume(implicit objectChecker: ObjectChecker,
                                  workerCollie: WorkerCollie,
                                  executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList
+        .workerCluster(connectorInfo.workerClusterKey, RUNNING)
         .connector(connectorInfo.key, RUNNING)
         .check()
-        .flatMap(_ => CollieUtils.workerClient(connectorInfo.workerClusterKey))
-        .map {
-          case (_, wkClient) =>
-            wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
-              case State.RUNNING.name => Future.unit
-              case _                  => wkClient.resume(connectorInfo.key).map(_ => Unit)
-            }
+        .map(_.runningWorkers.head)
+        .flatMap(workerCollie.workerClient)
+        .map { wkClient =>
+          wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
+            case State.RUNNING.name => Future.unit
+            case _                  => wkClient.resume(connectorInfo.key).map(_ => Unit)
+          }
       }
 
   def apply(implicit store: DataStore,

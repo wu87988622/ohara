@@ -57,7 +57,6 @@ streamApp stored data
      - jmxPort (**int**) — expose port for jmx
      - from (**array(TopicKey)**) — source topic
      - to (**array(TopicKey)**) — target topic
-     - instances (**int**) — number of running streamApp
      - nodeNames (**array(string)**) — the nodes running the zookeeper process
      - brokerClusterKey (**object**) — the broker cluster key used for streamApp running
 
@@ -146,21 +145,6 @@ Example Request
 
      [TODO] We will support multiple topics on issue :ohara-issue:`688`
 
-  #. instances (**int**) — number of running streamApp
-
-     The above fields are pre-defined and could use in request body for convenient. The option fields will have no default value,
-     but others will auto fill default value as we describe above. The minimum required fields for request are nodeNames and jarKey:
-
-     .. code-block:: json
-
-        {
-          "nodeNames": ["node1"],
-          "jarKey": {
-            "name": "stream-app.jar",
-            "group": "wk01"
-          }
-        }
-
 Example Response
   Response format is as :ref:`streamApp stored format <rest-streamapp-stored-data>`.
 
@@ -210,20 +194,6 @@ Example Response
             "tableKeys": [],
             "orderInGroup": -1,
             "key": "from",
-            "required": true,
-            "defaultValue": null,
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Instances",
-            "internal": false,
-            "documentation": "The running container number of this streamApp",
-            "valueType": "INT",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "instances",
             "required": true,
             "defaultValue": null,
             "group": "core",
@@ -462,8 +432,6 @@ Update the properties of a non-started streamApp.
 
    [TODO] We will support multiple topics on issue :ohara-issue:`688`
 
-#. instances (**option(int)**) — number of running streamApp.
-
 Example Request
   .. code-block:: json
 
@@ -476,7 +444,6 @@ Example Request
          "name": "newJar.jar"
        },
        "jmxPort": 8888,
-       "instances": 3,
        "nodeNames": ["node1", "node2"]
      }
 

@@ -123,16 +123,14 @@ class TestBrokerRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testCreateOnNonexistentNode(): Unit = {
-    val bk = result(
+  def testCreateOnNonexistentNode(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
       brokerApi.request
         .name(CommonUtils.randomString(10))
         .nodeName(CommonUtils.randomString(10))
         .zookeeperClusterKey(zkKey)
         .create()
     )
-    an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk.key))
-  }
 
   @Test
   def testDefaultZk(): Unit = {

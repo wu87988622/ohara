@@ -185,6 +185,8 @@ package object v0 {
       // cluster creation should use the default image of current version
       .nullToString(IMAGE_NAME_KEY, defaultImage)
       //-------------------------------------- "nodeNames" rules ---------------------------------//
+      // nodeNames is the only required field in creating cluster, add the requirement for it
+      .requireKey(NODE_NAMES_KEY)
       .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:
       // xxx/cluster/{name}/{node}
@@ -197,8 +199,6 @@ package object v0 {
       .toRefiner
       // default is empty tags
       .nullToEmptyObject(TAGS_KEY)
-      // nodeNames is the only required field in creating cluster, add the requirement for it
-      .requireKey(NODE_NAMES_KEY)
 
   /**
     * use basic check rules of update request for json refiner.

@@ -16,25 +16,19 @@
 
 package com.island.ohara.configurator.route
 
-import java.util.Objects
-
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
-import com.island.ohara.client.kafka.TopicAdmin.KafkaTopicInfo
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
+import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
+import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json._
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Random
 private[configurator] object StreamRoute {
 
   /**
@@ -43,271 +37,181 @@ private[configurator] object StreamRoute {
     */
   private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue()
 
-  /**
-    * Assert the require streamApp properties in creation / updating
-    *
-    * @param streamClusterInfo streamApp data
-    */
-  private[this] def assertParameters(streamClusterInfo: StreamClusterInfo): StreamClusterInfo = {
-    CommonUtils.requireNonEmpty(streamClusterInfo.name, () => "name fail assert")
-    CommonUtils.requireConnectionPort(streamClusterInfo.jmxPort)
-    // jarKey is required in properties payload
-    Objects.requireNonNull(streamClusterInfo.jarKey)
-    streamClusterInfo
-  }
-
-  /**
-    * Assert the require streamApp properties before running
-    *
-    * @param streamClusterInfo streamApp data
-    */
-  private[this] def assertParameters(streamClusterInfo: StreamClusterInfo,
-                                     topicInfos: Seq[KafkaTopicInfo]): StreamClusterInfo = {
-    def checkStoppedTopics(topicKeys: Set[TopicKey], prefix: String): Unit = {
-      CommonUtils.requireNonEmpty(topicKeys.asJava, () => s"$prefix topics can't be empty")
-      // check the from/to topic size equals one
-      // TODO: this is a workaround to avoid input multiple topics
-      // TODO: please refactor this after the single from/to topic issue resolved...by Sam
-      if (topicKeys.size > 1)
-        throw new IllegalArgumentException(
-          s"We don't allow multiple topics of $prefix field, actual: ${topicKeys.mkString(",")}")
-      val stoppedFromTopics = topicKeys.filterNot(topicKey => topicInfos.exists(_.name == topicKey.topicNameOnKafka()))
-      if (stoppedFromTopics.nonEmpty)
-        throw new NoSuchElementException(s"topics:${stoppedFromTopics.mkString(",")} is not running")
-    }
-    checkStoppedTopics(streamClusterInfo.fromTopicKeys, "from")
-    checkStoppedTopics(streamClusterInfo.toTopicKeys, "to")
-    assertParameters(streamClusterInfo)
-  }
-
-  /**
-    * fina the broker cluster for this creation. The rules are shown below.
-    * 1) find the defined value for broker cluster key
-    * 2) find the single broker cluster if brokerClusterKey is None
-    * 3) throw exception otherwise
-    */
-  private[this] def pickBrokerCluster(brokerClusterKey: Option[ObjectKey])(
-    implicit brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): Future[ObjectKey] =
-    brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster())
-
-  /**
-    * This is a temporary solution for using both nodeNames and instances
-    * Decide streamApp running nodes. Rules:
-    * 1) If both instances and nodeNames were not defined, return empty
-    * 2) If instances was defined and nodeNames was not empty, throw exception
-    * 3) If instances was not defined but nodeNames is defined
-    * 3.1) If some nodes were not defined in dataCollie, throw exception
-    * 3.2) return nodeNames
-    * 4) If instances is bigger than dataCollie size, throw exception
-    * 5) Random pick node name from dataCollie of instances size
-    *
-    * @param nodeNamesOption node name list
-    * @param instancesOption running instances
-    * @param executionContext execution context
-    * @param dataCollie node collie
-    * @return actual node name list
-    */
-  private[this] def pickNodeNames(nodeNamesOption: Option[Set[String]], instancesOption: Option[Int])(
-    implicit executionContext: ExecutionContext,
-    dataCollie: DataCollie): Future[Option[Set[String]]] =
-    dataCollie.values[Node]().map(n => n.map(_.name)).map { all =>
-      instancesOption.fold(
-        // not define instances, use nodeNames instead
-        // If there were some nodes that dataCollie doesn't contain, throw exception
-        nodeNamesOption.fold[Option[Set[String]]](
-          // both instances and nodeNames are not defined, return None
-          None
-        ) { nodeNames =>
-          if (nodeNames.forall(all.contains))
-            // you are fine to going use it
-            Some(nodeNames)
-          else
-            // we find a node that is not belong to dataCollie , throw error
-            throw new IllegalArgumentException(
-              s"Some nodes could not be found, expected: $nodeNames, actual: $all"
-            )
-        }
-      ) { instances =>
-        if (nodeNamesOption.isDefined && nodeNamesOption.get.nonEmpty)
+  private[this] def creationToClusterInfo(creation: Creation)(
+    implicit objectChecker: ObjectChecker,
+    streamCollie: StreamCollie,
+    executionContext: ExecutionContext): Future[StreamClusterInfo] =
+    objectChecker.checkList
+      .nodes(creation.nodeNames)
+      .file(creation.jarKey)
+      .brokerCluster(creation.brokerClusterKey)
+      /**
+        * TODO: this is a workaround to avoid input multiple topics
+        * TODO: please refactor this after the single from/to topic issue resolved...by Sam
+        */
+      .topics {
+        if (creation.fromTopicKeys.size > 1)
           throw new IllegalArgumentException(
-            s"You cannot define both nodeNames[$nodeNamesOption] and instances[$instances]")
-        if (all.size < instances)
-          throw new IllegalArgumentException(
-            s"You cannot set instances bigger than actual node list. Expect instances: $instances, actual: ${all.size}")
-        Some(Random.shuffle(all).take(instances).toSet)
+            s"the size of from topics MUST be equal to 1 (multiple topics is a unsupported feature)")
+        creation.fromTopicKeys
       }
-    }
+      /**
+        * TODO: this is a workaround to avoid input multiple topics
+        * TODO: please refactor this after the single from/to topic issue resolved...by Sam
+        */
+      .topics {
+        if (creation.toTopicKeys.size > 1)
+          throw new IllegalArgumentException(
+            s"the size of from topics MUST be equal to 1 (multiple topics is a unsupported feature)")
+        creation.toTopicKeys
+      }
+      .check()
+      .map(_.fileInfos.head)
+      .flatMap(fileInfo => streamCollie.loadDefinition(fileInfo.url))
+      .map { definition =>
+        StreamClusterInfo(
+          settings = creation.settings,
+          definition = definition,
+          aliveNodes = Set.empty,
+          state = None,
+          metrics = Metrics(Seq.empty),
+          error = None,
+          lastModified = CommonUtils.current()
+        )
+      }
 
-  private[this] def hookOfCreation(implicit fileStore: FileStore,
-                                   dataCollie: DataCollie,
-                                   brokerCollie: BrokerCollie,
+  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
                                    streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
-    (creation: Creation) =>
-      pickBrokerCluster(creation.brokerClusterKey).flatMap { bkKey =>
-        //TODO remove this after #2288
-        pickNodeNames(Some(creation.nodeNames), creation.instances).flatMap(
-          nodes =>
-            fileStore
-              .fileInfo(creation.jarKey)
-              .flatMap(info => streamCollie.loadDefinition(info.url))
-              .map { definition =>
-                StreamClusterInfo(
-                  settings = {
-                    // In creation, we have to re-define the following value since they may changed:
-                    // 1) broker cluster name
-                    // 2) node name (This should be removed after #2288
-                    val req = access.request.settings(creation.settings).brokerClusterKey(bkKey)
-                    if (nodes.isDefined) req.nodeNames(nodes.get)
-                    req.creation.settings
-                  },
-                  definition = definition,
-                  aliveNodes = Set.empty,
-                  state = None,
-                  metrics = Metrics(Seq.empty),
-                  error = None,
-                  lastModified = CommonUtils.current()
-                )
-              }
-              .map(assertParameters))
+    creationToClusterInfo(_)
+
+  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
+                                   streamCollie: StreamCollie,
+                                   executionContext: ExecutionContext): HookOfUpdating[Updating, StreamClusterInfo] =
+    (key: ObjectKey, updating: Updating, previousOption: Option[StreamClusterInfo]) =>
+      previousOption match {
+        case None =>
+          creationToClusterInfo(
+            access.request
+              .settings(updating.settings)
+              // the key is not in update's settings so we have to add it to settings
+              .name(key.name)
+              .group(key.group)
+              .creation)
+        case Some(previous) =>
+          objectChecker.checkList
+          // we don't support to update a running streamApp
+            .streamApp(previous.key, STOPPED)
+            .check()
+            .flatMap { _ =>
+              // 1) fill the previous settings (if exists)
+              // 2) overwrite previous settings by updated settings
+              // 3) fill the ignored settings by creation
+              creationToClusterInfo(
+                access.request
+                  .settings(previous.settings)
+                  .settings(updating.settings)
+                  // the key is not in update's settings so we have to add it to settings
+                  .name(key.name)
+                  .group(key.group)
+                  .creation)
+            }
     }
 
-  private[this] def hookOfUpdating(implicit dataCollie: DataCollie,
-                                   brokerCollie: BrokerCollie,
-                                   streamCollie: StreamCollie,
-                                   fileStore: FileStore,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, StreamClusterInfo] =
-    (key: ObjectKey, update: Updating, previousOption: Option[StreamClusterInfo]) =>
-      streamCollie.clusters
-        .flatMap { clusters =>
-          if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
-            throw new RuntimeException(s"You cannot update property on non-stopped StreamApp cluster: $key")
-          pickBrokerCluster(update.brokerClusterKey.orElse(previousOption.map(_.brokerClusterKey))).flatMap(
-            bkKey =>
-              //TODO remove this after #2288
-              pickNodeNames(update.nodeNames, update.instances).map { nodes =>
-                var extra_settings =
-                  Map[String, JsValue](
-                    StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key() -> ObjectKey.toJsonString(bkKey).parseJson)
-                if (nodes.isDefined)
-                  extra_settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
-                    nodes.get.map(JsString(_)).toVector)
-                new Updating(update.settings ++ extra_settings)
-            }
-          )
-        }
-        .flatMap { update =>
-          // 1) fill the previous settings (if exists)
-          // 2) overwrite previous settings by updated settings
-          // 3) fill the ignored settings by creation
-          val newCreation = access.request
-            .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-            .settings(update.settings)
-            // the key is not in update's settings so we have to add it to settings
-            .name(key.name)
-            .group(key.group)
-            .creation
-          // re-load the definitions since the jar key may be updated
-          fileStore.fileInfo(newCreation.jarKey).flatMap { fileInfo =>
-            streamCollie.loadDefinition(fileInfo.url).map(newCreation -> _)
-          }
-        }
-        .map {
-          case (creation, definitions) =>
-            StreamClusterInfo(
-              settings = creation.settings,
-              definition = definitions,
-              // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
-              aliveNodes = Set.empty,
-              state = None,
-              metrics = Metrics.EMPTY,
-              error = None,
-              lastModified = CommonUtils.current()
-            )
-        }
-        .map(assertParameters)
+  /**
+    * create an new cluster info based on definitions. It reject the nonexistent but required fields and auto-fill the
+    * value to the fields having default value.
+    * @param streamClusterInfo origin cluster info
+    * @return updated cluster info
+    */
+  private[this] def updateSettings(streamClusterInfo: StreamClusterInfo): StreamClusterInfo = {
+    // check the values by definition
+    //TODO move this to RouteUtils in #2191
+    val copy = streamClusterInfo.settings ++
+      // add the (key, defaultValue) to settings if absent
+      streamClusterInfo.definition.definitions.flatMap { settingDef =>
+        if (streamClusterInfo.settings.contains(settingDef.key()) || CommonUtils.isEmpty(settingDef.defaultValue()))
+          None
+        else Some(settingDef.key() -> JsString(settingDef.defaultValue()))
+      }.toMap
 
-  private[this] def hookOfStart(implicit store: DataStore,
-                                meterCache: MeterCache,
-                                fileStore: FileStore,
+    copy
+      .map {
+        case (k, v) =>
+          k -> (v match {
+            case JsString(s) => s
+            case _           => v.toString
+          })
+      }
+      .foreach {
+        case (k, v) =>
+          streamClusterInfo.definition.definitions
+            .find(_.key() == k)
+            .getOrElse(throw DeserializationException(s"$k is required!!!", fieldNames = List(k)))
+            .checker()
+            .accept(v)
+      }
+    streamClusterInfo.copy(settings = copy)
+  }
+
+  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 streamCollie: StreamCollie,
-                                cleaner: AdminCleaner,
-                                brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction[StreamClusterInfo] =
     (streamClusterInfo: StreamClusterInfo, _, _) => {
-      // check the values by definition
-      //TODO move this to RouteUtils in #2191
-      var copy = streamClusterInfo.settings
-      streamClusterInfo.definition.definitions.foreach(
-        settingDef =>
-          // add the (key, defaultValue) to settings if absent
-          if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
-            copy += settingDef.key() -> JsString(settingDef.defaultValue()))
-      streamClusterInfo.settings
-        .map {
-          case (k, v) =>
-            k -> (v match {
-              case JsString(s) => s
-              case _           => v.toString
-            })
-        }
-        .foreach {
-          case (k, v) =>
-            streamClusterInfo.definition.definitions
-              .find(_.key() == k)
-              .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
-                settingDef.checker().accept(v)
-              }
-        }
-      streamClusterInfo.copy(settings = copy)
-      CollieUtils
-        .topicAdmin(streamClusterInfo.brokerClusterKey)
+      objectChecker.checkList
+        .streamApp(streamClusterInfo.key)
+        .file(streamClusterInfo.jarKey)
+        .brokerCluster(streamClusterInfo.brokerClusterKey, RUNNING)
+        .topics(streamClusterInfo.toTopicKeys, RUNNING)
+        .topics(streamClusterInfo.fromTopicKeys, RUNNING)
+        .check()
+        .map(
+          report =>
+            (report.streamClusterInfos.head._2,
+             report.fileInfos.head,
+             report.brokerClusterInfos.head._1,
+             report.runningTopics))
         .flatMap {
-          case (brokerClusterInfo, topicAdmin) =>
-            topicAdmin.topics().map { topicInfos =>
-              try brokerClusterInfo -> topicInfos
-              finally topicAdmin.close()
+          case (condition, fileInfo, brokerClusterInfo, topicInfos) =>
+            condition match {
+              case RUNNING => Future.unit
+              case STOPPED =>
+                topicInfos.filter(_.brokerClusterKey != brokerClusterInfo.key).foreach { topicInfo =>
+                  throw new IllegalArgumentException(
+                    s"stream app counts on broker cluster:${streamClusterInfo.brokerClusterKey} " +
+                      s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
+                }
+
+                val newClusterInfo = updateSettings(streamClusterInfo)
+                streamCollie.creator
+                // these settings will send to container environment
+                // we convert all value to string for convenient
+                  .settings(newClusterInfo.settings)
+                  .name(newClusterInfo.name)
+                  .group(newClusterInfo.group)
+                  .imageName(newClusterInfo.imageName)
+                  .nodeNames(newClusterInfo.nodeNames)
+                  .jarInfo(fileInfo)
+                  .brokerClusterKey(brokerClusterInfo.key)
+                  .connectionProps(brokerClusterInfo.connectionProps)
+                  .threadPool(executionContext)
+                  .create()
             }
-        }
-        .map {
-          case (brokerClusterInfo, topicInfos) =>
-            assertParameters(streamClusterInfo, topicInfos)
-            brokerClusterInfo
-        }
-        .flatMap { brokerClusterInfo =>
-          fileStore.fileInfo(streamClusterInfo.jarKey).flatMap { fileInfo =>
-            streamCollie.creator
-            // these settings will send to container environment
-            // we convert all value to string for convenient
-              .settings(streamClusterInfo.settings)
-              .name(streamClusterInfo.name)
-              .group(streamClusterInfo.group)
-              .imageName(streamClusterInfo.imageName)
-              .nodeNames(streamClusterInfo.nodeNames)
-              .jarInfo(fileInfo)
-              .brokerClusterKey(brokerClusterInfo.key)
-              .connectionProps(brokerClusterInfo.connectionProps)
-              // This is a temporary solution for "enable exactly once",
-              // but we should change the behavior to not just "true or false"...by Sam
-              .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(), JsString(streamClusterInfo.exactlyOnce.toString))
-              .threadPool(executionContext)
-              .create()
-          }
         }
     }
 
   private[this] def hookBeforeStop: HookOfAction[StreamClusterInfo] = (_, _, _) => Future.unit
 
+  private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
+
   def apply(implicit store: DataStore,
+            objectChecker: ObjectChecker,
             dataCollie: DataCollie,
             zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            cleaner: AdminCleaner,
-            fileStore: FileStore,
             meterCache: MeterCache,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[StreamClusterInfo, StreamClusterStatus, Creation, Updating](
@@ -316,6 +220,7 @@ private[configurator] object StreamRoute {
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
-      hookBeforeStop = hookBeforeStop
+      hookBeforeStop = hookBeforeStop,
+      hookBeforeDelete = hookBeforeDelete
     )
 }

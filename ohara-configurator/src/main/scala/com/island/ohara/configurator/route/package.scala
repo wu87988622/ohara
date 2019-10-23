@@ -104,7 +104,8 @@ package object route {
                                                 hookOfCreation: HookOfCreation[Creation, Cluster],
                                                 hookOfUpdating: HookOfUpdating[Updating, Cluster],
                                                 hookOfStart: HookOfAction[Cluster],
-                                                hookBeforeStop: HookOfAction[Cluster])(
+                                                hookBeforeStop: HookOfAction[Cluster],
+                                                hookBeforeDelete: HookBeforeDelete)(
     implicit store: DataStore,
     meterCache: MeterCache,
     collie: Collie[Status],
@@ -127,12 +128,15 @@ package object route {
       .hookBeforeDelete((key: ObjectKey) =>
         store.get[Cluster](key).flatMap {
           _.fold(Future.unit) { info =>
-            updateState[Cluster, Status](info, metricsKey).map(_.state).map {
-              case None => Unit
-              case Some(_) =>
-                throw new IllegalArgumentException(
-                  s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key")
-            }
+            updateState[Cluster, Status](info, metricsKey)
+              .flatMap(cluster => hookBeforeDelete(cluster.key).map(_ => cluster))
+              .map(_.state)
+              .map {
+                case None => Unit
+                case Some(_) =>
+                  throw new IllegalArgumentException(
+                    s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key")
+              }
           }
       })
       .hookOfPutAction(

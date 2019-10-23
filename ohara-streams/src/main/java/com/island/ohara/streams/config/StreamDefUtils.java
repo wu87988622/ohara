@@ -152,16 +152,6 @@ public final class StreamDefUtils {
           .optional()
           .build();
 
-  public static final SettingDef INSTANCES_DEFINITION =
-      SettingDef.builder()
-          .key("instances")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Instances")
-          .documentation("The running container number of this streamApp")
-          .valueType(Type.INT)
-          .build();
-
   public static final SettingDef NODE_NAMES_DEFINITION =
       SettingDef.builder()
           .key("nodeNames")
@@ -171,18 +161,6 @@ public final class StreamDefUtils {
           .documentation("The used node name list of this streamApp")
           .internal()
           .valueType(Type.ARRAY)
-          .build();
-
-  public static final SettingDef EXACTLY_ONCE_DEFINITION =
-      SettingDef.builder()
-          .key("exactlyOnce")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Enable exactly once")
-          .documentation("Enable this streamApp to process each record exactly once")
-          .readonly()
-          .valueType(Type.BOOLEAN)
-          .optional("false")
           .build();
 
   public static final SettingDef VERSION_DEFINITION =

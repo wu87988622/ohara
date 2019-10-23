@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import java.io.{File, FileOutputStream}
 
-import com.island.ohara.client.configurator.v0.{FileInfoApi, StreamApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, FileInfoApi, StreamApi, TopicApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -28,8 +28,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestFileRoute extends OharaTest with Matchers {
 
   private[this] val configurator: Configurator = Configurator.builder.fake().build()
@@ -119,8 +119,31 @@ class TestFileRoute extends OharaTest with Matchers {
     val f = tmpFile(data)
     // upload jar
     val jar = result(fileApi.request.file(f).upload())
+    val brokerClusterInfo = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    val fromTopic = result(
+      TopicApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .create())
+    val toTopic = result(
+      TopicApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .create())
     // create streamApp property
-    val streamInfo = result(streamApi.request.name(name).jarKey(jar.key).create())
+    val streamInfo = result(
+      streamApi.request
+        .name(name)
+        .jarKey(jar.key)
+        .fromTopicKey(fromTopic.key)
+        .toTopicKey(toTopic.key)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .nodeNames(brokerClusterInfo.nodeNames)
+        .create())
     // cannot delete a used jar
     val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.key))
     thrown.getMessage should include(StreamApi.STREAM_SERVICE_NAME)

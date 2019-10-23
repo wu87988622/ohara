@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
@@ -32,6 +32,8 @@ import scala.concurrent.{Await, Future}
 class TestConnectorRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
+  private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -40,6 +42,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
   private[this] val brokerClusterInfo = result(
     BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+  private[this] val nodeNames = brokerClusterInfo.nodeNames
   private[this] val bkKey = brokerClusterInfo.key
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
@@ -509,6 +512,29 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
     result(workerApi.start(worker.key))
     result(connectorApi.start(connector.key))
+  }
+
+  @Test
+  def topicMustOnSameBrokerCluster(): Unit = {
+    val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zk.key))
+    val bk = result(brokerApi.request.zookeeperClusterKey(zk.key).nodeNames(nodeNames).create())
+    result(brokerApi.start(bk.key))
+
+    // put those topics on different broker cluster
+    val topic = result(topicApi.request.brokerClusterKey(bk.key).create())
+    result(topicApi.start(topic.key))
+
+    val connector = result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .workerClusterKey(workerClusterInfo.key)
+        .create())
+
+    intercept[IllegalArgumentException] {
+      result(connectorApi.start(connector.key))
+    }.getMessage should include("another broker cluster")
   }
 
   @After

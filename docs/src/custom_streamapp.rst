@@ -315,7 +315,6 @@ By default, we will keep the following definitions in the "core" group and gener
 #. DefaultConfigs.FROM_TOPICS_DEFINITION : The from topic
 #. DefaultConfigs.TO_TOPICS_DEFINITION : The to topic
 #. DefaultConfigs.JMX_PORT_DEFINITION : The exposed jmx port
-#. DefaultConfigs.INSTANCES_DEFINITION : The running instances
 #. DefaultConfigs.NODE_NAMES_DEFINITION : The node name list
 #. DefaultConfigs.VERSION_DEFINITION : The version of streamApp
 #. DefaultConfigs.REVISION_DEFINITION : The revision of streamApp

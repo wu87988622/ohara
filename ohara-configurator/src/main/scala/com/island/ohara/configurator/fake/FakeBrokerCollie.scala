@@ -18,11 +18,12 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{BrokerCollie, ServiceState, NoSuchClusterException, DataCollie}
+import com.island.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException, ServiceState}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
@@ -41,8 +42,9 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
   /**
     * cache all topics info in-memory so we should keep instance for each fake cluster.
     */
-  private[this] val fakeAdminCache = new ConcurrentSkipListMap[BrokerClusterInfo, FakeTopicAdmin](
-    (o1: BrokerClusterInfo, o2: BrokerClusterInfo) => o1.key.compareTo(o2.key))
+  @VisibleForTesting
+  private[configurator] val fakeAdminCache = new ConcurrentSkipListMap[BrokerClusterStatus, FakeTopicAdmin](
+    (o1: BrokerClusterStatus, o2: BrokerClusterStatus) => o1.key.compareTo(o2.key))
 
   override def creator: BrokerCollie.ClusterCreator = (_, creation) =>
     Future.successful(
@@ -65,12 +67,13 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
         creation.ports
       ))
 
-  override def topicAdmin(cluster: BrokerClusterInfo)(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
+  override def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(
+    implicit executionContext: ExecutionContext): Future[TopicAdmin] =
     if (bkConnectionProps == null) Future.successful {
-      if (!clusterCache.containsKey(cluster))
-        throw new NoSuchClusterException(s"cluster:${cluster.name} is not running")
+      if (!clusterCache.keySet().asScala.exists(_.key == brokerClusterInfo.key))
+        throw new NoSuchClusterException(s"cluster:${brokerClusterInfo.key} is not running")
       val fake = new FakeTopicAdmin
-      val r = fakeAdminCache.putIfAbsent(cluster, fake)
+      val r = fakeAdminCache.putIfAbsent(clusterCache.asScala.find(_._1.key == brokerClusterInfo.key).get._1, fake)
       if (r == null) fake else r
     } else Future.successful(TopicAdmin(bkConnectionProps))
 

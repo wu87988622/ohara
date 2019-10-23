@@ -67,7 +67,7 @@ object StreamApi {
         })
     }
 
-    def brokerClusterKey: Option[ObjectKey] = settings.brokerClusterKey
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
 
     override def imageName: String = settings.imageName.get
 
@@ -91,42 +91,25 @@ object StreamApi {
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
     def toTopicKeys: Set[TopicKey] = settings.toTopicKeys.get
 
-    //TODO remove this field after #2288
-    def instances: Option[Int] = settings.instances
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     // TODO: reuse the global checks for streamapp in #2288
     // the following checkers is a part of global cluster checks.
     // We don't reuse the global checks since streamapp accept empty/null nodeNames ... by chia
-    basicRulesOfKey[Creation]
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
-      .rejectEmptyString()
-      // jarKey is required in creation
-      .requireKey(StreamDefUtils.JAR_KEY_DEFINITION.key())
-      .arrayRestriction(NODE_NAMES_KEY)
-      // we use the same sub-path for "node" and "actions" urls:
-      // xxx/cluster/{name}/{node}
-      // xxx/cluster/{name}/[start|stop]
-      // the "actions" keywords must be avoided in nodeNames parameter
-      .rejectKeyword(START_COMMAND)
-      .rejectKeyword(STOP_COMMAND)
-      .toRefiner
-      .nullToString(IMAGE_NAME_KEY, IMAGE_NAME_DEFAULT)
-      .nullToEmptyObject(TAGS_KEY)
       //----------------------------------------//
       .nullToRandomPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      //TODO remove this default value after #2288
-      .nullToEmptyArray(StreamDefUtils.NODE_NAMES_DEFINITION.key())
-      // TODO: we should reject the request carrying no from topics ... by chia
-      .nullToEmptyArray(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
-      // TODO: we should reject the request carrying no to topics ... by chia
-      .nullToEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
+      .requireKey(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
+      .rejectEmptyArray(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
+      .requireKey(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
+      .rejectEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
       // restrict rules
       .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
+      .requireKey(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key())
       .refine
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
@@ -166,10 +149,6 @@ object StreamApi {
     override def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(StreamDefUtils.NODE_NAMES_DEFINITION.key()).map(_.convertTo[Seq[String]].toSet)
 
-    //TODO remove this field after #2288
-    def instances: Option[Int] =
-      noJsNull(settings).get(StreamDefUtils.INSTANCES_DEFINITION.key()).map(_.convertTo[Int])
-
     override def tags: Option[Map[String, JsValue]] =
       noJsNull(settings).get(StreamDefUtils.TAGS_DEFINITION.key()).map {
         case s: JsObject => s.fields
@@ -184,7 +163,8 @@ object StreamApi {
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       })
       .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
+      .rejectEmptyArray(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
+      .rejectEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
       .refine
 
   implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
@@ -242,8 +222,6 @@ object StreamApi {
     override def tags: Map[String, JsValue] = settings.tags
 
     def imageName: String = settings.imageName
-    // TODO this field is deprecated and should be removed in #2288
-    def instances: Int = settings.instances.get
 
     /**
       * Return the key of explicit value. Otherwise, return the key of jar info.
@@ -254,12 +232,10 @@ object StreamApi {
 
     def jarInfo: FileInfo = settings.jarInfo.get
 
-    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
     def toTopicKeys: Set[TopicKey] = settings.toTopicKeys
     def jmxPort: Int = settings.jmxPort
-    // TODO remove this default value after we could handle from UI
-    def exactlyOnce: Boolean = false
 
     def nodeNames: Set[String] = settings.nodeNames
 
@@ -302,10 +278,7 @@ object StreamApi {
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
-    @Optional("you should not set both nodeNames and instances")
-    //TODO "This should be removed after #2288"
-    def instances(instances: Int): Request.this.type =
-      setting(StreamDefUtils.INSTANCES_DEFINITION.key(), JsNumber(CommonUtils.requirePositiveInt(instances)))
+
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request.this.type =
       setting(StreamDefUtils.TAGS_DEFINITION.key(), JsObject(tags))

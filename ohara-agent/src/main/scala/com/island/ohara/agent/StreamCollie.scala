@@ -54,12 +54,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
             // the broker cluster should be defined in data creating phase already
             // here we just throw an exception for absent value to ensure everything works as expect
             .flatMap(
-              nodes =>
-                brokerContainers(
-                  creation.brokerClusterKey.getOrElse(
-                    throw new RuntimeException("broker cluster key should be defined")
-                  )
-                ).map(cs => (nodes, cs))
+              nodes => brokerContainers(creation.brokerClusterKey).map(cs => (nodes, cs))
             )
             .flatMap {
               case (nodes, brokerContainers) =>

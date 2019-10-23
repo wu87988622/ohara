@@ -16,12 +16,14 @@
 
 package com.island.ohara.configurator.route
 
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.fake.FakeBrokerCollie
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -398,7 +400,17 @@ class TestTopicRoute extends OharaTest with Matchers {
     result(topicApi.start(topic.key))
 
     // remove broker cluster
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(bk.key))
+    // we can't use APIs to remove broker since it is used by topic
+    val cache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
+    val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
+    import scala.collection.JavaConverters._
+    val cluster = cache.keySet().asScala.find(_.key == bk.key).get
+    cache.remove(cluster)
+    adminCache.remove(cluster)
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
+      .find(_.key == bk.key)
+      .get
+      .state shouldBe None
     result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
   }
@@ -410,9 +422,16 @@ class TestTopicRoute extends OharaTest with Matchers {
     result(topicApi.start(topic.key))
 
     // remove broker cluster
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(bk.key))
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(bk.key))
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 0
+    // we can't use APIs to remove broker since it is used by topic
+    val cache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
+    val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
+    import scala.collection.JavaConverters._
+    val cluster = cache.keySet().asScala.find(_.key == bk.key).get
+    cache.remove(cluster)
+    adminCache.remove(cluster)
+    configurator.store.remove[BrokerClusterInfo](bk.key)
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
+      .find(_.key == bk.key) shouldBe None
     result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
   }
@@ -424,7 +443,16 @@ class TestTopicRoute extends OharaTest with Matchers {
     result(topicApi.start(topic.key))
 
     // remove broker cluster
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(bk.key))
+    // we can't use APIs to remove broker since it is used by topic
+    val cache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
+    val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
+    import scala.collection.JavaConverters._
+    val cluster = cache.keySet().asScala.find(_.key == bk.key).get
+    cache.remove(cluster)
+    adminCache.remove(cluster)
+    configurator.store.remove[BrokerClusterInfo](bk.key)
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
+      .find(_.key == bk.key) shouldBe None
     result(topicApi.delete(topic.key))
   }
 

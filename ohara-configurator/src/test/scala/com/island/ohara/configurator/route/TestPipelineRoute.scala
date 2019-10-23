@@ -36,7 +36,6 @@ class TestPipelineRoute extends OharaTest with Matchers {
 
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -48,6 +47,8 @@ class TestPipelineRoute extends OharaTest with Matchers {
 
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+
+  private[this] val nodeNames = workerClusterInfo.nodeNames
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
@@ -75,9 +76,8 @@ class TestPipelineRoute extends OharaTest with Matchers {
     pipeline.flows.head.to shouldBe Set(topic.key)
     pipeline.objects.size shouldBe 2
 
-    result(topicApi.stop(topic.key))
-    // remove topic
-    result(topicApi.delete(topic.key))
+    result(connectorApi.stop(connector.key))
+    result(connectorApi.delete(connector.key))
 
     pipeline = result(pipelineApi.get(pipeline.key))
 
@@ -91,10 +91,11 @@ class TestPipelineRoute extends OharaTest with Matchers {
     // topic is gone
     pipelines.head.objects.size shouldBe 1
 
-    // remove worker cluster
-    val wk = result(workerApi.list()).head.key
-    result(workerApi.stop(wk))
-    result(workerApi.delete(wk))
+    // remove broker cluster to make topic fail to update state
+    val bk = result(brokerApi.list()).head.key
+
+    // we can't remove the broker cluster via APIs since our strong check obstruct us from entering dangerous deletion
+    configurator.serviceCollie.brokerCollie.remove(bk)
 
     // worker cluster is gone so the object abstract should contain error
     pipeline = result(pipelineApi.get(pipeline.key))
@@ -121,8 +122,8 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .fromTopicKey(from.key)
         .toTopicKey(to.key)
         .brokerClusterKey(bk.key)
-        .instances(1)
         .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
         .create())
 
     val pipeline = result(

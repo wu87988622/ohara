@@ -224,7 +224,7 @@ class TestStreamCreator extends OharaTest with Matchers {
   }
 
   @Test
-  def ignoreFromTopic(): Unit = an[IllegalArgumentException] should be thrownBy
+  def ignoreFromTopic(): Unit = an[DeserializationException] should be thrownBy
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
@@ -237,7 +237,7 @@ class TestStreamCreator extends OharaTest with Matchers {
       .create()
 
   @Test
-  def ignoreToTopic(): Unit = an[IllegalArgumentException] should be thrownBy
+  def ignoreToTopic(): Unit = an[DeserializationException] should be thrownBy
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))

@@ -21,6 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
@@ -51,10 +52,18 @@ object ObjectChecker {
   case class ObjectInfos(topicInfos: Map[TopicInfo, Condition],
                          connectorInfos: Map[ConnectorInfo, Condition],
                          fileInfos: Seq[FileInfo],
+                         nodes: Seq[Node],
                          zookeeperClusterInfos: Map[ZookeeperClusterInfo, Condition],
                          brokerClusterInfos: Map[BrokerClusterInfo, Condition],
                          workerClusterInfos: Map[WorkerClusterInfo, Condition],
-                         streamClusterInfos: Map[StreamClusterInfo, Condition])
+                         streamClusterInfos: Map[StreamClusterInfo, Condition]) {
+    def runningTopics: Seq[TopicInfo] = topicInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningConnectors: Seq[ConnectorInfo] = connectorInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningZookeepers: Seq[ZookeeperClusterInfo] = zookeeperClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningBrokers: Seq[BrokerClusterInfo] = brokerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningWorkers: Seq[WorkerClusterInfo] = workerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningStreamApps: Seq[StreamClusterInfo] = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+  }
 
   final class ObjectCheckException(val objectType: String,
                                    val nonexistent: Set[ObjectKey],
@@ -75,6 +84,12 @@ object ObjectChecker {
     //---------------[topic]---------------//
 
     /**
+      * check all topics. It invokes a loop to all topics and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allTopics(): ChickList
+
+    /**
       * check the properties of topic.
       * @param key topic key
       * @return this check list
@@ -87,10 +102,29 @@ object ObjectChecker {
       * @return this check list
       */
     def topic(key: TopicKey, condition: Condition): ChickList = topics(Set(key), Some(condition))
+
+    /**
+      * check whether input topics have been stored in Configurator
+      * @param keys topic keys
+      * @return this check list
+      */
+    def topics(keys: Set[TopicKey]): ChickList = topics(keys, None)
+
+    /**
+      * check whether input topics condition.
+      * @param keys topic keys
+      * @return this check list
+      */
     def topics(keys: Set[TopicKey], condition: Condition): ChickList = topics(keys, Some(condition))
     protected def topics(keys: Set[TopicKey], condition: Option[Condition]): ChickList
 
     //---------------[connector]---------------//
+
+    /**
+      * check all connectors. It invokes a loop to all connectors and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allConnectors(): ChickList
 
     /**
       * check the properties of connector.
@@ -108,6 +142,11 @@ object ObjectChecker {
     protected def connectors(keys: Set[ConnectorKey], condition: Option[Condition]): ChickList
 
     //---------------[file]---------------//
+    /**
+      * check all files.
+      * @return check list
+      */
+    def allFiles(): ChickList
 
     /**
       * check the properties of file.
@@ -123,7 +162,35 @@ object ObjectChecker {
       */
     def files(keys: Set[ObjectKey]): ChickList
 
+    //---------------[node]---------------//
+
+    /**
+      * check all nodes.
+      * @return check list
+      */
+    def allNodes(): ChickList
+
+    /**
+      * check the properties of node.
+      * @param hostname hostname
+      * @return this check list
+      */
+    def node(hostname: String): ChickList = nodes(Set(hostname))
+
+    /**
+      * check the properties of nodes.
+      * @param hostNames node names
+      * @return this check list
+      */
+    def nodes(hostNames: Set[String]): ChickList
+
     //---------------[zookeeper]---------------//
+
+    /**
+      * check all zookeepers. It invokes a loop to all zookeepers and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allZookeepers(): ChickList
 
     /**
       * check the properties of zookeeper cluster.
@@ -144,6 +211,12 @@ object ObjectChecker {
     //---------------[broker]---------------//
 
     /**
+      * check all brokers. It invokes a loop to all brokers and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allBrokers(): ChickList
+
+    /**
       * check the properties of broker cluster.
       * @param key broker cluster key
       * @return this check list
@@ -162,6 +235,12 @@ object ObjectChecker {
     //---------------[worker]---------------//
 
     /**
+      * check all workers. It invokes a loop to all workers and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allWorkers(): ChickList
+
+    /**
       * check the properties of worker cluster.
       * @param key worker cluster key
       * @return this check list
@@ -178,6 +257,12 @@ object ObjectChecker {
     protected def workerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
 
     //---------------[stream app]---------------//
+
+    /**
+      * check all streamApps. It invokes a loop to all streamApps and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allStreamApps(): ChickList
 
     /**
       * check the properties of streamApp cluster.
@@ -218,18 +303,22 @@ object ObjectChecker {
     new ObjectChecker {
 
       override def checkList: ChickList = new ChickList {
-        private[this] val files: mutable.Set[ObjectKey] = mutable.Set[ObjectKey]()
-        private[this] val topics: mutable.Map[TopicKey, Option[Condition]] = mutable.Map[TopicKey, Option[Condition]]()
-        private[this] val connectors: mutable.Map[ConnectorKey, Option[Condition]] =
-          mutable.Map[ConnectorKey, Option[Condition]]()
-        private[this] val zookeepers: mutable.Map[ObjectKey, Option[Condition]] =
-          mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] val brokers: mutable.Map[ObjectKey, Option[Condition]] =
-          mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] val workers: mutable.Map[ObjectKey, Option[Condition]] =
-          mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] val streamApps: mutable.Map[ObjectKey, Option[Condition]] =
-          mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllNodes = false
+        private[this] val requiredNodes = mutable.Set[String]()
+        private[this] var requireAllFiles = false
+        private[this] val requiredFiles = mutable.Set[ObjectKey]()
+        private[this] var requireAllTopics = false
+        private[this] val requiredTopics = mutable.Map[TopicKey, Option[Condition]]()
+        private[this] var requireAllConnectors = false
+        private[this] val requiredConnectors = mutable.Map[ConnectorKey, Option[Condition]]()
+        private[this] var requireAllZookeepers = false
+        private[this] val requiredZookeepers = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllBrokers = false
+        private[this] val requiredBrokers = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllWorkers = false
+        private[this] val requiredWorkers = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllStreamApps = false
+        private[this] val requiredStreamApps = mutable.Map[ObjectKey, Option[Condition]]()
 
         private[this] def checkCluster[S <: ClusterStatus, C <: ClusterInfo: ClassTag](
           collie: Collie[S],
@@ -248,6 +337,54 @@ object ObjectChecker {
               checkCluster[S, C](collie, key)
             }
             .map(_.flatten.toMap)
+
+        private[this] def checkZookeepers()(
+          implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Condition]] =
+          if (requireAllZookeepers)
+            store
+              .values[ZookeeperClusterInfo]()
+              .map(_.map(_.key))
+              .flatMap(keys =>
+                checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie, keys.toSet))
+          else
+            checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie,
+                                                                        requiredZookeepers.keys.toSet)
+
+        private[this] def checkBrokers()(
+          implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Condition]] =
+          if (requireAllBrokers)
+            store
+              .values[BrokerClusterInfo]()
+              .map(_.map(_.key))
+              .flatMap(keys =>
+                checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie, keys.toSet))
+          else
+            checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie,
+                                                                  requiredBrokers.keys.toSet)
+
+        private[this] def checkWorkers()(
+          implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Condition]] =
+          if (requireAllWorkers)
+            store
+              .values[WorkerClusterInfo]()
+              .map(_.map(_.key))
+              .flatMap(keys =>
+                checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie, keys.toSet))
+          else
+            checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie,
+                                                                  requiredWorkers.keys.toSet)
+
+        private[this] def checkStreamApps()(
+          implicit executionContext: ExecutionContext): Future[Map[StreamClusterInfo, Condition]] =
+          if (requireAllStreamApps)
+            store
+              .values[StreamClusterInfo]()
+              .map(_.map(_.key))
+              .flatMap(keys =>
+                checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, keys.toSet))
+          else
+            checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie,
+                                                                  requiredStreamApps.keys.toSet)
 
         private[this] def checkTopic(key: TopicKey)(
           implicit executionContext: ExecutionContext): Future[Option[(TopicInfo, Condition)]] =
@@ -278,6 +415,12 @@ object ObjectChecker {
               }
           }
 
+        private[this] def checkTopics()(
+          implicit executionContext: ExecutionContext): Future[Map[TopicInfo, Condition]] =
+          if (requireAllTopics) store.values[TopicInfo]().map(_.map(_.key)).flatMap { keys =>
+            Future.traverse(keys)(checkTopic).map(_.flatten.toMap)
+          } else Future.traverse(requiredTopics.keySet)(checkTopic).map(_.flatten.toMap)
+
         private[this] def checkConnector(key: ConnectorKey)(
           implicit executionContext: ExecutionContext): Future[Option[(ConnectorInfo, Condition)]] =
           store.get[ConnectorInfo](key).flatMap {
@@ -300,11 +443,22 @@ object ObjectChecker {
               }
           }
 
-        private[this] def checkFile(key: ObjectKey)(
-          implicit executionContext: ExecutionContext): Future[Option[FileInfo]] =
-          fileStore.fileInfo(key).map(Some(_)).recover {
-            case _: NoSuchElementException => None
-          }
+        private[this] def checkConnectors()(
+          implicit executionContext: ExecutionContext): Future[Map[ConnectorInfo, Condition]] =
+          if (requireAllConnectors) store.values[ConnectorInfo]().map(_.map(_.key)).flatMap { keys =>
+            Future.traverse(keys)(checkConnector).map(_.flatten.toMap)
+          } else Future.traverse(requiredConnectors.keySet)(checkConnector).map(_.flatten.toMap)
+
+        private[this] def checkFiles()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
+          if (requireAllFiles) fileStore.fileInfos()
+          else Future.traverse(requiredFiles)(fileStore.fileInfo).map(_.toSeq)
+
+        private[this] def checkNodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
+          if (requireAllNodes) store.values[Node]()
+          else
+            Future
+              .traverse(requiredNodes.map(hostname => ObjectKey.of(GROUP_DEFAULT, hostname)))(store.get[Node])
+              .map(_.flatten.toSeq)
 
         private[this] def compare(name: String,
                                   result: Map[ObjectKey, Condition],
@@ -324,100 +478,148 @@ object ObjectChecker {
 
         override def check()(implicit executionContext: ExecutionContext): Future[ObjectInfos] =
           // check files
-          Future
-            .traverse(files)(checkFile)
-            .map(_.flatten)
+          checkFiles()
             .map { passed =>
-              compare("file", passed.map(_.key -> RUNNING).toMap, files.map(_ -> Some(RUNNING)).toMap)
+              compare("file", passed.map(_.key -> RUNNING).toMap, requiredFiles.map(_ -> Some(RUNNING)).toMap)
               ObjectInfos(
                 topicInfos = Map.empty,
                 connectorInfos = Map.empty,
-                fileInfos = passed.toSeq,
+                fileInfos = passed,
+                nodes = Seq.empty,
                 zookeeperClusterInfos = Map.empty,
                 brokerClusterInfos = Map.empty,
                 workerClusterInfos = Map.empty,
                 streamClusterInfos = Map.empty
               )
             }
+            .flatMap { report =>
+              checkNodes.map { passed =>
+                compare("node",
+                        passed.map(_.key -> RUNNING).toMap,
+                        requiredNodes.map(n => ObjectKey.of(GROUP_DEFAULT, n)).map(_ -> Some(RUNNING)).toMap)
+                report.copy(nodes = passed)
+              }
+            }
             // check zookeepers
             .flatMap { report =>
-              checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie,
-                                                                          zookeepers.keys.toSet).map { passed =>
-                compare("zookeeper", passed.map(e => e._1.key -> e._2), zookeepers.toMap)
+              checkZookeepers().map { passed =>
+                compare("zookeeper", passed.map(e => e._1.key -> e._2), requiredZookeepers.toMap)
                 report.copy(zookeeperClusterInfos = passed)
               }
             }
             // check brokers
             .flatMap { report =>
-              checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie, brokers.keys.toSet)
-                .map { passed =>
-                  compare("broker", passed.map(e => e._1.key -> e._2), brokers.toMap)
-                  report.copy(brokerClusterInfos = passed)
-                }
+              checkBrokers().map { passed =>
+                compare("broker", passed.map(e => e._1.key -> e._2), requiredBrokers.toMap)
+                report.copy(brokerClusterInfos = passed)
+              }
             }
             // check streamApps
             .flatMap { report =>
-              checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, streamApps.keys.toSet)
-                .map { passed =>
-                  compare("streamApp", passed.map(e => e._1.key -> e._2), streamApps.toMap)
-                  report.copy(streamClusterInfos = passed)
-                }
+              checkStreamApps().map { passed =>
+                compare("streamApp", passed.map(e => e._1.key -> e._2), requiredStreamApps.toMap)
+                report.copy(streamClusterInfos = passed)
+              }
             }
             // check workers
             .flatMap { report =>
-              checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie, workers.keys.toSet)
-                .map { passed =>
-                  compare("worker", passed.map(e => e._1.key -> e._2), workers.toMap)
-                  report.copy(workerClusterInfos = passed)
-                }
+              checkWorkers().map { passed =>
+                compare("worker", passed.map(e => e._1.key -> e._2), requiredWorkers.toMap)
+                report.copy(workerClusterInfos = passed)
+              }
             }
             // check topics
             .flatMap { report =>
-              Future.traverse(topics.keySet)(checkTopic).map(_.flatten.toMap).map { passed =>
-                compare("topic", passed.map(e => e._1.key -> e._2).toMap, topics.toMap)
+              checkTopics().map { passed =>
+                compare("topic", passed.map(e => e._1.key -> e._2).toMap, requiredTopics.toMap)
                 report.copy(topicInfos = passed)
               }
             }
             // check connectors
             .flatMap { report =>
-              Future.traverse(connectors.keys)(checkConnector).map(_.flatten.toMap).map { passed =>
-                compare("connector", passed.map(e => e._1.key -> e._2).toMap, connectors.toMap)
+              checkConnectors().map { passed =>
+                compare("connector", passed.map(e => e._1.key -> e._2).toMap, requiredConnectors.toMap)
                 report.copy(connectorInfos = passed)
               }
             }
 
         override protected def topics(keys: Set[TopicKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => topics += (key -> condition))
+          keys.foreach(key => requiredTopics += (key -> condition))
           this
         }
 
         override protected def connectors(keys: Set[ConnectorKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => connectors += (key -> condition))
+          keys.foreach(key => requiredConnectors += (key -> condition))
+          this
+        }
+
+        override def nodes(hostNames: Set[String]): ChickList = {
+          requiredNodes ++= hostNames
           this
         }
 
         override def files(keys: Set[ObjectKey]): ChickList = {
-          files ++= keys
+          requiredFiles ++= keys
           this
         }
 
         override protected def zookeeperClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => zookeepers += (key -> condition))
+          keys.foreach(key => requiredZookeepers += (key -> condition))
           this
         }
 
         override protected def brokerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => brokers += (key -> condition))
+          keys.foreach(key => requiredBrokers += (key -> condition))
           this
         }
 
         override protected def workerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => workers += (key -> condition))
+          keys.foreach(key => requiredWorkers += (key -> condition))
           this
         }
 
         override protected def streamApps(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => streamApps += (key -> condition))
+          keys.foreach(key => requiredStreamApps += (key -> condition))
+          this
+        }
+
+        override def allTopics(): ChickList = {
+          this.requireAllTopics = true
+          this
+        }
+
+        override def allConnectors(): ChickList = {
+          this.requireAllConnectors = true
+          this
+        }
+
+        override def allFiles(): ChickList = {
+          this.requireAllFiles = true
+          this
+        }
+
+        override def allNodes(): ChickList = {
+          this.requireAllNodes = true
+          this
+        }
+
+        override def allZookeepers(): ChickList = {
+          this.requireAllZookeepers = true
+          this
+        }
+
+        override def allBrokers(): ChickList = {
+          this.requireAllBrokers = true
+          this
+        }
+
+        override def allWorkers(): ChickList = {
+          this.requireAllWorkers = true
+          this
+        }
+
+        override def allStreamApps(): ChickList = {
+          this.requireAllStreamApps = true
           this
         }
       }

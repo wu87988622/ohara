@@ -17,11 +17,11 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ServiceCollie, DataCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent.{BrokerCollie, DataCollie, ServiceCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfUpdating}
+import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -96,6 +96,8 @@ object ZookeeperRoute {
                 s"you can't remove zookeeper cluster:${zookeeperClusterInfo.key} since it is used by broker cluster:${usedBks
                   .mkString(",")}"))
 
+  private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
+
   def apply(implicit store: DataStore,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
@@ -111,6 +113,7 @@ object ZookeeperRoute {
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,
-      hookBeforeStop = hookBeforeStop
+      hookBeforeStop = hookBeforeStop,
+      hookBeforeDelete = hookBeforeDelete
     )
 }
