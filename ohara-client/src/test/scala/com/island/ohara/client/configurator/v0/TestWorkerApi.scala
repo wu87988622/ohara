@@ -52,7 +52,11 @@ class TestWorkerApi extends OharaTest with Matchers {
   def testClone(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
-      settings = WorkerApi.access.request.nodeNames(Set(CommonUtils.randomString())).creation.settings,
+      settings = WorkerApi.access.request
+        .nodeNames(Set(CommonUtils.randomString()))
+        .brokerClusterKey(ObjectKey.of("g", "n"))
+        .creation
+        .settings,
       connectors = Seq.empty,
       aliveNodes = Set.empty,
       state = None,
@@ -64,12 +68,18 @@ class TestWorkerApi extends OharaTest with Matchers {
 
   @Test
   def ignoreNameOnCreation(): Unit =
-    accessApi.nodeName(CommonUtils.randomString(10)).creation.name.length should not be 0
+    accessApi
+      .nodeName(CommonUtils.randomString(10))
+      .brokerClusterKey(ObjectKey.of("g", "n"))
+      .creation
+      .name
+      .length should not be 0
 
   @Test
   def testTags(): Unit = accessApi
     .nodeName(CommonUtils.randomString(10))
     .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
+    .brokerClusterKey(ObjectKey.of("g", "n"))
     .creation
     .tags
     .size shouldBe 2
@@ -191,7 +201,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
     creation.jmxPort shouldBe jmxPort
-    creation.brokerClusterKey.get shouldBe brokerClusterKey
+    creation.brokerClusterKey shouldBe brokerClusterKey
     creation.configTopicName shouldBe configTopicName
     creation.configTopicReplications shouldBe configTopicReplications
     creation.offsetTopicName shouldBe offsetTopicName
@@ -208,12 +218,16 @@ class TestWorkerApi extends OharaTest with Matchers {
     val nodeName = CommonUtils.randomString()
     val creation = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "nodeNames": ["$nodeName"]
+      |    "nodeNames": ["$nodeName"],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    }
       |  }
       |  """.stripMargin.parseJson)
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
-    creation.brokerClusterKey shouldBe None
+    creation.brokerClusterKey shouldBe ObjectKey.of("g", "n")
     creation.configTopicReplications shouldBe 1
     creation.offsetTopicReplications shouldBe 1
     creation.offsetTopicPartitions shouldBe 1
@@ -229,6 +243,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "$name",
       |    "group": "$group",
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["$nodeName"]
       |  }
       |  """.stripMargin.parseJson)
@@ -236,7 +254,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     creation2.name shouldBe name
     creation2.group shouldBe group
     creation2.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
-    creation2.brokerClusterKey shouldBe None
+    creation2.brokerClusterKey shouldBe ObjectKey.of("g", "n")
     creation2.configTopicReplications shouldBe 1
     creation2.offsetTopicReplications shouldBe 1
     creation2.offsetTopicPartitions shouldBe 1
@@ -254,13 +272,15 @@ class TestWorkerApi extends OharaTest with Matchers {
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val nodeName = CommonUtils.randomString()
+    val brokerClusterKey = ObjectKey.of("g", "n")
 
-    val creation = accessApi.name(name).nodeName(nodeName).creation
+    val creation = accessApi.name(name).nodeName(nodeName).brokerClusterKey(brokerClusterKey).creation
     creation.name shouldBe name
     // use default values if absent
     creation.group shouldBe GROUP_DEFAULT
     creation.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
     creation.nodeNames shouldBe Set(nodeName)
+    creation.brokerClusterKey shouldBe brokerClusterKey
 
     // initial a new update request
     val updateAsCreation = WorkerApi.access.request
@@ -281,6 +301,10 @@ class TestWorkerApi extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "asdasd",
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": []
       |  }
       |  """.stripMargin.parseJson)
@@ -288,6 +312,10 @@ class TestWorkerApi extends OharaTest with Matchers {
   def parseNodeNamesOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -300,6 +328,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "name",
       |    "clientPort": 0,
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["n"]
       |  }
       |  """.stripMargin.parseJson)
@@ -310,6 +342,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "name",
       |    "clientPort": -1,
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["n"]
       |  }
       |  """.stripMargin.parseJson)
@@ -320,6 +356,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "name",
       |    "clientPort": 999999,
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["n"]
       |  }
       |  """.stripMargin.parseJson)
@@ -331,6 +371,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": [
       |      "node"
       |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "clientPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -341,6 +385,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": [
       |      "node"
       |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "clientPort": -9
       |  }
       |  """.stripMargin.parseJson)
@@ -351,6 +399,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": [
       |      "node"
       |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "clientPort": 99999
       |  }
       |  """.stripMargin.parseJson)
@@ -363,6 +415,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "name",
       |    "jmxPort": 0,
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["n"]
       |  }
       |  """.stripMargin.parseJson)
@@ -373,6 +429,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "name",
       |    "jmxPort": -1,
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["n"]
       |  }
       |  """.stripMargin.parseJson)
@@ -383,6 +443,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  {
       |    "name": "name",
       |    "jmxPort": 999999,
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "nodeNames": ["n"]
       |  }
       |  """.stripMargin.parseJson)
@@ -394,6 +458,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": [
       |      "node"
       |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -404,6 +472,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": [
       |      "node"
       |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": -9
       |  }
       |  """.stripMargin.parseJson)
@@ -414,6 +486,10 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": [
       |      "node"
       |    ],
+      |    "brokerClusterKey": {
+      |      "group": "g",
+      |      "name": "n"
+      |    },
       |    "jmxPort": 99999
       |  }
       |  """.stripMargin.parseJson)
@@ -423,7 +499,8 @@ class TestWorkerApi extends OharaTest with Matchers {
   @Test
   def testDeadNodes(): Unit = {
     val cluster = WorkerClusterInfo(
-      settings = WorkerApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      settings =
+        WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
       connectors = Seq.empty,
       aliveNodes = Set("n0"),
       state = Some("running"),
@@ -437,12 +514,17 @@ class TestWorkerApi extends OharaTest with Matchers {
 
   @Test
   def testFreePorts(): Unit = {
-    WorkerApi.access.request.nodeName(CommonUtils.randomString()).creation.freePorts shouldBe Set.empty
+    WorkerApi.access.request
+      .nodeName(CommonUtils.randomString())
+      .brokerClusterKey(ObjectKey.of("g", "n"))
+      .creation
+      .freePorts shouldBe Set.empty
 
     val freePorts = Set(CommonUtils.availablePort(), CommonUtils.availablePort())
     WorkerApi.access.request
       .nodeName(CommonUtils.randomString())
       .freePorts(freePorts)
+      .brokerClusterKey(ObjectKey.of("g", "n"))
       .creation
       .freePorts shouldBe freePorts
   }
@@ -485,7 +567,8 @@ class TestWorkerApi extends OharaTest with Matchers {
   @Test
   def testConnectionProps(): Unit = {
     val cluster = WorkerClusterInfo(
-      settings = WorkerApi.access.request.nodeNames(Set("n0", "m1")).creation.settings,
+      settings =
+        WorkerApi.access.request.nodeNames(Set("n0", "m1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
       aliveNodes = Set("nn"),
       state = None,
       error = None,
@@ -498,6 +581,6 @@ class TestWorkerApi extends OharaTest with Matchers {
   @Test
   def testBrokerClusterKey(): Unit = {
     val bkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    accessApi.nodeName("n").brokerClusterKey(bkKey).creation.brokerClusterKey.get shouldBe bkKey
+    accessApi.nodeName("n").brokerClusterKey(bkKey).creation.brokerClusterKey shouldBe bkKey
   }
 }

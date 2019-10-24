@@ -396,7 +396,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def stopTopicFromStoppingBrokerCluster(): Unit = {
     val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
+    val bk = result(brokerApi.list()).head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
@@ -406,7 +406,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     import scala.collection.JavaConverters._
     val cluster = cache.keySet().asScala.find(_.key == bk.key).get
     cache.remove(cluster)
-    adminCache.remove(cluster)
+    adminCache.remove(bk)
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .find(_.key == bk.key)
       .get
@@ -418,7 +418,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def stopTopicFromNonexistentBrokerCluster(): Unit = {
     val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
+    val bk = result(brokerApi.list()).head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
@@ -428,7 +428,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     import scala.collection.JavaConverters._
     val cluster = cache.keySet().asScala.find(_.key == bk.key).get
     cache.remove(cluster)
-    adminCache.remove(cluster)
+    adminCache.remove(bk)
     configurator.store.remove[BrokerClusterInfo](bk.key)
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .find(_.key == bk.key) shouldBe None
@@ -439,7 +439,7 @@ class TestTopicRoute extends OharaTest with Matchers {
   @Test
   def deleteTopicFromNonexistentBrokerCluster(): Unit = {
     val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val bk = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
+    val bk = result(brokerApi.list()).head
     result(topicApi.start(topic.key))
 
     // remove broker cluster
@@ -449,7 +449,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     import scala.collection.JavaConverters._
     val cluster = cache.keySet().asScala.find(_.key == bk.key).get
     cache.remove(cluster)
-    adminCache.remove(cluster)
+    adminCache.remove(bk)
     configurator.store.remove[BrokerClusterInfo](bk.key)
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .find(_.key == bk.key) shouldBe None

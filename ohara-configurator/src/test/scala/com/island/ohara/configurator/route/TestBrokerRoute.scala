@@ -100,6 +100,8 @@ class TestBrokerRoute extends OharaTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())
     // start worker
     result(

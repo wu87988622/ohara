@@ -65,9 +65,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
             (existNodes,
              // find the nodes which have not run the services
              nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)),
-             brokerContainers(
-               creation.brokerClusterKey.getOrElse(
-                 throw new RuntimeException("The broker cluser name should be define"))))
+             brokerContainers(creation.brokerClusterKey))
         }
         .flatMap {
           case (existNodes, newNodes, brokerContainers) =>
@@ -75,7 +73,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
               .flatMap(brokerContainers => {
 
                 if (brokerContainers.isEmpty)
-                  throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey.get} doesn't exist")
+                  throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} doesn't exist")
 
                 if (newNodes.isEmpty) Future.successful(Seq.empty)
                 else {

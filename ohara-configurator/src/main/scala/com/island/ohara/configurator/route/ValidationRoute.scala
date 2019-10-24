@@ -28,7 +28,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
-import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.configurator.store.DataStore
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -86,7 +86,6 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
 
   def apply(implicit brokerCollie: BrokerCollie,
             dataStore: DataStore,
-            meterCache: MeterCache,
             adminCleaner: AdminCleaner,
             workerCollie: WorkerCollie,
             serviceCollie: ServiceCollie,

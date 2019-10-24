@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, NodeApi, TopicApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -26,9 +26,9 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestWorkerRoute extends OharaTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
@@ -45,6 +45,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+
   @Before
   def setup(): Unit = {
     val nodeAccess = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -68,17 +69,21 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testDefaultBk(): Unit =
-    result(workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).brokerClusterKey shouldBe brokerClusterKey
+    result(
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create()).brokerClusterKey shouldBe brokerClusterKey
 
   @Test
-  def runOnIncorrectBk(): Unit =
+  def createWithIncorrectBk(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       workerApi.request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .brokerClusterKey(ObjectKey.of("default", CommonUtils.randomString()))
-        .create()
-        .flatMap(wk => workerApi.start(wk.key)))
+        .create())
 
   @Test
   def testAllSetting(): Unit = {
@@ -101,6 +106,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .clientPort(clientPort)
         .jmxPort(jmxPort)
         .groupId(groupId)
+        .brokerClusterKey(brokerClusterKey)
         .configTopicName(configTopicName)
         .configTopicReplications(configTopicReplications)
         .offsetTopicName(offsetTopicName)
@@ -125,46 +131,12 @@ class TestWorkerRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testDefaultBrokerInMultiBrokerCluster(): Unit = {
-    val zkClusterName = CommonUtils.randomString(10)
-    val zk = result(
-      ZookeeperApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(zkClusterName)
-        .nodeNames(nodeNames)
-        .create())
-    zk.name shouldBe zkClusterName
-    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key))
-    val anotherBk = result(
-      BrokerApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .zookeeperClusterKey(zk.key)
-        .nodeNames(nodeNames)
-        .create())
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(anotherBk.key))
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
-
-    // there are two bk cluster so we have to assign the bk cluster...
-    an[IllegalArgumentException] should be thrownBy result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
-    )
-    // pass
-    result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).brokerClusterKey(anotherBk.key).create()
-    )
-  }
-
-  @Test
   def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       workerApi.request
         .name(CommonUtils.randomString(10))
         .nodeName(CommonUtils.randomString())
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -172,7 +144,11 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testImageName(): Unit = {
     result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create()
     ).imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
 
     //  the available images in fake mode is only IMAGE_NAME_DEFAULT
@@ -181,6 +157,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .imageName(CommonUtils.randomString(10))
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -190,7 +167,11 @@ class TestWorkerRoute extends OharaTest with Matchers {
     val count = 5
     (0 until count).foreach { _ =>
       result(
-        workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+        workerApi.request
+          .name(CommonUtils.randomString(10))
+          .nodeNames(nodeNames)
+          .brokerClusterKey(brokerClusterKey)
+          .create()
       )
     }
     result(workerApi.list()).size shouldBe count
@@ -199,7 +180,11 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testRemove(): Unit = {
     val cluster = result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create()
     )
     result(workerApi.list()).size shouldBe 1
     result(workerApi.delete(cluster.key))
@@ -209,7 +194,11 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testAddNode(): Unit = {
     val cluster = result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeName(nodeNames.head)
+        .brokerClusterKey(brokerClusterKey)
+        .create()
     )
     result(workerApi.start(cluster.key))
     result(workerApi.addNode(cluster.key, nodeNames.last).flatMap(_ => workerApi.get(cluster.key))).nodeNames shouldBe cluster.nodeNames ++ Set(
@@ -219,7 +208,11 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testRemoveNode(): Unit = {
     val cluster = result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create()
     )
     result(workerApi.start(cluster.key))
     cluster.nodeNames shouldBe nodeNames
@@ -229,21 +222,21 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testInvalidClusterName(): Unit = an[DeserializationException] should be thrownBy result(
-    workerApi.request.name("123123.").nodeNames(nodeNames).create()
+    workerApi.request.name("123123.").nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()
   )
 
   @Test
-  def createWkClusterWithSameName(): Unit = {
+  def createWorkerClusterWithSameName(): Unit = {
     val name = CommonUtils.randomString(10)
 
     // pass
     result(
-      workerApi.request.name(name).nodeNames(nodeNames).create()
+      workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()
     )
 
     // we don't need to create another bk cluster since it is feasible to create multi wk cluster on same broker cluster
     an[IllegalArgumentException] should be thrownBy result(
-      workerApi.request.name(name).nodeNames(nodeNames).create()
+      workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()
     )
   }
 
@@ -256,6 +249,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .clientPort(clientPort)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -265,6 +259,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .clientPort(clientPort)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -279,6 +274,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .jmxPort(jmxPort)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -288,6 +284,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .jmxPort(jmxPort)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -302,6 +299,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .groupId(groupId)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -311,6 +309,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .groupId(groupId)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -325,6 +324,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .configTopicName(configTopicName)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -334,6 +334,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .configTopicName(configTopicName)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -348,6 +349,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .offsetTopicName(offsetTopicName)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -357,6 +359,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .offsetTopicName(offsetTopicName)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -371,6 +374,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .statusTopicName(statusTopicName)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -380,6 +384,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .statusTopicName(statusTopicName)
         .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))
     )
@@ -391,7 +396,11 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
     // graceful delete
     val wk0 = result(
-      workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create()
     )
     result(workerApi.start(wk0.key))
     result(workerApi.stop(wk0.key))
@@ -399,7 +408,12 @@ class TestWorkerRoute extends OharaTest with Matchers {
     configurator.serviceCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
-    val wk1 = result(workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val wk1 = result(
+      workerApi.request
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create())
     result(workerApi.start(wk1.key))
     result(workerApi.forceStop(wk1.key))
     result(workerApi.delete(wk1.key))
@@ -427,7 +441,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
       "cc" -> JsNumber(123),
       "dd" -> JsArray(JsString("bar"), JsString("foo"))
     )
-    val wk = result(workerApi.request.tags(tags).nodeNames(nodeNames).create())
+    val wk = result(workerApi.request.tags(tags).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     wk.tags shouldBe tags
 
     // after create, tags should exist
@@ -452,17 +466,18 @@ class TestWorkerRoute extends OharaTest with Matchers {
   def testGroup(): Unit = {
     val group = CommonUtils.randomString(10)
     // different name but same group
-    result(workerApi.request.group(group).nodeNames(nodeNames).create()).group shouldBe group
-    result(workerApi.request.group(group).nodeNames(nodeNames).create()).group shouldBe group
+    result(workerApi.request.group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()).group shouldBe group
+    result(workerApi.request.group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()).group shouldBe group
 
     result(workerApi.list()).size shouldBe 2
 
     // same name but different group
     val name = CommonUtils.randomString(10)
-    val bk1 = result(workerApi.request.name(name).nodeNames(nodeNames).create())
+    val bk1 = result(workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     bk1.name shouldBe name
     bk1.group should not be group
-    val bk2 = result(workerApi.request.name(name).group(group).nodeNames(nodeNames).create())
+    val bk2 = result(
+      workerApi.request.name(name).group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     bk2.name shouldBe name
     bk2.group shouldBe group
 
@@ -472,8 +487,8 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testNameFilter(): Unit = {
     val name = CommonUtils.randomString(10)
-    val worker = result(workerApi.request.name(name).nodeNames(nodeNames).create())
-    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    val worker = result(workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
     val workers = result(workerApi.query.name(name).execute())
     workers.size shouldBe 1
@@ -483,8 +498,8 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testGroupFilter(): Unit = {
     val group = CommonUtils.randomString(10)
-    val worker = result(workerApi.request.group(group).nodeNames(nodeNames).create())
-    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    val worker = result(workerApi.request.group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
     val workers = result(workerApi.query.group(group).execute())
     workers.size shouldBe 1
@@ -500,8 +515,8 @@ class TestWorkerRoute extends OharaTest with Matchers {
       "d" -> JsArray(JsString("B")),
       "e" -> JsObject("a" -> JsNumber(123))
     )
-    val worker = result(workerApi.request.tags(tags).nodeNames(nodeNames).create())
-    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    val worker = result(workerApi.request.tags(tags).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
     val workers = result(workerApi.query.tags(tags).execute())
     workers.size shouldBe 1
@@ -510,8 +525,8 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testStateFilter(): Unit = {
-    val worker = result(workerApi.request.nodeNames(nodeNames).create())
-    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).create()))
+    val worker = result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
+    (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
     result(workerApi.start(worker.key))
     val workers = result(workerApi.query.state("running").execute())
@@ -524,15 +539,52 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testAliveNodesFilter(): Unit = {
-    val worker = result(workerApi.request.nodeName(nodeNames.head).create())
-    (0 until 3).foreach(_ =>
-      result(workerApi.request.nodeNames(nodeNames).create().flatMap(z => workerApi.start(z.key))))
+    val worker = result(workerApi.request.nodeName(nodeNames.head).brokerClusterKey(brokerClusterKey).create())
+    (0 until 3).foreach(
+      _ =>
+        result(
+          workerApi.request
+            .nodeNames(nodeNames)
+            .brokerClusterKey(brokerClusterKey)
+            .create()
+            .flatMap(z => workerApi.start(z.key))))
     result(workerApi.list()).size shouldBe 4
     result(workerApi.start(worker.key))
     val workers = result(workerApi.query.aliveNodes(Set(nodeNames.head)).execute())
     workers.size shouldBe 1
     workers.head.key shouldBe worker.key
     result(workerApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
+  }
+
+  @Test
+  def removeWorkerClusterUsedByConnector(): Unit = {
+    def connectorApi =
+      ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
+    def topicApi =
+      TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(brokerClusterKey).create())
+    result(topicApi.start(topic.key))
+
+    val worker = result(workerApi.request.nodeName(nodeNames.head).brokerClusterKey(brokerClusterKey).create())
+    val connector = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .topicKey(topic.key)
+        .workerClusterKey(worker.key)
+        .create())
+
+    intercept[IllegalArgumentException] {
+      result(workerApi.delete(worker.key))
+    }.getMessage should include(connector.key.toString)
+
+    result(workerApi.start(worker.key))
+    result(connectorApi.start(connector.key))
+
+    intercept[IllegalArgumentException] {
+      result(workerApi.stop(worker.key))
+    }.getMessage should include(connector.key.toString)
   }
 
   @After

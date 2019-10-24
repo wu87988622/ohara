@@ -73,7 +73,7 @@ object WorkerApi {
     private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
     override def imageName: String = settings.imageName.get
-    def brokerClusterKey: Option[ObjectKey] = settings.brokerClusterKey
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
     def clientPort: Int = settings.clientPort.get
     def jmxPort: Int = settings.jmxPort.get
     def groupId: String = settings.groupId.get
@@ -125,6 +125,7 @@ object WorkerApi {
       .nullToShort(STATUS_TOPIC_REPLICATIONS_KEY, 1)
       .nullToEmptyArray(JAR_KEYS_KEY)
       .nullToEmptyArray(FREE_PORTS_KEY)
+      .requireKey(BROKER_CLUSTER_KEY_KEY)
       .refine
 
   final class Updating private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdating {
@@ -216,7 +217,7 @@ object WorkerApi {
     override def name: String = settings.name
     override def group: String = settings.group
     override def imageName: String = settings.imageName
-    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
+    def brokerClusterKey: ObjectKey = settings.brokerClusterKey
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
     def groupId: String = settings.groupId

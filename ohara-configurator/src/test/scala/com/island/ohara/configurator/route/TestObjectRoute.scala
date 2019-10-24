@@ -80,49 +80,7 @@ class TestObjectRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testConnector(): Unit = {
-    val connector0 = result(
-      connectorApi.request
-        .name(CommonUtils.randomString(10))
-        .className("com.island.ohara.connector.ftp.FtpSink")
-        .numberOfTasks(1)
-        .workerClusterKey(workerClusterInfo.key)
-        .create())
-
-    var objs = result(objectApi.list())
-    objs.size shouldBe (1 + initialSize)
-
-    objs.find(_.name == connector0.name).get.name shouldBe connector0.name
-    objs.find(_.name == connector0.name).get.kind shouldBe connector0.kind
-    objs.find(_.name == connector0.name).get.lastModified shouldBe connector0.lastModified
-
-    val connector1 = result(
-      connectorApi.request
-        .name(CommonUtils.randomString(10))
-        .className("com.island.ohara.connector.ftp.FtpSink")
-        .numberOfTasks(1)
-        .workerClusterKey(workerClusterInfo.key)
-        .create())
-
-    objs = result(objectApi.list())
-
-    objs.size shouldBe (2 + initialSize)
-
-    objs.find(_.name == connector1.name).get.name shouldBe connector1.name
-    objs.find(_.name == connector1.name).get.kind shouldBe connector1.kind
-    objs.find(_.name == connector1.name).get.lastModified shouldBe connector1.lastModified
-  }
-
-  @Test
   def listTopicAndConnector(): Unit = {
-    val connector = result(
-      connectorApi.request
-        .name(CommonUtils.randomString(10))
-        .className("com.island.ohara.connector.ftp.FtpSink")
-        .numberOfTasks(1)
-        .workerClusterKey(workerClusterInfo.key)
-        .create())
-
     val topic = result(
       TopicApi.access
         .hostname(configurator.hostname)
@@ -131,6 +89,15 @@ class TestObjectRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
           result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+        .create())
+
+    val connector = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topic.key)
         .create())
 
     val objs = result(objectApi.list())

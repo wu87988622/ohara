@@ -182,6 +182,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topic.key)
         .create())
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
@@ -371,6 +372,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(className)
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topic.key)
         .create())
     val pipeline = result(pipelineApi.request.flow(Flow(connector.key, Set(topic.key))).create())
     pipeline.objects.size shouldBe 2
@@ -386,6 +388,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topic.key)
         .create())
     val pipeline = result(
       pipelineApi.request
@@ -395,7 +398,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
         .create())
     pipeline.objects.size shouldBe 2
 
-    result(topicApi.delete(topic.key))
+    result(connectorApi.delete(connector.key))
     result(pipelineApi.refresh(pipeline.key))
 
     // the topic is removed so

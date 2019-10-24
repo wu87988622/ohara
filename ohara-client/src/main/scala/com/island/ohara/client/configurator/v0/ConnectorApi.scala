@@ -105,12 +105,13 @@ object ConnectorApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
+      .requireKey(TOPIC_KEYS_KEY)
+      .rejectEmptyArray(TOPIC_KEYS_KEY)
       // set the default number of tasks
       .nullToInt(NUMBER_OF_TASKS_KEY, DEFAULT_NUMBER_OF_TASKS)
       .rejectEmptyString()
       .nullToEmptyObject(TAGS_KEY)
       .nullToEmptyArray(COLUMNS_KEY)
-      .nullToEmptyArray(TOPIC_KEYS_KEY)
       // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
       // to users to save their life :)
       .rejectKey(TOPIC_NAMES_KEY)

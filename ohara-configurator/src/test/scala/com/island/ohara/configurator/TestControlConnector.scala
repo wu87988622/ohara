@@ -132,6 +132,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
           .group(sink.group)
           .className(classOf[DumbSink].getName)
           .numberOfTasks(1)
+          .topicKey(topic.key)
           .workerClusterKey(Await
             .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
             .head

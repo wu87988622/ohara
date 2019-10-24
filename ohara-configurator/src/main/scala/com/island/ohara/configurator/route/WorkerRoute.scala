@@ -18,152 +18,153 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
+import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
 
-  private[this] def hookOfCreation(implicit store: DataStore,
-                                   brokerCollie: BrokerCollie,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
-    (creation: Creation) =>
-      creation.brokerClusterKey.map(Future.successful).getOrElse(CollieUtils.singleBrokerCluster()).flatMap { bkKey =>
-        Future
-          .traverse(creation.jarKeys)(store.value[FileInfo])
-          .map(_.toSeq)
-          .map(jarInfos =>
-            WorkerClusterInfo(
-              settings = WorkerApi.access.request
-                .settings(creation.settings)
-                .brokerClusterKey(bkKey)
-                .jarInfos(jarInfos)
-                .creation
-                .settings,
-              connectors = Seq.empty,
-              aliveNodes = Set.empty,
-              state = None,
-              error = None,
-              lastModified = CommonUtils.current()
-          ))
-    }
+  private[this] def creationToClusterInfo(creation: Creation)(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+    objectChecker.checkList
+      .brokerCluster(creation.brokerClusterKey)
+      .files(creation.jarKeys)
+      .check()
+      .map(_.fileInfos)
+      .map { fileInfos =>
+        WorkerClusterInfo(
+          settings = WorkerApi.access.request.settings(creation.settings).jarInfos(fileInfos).creation.settings,
+          connectors = Seq.empty,
+          aliveNodes = Set.empty,
+          state = None,
+          error = None,
+          lastModified = CommonUtils.current()
+        )
+      }
 
-  private[this] def hookOfUpdating(implicit store: DataStore,
-                                   serviceCollie: ServiceCollie,
-                                   brokerCollie: BrokerCollie,
+  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
+    creationToClusterInfo(_)
+
+  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, WorkerClusterInfo] =
-    (key: ObjectKey, update: Updating, previousOption: Option[WorkerClusterInfo]) =>
-      serviceCollie.workerCollie
-        .clusters()
-        .flatMap { clusters =>
-          if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
-            throw new RuntimeException(s"You cannot update property on non-stopped worker cluster: $key")
-          update.brokerClusterKey
-            .orElse(previousOption.map(_.brokerClusterKey))
-            .map(Future.successful)
-            .getOrElse(CollieUtils.singleBrokerCluster())
-        }
-        .flatMap { bkKey =>
-          // use PUT as creation request
-          Future.traverse(update.jarKeys.getOrElse(Set.empty))(store.value[FileInfo]).map(_.toSeq).map { jarInfos =>
+    (key: ObjectKey, updating: Updating, previousOption: Option[WorkerClusterInfo]) =>
+      previousOption match {
+        case None => creationToClusterInfo(WorkerApi.access.request.settings(updating.settings).key(key).creation)
+        case Some(previous) =>
+          objectChecker.checkList.workerCluster(key, STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
             // 2) overwrite previous settings by updated settings
             // 3) fill the ignored settings by creation
-            WorkerClusterInfo(
-              settings = WorkerApi.access.request
-                .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-                .settings(update.settings)
-                .brokerClusterKey(bkKey)
-                .jarInfos(jarInfos)
+            creationToClusterInfo(
+              WorkerApi.access.request
+                .settings(previous.settings)
+                .settings(updating.settings)
                 // the key is not in update's settings so we have to add it to settings
                 .name(key.name)
                 .group(key.group)
-                .creation
-                .settings,
-              connectors = Seq.empty,
-              aliveNodes = Set.empty,
-              state = None,
-              error = None,
-              lastModified = CommonUtils.current()
-            )
+                .creation)
           }
-      }
+    }
 
-  private[this] def hookOfStart(implicit store: DataStore,
-                                meterCache: MeterCache,
-                                brokerCollie: BrokerCollie,
-                                workerCollie: WorkerCollie,
+  private[this] def checkConflict(workerClusterInfo: WorkerClusterInfo, connectorInfos: Seq[ConnectorInfo]): Unit = {
+    val conflictConnectors = connectorInfos.filter(_.workerClusterKey == workerClusterInfo.key)
+    if (conflictConnectors.nonEmpty)
+      throw new IllegalArgumentException(
+        s"you can't remove worker cluster:${workerClusterInfo.key} since it is used by connector:${conflictConnectors.map(_.key).mkString(",")}")
+  }
+
+  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction[WorkerClusterInfo] =
     (workerClusterInfo: WorkerClusterInfo, _, _) =>
-      (for {
-        bks <- runningBrokerClusters()
-        wks <- runningWorkerClusters()
-      } yield (bks, wks))
-        .flatMap {
-          case (runningBrokerClusters, runningWorkerClusters) =>
-            // check broker cluster
-            if (!runningBrokerClusters.exists(_.key == workerClusterInfo.brokerClusterKey))
-              throw new NoSuchClusterException(s"broker cluster:${workerClusterInfo.brokerClusterKey} doesn't exist")
+      objectChecker.checkList
+        .brokerCluster(workerClusterInfo.brokerClusterKey, RUNNING)
+        .allWorkers()
+        .check()
+        .map(_.runningWorkers)
+        .flatMap { runningWorkerClusters =>
+          // check group id
+          runningWorkerClusters.find(_.groupId == workerClusterInfo.groupId).foreach { cluster =>
+            throw new IllegalArgumentException(
+              s"group id:${workerClusterInfo.groupId} is used by wk cluster:${cluster.name}")
+          }
 
-            // check group id
-            runningWorkerClusters.find(_.groupId == workerClusterInfo.groupId).foreach { cluster =>
-              throw new IllegalArgumentException(
-                s"group id:${workerClusterInfo.groupId} is used by wk cluster:${cluster.name}")
-            }
+          // check setting topic
+          runningWorkerClusters.find(_.configTopicName == workerClusterInfo.configTopicName).foreach { cluster =>
+            throw new IllegalArgumentException(
+              s"configTopicName:${workerClusterInfo.configTopicName} is used by wk cluster:${cluster.name}")
+          }
 
-            // check setting topic
-            runningWorkerClusters.find(_.configTopicName == workerClusterInfo.configTopicName).foreach { cluster =>
-              throw new IllegalArgumentException(
-                s"configTopicName:${workerClusterInfo.configTopicName} is used by wk cluster:${cluster.name}")
-            }
+          // check offset topic
+          runningWorkerClusters.find(_.offsetTopicName == workerClusterInfo.offsetTopicName).foreach { cluster =>
+            throw new IllegalArgumentException(
+              s"offsetTopicName:${workerClusterInfo.offsetTopicName} is used by wk cluster:${cluster.name}")
+          }
 
-            // check offset topic
-            runningWorkerClusters.find(_.offsetTopicName == workerClusterInfo.offsetTopicName).foreach { cluster =>
-              throw new IllegalArgumentException(
-                s"offsetTopicName:${workerClusterInfo.offsetTopicName} is used by wk cluster:${cluster.name}")
-            }
+          // check status topic
+          runningWorkerClusters.find(_.statusTopicName == workerClusterInfo.statusTopicName).foreach { cluster =>
+            throw new IllegalArgumentException(
+              s"statusTopicName:${workerClusterInfo.statusTopicName} is used by wk cluster:${cluster.name}")
+          }
 
-            // check status topic
-            runningWorkerClusters.find(_.statusTopicName == workerClusterInfo.statusTopicName).foreach { cluster =>
-              throw new IllegalArgumentException(
-                s"statusTopicName:${workerClusterInfo.statusTopicName} is used by wk cluster:${cluster.name}")
-            }
-
-            serviceCollie.workerCollie.creator
-              .settings(workerClusterInfo.settings)
-              .name(workerClusterInfo.name)
-              .group(workerClusterInfo.group)
-              .clientPort(workerClusterInfo.clientPort)
-              .jmxPort(workerClusterInfo.jmxPort)
-              .brokerClusterKey(workerClusterInfo.brokerClusterKey)
-              .groupId(workerClusterInfo.groupId)
-              .configTopicName(workerClusterInfo.configTopicName)
-              .configTopicReplications(workerClusterInfo.configTopicReplications)
-              .offsetTopicName(workerClusterInfo.offsetTopicName)
-              .offsetTopicPartitions(workerClusterInfo.offsetTopicPartitions)
-              .offsetTopicReplications(workerClusterInfo.offsetTopicReplications)
-              .statusTopicName(workerClusterInfo.statusTopicName)
-              .statusTopicPartitions(workerClusterInfo.statusTopicPartitions)
-              .statusTopicReplications(workerClusterInfo.statusTopicReplications)
-              .imageName(workerClusterInfo.imageName)
-              .jarInfos(workerClusterInfo.jarInfos)
-              .nodeNames(workerClusterInfo.nodeNames)
-              .threadPool(executionContext)
-              .create()
+          serviceCollie.workerCollie.creator
+            .settings(workerClusterInfo.settings)
+            .name(workerClusterInfo.name)
+            .group(workerClusterInfo.group)
+            .clientPort(workerClusterInfo.clientPort)
+            .jmxPort(workerClusterInfo.jmxPort)
+            .brokerClusterKey(workerClusterInfo.brokerClusterKey)
+            .groupId(workerClusterInfo.groupId)
+            .configTopicName(workerClusterInfo.configTopicName)
+            .configTopicReplications(workerClusterInfo.configTopicReplications)
+            .offsetTopicName(workerClusterInfo.offsetTopicName)
+            .offsetTopicPartitions(workerClusterInfo.offsetTopicPartitions)
+            .offsetTopicReplications(workerClusterInfo.offsetTopicReplications)
+            .statusTopicName(workerClusterInfo.statusTopicName)
+            .statusTopicPartitions(workerClusterInfo.statusTopicPartitions)
+            .statusTopicReplications(workerClusterInfo.statusTopicReplications)
+            .imageName(workerClusterInfo.imageName)
+            .jarInfos(workerClusterInfo.jarInfos)
+            .nodeNames(workerClusterInfo.nodeNames)
+            .threadPool(executionContext)
+            .create()
         }
         .map(_ => Unit)
 
-  private[this] def hookBeforeStop: HookOfAction[WorkerClusterInfo] = (_, _, _) => Future.unit
+  private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
+                                   executionContext: ExecutionContext): HookOfAction[WorkerClusterInfo] =
+    (workerClusterInfo: WorkerClusterInfo, _, _) =>
+      objectChecker.checkList.allConnectors().check().map(_.runningConnectors).map(checkConflict(workerClusterInfo, _))
 
-  private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
+  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
+                                     executionContext: ExecutionContext): HookBeforeDelete =
+    key =>
+      objectChecker.checkList
+        .allConnectors()
+        .workerCluster(key, STOPPED)
+        .check()
+        .map(report => (report.workerClusterInfos.keys.head, report.connectorInfos.keys.toSeq))
+        .map {
+          case (workerClusterInfo, connectorInfos) => checkConflict(workerClusterInfo, connectorInfos)
+        }
+        .recover {
+          // the duplicate deletes are legal to ohara
+          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: Throwable                                           => throw e
+        }
+        .map(_ => Unit)
 
   def apply(implicit store: DataStore,
+            objectChecker: ObjectChecker,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,

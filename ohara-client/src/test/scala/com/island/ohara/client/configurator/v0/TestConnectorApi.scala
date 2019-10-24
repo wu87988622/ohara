@@ -145,7 +145,12 @@ class TestConnectorApi extends OharaTest with Matchers {
   def renderJsonWithConnectorClass(): Unit = {
     val className = CommonUtils.randomString()
     val response = ConnectorInfo(
-      settings = access.request.className(className).workerClusterKey(ObjectKey.of("g", "m")).creation.settings,
+      settings = access.request
+        .className(className)
+        .workerClusterKey(ObjectKey.of("g", "m"))
+        .topicKey(TopicKey.of("g", "n"))
+        .creation
+        .settings,
       status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -187,6 +192,12 @@ class TestConnectorApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "topicKeys": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
       |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
       |    "columns": [
       |      {
@@ -206,66 +217,13 @@ class TestConnectorApi extends OharaTest with Matchers {
   }
 
   @Test
-  def parseStaleConfigs(): Unit = {
-    val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-          |  {
-          |    "$WORKER_CLUSTER_KEY_KEY": {
-          |      "group": "g",
-          |      "name": "n"
-          |    },
-          |    "name": "ftpsource",
-          |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
-          |    "$COLUMNS_KEY": [
-          |    {
-          |      "name": "col1",
-          |      "newName": "col1",
-          |      "dataType": "STRING",
-          |      "order": 1
-          |    },
-          |    {
-          |      "name": "col2",
-          |      "newName": "col2",
-          |      "dataType": "STRING",
-          |      "order": 2
-          |    },
-          |    {
-          |      "name": "col3",
-          |      "newName": "col3",
-          |      "dataType": "STRING",
-          |      "order": 3
-          |    }
-          |  ],
-          |  "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
-          |  "numberOfTasks": 1,
-          |  "configs": {
-          |    "ftp.input.folder": "/demo_folder/input",
-          |    "ftp.completed.folder": "/demo_folder/complete",
-          |    "ftp.error.folder": "/demo_folder/error",
-          |    "ftp.encode": "UTF-8",
-          |    "ftp.hostname": "10.2.0.28",
-          |    "ftp.port": "21",
-          |    "ftp.user.name": "ohara",
-          |    "ftp.user.password": "island123",
-          |    "currTask": "1"
-          |  }
-          |}
-          |     """.stripMargin.parseJson)
-    // the deprecated APIs should not be supported now!!!
-    creationRequest.settings.contains("ftp.input.folder") shouldBe false
-    creationRequest.settings.contains("ftp.completed.folder") shouldBe false
-    creationRequest.settings.contains("ftp.error.folder") shouldBe false
-    creationRequest.settings.contains("ftp.encode") shouldBe false
-    creationRequest.settings.contains("ftp.hostname") shouldBe false
-    creationRequest.settings.contains("ftp.port") shouldBe false
-  }
-
-  @Test
   def ignoreClassNameOnCreation(): Unit = intercept[DeserializationException] {
     ConnectorApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
       .request
       .workerClusterKey(ObjectKey.of("default", "name"))
+      .topicKey(TopicKey.of("g", "n"))
       .creation
   }.getMessage should include(CONNECTOR_CLASS_KEY)
 
@@ -276,6 +234,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     .request
     .className(CommonUtils.randomString())
     .workerClusterKey(ObjectKey.of("default", "name"))
+    .topicKey(TopicKey.of("g", "n"))
     .creation
     .name
     .length should not be 0
@@ -365,6 +324,12 @@ class TestConnectorApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "topicKeys": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
       |    "name": "ftpsource",
       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
       |  }
@@ -382,6 +347,12 @@ class TestConnectorApi extends OharaTest with Matchers {
                                             |      "group": "g",
                                             |      "name": "n"
                                             |    },
+                                            |    "topicKeys": [
+                                            |      {
+                                            |        "group": "g",
+                                            |        "name": "n"
+                                            |      }
+                                            |    ],
                                             |    "$CONNECTOR_CLASS_KEY": "${CommonUtils.randomString()}",
                                             |    "$COLUMNS_KEY": [
                                             |      {
@@ -407,6 +378,12 @@ class TestConnectorApi extends OharaTest with Matchers {
                                                                        |      "name": "n"
                                                                        |    },
                                                                        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
+                                                                       |    "topicKeys": [
+                                                                       |      {
+                                                                       |        "group": "g",
+                                                                       |        "name": "n"
+                                                                       |      }
+                                                                       |    ],
                                                                        |    "$COLUMNS_KEY": [
                                                                        |      {
                                                                        |        "name": "$name",
@@ -607,6 +584,12 @@ class TestConnectorApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "topicKeys": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
       |    "tags": {
       |      "a": "bb",
@@ -626,6 +609,12 @@ class TestConnectorApi extends OharaTest with Matchers {
       |      "group": "g",
       |      "name": "n"
       |    },
+      |    "topicKeys": [
+      |      {
+      |        "group": "g",
+      |        "name": "n"
+      |      }
+      |    ],
       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
       |  }
       |     """.stripMargin.parseJson).tags shouldBe Map.empty
@@ -638,6 +627,12 @@ class TestConnectorApi extends OharaTest with Matchers {
        |      "group": "g",
        |      "name": "n"
        |    },
+       |    "topicKeys": [
+       |      {
+       |        "group": "g",
+       |        "name": "n"
+       |      }
+       |    ],
        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
        |    "$CONNECTOR_KEY_KEY": {
        |      "group": "g",
@@ -654,6 +649,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     .group("abc")
     .className(CommonUtils.randomString())
     .workerClusterKey(ObjectKey.of("g", "n"))
+    .topicKey(TopicKey.of("g", "n"))
     .creation
     .group shouldBe "abc"
 
@@ -664,6 +660,7 @@ class TestConnectorApi extends OharaTest with Matchers {
     .request
     .className(CommonUtils.randomString())
     .workerClusterKey(ObjectKey.of("g", "n"))
+    .topicKey(TopicKey.of("g", "n"))
     .creation
     .group shouldBe GROUP_DEFAULT
 
@@ -675,6 +672,12 @@ class TestConnectorApi extends OharaTest with Matchers {
                                       |      "group": "g",
                                       |      "name": "n"
                                       |    },
+                                      |    "topicKeys": [
+                                      |      {
+                                      |        "group": "g",
+                                      |        "name": "n"
+                                      |      }
+                                      |    ],
                                       |    "connector.class": "aa",
                                       |    "topics": []
                                       |  }

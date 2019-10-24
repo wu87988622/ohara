@@ -19,12 +19,12 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import org.junit.{After, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -38,6 +38,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val topicKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
   private[this] val brokerClusterInfo = result(
@@ -47,10 +48,20 @@ class TestConnectorRoute extends OharaTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
 
+  @Before
+  def setupTopic(): Unit = {
+    result(topicApi.request.key(topicKey).brokerClusterKey(bkKey).create())
+    result(topicApi.start(topicKey))
+  }
+
   @Test
   def listConnectorDeployedOnStoppedCluster(): Unit = {
     val connector = result(
-      connectorApi.request.className(CommonUtils.randomString(10)).workerClusterKey(workerClusterInfo.key).create())
+      connectorApi.request
+        .className(CommonUtils.randomString(10))
+        .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topicKey)
+        .create())
 
     result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).stop(workerClusterInfo.key))
 
@@ -58,16 +69,15 @@ class TestConnectorRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def runConnectorWithoutTopic(): Unit = {
-    val connector = result(
-      connectorApi.request
-        .name(CommonUtils.randomString(10))
-        .className(CommonUtils.randomString(10))
-        .workerClusterKey(workerClusterInfo.key)
-        .create())
-
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.key))
-  }
+  def runConnectorWithoutTopic(): Unit =
+    intercept[DeserializationException] {
+      result(
+        connectorApi.request
+          .name(CommonUtils.randomString(10))
+          .className(CommonUtils.randomString(10))
+          .workerClusterKey(workerClusterInfo.key)
+          .create())
+    }.getMessage should include("topicKeys")
 
   @Test
   def test(): Unit = {
@@ -86,11 +96,13 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .columns(columns)
         .numberOfTasks(numberOfTasks)
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topicKey)
         .create())
     response.name shouldBe name
     response.className shouldBe className
     response.columns shouldBe columns
     response.numberOfTasks shouldBe numberOfTasks
+    response.topicKeys shouldBe Set(topicKey)
 
     // test update
     val className2 = CommonUtils.randomString()
@@ -103,6 +115,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .columns(columns2)
         .numberOfTasks(numberOfTasks2)
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topicKey)
         .update())
     response2.name shouldBe name
     response2.className shouldBe className2
@@ -126,6 +139,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topicKey)
         .create())
 
     connector.workerClusterKey shouldBe workerClusterInfo.key
@@ -143,6 +157,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .workerClusterKey(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
+        .topicKey(topicKey)
         .create())
 
   @Test
@@ -155,6 +170,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .className("com.island.ohara.connector.ftp.FtpSink")
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topicKey)
         .create())
     // In creation, workerClusterName will not be auto-filled
     connector.workerClusterKey shouldBe workerClusterInfo.key
@@ -333,6 +349,7 @@ class TestConnectorRoute extends OharaTest with Matchers {
         .className("com.island.ohara.connector.ftp.FtpSink")
         .tags(tags)
         .workerClusterKey(workerClusterInfo.key)
+        .topicKey(topicKey)
         .create())
     connectorDesc.tags shouldBe tags
 

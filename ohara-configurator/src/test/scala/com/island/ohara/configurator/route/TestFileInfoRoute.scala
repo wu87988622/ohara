@@ -194,6 +194,8 @@ class TestFileInfoRoute extends OharaTest with Matchers {
         .request
         .jarKeys(Set(jar.key))
         .nodeName(CommonUtils.randomString())
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())
 
     an[IllegalArgumentException] should be thrownBy result(fileApi.delete(jar.key))

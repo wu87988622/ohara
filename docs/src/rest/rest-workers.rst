@@ -231,13 +231,8 @@ Example Request
     }
 
   .. note::
-     As you don’t input the broker cluster name, Ohara will try to pick up
-     a broker cluster for you. If the number of broker cluster host by
-     ohara is only one, ohara do deploy worker cluster on the broker
-     cluster. Otherwise, ohara will say that it can’t match a broker
-     cluster for you. All ports have default value so you can ignore them
-     when creating worker cluster. However, the port conflict detect does
-     not allow you to reuse port on different purpose (a dangerous behavior, right?).
+    All ports have default value so you can ignore them when creating worker cluster.
+    However, the port conflict detect does not allow you to reuse port on different purpose (a dangerous behavior, right?).
 
 Example Response
   .. code-block:: json
@@ -612,7 +607,7 @@ Example Response
                      "reference":"WORKER_CLUSTER",
                      "displayName":"worker cluster",
                      "internal":false,
-                     "documentation":"the cluster name of running this connector.If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you",
+                     "documentation":"the cluster name of running this connector",
                      "valueType":"STRING",
                      "tableKeys":[
 

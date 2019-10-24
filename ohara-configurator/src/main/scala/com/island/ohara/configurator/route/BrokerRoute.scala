@@ -78,17 +78,15 @@ object BrokerRoute {
           }
     }
 
-  private[this] def hookOfStart(implicit store: DataStore,
-                                objectChecker: ObjectChecker,
-                                meterCache: MeterCache,
-                                brokerCollie: BrokerCollie,
+  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 serviceCollie: ServiceCollie,
                                 executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
     (brokerClusterInfo: BrokerClusterInfo, _, _) =>
       objectChecker.checkList
         .zookeeperCluster(brokerClusterInfo.zookeeperClusterKey, RUNNING)
+        .allBrokers()
         .check()
-        .flatMap(_ => runningBrokerClusters())
+        .map(_.runningBrokers)
         .flatMap { runningBrokerClusters =>
           val conflictBrokerClusters =
             runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
@@ -117,18 +115,15 @@ object BrokerRoute {
     val conflictWorkers = workerClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictWorkers.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers
-          .mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers.map(_.key).mkString(",")}")
     val conflictStreamApps = streamClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictStreamApps.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreamApps
-          .mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreamApps.map(_.key).mkString(",")}")
     val conflictTopics = topicInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictTopics.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreamApps
-          .mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreamApps.map(_.key).mkString(",")}")
   }
 
   private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,

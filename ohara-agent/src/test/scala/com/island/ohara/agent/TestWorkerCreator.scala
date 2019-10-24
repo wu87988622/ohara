@@ -195,6 +195,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
+      .brokerClusterKey(ObjectKey.of("g", "n"))
       .create(),
     5 seconds
   )

@@ -286,10 +286,10 @@ package object route {
         Future.unit
       }
 
-  def runningZookeeperClusters()(implicit meterCache: MeterCache,
-                                 store: DataStore,
-                                 collie: ZookeeperCollie,
-                                 executionContext: ExecutionContext): Future[Seq[ZookeeperClusterInfo]] =
+  private[this] def runningZookeeperClusters()(implicit meterCache: MeterCache,
+                                               store: DataStore,
+                                               collie: ZookeeperCollie,
+                                               executionContext: ExecutionContext): Future[Seq[ZookeeperClusterInfo]] =
     clusters[ZookeeperClusterInfo, ZookeeperClusterStatus]()
 
   def runningBrokerClusters()(implicit meterCache: MeterCache,
@@ -298,16 +298,16 @@ package object route {
                               executionContext: ExecutionContext): Future[Seq[BrokerClusterInfo]] =
     clusters[BrokerClusterInfo, BrokerClusterStatus]()
 
-  def runningWorkerClusters()(implicit meterCache: MeterCache,
-                              store: DataStore,
-                              collie: WorkerCollie,
-                              executionContext: ExecutionContext): Future[Seq[WorkerClusterInfo]] =
+  private[this] def runningWorkerClusters()(implicit meterCache: MeterCache,
+                                            store: DataStore,
+                                            collie: WorkerCollie,
+                                            executionContext: ExecutionContext): Future[Seq[WorkerClusterInfo]] =
     clusters[WorkerClusterInfo, WorkerClusterStatus]()
 
-  def runningStreamClusters()(implicit meterCache: MeterCache,
-                              store: DataStore,
-                              collie: StreamCollie,
-                              executionContext: ExecutionContext): Future[Seq[StreamClusterInfo]] =
+  private[this] def runningStreamClusters()(implicit meterCache: MeterCache,
+                                            store: DataStore,
+                                            collie: StreamCollie,
+                                            executionContext: ExecutionContext): Future[Seq[StreamClusterInfo]] =
     clusters[StreamClusterInfo, StreamClusterStatus]()
 
   /**

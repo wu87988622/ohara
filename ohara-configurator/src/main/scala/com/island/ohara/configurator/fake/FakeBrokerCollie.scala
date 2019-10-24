@@ -43,8 +43,8 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
     * cache all topics info in-memory so we should keep instance for each fake cluster.
     */
   @VisibleForTesting
-  private[configurator] val fakeAdminCache = new ConcurrentSkipListMap[BrokerClusterStatus, FakeTopicAdmin](
-    (o1: BrokerClusterStatus, o2: BrokerClusterStatus) => o1.key.compareTo(o2.key))
+  private[configurator] val fakeAdminCache = new ConcurrentSkipListMap[BrokerClusterInfo, FakeTopicAdmin](
+    (o1: BrokerClusterInfo, o2: BrokerClusterInfo) => o1.key.compareTo(o2.key))
 
   override def creator: BrokerCollie.ClusterCreator = (_, creation) =>
     Future.successful(
@@ -73,7 +73,7 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
       if (!clusterCache.keySet().asScala.exists(_.key == brokerClusterInfo.key))
         throw new NoSuchClusterException(s"cluster:${brokerClusterInfo.key} is not running")
       val fake = new FakeTopicAdmin
-      val r = fakeAdminCache.putIfAbsent(clusterCache.asScala.find(_._1.key == brokerClusterInfo.key).get._1, fake)
+      val r = fakeAdminCache.putIfAbsent(brokerClusterInfo, fake)
       if (r == null) fake else r
     } else Future.successful(TopicAdmin(bkConnectionProps))
 

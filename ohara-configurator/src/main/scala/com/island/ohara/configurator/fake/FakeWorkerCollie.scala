@@ -67,8 +67,8 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
     implicit executionContext: ExecutionContext): Future[WorkerClient] =
     Future.successful {
       if (wkConnectionProps == null) {
-        if (!clusterCache.containsKey(cluster))
-          throw new NoSuchClusterException(s"worker cluster:$cluster does not exist")
+        if (!clusterCache.keySet().asScala.exists(_.key == cluster.key))
+          throw new NoSuchClusterException(s"cluster:${cluster.key} is not running")
         val fake = FakeWorkerClient()
         val r = fakeClientCache.putIfAbsent(cluster, fake)
         if (r == null) fake else r
