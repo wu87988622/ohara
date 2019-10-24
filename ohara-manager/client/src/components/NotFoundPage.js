@@ -14,38 +14,11 @@
  * limitations under the License.
  */
 
-import { createGlobalStyle } from 'styled-components';
+import React from 'react';
+import Typography from '@material-ui/core/Typography';
 
-export default createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap');
-  
-  *, *:before, *:after {
-    box-sizing: border-box;
-  }
+const NotFoundPage = () => {
+  return <Typography variant="h2">Ooooops, page not found!</Typography>;
+};
 
-
-  body {
-    padding: 0;
-    margin: 0;
-    font-family: Roboto, sans-serif;
-  }
-
-  a {
-    text-decoration: none;
-    
-  }
-
-  ul, li {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  button, input {
-    outline: none;
-  }
-
-  button {
-    cursor: pointer;
-  }
-`;
+export default NotFoundPage;

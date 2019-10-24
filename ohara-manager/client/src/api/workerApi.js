@@ -14,38 +14,17 @@
  * limitations under the License.
  */
 
-import { createGlobalStyle } from 'styled-components';
+import { axiosInstance } from './apiUtils';
 
-export default createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap');
-  
-  *, *:before, *:after {
-    box-sizing: border-box;
+export const fetchWorkers = async () => {
+  try {
+    const response = await axiosInstance.get('/api/workers');
+    const { isSuccess } = response.data;
+
+    if (!isSuccess) throw new Error(response.errorMessage);
+
+    return response;
+  } catch (error) {
+    throw new Error(error);
   }
-
-
-  body {
-    padding: 0;
-    margin: 0;
-    font-family: Roboto, sans-serif;
-  }
-
-  a {
-    text-decoration: none;
-    
-  }
-
-  ul, li {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  button, input {
-    outline: none;
-  }
-
-  button {
-    cursor: pointer;
-  }
-`;
+};

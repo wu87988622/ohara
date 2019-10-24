@@ -15,25 +15,46 @@
  */
 
 import React from 'react';
+import styled from 'styled-components';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
 import Theme from 'components/Theme';
+import AppBar from 'components/Layout/AppBar';
+import NotFoundPage from 'components/NotFoundPage';
+
+const Container = styled.div`
+  display: flex;
+
+  /* 
+    Make AppBar can stretch to the bottom of the brower view even if the content
+    height is not enough to do so
+  */
+  min-height: 100vh;
+`;
+
+const Main = styled.main`
+  padding: ${props => props.theme.spacing(2)}px;
+`;
 
 const App = () => {
   return (
     <Router>
-      <>
+      <Container className="container">
         <GlobalStyle />
-        <Switch>
-          <Route
-            exact
-            path="/"
-            component={() => <h1>Hello ohara manager!</h1>}
-          />
-          <Route exact path="/theme" component={Theme} />
-        </Switch>
-      </>
+        <AppBar />
+        <Main>
+          <Switch>
+            <Route
+              exact
+              path="/"
+              component={() => <h1>Hello ohara manager!</h1>}
+            />
+            <Route exact path="/theme" component={Theme} />
+            <Route path="*" component={NotFoundPage} />
+          </Switch>
+        </Main>
+      </Container>
     </Router>
   );
 };

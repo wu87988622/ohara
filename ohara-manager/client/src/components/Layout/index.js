@@ -14,38 +14,6 @@
  * limitations under the License.
  */
 
-import { createGlobalStyle } from 'styled-components';
+import AppBar from './AppBar';
 
-export default createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap');
-  
-  *, *:before, *:after {
-    box-sizing: border-box;
-  }
-
-
-  body {
-    padding: 0;
-    margin: 0;
-    font-family: Roboto, sans-serif;
-  }
-
-  a {
-    text-decoration: none;
-    
-  }
-
-  ul, li {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  button, input {
-    outline: none;
-  }
-
-  button {
-    cursor: pointer;
-  }
-`;
+export default AppBar;
