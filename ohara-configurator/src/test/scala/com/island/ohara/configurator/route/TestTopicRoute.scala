@@ -429,7 +429,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     val cluster = cache.keySet().asScala.find(_.key == bk.key).get
     cache.remove(cluster)
     adminCache.remove(bk)
-    configurator.store.remove[BrokerClusterInfo](bk.key)
+    result(configurator.store.remove[BrokerClusterInfo](bk.key))
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .find(_.key == bk.key) shouldBe None
     result(topicApi.stop(topic.key))
@@ -450,7 +450,7 @@ class TestTopicRoute extends OharaTest with Matchers {
     val cluster = cache.keySet().asScala.find(_.key == bk.key).get
     cache.remove(cluster)
     adminCache.remove(bk)
-    configurator.store.remove[BrokerClusterInfo](bk.key)
+    result(configurator.store.remove[BrokerClusterInfo](bk.key))
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .find(_.key == bk.key) shouldBe None
     result(topicApi.delete(topic.key))
