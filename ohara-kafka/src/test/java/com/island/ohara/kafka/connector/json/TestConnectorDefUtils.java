@@ -310,10 +310,18 @@ public class TestConnectorDefUtils extends OharaTest {
     ConnectorDefUtils.DEFINITIONS_DEFAULT.forEach(
         definition -> {
           if (definition.valueType().equals(SettingDef.Type.TABLE)) {
-            Assert.assertTrue(definition.tableKeys().contains(SettingDef.ORDER_KEY));
-            Assert.assertTrue(definition.tableKeys().contains(SettingDef.COLUMN_DATA_TYPE_KEY));
-            Assert.assertTrue(definition.tableKeys().contains(SettingDef.COLUMN_NAME_KEY));
-            Assert.assertTrue(definition.tableKeys().contains(SettingDef.COLUMN_NEW_NAME_KEY));
+            Assert.assertTrue(
+                definition.tableKeys().stream()
+                    .anyMatch(k -> k.name().equals(SettingDef.ORDER_KEY)));
+            Assert.assertTrue(
+                definition.tableKeys().stream()
+                    .anyMatch(k -> k.name().equals(SettingDef.COLUMN_DATA_TYPE_KEY)));
+            Assert.assertTrue(
+                definition.tableKeys().stream()
+                    .anyMatch(k -> k.name().equals(SettingDef.COLUMN_NAME_KEY)));
+            Assert.assertTrue(
+                definition.tableKeys().stream()
+                    .anyMatch(k -> k.name().equals(SettingDef.COLUMN_NEW_NAME_KEY)));
           } else Assert.assertTrue(definition.tableKeys().isEmpty());
         });
   }

@@ -32,7 +32,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * This class is the base class to define configuration for ohara object.
@@ -136,7 +138,7 @@ public class SettingDef implements JsonObject, Serializable {
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
-  private final List<String> tableKeys;
+  private final List<TableColumn> tableKeys;
 
   @JsonCreator
   private SettingDef(
@@ -151,7 +153,7 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) Reference reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
-      @JsonProperty(TABLE_KEYS_KEY) List<String> tableKeys) {
+      @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys) {
     this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
     this.editable = editable;
@@ -272,16 +274,20 @@ public class SettingDef implements JsonObject, Serializable {
             propGroups
                 .raw()
                 .forEach(
-                    row ->
-                        tableKeys.forEach(
-                            tableKey -> {
-                              if (!row.containsKey(tableKey))
-                                throw new IllegalArgumentException(
-                                    "table key:"
-                                        + tableKey
-                                        + " does not exist in row:"
-                                        + String.join(",", row.keySet()));
-                            }));
+                    row -> {
+                      if (!tableKeys.isEmpty()) {
+                        Set<String> expectedColumnNames =
+                            tableKeys.stream().map(TableColumn::name).collect(Collectors.toSet());
+                        Set<String> actualColumnName = row.keySet();
+                        if (!actualColumnName.equals(expectedColumnNames)) {
+                          throw new IllegalArgumentException(
+                              "expected column names:"
+                                  + String.join(",", expectedColumnNames)
+                                  + ", actual:"
+                                  + String.join(",", actualColumnName));
+                        }
+                      }
+                    });
 
           } catch (Exception e) {
             throw new OharaConfigException(
@@ -405,7 +411,7 @@ public class SettingDef implements JsonObject, Serializable {
   }
 
   @JsonProperty(TABLE_KEYS_KEY)
-  public List<String> tableKeys() {
+  public List<TableColumn> tableKeys() {
     return new ArrayList<>(tableKeys);
   }
 
@@ -445,7 +451,7 @@ public class SettingDef implements JsonObject, Serializable {
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
-    private List<String> tableKeys = Collections.emptyList();
+    private List<TableColumn> tableKeys = Collections.emptyList();
 
     private Builder() {}
 
@@ -477,7 +483,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return this builder
      */
     @Optional("default value is empty")
-    public Builder tableKeys(List<String> tableKeys) {
+    public Builder tableKeys(List<TableColumn> tableKeys) {
       this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
       return this;
     }

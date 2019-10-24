@@ -26,8 +26,9 @@ import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -199,26 +200,43 @@ public class TestSettingDef extends OharaTest {
         SettingDef.builder()
             .key(CommonUtils.randomString())
             .valueType(SettingDef.Type.TABLE)
-            .tableKeys(Arrays.asList("a", "b"))
+            .tableKeys(
+                Arrays.asList(
+                    TableColumn.builder()
+                        .name("a")
+                        .recommendedItems(new HashSet<>(Arrays.asList("a0", "a1")))
+                        .build(),
+                    TableColumn.builder().name("b").build()))
             .build();
+    // illegal format
     assertException(OharaConfigException.class, () -> settingDef.checker().accept(null));
+    // illegal format
     assertException(OharaConfigException.class, () -> settingDef.checker().accept(123));
+    // illegal format
     assertException(
         OharaConfigException.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    // neglect column "b"
     assertException(
         OharaConfigException.class,
         () ->
             settingDef
                 .checker()
                 .accept(Collections.singletonList(Collections.singletonMap("a", "c"))));
-    settingDef
-        .checker()
-        .accept(
-            PropGroups.of(
-                    Collections.singletonList(
-                        settingDef.tableKeys().stream()
-                            .collect(Collectors.toMap(Function.identity(), Function.identity()))))
-                .toJsonString());
+
+    // too many items
+    Map<String, String> goodMap = new HashMap<>();
+    goodMap.put("a", "a0");
+    goodMap.put("b", "c");
+    settingDef.checker().accept(PropGroups.of(Collections.singletonList(goodMap)).toJsonString());
+
+    Map<String, String> illegalColumnMap = new HashMap<>(goodMap);
+    illegalColumnMap.put("dddd", "fff");
+    assertException(
+        OharaConfigException.class,
+        () ->
+            settingDef
+                .checker()
+                .accept(PropGroups.of(Collections.singletonList(illegalColumnMap)).toJsonString()));
   }
 
   @Test

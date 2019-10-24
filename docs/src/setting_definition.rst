@@ -42,7 +42,11 @@ SettingDef is a class used to describe the details of **a** setting. It consists
 #. defaultValue (**string**) — the default value
 #. documentation (**string**) — the explanation of this definition
 #. internal (**string**) — true if this setting is assigned by system automatically.
-#. tableKeys (**array(string)**) — the column name when the type is TABLE
+#. tableKeys (**array(object)**) — the description to Type.TABLE
+
+  - tableKeys[i].name - the column name
+  - tableKeys[i].type - acceptable type (string, number and boolean)
+  - tableKeys[i].recommendedItems - recommended values (it is legal to enter other values you prefer)
 
 .. note::
    You can call :ref:`Worker APIs <rest-workers>` to get all connectors’ setting definitions, and use

@@ -26,6 +26,7 @@ import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Reference;
 import com.island.ohara.common.setting.SettingDef.Type;
+import com.island.ohara.common.setting.TableColumn;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -139,7 +140,17 @@ public final class ConnectorDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .tableKeys(
-              Arrays.asList(ORDER_KEY, COLUMN_DATA_TYPE_KEY, COLUMN_NAME_KEY, COLUMN_NEW_NAME_KEY))
+              Arrays.asList(
+                  TableColumn.builder().name(ORDER_KEY).type(TableColumn.Type.NUMBER).build(),
+                  TableColumn.builder()
+                      .name(COLUMN_DATA_TYPE_KEY)
+                      .type(TableColumn.Type.STRING)
+                      .build(),
+                  TableColumn.builder().name(COLUMN_NAME_KEY).type(TableColumn.Type.STRING).build(),
+                  TableColumn.builder()
+                      .name(COLUMN_NEW_NAME_KEY)
+                      .type(TableColumn.Type.STRING)
+                      .build()))
           .build();
 
   public static final SettingDef WORKER_CLUSTER_KEY_DEFINITION =
