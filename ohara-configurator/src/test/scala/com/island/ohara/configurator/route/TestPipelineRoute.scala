@@ -95,7 +95,7 @@ class TestPipelineRoute extends OharaTest with Matchers {
     val bk = result(brokerApi.list()).head.key
 
     // we can't remove the broker cluster via APIs since our strong check obstruct us from entering dangerous deletion
-    configurator.serviceCollie.brokerCollie.remove(bk)
+    result(configurator.serviceCollie.brokerCollie.remove(bk))
 
     // worker cluster is gone so the object abstract should contain error
     pipeline = result(pipelineApi.get(pipeline.key))
