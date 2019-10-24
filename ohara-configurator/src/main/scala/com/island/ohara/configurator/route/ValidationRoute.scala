@@ -94,7 +94,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
         verify = (req: HdfsValidation) => {
-          CollieUtils.both(req.workerClusterKey).flatMap {
+          both(req.workerClusterKey).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
                 case _: FakeWorkerClient => fakeReport()
@@ -105,7 +105,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (req: RdbValidation) =>
-          CollieUtils.both(req.workerClusterKey).flatMap {
+          both(req.workerClusterKey).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
                 case _: FakeWorkerClient => fakeJdbcReport()
@@ -116,7 +116,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (req: FtpValidation) =>
-          CollieUtils.both(req.workerClusterKey).flatMap {
+          both(req.workerClusterKey).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
                 case _: FakeWorkerClient => fakeReport()
@@ -170,28 +170,25 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
             .map(Seq(_))
       ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
         put {
-          entity(as[Creation])(
-            req =>
-              complete(
-                CollieUtils
-                  .workerClient(req.workerClusterKey)
-                  .flatMap {
-                    case (cluster, workerClient) =>
-                      workerClient
-                        .connectorValidator()
-                        .settings(req.plain)
-                        .className(req.className)
-                        .workerClusterKey(cluster.key)
-                        // the topic name is composed by group and name. However, the kafka topic is still a pure string.
-                        // Hence, we can't just push Ohara topic "key" to kafka topic "name".
-                        // The name of topic is a required for connector and hence we have to fill the filed when starting
-                        // connector.
-                        .topicKeys(req.topicKeys)
-                        // add the connector key manually since the arguments exposed to user is "group" and "name" than "key"
-                        .connectorKey(req.key)
-                        .run()
-                  }
-                  .map(settingInfo => HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
+          entity(as[Creation])(req =>
+            complete(workerClient(req.workerClusterKey)
+              .flatMap {
+                case (cluster, workerClient) =>
+                  workerClient
+                    .connectorValidator()
+                    .settings(req.plain)
+                    .className(req.className)
+                    .workerClusterKey(cluster.key)
+                    // the topic name is composed by group and name. However, the kafka topic is still a pure string.
+                    // Hence, we can't just push Ohara topic "key" to kafka topic "name".
+                    // The name of topic is a required for connector and hence we have to fill the filed when starting
+                    // connector.
+                    .topicKeys(req.topicKeys)
+                    // add the connector key manually since the arguments exposed to user is "group" and "name" than "key"
+                    .connectorKey(req.key)
+                    .run()
+              }
+              .map(settingInfo => HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
         }
       }
     }

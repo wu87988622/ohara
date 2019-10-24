@@ -36,15 +36,16 @@ object BrokerRoute {
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
     executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    objectChecker.checkList.nodes(creation.nodeNames).zookeeperCluster(creation.zookeeperClusterKey).check().map { _ =>
-      BrokerClusterInfo(
-        settings = creation.settings,
-        aliveNodes = Set.empty,
-        state = None,
-        error = None,
-        lastModified = CommonUtils.current(),
-        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-      )
+    objectChecker.checkList.nodeNames(creation.nodeNames).zookeeperCluster(creation.zookeeperClusterKey).check().map {
+      _ =>
+        BrokerClusterInfo(
+          settings = creation.settings,
+          aliveNodes = Set.empty,
+          state = None,
+          error = None,
+          lastModified = CommonUtils.current(),
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+        )
     }
 
   private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
@@ -60,11 +61,10 @@ object BrokerRoute {
             BrokerApi.access.request
               .settings(updating.settings)
               // the key is not in update's settings so we have to add it to settings
-              .name(key.name)
-              .group(key.group)
+              .key(key)
               .creation)
         case Some(previous) =>
-          objectChecker.checkList.brokerCluster(previous.key, STOPPED).check().flatMap { _ =>
+          objectChecker.checkList.brokerCluster(key, STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
             // 2) overwrite previous settings by updated settings
             // 3) fill the ignored settings by creation
@@ -164,12 +164,8 @@ object BrokerRoute {
   def apply(implicit store: DataStore,
             objectChecker: ObjectChecker,
             meterCache: MeterCache,
-            zookeeperCollie: ZookeeperCollie,
             brokerCollie: BrokerCollie,
-            workerCollie: WorkerCollie,
-            streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            dataCollie: DataCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[BrokerClusterInfo, BrokerClusterStatus, Creation, Updating](
       root = BROKER_PREFIX_PATH,

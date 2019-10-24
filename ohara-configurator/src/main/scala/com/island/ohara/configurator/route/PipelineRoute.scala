@@ -141,11 +141,11 @@ private[configurator] object PipelineRoute {
                                           executionContext: ExecutionContext,
                                           meterCache: MeterCache): Future[ObjectAbstract] = obj match {
     case data: ConnectorInfo =>
-      CollieUtils.workerClient(data.workerClusterKey).flatMap {
+      workerClient(data.workerClusterKey).flatMap {
         case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
       }
     case data: TopicInfo =>
-      CollieUtils.topicAdmin(data.brokerClusterKey).flatMap {
+      topicAdmin(data.brokerClusterKey).flatMap {
         case (cluster, admin) => toAbstract(data, cluster, admin)
       }
     case data: StreamClusterInfo =>

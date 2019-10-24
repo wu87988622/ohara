@@ -88,13 +88,9 @@ class TestZookeeperRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testCreateOnNonexistentNode(): Unit = {
-    val zk = result(
-      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
-    )
-
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk.key))
-  }
+  def testCreateOnNonexistentNode(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create())
 
   @Test
   def testImageName(): Unit = {
@@ -421,6 +417,29 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     zookeepers.size shouldBe 1
     zookeepers.head.key shouldBe zookeeper.key
     result(zookeeperApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
+  }
+
+  @Test
+  def failToStopZookeeperIfThereIsBroker(): Unit = {
+    val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
+    result(zookeeperApi.start(zookeeper.key))
+    def brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
+    val broker = result(brokerApi.request.zookeeperClusterKey(zookeeper.key).nodeNames(nodeNames).create())
+    result(brokerApi.start(broker.key))
+
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.stop(zookeeper.key))
+    }.getMessage should include(broker.key.toString)
+
+    result(brokerApi.stop(broker.key))
+    result(zookeeperApi.stop(zookeeper.key))
+
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.delete(zookeeper.key))
+    }.getMessage should include(broker.key.toString)
+
+    result(brokerApi.delete(broker.key))
+    result(zookeeperApi.delete(zookeeper.key))
   }
 
   @After

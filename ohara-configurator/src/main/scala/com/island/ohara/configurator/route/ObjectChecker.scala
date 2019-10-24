@@ -174,14 +174,28 @@ object ObjectChecker {
       * @param hostname hostname
       * @return this check list
       */
-    def node(hostname: String): ChickList = nodes(Set(hostname))
+    def nodeName(hostname: String): ChickList = nodeNames(Set(hostname))
 
     /**
       * check the properties of nodes.
       * @param hostNames node names
       * @return this check list
       */
-    def nodes(hostNames: Set[String]): ChickList
+    def nodeNames(hostNames: Set[String]): ChickList = nodes(hostNames.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+
+    /**
+      * check the properties of nodes.
+      * @param key node key
+      * @return this check list
+      */
+    def node(key: ObjectKey): ChickList = nodes(Set(key))
+
+    /**
+      * check the properties of nodes.
+      * @param keys nodes key
+      * @return this check list
+      */
+    def nodes(keys: Set[ObjectKey]): ChickList
 
     //---------------[zookeeper]---------------//
 
@@ -300,7 +314,7 @@ object ObjectChecker {
 
       override def checkList: ChickList = new ChickList {
         private[this] var requireAllNodes = false
-        private[this] val requiredNodes = mutable.Set[String]()
+        private[this] val requiredNodes = mutable.Set[ObjectKey]()
         private[this] var requireAllFiles = false
         private[this] val requiredFiles = mutable.Set[ObjectKey]()
         private[this] var requireAllTopics = false
@@ -394,13 +408,11 @@ object ObjectChecker {
                   condition match {
                     case STOPPED => Future.successful(Some(topicInfo -> STOPPED))
                     case RUNNING =>
-                      serviceCollie.brokerCollie
-                        .topicAdmin(brokerClusterInfo)
-                        // make sure the topic admin is closed!!!
+                      topicAdmin(brokerClusterInfo)(serviceCollie.brokerCollie, adminCleaner, executionContext)
+                      // make sure the topic admin is closed!!!
                         .flatMap(
                           admin =>
-                            adminCleaner
-                              .add(admin)
+                            admin
                               .topics()
                               .map(try _
                               finally Releasable.close(admin)))
@@ -452,9 +464,7 @@ object ObjectChecker {
         private[this] def checkNodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
           if (requireAllNodes) store.values[Node]()
           else
-            Future
-              .traverse(requiredNodes.map(hostname => ObjectKey.of(GROUP_DEFAULT, hostname)))(store.get[Node])
-              .map(_.flatten.toSeq)
+            Future.traverse(requiredNodes)(store.get[Node]).map(_.flatten.toSeq)
 
         private[this] def compare(name: String,
                                   result: Map[ObjectKey, Condition],
@@ -490,9 +500,7 @@ object ObjectChecker {
             }
             .flatMap { report =>
               checkNodes.map { passed =>
-                compare("node",
-                        passed.map(_.key -> RUNNING).toMap,
-                        requiredNodes.map(n => ObjectKey.of(GROUP_DEFAULT, n)).map(_ -> Some(RUNNING)).toMap)
+                compare("node", passed.map(_.key -> RUNNING).toMap, requiredNodes.map(_ -> Some(RUNNING)).toMap)
                 report.copy(nodes = passed)
               }
             }
@@ -549,8 +557,8 @@ object ObjectChecker {
           this
         }
 
-        override def nodes(hostNames: Set[String]): ChickList = {
-          requiredNodes ++= hostNames
+        override def nodes(keys: Set[ObjectKey]): ChickList = {
+          requiredNodes ++= keys
           this
         }
 

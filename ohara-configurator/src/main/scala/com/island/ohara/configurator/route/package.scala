@@ -23,7 +23,6 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
@@ -35,6 +34,7 @@ import com.island.ohara.client.configurator.v0.{
   ErrorApi,
   OharaJsonFormat
 }
+import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.configurator.route.hook._
@@ -45,15 +45,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
 package object route {
-
-  /**
-    * generate the error message used to indicate that some fields are miss in the update request.
-    * @param key key
-    * @param fieldName name of field
-    * @return error message
-    */
-  def errorMessage(key: ObjectKey, fieldName: String): String =
-    s"$key does not exist so there is an new object will be created. Hence, you cannot ignore $fieldName"
 
   /** default we restrict the jar size to 50MB */
   private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
@@ -107,14 +98,10 @@ package object route {
                                                 hookBeforeStop: HookOfAction[Cluster],
                                                 hookBeforeDelete: HookBeforeDelete)(
     implicit store: DataStore,
+    objectChecker: ObjectChecker,
     meterCache: MeterCache,
     collie: Collie[Status],
     serviceCollie: ServiceCollie,
-    zookeeperCollie: ZookeeperCollie,
-    brokerCollie: BrokerCollie,
-    workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
-    dataCollie: DataCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Updating],
     rm2: RootJsonFormat[Cluster],
@@ -147,7 +134,7 @@ package object route {
               // this cluster already exists, return OK
               Future.unit
             } else
-              checkResourcesConflict(dataCollie, clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
+              checkResourcesConflict(clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
         }
       )
       .hookOfPutAction(
@@ -218,45 +205,40 @@ package object route {
     * 2) name should not conflict
     * 3) port should not conflict
     *
-    * @param dataCollie dataCollie instance
     * @param serviceCollie serviceCollie instance
     * @param req cluster creation request
     * @param executionContext execution context
     * @tparam Cluster type of request
     * @return clusters that fitted the requires
     */
-  private[this] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](dataCollie: DataCollie, req: Cluster)(
+  private[this] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](req: Cluster)(
     implicit executionContext: ExecutionContext,
-    serviceCollie: ServiceCollie,
-    store: DataStore,
-    zookeeperCollie: ZookeeperCollie,
-    brokerCollie: BrokerCollie,
-    workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
-    meterCache: MeterCache): Future[Unit] =
-    // dataCollie.nodes(req.nodeNames) is used to check the existence of node names of request
-    dataCollie
-      .valuesByNames[Node](req.nodeNames)
-      .flatMap(serviceCollie.images)
+    objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie): Future[Unit] =
+    objectChecker.checkList
+      .nodeNames(req.nodeNames)
+      .allZookeepers()
+      .allBrokers()
+      .allWorkers()
+      .allStreamApps()
+      .check()
+      .map(report =>
+        (report.nodes,
+         report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreamApps))
       // check the docker images
-      .map { nodesImages =>
-        nodesImages
-          .filterNot(_._2.contains(req.imageName))
-          .keys
-          .map(_.name)
-          .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:${req.imageName}"))
+      .flatMap {
+        case (nodes, clusters) =>
+          serviceCollie.images(nodes).map { nodesImages =>
+            nodesImages
+              .filterNot(_._2.contains(req.imageName))
+              .keys
+              .map(_.name)
+              .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:${req.imageName}"))
+            clusters
+          }
       }
-      .flatMap { _ =>
-        for {
-          zks <- runningZookeeperClusters()
-          bks <- runningBrokerClusters()
-          wks <- runningWorkerClusters()
-          ss <- runningStreamClusters()
-        } yield zks ++ bks ++ wks ++ ss
-      }
-      // the non-running clusters should NOT block other clusters since they are NOT using the resources.
-      .map(_.filter(_.state.nonEmpty))
-      .flatMap { clusters =>
+      // check resources
+      .map { clusters =>
         def serviceName(cluster: ClusterInfo): String = cluster match {
           case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.key}"
           case _: BrokerClusterInfo    => s"broker cluster:${cluster.key}"
@@ -283,44 +265,8 @@ package object route {
               s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
           }
           .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
-        Future.unit
+        Unit
       }
-
-  private[this] def runningZookeeperClusters()(implicit meterCache: MeterCache,
-                                               store: DataStore,
-                                               collie: ZookeeperCollie,
-                                               executionContext: ExecutionContext): Future[Seq[ZookeeperClusterInfo]] =
-    clusters[ZookeeperClusterInfo, ZookeeperClusterStatus]()
-
-  def runningBrokerClusters()(implicit meterCache: MeterCache,
-                              store: DataStore,
-                              collie: BrokerCollie,
-                              executionContext: ExecutionContext): Future[Seq[BrokerClusterInfo]] =
-    clusters[BrokerClusterInfo, BrokerClusterStatus]()
-
-  private[this] def runningWorkerClusters()(implicit meterCache: MeterCache,
-                                            store: DataStore,
-                                            collie: WorkerCollie,
-                                            executionContext: ExecutionContext): Future[Seq[WorkerClusterInfo]] =
-    clusters[WorkerClusterInfo, WorkerClusterStatus]()
-
-  private[this] def runningStreamClusters()(implicit meterCache: MeterCache,
-                                            store: DataStore,
-                                            collie: StreamCollie,
-                                            executionContext: ExecutionContext): Future[Seq[StreamClusterInfo]] =
-    clusters[StreamClusterInfo, StreamClusterStatus]()
-
-  /**
-    * return the running clusters. All runtime information is up-to-date.
-    */
-  private[this] def clusters[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus]()(
-    implicit meterCache: MeterCache,
-    store: DataStore,
-    collie: Collie[Status],
-    executionContext: ExecutionContext): Future[Seq[Cluster]] = store
-    .values[Cluster]()
-    .flatMap(clusters => Future.sequence(clusters.map(cluster => updateState[Cluster, Status](cluster, None))))
-    .map(_.filter(_.state.nonEmpty))
 
   private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus](cluster: Cluster,
                                                                                            metricsKey: Option[String])(
@@ -385,4 +331,52 @@ package object route {
           // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
           .asInstanceOf[Cluster]
       )
+
+  /**
+    * Create a topic admin according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterKey target cluster
+    * @return cluster info and topic admin
+    */
+  def topicAdmin(clusterKey: ObjectKey)(implicit brokerCollie: BrokerCollie,
+                                        store: DataStore,
+                                        cleaner: AdminCleaner,
+                                        executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
+    store.value[BrokerClusterInfo](clusterKey).flatMap(cluster => topicAdmin(cluster).map(cluster -> _))
+
+  /**
+    * Create a worker client according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterKey target cluster
+    * @return cluster info and client
+    */
+  def workerClient(clusterKey: ObjectKey)(
+    implicit workerCollie: WorkerCollie,
+    store: DataStore,
+    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] =
+    store.value[WorkerClusterInfo](clusterKey).flatMap(cluster => workerCollie.workerClient(cluster).map(cluster -> _))
+
+  /**
+    * create worker client and topic admin based on input worker cluster key.
+    */
+  def both[T](workerClusterKey: ObjectKey)(
+    implicit brokerCollie: BrokerCollie,
+    store: DataStore,
+    cleaner: AdminCleaner,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
+    workerClient(workerClusterKey).flatMap {
+      case (wkInfo, wkClient) =>
+        topicAdmin(wkInfo.brokerClusterKey).map {
+          case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
+        }
+    }
+
+  /**
+    * create a topic admin and then add it to cleanup process in order to avoid resource leak.
+    */
+  def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(implicit brokerCollie: BrokerCollie,
+                                                       adminCleaner: AdminCleaner,
+                                                       executionContext: ExecutionContext): Future[TopicAdmin] =
+    brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
 }

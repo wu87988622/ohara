@@ -79,7 +79,7 @@ private[configurator] object TopicRoute {
             .check()
             .map(_.runningBrokers.head)
             .flatMap { brokerClusterInfo =>
-              brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add).flatMap { topicAdmin =>
+              topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
                 topicAdmin
                   .exist(topicInfo.key)
                   .flatMap(
@@ -230,7 +230,7 @@ private[configurator] object TopicRoute {
             condition match {
               case RUNNING => Future.unit
               case STOPPED =>
-                brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add).flatMap { topicAdmin =>
+                topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
                   topicAdmin.creator
                     .topicKey(topicInfo.key)
                     .numberOfPartitions(topicInfo.numberOfPartitions)
@@ -266,8 +266,7 @@ private[configurator] object TopicRoute {
                   .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
                   .check()
                   .map(_.runningBrokers.head)
-                  .flatMap(brokerCollie.topicAdmin)
-                  .map(adminCleaner.add)
+                  .flatMap(topicAdmin)
                   .flatMap { topicAdmin =>
                     topicAdmin
                       .delete(topicInfo.key)

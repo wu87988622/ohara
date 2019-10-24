@@ -42,7 +42,7 @@ private[configurator] object StreamRoute {
     streamCollie: StreamCollie,
     executionContext: ExecutionContext): Future[StreamClusterInfo] =
     objectChecker.checkList
-      .nodes(creation.nodeNames)
+      .nodeNames(creation.nodeNames)
       .file(creation.jarKey)
       .brokerCluster(creation.brokerClusterKey)
       /**
@@ -95,8 +95,7 @@ private[configurator] object StreamRoute {
             access.request
               .settings(updating.settings)
               // the key is not in update's settings so we have to add it to settings
-              .name(key.name)
-              .group(key.group)
+              .key(key)
               .creation)
         case Some(previous) =>
           objectChecker.checkList
@@ -112,8 +111,7 @@ private[configurator] object StreamRoute {
                   .settings(previous.settings)
                   .settings(updating.settings)
                   // the key is not in update's settings so we have to add it to settings
-                  .name(key.name)
-                  .group(key.group)
+                  .key(key)
                   .creation)
             }
     }
@@ -206,10 +204,6 @@ private[configurator] object StreamRoute {
 
   def apply(implicit store: DataStore,
             objectChecker: ObjectChecker,
-            dataCollie: DataCollie,
-            zookeeperCollie: ZookeeperCollie,
-            brokerCollie: BrokerCollie,
-            workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
             meterCache: MeterCache,

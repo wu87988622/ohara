@@ -18,9 +18,11 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ServiceCollie
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
@@ -48,53 +50,100 @@ object NodeRoute {
                                executionContext: ExecutionContext): HookOfList[Node] =
     Future.traverse(_)(updateServices)
 
-  private[this] def hookOfCreation(implicit serviceCollie: ServiceCollie,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, Node] =
-    (creation: Creation) =>
-      updateServices(
-        Node(
-          hostname = creation.hostname,
-          port = creation.port,
-          user = creation.user,
-          password = creation.password,
-          services = Seq.empty,
-          lastModified = CommonUtils.current(),
-          validationReport = None,
-          tags = creation.tags
-        ))
+  private[this] def creationToNode(creation: Creation): Future[Node] = Future.successful(
+    Node(
+      hostname = creation.hostname,
+      port = creation.port,
+      user = creation.user,
+      password = creation.password,
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = creation.tags
+    ))
 
-  private[this] def hookOfUpdating(implicit serviceCollie: ServiceCollie,
+  private[this] def hookOfCreation: HookOfCreation[Creation, Node] = creationToNode(_)
+
+  private[this] def checkConflict(nodeName: String, serviceName: String, clusterInfos: Seq[ClusterInfo]): Unit = {
+    val conflicted = clusterInfos.filter(_.nodeNames.contains(nodeName))
+    if (conflicted.nonEmpty)
+      throw new IllegalArgumentException(s"node:$nodeName is used by $serviceName.")
+  }
+
+  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, Node] =
-    (key: ObjectKey, update: Updating, previous: Option[Node]) =>
-      updateServices(
-        Node(
-          hostname = key.name,
-          port = if (update.port.isDefined) update.port else previous.flatMap(_.port),
-          user = if (update.user.isDefined) update.user else previous.flatMap(_.user),
-          password = if (update.password.isDefined) update.password else previous.flatMap(_.password),
-          services = Seq.empty,
-          lastModified = CommonUtils.current(),
-          // clear the report for update request
-          validationReport = None,
-          tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
-        ))
+    (key: ObjectKey, updating: Updating, previousOption: Option[Node]) =>
+      previousOption match {
+        case None =>
+          creationToNode(
+            Creation(
+              hostname = key.name(),
+              port = updating.port,
+              user = updating.user,
+              password = updating.password,
+              tags = updating.tags.getOrElse(Map.empty)
+            ))
+        case Some(previous) =>
+          objectChecker.checkList
+            .allZookeepers()
+            .allBrokers()
+            .allWorkers()
+            .allStreamApps()
+            .check()
+            .map(report =>
+              (report.runningZookeepers, report.runningBrokers, report.runningWorkers, report.runningStreamApps))
+            .flatMap {
+              case (zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
+                checkConflict(key.name, "zookeeper cluster", zookeeperClusterInfos)
+                checkConflict(key.name, "broker cluster", brokerClusterInfos)
+                checkConflict(key.name, "worker cluster", workerClusterInfos)
+                checkConflict(key.name, "stream cluster", streamClusterInfos)
+                creationToNode(
+                  Creation(
+                    hostname = key.name(),
+                    port = updating.port.orElse(previous.port),
+                    user = updating.user.orElse(previous.user),
+                    password = updating.password.orElse(previous.password),
+                    tags = updating.tags.getOrElse(previous.tags)
+                  ))
+            }
 
-  private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     serviceCollie: ServiceCollie,
+    }
+
+  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    store
-      .get[Node](key)
-      .flatMap(_.map {
-        updateServices(_).flatMap { node =>
-          if (node.services.map(_.clusterKeys.size).sum != 0)
-            Future.failed(new IllegalStateException(
-              s"${node.name} is running ${node.services.filter(_.clusterKeys.nonEmpty).map(s => s"${s.name}:${s.clusterKeys.mkString(".")}").mkString(" ")}. " +
-                s"Please stop all services before deleting"))
-          else Future.unit
-        }
-      }.getOrElse(Future.unit))
+    objectChecker.checkList
+      .allZookeepers()
+      .allBrokers()
+      .allWorkers()
+      .allStreamApps()
+      .node(key)
+      .check()
+      .map(
+        report =>
+          (report.nodes.head,
+           report.zookeeperClusterInfos.keys.toSeq,
+           report.brokerClusterInfos.keys.toSeq,
+           report.workerClusterInfos.keys.toSeq,
+           report.streamClusterInfos.keys.toSeq))
+      .map {
+        case (node, zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
+          checkConflict(node.hostname, "zookeeper cluster", zookeeperClusterInfos)
+          checkConflict(node.hostname, "broker cluster", brokerClusterInfos)
+          checkConflict(node.hostname, "worker cluster", workerClusterInfos)
+          checkConflict(node.hostname, "stream cluster", streamClusterInfos)
+      }
+      .recover {
+        // the duplicate deletes are legal to ohara
+        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+        case e: Throwable                                           => throw e
+      }
+      .map(_ => Unit)
 
-  def apply(implicit store: DataStore, serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
+  def apply(implicit store: DataStore,
+            objectChecker: ObjectChecker,
+            serviceCollie: ServiceCollie,
+            executionContext: ExecutionContext): server.Route =
     RouteBuilder[Creation, Updating, Node]()
       .root(NODES_PREFIX_PATH)
       .hookOfCreation(hookOfCreation)

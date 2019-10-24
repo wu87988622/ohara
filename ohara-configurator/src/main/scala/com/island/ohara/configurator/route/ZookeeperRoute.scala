@@ -17,10 +17,13 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, DataCollie, ServiceCollie, StreamCollie, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent.{ServiceCollie, ZookeeperCollie}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.ObjectChecker.Condition.STOPPED
+import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
@@ -28,84 +31,99 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, ZookeeperClusterInfo] = (creation: Creation) =>
-    Future.successful(
+  private[this] def creationToClusterInfo(creation: Creation)(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+    objectChecker.checkList.nodeNames(creation.nodeNames).check().map { _ =>
       ZookeeperClusterInfo(
         settings = creation.settings,
         aliveNodes = Set.empty,
         state = None,
         error = None,
         lastModified = CommonUtils.current()
-      ))
+      )
+    }
 
-  private[this] def hookOfUpdating(implicit serviceCollie: ServiceCollie,
+  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, ZookeeperClusterInfo] =
+    creationToClusterInfo(_)
+
+  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, ZookeeperClusterInfo] =
-    (key: ObjectKey, update: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
-      serviceCollie.zookeeperCollie.clusters().map { clusters =>
-        if (clusters.keys.filter(_.key == key).exists(_.state.nonEmpty))
-          throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
-        else
-          // use PUT as creation request
-          ZookeeperClusterInfo(
-            // 1) fill the previous settings (if exists)
-            // 2) overwrite previous settings by updated settings
-            // 3) fill the ignored settings by creation
-            settings = access.request
-              .settings(previousOption.map(_.settings).getOrElse(Map.empty))
-              .settings(update.settings)
-              // the key is not in update's settings so we have to add it to settings
-              .name(key.name)
-              .group(key.group)
-              .creation
-              .settings,
-            // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
-            aliveNodes = Set.empty,
-            state = None,
-            error = None,
-            lastModified = CommonUtils.current()
-          )
+    (key: ObjectKey, updating: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
+      previousOption match {
+        case None => creationToClusterInfo(access.request.settings(updating.settings).key(key).creation)
+        case Some(previous) =>
+          objectChecker.checkList.zookeeperCluster(key, STOPPED).check().flatMap { _ =>
+            creationToClusterInfo(
+              // 1) fill the previous settings (if exists)
+              // 2) overwrite previous settings by updated settings
+              // 3) fill the ignored settings by creation
+              access.request
+                .settings(previous.settings)
+                .settings(updating.settings)
+                // the key is not in update's settings so we have to add it to settings
+                .key(key)
+                .creation)
+          }
     }
 
   private[this] def hookOfStart(implicit serviceCollie: ServiceCollie,
+                                objectChecker: ObjectChecker,
                                 executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _, _) =>
-      serviceCollie.zookeeperCollie.creator
-        .settings(zookeeperClusterInfo.settings)
-        .name(zookeeperClusterInfo.name)
-        .group(zookeeperClusterInfo.group)
-        .clientPort(zookeeperClusterInfo.clientPort)
-        .electionPort(zookeeperClusterInfo.electionPort)
-        .peerPort(zookeeperClusterInfo.peerPort)
-        .imageName(zookeeperClusterInfo.imageName)
-        .nodeNames(zookeeperClusterInfo.nodeNames)
-        .threadPool(executionContext)
-        .create()
+      objectChecker.checkList.nodeNames(zookeeperClusterInfo.nodeNames).check().flatMap { _ =>
+        serviceCollie.zookeeperCollie.creator
+          .settings(zookeeperClusterInfo.settings)
+          .name(zookeeperClusterInfo.name)
+          .group(zookeeperClusterInfo.group)
+          .clientPort(zookeeperClusterInfo.clientPort)
+          .electionPort(zookeeperClusterInfo.electionPort)
+          .peerPort(zookeeperClusterInfo.peerPort)
+          .imageName(zookeeperClusterInfo.imageName)
+          .nodeNames(zookeeperClusterInfo.nodeNames)
+          .threadPool(executionContext)
+          .create()
+    }
 
-  private[this] def hookBeforeStop(implicit store: DataStore,
-                                   meterCache: MeterCache,
-                                   brokerCollie: BrokerCollie,
+  private[this] def checkConflict(zookeeperClusterInfo: ZookeeperClusterInfo,
+                                  brokerClusterInfos: Seq[BrokerClusterInfo]): Unit = {
+    val conflictedBrokers = brokerClusterInfos.filter(_.zookeeperClusterKey == zookeeperClusterInfo.key)
+    if (conflictedBrokers.nonEmpty)
+      throw new IllegalArgumentException(
+        s"you can't remove zookeeper cluster:${zookeeperClusterInfo.key} since it is used by broker cluster:${conflictedBrokers.map(_.key).mkString(",")}")
+  }
+
+  private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
                                    executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _: String, _: Map[String, String]) =>
-      runningBrokerClusters()
-        .map(_.filter(_.zookeeperClusterKey == zookeeperClusterInfo.key))
-        .map(_.filter(_.state.nonEmpty))
-        .map(
-          usedBks =>
-            if (usedBks.nonEmpty)
-              throw new IllegalArgumentException(
-                s"you can't remove zookeeper cluster:${zookeeperClusterInfo.key} since it is used by broker cluster:${usedBks
-                  .mkString(",")}"))
+      objectChecker.checkList.allBrokers().check().map(_.runningBrokers).map { runningBrokerClusters =>
+        checkConflict(zookeeperClusterInfo, runningBrokerClusters)
+    }
 
-  private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
+  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
+                                     executionContext: ExecutionContext): HookBeforeDelete = key =>
+    objectChecker.checkList
+      .zookeeperCluster(key, STOPPED)
+      .allBrokers()
+      .check()
+      .map(report => (report.zookeeperClusterInfos.head._1, report.brokerClusterInfos.keys.toSeq))
+      .map {
+        case (zookeeperClusterInfo, brokerClusterInfos) =>
+          checkConflict(zookeeperClusterInfo, brokerClusterInfos)
+      }
+      .recover {
+        // the duplicate deletes are legal to ohara
+        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+        case e: Throwable                                           => throw e
+      }
+      .map(_ => Unit)
 
   def apply(implicit store: DataStore,
+            objectChecker: ObjectChecker,
             meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
-            brokerCollie: BrokerCollie,
-            workerCollie: WorkerCollie,
-            streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            dataCollie: DataCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[ZookeeperClusterInfo, ZookeeperClusterStatus, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,

@@ -193,7 +193,8 @@ class TestFileInfoRoute extends OharaTest with Matchers {
         .port(configurator.port)
         .request
         .jarKeys(Set(jar.key))
-        .nodeName(CommonUtils.randomString())
+        .nodeNames(
+          result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.nodeNames)
         .brokerClusterKey(
           result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
         .create())

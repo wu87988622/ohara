@@ -102,7 +102,6 @@ class TestPipelineRoute extends OharaTest with Matchers {
     // topic is gone
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.error should not be None
-
   }
 
   @Test

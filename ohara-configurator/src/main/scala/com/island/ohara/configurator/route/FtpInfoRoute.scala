@@ -22,49 +22,56 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
+import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object FtpInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = (creation: Creation) =>
-    Future.successful(
-      FtpInfo(
-        group = creation.group,
-        name = creation.name,
-        hostname = creation.hostname,
-        port = creation.port,
-        user = creation.user,
-        password = creation.password,
-        lastModified = CommonUtils.current(),
-        tags = creation.tags
-      ))
+  private[this] def creationToFtpInfo(creation: Creation): Future[FtpInfo] = Future.successful(
+    FtpInfo(
+      group = creation.group,
+      name = creation.name,
+      hostname = creation.hostname,
+      port = creation.port,
+      user = creation.user,
+      password = creation.password,
+      lastModified = CommonUtils.current(),
+      tags = creation.tags
+    ))
+
+  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = creationToFtpInfo(_)
 
   private[this] def hookOfUpdating: HookOfUpdating[Updating, FtpInfo] =
-    (key: ObjectKey, update: Updating, previous: Option[FtpInfo]) =>
-      Future.successful(previous.fold {
-        FtpInfo(
-          group = key.group,
-          name = key.name,
-          hostname = update.hostname.get,
-          port = update.port.get,
-          user = update.user.get,
-          password = update.password.get,
-          lastModified = CommonUtils.current(),
-          tags = update.tags.getOrElse(Map.empty)
-        )
-      } { previous =>
-        FtpInfo(
-          group = key.group,
-          name = key.name,
-          hostname = update.hostname.getOrElse(previous.hostname),
-          port = update.port.getOrElse(previous.port),
-          user = update.user.getOrElse(previous.user),
-          password = update.password.getOrElse(previous.password),
-          lastModified = CommonUtils.current(),
-          tags = update.tags.getOrElse(previous.tags)
-        )
-      })
+    (key: ObjectKey, updating: Updating, previousOption: Option[FtpInfo]) =>
+      previousOption match {
+        case None =>
+          creationToFtpInfo(
+            Creation(
+              group = key.group,
+              name = key.name,
+              hostname = updating.hostname.getOrElse(
+                throw DeserializationException(s"hostname is required", fieldNames = List("hostname"))),
+              port =
+                updating.port.getOrElse(throw DeserializationException(s"port is required", fieldNames = List("port"))),
+              user =
+                updating.user.getOrElse(throw DeserializationException(s"user is required", fieldNames = List("user"))),
+              password = updating.password.getOrElse(
+                throw DeserializationException(s"user is required", fieldNames = List("user"))),
+              tags = updating.tags.getOrElse(Map.empty)
+            ))
+        case Some(previous) =>
+          creationToFtpInfo(
+            Creation(
+              group = key.group,
+              name = key.name,
+              hostname = updating.hostname.getOrElse(previous.hostname),
+              port = updating.port.getOrElse(previous.port),
+              user = updating.user.getOrElse(previous.user),
+              password = updating.password.getOrElse(previous.password),
+              tags = updating.tags.getOrElse(previous.tags)
+            ))
+    }
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteBuilder[Creation, Updating, FtpInfo]()

@@ -40,7 +40,7 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
     path(RDB_PREFIX_PATH) {
       post {
         entity(as[RdbQuery]) { query =>
-          complete(CollieUtils.both(query.workerClusterKey).flatMap {
+          complete(both(query.workerClusterKey).flatMap {
             case (_, topicAdmin, workerCluster, workerClient) =>
               workerClient match {
                 case _: FakeWorkerClient =>

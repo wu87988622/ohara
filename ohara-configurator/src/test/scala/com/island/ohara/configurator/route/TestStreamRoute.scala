@@ -63,6 +63,16 @@ class TestStreamRoute extends OharaTest with Matchers {
 
     file.deleteOnExit()
   }
+  @Test
+  def testCreateOnNonexistentNode(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      streamApi.request
+        .jarKey(fileInfo.key)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .toTopicKey(toTopicKey)
+        .fromTopicKey(fromTopicKey)
+        .nodeName(CommonUtils.randomString())
+        .create())
 
   @Test
   def testUpdateJarKey(): Unit = {

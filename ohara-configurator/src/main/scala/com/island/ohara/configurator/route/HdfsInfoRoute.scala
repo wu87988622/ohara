@@ -21,12 +21,13 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook.{HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
+import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object HdfsInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = (creation: Creation) =>
+  private[this] def creationToHdfsInfo(creation: Creation): Future[HdfsInfo] =
     Future.successful(
       HdfsInfo(group = creation.group,
                name = creation.name,
@@ -34,27 +35,27 @@ private[configurator] object HdfsInfoRoute {
                lastModified = CommonUtils.current(),
                tags = creation.tags))
 
+  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = creationToHdfsInfo(_)
+
   private[this] def hookOfUpdating: HookOfUpdating[Updating, HdfsInfo] =
-    (key: ObjectKey, update: Updating, previous: Option[HdfsInfo]) =>
-      Future.successful {
-        previous.fold {
-          if (update.uri.isEmpty) throw new IllegalArgumentException(errorMessage(key, "uri"))
-          HdfsInfo(
-            group = key.group,
-            name = key.name,
-            uri = update.uri.get,
-            lastModified = CommonUtils.current(),
-            tags = update.tags.getOrElse(Map.empty)
-          )
-        } { previous =>
-          HdfsInfo(
-            group = key.group,
-            name = key.name,
-            uri = update.uri.getOrElse(previous.uri),
-            lastModified = CommonUtils.current(),
-            tags = update.tags.getOrElse(previous.tags)
-          )
-        }
+    (key: ObjectKey, updating: Updating, previousOption: Option[HdfsInfo]) =>
+      previousOption match {
+        case None =>
+          creationToHdfsInfo(
+            Creation(
+              group = key.group,
+              name = key.name,
+              uri = updating.uri.getOrElse(throw DeserializationException(s"uri is required", fieldNames = List("uri"))),
+              tags = updating.tags.getOrElse(Map.empty)
+            ))
+        case Some(previous) =>
+          creationToHdfsInfo(
+            Creation(
+              group = key.group,
+              name = key.name,
+              uri = updating.uri.getOrElse(previous.uri),
+              tags = updating.tags.getOrElse(previous.tags)
+            ))
     }
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =

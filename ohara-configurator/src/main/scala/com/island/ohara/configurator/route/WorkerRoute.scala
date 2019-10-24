@@ -35,6 +35,7 @@ object WorkerRoute {
     implicit objectChecker: ObjectChecker,
     executionContext: ExecutionContext): Future[WorkerClusterInfo] =
     objectChecker.checkList
+      .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
       .files(creation.jarKeys)
       .check()
@@ -69,8 +70,7 @@ object WorkerRoute {
                 .settings(previous.settings)
                 .settings(updating.settings)
                 // the key is not in update's settings so we have to add it to settings
-                .name(key.name)
-                .group(key.group)
+                .key(key)
                 .creation)
           }
     }
@@ -166,12 +166,8 @@ object WorkerRoute {
   def apply(implicit store: DataStore,
             objectChecker: ObjectChecker,
             meterCache: MeterCache,
-            zookeeperCollie: ZookeeperCollie,
-            brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
-            streamCollie: StreamCollie,
             serviceCollie: ServiceCollie,
-            dataCollie: DataCollie,
             executionContext: ExecutionContext): server.Route =
     clusterRoute[WorkerClusterInfo, WorkerClusterStatus, Creation, Updating](
       root = WORKER_PREFIX_PATH,
