@@ -242,8 +242,16 @@ class TestBrokerRoute extends OharaTest with Matchers {
     result(brokerApi.start(cluster.key))
 
     result(brokerApi.removeNode(cluster.key, nodeNames.last))
-
     result(brokerApi.get(cluster.key)).nodeNames shouldBe cluster.nodeNames - nodeNames.last
+
+    result(brokerApi.addNode(cluster.key, nodeNames.last))
+    result(brokerApi.removeNode(cluster.key, nodeNames.last))
+    result(brokerApi.get(cluster.key)).nodeNames shouldBe cluster.nodeNames - nodeNames.last
+    intercept[IllegalArgumentException] {
+      result(brokerApi.get(cluster.key)).nodeNames.foreach { nodeName =>
+        result(brokerApi.removeNode(cluster.key, nodeName))
+      }
+    }.getMessage should include("Please use remove(clusterName)")
   }
 
   @Test

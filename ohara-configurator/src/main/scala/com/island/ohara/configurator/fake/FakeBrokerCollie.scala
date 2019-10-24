@@ -63,7 +63,6 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
           error = None
         ),
         creation.imageName,
-        creation.nodeNames,
         creation.ports
       ))
 

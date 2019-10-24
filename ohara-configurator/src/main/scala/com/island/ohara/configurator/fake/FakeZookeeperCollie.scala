@@ -42,7 +42,6 @@ private[configurator] class FakeZookeeperCollie(node: DataCollie)
             error = None
           ),
           creation.imageName,
-          creation.nodeNames,
           creation.ports
         ))
 

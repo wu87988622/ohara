@@ -52,9 +52,9 @@ private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](da
     * @param nodeNames node names
     * @return cluster status
     */
-  private[configurator] def addCluster(cluster: T, imageName: String, nodeNames: Set[String], ports: Set[Int]): T = {
+  private[configurator] def addCluster(cluster: T, imageName: String, ports: Set[Int]): T = {
     val FAKE_KIND_NAME = "FAKE"
-    def genContainers(cluster: T): Seq[ContainerInfo] = nodeNames.map { nodeName =>
+    def genContainers(cluster: T): Seq[ContainerInfo] = cluster.aliveNodes.map { nodeName =>
       ContainerInfo(
         nodeName = nodeName,
         id = CommonUtils.randomString(10),

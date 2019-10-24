@@ -59,7 +59,6 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
           error = None
         ),
         creation.imageName,
-        creation.nodeNames,
         creation.ports
       ))
 

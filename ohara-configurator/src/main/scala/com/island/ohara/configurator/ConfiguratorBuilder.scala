@@ -189,7 +189,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           error = None
         ),
         bkCluster.imageName,
-        bkCluster.nodeNames,
         bkCluster.ports
       )
       collie.workerCollie.addCluster(
@@ -203,7 +202,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           error = None
         ),
         wkCluster.imageName,
-        wkCluster.nodeNames,
         wkCluster.ports
       )
       serviceCollie(collie)
@@ -251,7 +249,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             error = None
           ),
           creation.imageName,
-          creation.nodeNames,
           creation.ports
         )
         creation
@@ -278,7 +275,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               error = None
             ),
             creation.imageName,
-            creation.nodeNames,
             creation.ports
           )
           creation
@@ -299,7 +295,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             error = None
           ),
           creation.imageName,
-          creation.nodeNames,
           creation.ports
         )
         creation

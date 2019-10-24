@@ -63,7 +63,6 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
               error = None
             ),
             creation.imageName,
-            creation.nodeNames,
             creation.ports
           ))
 
