@@ -30,7 +30,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.config.StreamDefUtils
-import spray.json._
+import spray.json.JsString
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,20 +100,19 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                               // StreamDefUtils offers the helper method to turn them back.
                               case _ => CommonUtils.toEnvString(v.toString)
                             })
-                        },
+                        } ++ Map(
+                          "JMX_PORT" -> creation.jmxPort.toString,
+                          "JMX_HOSTNAME" -> newNode.hostname
+                        ),
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                       )
-                      doCreator(executionContext,
-                                containerInfo.name,
-                                containerInfo,
-                                newNode,
-                                route,
-                                creation.jmxPort,
-                                jarInfo).map(_ => Some(containerInfo)).recover {
-                        case _: Throwable =>
-                          None
-                      }
+                      doCreator(executionContext, containerInfo.name, containerInfo, newNode, route, jarInfo)
+                        .map(_ => Some(containerInfo))
+                        .recover {
+                          case _: Throwable =>
+                            None
+                        }
                   })
                   .map(_.flatten.toSeq)
                   .map { aliveContainers =>
@@ -201,7 +200,6 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                           containerInfo: ContainerInfo,
                           node: Node,
                           route: Map[String, String],
-                          jmxPort: Int,
                           jarInfo: FileInfo): Future[Unit]
 
   protected def postCreate(clusterStatus: StreamClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
@@ -246,22 +244,4 @@ object StreamCollie {
     * the flag to get/set streamApp configs for container
     */
   private[agent] val CONFIG_KEY = "CONFIG_KEY"
-
-  /**
-    * generate the jmx required properties
-    *
-    * @param hostname the hostname used by jmx remote
-    * @param port the port used by jmx remote
-    * @return jmx properties
-    */
-  private[agent] def formatJMXProperties(hostname: String, port: Int): Seq[String] = {
-    Seq(
-      "-Dcom.sun.management.jmxremote",
-      "-Dcom.sun.management.jmxremote.authenticate=false",
-      "-Dcom.sun.management.jmxremote.ssl=false",
-      s"-Dcom.sun.management.jmxremote.port=$port",
-      s"-Dcom.sun.management.jmxremote.rmi.port=$port",
-      s"-Djava.rmi.server.hostname=$hostname"
-    )
-  }
 }

@@ -37,7 +37,6 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],
-                                   jmxPort: Int,
                                    jarInfo: FileInfo): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
@@ -52,12 +51,12 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .name(containerInfo.name)
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
-      .portMappings(Map(jmxPort -> jmxPort))
+      .portMappings(
+        containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
       .routes(route)
       .envs(containerInfo.environments)
-      .args(StreamCollie.formatJMXProperties(node.name, jmxPort) ++
-        Seq(StreamCollie.MAIN_ENTRY,
-            s"""${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"""))
+      .args(Seq(StreamCollie.MAIN_ENTRY,
+                s"${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"))
       .threadPool(executionContext)
       .create()
       .recover {

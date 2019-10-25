@@ -35,7 +35,6 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],
-                                   jmxPort: Int,
                                    jarInfo: FileInfo): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
@@ -48,12 +47,8 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           .portMappings(
             containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
           .route(route)
-          .command(String.join(
-            " ",
-            StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
-            StreamCollie.MAIN_ENTRY,
-            s"""${StreamDefUtils.JAR_URL_DEFINITION.key()}="${jarInfo.url.toURI.toASCIIString}""""
-          ))
+          .command(
+            s"${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}")
           .create()
       )
     } catch {

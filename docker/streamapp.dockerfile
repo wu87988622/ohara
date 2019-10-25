@@ -14,28 +14,8 @@
 # limitations under the License.
 #
 
-FROM openjdk:8u171-jdk-alpine as deps
-MAINTAINER sam cho <sam@is-land.com.tw>
+FROM oharastream/ohara:deps as deps
 
-ARG GRADLE_VERSION=5.6.3
-
-
-RUN apk --no-cache add git && rm -rf /tmp/* /var/cache/apk/* && \
- mkdir -p /opt/lib && \
- rm -rf /var/lib/apt/lists/*
-
-# download gradle
-WORKDIR /opt/gradle
-RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip && \
- unzip gradle-$GRADLE_VERSION-bin.zip && \
- rm -f gradle-$GRADLE_VERSION-bin.zip && \
- ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
-
-# add gradle to path
-ENV GRADLE_HOME=/opt/gradle/default
-ENV PATH=$PATH:$GRADLE_HOME/bin
-
-# build ohara-streams
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
@@ -43,46 +23,39 @@ ARG BEFORE_BUILD=""
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
-RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/sh -c "$BEFORE_BUILD" ; fi
-
-# copy required jars except test jar
-RUN gradle jar -x test && \
- cp `ls /testpatch/ohara/*/build/libs/*.jar | grep -v tests.jar | grep -E 'common|kafka|metrics|streams'` /opt/lib
-
-# download all dependencies
-RUN gradle ohara-stream:copyDependencies
+RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
+RUN gradle clean build -x test -PskipManager
+RUN mkdir /opt/ohara
+RUN tar -xvf $(find "/testpatch/ohara/ohara-streams/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
 FROM centos:7.6.1810
 
-RUN yum -y update && \
- yum -y install java-1.8.0-openjdk-headless wget && \
- yum clean all && \
- rm -rf /var/cache/yum
+# install tools
+RUN yum install -y \
+  java-1.8.0-openjdk
 
-# add user from root to kafka
+# export JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/jre
+
+# add user
 ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
-# copy required library
-COPY --from=deps /opt/lib/* /opt/ohara/
-
 # clone ohara binary
-COPY --from=deps /testpatch/ohara/bin/* /home/$USER/default/
-COPY --from=deps /testpatch/ohara/docker/streamapp.sh /home/$USER/default/
-RUN mkdir /home/$USER/lib && \
- ln -s /opt/ohara/*.jar /home/$USER/lib && \
- chown -R $USER:$USER /home/$USER/default && \
- chmod +x /home/$USER/default/*.sh
+COPY --from=deps /opt/ohara /home/$USER
+RUN ln -s $(find "/home/$USER/" -maxdepth 1 -type d -name "ohara-*") /home/$USER/default
+COPY --from=deps /testpatch/ohara/docker/streamapp.sh /home/$USER/default/bin/
+RUN chown -R $USER:$USER /home/$USER
+RUN chmod +x /home/$USER/default/bin/streamapp.sh
 ENV OHARA_HOME=/home/$USER/default
-ENV PATH=$PATH:$OHARA_HOME
+ENV PATH=$PATH:$OHARA_HOME/bin
 
-# add Tini
-ARG TINI_VERSION=v0.18.0
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
+# clone Tini
+COPY --from=deps /tini /tini
 RUN chmod +x /tini
 
-# change user
+# change to user
 USER $USER
 
 ENTRYPOINT ["/tini", "--", "streamapp.sh"]

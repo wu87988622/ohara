@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Copyright 2019 is-land
 #
@@ -15,9 +15,12 @@
 # limitations under the License.
 #
 
-if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
-  exec ohara.sh -v
-  exit 0
-fi
+# change the working path from root to ohara folder
+cd $OHARA_HOME/bin
 
-exec /usr/bin/java -cp "/opt/ohara/*" "$@"
+if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
+  exec $OHARA_HOME/bin/ohara.sh -v
+else
+  # Stream collie decides on the main class for starting stream app.
+  exec $OHARA_HOME/bin/ohara.sh start "$@"
+fi

@@ -76,7 +76,6 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],
-                                   jmxPort: Int,
                                    jarInfo: FileInfo): Future[Unit] = Future.unit
 
   override protected def dataCollie: DataCollie = node

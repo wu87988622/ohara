@@ -144,7 +144,7 @@ trait Collie[T <: ClusterStatus] {
   def cluster(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
     clusters().map(
       _.find(_._1.key == key)
-        .getOrElse(throw new NoSuchClusterException(s"cluster with objectKey [$key] is not running")))
+        .getOrElse(throw new NoSuchClusterException(s"$serviceName cluster with objectKey [$key] is not running")))
 
   /**
     * @param key cluster key

@@ -23,13 +23,14 @@ fi
 
 #----------[JMX]----------#
 if [[ -z "$OHARA_JMX_OPTS" ]]; then
-  export OHARA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false "
-fi
+  export OHARA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 
-if [[ ! -z $JMX_PORT ]]; then
-  export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT -Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT "
-fi
+  if [[ ! -z $JMX_PORT ]]; then
+    export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT -Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT"
+  fi
 
-if [[ ! -z $JMX_HOSTNAME ]]; then
-  export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Djava.rmi.server.hostname=$JMX_HOSTNAME "
+  if [[ ! -z $JMX_HOSTNAME ]]; then
+    export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Djava.rmi.server.hostname=$JMX_HOSTNAME"
+  fi
+
 fi
