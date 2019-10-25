@@ -10,5 +10,7 @@
   "videosFolder": "cypress/videos/e2e",
   "requestTimeout": 30000,
   "defaultCommandTimeout": 20000,
-  "watchForFileChanges": false
+  "watchForFileChanges": false,
+  "viewportWidth": 1024,
+  "viewportHeight": 800
 }

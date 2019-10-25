@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
-describe('Hello manager!', () => {
-  it('Visits and gets the page heading', () => {
-    cy.visit('/');
-    cy.findByText('Hello ohara manager!').should('exist');
+describe('Root route', () => {
+  it('should display root route', () => {
+    cy.visit('/')
+      .findByText(`You don't have any workspace yet!`)
+      .should('exist');
+  });
+});
+
+describe('Not found page', () => {
+  it('should display page not found route', () => {
+    // Another URL pattern, we can add more patterns here
+    // to ensure different route patterns are all handled
+    // properly
+    cy.visit('/jladkf/safkj')
+      .findByText('Ooooops, page not found!')
+      .should('exist');
   });
 });

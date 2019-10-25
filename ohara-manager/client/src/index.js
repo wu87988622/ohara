@@ -16,13 +16,13 @@
 
 import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
-import App from 'App';
 import { ThemeProvider } from 'styled-components';
 import {
   ThemeProvider as MuiThemeProvider,
   StylesProvider,
 } from '@material-ui/styles';
 
+import App from './App';
 import MuiTheme from './theme/muiTheme';
 import { SnackbarProvider } from './context/SnackbarContext';
 

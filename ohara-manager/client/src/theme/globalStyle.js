@@ -23,29 +23,15 @@ export default createGlobalStyle`
     box-sizing: border-box;
   }
 
-
   body {
     padding: 0;
     margin: 0;
-    font-family: Roboto, sans-serif;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
   }
-
-  a {
-    text-decoration: none;
-    
-  }
-
+  
   ul, li {
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  button, input {
-    outline: none;
-  }
-
-  button {
-    cursor: pointer;
   }
 `;
