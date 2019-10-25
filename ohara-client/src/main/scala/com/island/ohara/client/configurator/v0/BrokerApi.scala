@@ -50,12 +50,6 @@ object BrokerApi {
     .documentation("the port exposed to client to connect to broker")
     .optional()
     .build()
-  private[this] val EXPORTER_PORT_KEY: String = "exporterPort"
-  val EXPORTER_PORT_DEFINITION: SettingDef = definitionBuilder
-    .key(EXPORTER_PORT_KEY)
-    .documentation("the port exposed to client to connect to broker exporter")
-    .optional()
-    .build()
   private[this] val JMX_PORT_KEY: String = "jmxPort"
   val JMX_PORT_DEFINITION: SettingDef = definitionBuilder
     .key(JMX_PORT_KEY)
@@ -131,10 +125,9 @@ object BrokerApi {
 
     override def imageName: String = settings.imageName.get
     override def nodeNames: Set[String] = settings.nodeNames.get
-    override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
+    override def ports: Set[Int] = Set(clientPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags.get
 
-    def exporterPort: Int = settings.exporterPort.get
     def clientPort: Int = settings.clientPort.get
     def jmxPort: Int = settings.jmxPort.get
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
@@ -157,8 +150,6 @@ object BrokerApi {
       })
       .nullToRandomPort(CLIENT_PORT_KEY)
       .requireBindPort(CLIENT_PORT_KEY)
-      .nullToRandomPort(EXPORTER_PORT_KEY)
-      .requireBindPort(EXPORTER_PORT_KEY)
       .nullToRandomPort(JMX_PORT_KEY)
       .requireBindPort(JMX_PORT_KEY)
       .requireKey(ZOOKEEPER_CLUSTER_KEY_KEY)
@@ -177,7 +168,6 @@ object BrokerApi {
         throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
     }
 
-    def exporterPort: Option[Int] = noJsNull(settings).get(EXPORTER_PORT_KEY).map(_.convertTo[Int])
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
     def jmxPort: Option[Int] = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
 
@@ -207,7 +197,6 @@ object BrokerApi {
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       })
       .requireBindPort(CLIENT_PORT_KEY)
-      .requireBindPort(EXPORTER_PORT_KEY)
       .requireBindPort(JMX_PORT_KEY)
       .refine
 
@@ -249,7 +238,7 @@ object BrokerApi {
     override def name: String = settings.name
     override def group: String = settings.group
     override def kind: String = BROKER_SERVICE_NAME
-    override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
+    override def ports: Set[Int] = Set(clientPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags
     def nodeNames: Set[String] = settings.nodeNames
 
@@ -262,7 +251,6 @@ object BrokerApi {
     else nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
     override def imageName: String = settings.imageName
-    def exporterPort: Int = settings.exporterPort
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey
@@ -290,9 +278,6 @@ object BrokerApi {
     @Optional("the default port is random")
     def clientPort(clientPort: Int): Request.this.type =
       setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
-    @Optional("the default port is random")
-    def exporterPort(exporterPort: Int): Request.this.type =
-      setting(EXPORTER_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(exporterPort)))
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))

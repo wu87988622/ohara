@@ -130,7 +130,6 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
       bk_create(
         clusterKey = nameHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
-        exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
         nodeNames = Set(nodes.head.name)
@@ -250,14 +249,12 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
 
   private[this] def bk_create(clusterKey: ObjectKey,
                               clientPort: Int,
-                              exporterPort: Int,
                               jmxPort: Int,
                               zookeeperClusterKey: ObjectKey,
                               nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkApi.request
       .key(clusterKey)
       .clientPort(clientPort)
-      .exporterPort(exporterPort)
       .jmxPort(jmxPort)
       .zookeeperClusterKey(zookeeperClusterKey)
       .nodeNames(nodeNames)

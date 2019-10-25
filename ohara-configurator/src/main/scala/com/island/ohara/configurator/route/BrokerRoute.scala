@@ -98,7 +98,6 @@ object BrokerRoute {
             .name(brokerClusterInfo.name)
             .group(brokerClusterInfo.group)
             .clientPort(brokerClusterInfo.clientPort)
-            .exporterPort(brokerClusterInfo.exporterPort)
             .jmxPort(brokerClusterInfo.jmxPort)
             .zookeeperClusterKey(brokerClusterInfo.zookeeperClusterKey)
             .imageName(brokerClusterInfo.imageName)

@@ -332,44 +332,6 @@ class TestBrokerRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def exporterPortConflict(): Unit = {
-    val exporterPort = CommonUtils.availablePort()
-    val bk = result(
-      brokerApi.request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .exporterPort(exporterPort)
-        .zookeeperClusterKey(zkKey)
-        .create())
-    result(brokerApi.start(bk.key))
-
-    val zk2 = result(
-      ZookeeperApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .create()
-    )
-    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.key))
-
-    val bk2 = result(
-      brokerApi.request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .exporterPort(exporterPort)
-        .zookeeperClusterKey(zk2.key)
-        .create())
-    an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk2.key))
-
-    // pass
-    val bk3 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create())
-    result(brokerApi.start(bk3.key))
-  }
-
-  @Test
   def jmxPortConflict(): Unit = {
     val jmxPort = CommonUtils.availablePort()
     val bk = result(

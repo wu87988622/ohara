@@ -100,16 +100,12 @@ class TestBrokerApi extends OharaTest with Matchers {
   def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy access.jmxPort(-1)
 
   @Test
-  def negativeExporterPort(): Unit = an[IllegalArgumentException] should be thrownBy access.exporterPort(-1)
-
-  @Test
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
-    val exporterPort = CommonUtils.availablePort()
     val zkKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     val nodeName = CommonUtils.randomString()
     val creation = access
@@ -119,7 +115,6 @@ class TestBrokerApi extends OharaTest with Matchers {
       .imageName(imageName)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
-      .exporterPort(exporterPort)
       .nodeName(nodeName)
       .creation
     creation.name shouldBe name
@@ -127,7 +122,6 @@ class TestBrokerApi extends OharaTest with Matchers {
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
     creation.jmxPort shouldBe jmxPort
-    creation.exporterPort shouldBe exporterPort
     creation.zookeeperClusterKey shouldBe zkKey
     creation.nodeNames.head shouldBe nodeName
   }
@@ -167,21 +161,18 @@ class TestBrokerApi extends OharaTest with Matchers {
     creation.nodeNames.head shouldBe nodeName
     creation.clientPort should not be 0
     creation.jmxPort should not be 0
-    creation.exporterPort should not be 0
-    creation.ports.size shouldBe 3
+    creation.ports.size shouldBe 2
 
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
     val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
-    val exporterPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     val creation2 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name",
       |    "group": "$group",
       |    "clientPort": $clientPort,
-      |    "exporterPort": $exporterPort,
       |    "jmxPort": $jmxPort,
       |    "zookeeperClusterKey": ${zkKey.toString},
       |    "nodeNames": ["$nodeName"]
@@ -195,7 +186,6 @@ class TestBrokerApi extends OharaTest with Matchers {
     creation2.nodeNames.head shouldBe nodeName
     creation2.zookeeperClusterKey.name() shouldBe zkKey.name()
     creation2.clientPort shouldBe clientPort
-    creation2.exporterPort shouldBe exporterPort
     creation2.jmxPort shouldBe jmxPort
 
     val creation3 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
@@ -211,7 +201,6 @@ class TestBrokerApi extends OharaTest with Matchers {
     creation3.nodeNames.head shouldBe nodeName
     creation3.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation3.clientPort should not be 0
-    creation3.exporterPort should not be 0
     creation3.jmxPort should not be 0
   }
 
@@ -406,93 +395,6 @@ class TestBrokerApi extends OharaTest with Matchers {
   }
 
   @Test
-  def parseZeroExporterPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "name": "name",
-      |    "exporterPort": 0,
-      |    "nodeNames": ["n"]
-      |  }
-      """.stripMargin.parseJson)
-
-  @Test
-  def parseNegativeExporterPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "name": "name",
-      |    "exporterPort": -1,
-      |    "nodeNames": ["n"]
-      |  }
-      """.stripMargin.parseJson)
-
-  @Test
-  def parseLargeExporterPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "name": "name",
-      |    "exporterPort": 999999,
-      |    "nodeNames": ["n"]
-      |  }
-      """.stripMargin.parseJson)
-
-  @Test
-  def parseExporterPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "exporterPort": 0
-      |  }
-      """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
-
-    val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "exporterPort": -9
-      |  }
-      """.stripMargin.parseJson)
-    thrown2.getMessage should include("the connection port must be [1024, 65535)")
-
-    val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "exporterPort": 99999
-      |  }
-      """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
-  }
-
-  @Test
   def parseZeroJmxPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
@@ -623,7 +525,6 @@ class TestBrokerApi extends OharaTest with Matchers {
     val data = access.name(CommonUtils.randomString(10)).updating
     data.imageName.isEmpty shouldBe true
     data.zookeeperClusterKey.isEmpty shouldBe true
-    data.exporterPort.isEmpty shouldBe true
     data.jmxPort.isEmpty shouldBe true
     data.clientPort.isEmpty shouldBe true
     data.nodeNames.isEmpty shouldBe true

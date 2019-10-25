@@ -42,7 +42,6 @@ The properties which can be set by user are shown below.
      - group (**string**) — cluster group
      - imageName (**string**) — docker image
      - clientPort (**int**) — broker client port.
-     - exporterPort (**int**) — port used by internal communication
      - jmxPort (**int**) — port used by jmx service
      - zookeeperClusterKey (**object**) — key of zookeeper cluster used to store metadata of broker cluster
 
@@ -73,7 +72,6 @@ create a broker cluster
 #. group (**string**) — cluster group ; default value is "default"
 #. imageName (**string**) — docker image ; default is oharastream/broker:|version|
 #. clientPort (**int**) — broker client port ; default is random port
-#. exporterPort (**int**) — port used by internal communication ; default is random port
 #. jmxPort (**int**) — port used by jmx service ; default is random port
 #. zookeeperClusterKey (**option(object)**) — key of zookeeper cluster used to store metadata of broker cluster.
    default will find a zookeeper for you
@@ -92,7 +90,6 @@ Example Request
          "name": "zk00"
        },
        "clientPort": 12345,
-       "exporterPort": 12346,
        "jmxPort": 12347,
        "nodeNames": [
          "node00"
@@ -112,7 +109,6 @@ Example Response
            "name": "zk00"
          },
          "imageName": "oharastream/broker:$|version|",
-         "exporterPort": 12346,
          "clientPort": 12345,
          "jmxPort": 12347,
          "nodeNames": [
@@ -158,7 +154,6 @@ Example Response
            "name": "zk00"
          },
          "imageName": "oharastream/broker:$|version|",
-         "exporterPort": 12346,
          "clientPort": 12345,
          "jmxPort": 12347,
          "nodeNames": [
@@ -197,7 +192,6 @@ Example Response
              "name": "zk00"
            },
            "imageName": "oharastream/broker:$|version|",
-           "exporterPort": 12346,
            "clientPort": 12345,
            "jmxPort": 12347,
            "nodeNames": [
@@ -221,7 +215,6 @@ update broker cluster properties
 Example Request
   #. imageName (**string**) — docker image ; default is oharastream/broker:|version|
   #. clientPort (**int**) — broker client port ; default is random port
-  #. exporterPort (**int**) — port used by internal communication ; default is random port
   #. jmxPort (**int**) — port used by jmx service ; default is random port
   #. zookeeperClusterKey (**option(object)**) — key of zookeeper cluster used to store metadata of broker cluster.
      default will find a zookeeper for you
@@ -237,7 +230,6 @@ Example Request
          "name": "zk00"
        },
        "clientPort": 12345,
-       "exporterPort": 12346,
        "jmxPort": 12347,
        "nodeNames": [
          "node00"
@@ -257,7 +249,6 @@ Example Response
            "name": "zk00"
          },
          "imageName": "oharastream/broker:$|version|",
-         "exporterPort": 12346,
          "clientPort": 12345,
          "jmxPort": 12347,
          "nodeNames": [
@@ -307,7 +298,6 @@ Example Response
            "name": "zk00"
          },
          "imageName": "oharastream/broker:$|version|",
-         "exporterPort": 7071,
          "clientPort": 9092,
          "jmxPort": 9093,
          "nodeNames": [

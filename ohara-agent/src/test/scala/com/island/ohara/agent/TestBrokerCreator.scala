@@ -88,11 +88,6 @@ class TestBrokerCreator extends OharaTest with Matchers {
   }
 
   @Test
-  def negativeExporterPort(): Unit = {
-    an[IllegalArgumentException] should be thrownBy bkCreator().exporterPort(-1)
-  }
-
-  @Test
   def negativeJmxPort(): Unit = {
     an[IllegalArgumentException] should be thrownBy bkCreator().jmxPort(-1)
   }
@@ -113,7 +108,6 @@ class TestBrokerCreator extends OharaTest with Matchers {
     .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
     .zookeeperClusterKey(zkKey)
-    .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
     .nodeName(CommonUtils.randomString)
     .create()

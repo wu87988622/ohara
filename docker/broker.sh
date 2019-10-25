@@ -15,26 +15,6 @@
 # limitations under the License.
 #
 
-# TODO: a big hard code ... those variables are in dockerfile
-if [[ ! -z "$PROMETHEUS_EXPORTER" ]]; then
-  if [[ ! -f "$PROMETHEUS_EXPORTER" ]]; then
-    echo "PROMETHEUS_EXPORTER exporter doesn't exist!!!"
-    exit 2
-  fi
-
-  if [[ ! -f "$PROMETHEUS_EXPORTER_CONFIG" ]]; then
-    echo "PROMETHEUS_EXPORTER_CONFIG exporter config doesn't exist!!!"
-    exit 2
-  fi
-
-  if [[ -z "$exporterPort" ]]; then
-    echo "exporterPort is required!!!"
-    exit 2
-  fi
-  export KAFKA_OPTS="-javaagent:$PROMETHEUS_EXPORTER=$exporterPort:$PROMETHEUS_EXPORTER_CONFIG"
-fi
-
-
 if [[ -z "$KAFKA_HOME" ]];then
   echo "$KAFKA_HOME is required!!!"
   exit 2

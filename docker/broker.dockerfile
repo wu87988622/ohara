@@ -32,12 +32,6 @@ RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
 
-# download Prometheus exporter
-ARG EXPORTER_VERSION=0.3.1
-RUN mkdir /prometheus
-RUN wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/${EXPORTER_VERSION}/jmx_prometheus_javaagent-${EXPORTER_VERSION}.jar -O /prometheus/jmx_prometheus_javaagent.jar
-ADD ./prometheus/exporter.config.yml /prometheus/config.yml
-
 # clone ohara
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
@@ -71,11 +65,6 @@ RUN chmod +x /home/$USER/default/bin/broker.sh
 RUN chown -R $USER:$USER /home/$USER
 ENV KAFKA_HOME=/home/$USER/default
 ENV PATH=$PATH:$KAFKA_HOME/bin
-
-# copy prometheus java-exporter
-COPY --from=deps /prometheus /prometheus
-ENV PROMETHEUS_EXPORTER=/prometheus/jmx_prometheus_javaagent.jar
-ENV PROMETHEUS_EXPORTER_CONFIG=/prometheus/config.yml
 
 # copy Tini
 COPY --from=oharastream/ohara:deps /tini /tini

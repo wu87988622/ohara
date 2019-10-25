@@ -104,13 +104,11 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   private[this] def bk_create(clusterKey: ObjectKey,
                               clientPort: Int,
-                              exporterPort: Int,
                               jmxPort: Int,
                               zookeeperClusterKey: ObjectKey,
                               nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi.request
     .key(clusterKey)
     .clientPort(clientPort)
-    .exporterPort(exporterPort)
     .jmxPort(jmxPort)
     .zookeeperClusterKey(zookeeperClusterKey)
     .nodeNames(nodeNames)
@@ -285,14 +283,12 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     log.info(s"[BROKER] verify existence of broker cluster:$clusterKey...done")
     val nodeName: String = nodes.head.name
     val clientPort = CommonUtils.availablePort()
-    val exporterPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
       brokerCluster.key shouldBe clusterKey
       brokerCluster.zookeeperClusterKey shouldBe zkCluster.key
       brokerCluster.nodeNames.head shouldBe nodeName
       brokerCluster.clientPort shouldBe clientPort
-      brokerCluster.exporterPort shouldBe exporterPort
       brokerCluster.jmxPort shouldBe jmxPort
       brokerCluster
     }
@@ -302,7 +298,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         bk_create(
           clusterKey = clusterKey,
           clientPort = clientPort,
-          exporterPort = exporterPort,
           jmxPort = jmxPort,
           zookeeperClusterKey = zkCluster.key,
           nodeNames = Set(nodeName)
@@ -320,7 +315,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.name.contains(clusterKey.name) shouldBe true
       container.name should not be container.hostname
       container.name.length should be > container.hostname.length
-      container.portMappings.head.portPairs.size shouldBe 3
+      container.portMappings.head.portPairs.size shouldBe 2
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
     }
     result(bk_logs(clusterKey)).size shouldBe 1
@@ -375,7 +370,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         newCluster.key shouldBe previousCluster.key
         newCluster.imageName shouldBe previousCluster.imageName
         newCluster.zookeeperClusterKey shouldBe previousCluster.zookeeperClusterKey
-        newCluster.exporterPort shouldBe previousCluster.exporterPort
         newCluster.clientPort shouldBe previousCluster.clientPort
         newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
         result(bk_cluster(newCluster.key)).aliveNodes.contains(newNode)
@@ -491,7 +485,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       bk_create(
         clusterKey = nameHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
-        exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
         nodeNames = Set(nodes.head.name)
@@ -738,7 +731,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           bk_create(
             clusterKey = bkKeys(index),
             clientPort = CommonUtils.availablePort(),
-            exporterPort = CommonUtils.availablePort(),
             jmxPort = CommonUtils.availablePort(),
             zookeeperClusterKey = zk.key,
             nodeNames = Set(nodes.head.name)
@@ -775,7 +767,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       bk_create(
         clusterKey = bkKey,
         clientPort = CommonUtils.availablePort(),
-        exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
         nodeNames = Set(nodes.head.name)

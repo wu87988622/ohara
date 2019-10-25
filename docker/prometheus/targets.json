@@ -1,9 +1,0 @@
-[
-  {
-    "targets": [],
-    "labels": {
-      "env": "dev",
-      "job": "kafka"
-    }
-  }
-]

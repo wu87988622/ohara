@@ -43,11 +43,10 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
     * This is a complicated process. We must address following issues.
     * 1) check the existence of cluster
     * 2) check the existence of nodes
-    * 3) Each broker container has got to export exporter port and client port
-    * 4) Each broker container should assign "docker host name/port" to advertised name/port
-    * 5) add zookeeper routes to all broker containers (broker needs to connect to zookeeper cluster)
-    * 6) Add broker routes to all broker containers
-    * 7) update existed containers (if we are adding new node into a running cluster)
+    * 3) Each broker container should assign "docker host name/port" to advertised name/port
+    * 4) add zookeeper routes to all broker containers (broker needs to connect to zookeeper cluster)
+    * 5) Add broker routes to all broker containers
+    * 6) update existed containers (if we are adding new node into a running cluster)
     * @return creator of broker cluster
     */
   override def creator: BrokerCollie.ClusterCreator = (executionContext, creation) => {
@@ -107,10 +106,6 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                               containerPort = creation.clientPort
                             ),
                             PortPair(
-                              hostPort = creation.exporterPort,
-                              containerPort = creation.exporterPort
-                            ),
-                            PortPair(
                               hostPort = creation.jmxPort,
                               containerPort = creation.jmxPort
                             )
@@ -122,9 +117,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                             s" -Dcom.sun.management.jmxremote.ssl=false" +
                             s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
                             s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
-                            s" -Djava.rmi.server.hostname=${newNode.hostname}"),
-                          // TODO: hard code ... we should refactor the exporter
-                          "exporterPort" -> s"${creation.exporterPort}"
+                            s" -Djava.rmi.server.hostname=${newNode.hostname}")
                         ),
                         hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                       )

@@ -40,11 +40,10 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     * This is a complicated process. We must address following issues.
     * 1) check the existence of cluster
     * 2) check the existence of nodes
-    * 3) Each worker container has got to export exporter port and client port
-    * 4) Each worker container should assign "docker host name/port" to advertised name/port
-    * 5) add broker routes to all worker containers (worker needs to connect to broker cluster)
-    * 6) Add worker routes to all worker containers
-    * 7) update existed containers (if we are adding new node into a running cluster)
+    * 3) Each worker container should assign "docker host name/port" to advertised name/port
+    * 4) add broker routes to all worker containers (worker needs to connect to broker cluster)
+    * 5) Add worker routes to all worker containers
+    * 6) update existed containers (if we are adding new node into a running cluster)
     * @return description of worker cluster
     */
   override def creator: WorkerCollie.ClusterCreator = (executionContext, creation) => {
