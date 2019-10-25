@@ -24,16 +24,19 @@ import {
 } from '@material-ui/styles';
 
 import MuiTheme from './theme/muiTheme';
+import { SnackbarProvider } from './context/SnackbarContext';
 
 ReactDOM.render(
-  <StylesProvider injectFirst>
-    <MuiThemeProvider theme={MuiTheme}>
-      <ThemeProvider theme={MuiTheme}>
-        <StrictMode>
-          <App />
-        </StrictMode>
-      </ThemeProvider>
-    </MuiThemeProvider>
-  </StylesProvider>,
+  <StrictMode>
+    <StylesProvider injectFirst>
+      <MuiThemeProvider theme={MuiTheme}>
+        <ThemeProvider theme={MuiTheme}>
+          <SnackbarProvider>
+            <App />
+          </SnackbarProvider>
+        </ThemeProvider>
+      </MuiThemeProvider>
+    </StylesProvider>
+  </StrictMode>,
   document.getElementById('root'),
 );

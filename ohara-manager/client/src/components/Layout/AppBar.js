@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Tooltip from '@material-ui/core/Tooltip';
 import { Link } from 'react-router-dom';
@@ -102,9 +102,9 @@ const Tools = styled.ul`
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Mui's
 const AppBar = () => {
-  const [workers, setWorkers] = React.useState([]);
+  const [workers, setWorkers] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchWorkers = async () => {
       const response = await workerApi.fetchWorkers();
       const workers = get(response, 'data.result', []);
@@ -148,7 +148,14 @@ const AppBar = () => {
               </Tooltip>
             );
           })}
-          <i className="add-workspace item fas fa-plus"></i>
+
+          <Tooltip
+            title="Create a new workspace"
+            placement="right"
+            enterDelay={1000}
+          >
+            <i className="add-workspace item fas fa-plus"></i>
+          </Tooltip>
         </WorkspaceList>
 
         <Tools>

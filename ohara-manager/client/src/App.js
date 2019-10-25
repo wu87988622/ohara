@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
@@ -22,6 +22,7 @@ import GlobalStyle from 'theme/globalStyle';
 import Theme from 'components/Theme';
 import AppBar from 'components/Layout/AppBar';
 import NotFoundPage from 'components/NotFoundPage';
+import { useSnackbar } from './context/SnackbarContext';
 
 const Container = styled.div`
   display: flex;
@@ -38,6 +39,13 @@ const Main = styled.main`
 `;
 
 const App = () => {
+  const showMessage = useSnackbar();
+
+  // Example usage, should be removed later
+  useEffect(() => {
+    showMessage('Hello world!');
+  }, [showMessage]);
+
   return (
     <Router>
       <Container className="container">
@@ -48,7 +56,9 @@ const App = () => {
             <Route
               exact
               path="/"
-              component={() => <h1>Hello ohara manager!</h1>}
+              component={() => (
+                <h1 onClick={() => showMessage('Ah?')}>Hello ohara manager!</h1>
+              )}
             />
             <Route exact path="/theme" component={Theme} />
             <Route path="*" component={NotFoundPage} />
