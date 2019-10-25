@@ -116,18 +116,17 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                       }
                   })
                   .map(_.flatten.toSeq)
-                  .map { successfulContainers =>
-                    val state = toClusterState(successfulContainers).map(_.name)
+                  .map { aliveContainers =>
+                    val state = toClusterState(aliveContainers).map(_.name)
                     postCreate(
                       new StreamClusterStatus(
                         group = creation.group,
                         name = creation.name,
-                        // no state means cluster is NOT running so we cleanup the dead nodes
-                        aliveNodes = state.map(_ => successfulContainers.map(_.nodeName).toSet).getOrElse(Set.empty),
+                        aliveNodes = aliveContainers.map(_.nodeName).toSet,
                         state = state,
                         error = None
                       ),
-                      successfulContainers
+                      aliveContainers
                     )
                   }
             }

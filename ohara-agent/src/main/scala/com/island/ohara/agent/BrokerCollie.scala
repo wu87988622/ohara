@@ -159,16 +159,14 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
               .map(_.flatten.toSeq)
               .map {
                 successfulContainers =>
-                  val state = toClusterState(existNodes.values.toSeq ++ successfulContainers).map(_.name)
+                  val aliveContainers = existNodes.values.toSeq ++ successfulContainers
+                  val state = toClusterState(aliveContainers).map(_.name)
                   val status = new BrokerClusterStatus(
                     group = creation.group,
                     name = creation.name,
                     // TODO: we should check the supported arguments by the running broker images
                     topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
-                    // no state means cluster is NOT running so we cleanup the dead nodes
-                    aliveNodes = state
-                      .map(_ => (successfulContainers.map(_.nodeName) ++ existNodes.values.map(_.hostname)).toSet)
-                      .getOrElse(Set.empty),
+                    aliveNodes = aliveContainers.map(_.nodeName).toSet,
                     state = state,
                     error = None
                   )
