@@ -253,9 +253,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
       container.portMappings.head.portPairs.exists(_.containerPort == electionPort) shouldBe true
       container.portMappings.head.portPairs.exists(_.containerPort == peerPort) shouldBe true
-      container.environments.exists(_._2 == clientPort.toString) shouldBe true
-      container.environments.exists(_._2 == electionPort.toString) shouldBe true
-      container.environments.exists(_._2 == peerPort.toString) shouldBe true
     }
     log.info(s"get containers from zk:$clusterKey... done")
     result(zk_stop(clusterKey))
@@ -325,7 +322,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.name.length should be > container.hostname.length
       container.portMappings.head.portPairs.size shouldBe 3
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
-      container.environments.exists(_._2 == clientPort.toString) shouldBe true
     }
     result(bk_logs(clusterKey)).size shouldBe 1
     result(bk_logs(clusterKey)).foreach(log =>

@@ -77,10 +77,10 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
     } else Future.successful(TopicAdmin(bkConnectionProps))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] =
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] =
     throw new UnsupportedOperationException("Fake broker collie doesn't support doCreator function")
 
   protected override def zookeeperContainers(zkClusterKey: ObjectKey)(

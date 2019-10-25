@@ -30,7 +30,6 @@ private class ZookeeperCollieImpl(val dataCollie: DataCollie,
     with ZookeeperCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],
@@ -53,7 +52,7 @@ private class ZookeeperCollieImpl(val dataCollie: DataCollie,
       )
     } catch {
       case e: Throwable =>
-        try dockerCache.exec(node, _.forceRemove(containerName))
+        try dockerCache.exec(node, _.forceRemove(containerInfo.name))
         catch {
           case _: Throwable =>
           // do nothing

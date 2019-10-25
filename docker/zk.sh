@@ -15,19 +15,28 @@
 # limitations under the License.
 #
 
+if [[ -z "$ZOOKEEPER_HOME" ]];then
+  echo "$ZOOKEEPER_HOME is required!!!"
+  exit 2
+fi
+
+VERSION_FILE=$ZOOKEEPER_HOME/bin/zookeeper_version
+OHARA_VERSION_FILE=$ZOOKEEPER_HOME/bin/ohara_version
+CONFIG_FILE=$ZOOKEEPER_HOME/conf/zoo.cfg
+
 # parsing arguments
 while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
     -v|--version)
-    if [[ -f "$ZOOKEEPER_HOME/bin/zookeeper_version" ]]; then
-      echo "zookeeper $(cat "$ZOOKEEPER_HOME/bin/zookeeper_version")"
+    if [[ -f "$VERSION_FILE" ]]; then
+      echo "zookeeper $(cat "$VERSION_FILE")"
     else
       echo "zookeeper: unknown"
     fi
-    if [[ -f "$ZOOKEEPER_HOME/bin/ohara_version" ]]; then
-      echo "ohara $(cat "$ZOOKEEPER_HOME/bin/ohara_version")"
+    if [[ -f "$OHARA_VERSION_FILE" ]]; then
+      echo "ohara $(cat "$OHARA_VERSION_FILE")"
     else
       echo "ohara: unknown"
     fi
@@ -42,8 +51,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # parsing files
-## we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
-## the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
+# format: --file path=line0,line1 --file path1=line0,line1
 for f in "${FILE_DATA[@]}"; do
   key=${f%%=*}
   value=${f#*=}
@@ -58,9 +66,9 @@ for f in "${FILE_DATA[@]}"; do
   done
 done
 
-if [[ -z "$ZOOKEEPER_HOME" ]];then
-  echo "$ZOOKEEPER_HOME is required!!!"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "$CONFIG_FILE is required!!!"
   exit 2
 fi
 
-exec $ZOOKEEPER_HOME/bin/zkServer.sh start-foreground $ZOOKEEPER_HOME/conf/zoo.cfg
+exec $ZOOKEEPER_HOME/bin/zkServer.sh start-foreground $CONFIG_FILE

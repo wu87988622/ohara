@@ -17,7 +17,7 @@
 package com.island.ohara.agent.docker
 
 import java.util.Objects
-import scala.collection.JavaConverters._
+
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
@@ -102,7 +102,7 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
     */
   @Optional("default is empty")
   def envs(envs: Map[String, String]): ContainerCreator = {
-    this.envs = CommonUtils.requireNonEmpty(envs.asJava).asScala.toMap
+    this.envs = Objects.requireNonNull(envs)
     this
   }
 
@@ -112,7 +112,7 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
     */
   @Optional("default is empty")
   def route(route: Map[String, String]): ContainerCreator = {
-    this.route = CommonUtils.requireNonEmpty(route.asJava).asScala.toMap
+    this.route = Objects.requireNonNull(route)
     this
   }
 
@@ -125,7 +125,7 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
     */
   @Optional("default is empty")
   def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-    this.ports = CommonUtils.requireNonEmpty(ports.asJava).asScala.toMap
+    this.ports = Objects.requireNonNull(ports)
     this
   }
 
@@ -136,7 +136,7 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
     */
   @Optional("default is empty")
   def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator = {
-    this.volumeMapping = CommonUtils.requireNonEmpty(volumeMapping.asJava).asScala.toMap
+    this.volumeMapping = Objects.requireNonNull(volumeMapping)
     this
   }
 

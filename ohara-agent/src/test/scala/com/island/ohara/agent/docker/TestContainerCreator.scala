@@ -74,25 +74,25 @@ class TestContainerCreator extends OharaTest with Matchers {
   def nullPorts(): Unit = an[NullPointerException] should be thrownBy fake().portMappings(null)
 
   @Test
-  def emptyPorts(): Unit = an[IllegalArgumentException] should be thrownBy fake().portMappings(Map.empty)
+  def emptyPorts(): Unit = fake().portMappings(Map.empty)
 
   @Test
   def nullEnvs(): Unit = an[NullPointerException] should be thrownBy fake().envs(null)
 
   @Test
-  def emptyEnvs(): Unit = an[IllegalArgumentException] should be thrownBy fake().envs(Map.empty)
+  def emptyEnvs(): Unit = fake().envs(Map.empty)
 
   @Test
   def nullRoute(): Unit = an[NullPointerException] should be thrownBy fake().route(null)
 
   @Test
-  def emptyRoute(): Unit = an[IllegalArgumentException] should be thrownBy fake().route(Map.empty)
+  def emptyRoute(): Unit = fake().route(Map.empty)
 
   @Test
   def nullVolumeMapping(): Unit = an[NullPointerException] should be thrownBy fake().volumeMapping(null)
 
   @Test
-  def emptyVolumeMapping(): Unit = an[IllegalArgumentException] should be thrownBy fake().volumeMapping(Map.empty)
+  def emptyVolumeMapping(): Unit = fake().volumeMapping(Map.empty)
 
   @Test
   def nullNetworkDriver(): Unit = an[NullPointerException] should be thrownBy fake().command(null)

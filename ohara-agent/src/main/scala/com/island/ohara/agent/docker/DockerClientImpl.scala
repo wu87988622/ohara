@@ -254,8 +254,7 @@ private[docker] class DockerClientImpl(nodeName: String, port: Int, user: String
               val items = line.split("=")
               items.size match {
                 case 1 => items.head -> ""
-                case 2 => items.head -> items.last
-                case _ => throw new IllegalArgumentException(s"invalid format of environment:$line")
+                case _ => items.head -> items.tail.mkString
               }
             })
             .map(_.toMap)

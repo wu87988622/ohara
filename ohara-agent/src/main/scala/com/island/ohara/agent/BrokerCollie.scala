@@ -21,13 +21,12 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus, Creation}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
-import spray.json.JsString
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,6 +34,10 @@ import scala.concurrent.{ExecutionContext, Future}
 trait BrokerCollie extends Collie[BrokerClusterStatus] {
 
   override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
+
+  // TODO: remove this hard code (see #2957)
+  private[this] val homeFolder: String = BrokerApi.BROKER_HOME_FOLDER
+  private[this] val configPath: String = s"$homeFolder/config/broker.config"
 
   /**
     * This is a complicated process. We must address following issues.
@@ -58,59 +61,33 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
             .valuesByNames[Node](containers.map(_.nodeName).toSet)
             .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
         .getOrElse(Future.successful(Map.empty))
-        .map {
-          existNodes =>
-            // if there is a running cluster already, we should check the consistency of configuration
-            existNodes.values.foreach {
-              container =>
-                def checkValue(previous: String, newValue: String): Unit =
-                  if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-
-                def check(key: String, newValue: String): Unit = {
-                  val previous = CommonUtils.fromEnvString(container.environments(key))
-                  if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                }
-
-                checkValue(container.imageName, creation.imageName)
-                check(BrokerApi.CLIENT_PORT_KEY, creation.clientPort.toString)
-                check(BrokerApi.ZOOKEEPER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(creation.zookeeperClusterKey))
-            }
-            existNodes
-        }
         .flatMap(existNodes => dataCollie.valuesByNames[Node](creation.nodeNames).map((existNodes, _)))
         .map {
           case (existNodes, nodes) =>
             (existNodes,
              // find the nodes which have not run the services
-             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)),
-             zookeeperContainers(creation.zookeeperClusterKey))
+             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)))
         }
         .flatMap {
-          case (existNodes, newNodes, zkContainers) =>
-            zkContainers
-              .flatMap(zkContainers => {
-                if (zkContainers.isEmpty)
-                  throw new IllegalArgumentException(s"zookeeper:${creation.zookeeperClusterKey} does not exist")
+          case (existNodes, newNodes) =>
+            dataCollie
+              .value[ZookeeperClusterInfo](creation.zookeeperClusterKey)
+              .flatMap(zookeeperClusterInfo => {
                 if (newNodes.isEmpty) Future.successful(Seq.empty)
                 else {
-                  val zookeepers = zkContainers
-                    .map(c => s"${c.nodeName}:${c.environments(ZookeeperApi.CLIENT_PORT_KEY).toInt}")
+                  val zookeepers = zookeeperClusterInfo.nodeNames
+                    .map(nodeName => s"$nodeName:${zookeeperClusterInfo.clientPort}")
                     .mkString(",")
 
-                  val route = resolveHostNames(
-                    (existNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
+                  val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes
+                    .map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet)
                   existNodes.foreach {
                     case (node, container) => hookOfNewRoute(node, container, route)
                   }
 
-                  // the new broker node can't take used id so we find out the max id which is used by current cluster
-                  val maxId: Int =
-                    if (existNodes.isEmpty) 0
-                    else existNodes.values.map(_.environments(BrokerApi.ID_KEY).toInt).toSet.max + 1
-
                   // ssh connection is slow so we submit request by multi-thread
-                  Future.sequence(newNodes.zipWithIndex.map {
-                    case (newNode, index) =>
+                  Future.sequence(newNodes.map {
+                    newNode =>
                       val containerInfo = ContainerInfo(
                         nodeName = newNode.name,
                         id = Collie.UNKNOWN,
@@ -139,27 +116,38 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                             )
                           )
                         )),
-                        environments = creation.settings.map {
-                          case (k, v) =>
-                            k -> (v match {
-                              // the string in json representation has quote in the beginning and end.
-                              // we don't like the quotes since it obstruct us to cast value to pure string.
-                              case JsString(s) => s
-                              // save the json string for all settings
-                              case _ => CommonUtils.toEnvString(v.toString)
-                            })
-                        }
-                        // each broker instance needs an unique id to identify
-                          + (BrokerApi.ID_KEY -> (maxId + index).toString)
-                        // connect to user defined zookeeper cluster
-                          + (BrokerApi.ZOOKEEPERS_KEY -> zookeepers)
-                        // expose the borker hostname for zookeeper to register
-                          + (BrokerApi.ADVERTISED_HOSTNAME_KEY -> newNode.hostname)
-                        // jmx exporter host name
-                          + (BrokerApi.JMX_HOSTNAME_KEY -> newNode.hostname),
+                        environments = Map(
+                          "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
+                            s" -Dcom.sun.management.jmxremote.authenticate=false" +
+                            s" -Dcom.sun.management.jmxremote.ssl=false" +
+                            s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
+                            s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
+                            s" -Djava.rmi.server.hostname=${newNode.hostname}"),
+                          // TODO: hard code ... we should refactor the exporter
+                          "exporterPort" -> s"${creation.exporterPort}"
+                        ),
                         hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                       )
-                      doCreator(executionContext, containerInfo.name, containerInfo, newNode, route)
+
+                      /**
+                        * Construct the required configs for current container
+                        * we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
+                        * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
+                        */
+                      val arguments = ArgumentsBuilder()
+                        .file(configPath)
+                        .append("zookeeper.connect", zookeepers)
+                        .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.logDirs)
+                        .append(BrokerApi.NUMBER_OF_PARTITIONS_DEFINITION.key(), creation.numberOfPartitions)
+                        .append(BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
+                                creation.numberOfReplications4OffsetsTopic)
+                        .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_DEFINITION.key(), creation.numberOfNetworkThreads)
+                        .append(BrokerApi.NUMBER_OF_IO_THREADS_DEFINITION.key(), creation.numberOfIoThreads)
+                        .append(s"listeners=PLAINTEXT://:${creation.clientPort}")
+                        .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
+                        .done
+                        .build
+                      doCreator(executionContext, containerInfo, newNode, route, arguments)
                         .map(_ => Some(containerInfo))
                         .recover {
                           case _: Throwable =>
@@ -211,16 +199,15 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
   /**
     * Please implement this function to create the container to a different platform
     * @param executionContext execution context
-    * @param containerName container name
     * @param containerInfo container information
     * @param node node object
     * @param route ip-host mapping
     */
   protected def doCreator(executionContext: ExecutionContext,
-                          containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
-                          route: Map[String, String]): Future[Unit]
+                          route: Map[String, String],
+                          arguments: Seq[String]): Future[Unit]
 
   /**
     * After creating the broker, need to processor other things

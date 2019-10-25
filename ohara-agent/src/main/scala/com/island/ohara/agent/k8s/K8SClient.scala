@@ -26,7 +26,6 @@ import com.island.ohara.client.{Enum, HttpExecutor}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 case class K8SStatusInfo(isHealth: Boolean, message: String)
@@ -231,17 +230,17 @@ object K8SClient {
           }
 
           override def envs(envs: Map[String, String]): ContainerCreator = {
-            this.envs = CommonUtils.requireNonEmpty(envs.asJava).asScala.toMap
+            this.envs = Objects.requireNonNull(envs)
             this
           }
 
           override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-            this.ports = CommonUtils.requireNonEmpty(ports.asJava).asScala.toMap
+            this.ports = Objects.requireNonNull(ports)
             this
           }
 
           override def routes(routes: Map[String, String]): ContainerCreator = {
-            this.routes = CommonUtils.requireNonEmpty(routes.asJava).asScala.toMap
+            this.routes = Objects.requireNonNull(routes)
             this
           }
 
@@ -274,13 +273,13 @@ object K8SClient {
 
           @Optional("default is empty")
           override def command(command: Seq[String]): ContainerCreator = {
-            this.command = CommonUtils.requireNonEmpty(command.asJava).asScala
+            this.command = Objects.requireNonNull(command)
             this
           }
 
           @Optional("default is empty")
           override def args(args: Seq[String]): ContainerCreator = {
-            this.args = CommonUtils.requireNonEmpty(args.asJava).asScala
+            this.args = Objects.requireNonNull(args)
             this
           }
 

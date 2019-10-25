@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
@@ -40,15 +41,72 @@ object BrokerApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtils.VERSION}"
 
   //------------------------ The key name list in settings field ---------------------------------/
-  private[ohara] val CLIENT_PORT_KEY: String = "clientPort"
+  val BROKER_HOME_FOLDER: String = "/home/ohara/default"
+  private[this] val COUNTER = new AtomicInteger(0)
+  private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
+  private[this] val CLIENT_PORT_KEY: String = "clientPort"
+  val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
+    .key(CLIENT_PORT_KEY)
+    .documentation("the port exposed to client to connect to broker")
+    .optional()
+    .build()
   private[this] val EXPORTER_PORT_KEY: String = "exporterPort"
+  val EXPORTER_PORT_DEFINITION: SettingDef = definitionBuilder
+    .key(EXPORTER_PORT_KEY)
+    .documentation("the port exposed to client to connect to broker exporter")
+    .optional()
+    .build()
   private[this] val JMX_PORT_KEY: String = "jmxPort"
-  private[ohara] val ADVERTISED_HOSTNAME_KEY: String = "advertisedHostname"
-  private[ohara] val ADVERTISED_CLIENT_PORT_KEY: String = "advertisedClientPort"
-  private[ohara] val ID_KEY: String = "brokerId"
-  private[ohara] val DATA_DIRECTORY_KEY: String = "dataDir"
-  private[ohara] val ZOOKEEPERS_KEY: String = "zookeepers"
-  private[ohara] val JMX_HOSTNAME_KEY: String = "jmxHostname"
+  val JMX_PORT_DEFINITION: SettingDef = definitionBuilder
+    .key(JMX_PORT_KEY)
+    .documentation("the port exposed to client to connect to broker jmx")
+    .optional()
+    .build()
+  private[this] val LOG_DIRS_KEY: String = "log.dirs"
+  private[this] val LOG_DIRS_DEFAULT = s"$BROKER_HOME_FOLDER/data"
+  val LOG_DIRS_DEFINITION: SettingDef = definitionBuilder
+    .key(LOG_DIRS_KEY)
+    .documentation("the folder used to store data of broker")
+    .optional(LOG_DIRS_DEFAULT)
+    .build()
+  private[this] val NUMBER_OF_PARTITIONS_KEY: String = "num.partitions"
+  private[this] val NUMBER_OF_PARTITIONS_DEFAULT = 1
+  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(NUMBER_OF_PARTITIONS_KEY)
+    .documentation("the number of partitions for all topics by default")
+    .optional(NUMBER_OF_PARTITIONS_DEFAULT)
+    .build()
+  private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
+  private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT = 1
+  val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = definitionBuilder
+    .key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
+    .documentation("the number of replications for internal offset topic")
+    .optional(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
+    .build()
+  private[this] val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
+  private[this] val NUMBER_OF_NETWORK_THREADS_DEFAULT = 1
+  val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = definitionBuilder
+    .key(NUMBER_OF_NETWORK_THREADS_KEY)
+    .documentation("the number of threads used to accept network requests")
+    .optional(NUMBER_OF_NETWORK_THREADS_DEFAULT)
+    .build()
+  private[this] val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
+  private[this] val NUMBER_OF_IO_THREADS_DEFAULT = 1
+  val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = definitionBuilder
+    .key(NUMBER_OF_IO_THREADS_KEY)
+    .documentation("the number of threads used to process network requests")
+    .optional(NUMBER_OF_IO_THREADS_DEFAULT)
+    .build()
+
+  /**
+    * all public configs
+    */
+  val DEFINITIONS: Seq[SettingDef] = Seq(
+    CLIENT_PORT_DEFINITION,
+    LOG_DIRS_DEFINITION,
+    NUMBER_OF_PARTITIONS_DEFINITION,
+    NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION
+  )
 
   /**
     * internal key used to save the zookeeper cluster key.
@@ -80,6 +138,12 @@ object BrokerApi {
     def clientPort: Int = settings.clientPort.get
     def jmxPort: Int = settings.jmxPort.get
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
+    def logDirs: String = settings.logDirs.getOrElse(LOG_DIRS_DEFAULT)
+    def numberOfPartitions: Int = settings.numberOfPartitions.getOrElse(NUMBER_OF_PARTITIONS_DEFAULT)
+    def numberOfReplications4OffsetsTopic: Int =
+      settings.numberOfReplications4OffsetsTopic.getOrElse(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
+    def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads.getOrElse(NUMBER_OF_NETWORK_THREADS_DEFAULT)
+    def numberOfIoThreads: Int = settings.numberOfIoThreads.getOrElse(NUMBER_OF_IO_THREADS_DEFAULT)
   }
 
   /**
@@ -119,6 +183,21 @@ object BrokerApi {
 
     def zookeeperClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+
+    def logDirs: Option[String] =
+      noJsNull(settings).get(LOG_DIRS_KEY).map(_.convertTo[String])
+
+    def numberOfPartitions: Option[Int] =
+      noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
+
+    def numberOfReplications4OffsetsTopic: Option[Int] =
+      noJsNull(settings).get(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY).map(_.convertTo[Int])
+
+    def numberOfNetworkThreads: Option[Int] =
+      noJsNull(settings).get(NUMBER_OF_NETWORK_THREADS_KEY).map(_.convertTo[Int])
+
+    def numberOfIoThreads: Option[Int] =
+      noJsNull(settings).get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
   }
 
   implicit val BROKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
@@ -182,12 +261,16 @@ object BrokerApi {
     def connectionProps: String = if (nodeNames.isEmpty) throw new IllegalArgumentException("there is no nodes!!!")
     else nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
-    // TODO remove this duplicated fields after #2191
-    def imageName: String = settings.imageName
+    override def imageName: String = settings.imageName
     def exporterPort: Int = settings.exporterPort
     def clientPort: Int = settings.clientPort
     def jmxPort: Int = settings.jmxPort
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey
+    def logDirs: String = settings.logDirs
+    def numberOfPartitions: Int = settings.numberOfPartitions
+    def numberOfReplications4OffsetsTopic: Int = settings.numberOfReplications4OffsetsTopic
+    def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads
+    def numberOfIoThreads: Int = settings.numberOfIoThreads
   }
 
   /**

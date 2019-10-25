@@ -30,7 +30,6 @@ private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SC
   private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],

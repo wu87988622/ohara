@@ -31,10 +31,10 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
     with BrokerCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] =
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
@@ -46,11 +46,12 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           .envs(containerInfo.environments)
           .name(containerInfo.name)
           .route(route)
+          .command(arguments.mkString(" "))
           .create()
       )
     } catch {
       case e: Throwable =>
-        try dockerCache.exec(node, _.forceRemove(containerName))
+        try dockerCache.exec(node, _.forceRemove(containerInfo.name))
         catch {
           case _: Throwable =>
           // do nothing

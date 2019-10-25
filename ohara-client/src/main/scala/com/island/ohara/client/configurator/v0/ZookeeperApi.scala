@@ -16,10 +16,12 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
@@ -38,19 +40,64 @@ object ZookeeperApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtils.VERSION}"
 
   //------------------------ The key name list in settings field ---------------------------------/
+  val ZOOKEEPER_HOME_FOLDER: String = "/home/ohara/default"
+  private[this] val COUNTER = new AtomicInteger(0)
+  private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
   // export this variable to broker collie
-  private[ohara] val CLIENT_PORT_KEY = "clientPort"
+  private[this] val CLIENT_PORT_KEY = "clientPort"
+  val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
+    .key(CLIENT_PORT_KEY)
+    .documentation("the port exposed to client to connect to zookeeper")
+    .optional()
+    .build()
   private[this] val PEER_PORT_KEY = "peerPort"
+  val PEER_PORT_DEFINITION: SettingDef =
+    definitionBuilder.key(PEER_PORT_KEY).documentation("the port exposed to each quorum").optional().build()
   private[this] val ELECTION_PORT_KEY = "electionPort"
+  val ELECTION_PORT_DEFINITION: SettingDef =
+    definitionBuilder.key(ELECTION_PORT_KEY).documentation("quorum leader election port").optional().build()
   // export these variables to collie for creating
-  private[ohara] val TICK_TIME_KEY = "tickTime"
-  private[ohara] val INIT_LIMIT_KEY = "initLimit"
-  private[ohara] val SYNC_LIMIT_KEY = "syncLimit"
-  private[ohara] val MAX_CLIENT_CNXNS_KEY = "maxClientCnxns"
+  private[this] val TICK_TIME_KEY = "tickTime"
+  private[this] val TICK_TIME_DEFAULT: Int = 2000
+  val TICK_TIME_DEFINITION: SettingDef = definitionBuilder
+    .key(TICK_TIME_KEY)
+    .documentation("basic time unit in zookeeper")
+    .optional(TICK_TIME_DEFAULT)
+    .build()
+  private[this] val INIT_LIMIT_KEY = "initLimit"
+  private[this] val INIT_LIMIT_DEFAULT: Int = 10
+  val INIT_LIMIT_DEFINITION: SettingDef = definitionBuilder
+    .key(INIT_LIMIT_KEY)
+    .documentation("timeout to connect to leader")
+    .optional(INIT_LIMIT_DEFAULT)
+    .build()
+  private[this] val SYNC_LIMIT_KEY = "syncLimit"
+  private[this] val SYNC_LIMIT_DEFAULT: Int = 5
+  val SYNC_LIMIT_DEFINITION: SettingDef = definitionBuilder
+    .key(SYNC_LIMIT_KEY)
+    .documentation("the out-of-date of a sever from leader")
+    .optional(SYNC_LIMIT_DEFAULT)
+    .build()
+  private[this] val DATA_DIR_KEY = "dataDir"
+  private[this] val DATA_DIR_DEFAULT = s"$ZOOKEEPER_HOME_FOLDER/data"
+  val DATA_DIR_DEFINITION: SettingDef = definitionBuilder
+    .key(DATA_DIR_KEY)
+    .documentation("the folder used to store zookeeper data")
+    .optional(DATA_DIR_DEFAULT)
+    .build()
 
-  private[ohara] val ZK_ID_KEY = "zkId"
-  private[ohara] val SERVERS_KEY = "servers"
-  private[ohara] val DATA_DIR_KEY = "dataDir"
+  /**
+    * all public configs
+    */
+  val DEFINITIONS: Seq[SettingDef] = Seq(
+    CLIENT_PORT_DEFINITION,
+    PEER_PORT_DEFINITION,
+    ELECTION_PORT_DEFINITION,
+    TICK_TIME_DEFINITION,
+    INIT_LIMIT_DEFINITION,
+    SYNC_LIMIT_DEFINITION,
+    DATA_DIR_DEFINITION
+  )
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 
@@ -75,6 +122,10 @@ object ZookeeperApi {
     def clientPort: Int = settings.clientPort.get
     def peerPort: Int = settings.peerPort.get
     def electionPort: Int = settings.electionPort.get
+    def tickTime: Int = settings.tickTime.getOrElse(TICK_TIME_DEFAULT)
+    def initLimit: Int = settings.initLimit.getOrElse(INIT_LIMIT_DEFAULT)
+    def syncLimit: Int = settings.syncLimit.getOrElse(SYNC_LIMIT_DEFAULT)
+    def dataDir: String = settings.dataDir.getOrElse(DATA_DIR_DEFAULT)
   }
 
   /**
@@ -117,6 +168,14 @@ object ZookeeperApi {
       noJsNull(settings).get(PEER_PORT_KEY).map(_.convertTo[Int])
     def electionPort: Option[Int] =
       noJsNull(settings).get(ELECTION_PORT_KEY).map(_.convertTo[Int])
+    def tickTime: Option[Int] =
+      noJsNull(settings).get(TICK_TIME_KEY).map(_.convertTo[Int])
+    def initLimit: Option[Int] =
+      noJsNull(settings).get(INIT_LIMIT_KEY).map(_.convertTo[Int])
+    def syncLimit: Option[Int] =
+      noJsNull(settings).get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
+    def dataDir: Option[String] =
+      noJsNull(settings).get(DATA_DIR_KEY).map(_.convertTo[String])
   }
 
   implicit val ZOOKEEPER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
@@ -173,12 +232,14 @@ object ZookeeperApi {
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
     override def tags: Map[String, JsValue] = settings.tags
     def nodeNames: Set[String] = settings.nodeNames
-
-    // TODO remove this duplicated fields after #2191
     def imageName: String = settings.imageName
     def clientPort: Int = settings.clientPort
     def peerPort: Int = settings.peerPort
     def electionPort: Int = settings.electionPort
+    def tickTime: Int = settings.tickTime
+    def initLimit: Int = settings.initLimit
+    def syncLimit: Int = settings.syncLimit
+    def dataDir: String = settings.dataDir
   }
 
   /**

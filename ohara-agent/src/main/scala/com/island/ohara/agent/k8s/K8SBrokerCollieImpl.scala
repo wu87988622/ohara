@@ -31,10 +31,10 @@ private class K8SBrokerCollieImpl(val dataCollie: DataCollie, zkCollie: Zookeepe
   private[this] val LOG = Logger(classOf[K8SBrokerCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
-                                   route: Map[String, String]): Future[Unit] = {
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
@@ -52,6 +52,7 @@ private class K8SBrokerCollieImpl(val dataCollie: DataCollie, zkCollie: Zookeepe
       .envs(containerInfo.environments)
       .name(containerInfo.name)
       .threadPool(executionContext)
+      .args(arguments)
       .create()
       .recover {
         case e: Throwable =>

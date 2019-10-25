@@ -21,10 +21,17 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{Creation, ZookeeperClusterStatus}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.{
+  CLIENT_PORT_DEFINITION,
+  Creation,
+  DATA_DIR_DEFINITION,
+  INIT_LIMIT_DEFINITION,
+  SYNC_LIMIT_DEFINITION,
+  TICK_TIME_DEFINITION,
+  ZookeeperClusterStatus
+}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,8 +42,11 @@ import scala.concurrent.{ExecutionContext, Future}
 trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
 
   // the required files for zookeeper
-  private[agent] val zooCfgPath: String = "/home/ohara/default/conf/zoo.cfg"
-  private[agent] val myIdPath: String = "/home/ohara/default/data/myid"
+  // TODO: remove this hard code (see #2957)
+  private[this] val homeFolder: String = ZookeeperApi.ZOOKEEPER_HOME_FOLDER
+  private[this] val configPath: String = s"$homeFolder/conf/zoo.cfg"
+  private[this] val dataFolder: String = s"$homeFolder/data"
+  private[this] val myIdPath: String = s"$dataFolder/myid"
 
   override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
 
@@ -65,21 +75,26 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
               .sequence(newNodes.zipWithIndex.map {
                 case (node, nodeIndex) =>
                   val hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
-                  val zkServers = newNodes.map(_.name).zipWithIndex.map {
-                    case (nodeName, serverIndex) =>
-                      /**
-                        * this is a long story.
-                        * zookeeper quorum has to bind three ports: client port, peer port and election port
-                        * 1) the client port, by default, is bound on all network interface (0.0.0.0)
-                        * 2) the peer port and election port are bound on the "server name". this config has form:
-                        *    server.$i=$serverName:$peerPort:$electionPort
-                        *    Hence, the $serverName must be equal to hostname of container. Otherwise, the BindException
-                        *    will be thrown. By contrast, the other $serverNames are used to connect (if the quorum is not lead)
-                        *    Hence, the other $serverNames MUST be equal to "node names"
-                        */
-                      val serverName = if (serverIndex == nodeIndex) hostname else nodeName
-                      s"server.$serverIndex=$serverName:${creation.peerPort}:${creation.electionPort}"
-                  }
+                  val zkServers = newNodes
+                    .map(_.name)
+                    .zipWithIndex
+                    .map {
+                      case (nodeName, serverIndex) =>
+                        /**
+                          * this is a long story.
+                          * zookeeper quorum has to bind three ports: client port, peer port and election port
+                          * 1) the client port, by default, is bound on all network interface (0.0.0.0)
+                          * 2) the peer port and election port are bound on the "server name". this config has form:
+                          *    server.$i=$serverName:$peerPort:$electionPort
+                          *    Hence, the $serverName must be equal to hostname of container. Otherwise, the BindException
+                          *    will be thrown. By contrast, the other $serverNames are used to connect (if the quorum is not lead)
+                          *    Hence, the other $serverNames MUST be equal to "node names"
+                          */
+                        val serverName = if (serverIndex == nodeIndex) hostname else nodeName
+                        s"server.$serverIndex=$serverName:${creation.peerPort}:${creation.electionPort}"
+                    }
+                    .toSet
+
                   val containerInfo = ContainerInfo(
                     nodeName = node.name,
                     id = Collie.UNKNOWN,
@@ -108,16 +123,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                         )
                       )
                     )),
-                    environments = creation.settings.map {
-                      case (k, v) =>
-                        k -> (v match {
-                          // the string in json representation has quote in the beginning and end.
-                          // we don't like the quotes since it obstruct us to cast value to pure string.
-                          case JsString(s) => s
-                          // save the json string for all settings
-                          case _ => CommonUtils.toEnvString(v.toString)
-                        })
-                    },
+                    environments = Map.empty,
                     hostname = hostname
                   )
 
@@ -126,21 +132,20 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                     * we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
                     * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
                     */
-                  val configFiles = Map(
-                    zooCfgPath -> {
-                      Seq(
-                        s"${ZookeeperApi.TICK_TIME_KEY}=2000",
-                        s"${ZookeeperApi.INIT_LIMIT_KEY}=10",
-                        s"${ZookeeperApi.SYNC_LIMIT_KEY}=5",
-                        s"${ZookeeperApi.MAX_CLIENT_CNXNS_KEY}=60",
-                        s"${ZookeeperApi.CLIENT_PORT_KEY}=${creation.clientPort}",
-                        s"${ZookeeperApi.DATA_DIR_KEY}=${myIdPath.substring(0, myIdPath.lastIndexOf("/"))}"
-                      ) ++ zkServers
-                    }.mkString(","),
-                    myIdPath -> Seq(nodeIndex.toString).mkString(",")
-                  )
-                  val arguments = configFiles.flatMap { case (k, v) => Seq("--file", s"$k=$v") }.toSeq
-                  doCreator(executionContext, containerInfo.name, containerInfo, node, route, arguments)
+                  val arguments = ArgumentsBuilder()
+                    .file(configPath)
+                    .append(CLIENT_PORT_DEFINITION.key(), creation.clientPort)
+                    .append(TICK_TIME_DEFINITION.key(), creation.tickTime)
+                    .append(INIT_LIMIT_DEFINITION.key(), creation.initLimit)
+                    .append(SYNC_LIMIT_DEFINITION.key(), creation.syncLimit)
+                    .append(DATA_DIR_DEFINITION.key(), creation.dataDir)
+                    .append(zkServers)
+                    .done
+                    .file(myIdPath)
+                    .append(nodeIndex)
+                    .done
+                    .build
+                  doCreator(executionContext, containerInfo, node, route, arguments)
                     .map(_ => Some(containerInfo))
                     .recover {
                       case _: Throwable =>
@@ -175,7 +180,6 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
   protected def prefixKey: String
 
   protected def doCreator(executionContext: ExecutionContext,
-                          containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
                           route: Map[String, String],

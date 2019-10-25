@@ -18,10 +18,11 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo, WorkerClusterStatus}
-import com.island.ohara.client.configurator.v0.{BrokerApi, Definition, WorkerApi}
+import com.island.ohara.client.configurator.v0.{Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -64,27 +65,23 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
             // here we just throw an exception for absent value to ensure everything works as expect
             (existNodes,
              // find the nodes which have not run the services
-             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)),
-             brokerContainers(creation.brokerClusterKey))
+             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)))
         }
         .flatMap {
-          case (existNodes, newNodes, brokerContainers) =>
-            brokerContainers
-              .flatMap(brokerContainers => {
-
-                if (brokerContainers.isEmpty)
-                  throw new IllegalArgumentException(s"broker cluster:${creation.brokerClusterKey} doesn't exist")
-
+          case (existNodes, newNodes) =>
+            dataCollie
+              .value[BrokerClusterInfo](creation.brokerClusterKey)
+              .flatMap(brokerClusterInfo => {
                 if (newNodes.isEmpty) Future.successful(Seq.empty)
                 else {
-                  val brokers = brokerContainers
-                    .map(c => s"${c.nodeName}:${c.environments(BrokerApi.CLIENT_PORT_KEY).toInt}")
+                  val brokers = brokerClusterInfo.nodeNames
+                    .map(nodeName => s"$nodeName:${brokerClusterInfo.clientPort}")
                     .mkString(",")
 
                   val route = resolveHostNames(
                     (existNodes.keys.map(_.hostname)
                       ++ newNodes.map(_.hostname)
-                      ++ brokerContainers.map(_.nodeName)).toSet
+                      ++ brokerClusterInfo.nodeNames).toSet
                     // make sure the worker can connect to configurator for downloading jars
                     // Normally, the jar host name should be resolvable by worker since
                     // we should add the "hostname" to configurator for most cases...

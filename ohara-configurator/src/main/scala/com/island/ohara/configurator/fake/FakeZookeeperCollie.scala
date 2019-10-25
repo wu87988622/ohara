@@ -51,7 +51,6 @@ private[configurator] class FakeZookeeperCollie(node: DataCollie)
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
                                    route: Map[String, String],
