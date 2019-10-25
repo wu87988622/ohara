@@ -56,7 +56,7 @@ RUN yum install -y python2 make \
   && pip install -U sphinx recommonmark sphinx_rtd_theme
 
 # download gradle
-ARG GRADLE_VERSION=5.4.1
+ARG GRADLE_VERSION=5.6.3
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip

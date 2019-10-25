@@ -17,7 +17,7 @@
 FROM openjdk:8u171-jdk-alpine as deps
 MAINTAINER sam cho <sam@is-land.com.tw>
 
-ARG GRADLE_VERSION=5.4.1
+ARG GRADLE_VERSION=5.6.3
 
 
 RUN apk --no-cache add git && rm -rf /tmp/* /var/cache/apk/* && \
