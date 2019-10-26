@@ -16,13 +16,11 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent._
+import com.island.ohara.agent.{BrokerCollie, DataCollie, ServiceCache}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
-import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,7 +44,7 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           .envs(containerInfo.environments)
           .name(containerInfo.name)
           .route(route)
-          .command(arguments.mkString(" "))
+          .arguments(arguments)
           .create()
       )
     } catch {
@@ -67,15 +65,6 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
   override protected def postCreate(clusterStatus: BrokerClusterStatus,
                                     successfulContainers: Seq[ContainerInfo]): Unit =
     clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
-
-  protected override def zookeeperContainers(zkClusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    Future.successful(
-      clusterCache.snapshot
-        .filter(_._1.isInstanceOf[ZookeeperClusterStatus])
-        .find(_._1.key == zkClusterKey)
-        .map(_._2)
-        .getOrElse(throw new NoSuchClusterException(s"zookeeper:$zkClusterKey does not exist")))
 
   override protected def prefixKey: String = PREFIX_KEY
 

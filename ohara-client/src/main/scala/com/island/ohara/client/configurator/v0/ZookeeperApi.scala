@@ -43,7 +43,12 @@ object ZookeeperApi {
   val ZOOKEEPER_HOME_FOLDER: String = "/home/ohara/default"
   private[this] val COUNTER = new AtomicInteger(0)
   private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
-  // export this variable to broker collie
+  val GROUP_DEFINITION: SettingDef =
+    definitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+  val NAME_DEFINITION: SettingDef =
+    definitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+  val TAGS_DEFINITION: SettingDef =
+    definitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
   private[this] val CLIENT_PORT_KEY = "clientPort"
   val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
     .key(CLIENT_PORT_KEY)
@@ -90,13 +95,16 @@ object ZookeeperApi {
     * all public configs
     */
   val DEFINITIONS: Seq[SettingDef] = Seq(
+    GROUP_DEFINITION,
+    NAME_DEFINITION,
+    TAGS_DEFINITION,
     CLIENT_PORT_DEFINITION,
     PEER_PORT_DEFINITION,
     ELECTION_PORT_DEFINITION,
     TICK_TIME_DEFINITION,
     INIT_LIMIT_DEFINITION,
     SYNC_LIMIT_DEFINITION,
-    DATA_DIR_DEFINITION
+    DATA_DIR_DEFINITION,
   )
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {

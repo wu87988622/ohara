@@ -30,18 +30,19 @@ Zookeeper service has many configs which make you spend a lot of time to
 read and set. Ohara provides default values to all configs but open a
 room to enable you to overwrite somethings you do care.
 
-#. settings (**object**) — custom settings. Apart from the following fields, you can add any setting if needed.
+The properties which can be set by user are shown below.
 
-   - the official support fields are listed below
+#. name (**string**) — cluster name
+#. group (**string**) — cluster group
+#. imageName (**string**) — docker image
+#. clientPort (**int**) — broker client port.
+#. electionPort (**int**) — used to select the zk node leader
+#. peerPort (**int**) — port used by internal communication
+#. nodeNames (**array(string)**) — the nodes running the zookeeper process
+#. tags (**object**) — the user defined parameters
 
-     - name (**string**) — cluster name
-     - group (**string**) — cluster group
-     - imageName (**string**) — docker image
-     - clientPort (**int**) — broker client port.
-     - electionPort (**int**) — used to select the zk node leader
-     - peerPort (**int**) — port used by internal communication
-     - nodeNames (**array(string)**) — the nodes running the zookeeper process
-     - tags (**object**) — the user defined parameters
+
+The following information are updated by Ohara.
 
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of zookeeper
 #. state (**option(string)**) — only started/failed zookeeper has state (RUNNING or DEAD)

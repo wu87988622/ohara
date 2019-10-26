@@ -55,16 +55,16 @@ The properties which can be set by user are shown below.
                                 define the free ports for your worker cluster so as to make Configurator pre-bind
                                 the ports on your worker cluster. Otherwise, your connectors is disable to build service
                                 on the port of worker cluster and be connected by external node.
-#. groupId (**string**) — the id of worker stored in broker cluster
-#. configTopicName (**string**) — a internal topic used to store connector configuration
-#. configTopicReplications (**int**) — number of replications for config topic
-#. offsetTopicName (**string**) — a internal topic used to store connector offset
-#. offsetTopicPartitions (**int**) — number of partitions for offset topic
-#. offsetTopicReplications (**int**) — number of replications for offset topic
-#. statusTopicName (**string**) — a internal topic used to store connector status
-#. statusTopicPartitions (**int**) — number of partitions for status topic
-#. statusTopicReplications (**int**) — number of replications for status topic
-#. jarKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
+#. group.id (**string**) — the id of worker stored in broker cluster
+#. config.storage.topic (**string**) — a internal topic used to store connector configuration
+#. config.storage.replication.factor (**int**) — number of replications for config topic
+#. offset.storage.topic (**string**) — a internal topic used to store connector offset
+#. offset.storage.partitions (**int**) — number of partitions for offset topic
+#. offset.storage.replication.factor (**int**) — number of replications for offset topic
+#. status.storage.topic (**string**) — a internal topic used to store connector status
+#. status.storage.partitions (**int**) — number of partitions for status topic
+#. status.storage.replication.factor (**int**) — number of replications for status topic
+#. fileKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
                                  You can require worker cluster to load the jars stored in ohara if you want to run custom connectors
                                  on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. Noted: the response
                                  will replace this by :ref:`JarInfo <rest-files>`.
@@ -75,7 +75,7 @@ The following information are updated by Ohara.
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of worker
 
     .. note::
-       The groupId, configTopicName, offsetTopicName and statusTopicName
+       The group.id, config.storage.topic, offset.storage.topic and status.storage.topic
        must be unique in broker cluster. Don’t reuse them in same broker
        cluster. Dispatching above unique resources to two worker cluster
        will pollute the data. Of course, ohara do a quick failure for this
@@ -92,7 +92,7 @@ The following information are updated by Ohara.
     .. code-block:: json
 
        {
-         "connectors": [
+         "connectorDefinitions": [
            {
              "className": "xxx",
              "definitions": [
@@ -169,15 +169,15 @@ Example Request
       "jmxPort": 12346,
       "freePorts": [],
       "brokerClusterKey": "preCreatedBkCluster",
-      "groupId": "abcdefg",
-      "configTopicName": "configTopic",
-      "configTopicReplications": 1,
-      "offsetTopicName": "offsetTopic",
-      "offsetTopicReplications": 1,
-      "offsetTopicPartitions": 1,
-      "statusTopicName": "statusTopic",
-      "statusTopicReplications": 1,
-      "statusTopicPartitions": 1,
+      "group.id": "abcdefg",
+      "config.storage.topic": "configTopic",
+      "config.storage.replication.factor": 1,
+      "offset.storage.topic": "offsetTopic",
+      "offset.storage.replication.factor": 1,
+      "offset.storage.partitions": 1,
+      "status.storage.topic": "statusTopic",
+      "status.storage.replication.factor": 1,
+      "status.storage.partitions": 1,
       "nodeNames": [
         "node00"
       ]
@@ -188,30 +188,30 @@ Example Response
 
     {
       "lastModified": 1567177024356,
-      "connectors": [],
+      "connectorDefinitions": [],
       "aliveNodes": [],
       "settings": {
-        "statusTopicName": "statusTopic",
+        "status.storage.topic": "statusTopic",
         "name": "wk00",
         "group": "default",
-        "offsetTopicPartitions": 1,
+        "offset.storage.partitions": 1,
         "brokerClusterKey": {
           "group": "default",
           "name": "preCreatedBkCluster"
         },
         "tags": {},
         "jarInfos": [],
-        "offsetTopicName": "offsetTopic",
-        "groupId": "abcdefg",
-        "statusTopicReplications": 1,
-        "offsetTopicReplications": 1,
-        "configTopicReplications": 1,
-        "statusTopicPartitions": 1,
-        "configTopicName": "configTopic",
+        "offset.storage.topic": "offsetTopic",
+        "group.id": "abcdefg",
+        "status.storage.replication.factor": 1,
+        "offset.storage.replication.factor": 1,
+        "config.storage.replication.factor": 1,
+        "status.storage.partitions": 1,
+        "config.storage.topic": "configTopic",
         "jmxPort": 12346,
         "clientPort": 12345,
         "freePorts": [],
-        "jarKeys": [],
+        "fileKeys": [],
         "nodeNames": [
           "node00"
         ]
@@ -239,30 +239,30 @@ Example Response
 
     {
       "lastModified": 1567176877946,
-      "connectors": [],
+      "connectorDefinitions": [],
       "aliveNodes": [],
       "settings": {
-        "statusTopicName": "a6c5018531",
+        "status.storage.topic": "a6c5018531",
         "name": "wk",
         "group": "default",
-        "offsetTopicPartitions": 1,
+        "offset.storage.partitions": 1,
         "brokerClusterKey": {
           "group": "default",
           "name": "preCreatedBkCluster"
         },
         "tags": {},
         "jarInfos": [],
-        "offsetTopicName": "6ec3cd5f1b",
-        "groupId": "979a8c0c18",
-        "statusTopicReplications": 1,
-        "offsetTopicReplications": 1,
-        "configTopicReplications": 1,
-        "statusTopicPartitions": 1,
-        "configTopicName": "4fdfdabb51",
+        "offset.storage.topic": "6ec3cd5f1b",
+        "group.id": "979a8c0c18",
+        "status.storage.replication.factor": 1,
+        "offset.storage.replication.factor": 1,
+        "config.storage.replication.factor": 1,
+        "status.storage.partitions": 1,
+        "config.storage.topic": "4fdfdabb51",
         "jmxPort": 37116,
         "clientPort": 37634,
         "freePorts": [],
-        "jarKeys": [],
+        "fileKeys": [],
         "nodeNames": [
           "node10"
         ]
@@ -291,29 +291,29 @@ Example Response
     [
       {
         "lastModified": 1567177024356,
-        "connectors": [],
+        "connectorDefinitions": [],
         "aliveNodes": [],
         "settings": {
-          "statusTopicName": "statusTopic",
+          "status.storage.topic": "statusTopic",
           "name": "wk00",
-          "offsetTopicPartitions": 1,
+          "offset.storage.partitions": 1,
           "brokerClusterKey": {
             "group": "default",
             "name": "preCreatedBkCluster"
           },
           "tags": {},
           "jarInfos": [],
-          "offsetTopicName": "offsetTopic",
-            "groupId": "abcdefg",
-          "statusTopicReplications": 1,
-          "offsetTopicReplications": 1,
-          "configTopicReplications": 1,
-          "statusTopicPartitions": 1,
-          "configTopicName": "configTopic",
+          "offset.storage.topic": "offsetTopic",
+            "group.id": "abcdefg",
+          "status.storage.replication.factor": 1,
+          "offset.storage.replication.factor": 1,
+          "config.storage.replication.factor": 1,
+          "status.storage.partitions": 1,
+          "config.storage.topic": "configTopic",
           "jmxPort": 12346,
           "clientPort": 12345,
           "freePorts": [],
-          "jarKeys": [],
+          "fileKeys": [],
           "nodeNames": [
             "node00"
           ],
@@ -340,15 +340,15 @@ Example Request
         "group": "default",
         "name": "preCreatedBkCluster"
       },
-      "groupId": "abcdefg",
-      "configTopicName": "configTopic",
-      "configTopicReplications": 1,
-      "offsetTopicName": "offsetTopic",
-      "offsetTopicReplications": 1,
-      "offsetTopicPartitions": 1,
-      "statusTopicName": "statusTopic",
-      "statusTopicReplications": 1,
-      "statusTopicPartitions": 1,
+      "group.id": "abcdefg",
+      "config.storage.topic": "configTopic",
+      "config.storage.replication.factor": 1,
+      "offset.storage.topic": "offsetTopic",
+      "offset.storage.replication.factor": 1,
+      "offset.storage.partitions": 1,
+      "status.storage.topic": "statusTopic",
+      "status.storage.replication.factor": 1,
+      "status.storage.partitions": 1,
       "nodeNames": [
         "node00"
       ]
@@ -359,30 +359,30 @@ Example Response
 
     {
       "lastModified": 1567177024356,
-      "connectors": [],
+      "connectorDefinitions": [],
       "aliveNodes": [],
       "settings": {
-        "statusTopicName": "statusTopic",
+        "status.storage.topic": "statusTopic",
         "name": "wk00",
         "group": "default",
-        "offsetTopicPartitions": 1,
+        "offset.storage.partitions": 1,
         "brokerClusterKey": {
           "group": "default",
           "name": "preCreatedBkCluster"
         },
         "tags": {},
         "jarInfos": [],
-        "offsetTopicName": "offsetTopic",
-        "groupId": "abcdefg",
-        "statusTopicReplications": 1,
-        "offsetTopicReplications": 1,
-        "configTopicReplications": 1,
-        "statusTopicPartitions": 1,
-        "configTopicName": "configTopic",
+        "offset.storage.topic": "offsetTopic",
+        "group.id": "abcdefg",
+        "status.storage.replication.factor": 1,
+        "offset.storage.replication.factor": 1,
+        "config.storage.replication.factor": 1,
+        "status.storage.partitions": 1,
+        "config.storage.topic": "configTopic",
         "jmxPort": 12346,
         "clientPort": 12345,
         "freePorts": [],
-        "jarKeys": [],
+        "fileKeys": [],
         "nodeNames": [
           "node00"
         ]
@@ -420,7 +420,7 @@ Example Response
 
       {
          "lastModified":1567178933996,
-         "connectors":[
+         "connectorDefinitions":[
             {
                "className":"com.island.ohara.connector.console.ConsoleSink",
                "definitions":[
@@ -705,10 +705,10 @@ Example Response
          "aliveNodes":[
          ],
          "settings":{
-            "statusTopicName":"d28ca7c875",
+            "status.storage.topic":"d28ca7c875",
             "name":"wk",
             "group": "default",
-            "offsetTopicPartitions":1,
+            "offset.storage.partitions":1,
             "brokerClusterKey": {
               "group": "default",
               "name": "preCreatedBkCluster"
@@ -716,18 +716,18 @@ Example Response
             "tags":{
 
             },
-            "offsetTopicName":"f1f6ae812c",
+            "offset.storage.topic":"f1f6ae812c",
             "imageName":"oharastream/connect-worker:0.8.0-SNAPSHOT",
-            "groupId":"16f3408f84",
-            "statusTopicReplications":1,
-            "offsetTopicReplications":1,
-            "configTopicReplications":1,
-            "statusTopicPartitions":1,
-            "configTopicName":"4279f8a236",
+            "group.id":"16f3408f84",
+            "status.storage.replication.factor":1,
+            "offset.storage.replication.factor":1,
+            "config.storage.replication.factor":1,
+            "status.storage.partitions":1,
+            "config.storage.topic":"4279f8a236",
             "jmxPort":33983,
             "freePorts": [],
             "clientPort":34601,
-            "jarKeys":[
+            "fileKeys":[
 
             ],
             "nodeNames":[

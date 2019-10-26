@@ -51,122 +51,116 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
     */
   override def creator: BrokerCollie.ClusterCreator = (executionContext, creation) => {
     implicit val exec: ExecutionContext = executionContext
-    clusters().flatMap(clusters => {
-      clusters
-        .find(_._1.key == creation.key)
-        .map(_._2)
-        .map(containers =>
+
+    val resolveRequiredInfos = for {
+      allNodes <- dataCollie.valuesByNames[Node](creation.nodeNames)
+      existentNodes <- clusters().map(_.find(_._1.key == creation.key)).flatMap {
+        case Some(value) =>
           dataCollie
-            .valuesByNames[Node](containers.map(_.nodeName).toSet)
-            .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
-        .getOrElse(Future.successful(Map.empty))
-        .flatMap(existNodes => dataCollie.valuesByNames[Node](creation.nodeNames).map((existNodes, _)))
-        .map {
-          case (existNodes, nodes) =>
-            (existNodes,
-             // find the nodes which have not run the services
-             nodes.filterNot(n => existNodes.exists(_._1.hostname == n.hostname)))
-        }
-        .flatMap {
-          case (existNodes, newNodes) =>
-            dataCollie
-              .value[ZookeeperClusterInfo](creation.zookeeperClusterKey)
-              .flatMap(zookeeperClusterInfo => {
-                if (newNodes.isEmpty) Future.successful(Seq.empty)
-                else {
-                  val zookeepers = zookeeperClusterInfo.nodeNames
-                    .map(nodeName => s"$nodeName:${zookeeperClusterInfo.clientPort}")
-                    .mkString(",")
+            .valuesByNames[Node](value._1.aliveNodes)
+            .map(nodes => nodes.map(node => node -> value._2.find(_.nodeName == node.hostname).get).toMap)
+        case None => Future.successful(Map.empty[Node, ContainerInfo])
+      }
+      zookeeperClusterInfo <- dataCollie.value[ZookeeperClusterInfo](creation.zookeeperClusterKey)
+    } yield
+      (existentNodes,
+       allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
+       zookeeperClusterInfo)
 
-                  val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes
-                    .map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet)
-                  existNodes.foreach {
-                    case (node, container) => hookOfNewRoute(node, container, route)
-                  }
+    resolveRequiredInfos.flatMap {
+      case (existentNodes, newNodes, zookeeperClusterInfo) =>
+        val successfulContainersFuture =
+          if (newNodes.isEmpty) Future.successful(Seq.empty)
+          else {
+            val zookeepers = zookeeperClusterInfo.nodeNames
+              .map(nodeName => s"$nodeName:${zookeeperClusterInfo.clientPort}")
+              .mkString(",")
 
-                  // ssh connection is slow so we submit request by multi-thread
-                  Future.sequence(newNodes.map {
-                    newNode =>
-                      val containerInfo = ContainerInfo(
-                        nodeName = newNode.name,
-                        id = Collie.UNKNOWN,
-                        imageName = creation.imageName,
-                        created = Collie.UNKNOWN,
-                        // this fake container will be cached before refreshing cache so we make it running.
-                        // other, it will be filtered later ...
-                        state = ContainerState.RUNNING.name,
-                        kind = Collie.UNKNOWN,
-                        name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
-                        size = Collie.UNKNOWN,
-                        portMappings = Seq(PortMapping(
-                          hostIp = Collie.UNKNOWN,
-                          portPairs = Seq(
-                            PortPair(
-                              hostPort = creation.clientPort,
-                              containerPort = creation.clientPort
-                            ),
-                            PortPair(
-                              hostPort = creation.jmxPort,
-                              containerPort = creation.jmxPort
-                            )
-                          )
-                        )),
-                        environments = Map(
-                          "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
-                            s" -Dcom.sun.management.jmxremote.authenticate=false" +
-                            s" -Dcom.sun.management.jmxremote.ssl=false" +
-                            s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
-                            s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
-                            s" -Djava.rmi.server.hostname=${newNode.hostname}")
-                        ),
-                        hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+            val route = resolveHostNames(
+              (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet)
+            existentNodes.foreach {
+              case (node, container) => hookOfNewRoute(node, container, route)
+            }
+
+            // ssh connection is slow so we submit request by multi-thread
+            Future.sequence(newNodes.map { newNode =>
+              val containerInfo = ContainerInfo(
+                nodeName = newNode.name,
+                id = Collie.UNKNOWN,
+                imageName = creation.imageName,
+                created = Collie.UNKNOWN,
+                // this fake container will be cached before refreshing cache so we make it running.
+                // other, it will be filtered later ...
+                state = ContainerState.RUNNING.name,
+                kind = Collie.UNKNOWN,
+                name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                size = Collie.UNKNOWN,
+                portMappings = Seq(
+                  PortMapping(
+                    hostIp = Collie.UNKNOWN,
+                    portPairs = Seq(
+                      PortPair(
+                        hostPort = creation.clientPort,
+                        containerPort = creation.clientPort
+                      ),
+                      PortPair(
+                        hostPort = creation.jmxPort,
+                        containerPort = creation.jmxPort
                       )
+                    )
+                  )),
+                environments = Map(
+                  "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
+                    s" -Dcom.sun.management.jmxremote.authenticate=false" +
+                    s" -Dcom.sun.management.jmxremote.ssl=false" +
+                    s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
+                    s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
+                    s" -Djava.rmi.server.hostname=${newNode.hostname}")
+                ),
+                hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+              )
 
-                      /**
-                        * Construct the required configs for current container
-                        * we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
-                        * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
-                        */
-                      val arguments = ArgumentsBuilder()
-                        .file(configPath)
-                        .append("zookeeper.connect", zookeepers)
-                        .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.logDirs)
-                        .append(BrokerApi.NUMBER_OF_PARTITIONS_DEFINITION.key(), creation.numberOfPartitions)
-                        .append(BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
-                                creation.numberOfReplications4OffsetsTopic)
-                        .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_DEFINITION.key(), creation.numberOfNetworkThreads)
-                        .append(BrokerApi.NUMBER_OF_IO_THREADS_DEFINITION.key(), creation.numberOfIoThreads)
-                        .append(s"listeners=PLAINTEXT://:${creation.clientPort}")
-                        .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
-                        .done
-                        .build
-                      doCreator(executionContext, containerInfo, newNode, route, arguments)
-                        .map(_ => Some(containerInfo))
-                        .recover {
-                          case _: Throwable =>
-                            None
-                        }
-                  })
+              /**
+                * Construct the required configs for current container
+                * we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
+                * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
+                */
+              val arguments = ArgumentsBuilder()
+                .file(configPath)
+                .append("zookeeper.connect", zookeepers)
+                .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.logDirs)
+                .append(BrokerApi.NUMBER_OF_PARTITIONS_DEFINITION.key(), creation.numberOfPartitions)
+                .append(BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
+                        creation.numberOfReplications4OffsetsTopic)
+                .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_DEFINITION.key(), creation.numberOfNetworkThreads)
+                .append(BrokerApi.NUMBER_OF_IO_THREADS_DEFINITION.key(), creation.numberOfIoThreads)
+                .append(s"listeners=PLAINTEXT://:${creation.clientPort}")
+                .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
+                .done
+                .build
+              doCreator(executionContext, containerInfo, newNode, route, arguments)
+                .map(_ => Some(containerInfo))
+                .recover {
+                  case _: Throwable =>
+                    None
                 }
-              })
-              .map(_.flatten.toSeq)
-              .map {
-                successfulContainers =>
-                  val aliveContainers = existNodes.values.toSeq ++ successfulContainers
-                  val state = toClusterState(aliveContainers).map(_.name)
-                  val status = new BrokerClusterStatus(
-                    group = creation.group,
-                    name = creation.name,
-                    // TODO: we should check the supported arguments by the running broker images
-                    topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
-                    aliveNodes = aliveContainers.map(_.nodeName).toSet,
-                    state = state,
-                    error = None
-                  )
-                  postCreate(status, successfulContainers)
-              }
+            })
+          }
+        successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
+          val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
+          val state = toClusterState(aliveContainers).map(_.name)
+          val status = new BrokerClusterStatus(
+            group = creation.group,
+            name = creation.name,
+            // TODO: we should check the supported arguments by the running broker images
+            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+            aliveNodes = aliveContainers.map(_.nodeName).toSet,
+            state = state,
+            error = None
+          )
+          postCreate(status, successfulContainers)
         }
-    })
+    }
   }
 
   protected def dataCollie: DataCollie
@@ -243,16 +237,6 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
         // TODO how could we fetch the error?...by Sam
         error = None
       ))
-
-  /**
-    * In creation progress, broker has to check the existence of zookeeper and then fetch something important from zookeeper
-    * containers.
-    * @param zkClusterKey zookeeper cluster key
-    * @param executionContext execution context
-    * @return
-    */
-  protected def zookeeperContainers(zkClusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 
   /**
     * there is new route to the node. the sub class can update the running container to apply new route.

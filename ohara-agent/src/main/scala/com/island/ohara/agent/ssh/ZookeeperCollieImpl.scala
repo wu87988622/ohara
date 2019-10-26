@@ -46,7 +46,7 @@ private class ZookeeperCollieImpl(val dataCollie: DataCollie,
             .envs(containerInfo.environments)
             .name(containerInfo.name)
             .route(route)
-            .command(arguments.mkString(" "))
+            .arguments(arguments)
             .create()
         }
       )

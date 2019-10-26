@@ -16,12 +16,11 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, DataCollie, StreamCollie}
+import com.island.ohara.agent.{BrokerCollie, DataCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
 
@@ -74,12 +73,4 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
 
   override protected def prefixKey: String = PREFIX_KEY
 
-  override protected def brokerContainers(clusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    bkCollie
-      .clusters()
-      .map(
-        _.find(_._1.key == clusterKey)
-          .map(_._2)
-          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterKey does not exist")))
 }

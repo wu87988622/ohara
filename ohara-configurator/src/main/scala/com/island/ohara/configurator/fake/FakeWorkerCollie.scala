@@ -18,12 +18,11 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{ServiceState, NoSuchClusterException, DataCollie, WorkerCollie}
+import com.island.ohara.agent.{DataCollie, NoSuchClusterException, ServiceState, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
@@ -49,7 +48,7 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
         new WorkerClusterStatus(
           group = creation.group,
           name = creation.name,
-          connectors = FakeWorkerClient.localConnectorDefinitions,
+          connectorDefinitions = FakeWorkerClient.localConnectorDefinitions,
           aliveNodes = creation.nodeNames ++ clusterCache.asScala
             .find(_._1.key == creation.key)
             .map(_._2.map(_.nodeName))
@@ -75,15 +74,11 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
     }
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] =
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
-
-  override protected def brokerContainers(classKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support brokerClusters function")
 
   override protected def dataCollie: DataCollie = node
 

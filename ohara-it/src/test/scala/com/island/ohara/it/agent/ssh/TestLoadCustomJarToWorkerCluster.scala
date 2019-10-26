@@ -117,7 +117,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       wkApi.request
         .key(nameHolder.generateClusterKey())
         .brokerClusterKey(bkCluster.key)
-        .jarKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
+        .fileKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
         .nodeName(nodes.head.name)
         .create())
     result(wkApi.start(wkCluster.key))
@@ -141,7 +141,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       )
     }
     await(() => {
-      val connectors = result(wkApi.get(wkCluster.key)).connectors
+      val connectors = result(wkApi.get(wkCluster.key)).connectorDefinitions
       connectors.map(_.className).contains(classOf[DumbSinkConnector].getName) &&
       connectors.map(_.className).contains(classOf[DumbSourceConnector].getName)
     })

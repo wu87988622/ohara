@@ -20,7 +20,6 @@ import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.setting.ObjectKey
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,10 +60,6 @@ private class K8SBrokerCollieImpl(val dataCollie: DataCollie, zkCollie: Zookeepe
       }
       .map(_ => Unit)
   }
-
-  protected override def zookeeperContainers(zkClusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    zkCollie.cluster(zkClusterKey).map(_._2)
 
   /**
     * Implement prefix name for the platform

@@ -544,7 +544,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       // [AFTER] ServiceCollieImpl use bridge network now
       container.portMappings.head.portPairs.size shouldBe 2
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
-      container.environments.exists(_._2 == clientPort.toString) shouldBe true
     }
     val logs = result(wk_logs(clusterKey))
     logs.size shouldBe 1

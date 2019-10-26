@@ -18,13 +18,12 @@ package com.island.ohara.configurator.fake
 
 import java.net.URL
 
-import com.island.ohara.agent.{ServiceState, DataCollie, StreamCollie}
+import com.island.ohara.agent.{DataCollie, ServiceState, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
 import com.island.ohara.metrics.basic.{Counter, CounterMBean}
@@ -96,7 +95,4 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
       // a serializable collection
     }
 
-  override protected def brokerContainers(clusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    throw new UnsupportedOperationException
 }

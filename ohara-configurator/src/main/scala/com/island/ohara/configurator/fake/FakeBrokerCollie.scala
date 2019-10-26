@@ -24,7 +24,6 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.VisibleForTesting
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
 
@@ -82,10 +81,6 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
                                    route: Map[String, String],
                                    arguments: Seq[String]): Future[Unit] =
     throw new UnsupportedOperationException("Fake broker collie doesn't support doCreator function")
-
-  protected override def zookeeperContainers(zkClusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    throw new UnsupportedOperationException("Fake broker doesn't support zookeeperCluster function")
 
   override protected def dataCollie: DataCollie = node
 

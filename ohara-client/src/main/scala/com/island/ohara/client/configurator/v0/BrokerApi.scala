@@ -44,6 +44,12 @@ object BrokerApi {
   val BROKER_HOME_FOLDER: String = "/home/ohara/default"
   private[this] val COUNTER = new AtomicInteger(0)
   private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
+  val GROUP_DEFINITION: SettingDef =
+    definitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+  val NAME_DEFINITION: SettingDef =
+    definitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+  val TAGS_DEFINITION: SettingDef =
+    definitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
   private[this] val CLIENT_PORT_KEY: String = "clientPort"
   val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
     .key(CLIENT_PORT_KEY)
@@ -96,6 +102,9 @@ object BrokerApi {
     * all public configs
     */
   val DEFINITIONS: Seq[SettingDef] = Seq(
+    GROUP_DEFINITION,
+    NAME_DEFINITION,
+    TAGS_DEFINITION,
     CLIENT_PORT_DEFINITION,
     LOG_DIRS_DEFINITION,
     NUMBER_OF_PARTITIONS_DEFINITION,

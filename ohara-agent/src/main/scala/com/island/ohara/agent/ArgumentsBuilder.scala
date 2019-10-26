@@ -50,6 +50,8 @@ object ArgumentsBuilder {
       this.props ++= props
       this
     }
+    def append(key: String, value: Boolean): FileAppender = append(s"$key=$value")
+    def append(key: String, value: Short): FileAppender = append(s"$key=$value")
     def append(key: String, value: Int): FileAppender = append(s"$key=$value")
     def append(key: String, value: String): FileAppender = append(s"$key=$value")
     def append(key: String, value: JsValue): FileAppender = append(

@@ -68,7 +68,7 @@ class TestContainerCreator extends OharaTest with Matchers {
   def nullCommand(): Unit = an[NullPointerException] should be thrownBy fake().command(null)
 
   @Test
-  def emptyCommand(): Unit = an[IllegalArgumentException] should be thrownBy fake().command("")
+  def emptyCommand(): Unit = fake().command("")
 
   @Test
   def nullPorts(): Unit = an[NullPointerException] should be thrownBy fake().portMappings(null)

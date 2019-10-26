@@ -16,11 +16,10 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent._
+import com.island.ohara.agent.{BrokerCollie, DataCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
-import com.island.ohara.common.setting.ObjectKey
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,16 +30,17 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] = {
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
       .imageName(containerInfo.imageName)
       .portMappings(
         containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+
       /**
         * the hostname of k8s/docker container has strict limit. Fortunately, we are aware of this issue and the hostname
         * passed to this method is legal to k8s/docker. Hence, assigning the hostname is very safe to you :)
@@ -51,6 +51,7 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
       .name(containerInfo.name)
+      .args(arguments)
       .threadPool(executionContext)
       .create()
       .recover {
@@ -60,15 +61,6 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       }
       .map(_ => Unit)
   }
-
-  override protected def brokerContainers(classKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    bkCollie
-      .clusters()
-      .map(
-        _.find(_._1.key == classKey)
-          .map(_._2)
-          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey does not exist")))
 
   /**
     * Implement prefix name for paltform

@@ -61,113 +61,129 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
     */
   override def creator: ZookeeperCollie.ClusterCreator = (executionContext, creation) => {
     implicit val exec: ExecutionContext = executionContext
-    clusters().flatMap(clusters => {
-      if (clusters.keys.exists(_.key == creation.key))
-        Future.failed(
-          new UnsupportedOperationException(s"zookeeper collie doesn't support to add node to a running cluster"))
-      else
-        dataCollie.valuesByNames[Node](creation.nodeNames).flatMap {
-          newNodes =>
+
+    val resolveRequiredInfos = for {
+      allNodes <- dataCollie.valuesByNames[Node](creation.nodeNames)
+      existentNodes <- clusters().map(_.find(_._1.key == creation.key)).flatMap {
+        case Some(value) =>
+          dataCollie
+            .valuesByNames[Node](value._1.aliveNodes)
+            .map(nodes => nodes.map(node => node -> value._2.find(_.nodeName == node.hostname).get).toMap)
+        case None => Future.successful(Map.empty[Node, ContainerInfo])
+      }
+    } yield (existentNodes, allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)))
+
+    resolveRequiredInfos
+      .map {
+        case (existentNodes, newNodes) =>
+          if (existentNodes.nonEmpty)
+            throw new UnsupportedOperationException(
+              s"zookeeper collie doesn't support to add node to a running cluster")
+          else newNodes
+      }
+      .flatMap { newNodes =>
+        val successfulContainersFuture =
+          if (newNodes.isEmpty) Future.successful(Seq.empty)
+          else {
             // add route in order to make zk node can connect to each other.
             val route: Map[String, String] = newNodes.map(node => node.name -> CommonUtils.address(node.name)).toMap
             // ssh connection is slow so we submit request by multi-thread
-            Future
-              .sequence(newNodes.zipWithIndex.map {
-                case (node, nodeIndex) =>
-                  val hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
-                  val zkServers = newNodes
-                    .map(_.name)
-                    .zipWithIndex
-                    .map {
-                      case (nodeName, serverIndex) =>
-                        /**
-                          * this is a long story.
-                          * zookeeper quorum has to bind three ports: client port, peer port and election port
-                          * 1) the client port, by default, is bound on all network interface (0.0.0.0)
-                          * 2) the peer port and election port are bound on the "server name". this config has form:
-                          *    server.$i=$serverName:$peerPort:$electionPort
-                          *    Hence, the $serverName must be equal to hostname of container. Otherwise, the BindException
-                          *    will be thrown. By contrast, the other $serverNames are used to connect (if the quorum is not lead)
-                          *    Hence, the other $serverNames MUST be equal to "node names"
-                          */
-                        val serverName = if (serverIndex == nodeIndex) hostname else nodeName
-                        s"server.$serverIndex=$serverName:${creation.peerPort}:${creation.electionPort}"
-                    }
-                    .toSet
+            Future.sequence(newNodes.zipWithIndex.map {
+              case (node, nodeIndex) =>
+                val hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                val zkServers = newNodes
+                  .map(_.name)
+                  .zipWithIndex
+                  .map {
+                    case (nodeName, serverIndex) =>
+                      /**
+                        * this is a long story.
+                        * zookeeper quorum has to bind three ports: client port, peer port and election port
+                        * 1) the client port, by default, is bound on all network interface (0.0.0.0)
+                        * 2) the peer port and election port are bound on the "server name". this config has form:
+                        *    server.$i=$serverName:$peerPort:$electionPort
+                        *    Hence, the $serverName must be equal to hostname of container. Otherwise, the BindException
+                        *    will be thrown. By contrast, the other $serverNames are used to connect (if the quorum is not lead)
+                        *    Hence, the other $serverNames MUST be equal to "node names"
+                        */
+                      val serverName = if (serverIndex == nodeIndex) hostname else nodeName
+                      s"server.$serverIndex=$serverName:${creation.peerPort}:${creation.electionPort}"
+                  }
+                  .toSet
 
-                  val containerInfo = ContainerInfo(
-                    nodeName = node.name,
-                    id = Collie.UNKNOWN,
-                    imageName = creation.imageName,
-                    created = Collie.UNKNOWN,
-                    // this fake container will be cached before refreshing cache so we make it running.
-                    // other, it will be filtered later ...
-                    state = ContainerState.RUNNING.name,
-                    kind = Collie.UNKNOWN,
-                    name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
-                    size = Collie.UNKNOWN,
-                    portMappings = Seq(PortMapping(
-                      hostIp = Collie.UNKNOWN,
-                      portPairs = Seq(
-                        PortPair(
-                          hostPort = creation.clientPort,
-                          containerPort = creation.clientPort
-                        ),
-                        PortPair(
-                          hostPort = creation.peerPort,
-                          containerPort = creation.peerPort
-                        ),
-                        PortPair(
-                          hostPort = creation.electionPort,
-                          containerPort = creation.electionPort
-                        )
+                val containerInfo = ContainerInfo(
+                  nodeName = node.name,
+                  id = Collie.UNKNOWN,
+                  imageName = creation.imageName,
+                  created = Collie.UNKNOWN,
+                  // this fake container will be cached before refreshing cache so we make it running.
+                  // other, it will be filtered later ...
+                  state = ContainerState.RUNNING.name,
+                  kind = Collie.UNKNOWN,
+                  name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                  size = Collie.UNKNOWN,
+                  portMappings = Seq(PortMapping(
+                    hostIp = Collie.UNKNOWN,
+                    portPairs = Seq(
+                      PortPair(
+                        hostPort = creation.clientPort,
+                        containerPort = creation.clientPort
+                      ),
+                      PortPair(
+                        hostPort = creation.peerPort,
+                        containerPort = creation.peerPort
+                      ),
+                      PortPair(
+                        hostPort = creation.electionPort,
+                        containerPort = creation.electionPort
                       )
-                    )),
-                    environments = Map.empty,
-                    hostname = hostname
-                  )
-
-                  /**
-                    * Construct the required configs for current container
-                    * we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
-                    * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
-                    */
-                  val arguments = ArgumentsBuilder()
-                    .file(configPath)
-                    .append(CLIENT_PORT_DEFINITION.key(), creation.clientPort)
-                    .append(TICK_TIME_DEFINITION.key(), creation.tickTime)
-                    .append(INIT_LIMIT_DEFINITION.key(), creation.initLimit)
-                    .append(SYNC_LIMIT_DEFINITION.key(), creation.syncLimit)
-                    .append(DATA_DIR_DEFINITION.key(), creation.dataDir)
-                    .append(zkServers)
-                    .done
-                    .file(myIdPath)
-                    .append(nodeIndex)
-                    .done
-                    .build
-                  doCreator(executionContext, containerInfo, node, route, arguments)
-                    .map(_ => Some(containerInfo))
-                    .recover {
-                      case _: Throwable =>
-                        None
-                    }
-              })
-              .map(_.flatten.toSeq)
-              .map { aliveContainers =>
-                val state = toClusterState(aliveContainers).map(_.name)
-                postCreate(
-                  new ZookeeperClusterStatus(
-                    group = creation.group,
-                    name = creation.name,
-                    aliveNodes = aliveContainers.map(_.nodeName).toSet,
-                    state = state,
-                    error = None
-                  ),
-                  aliveContainers
+                    )
+                  )),
+                  environments = Map.empty,
+                  hostname = hostname
                 )
-              }
+
+                /**
+                  * Construct the required configs for current container
+                  * we will loop all the files in FILE_DATA of arguments : --file A --file B --file C
+                  * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
+                  */
+                val arguments = ArgumentsBuilder()
+                  .file(configPath)
+                  .append(CLIENT_PORT_DEFINITION.key(), creation.clientPort)
+                  .append(TICK_TIME_DEFINITION.key(), creation.tickTime)
+                  .append(INIT_LIMIT_DEFINITION.key(), creation.initLimit)
+                  .append(SYNC_LIMIT_DEFINITION.key(), creation.syncLimit)
+                  .append(DATA_DIR_DEFINITION.key(), creation.dataDir)
+                  .append(zkServers)
+                  .done
+                  .file(myIdPath)
+                  .append(nodeIndex)
+                  .done
+                  .build
+                doCreator(executionContext, containerInfo, node, route, arguments)
+                  .map(_ => Some(containerInfo))
+                  .recover {
+                    case _: Throwable =>
+                      None
+                  }
+            })
+          }
+
+        successfulContainersFuture.map(_.flatten.toSeq).map { aliveContainers =>
+          val state = toClusterState(aliveContainers).map(_.name)
+          postCreate(
+            new ZookeeperClusterStatus(
+              group = creation.group,
+              name = creation.name,
+              aliveNodes = aliveContainers.map(_.nodeName).toSet,
+              state = state,
+              error = None
+            ),
+            aliveContainers
+          )
         }
-    })
+      }
   }
 
   protected def dataCollie: DataCollie

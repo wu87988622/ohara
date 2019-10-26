@@ -423,14 +423,14 @@ class TestWorkerRoute extends OharaTest with Matchers {
   @Test
   def testConnectorDefinitions(): Unit = {
     FakeWorkerClient.localConnectorDefinitions.size should not be 0
-    result(workerApi.list()).foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
+    result(workerApi.list()).foreach(_.connectorDefinitions shouldBe FakeWorkerClient.localConnectorDefinitions)
   }
 
   @Test
   def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
     val configurator = Configurator.builder.fake(numberOfCluster, 1).build()
     try result(configurator.serviceCollie.workerCollie.clusters()).keys
-      .foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
+      .foreach(_.connectorDefinitions shouldBe FakeWorkerClient.localConnectorDefinitions)
     finally configurator.close()
   }
 
@@ -447,19 +447,19 @@ class TestWorkerRoute extends OharaTest with Matchers {
     // after create, tags should exist
     val res = result(workerApi.get(wk.key))
     res.tags shouldBe tags
-    res.connectors shouldBe Seq.empty
+    res.connectorDefinitions shouldBe Seq.empty
 
     // after start, tags should still exist
     result(workerApi.start(wk.key))
     val res1 = result(workerApi.get(wk.key))
     res1.tags shouldBe tags
-    res1.connectors should not be Seq.empty
+    res1.connectorDefinitions should not be Seq.empty
 
     // after stop, tags should still exist
     result(workerApi.stop(wk.key))
     val res2 = result(workerApi.get(wk.key))
     res2.tags shouldBe tags
-    res2.connectors shouldBe Seq.empty
+    res2.connectorDefinitions shouldBe Seq.empty
   }
 
   @Test

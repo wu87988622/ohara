@@ -16,13 +16,11 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
+import com.island.ohara.agent.{DataCollie, ServiceCache, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
-import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,10 +33,10 @@ private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
     clusterCache.put(workerClusterStatus, clusterCache.get(workerClusterStatus) ++ successfulContainers)
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] =
+                                   route: Map[String, String],
+                                   arguments: Seq[String]): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
@@ -60,12 +58,13 @@ private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           // similar case in other type (streamapp and k8s impl). Hence we change the network type from host to bridge
           .portMappings(
             containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+          .arguments(arguments)
           .create()
       )
 
     } catch {
       case e: Throwable =>
-        try dockerCache.exec(node, _.forceRemove(containerName))
+        try dockerCache.exec(node, _.forceRemove(containerInfo.name))
         catch {
           case _: Throwable =>
           // do nothing
@@ -77,15 +76,6 @@ private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
   override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     updateRoute(node, container.name, route)
   }
-
-  override protected def brokerContainers(classKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    Future.successful(
-      clusterCache.snapshot
-        .filter(_._1.isInstanceOf[BrokerClusterStatus])
-        .find(_._1.key == classKey)
-        .map(_._2)
-        .getOrElse(throw new NoSuchClusterException(s"broker cluster:$classKey doesn't exist. other broker clusters")))
 
   /**
     * Implement prefix name for paltform

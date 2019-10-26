@@ -20,6 +20,7 @@ import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -43,94 +44,106 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
   override def creator: StreamCollie.ClusterCreator =
     (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
-      clusters().flatMap(clusters => {
-        if (clusters.keys.exists(_.key == creation.key))
-          Future.failed(
-            new UnsupportedOperationException(s"Streamapp cluster does NOT support to add new nodes at runtime"))
-        else {
-          val jarInfo = creation.jarInfo.getOrElse(throw new RuntimeException("jarInfo should be defined"))
-          dataCollie
-            .valuesByNames[Node](creation.nodeNames)
-            // the broker cluster should be defined in data creating phase already
-            // here we just throw an exception for absent value to ensure everything works as expect
-            .flatMap(
-              nodes => brokerContainers(creation.brokerClusterKey).map(cs => (nodes, cs))
-            )
-            .flatMap {
-              case (nodes, brokerContainers) =>
+
+      val resolveRequiredInfos = for {
+        allNodes <- dataCollie.valuesByNames[Node](creation.nodeNames)
+        existentNodes <- clusters().map(_.find(_._1.key == creation.key)).flatMap {
+          case Some(value) =>
+            dataCollie
+              .valuesByNames[Node](value._1.aliveNodes)
+              .map(nodes => nodes.map(node => node -> value._2.find(_.nodeName == node.hostname).get).toMap)
+          case None => Future.successful(Map.empty[Node, ContainerInfo])
+        }
+        brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
+        fileInfo <- dataCollie.value[FileInfo](creation.jarKey)
+      } yield
+        (existentNodes,
+         allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
+         brokerClusterInfo,
+         fileInfo)
+
+      resolveRequiredInfos
+        .map {
+          case (existentNodes, newNodes, brokerClusterInfo, fileInfo) =>
+            if (existentNodes.nonEmpty)
+              throw new UnsupportedOperationException(s"stream collie doesn't support to add node to a running cluster")
+            else (newNodes, brokerClusterInfo, fileInfo)
+        }
+        .flatMap {
+          case (newNodes, brokerClusterInfo, fileInfo) =>
+            val successfulContainersFuture =
+              if (newNodes.isEmpty) Future.successful(Seq.empty)
+              else {
                 val route = resolveHostNames(
-                  (nodes.map(_.hostname)
-                    ++ brokerContainers.map(_.nodeName)
+                  (newNodes.map(_.hostname)
+                    ++ brokerClusterInfo.nodeNames
                   // make sure the streamApp can connect to configurator
-                    ++ Seq(jarInfo.url.getHost)).toSet
+                    ++ Seq(fileInfo.url.getHost)).toSet
                 )
                 // ssh connection is slow so we submit request by multi-thread
-                Future
-                  .sequence(nodes.map {
-                    newNode =>
-                      val containerInfo = ContainerInfo(
-                        nodeName = newNode.name,
-                        id = Collie.UNKNOWN,
-                        imageName = creation.imageName,
-                        created = Collie.UNKNOWN,
-                        // this fake container will be cached before refreshing cache so we make it running.
-                        // other, it will be filtered later ...
-                        state = ContainerState.RUNNING.name,
-                        kind = Collie.UNKNOWN,
-                        name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
-                        size = Collie.UNKNOWN,
-                        portMappings = Seq(
-                          PortMapping(
-                            hostIp = Collie.UNKNOWN,
-                            portPairs = Seq(
-                              PortPair(
-                                hostPort = creation.jmxPort,
-                                containerPort = creation.jmxPort
-                              )
-                            )
+                Future.sequence(newNodes.map { newNode =>
+                  val containerInfo = ContainerInfo(
+                    nodeName = newNode.name,
+                    id = Collie.UNKNOWN,
+                    imageName = creation.imageName,
+                    created = Collie.UNKNOWN,
+                    // this fake container will be cached before refreshing cache so we make it running.
+                    // other, it will be filtered later ...
+                    state = ContainerState.RUNNING.name,
+                    kind = Collie.UNKNOWN,
+                    name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                    size = Collie.UNKNOWN,
+                    portMappings = Seq(
+                      PortMapping(
+                        hostIp = Collie.UNKNOWN,
+                        portPairs = Seq(
+                          PortPair(
+                            hostPort = creation.jmxPort,
+                            containerPort = creation.jmxPort
                           )
-                        ),
-                        environments = creation.settings.map {
-                          case (k, v) =>
-                            k -> (v match {
-                              // the string in json representation has quote in the beginning and end.
-                              // we don't like the quotes since it obstruct us to cast value to pure string.
-                              case JsString(s) => s
-                              // save the json string for all settings
-                              // StreamDefUtils offers the helper method to turn them back.
-                              case _ => CommonUtils.toEnvString(v.toString)
-                            })
-                        } ++ Map(
-                          "JMX_PORT" -> creation.jmxPort.toString,
-                          "JMX_HOSTNAME" -> newNode.hostname
-                        ),
-                        // we should set the hostname to container name in order to avoid duplicate name with other containers
-                        hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                        )
                       )
-                      doCreator(executionContext, containerInfo.name, containerInfo, newNode, route, jarInfo)
-                        .map(_ => Some(containerInfo))
-                        .recover {
-                          case _: Throwable =>
-                            None
-                        }
-                  })
-                  .map(_.flatten.toSeq)
-                  .map { aliveContainers =>
-                    val state = toClusterState(aliveContainers).map(_.name)
-                    postCreate(
-                      new StreamClusterStatus(
-                        group = creation.group,
-                        name = creation.name,
-                        aliveNodes = aliveContainers.map(_.nodeName).toSet,
-                        state = state,
-                        error = None
-                      ),
-                      aliveContainers
-                    )
-                  }
+                    ),
+                    environments = creation.settings.map {
+                      case (k, v) =>
+                        k -> (v match {
+                          // the string in json representation has quote in the beginning and end.
+                          // we don't like the quotes since it obstruct us to cast value to pure string.
+                          case JsString(s) => s
+                          // save the json string for all settings
+                          // StreamDefUtils offers the helper method to turn them back.
+                          case _ => CommonUtils.toEnvString(v.toString)
+                        })
+                    } ++ Map(
+                      "JMX_PORT" -> creation.jmxPort.toString,
+                      "JMX_HOSTNAME" -> newNode.hostname
+                    ),
+                    // we should set the hostname to container name in order to avoid duplicate name with other containers
+                    hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                  )
+                  doCreator(executionContext, containerInfo.name, containerInfo, newNode, route, fileInfo)
+                    .map(_ => Some(containerInfo))
+                    .recover {
+                      case _: Throwable =>
+                        None
+                    }
+                })
+              }
+
+            successfulContainersFuture.map(_.flatten.toSeq).map { aliveContainers =>
+              val state = toClusterState(aliveContainers).map(_.name)
+              postCreate(
+                new StreamClusterStatus(
+                  group = creation.group,
+                  name = creation.name,
+                  aliveNodes = aliveContainers.map(_.nodeName).toSet,
+                  state = state,
+                  error = None
+                ),
+                aliveContainers
+              )
             }
         }
-      })
     }
 
   /**
@@ -206,14 +219,6 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
     //Default do nothing
   }
 
-  /**
-    * get the containers for specific broker cluster. This method is used to update the route.
-    * @param clusterKey key of broker cluster
-    * @param executionContext thread pool
-    * @return containers
-    */
-  protected def brokerContainers(clusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 }
 
 object StreamCollie {

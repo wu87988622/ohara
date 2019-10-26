@@ -164,7 +164,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .nodeName(host)
             .creation
             .settings,
-          connectors = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
+          connectorDefinitions = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ServiceState.RUNNING.name),
@@ -195,7 +195,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         new WorkerClusterStatus(
           group = wkCluster.group,
           name = wkCluster.name,
-          connectors = wkCluster.connectors,
+          connectorDefinitions = wkCluster.connectorDefinitions,
           aliveNodes = wkCluster.nodeNames,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ServiceState.RUNNING.name),
@@ -288,7 +288,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           new WorkerClusterStatus(
             group = creation.group,
             name = creation.name,
-            connectors = FakeWorkerClient.localConnectorDefinitions,
+            connectorDefinitions = FakeWorkerClient.localConnectorDefinitions,
             aliveNodes = bkCreation.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ServiceState.RUNNING.name),
@@ -333,7 +333,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           creation =>
             WorkerClusterInfo(
               settings = creation.settings,
-              connectors = FakeWorkerClient.localConnectorDefinitions,
+              connectorDefinitions = FakeWorkerClient.localConnectorDefinitions,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ServiceState.RUNNING.name),

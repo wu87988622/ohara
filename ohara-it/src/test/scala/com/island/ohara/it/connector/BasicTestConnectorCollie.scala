@@ -285,7 +285,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
       .jmxPort(jmxPort)
       .brokerClusterKey(brokerClusterKey)
       .nodeNames(nodeNames)
-      .jarInfos(Seq(jdbcJarFileInfo))
+      .fileKey(jdbcJarFileInfo.key)
       .create()
 
   private[this] def checkDataBaseInfo(): Unit = {

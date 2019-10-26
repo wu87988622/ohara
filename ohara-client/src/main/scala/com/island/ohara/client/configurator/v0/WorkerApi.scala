@@ -17,12 +17,12 @@
 package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
-import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, _}
@@ -39,23 +39,132 @@ object WorkerApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
+  //------------------------ The key name list in settings field ---------------------------------/
+  val WORKER_HOME_FOLDER: String = "/home/ohara/default"
+  private[this] val COUNTER = new AtomicInteger(0)
+  private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
+  val GROUP_DEFINITION: SettingDef =
+    definitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+  val NAME_DEFINITION: SettingDef =
+    definitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+  val TAGS_DEFINITION: SettingDef =
+    definitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
   private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
+  val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = definitionBuilder
+    .key(BROKER_CLUSTER_KEY_KEY)
+    .documentation("broker cluster used to store data for this worker cluster")
+    .build()
   private[this] val CLIENT_PORT_KEY = "clientPort"
+  val CLIENT_PORT_DEFINITION: SettingDef =
+    definitionBuilder.key(CLIENT_PORT_KEY).documentation("the port used to receive HTTP request").optional().build()
   private[this] val JMX_PORT_KEY = "jmxPort"
-  private[this] val GROUP_ID_KEY = "groupId"
-  private[this] val STATUS_TOPIC_NAME_KEY = "statusTopicName"
-  private[this] val STATUS_TOPIC_PARTITIONS_KEY = "statusTopicPartitions"
-  private[this] val STATUS_TOPIC_REPLICATIONS_KEY = "statusTopicReplications"
-  private[this] val CONFIG_TOPIC_NAME_KEY = "configTopicName"
-  private[this] val CONFIG_TOPIC_PARTITIONS_KEY = "configTopicPartitions"
-  private[this] val CONFIG_TOPIC_REPLICATIONS_KEY = "configTopicReplications"
-  private[this] val OFFSET_TOPIC_NAME_KEY = "offsetTopicName"
-  private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offsetTopicPartitions"
-  private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offsetTopicReplications"
-  private[this] val JAR_KEYS_KEY = "jarKeys"
-  private[this] val JAR_INFOS_KEY = "jarInfos"
-  private[this] val TAGS_KEY = "tags"
+  val JMX_PORT_DEFINITION: SettingDef =
+    definitionBuilder.key(JMX_PORT_KEY).documentation("the port used to expose jmx").optional().build()
+  private[this] val FILE_KEYS_KEY = "fileKeys"
+  val FILE_KEYS_DEFINITION: SettingDef = definitionBuilder
+    .key(FILE_KEYS_KEY)
+    .documentation("the files you want to deploy on worker cluster")
+    .optional()
+    .build()
   private[this] val FREE_PORTS_KEY = "freePorts"
+  val FREE_PORTS_DEFINITION: SettingDef = definitionBuilder
+    .key(FREE_PORTS_KEY)
+    .documentation(
+      "the pre-binding ports for this worker cluster. If your connectors have to use socket, please bind the port in running worker cluster")
+    .optional()
+    .build()
+  private[this] val GROUP_ID_KEY = "group.id"
+  val GROUP_ID_DEFINITION: SettingDef =
+    definitionBuilder.key(GROUP_ID_KEY).documentation("group ID of this worker cluster").optional().build()
+  //-------------[status topic]-------------//
+  private[this] val STATUS_TOPIC_NAME_KEY = "status.storage.topic"
+  val STATUS_TOPIC_NAME_DEFINITION: SettingDef = definitionBuilder
+    .key(STATUS_TOPIC_NAME_KEY)
+    .documentation("name of status topic which is used to store connector status")
+    .optional()
+    .build()
+  private[this] val STATUS_TOPIC_PARTITIONS_KEY = "status.storage.partitions"
+  private[this] val STATUS_TOPIC_PARTITIONS_DEFAULT = 1
+  val STATUS_TOPIC_PARTITIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(STATUS_TOPIC_PARTITIONS_KEY)
+    .documentation("number of partitions for status topic")
+    .optional(STATUS_TOPIC_PARTITIONS_DEFAULT)
+    .build()
+  private[this] val STATUS_TOPIC_REPLICATIONS_KEY = "status.storage.replication.factor"
+  private[this] val STATUS_TOPIC_REPLICATIONS_DEFAULT: Short = 1
+  val STATUS_TOPIC_REPLICATIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(STATUS_TOPIC_REPLICATIONS_KEY)
+    .documentation("number of replications for status topic")
+    .optional(STATUS_TOPIC_REPLICATIONS_DEFAULT)
+    .build()
+
+  //-------------[config topic]-------------//
+  private[this] val CONFIG_TOPIC_NAME_KEY = "config.storage.topic"
+  val CONFIG_TOPIC_NAME_DEFINITION: SettingDef = definitionBuilder
+    .key(CONFIG_TOPIC_NAME_KEY)
+    .documentation("number of replications for config topic")
+    .optional()
+    .build()
+  private[this] val CONFIG_TOPIC_PARTITIONS_KEY = "config.storage.partitions"
+  private[this] val CONFIG_TOPIC_PARTITIONS_DEFAULT = 1
+  val CONFIG_TOPIC_PARTITIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(CONFIG_TOPIC_PARTITIONS_KEY)
+    .documentation("number of partitions for config topic. this value MUST be 1")
+    .optional(CONFIG_TOPIC_PARTITIONS_DEFAULT)
+    .readonly()
+    .build()
+  private[this] val CONFIG_TOPIC_REPLICATIONS_KEY = "config.storage.replication.factor"
+  private[this] val CONFIG_TOPIC_REPLICATIONS_DEFAULT: Short = 1
+  val CONFIG_TOPIC_REPLICATIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(CONFIG_TOPIC_REPLICATIONS_KEY)
+    .documentation("number of replications for config topic")
+    .optional(CONFIG_TOPIC_REPLICATIONS_DEFAULT)
+    .build()
+  //-------------[offset topic]-------------//
+  private[this] val OFFSET_TOPIC_NAME_KEY = "offset.storage.topic"
+  val OFFSET_TOPIC_NAME_DEFINITION: SettingDef = definitionBuilder
+    .key(OFFSET_TOPIC_NAME_KEY)
+    .documentation("number of replications for offset topic")
+    .optional()
+    .build()
+  private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offset.storage.partitions"
+  private[this] val OFFSET_TOPIC_PARTITIONS_DEFAULT = 1
+  val OFFSET_TOPIC_PARTITIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(OFFSET_TOPIC_PARTITIONS_KEY)
+    .documentation("number of partitions for offset topic")
+    .optional(OFFSET_TOPIC_PARTITIONS_DEFAULT)
+    .build()
+  private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offset.storage.replication.factor"
+  private[this] val OFFSET_TOPIC_REPLICATIONS_DEFAULT: Short = 1
+  val OFFSET_TOPIC_REPLICATIONS_DEFINITION: SettingDef = definitionBuilder
+    .key(OFFSET_TOPIC_REPLICATIONS_KEY)
+    .documentation("number of replications for offset topic")
+    .optional(OFFSET_TOPIC_REPLICATIONS_DEFAULT)
+    .build()
+
+  /**
+    * all public configs
+    */
+  val DEFINITIONS: Seq[SettingDef] = Seq(
+    GROUP_DEFINITION,
+    NAME_DEFINITION,
+    TAGS_DEFINITION,
+    BROKER_CLUSTER_KEY_DEFINITION,
+    FILE_KEYS_DEFINITION,
+    CLIENT_PORT_DEFINITION,
+    JMX_PORT_DEFINITION,
+    FREE_PORTS_DEFINITION,
+    GROUP_ID_DEFINITION,
+    CONFIG_TOPIC_NAME_DEFINITION,
+    CONFIG_TOPIC_PARTITIONS_DEFINITION,
+    CONFIG_TOPIC_REPLICATIONS_DEFINITION,
+    OFFSET_TOPIC_NAME_DEFINITION,
+    OFFSET_TOPIC_PARTITIONS_DEFINITION,
+    OFFSET_TOPIC_REPLICATIONS_DEFINITION,
+    STATUS_TOPIC_NAME_DEFINITION,
+    STATUS_TOPIC_PARTITIONS_DEFINITION,
+    STATUS_TOPIC_REPLICATIONS_DEFINITION,
+  )
 
   final class Creation private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterCreation {
 
@@ -85,13 +194,8 @@ object WorkerApi {
     def offsetTopicName: String = settings.offsetTopicName.get
     def offsetTopicPartitions: Int = settings.offsetTopicPartitions.get
     def offsetTopicReplications: Short = settings.offsetTopicReplications.get
-    def jarKeys: Set[ObjectKey] = settings.jarKeys.getOrElse(Set.empty)
+    def fileKeys: Set[ObjectKey] = settings.fileKeys.getOrElse(Set.empty)
     def freePorts: Set[Int] = settings.freePorts.get
-
-    /**
-      * expose to WorkerCollie
-      */
-    private[ohara] def jarInfos: Seq[FileInfo] = settings.jarInfos.getOrElse(Seq.empty)
 
     override def tags: Map[String, JsValue] = settings.tags.get
     override def nodeNames: Set[String] = settings.nodeNames.get
@@ -116,14 +220,14 @@ object WorkerApi {
       .requireBindPort(JMX_PORT_KEY)
       .nullToRandomString(GROUP_ID_KEY)
       .nullToRandomString(CONFIG_TOPIC_NAME_KEY)
-      .nullToShort(CONFIG_TOPIC_REPLICATIONS_KEY, 1)
+      .nullToShort(CONFIG_TOPIC_REPLICATIONS_KEY, CONFIG_TOPIC_REPLICATIONS_DEFAULT)
       .nullToRandomString(OFFSET_TOPIC_NAME_KEY)
-      .nullToInt(OFFSET_TOPIC_PARTITIONS_KEY, 1)
-      .nullToShort(OFFSET_TOPIC_REPLICATIONS_KEY, 1)
+      .nullToInt(OFFSET_TOPIC_PARTITIONS_KEY, OFFSET_TOPIC_PARTITIONS_DEFAULT)
+      .nullToShort(OFFSET_TOPIC_REPLICATIONS_KEY, OFFSET_TOPIC_REPLICATIONS_DEFAULT)
       .nullToRandomString(STATUS_TOPIC_NAME_KEY)
-      .nullToInt(STATUS_TOPIC_PARTITIONS_KEY, 1)
-      .nullToShort(STATUS_TOPIC_REPLICATIONS_KEY, 1)
-      .nullToEmptyArray(JAR_KEYS_KEY)
+      .nullToInt(STATUS_TOPIC_PARTITIONS_KEY, STATUS_TOPIC_PARTITIONS_DEFAULT)
+      .nullToShort(STATUS_TOPIC_REPLICATIONS_KEY, STATUS_TOPIC_REPLICATIONS_DEFAULT)
+      .nullToEmptyArray(FILE_KEYS_KEY)
       .nullToEmptyArray(FREE_PORTS_KEY)
       .requireKey(BROKER_CLUSTER_KEY_KEY)
       .refine
@@ -148,20 +252,10 @@ object WorkerApi {
     def offsetTopicPartitions: Option[Int] = noJsNull(settings).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def offsetTopicReplications: Option[Short] =
       noJsNull(settings).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def jarKeys: Option[Set[ObjectKey]] =
-      jarInfos.map(_.map(_.key).toSet).orElse(noJsNull(settings).get(JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]]))
+    def fileKeys: Option[Set[ObjectKey]] = noJsNull(settings).get(FILE_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def freePorts: Option[Set[Int]] =
       noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
 
-    /**
-      * Normally, Update request should not carry the jar infos since the jar infos is returned by file store according
-      * to input jar keys. Hence, this method is not public and it is opened to this scope only.
-      * @return jar infos
-      */
-    private[WorkerApi] def jarInfos: Option[Seq[FileInfo]] =
-      noJsNull(settings)
-        .get(JAR_INFOS_KEY)
-        .map(_.convertTo[JsArray].elements.map(FileInfoApi.FILE_INFO_JSON_FORMAT.read))
     override def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
 
     override def nodeNames: Option[Set[String]] =
@@ -180,14 +274,14 @@ object WorkerApi {
 
   class WorkerClusterStatus(val group: String,
                             val name: String,
-                            val connectors: Seq[Definition],
+                            val connectorDefinitions: Seq[Definition],
                             val aliveNodes: Set[String],
                             val state: Option[String],
                             val error: Option[String])
       extends ClusterStatus
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
-                                                     connectors: Seq[Definition],
+                                                     connectorDefinitions: Seq[Definition],
                                                      aliveNodes: Set[String],
                                                      lastModified: Long,
                                                      state: Option[String],
@@ -200,7 +294,7 @@ object WorkerApi {
       * @return a updated cluster info
       */
     def update(status: WorkerClusterStatus): WorkerClusterInfo = copy(
-      connectors = status.connectors,
+      connectorDefinitions = status.connectorDefinitions,
       aliveNodes = status.aliveNodes,
       state = status.state,
       error = status.error,
@@ -230,8 +324,7 @@ object WorkerApi {
     def offsetTopicName: String = settings.offsetTopicName
     def offsetTopicPartitions: Int = settings.offsetTopicPartitions
     def offsetTopicReplications: Short = settings.offsetTopicReplications
-    def jarInfos: Seq[FileInfo] = settings.jarInfos
-    def jarKeys: Set[ObjectKey] = settings.jarKeys
+    def fileKeys: Set[ObjectKey] = settings.fileKeys
     def nodeNames: Set[String] = settings.nodeNames
     def freePorts: Set[Int] = settings.freePorts
     override def tags: Map[String, JsValue] = settings.tags
@@ -307,12 +400,14 @@ object WorkerApi {
     @Optional("the default number is 1")
     def offsetTopicReplications(offsetTopicReplications: Short): Request.this.type =
       setting(OFFSET_TOPIC_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(offsetTopicReplications)))
+
     @Optional("the default value is empty")
-    def jarKeys(jarKeys: Set[ObjectKey]): Request.this.type =
-      setting(JAR_KEYS_KEY, JsArray(jarKeys.map(ObjectKey.toJsonString).map(_.parseJson).toVector))
+    def fileKey(fileKey: ObjectKey): Request.this.type = fileKeys(Set(fileKey))
+
     @Optional("the default value is empty")
-    def jarInfos(jarInfos: Seq[FileInfo]): Request.this.type =
-      setting(JAR_INFOS_KEY, JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector))
+    def fileKeys(fileKeys: Set[ObjectKey]): Request.this.type =
+      setting(FILE_KEYS_KEY, JsArray(fileKeys.map(ObjectKey.toJsonString).map(_.parseJson).toVector))
+
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))
 

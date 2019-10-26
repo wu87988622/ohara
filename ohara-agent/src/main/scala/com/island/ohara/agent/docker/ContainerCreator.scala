@@ -164,6 +164,15 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
   }
 
   /**
+    * the arguments passed to docker container
+    *
+    * @param arguments arguments
+    * @return this builder
+    */
+  @Optional("default is empty")
+  def arguments(arguments: Seq[String]): ContainerCreator = command(arguments.mkString(" "))
+
+  /**
     * the command passed to docker container
     *
     * @param command command
@@ -171,7 +180,7 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
     */
   @Optional("default is empty")
   def command(command: String): ContainerCreator = {
-    this.command = CommonUtils.requireNonEmpty(command)
+    this.command = Objects.requireNonNull(command)
     this
   }
 }

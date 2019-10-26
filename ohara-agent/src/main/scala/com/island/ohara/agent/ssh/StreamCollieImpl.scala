@@ -16,13 +16,11 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{ServiceCache, NoSuchClusterException, DataCollie, StreamCollie}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
+import com.island.ohara.agent.{DataCollie, ServiceCache, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,8 +45,8 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           .portMappings(
             containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
           .route(route)
-          .command(
-            s"${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}")
+          .arguments(Seq(StreamCollie.MAIN_ENTRY,
+                         s"${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"))
           .create()
       )
     } catch {
@@ -72,12 +70,4 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
 
   override protected def prefixKey: String = PREFIX_KEY
 
-  override protected def brokerContainers(clusterKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    Future.successful(
-      clusterCache.snapshot
-        .filter(_._1.isInstanceOf[BrokerClusterStatus])
-        .find(_._1.key == clusterKey)
-        .map(_._2)
-        .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterKey doesn't exist.")))
 }

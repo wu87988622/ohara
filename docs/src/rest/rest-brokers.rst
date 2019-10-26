@@ -34,26 +34,24 @@ on same zookeeper cluster.
 
 The properties which can be set by user are shown below.
 
-#. settings (**object**) — custom settings. Apart from the following fields, you can add any setting if needed.
+#. name (**string**) — cluster name
+#. group (**string**) — cluster group
+#. imageName (**string**) — docker image
+#. clientPort (**int**) — broker client port.
+#. jmxPort (**int**) — port used by jmx service
+#. zookeeperClusterKey (**object**) — key of zookeeper cluster used to store metadata of broker cluster
 
-   - the official support fields are listed below
+  - zookeeperClusterKey.group(**option(string)**) — the group of zookeeper cluster
+  - zookeeperClusterKey.name(**string**) — the name of zookeeper cluster
 
-     - name (**string**) — cluster name
-     - group (**string**) — cluster group
-     - imageName (**string**) — docker image
-     - clientPort (**int**) — broker client port.
-     - jmxPort (**int**) — port used by jmx service
-     - zookeeperClusterKey (**object**) — key of zookeeper cluster used to store metadata of broker cluster
+    .. note::
+      the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
+      {"group": "default", "name": "n"}
 
-       - zookeeperClusterKey.group(**option(string)**) — the group of zookeeper cluster
-       - zookeeperClusterKey.name(**string**) — the name of zookeeper cluster
+#. nodeNames (**array(string)**) — the nodes running the zookeeper process
+#. tags (**object**) — the user defined parameters
 
-       .. note::
-          the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
-          {"group": "default", "name": "n"}
-
-     - nodeNames (**array(string)**) — the nodes running the zookeeper process
-     - tags (**object**) — the user defined parameters
+The following information are updated by Ohara.
 
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of broker cluster
 #. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)

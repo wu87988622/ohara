@@ -35,7 +35,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     Future.successful(
       WorkerClusterInfo(
         settings = creation.settings,
-        connectors = Seq.empty,
+        connectorDefinitions = Seq.empty,
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -206,7 +206,7 @@ class TestWorkerCreator extends OharaTest with Matchers {
     val workerClusterInfo = WorkerClusterInfo(
       settings =
         WorkerApi.access.request.brokerClusterKey(ObjectKey.of("default", "bk")).nodeNames(nodeNames).creation.settings,
-      connectors = Seq.empty,
+      connectorDefinitions = Seq.empty,
       aliveNodes = nodeNames,
       state = None,
       error = None,

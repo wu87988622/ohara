@@ -38,7 +38,7 @@ class TestWorkerApi extends OharaTest with Matchers {
         .nodeName(CommonUtils.randomString(10))
         .creation
         .settings,
-      connectors = Seq.empty,
+      connectorDefinitions = Seq.empty,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -57,7 +57,7 @@ class TestWorkerApi extends OharaTest with Matchers {
         .brokerClusterKey(ObjectKey.of("g", "n"))
         .creation
         .settings,
-      connectors = Seq.empty,
+      connectorDefinitions = Seq.empty,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -235,7 +235,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     creation.statusTopicPartitions shouldBe 1
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
-    creation.jarKeys.size shouldBe 0
+    creation.fileKeys.size shouldBe 0
 
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
@@ -262,7 +262,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     creation2.statusTopicPartitions shouldBe 1
     creation2.nodeNames.size shouldBe 1
     creation2.nodeNames.head shouldBe nodeName
-    creation2.jarKeys.size shouldBe 0
+    creation2.fileKeys.size shouldBe 0
   }
 
   @Test
@@ -501,7 +501,7 @@ class TestWorkerApi extends OharaTest with Matchers {
     val cluster = WorkerClusterInfo(
       settings =
         WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
-      connectors = Seq.empty,
+      connectorDefinitions = Seq.empty,
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
@@ -534,10 +534,10 @@ class TestWorkerApi extends OharaTest with Matchers {
     val key = CommonUtils.randomString()
     val updating = WorkerApi.WORKER_UPDATING_JSON_FORMAT.read(s"""
                                                   |  {
-                                                  |    "jarKeys": ["$key"]
+                                                  |    "fileKeys": ["$key"]
                                                   |  }
                                                   |  """.stripMargin.parseJson)
-    updating.jarKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
+    updating.fileKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
   }
 
   @Test
@@ -551,7 +551,7 @@ class TestWorkerApi extends OharaTest with Matchers {
         state = None,
         error = None,
         lastModified = CommonUtils.current(),
-        connectors = Seq.empty
+        connectorDefinitions = Seq.empty
       ))
 
     // serialize to json should see the object key (group, name)
@@ -573,7 +573,7 @@ class TestWorkerApi extends OharaTest with Matchers {
       state = None,
       error = None,
       lastModified = CommonUtils.current(),
-      connectors = Seq.empty
+      connectorDefinitions = Seq.empty
     )
     cluster.connectionProps should not include "nn"
   }
