@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.ArgumentsBuilder.FileAppender
+import com.island.ohara.common.util.CommonUtils
 import spray.json.{JsNull, JsNumber, JsString, JsValue}
 
 import scala.collection.mutable
@@ -37,6 +38,13 @@ trait ArgumentsBuilder extends com.island.ohara.common.pattern.Builder[Seq[Strin
     * @return this builder
     */
   def file(path: String): FileAppender
+
+  /**
+    * The script used to start service needs a file having all settings for service.
+    * If you call this method, this file will be used to set up the service.
+    * @return this appender
+    */
+  def mainConfigFile(path: String): ArgumentsBuilder
 
   override def build: Seq[String]
 }
@@ -70,17 +78,25 @@ object ArgumentsBuilder {
   }
   def apply(): ArgumentsBuilder = new ArgumentsBuilder {
     private[this] val files = mutable.Map[String, Set[String]]()
+    private[this] var mainConfigFile: String = _
 
-    override def build: Seq[String] =
+    override def build: Seq[String] = if (CommonUtils.isEmpty(mainConfigFile))
+      throw new IllegalArgumentException("you have to define the main configs")
+    else
       // format: --file path=line0,line1 --file path1=line0,line1
       // NOTED: the path and props must be in different line. otherwise, k8s will merge them into single line and our
       // script will fail to parse the command-line arguments
       files.flatMap {
         case (path, props) => Seq("--file", s"$path=${props.mkString(",")}")
-      }.toSeq
+      }.toSeq ++ Seq("--config", mainConfigFile)
 
     override def file(path: String): FileAppender = (props: Set[String]) => {
       this.files += (path -> props)
+      this
+    }
+
+    override def mainConfigFile(path: String): ArgumentsBuilder = {
+      this.mainConfigFile = CommonUtils.requireNonEmpty(path)
       this
     }
   }

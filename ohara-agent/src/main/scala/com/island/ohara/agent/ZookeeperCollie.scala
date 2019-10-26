@@ -149,6 +149,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                   * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
                   */
                 val arguments = ArgumentsBuilder()
+                  .mainConfigFile(configPath)
                   .file(configPath)
                   .append(CLIENT_PORT_DEFINITION.key(), creation.clientPort)
                   .append(TICK_TIME_DEFINITION.key(), creation.tickTime)

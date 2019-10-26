@@ -134,6 +134,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                 * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
                 */
               val arguments = ArgumentsBuilder()
+                .mainConfigFile(configPath)
                 .file(configPath)
                 .append("bootstrap.servers", brokers)
                 .append(WorkerApi.GROUP_ID_DEFINITION.key(), creation.groupId)

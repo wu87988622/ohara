@@ -18,10 +18,8 @@ package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.{BrokerCollie, DataCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,11 +30,10 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
   private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],
-                                   jarInfo: FileInfo): Future[Unit] = {
+                                   arguments: Seq[String]): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
@@ -54,8 +51,7 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
         containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
       .routes(route)
       .envs(containerInfo.environments)
-      .args(Seq(StreamCollie.MAIN_ENTRY,
-                s"${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"))
+      .args(arguments)
       .threadPool(executionContext)
       .create()
       .recover {

@@ -126,6 +126,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                 * the format of A, B, C should be file_name=k1=v1,k2=v2,k3,k4=v4...
                 */
               val arguments = ArgumentsBuilder()
+                .mainConfigFile(configPath)
                 .file(configPath)
                 .append("zookeeper.connect", zookeepers)
                 .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.logDirs)

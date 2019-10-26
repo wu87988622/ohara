@@ -21,7 +21,6 @@ import java.net.URL
 import com.island.ohara.agent.{DataCollie, ServiceState, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.Definition
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.common.util.CommonUtils
@@ -71,11 +70,10 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
       new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
                                    route: Map[String, String],
-                                   jarInfo: FileInfo): Future[Unit] = Future.unit
+                                   arguments: Seq[String]): Future[Unit] = Future.unit
 
   override protected def dataCollie: DataCollie = node
 

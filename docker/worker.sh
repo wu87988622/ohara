@@ -42,6 +42,11 @@ while [[ $# -gt 0 ]]; do
     fi
     exit
     ;;
+    --config)
+    CONFIG_FILE="$2"
+    shift
+    shift
+    ;;
     -f|--file)
     FILE_DATA+=("$2")
     shift

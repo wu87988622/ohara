@@ -121,7 +121,10 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )
-                  doCreator(executionContext, containerInfo.name, containerInfo, newNode, route, fileInfo)
+                  val arguments = Seq(StreamCollie.MAIN_ENTRY,
+                                      s"${StreamDefUtils.JAR_URL_DEFINITION.key()}=${fileInfo.url.toURI.toASCIIString}")
+
+                  doCreator(executionContext, containerInfo, newNode, route, arguments)
                     .map(_ => Some(containerInfo))
                     .recover {
                       case _: Throwable =>
@@ -209,11 +212,10 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
   override val serviceName: String = StreamApi.STREAM_SERVICE_NAME
 
   protected def doCreator(executionContext: ExecutionContext,
-                          containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
                           route: Map[String, String],
-                          jarInfo: FileInfo): Future[Unit]
+                          arguments: Seq[String]): Future[Unit]
 
   protected def postCreate(clusterStatus: StreamClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default do nothing
