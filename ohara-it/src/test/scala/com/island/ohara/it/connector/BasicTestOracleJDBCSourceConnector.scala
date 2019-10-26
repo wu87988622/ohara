@@ -37,6 +37,8 @@ abstract class BasicTestOracleJDBCSourceConnector extends BasicTestConnectorColl
 
   override protected val columnPrefixName: String = "COLUMN"
 
-  override protected def insertTableSQL(tableName: String, columns: Seq[String], value: Int): String =
-    s"INSERT INTO $tableName(${columns(0)}, ${columns(1)}, ${columns(2)}) VALUES(TO_TIMESTAMP('2018-09-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'a${value}', ${value})"
+  override protected val insertDataSQL: String =
+    s"INSERT INTO $tableName VALUES(TO_TIMESTAMP('2018-09-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'),?,?,?)"
+
+  override protected val BINARY_TYPE_NAME: String = "RAW(30)"
 }

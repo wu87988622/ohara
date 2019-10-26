@@ -22,6 +22,7 @@ import java.util.Calendar
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
+import com.island.ohara.connector.jdbc.datatype.{RDBDataTypeConverter, RDBDataTypeConverterFactory}
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 
 /**
@@ -35,15 +36,15 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
     .user(jdbcSourceConnectorConfig.dbUserName)
     .password(jdbcSourceConnectorConfig.dbPassword)
     .build
+
+  private[this] val dbProduct: String = client.connection.getMetaData.getDatabaseProductName
+
   private[this] var queryFlag: Boolean = true
 
   private[this] var resultSet: ResultSet = _
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
     if (queryFlag) {
-      /*val sql =
-        s"""SELECT * FROM \"$tableName\" WHERE \"$timeStampColumnName\" > ? and \"$timeStampColumnName\" < ? ORDER BY \"$timeStampColumnName\""""
-       */
       val sql =
         s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? AND $timeStampColumnName < ? ORDER BY $timeStampColumnName"
 
@@ -60,7 +61,8 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
       resultSet = preparedStatement.executeQuery()
       queryFlag = false
     }
-    new QueryResultIterator(resultSet, columns(tableName))
+    val rdbDataTypeConverter: RDBDataTypeConverter = RDBDataTypeConverterFactory.dataTypeConverter(dbProduct)
+    new QueryResultIterator(rdbDataTypeConverter, resultSet, columns(tableName))
   }
 
   def releaseResultSet(queryFlag: Boolean): Unit = {
@@ -82,8 +84,7 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
   def isTableExists(tableName: String): Boolean = client.tableQuery.tableName(tableName).execute().nonEmpty
 
   def dbCurrentTime(cal: Calendar): Timestamp = {
-    val dbProduct: String = client.connection.getMetaData.getDatabaseProductName
-    import DBTableDataProvider._
+
     val query = dbProduct.toLowerCase match {
       case ORACLE_DB_NAME => "SELECT CURRENT_TIMESTAMP FROM dual"
       case _              => "SELECT CURRENT_TIMESTAMP;"
@@ -96,8 +97,8 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
         throw new RuntimeException(
           s"Unable to get current time from DB using query $query on database $dbProduct"
         )
-      finally rs.close()
-    } finally stmt.close()
+      finally Releasable.close(rs)
+    } finally Releasable.close(stmt)
   }
 
   /**
@@ -106,8 +107,4 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
   override def doClose(): Unit = {
     Releasable.close(client)
   }
-}
-
-object DBTableDataProvider {
-  val ORACLE_DB_NAME = "oracle"
 }

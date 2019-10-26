@@ -37,6 +37,7 @@ abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestConnector
 
   override protected val columnPrefixName: String = "column"
 
-  override protected def insertTableSQL(tableName: String, columns: Seq[String], value: Int): String =
-    s"INSERT INTO $tableName(${columns(0)}, ${columns(1)}, ${columns(2)}) VALUES('2018-09-01 00:00:00', 'a${value}', ${value})"
+  override protected val insertDataSQL: String = s"INSERT INTO $tableName VALUES('2018-09-01 00:00:00',?,?,?)"
+
+  override protected val BINARY_TYPE_NAME: String = "BYTEA"
 }

@@ -16,18 +16,20 @@
 
 package com.island.ohara.connector.jdbc.datatype
 
-object RDBDataTypeConverterFactory {
+import com.island.ohara.client.Enum
 
-  def dataTypeConverter(productName: String): RDBDataTypeConverter = {
-    productName.toLowerCase match {
-      case "postgresql" =>
-        new PostgresqlDataTypeConverter()
-      case "mysql" =>
-        new MySQLDataTypeConverter()
-      case "oracle" =>
-        new OracleDataTypeConverter()
-      case _ =>
-        new GenericDataTypeConverter()
-    }
-  }
+sealed abstract class DataTypeEnum
+object DataTypeEnum extends Enum[DataTypeEnum] {
+  case object INTEGER extends DataTypeEnum
+  case object LONG extends DataTypeEnum
+  case object BOOLEAN extends DataTypeEnum
+  case object FLOAT extends DataTypeEnum
+  case object DOUBLE extends DataTypeEnum
+  case object BIGDECIMAL extends DataTypeEnum
+  case object STRING extends DataTypeEnum
+  case object DATE extends DataTypeEnum
+  case object TIME extends DataTypeEnum
+  case object TIMESTAMP extends DataTypeEnum
+  case object BYTES extends DataTypeEnum
+  case object NONETYPE extends DataTypeEnum
 }
