@@ -108,7 +108,9 @@ object BrokerApi {
     CLIENT_PORT_DEFINITION,
     LOG_DIRS_DEFINITION,
     NUMBER_OF_PARTITIONS_DEFINITION,
-    NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION
+    NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION,
+    NUMBER_OF_NETWORK_THREADS_DEFINITION,
+    NUMBER_OF_IO_THREADS_DEFINITION
   )
 
   /**
@@ -140,12 +142,12 @@ object BrokerApi {
     def clientPort: Int = settings.clientPort.get
     def jmxPort: Int = settings.jmxPort.get
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
-    def logDirs: String = settings.logDirs.getOrElse(LOG_DIRS_DEFAULT)
-    def numberOfPartitions: Int = settings.numberOfPartitions.getOrElse(NUMBER_OF_PARTITIONS_DEFAULT)
+    def logDirs: String = settings.logDirs.get
+    def numberOfPartitions: Int = settings.numberOfPartitions.get
     def numberOfReplications4OffsetsTopic: Int =
-      settings.numberOfReplications4OffsetsTopic.getOrElse(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
-    def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads.getOrElse(NUMBER_OF_NETWORK_THREADS_DEFAULT)
-    def numberOfIoThreads: Int = settings.numberOfIoThreads.getOrElse(NUMBER_OF_IO_THREADS_DEFAULT)
+      settings.numberOfReplications4OffsetsTopic.get
+    def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads.get
+    def numberOfIoThreads: Int = settings.numberOfIoThreads.get
   }
 
   /**
@@ -162,6 +164,15 @@ object BrokerApi {
       .nullToRandomPort(JMX_PORT_KEY)
       .requireBindPort(JMX_PORT_KEY)
       .requireKey(ZOOKEEPER_CLUSTER_KEY_KEY)
+      .nullToString(LOG_DIRS_KEY, LOG_DIRS_DEFAULT)
+      .nullToInt(NUMBER_OF_PARTITIONS_KEY, NUMBER_OF_PARTITIONS_DEFAULT)
+      .requirePositiveNumber(NUMBER_OF_PARTITIONS_KEY)
+      .nullToInt(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY, NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
+      .requirePositiveNumber(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
+      .nullToInt(NUMBER_OF_NETWORK_THREADS_KEY, NUMBER_OF_NETWORK_THREADS_DEFAULT)
+      .requirePositiveNumber(NUMBER_OF_NETWORK_THREADS_KEY)
+      .nullToInt(NUMBER_OF_IO_THREADS_KEY, NUMBER_OF_IO_THREADS_DEFAULT)
+      .requirePositiveNumber(NUMBER_OF_IO_THREADS_KEY)
       .refine
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {

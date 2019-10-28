@@ -495,4 +495,22 @@ class TestZookeeperApi extends OharaTest with Matchers {
     cluster.deadNodes shouldBe Set("n1")
     cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
+
+  @Test
+  def defaultValueShouldBeAppendedToResponse(): Unit = {
+    val cluster = ZookeeperClusterInfo(
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+
+    val string = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
+
+    ZookeeperApi.DEFINITIONS.filter(_.defaultValue() != null).foreach { definition =>
+      string should include(definition.key())
+      string should include(definition.defaultValue())
+    }
+  }
 }

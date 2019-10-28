@@ -130,10 +130,10 @@ object ZookeeperApi {
     def clientPort: Int = settings.clientPort.get
     def peerPort: Int = settings.peerPort.get
     def electionPort: Int = settings.electionPort.get
-    def tickTime: Int = settings.tickTime.getOrElse(TICK_TIME_DEFAULT)
-    def initLimit: Int = settings.initLimit.getOrElse(INIT_LIMIT_DEFAULT)
-    def syncLimit: Int = settings.syncLimit.getOrElse(SYNC_LIMIT_DEFAULT)
-    def dataDir: String = settings.dataDir.getOrElse(DATA_DIR_DEFAULT)
+    def tickTime: Int = settings.tickTime.get
+    def initLimit: Int = settings.initLimit.get
+    def syncLimit: Int = settings.syncLimit.get
+    def dataDir: String = settings.dataDir.get
   }
 
   /**
@@ -145,14 +145,19 @@ object ZookeeperApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
-      // default values
       .nullToRandomPort(CLIENT_PORT_KEY)
-      .nullToRandomPort(PEER_PORT_KEY)
-      .nullToRandomPort(ELECTION_PORT_KEY)
-      // restrict rules
       .requireBindPort(CLIENT_PORT_KEY)
+      .nullToRandomPort(PEER_PORT_KEY)
       .requireBindPort(PEER_PORT_KEY)
+      .nullToRandomPort(ELECTION_PORT_KEY)
       .requireBindPort(ELECTION_PORT_KEY)
+      .nullToInt(TICK_TIME_KEY, TICK_TIME_DEFAULT)
+      .requirePositiveNumber(TICK_TIME_KEY)
+      .nullToInt(INIT_LIMIT_KEY, INIT_LIMIT_DEFAULT)
+      .requirePositiveNumber(INIT_LIMIT_KEY)
+      .nullToInt(SYNC_LIMIT_KEY, SYNC_LIMIT_DEFAULT)
+      .requirePositiveNumber(SYNC_LIMIT_KEY)
+      .nullToString(DATA_DIR_KEY, DATA_DIR_DEFAULT)
       .refine
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {

@@ -583,4 +583,28 @@ class TestWorkerApi extends OharaTest with Matchers {
     val bkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     accessApi.nodeName("n").brokerClusterKey(bkKey).creation.brokerClusterKey shouldBe bkKey
   }
+
+  @Test
+  def defaultValueShouldBeAppendedToResponse(): Unit = {
+    val cluster = WorkerClusterInfo(
+      settings =
+        WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
+      connectorDefinitions = Seq.empty,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+
+    val string = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
+
+    WorkerApi.DEFINITIONS
+      .filter(_.defaultValue() != null)
+      // the immutable setting is not in custom field
+      .filter(_.editable())
+      .foreach { definition =>
+        string should include(definition.key())
+        string should include(definition.defaultValue())
+      }
+  }
 }

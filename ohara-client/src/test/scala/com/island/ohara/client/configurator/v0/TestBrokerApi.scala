@@ -648,4 +648,27 @@ class TestBrokerApi extends OharaTest with Matchers {
     val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     access.nodeName("n").zookeeperClusterKey(zkKey).creation.zookeeperClusterKey shouldBe zkKey
   }
+
+  @Test
+  def defaultValueShouldBeAppendedToResponse(): Unit = {
+    val cluster = BrokerClusterInfo(
+      settings = BrokerApi.access.request
+        .nodeNames(Set("n0", "n1"))
+        .zookeeperClusterKey(ObjectKey.of("g", "n"))
+        .creation
+        .settings,
+      topicSettingDefinitions = Seq.empty,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+
+    val string = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
+
+    BrokerApi.DEFINITIONS.filter(_.defaultValue() != null).foreach { definition =>
+      string should include(definition.key())
+      string should include(definition.defaultValue())
+    }
+  }
 }
