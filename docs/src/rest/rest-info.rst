@@ -18,8 +18,19 @@
 Info
 ====
 
-Info API returns the information of Ohara Configurator you are
-executing. It consists of following fields:
+Info API returns the information of service which is able be controlled by Ohara Configurator. It includes
+
+#. Ohara Configurator
+#. zookeeper
+#. broker
+#. worker
+
+get Ohara Configurator info
+---------------------------
+
+*GET /v0/info/configurator*
+
+the format of response of Ohara Configurator is shown below.
 
 #. name (**string**) — the name of configurator. Normally, it is equal to hostname of configurator container
 #. versionInfo (**object**) — version details of Ohara Configurator
@@ -47,4 +58,42 @@ Example Response
         "date": "2019-05-13 09:59:38"
       },
       "mode": "ssh"
+    }
+
+get zookeeper/broker/worker info
+--------------------------------
+
+*GET /v0/info/$service*
+
+the available variables for $service are shown below.
+
+#. zookeeper
+#. broker
+#. worker
+
+Example Request
+
+GET /v0/info/zookeeper
+
+Example Response
+  .. code-block:: json
+
+    {
+      "imageName": "oharastream/zookeeper:xxx",
+      "definitions": [
+        {
+          "reference": "NONE",
+          "displayName": "group",
+          "internal": false,
+          "documentation": "group of this worker cluster",
+          "valueType": "STRING",
+          "tableKeys": [],
+          "orderInGroup": 1,
+          "key": "group",
+          "required": false,
+          "defaultValue": "default",
+          "group": "core",
+          "editable": true
+        }
+      ]
     }

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.InfoApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, InfoApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
@@ -25,22 +25,46 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestInfoRoute extends OharaTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
+  private[this] val infoApi = InfoApi.access.hostname(configurator.hostname).port(configurator.port)
+
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+
   @Test
-  def test(): Unit = {
+  def testConfiguratorInfo(): Unit = {
     // only test the configurator based on mini cluster
-    val clusterInformation = result(InfoApi.access.hostname(configurator.hostname).port(configurator.port).get)
+    val clusterInformation = result(
+      InfoApi.access.hostname(configurator.hostname).port(configurator.port).configuratorInfo())
     clusterInformation.versionInfo.version shouldBe VersionUtils.VERSION
     clusterInformation.versionInfo.branch shouldBe VersionUtils.BRANCH
     clusterInformation.versionInfo.user shouldBe VersionUtils.USER
     clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION
     clusterInformation.versionInfo.date shouldBe VersionUtils.DATE
     clusterInformation.mode shouldBe Mode.FAKE.toString
+  }
+
+  @Test
+  def testZookeeperInfo(): Unit = {
+    val info = result(infoApi.zookeeperInfo())
+    info.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    info.definitions shouldBe ZookeeperApi.DEFINITIONS
+  }
+
+  @Test
+  def testBrokerInfo(): Unit = {
+    val info = result(infoApi.brokerInfo())
+    info.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
+    info.definitions shouldBe BrokerApi.DEFINITIONS
+  }
+  @Test
+  def testWorkerInfo(): Unit = {
+    val info = result(infoApi.workerInfo())
+    info.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
+    info.definitions shouldBe WorkerApi.DEFINITIONS
   }
 
   @After

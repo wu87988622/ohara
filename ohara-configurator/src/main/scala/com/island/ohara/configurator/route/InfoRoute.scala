@@ -19,24 +19,56 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import com.island.ohara.client.configurator.v0.InfoApi._
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.configurator.Configurator.Mode
 object InfoRoute extends SprayJsonSupport {
 
+  private[this] def routeToConfiguratorInf(mode: Mode) = get {
+    complete(
+      ConfiguratorInfo(
+        versionInfo = ConfiguratorVersion(
+          version = VersionUtils.VERSION,
+          branch = VersionUtils.BRANCH,
+          user = VersionUtils.USER,
+          revision = VersionUtils.REVISION,
+          date = VersionUtils.DATE
+        ),
+        mode = mode.toString
+      ))
+  }
+
   def apply(mode: Mode): server.Route =
-    path(INFO_PREFIX_PATH) {
-      get {
-        complete(
-          ConfiguratorInfo(
-            versionInfo = ConfiguratorVersion(
-              version = VersionUtils.VERSION,
-              branch = VersionUtils.BRANCH,
-              user = VersionUtils.USER,
-              revision = VersionUtils.REVISION,
-              date = VersionUtils.DATE
-            ),
-            mode = mode.toString
-          ))
+    pathPrefix(INFO_PREFIX_PATH) {
+      path(ZOOKEEPER_PREFIX_PATH) {
+        get {
+          complete(
+            ServiceInfo(
+              imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
+              definitions = ZookeeperApi.DEFINITIONS
+            ))
+        }
+      } ~ path(BROKER_PREFIX_PATH) {
+        get {
+          complete(
+            ServiceInfo(
+              imageName = BrokerApi.IMAGE_NAME_DEFAULT,
+              definitions = BrokerApi.DEFINITIONS
+            ))
+        }
+      } ~ path(WORKER_PREFIX_PATH) {
+        get {
+          complete(
+            ServiceInfo(
+              imageName = WorkerApi.IMAGE_NAME_DEFAULT,
+              definitions = WorkerApi.DEFINITIONS
+            ))
+        }
+      } ~ path(CONFIGURATOR_PREFIX_PATH) {
+        routeToConfiguratorInf(mode)
+      } ~ pathEnd {
+        // TODO: remove this route (see https://github.com/oharastream/ohara/issues/3093)
+        routeToConfiguratorInf(mode)
       }
     }
 }
