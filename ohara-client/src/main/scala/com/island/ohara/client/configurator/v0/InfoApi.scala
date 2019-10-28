@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -28,6 +28,7 @@ object InfoApi {
   val ZOOKEEPER_PREFIX_PATH: String = "zookeeper"
   val BROKER_PREFIX_PATH: String = "broker"
   val WORKER_PREFIX_PATH: String = "worker"
+  val STREAM_PREFIX_PATH: String = "stream"
 
   final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
   implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
@@ -52,6 +53,9 @@ object InfoApi {
 
     def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceInfo] =
       exec.get[ServiceInfo, ErrorApi.Error](s"$url/$WORKER_PREFIX_PATH")
+
+    def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceInfo] =
+      exec.get[ServiceInfo, ErrorApi.Error](s"$url/$STREAM_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
   }
 
   def access: Access = new Access

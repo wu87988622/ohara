@@ -59,7 +59,6 @@ class TestStreamApi extends OharaTest with Matchers {
         .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
         .settings,
-      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -94,7 +93,6 @@ class TestStreamApi extends OharaTest with Matchers {
         .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
         .settings,
-      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -111,7 +109,6 @@ class TestStreamApi extends OharaTest with Matchers {
     info.jarKey shouldBe fakeJar
     info.fromTopicKeys shouldBe Set(fromTopicKey)
     info.toTopicKeys shouldBe Set(toTopicKey)
-    info.definition.definitions.size == 1 shouldBe true
     info.tags.keys.size shouldBe 2
   }
 
@@ -909,7 +906,6 @@ class TestStreamApi extends OharaTest with Matchers {
           .nodeName(CommonUtils.randomString())
           .creation
           .settings,
-        definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -980,7 +976,6 @@ class TestStreamApi extends OharaTest with Matchers {
         .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
         .settings,
-      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,

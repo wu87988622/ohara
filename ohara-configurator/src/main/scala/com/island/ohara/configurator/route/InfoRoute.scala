@@ -18,10 +18,16 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
+import com.island.ohara.agent.StreamCollie
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.InfoApi._
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.configurator.Configurator.Mode
+import com.island.ohara.configurator.store.DataStore
+
+import scala.concurrent.ExecutionContext
 object InfoRoute extends SprayJsonSupport {
 
   private[this] def routeToConfiguratorInf(mode: Mode) = get {
@@ -38,9 +44,25 @@ object InfoRoute extends SprayJsonSupport {
       ))
   }
 
-  def apply(mode: Mode): server.Route =
+  def apply(mode: Mode)(implicit dataStore: DataStore,
+                        streamCollie: StreamCollie,
+                        executionContext: ExecutionContext): server.Route =
     pathPrefix(INFO_PREFIX_PATH) {
-      path(ZOOKEEPER_PREFIX_PATH) {
+      path(STREAM_PREFIX_PATH / Segment) { fileName =>
+        parameter(GROUP_KEY ?) { groupOption =>
+          complete(
+            dataStore
+              .value[FileInfo](ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), fileName))
+              .map(_.url)
+              .flatMap(streamCollie.loadDefinition)
+              .map { definition =>
+                ServiceInfo(
+                  imageName = StreamApi.IMAGE_NAME_DEFAULT,
+                  definitions = definition.definitions
+                )
+              })
+        }
+      } ~ path(ZOOKEEPER_PREFIX_PATH) {
         get {
           complete(
             ServiceInfo(

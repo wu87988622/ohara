@@ -20,10 +20,10 @@ import java.net.URL
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
@@ -44,7 +44,6 @@ class TestStreamCreator extends OharaTest with Matchers {
     Future.successful {
       StreamClusterInfo(
         settings = creation.settings,
-        definition = Definition("fake", Seq.empty),
         aliveNodes = Set.empty,
         metrics = Metrics.EMPTY,
         state = None,
@@ -176,7 +175,6 @@ class TestStreamCreator extends OharaTest with Matchers {
         .toTopicKey(topicKey())
         .creation
         .settings,
-      definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build())),
       aliveNodes = Set.empty,
       state = None,
       error = None,

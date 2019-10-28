@@ -16,9 +16,9 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, InfoApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, FileInfoApi, InfoApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.util.{Releasable, VersionUtils}
+import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.Configurator.Mode
 import org.junit.{After, Test}
@@ -60,11 +60,23 @@ class TestInfoRoute extends OharaTest with Matchers {
     info.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     info.definitions shouldBe BrokerApi.DEFINITIONS
   }
+
   @Test
   def testWorkerInfo(): Unit = {
     val info = result(infoApi.workerInfo())
     info.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
     info.definitions shouldBe WorkerApi.DEFINITIONS
+  }
+
+  @Test
+  def testStreamInfo(): Unit = {
+    val file = CommonUtils.createTempJar("empty_")
+    val fileInfo = result(
+      FileInfoApi.access.hostname(configurator.hostname).port(configurator.port).request.file(file).upload())
+    val info = result(infoApi.streamInfo(fileInfo.key))
+    info.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    // the jar is empty but we still see the default definitions
+    info.definitions should not be Seq.empty
   }
 
   @After

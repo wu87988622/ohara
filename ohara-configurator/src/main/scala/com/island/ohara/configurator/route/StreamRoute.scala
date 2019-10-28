@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.setting.ObjectKey
@@ -39,7 +40,6 @@ private[configurator] object StreamRoute {
 
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
-    streamCollie: StreamCollie,
     executionContext: ExecutionContext): Future[StreamClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
@@ -66,12 +66,9 @@ private[configurator] object StreamRoute {
         creation.toTopicKeys
       }
       .check()
-      .map(_.fileInfos.head)
-      .flatMap(fileInfo => streamCollie.loadDefinition(fileInfo.url))
-      .map { definition =>
+      .map { _ =>
         StreamClusterInfo(
           settings = creation.settings,
-          definition = definition,
           aliveNodes = Set.empty,
           state = None,
           metrics = Metrics(Seq.empty),
@@ -81,12 +78,10 @@ private[configurator] object StreamRoute {
       }
 
   private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, StreamClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[StreamClusterInfo]) =>
       previousOption match {
@@ -122,35 +117,38 @@ private[configurator] object StreamRoute {
     * @param streamClusterInfo origin cluster info
     * @return updated cluster info
     */
-  private[this] def updateSettings(streamClusterInfo: StreamClusterInfo): StreamClusterInfo = {
-    // check the values by definition
-    //TODO move this to RouteUtils in #2191
-    val copy = streamClusterInfo.settings ++
-      // add the (key, defaultValue) to settings if absent
-      streamClusterInfo.definition.definitions.flatMap { settingDef =>
-        if (streamClusterInfo.settings.contains(settingDef.key()) || CommonUtils.isEmpty(settingDef.defaultValue()))
-          None
-        else Some(settingDef.key() -> JsString(settingDef.defaultValue()))
-      }.toMap
+  private[this] def updateSettings(streamClusterInfo: StreamClusterInfo, fileInfo: FileInfo)(
+    implicit streamCollie: StreamCollie,
+    executionContext: ExecutionContext): Future[StreamClusterInfo] =
+    streamCollie.loadDefinition(fileInfo.url).map { settingDefinition =>
+      // check the values by definition
+      //TODO move this to RouteUtils in #2191
+      val copy = streamClusterInfo.settings ++
+        // add the (key, defaultValue) to settings if absent
+        settingDefinition.definitions.flatMap { settingDef =>
+          if (streamClusterInfo.settings.contains(settingDef.key()) || CommonUtils.isEmpty(settingDef.defaultValue()))
+            None
+          else Some(settingDef.key() -> JsString(settingDef.defaultValue()))
+        }.toMap
 
-    copy
-      .map {
-        case (k, v) =>
-          k -> (v match {
-            case JsString(s) => s
-            case _           => v.toString
-          })
-      }
-      .foreach {
-        case (k, v) =>
-          streamClusterInfo.definition.definitions
-            .find(_.key() == k)
-            .getOrElse(throw DeserializationException(s"$k is required!!!", fieldNames = List(k)))
-            .checker()
-            .accept(v)
-      }
-    streamClusterInfo.copy(settings = copy)
-  }
+      copy
+        .map {
+          case (k, v) =>
+            k -> (v match {
+              case JsString(s) => s
+              case _           => v.toString
+            })
+        }
+        .foreach {
+          case (k, v) =>
+            settingDefinition.definitions
+              .find(_.key() == k)
+              .getOrElse(throw DeserializationException(s"$k is required!!!", fieldNames = List(k)))
+              .checker()
+              .accept(v)
+        }
+      streamClusterInfo.copy(settings = copy)
+    }
 
   private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 streamCollie: StreamCollie,
@@ -180,20 +178,21 @@ private[configurator] object StreamRoute {
                       s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
                 }
 
-                val newClusterInfo = updateSettings(streamClusterInfo)
-                streamCollie.creator
-                // these settings will send to container environment
-                // we convert all value to string for convenient
-                  .settings(newClusterInfo.settings)
-                  .name(newClusterInfo.name)
-                  .group(newClusterInfo.group)
-                  .imageName(newClusterInfo.imageName)
-                  .nodeNames(newClusterInfo.nodeNames)
-                  .jarInfo(fileInfo)
-                  .brokerClusterKey(brokerClusterInfo.key)
-                  .connectionProps(brokerClusterInfo.connectionProps)
-                  .threadPool(executionContext)
-                  .create()
+                updateSettings(streamClusterInfo, fileInfo).flatMap { clusterInfo =>
+                  streamCollie.creator
+                  // these settings will send to container environment
+                  // we convert all value to string for convenient
+                    .settings(clusterInfo.settings)
+                    .name(clusterInfo.name)
+                    .group(clusterInfo.group)
+                    .imageName(clusterInfo.imageName)
+                    .nodeNames(clusterInfo.nodeNames)
+                    .jarInfo(fileInfo)
+                    .brokerClusterKey(brokerClusterInfo.key)
+                    .connectionProps(brokerClusterInfo.connectionProps)
+                    .threadPool(executionContext)
+                    .create()
+                }
             }
         }
     }

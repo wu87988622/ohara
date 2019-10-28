@@ -413,7 +413,6 @@ class TestStreamRoute extends OharaTest with Matchers {
         .setting(key, value)
         .create())
     // the url is not illegal
-    streamDesc.definition should not be None
     streamDesc.settings(key) shouldBe value
   }
 

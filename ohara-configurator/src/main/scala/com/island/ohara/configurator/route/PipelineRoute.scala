@@ -20,6 +20,7 @@ import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -100,43 +101,43 @@ private[configurator] object PipelineRoute {
       ))
   }
 
-  private[this] def toAbstract(data: StreamClusterInfo, clusterInfo: StreamClusterInfo)(
-    implicit meterCache: MeterCache): Future[ObjectAbstract] =
-    Future.successful(
-      ObjectAbstract(
-        group = data.group,
-        name = data.name,
-        kind = data.kind,
-        className = Some(data.definition.className),
-        state = clusterInfo.state,
-        error = None,
-        metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
-        lastModified = data.lastModified,
-        tags = data.tags
-      ))
+  private[this] def toAbstract(data: Data, error: Option[String])(
+    implicit dataStore: DataStore,
+    streamCollie: StreamCollie,
+    executionContext: ExecutionContext): Future[ObjectAbstract] =
+    (data match {
+      case description: ConnectorInfo => Future.successful(Some(description.className))
+      case description: StreamClusterInfo =>
+        dataStore
+          .value[FileInfo](description.jarKey)
+          .map(_.url)
+          .flatMap(streamCollie.loadDefinition)
+          .map(_.className)
+          .map(Some(_))
+      case _ => Future.successful(None)
+    }).recover {
+        case e: Throwable =>
+          LOG.error(s"fail to find the class name of data:${data.key}", e)
+          None
+      }
+      .map { className =>
+        ObjectAbstract(
+          group = data.group,
+          name = data.name,
+          kind = data.kind,
+          className = className,
+          state = None,
+          error = error,
+          metrics = Metrics.EMPTY,
+          lastModified = data.lastModified,
+          tags = data.tags
+        )
+      }
 
-  private[this] def toAbstract(data: Data, error: Option[String]): Future[ObjectAbstract] = Future.successful(
-    ObjectAbstract(
-      group = data.group,
-      name = data.name,
-      kind = data.kind,
-      // Just cast the input data to get the correct className
-      className = data match {
-        case description: ConnectorInfo     => Some(description.className)
-        case description: StreamClusterInfo => Some(description.definition.className)
-        case _                              => None
-      },
-      state = None,
-      error = error,
-      metrics = Metrics.EMPTY,
-      lastModified = data.lastModified,
-      tags = data.tags
-    ))
-
-  private[this] def toAbstract(obj: Data)(implicit brokerCollie: BrokerCollie,
+  private[this] def toAbstract(obj: Data)(implicit dataStore: DataStore,
+                                          brokerCollie: BrokerCollie,
                                           workerCollie: WorkerCollie,
                                           streamCollie: StreamCollie,
-                                          store: DataStore,
                                           adminCleaner: AdminCleaner,
                                           executionContext: ExecutionContext,
                                           meterCache: MeterCache): Future[ObjectAbstract] = obj match {
@@ -149,7 +150,26 @@ private[configurator] object PipelineRoute {
         case (cluster, admin) => toAbstract(data, cluster, admin)
       }
     case data: StreamClusterInfo =>
-      streamCollie.cluster(data.key).map(_._1).map(data.update).flatMap(toAbstract(data, _))
+      streamCollie
+        .cluster(data.key)
+        .map(_._1)
+        // update the cluster info with runtime status
+        .map(data.update)
+        .flatMap { clusterInfo =>
+          dataStore.value[FileInfo](data.jarKey).map(_.url).flatMap(streamCollie.loadDefinition).map { definition =>
+            ObjectAbstract(
+              group = data.group,
+              name = data.name,
+              kind = data.kind,
+              className = Some(definition.className),
+              state = clusterInfo.state,
+              error = None,
+              metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
+              lastModified = data.lastModified,
+              tags = data.tags
+            )
+          }
+        }
     case _ => toAbstract(obj, None)
   }
 

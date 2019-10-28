@@ -180,7 +180,6 @@ object StreamApi {
     * The Stream Cluster Information stored in configurator
     *
     * @param settings streamApp key-value pair settings
-    * @param definition the core and custom definition that defined in jar
     * @param aliveNodes alive node list of the running containers from this cluster
     * @param state the state of streamApp (stopped streamApp does not have this field)
     * @param error the error message if the state was failed to fetch
@@ -188,7 +187,6 @@ object StreamApi {
     * @param lastModified this data change time
     */
   final case class StreamClusterInfo(settings: Map[String, JsValue],
-                                     definition: Definition,
                                      aliveNodes: Set[String],
                                      state: Option[String],
                                      error: Option[String],
@@ -245,7 +243,7 @@ object StreamApi {
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
     JsonRefiner[StreamClusterInfo]
       .format(new RootJsonFormat[StreamClusterInfo] {
-        private[this] val format = jsonFormat7(StreamClusterInfo)
+        private[this] val format = jsonFormat6(StreamClusterInfo)
         override def read(json: JsValue): StreamClusterInfo = format.read(json)
         override def write(obj: StreamClusterInfo): JsValue =
           JsObject(noJsNull(format.write(obj).asJsObject.fields))
