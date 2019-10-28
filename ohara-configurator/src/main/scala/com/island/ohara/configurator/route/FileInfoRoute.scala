@@ -27,7 +27,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.util.ByteString
-import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, OharaJsonFormat}
 import com.island.ohara.common.setting.ObjectKey
@@ -75,8 +74,9 @@ private[configurator] object FileInfoRoute {
         })
     }
 
-  private[this] def customPost(hostname: String, port: Int)(implicit store: DataStore,
-                                                            executionContext: ExecutionContext): () => Route = () =>
+  private[this] def customPost(hostname: String, port: Int, version: String)(
+    implicit store: DataStore,
+    executionContext: ExecutionContext): () => Route = () =>
     withSizeLimit(DEFAULT_FILE_SIZE_BYTES) {
       // We need to convert the request entity to strict entity in order to fetch the "form fields",
       // The timeout here used seconds by the formula (for a worse case):
@@ -96,8 +96,7 @@ private[configurator] object FileInfoRoute {
                     store.add[FileInfo](new FileInfo(
                       group = group,
                       name = name,
-                      url = new URL(
-                        s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_FILE_PREFIX_PATH/$group/$name"),
+                      url = new URL(s"http://$hostname:$port/$version/$DOWNLOAD_FILE_PREFIX_PATH/$group/$name"),
                       lastModified = CommonUtils.current(),
                       bytes = try Files.readAllBytes(file.toPath)
                       finally file.delete(),
@@ -143,12 +142,15 @@ private[configurator] object FileInfoRoute {
     })
     .refine
 
-  def apply(hostname: String, port: Int)(implicit store: DataStore,
-                                         objectChecker: ObjectChecker,
-                                         executionContext: ExecutionContext): server.Route =
+  /**
+    * @param version the version is a part of generated URL. This is important stuff since we may reject the deprecated URL in the future.
+    */
+  def apply(hostname: String, port: Int, version: String)(implicit store: DataStore,
+                                                          objectChecker: ObjectChecker,
+                                                          executionContext: ExecutionContext): server.Route =
     RouteBuilder[FakeCreation, Updating, FileInfo]()
       .root(FILE_PREFIX_PATH)
-      .customPost(customPost(hostname, port))
+      .customPost(customPost(hostname, port, version))
       .hookOfUpdating(hookOfUpdating)
       .hookBeforeDelete(hookBeforeDelete)
       .build() ~ routeToDownload

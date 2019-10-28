@@ -28,12 +28,12 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.client.configurator.{ConfiguratorApiInfo, Data}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Mode
@@ -105,7 +105,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     case _                                                       => throw new IllegalArgumentException(s"unknown cluster collie: ${serviceCollie.getClass.getName}")
   }
 
-  private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
+  private[this] def exceptionHandler: ExceptionHandler = ExceptionHandler {
     case e @ (_: DeserializationException | _: ParsingException | _: IllegalArgumentException |
         _: NoSuchElementException) =>
       extractRequest { request =>
@@ -122,7 +122,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   /**
     *Akka use rejection to wrap error message
     */
-  private[this] def rejectionHandler(): RejectionHandler =
+  private[this] def rejectionHandler: RejectionHandler =
     RejectionHandler
       .newBuilder()
       .handle {
@@ -213,9 +213,15 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   }
 
   /**
+    * the version of APIs supported by Configurator.
+    * We are not ready to support multiples version APIs so it is ok to make a constant string.
+    */
+  private[this] val version = com.island.ohara.client.configurator.v0.V0
+
+  /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
-  private[this] def basicRoute(): server.Route = pathPrefix(ConfiguratorApiInfo.V0)(
+  private[this] def basicRoute: server.Route = pathPrefix(version)(
     Seq[server.Route](
       TopicRoute.apply,
       HdfsInfoRoute.apply,
@@ -232,17 +238,13 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       ZookeeperRoute.apply,
       BrokerRoute.apply,
       WorkerRoute.apply,
-      FileInfoRoute.apply(hostname, port),
+      FileInfoRoute.apply(hostname, port, version),
       LogRoute.apply,
       ObjectRoute.apply,
       ContainerRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
-  private[this] def privateRoute(): server.Route =
-    pathPrefix(ConfiguratorApiInfo.PRIVATE)(path(Remaining)(path =>
-      complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path")))
-
-  private[this] def finalRoute(): server.Route =
+  private[this] def finalRoute: server.Route =
     path(Remaining)(routeToOfficialUrl)
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
@@ -250,8 +252,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   private[this] val httpServer: Http.ServerBinding =
     try Await.result(
       Http().bindAndHandle(
-        handler = handleExceptions(exceptionHandler())(
-          handleRejections(rejectionHandler())(basicRoute() ~ privateRoute()) ~ finalRoute()),
+        handler = handleExceptions(exceptionHandler)(handleRejections(rejectionHandler)(basicRoute) ~ finalRoute),
         // we bind the service on all network adapter.
         interface = CommonUtils.anyLocalAddress(),
         port = port
