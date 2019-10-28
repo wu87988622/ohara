@@ -25,6 +25,7 @@ import {
 import App from './App';
 import MuiTheme from './theme/muiTheme';
 import { SnackbarProvider } from './context/SnackbarContext';
+import { WorkspaceProvider } from './context/WorkspaceConetxt';
 
 ReactDOM.render(
   <StrictMode>
@@ -32,7 +33,9 @@ ReactDOM.render(
       <MuiThemeProvider theme={MuiTheme}>
         <ThemeProvider theme={MuiTheme}>
           <SnackbarProvider>
-            <App />
+            <WorkspaceProvider>
+              <App />
+            </WorkspaceProvider>
           </SnackbarProvider>
         </ThemeProvider>
       </MuiThemeProvider>

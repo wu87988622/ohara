@@ -16,15 +16,13 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
 import Theme from 'components/Theme';
 import AppBar from 'components/Layout/AppBar';
 import NotFoundPage from 'components/NotFoundPage';
-import { useSnackbar } from './context/SnackbarContext';
-import { Button } from 'components/common/Form';
+import Workspace from 'components/Workspace';
 
 const Container = styled.div`
   display: flex;
@@ -42,30 +40,6 @@ const Container = styled.div`
 const Main = styled.main`
   padding: ${props => props.theme.spacing(2)}px;
 `;
-
-const Workspace = props => {
-  const { params } = props.match;
-  const showMessage = useSnackbar();
-
-  return params.workspaceName ? (
-    <>
-      <h1>Workerspace name: {params.workspaceName}</h1>
-      <Button onClick={() => showMessage(params.workspaceName)}>
-        Show me the name
-      </Button>
-    </>
-  ) : (
-    <h1>You don't have any workspace yet!</h1>
-  );
-};
-
-Workspace.propTypes = {
-  match: PropTypes.shape({
-    params: PropTypes.shape({
-      workspaceName: PropTypes.string,
-    }).isRequired,
-  }).isRequired,
-};
 
 const App = () => {
   return (
