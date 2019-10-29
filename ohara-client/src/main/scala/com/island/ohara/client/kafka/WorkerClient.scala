@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.v0.Definition
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
@@ -104,7 +104,7 @@ trait WorkerClient {
     * NOTED: the plugins which are not sub class of ohara connector are not included.
     * @return async future containing connector details
     */
-  def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[Definition]]
+  def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]]
 
   /**
     * get the definitions for specific connector
@@ -112,7 +112,7 @@ trait WorkerClient {
     * @param executionContext thread pool
     * @return definition
     */
-  def connectorDefinition(className: String)(implicit executionContext: ExecutionContext): Future[Definition] =
+  def connectorDefinition(className: String)(implicit executionContext: ExecutionContext): Future[ConnectorDefinition] =
     connectorDefinitions().map(
       _.find(_.className == className).getOrElse(throw new NoSuchElementException(s"$className does not exist")))
 
@@ -258,22 +258,23 @@ object WorkerClient {
         () => HttpExecutor.SINGLETON.get[Seq[KafkaPlugin], KafkaError](s"http://$workerAddress/connector-plugins"),
         s"fetch plugins $workerAddress")
 
-      override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[Definition]] =
+      override def connectorDefinitions()(
+        implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]] =
         plugins()
           .flatMap(Future.traverse(_) { p =>
             definitions(p.className)
               .map(
                 definitions =>
-                  Definition(
+                  ConnectorDefinition(
                     className = p.className,
-                    definitions = definitions
+                    settingDefinitions = definitions
                 ))
               .recover {
                 // It should fail if we try to parse non-ohara connectors
-                case _: IllegalArgumentException => Definition(p.className, Seq.empty)
+                case _: IllegalArgumentException => ConnectorDefinition(p.className, Seq.empty)
               }
           })
-          .map(_.filter(_.definitions.nonEmpty))
+          .map(_.filter(_.settingDefinitions.nonEmpty))
 
       override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[String], KafkaError](s"http://$workerAddress/connectors"),

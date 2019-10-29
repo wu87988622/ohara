@@ -80,7 +80,7 @@ Example Response
 
     {
       "imageName": "oharastream/zookeeper:xxx",
-      "definitions": [
+      "settingDefinitions": [
         {
           "reference": "NONE",
           "displayName": "group",

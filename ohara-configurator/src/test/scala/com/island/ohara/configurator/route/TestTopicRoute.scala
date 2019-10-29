@@ -24,7 +24,6 @@ import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeBrokerCollie
-import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -319,7 +318,7 @@ class TestTopicRoute extends OharaTest with Matchers {
 
   @Test
   def testCustomConfigs(): Unit = {
-    val key = TopicConfig.SEGMENT_BYTES_CONFIG
+    val key = TopicApi.SEGMENT_BYTES_DEFINITION.key()
     val value = 1024 * 1024
     val topicDesc = result(
       topicApi.request.configs(Map(key -> value.toString)).brokerClusterKey(brokerClusterInfo.key).create())
@@ -465,15 +464,6 @@ class TestTopicRoute extends OharaTest with Matchers {
     result(topicApi.stop(topic.key))
     // topic is stopped now.
     result(topicApi.request.key(topic.key).update())
-  }
-
-  @Test
-  def checkDefaultConfigs(): Unit = {
-    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    TopicRoute.TOPIC_CUSTOM_CONFIGS.foreach {
-      case (k, v) =>
-        topic.settings(k) shouldBe v
-    }
   }
 
   @Test

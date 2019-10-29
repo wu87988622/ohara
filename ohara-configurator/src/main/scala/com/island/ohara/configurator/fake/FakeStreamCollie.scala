@@ -20,9 +20,12 @@ import java.net.URL
 
 import com.island.ohara.agent.{DataCollie, ServiceState, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
+import com.island.ohara.client.configurator.v0.StreamApi.{
+  StreamClusterDefinition,
+  StreamClusterInfo,
+  StreamClusterStatus
+}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
 import com.island.ohara.metrics.basic.{Counter, CounterMBean}
@@ -86,10 +89,11 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
     * @param executionContext thread pool
     * @return stream definition
     */
-  override def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Definition] =
+  override def loadDefinition(jarUrl: URL)(
+    implicit executionContext: ExecutionContext): Future[StreamClusterDefinition] =
     super.loadDefinition(jarUrl).recover {
       case _: Throwable =>
-        Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)
+        StreamClusterDefinition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)
       // a serializable collection
     }
 

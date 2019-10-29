@@ -125,7 +125,7 @@ private[configurator] object StreamRoute {
       //TODO move this to RouteUtils in #2191
       val copy = streamClusterInfo.settings ++
         // add the (key, defaultValue) to settings if absent
-        settingDefinition.definitions.flatMap { settingDef =>
+        settingDefinition.settingDefinitions.flatMap { settingDef =>
           if (streamClusterInfo.settings.contains(settingDef.key()) || CommonUtils.isEmpty(settingDef.defaultValue()))
             None
           else Some(settingDef.key() -> JsString(settingDef.defaultValue()))
@@ -141,7 +141,7 @@ private[configurator] object StreamRoute {
         }
         .foreach {
           case (k, v) =>
-            settingDefinition.definitions
+            settingDefinition.settingDefinitions
               .find(_.key() == k)
               .getOrElse(throw DeserializationException(s"$k is required!!!", fieldNames = List(k)))
               .checker()

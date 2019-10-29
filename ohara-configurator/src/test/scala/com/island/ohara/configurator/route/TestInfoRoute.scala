@@ -51,21 +51,21 @@ class TestInfoRoute extends OharaTest with Matchers {
   def testZookeeperInfo(): Unit = {
     val info = result(infoApi.zookeeperInfo())
     info.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
-    info.definitions shouldBe ZookeeperApi.DEFINITIONS
+    info.settingDefinitions shouldBe ZookeeperApi.DEFINITIONS
   }
 
   @Test
   def testBrokerInfo(): Unit = {
     val info = result(infoApi.brokerInfo())
     info.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
-    info.definitions shouldBe BrokerApi.DEFINITIONS
+    info.settingDefinitions shouldBe BrokerApi.DEFINITIONS
   }
 
   @Test
   def testWorkerInfo(): Unit = {
     val info = result(infoApi.workerInfo())
     info.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
-    info.definitions shouldBe WorkerApi.DEFINITIONS
+    info.settingDefinitions shouldBe WorkerApi.DEFINITIONS
   }
 
   @Test
@@ -76,7 +76,7 @@ class TestInfoRoute extends OharaTest with Matchers {
     val info = result(infoApi.streamInfo(fileInfo.key))
     info.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     // the jar is empty but we still see the default definitions
-    info.definitions should not be Seq.empty
+    info.settingDefinitions should not be Seq.empty
   }
 
   @After

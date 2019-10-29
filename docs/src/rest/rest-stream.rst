@@ -69,26 +69,6 @@ streamApp stored data
 
      - tags (**object**) — the user defined parameters
 
-#. definition (**Option(object)**) — definition for current streamApp. If there was no **jarKey** defined, this
-   field will be disappeared. See :ref:`StreamApp Setting Definition <streamapp-setting-definitions>` for more details.
-
-   - className (**string**) — this streamApp entry class name.
-   - definitions (**array(object)**) — the detail definition of each setting.
-
-     - definitions[j].displayName (**string**) — the readable name of this setting
-     - definitions[j].group (**string**) — the group of this setting (all core setting are in core group)
-
-       - definitions[j].orderInGroup (**int**) — the order in group
-       - definitions[j].editable (**boolean**) — true if this setting is modifiable
-       - definitions[j].key (**string**) — the key of setting
-       - definitions[j].[valueType](#setting-type) (**string**) — the type of value
-       - definitions[j].defaultValue (**string**) — the default value
-       - definitions[j].documentation (**string**) — the explanation of this definition
-       - definitions[j].[reference](#setting-reference) (**string**) — works for ohara manager. It represents the reference of value.
-       - definitions[j].required(**boolean**) — true if this setting has no default value and you have to assign a value.
-       - definitions[j].internal (**string**) — true if this setting is assigned by system automatically.
-       - definitions[j].tableKeys (**array(string)**) — the column name when the type is TABLE
-
 #. nodeNames (**array(string)**) — node list of streamApp running container
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of streamapp cluster
 #. state (**option(string)**) — only started/failed streamApp has state (DEAD if all containers are not running, else RUNNING)
@@ -154,123 +134,6 @@ Example Response
       "lastModified": 1563499550267,
       "aliveNodes": [],
       "aliveNodes": [],
-      "definition": {
-        "className": "com.island.ohara.it.streamapp.DumbStreamApp",
-        "definitions": [
-          {
-            "reference": "NONE",
-            "displayName": "Author",
-            "internal": false,
-            "documentation": "Author of streamApp",
-            "valueType": "STRING",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "author",
-            "required": false,
-            "defaultValue": "unknown",
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Enable Exactly Once",
-            "internal": false,
-            "documentation": "Enable this streamApp to process each record exactly once",
-            "valueType": "BOOLEAN",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "exactlyOnce",
-            "required": false,
-            "defaultValue": "false",
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Topic of Consuming from",
-            "internal": false,
-            "documentation": "The topic name of this streamApp should consume from",
-            "valueType": "STRING",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "from",
-            "required": true,
-            "defaultValue": null,
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Application Name",
-            "internal": false,
-            "documentation": "The unique name of this streamApp",
-            "valueType": "STRING",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "name",
-            "required": true,
-            "defaultValue": null,
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Revision",
-            "internal": false,
-            "documentation": "Revision of streamApp",
-            "valueType": "STRING",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "revision",
-            "required": false,
-            "defaultValue": "unknown",
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Broker List",
-            "internal": false,
-            "documentation": "The broker list of current workspace",
-            "valueType": "ARRAY",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "servers",
-            "required": true,
-            "defaultValue": null,
-            "group": "core",
-            "editable": false
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Topic of Producing to",
-            "internal": false,
-            "documentation": "The topic name of this streamApp should produce to",
-            "valueType": "STRING",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "to",
-            "required": true,
-            "defaultValue": null,
-            "group": "core",
-            "editable": true
-          },
-          {
-            "reference": "NONE",
-            "displayName": "Version",
-            "internal": false,
-            "documentation": "Version of streamApp",
-            "valueType": "STRING",
-            "tableKeys": [],
-            "orderInGroup": -1,
-            "key": "version",
-            "required": false,
-            "defaultValue": "unknown",
-            "group": "core",
-            "editable": true
-          }
-        ]
-      },
       "metrics": {
         "meters": []
       },
@@ -316,10 +179,6 @@ Example Response
      {
        "lastModified": 1563499550267,
        "aliveNodes": [],
-       "definition": {
-         "className": "com.island.ohara.it.streamapp.DumbStreamApp",
-         "definitions": []
-       },
        "metrics": {
          "meters": []
        },
@@ -366,10 +225,6 @@ Example Response
        {
          "lastModified": 1563499550267,
          "aliveNodes": [],
-         "definition": {
-           "className": "com.island.ohara.it.streamapp.DumbStreamApp",
-           "definitions": []
-         },
          "metrics": {
            "meters": []
          },
@@ -457,10 +312,6 @@ Example Response
         "aliveNodes": [
           "node1", "node2"
         ],
-        "definition": {
-          "className": "com.island.ohara.it.streamapp.DumbStreamApp",
-          "definitions": []
-        },
         "metrics": {
           "meters": []
         },

@@ -140,6 +140,9 @@ only. If you don’t have interest in UI, you can just ignore this
 element. However, we still list the available values here.
 
 #. TOPIC
+#. FILE
+#. ZOOKEEPER_CLUSTER
+#. BROKER_CLUSTER
 #. WORKER_CLUSTER
 
 .. note::

@@ -164,6 +164,7 @@ public final class ConnectorDefUtils {
           .optional()
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
+
   public static final SettingDef KEY_CONVERTER_DEFINITION =
       SettingDef.builder()
           .displayName("key converter")

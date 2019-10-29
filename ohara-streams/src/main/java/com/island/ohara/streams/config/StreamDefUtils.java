@@ -45,7 +45,7 @@ public final class StreamDefUtils {
           .displayName("Broker cluster key")
           .documentation("the key of broker cluster used to transfer data for this streamApp")
           .valueType(Type.OBJECT_KEY)
-          .internal()
+          .reference(SettingDef.Reference.BROKER_CLUSTER)
           .build();
 
   public static final SettingDef BROKER_DEFINITION =
@@ -104,7 +104,7 @@ public final class StreamDefUtils {
           .documentation("The jar key of this streamApp using")
           .readonly()
           .valueType(Type.OBJECT_KEY)
-          .reference(SettingDef.Reference.JAR)
+          .reference(SettingDef.Reference.FILE)
           .build();
 
   /** this field is used to store whole info for a jar file */

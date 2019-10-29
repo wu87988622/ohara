@@ -16,8 +16,8 @@
 
 package com.island.ohara.agent
 
+import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -43,7 +43,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
           state = None,
           error = None,
           lastModified = 0,
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+          topicDefinition = BrokerApi.TOPIC_DEFINITION
         ))
     }
 
@@ -148,7 +148,7 @@ class TestBrokerCreator extends OharaTest with Matchers {
       state = None,
       error = None,
       lastModified = 0,
-      topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+      topicDefinition = BrokerApi.TOPIC_DEFINITION
     )
 
     // pass

@@ -18,7 +18,7 @@ package com.island.ohara.connector
 
 import java.lang.reflect.Modifier
 
-import com.island.ohara.client.configurator.v0.Definition
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import org.junit.Test
@@ -34,7 +34,7 @@ class TestConnectors extends OharaTest {
       .filter(definition => definition.className.startsWith("com.island.ohara.connector"))
       .foreach { definition =>
         val connName = definition.className
-        val settingDefs = definition.definitions
+        val settingDefs = definition.settingDefinitions
         settingDefs.foreach { settingDef =>
           val key = settingDef.key()
           if (key == "version" || key == "revision" || key == "author")
@@ -48,7 +48,7 @@ class TestConnectors extends OharaTest {
     * Dynamically instantiate local connector classes and then fetch the definitions from them.
     * @return local connector definitions
     */
-  private[connector] lazy val localConnectorDefinitions: Seq[Definition] = {
+  private[connector] lazy val localConnectorDefinitions: Seq[ConnectorDefinition] = {
     val reflections = new Reflections()
     val classes = reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala ++ reflections
       .getSubTypesOf(classOf[RowSinkConnector])
@@ -64,9 +64,9 @@ class TestConnectors extends OharaTest {
         }
       }
       .map { entry =>
-        Definition(
+        ConnectorDefinition(
           className = entry._1,
-          definitions = entry._2
+          settingDefinitions = entry._2
         )
       }
       .toSeq

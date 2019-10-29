@@ -44,7 +44,7 @@ class TestTopicApi extends OharaTest with Matchers {
   @Test
   def brokerClusterKeyShouldBeRequired(): Unit = intercept[DeserializationException] {
     TopicApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
-  }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_KEY)
+  }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_DEFINITION.key())
 
   @Test
   def ignoreNameOnCreation(): Unit = TopicApi.access
@@ -92,9 +92,9 @@ class TestTopicApi extends OharaTest with Matchers {
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
-         | "$BROKER_CLUSTER_KEY_KEY": "$brokerClusterName",
-         | "$NUMBER_OF_PARTITIONS_KEY": $numberOfPartitions,
-         | "$NUMBER_OF_REPLICATIONS_KEY": $numberOfReplications
+         | "${BROKER_CLUSTER_KEY_DEFINITION.key()}": "$brokerClusterName",
+         | "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": $numberOfPartitions,
+         | "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": $numberOfReplications
          |}
        """.stripMargin.parseJson)
 
@@ -112,17 +112,17 @@ class TestTopicApi extends OharaTest with Matchers {
     val numberOfPartitions = 100
     val numberOfReplications = 10
     val update = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                                                  |{
-                                                                  | "$NAME_KEY": "$name",
-                                                                  | "$BROKER_CLUSTER_KEY_KEY": "$brokerClusterName",
-                                                                  | "$NUMBER_OF_PARTITIONS_KEY": $numberOfPartitions,
-                                                                  | "$NUMBER_OF_REPLICATIONS_KEY": $numberOfReplications
-                                                                  |}
+      |{
+      | "$NAME_KEY": "$name",
+      | "${BROKER_CLUSTER_KEY_DEFINITION.key()}": "$brokerClusterName",
+      | "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": $numberOfPartitions,
+      | "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": $numberOfReplications
+      |}
        """.stripMargin.parseJson)
 
     update.brokerClusterKey.get.name() shouldBe brokerClusterName
-    update.settings(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
-    update.settings(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
+    update.settings(NUMBER_OF_PARTITIONS_DEFINITION.key()) shouldBe JsNumber(numberOfPartitions)
+    update.settings(NUMBER_OF_REPLICATIONS_DEFINITION.key()) shouldBe JsNumber(numberOfReplications)
 
     val update2 = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
          |{
@@ -130,8 +130,8 @@ class TestTopicApi extends OharaTest with Matchers {
        """.stripMargin.parseJson)
 
     update2.brokerClusterKey shouldBe None
-    update2.settings should not contain NUMBER_OF_PARTITIONS_KEY
-    update2.settings should not contain NUMBER_OF_REPLICATIONS_KEY
+    update2.settings should not contain NUMBER_OF_PARTITIONS_DEFINITION.key()
+    update2.settings should not contain NUMBER_OF_REPLICATIONS_DEFINITION.key()
   }
 
   @Test
@@ -154,11 +154,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def negativeReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_REPLICATIONS_KEY": -1
+                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -167,11 +167,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def negativePartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_PARTITIONS_KEY": -1
+                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -180,11 +180,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def negativeReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_REPLICATIONS_KEY": -1
+                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -193,11 +193,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def negativePartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_PARTITIONS_KEY": -1
+                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -206,11 +206,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def zeroReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_REPLICATIONS_KEY": 0
+                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -219,11 +219,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def zeroPartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_PARTITIONS_KEY": 0
+                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -232,11 +232,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def zeroReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_REPLICATIONS_KEY": 0
+                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")
@@ -245,11 +245,11 @@ class TestTopicApi extends OharaTest with Matchers {
   def zeroPartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
                                            |  {
-                                           |    "$BROKER_CLUSTER_KEY_KEY": {
+                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "$NUMBER_OF_PARTITIONS_KEY": 0
+                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
   }.getMessage should include("negative")

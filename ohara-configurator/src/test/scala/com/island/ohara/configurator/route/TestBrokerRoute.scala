@@ -395,7 +395,7 @@ class TestBrokerRoute extends OharaTest with Matchers {
     result(
       brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
     result(brokerApi.list()).size should not be 0
-    result(brokerApi.list()).foreach(_.topicSettingDefinitions.size should not be 0)
+    result(brokerApi.list()).foreach(_.topicDefinition.settingDefinitions.size should not be 0)
   }
 
   @Test

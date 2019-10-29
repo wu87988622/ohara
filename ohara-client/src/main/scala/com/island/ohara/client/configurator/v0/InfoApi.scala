@@ -37,25 +37,25 @@ object InfoApi {
 
   implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat2(ConfiguratorInfo)
 
-  case class ServiceInfo(imageName: String, definitions: Seq[SettingDef])
+  case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef])
 
-  implicit val SERVICE_DEFINITION_FORMAT: RootJsonFormat[ServiceInfo] = jsonFormat2(ServiceInfo)
+  implicit val SERVICE_DEFINITION_FORMAT: RootJsonFormat[ServiceDefinition] = jsonFormat2(ServiceDefinition)
 
   class Access private[v0] extends BasicAccess(INFO_PREFIX_PATH) {
     def configuratorInfo()(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =
       exec.get[ConfiguratorInfo, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
 
-    def zookeeperInfo()(implicit executionContext: ExecutionContext): Future[ServiceInfo] =
-      exec.get[ServiceInfo, ErrorApi.Error](s"$url/$ZOOKEEPER_PREFIX_PATH")
+    def zookeeperInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$ZOOKEEPER_PREFIX_PATH")
 
-    def brokerInfo()(implicit executionContext: ExecutionContext): Future[ServiceInfo] =
-      exec.get[ServiceInfo, ErrorApi.Error](s"$url/$BROKER_PREFIX_PATH")
+    def brokerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$BROKER_PREFIX_PATH")
 
-    def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceInfo] =
-      exec.get[ServiceInfo, ErrorApi.Error](s"$url/$WORKER_PREFIX_PATH")
+    def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$WORKER_PREFIX_PATH")
 
-    def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceInfo] =
-      exec.get[ServiceInfo, ErrorApi.Error](s"$url/$STREAM_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
+    def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$STREAM_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
   }
 
   def access: Access = new Access

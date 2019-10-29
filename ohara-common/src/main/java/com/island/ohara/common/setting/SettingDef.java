@@ -54,9 +54,10 @@ public class SettingDef implements JsonObject, Serializable {
   public enum Reference {
     NONE,
     TOPIC,
+    ZOOKEEPER_CLUSTER,
     BROKER_CLUSTER,
     WORKER_CLUSTER,
-    JAR
+    FILE
   }
 
   // -------------------------------[type]-------------------------------//

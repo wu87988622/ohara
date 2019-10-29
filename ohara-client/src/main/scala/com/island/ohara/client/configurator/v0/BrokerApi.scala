@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
@@ -50,6 +51,13 @@ object BrokerApi {
     definitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
   val TAGS_DEFINITION: SettingDef =
     definitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
+  private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
+  val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = definitionBuilder
+    .key(ZOOKEEPER_CLUSTER_KEY_KEY)
+    .documentation("the zookeeper cluster used to manage broker nodes")
+    .valueType(Type.OBJECT_KEYS)
+    .reference(Reference.ZOOKEEPER_CLUSTER)
+    .build()
   private[this] val CLIENT_PORT_KEY: String = "clientPort"
   val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
     .key(CLIENT_PORT_KEY)
@@ -113,11 +121,7 @@ object BrokerApi {
     NUMBER_OF_IO_THREADS_DEFINITION
   )
 
-  /**
-    * internal key used to save the zookeeper cluster key.
-    * All nodes of broker cluster should have this environment variable.
-    */
-  private[ohara] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
+  val TOPIC_DEFINITION: TopicDefinition = TopicDefinition(TopicApi.DEFINITIONS)
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 
@@ -220,9 +224,14 @@ object BrokerApi {
       .requireBindPort(JMX_PORT_KEY)
       .refine
 
+  final case class TopicDefinition(settingDefinitions: Seq[SettingDef])
+
+  implicit val TOPIC_DEFINITION_JSON_FORMAT: OharaJsonFormat[TopicDefinition] =
+    JsonRefiner[TopicDefinition].format(jsonFormat1(TopicDefinition)).rejectEmptyString().refine
+
   class BrokerClusterStatus(val group: String,
                             val name: String,
-                            val topicSettingDefinitions: Seq[SettingDef],
+                            val topicDefinition: TopicDefinition,
                             val aliveNodes: Set[String],
                             val state: Option[String],
                             val error: Option[String])
@@ -233,7 +242,7 @@ object BrokerApi {
                                                          lastModified: Long,
                                                          state: Option[String],
                                                          error: Option[String],
-                                                         topicSettingDefinitions: Seq[SettingDef])
+                                                         topicDefinition: TopicDefinition)
       extends ClusterInfo {
 
     /**
@@ -242,7 +251,7 @@ object BrokerApi {
       * @return a updated cluster info
       */
     def update(status: BrokerClusterStatus): BrokerClusterInfo = copy(
-      topicSettingDefinitions = status.topicSettingDefinitions,
+      topicDefinition = status.topicDefinition,
       aliveNodes = status.aliveNodes,
       state = status.state,
       error = status.error,

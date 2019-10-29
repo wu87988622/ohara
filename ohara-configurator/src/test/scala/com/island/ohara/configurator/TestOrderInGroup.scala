@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.Definition
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import org.junit.Test
@@ -31,13 +31,13 @@ class TestOrderInGroup extends OharaTest with Matchers {
   def test(): Unit = {
     val illegalConnectors =
       FakeWorkerClient.localConnectorDefinitions
-        .map(d => Definition(d.className, d.definitions.filter(_.orderInGroup() < 0)))
-        .filter(_.definitions.nonEmpty)
+        .map(d => ConnectorDefinition(d.className, d.settingDefinitions.filter(_.orderInGroup() < 0)))
+        .filter(_.settingDefinitions.nonEmpty)
     if (illegalConnectors.nonEmpty)
       throw new AssertionError(
         illegalConnectors
           .map(d =>
-            s"the following definitions in ${d.className} have illegal orderInGroup. ${d.definitions
+            s"the following definitions in ${d.className} have illegal orderInGroup. ${d.settingDefinitions
               .map(d => s"${d.key()} has orderInGroup:${d.orderInGroup()}")
               .mkString(",")}")
           .mkString(","))

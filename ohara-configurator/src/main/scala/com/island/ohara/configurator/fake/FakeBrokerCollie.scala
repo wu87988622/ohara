@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 import com.island.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException, ServiceState}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.metrics.BeanChannel
@@ -52,7 +52,7 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
           group = creation.group,
           name = creation.name,
           // TODO: we should check the supported arguments by the running broker images
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+          topicDefinition = BrokerApi.TOPIC_DEFINITION,
           aliveNodes = creation.nodeNames ++ clusterCache.asScala
             .find(_._1.key == creation.key)
             .map(_._2.map(_.nodeName))

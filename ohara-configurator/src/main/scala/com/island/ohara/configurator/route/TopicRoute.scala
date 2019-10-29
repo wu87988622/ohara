@@ -29,17 +29,10 @@ import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
-import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object TopicRoute {
   private[this] val LOG = Logger(TopicRoute.getClass)
-
-  /**
-    * convert the setting defs to plain map.
-    */
-  private[route] val TOPIC_CUSTOM_CONFIGS: Map[String, JsString] =
-    TOPIC_CUSTOM_DEFINITIONS.map(setting => setting.key() -> JsString(setting.defaultValue())).toMap
 
   /**
     * fetch the topic meters from broker cluster
@@ -139,7 +132,7 @@ private[configurator] object TopicRoute {
                                                             executionContext: ExecutionContext): Future[TopicInfo] =
     objectChecker.checkList.brokerCluster(creation.brokerClusterKey).check().map { _ =>
       TopicInfo(
-        settings = TOPIC_CUSTOM_CONFIGS ++ creation.settings,
+        settings = creation.settings,
         partitionInfos = Seq.empty,
         metrics = Metrics.EMPTY,
         state = None,

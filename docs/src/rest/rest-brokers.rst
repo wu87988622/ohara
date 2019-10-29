@@ -57,7 +57,9 @@ The following information are updated by Ohara.
 #. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
 #. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
 #. lastModified (**long**) — last modified this jar time
-#. topicSettingDefinitions (**array(onject)**) — the available custom configs of topics. see :ref:`custom connector guideline <connector>` for the format of setting definition.
+#. topicDefinition (**object**) — the available custom configs of topics. see :ref:`custom connector guideline <connector>` for the format of setting definition.
+
+  - topicDefinition.settingDefinitions (**array(onject)**) — se :ref:`setting definitions <setting-definition>` for more details
 
 .. _rest-brokers-create:
 

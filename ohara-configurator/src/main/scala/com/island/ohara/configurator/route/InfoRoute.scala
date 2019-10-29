@@ -56,34 +56,34 @@ object InfoRoute extends SprayJsonSupport {
               .map(_.url)
               .flatMap(streamCollie.loadDefinition)
               .map { definition =>
-                ServiceInfo(
+                ServiceDefinition(
                   imageName = StreamApi.IMAGE_NAME_DEFAULT,
-                  definitions = definition.definitions
+                  settingDefinitions = definition.settingDefinitions
                 )
               })
         }
       } ~ path(ZOOKEEPER_PREFIX_PATH) {
         get {
           complete(
-            ServiceInfo(
+            ServiceDefinition(
               imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
-              definitions = ZookeeperApi.DEFINITIONS
+              settingDefinitions = ZookeeperApi.DEFINITIONS
             ))
         }
       } ~ path(BROKER_PREFIX_PATH) {
         get {
           complete(
-            ServiceInfo(
+            ServiceDefinition(
               imageName = BrokerApi.IMAGE_NAME_DEFAULT,
-              definitions = BrokerApi.DEFINITIONS
+              settingDefinitions = BrokerApi.DEFINITIONS
             ))
         }
       } ~ path(WORKER_PREFIX_PATH) {
         get {
           complete(
-            ServiceInfo(
+            ServiceDefinition(
               imageName = WorkerApi.IMAGE_NAME_DEFAULT,
-              definitions = WorkerApi.DEFINITIONS
+              settingDefinitions = WorkerApi.DEFINITIONS
             ))
         }
       } ~ path(CONFIGURATOR_PREFIX_PATH) {

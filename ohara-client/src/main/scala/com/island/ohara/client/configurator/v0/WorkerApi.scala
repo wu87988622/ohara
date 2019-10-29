@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
@@ -53,6 +54,8 @@ object WorkerApi {
   val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = definitionBuilder
     .key(BROKER_CLUSTER_KEY_KEY)
     .documentation("broker cluster used to store data for this worker cluster")
+    .valueType(Type.OBJECT_KEY)
+    .reference(Reference.BROKER_CLUSTER)
     .build()
   private[this] val CLIENT_PORT_KEY = "clientPort"
   val CLIENT_PORT_DEFINITION: SettingDef =
@@ -64,6 +67,8 @@ object WorkerApi {
   val FILE_KEYS_DEFINITION: SettingDef = definitionBuilder
     .key(FILE_KEYS_KEY)
     .documentation("the files you want to deploy on worker cluster")
+    .valueType(Type.OBJECT_KEYS)
+    .reference(Reference.FILE)
     .optional()
     .build()
   private[this] val FREE_PORTS_KEY = "freePorts"
@@ -272,16 +277,21 @@ object WorkerApi {
       .requireBindPort(JMX_PORT_KEY)
       .refine
 
+  final case class ConnectorDefinition(className: String, settingDefinitions: Seq[SettingDef])
+
+  implicit val CONNECTOR_DEFINITION_JSON_FORMAT: OharaJsonFormat[ConnectorDefinition] =
+    JsonRefiner[ConnectorDefinition].format(jsonFormat2(ConnectorDefinition)).rejectEmptyString().refine
+
   class WorkerClusterStatus(val group: String,
                             val name: String,
-                            val connectorDefinitions: Seq[Definition],
+                            val connectorDefinitions: Seq[ConnectorDefinition],
                             val aliveNodes: Set[String],
                             val state: Option[String],
                             val error: Option[String])
       extends ClusterStatus
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
-                                                     connectorDefinitions: Seq[Definition],
+                                                     connectorDefinitions: Seq[ConnectorDefinition],
                                                      aliveNodes: Set[String],
                                                      lastModified: Long,
                                                      state: Option[String],
@@ -348,7 +358,6 @@ object WorkerApi {
   private[ohara] implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
     JsonRefiner[WorkerClusterInfo]
       .format(new RootJsonFormat[WorkerClusterInfo] {
-        implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
         private[this] val format = jsonFormat6(WorkerClusterInfo)
         override def write(obj: WorkerClusterInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
 

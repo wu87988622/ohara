@@ -50,7 +50,7 @@ private[configurator] object PipelineRoute {
           ObjectAbstract(
             group = data.group,
             name = data.name,
-            kind = ConnectorDefUtils.kind(connectorDefinition.definitions.asJava),
+            kind = ConnectorDefUtils.kind(connectorDefinition.settingDefinitions.asJava),
             className = Some(data.className),
             state = None,
             error = None,

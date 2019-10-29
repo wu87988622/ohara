@@ -40,7 +40,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       state = None,
       error = None,
       lastModified = CommonUtils.current(),
-      topicSettingDefinitions = Seq.empty
+      topicDefinition = BrokerApi.TOPIC_DEFINITION
     )
     brokerClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
   }
@@ -146,7 +146,7 @@ class TestBrokerApi extends OharaTest with Matchers {
     val nodeName = CommonUtils.randomString()
     val creation = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -236,7 +236,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   @Test
   def testDefaultName(): Unit = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -248,7 +248,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseNameField(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -263,7 +263,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseImageNameField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -288,7 +288,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def testEmptyNodeNames(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -311,7 +311,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseZeroClientPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -325,7 +325,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseNegativeClientPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -339,7 +339,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseLargeClientPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -353,7 +353,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseClientPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -367,7 +367,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -381,7 +381,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -398,7 +398,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseZeroJmxPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -412,7 +412,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseNegativeJmxPort(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -436,7 +436,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def parseJmxPortOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -450,7 +450,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -464,7 +464,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -486,7 +486,7 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -499,7 +499,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def testInvalidBrokerClusterKey(): Unit = {
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -534,7 +534,7 @@ class TestBrokerApi extends OharaTest with Matchers {
   def testEmptyString(): Unit = {
     an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "$ZOOKEEPER_CLUSTER_KEY_KEY": {
+      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
       |      "name": "n"
       |    },
@@ -575,7 +575,7 @@ class TestBrokerApi extends OharaTest with Matchers {
         state = None,
         error = None,
         lastModified = CommonUtils.current(),
-        topicSettingDefinitions = Seq.empty
+        topicDefinition = BrokerApi.TOPIC_DEFINITION
       ))
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
@@ -620,7 +620,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current(),
-      topicSettingDefinitions = Seq.empty
+      topicDefinition = BrokerApi.TOPIC_DEFINITION
     )
     cluster.deadNodes shouldBe Set("n1")
     cluster.copy(state = None).deadNodes shouldBe Set.empty
@@ -638,7 +638,7 @@ class TestBrokerApi extends OharaTest with Matchers {
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current(),
-      topicSettingDefinitions = Seq.empty
+      topicDefinition = BrokerApi.TOPIC_DEFINITION
     )
     cluster.connectionProps should not include "nn"
   }
@@ -657,7 +657,7 @@ class TestBrokerApi extends OharaTest with Matchers {
         .zookeeperClusterKey(ObjectKey.of("g", "n"))
         .creation
         .settings,
-      topicSettingDefinitions = Seq.empty,
+      topicDefinition = BrokerApi.TOPIC_DEFINITION,
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,

@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
@@ -167,7 +167,10 @@ object StreamApi {
       .rejectEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
       .refine
 
-  implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
+  final case class StreamClusterDefinition(className: String, settingDefinitions: Seq[SettingDef])
+
+  val STREAM_CLUSTER_DEFINITION_JSON_FORMAT: OharaJsonFormat[StreamClusterDefinition] =
+    JsonRefiner[StreamClusterDefinition].format(jsonFormat2(StreamClusterDefinition)).rejectEmptyString().refine
 
   class StreamClusterStatus(val group: String,
                             val name: String,

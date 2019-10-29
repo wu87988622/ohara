@@ -168,7 +168,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   @Test
   def testColumnsDefinition(): Unit =
     result(workerClient.connectorDefinitions())
-      .map(_.definitions.filter(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head)
+      .map(_.settingDefinitions.filter(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head)
       .foreach { definition =>
         definition.tableKeys().size() should not be 0
       }
@@ -177,7 +177,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   def testAllPluginDefinitions(): Unit = {
     val plugins = result(workerClient.connectorDefinitions())
     plugins.size should not be 0
-    plugins.foreach(plugin => check(plugin.definitions))
+    plugins.foreach(plugin => check(plugin.settingDefinitions))
   }
   @Test
   def testListDefinitions(): Unit = {

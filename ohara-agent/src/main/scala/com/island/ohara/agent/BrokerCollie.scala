@@ -18,11 +18,11 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus, Creation}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
@@ -154,7 +154,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
             group = creation.group,
             name = creation.name,
             // TODO: we should check the supported arguments by the running broker images
-            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+            topicDefinition = BrokerApi.TOPIC_DEFINITION,
             aliveNodes = aliveContainers.map(_.nodeName).toSet,
             state = state,
             error = None
@@ -230,7 +230,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
         group = key.group(),
         name = key.name(),
         // TODO: we should check the supported arguments by the running broker images
-        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+        topicDefinition = BrokerApi.TOPIC_DEFINITION,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,

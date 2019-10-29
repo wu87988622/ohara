@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Bro
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
-import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, TopicApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.pattern.Builder
@@ -149,7 +149,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           state = Some(ServiceState.RUNNING.name),
           error = None,
           lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+          topicDefinition = BrokerApi.TOPIC_DEFINITION
         )
       }
       val wkCluster = {
@@ -182,7 +182,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           group = bkCluster.group,
           name = bkCluster.name,
           // TODO: we should check the supported arguments by the running broker images
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+          topicDefinition = BrokerApi.TOPIC_DEFINITION,
           aliveNodes = bkCluster.nodeNames,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ServiceState.RUNNING.name),
@@ -268,7 +268,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               group = creation.group,
               name = creation.name,
               // TODO: we should check the supported arguments by the running broker images
-              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+              topicDefinition = BrokerApi.TOPIC_DEFINITION,
               aliveNodes = zkCreation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ServiceState.RUNNING.name),
@@ -320,7 +320,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             BrokerClusterInfo(
               settings = creation.settings,
               // TODO: we should check the supported arguments by the running broker images
-              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS,
+              topicDefinition = BrokerApi.TOPIC_DEFINITION,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ServiceState.RUNNING.name),

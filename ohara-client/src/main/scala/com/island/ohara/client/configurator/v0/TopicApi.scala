@@ -25,7 +25,6 @@ import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.apache.kafka.common.config.TopicConfig
-import org.apache.kafka.common.record.Records
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -33,20 +32,8 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object TopicApi {
-  private[v0] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
-  private[v0] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   @VisibleForTesting
   private[ohara] val TOPICS_PREFIX_PATH: String = "topics"
-
-  private[v0] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
-  private[v0] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
-
-  /**
-    * exposed to routes.
-    */
-  @VisibleForTesting
-  private[ohara] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
-  private[this] val TAGS_KEY = "tags"
 
   /**
     * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
@@ -56,197 +43,73 @@ object TopicApi {
     * Furthermore, kafka forbids us to put required configs to custom configs. Hence, we have to mark the custom config
     * in order to filter the custom from settings (see Creation).
     */
-  private[this] val GROUP_TO_EXTRA_CONFIG = "extra"
+  private[this] val EXTRA_GROUP = "extra"
+
+  private[this] val CORE_COUNTER = new AtomicInteger(0)
+  private[this] val EXTRA_COUNTER = new AtomicInteger(0)
+  private[this] def coreDefinitionBuilder =
+    SettingDef.builder().orderInGroup(CORE_COUNTER.incrementAndGet()).group("core")
+  private[this] def extraDefinitionBuilder =
+    SettingDef.builder().orderInGroup(EXTRA_COUNTER.incrementAndGet()).group(EXTRA_GROUP)
+  val GROUP_DEFINITION: SettingDef =
+    coreDefinitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+  val NAME_DEFINITION: SettingDef =
+    coreDefinitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+  val TAGS_DEFINITION: SettingDef =
+    coreDefinitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
+  private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
+  val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = coreDefinitionBuilder
+    .key(BROKER_CLUSTER_KEY_KEY)
+    .documentation("broker cluster used to store data for this worker cluster")
+    .valueType(Type.OBJECT_KEY)
+    .reference(Reference.BROKER_CLUSTER)
+    .build()
+  private[this] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
+  private[this] val NUMBER_OF_PARTITIONS_DEFAULT: Int = 1
+  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = coreDefinitionBuilder
+    .key(NUMBER_OF_PARTITIONS_KEY)
+    .documentation("the number of partitions")
+    .optional(NUMBER_OF_PARTITIONS_DEFAULT)
+    .build()
+  private[this] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+  private[this] val NUMBER_OF_REPLICATIONS_DEFAULT: Short = 1
+  val NUMBER_OF_REPLICATIONS_DEFINITION: SettingDef = coreDefinitionBuilder
+    .key(NUMBER_OF_REPLICATIONS_KEY)
+    .documentation("the number of replications")
+    .optional(NUMBER_OF_REPLICATIONS_DEFAULT)
+    .build()
+
+  private[this] val SEGMENT_BYTES_KEY = TopicConfig.SEGMENT_BYTES_CONFIG
+  private[this] val SEGMENT_BYTES_DEFAULT: Long = 1 * 1024 * 1024 * 1024L
+  val SEGMENT_BYTES_DEFINITION: SettingDef = extraDefinitionBuilder
+    .key(SEGMENT_BYTES_KEY)
+    .documentation(TopicConfig.SEGMENT_BYTES_DOC)
+    // ONE WEEK
+    .optional(SEGMENT_BYTES_DEFAULT)
+    .build()
+
+  private[this] val SEGMENT_MS_KEY = TopicConfig.SEGMENT_MS_CONFIG
+  private[this] val SEGMENT_MS_DEFAULT: Long = 7 * 24 * 60 * 60 * 1000L
+  val SEGMENT_MS_DEFINITION: SettingDef = extraDefinitionBuilder
+    .key(SEGMENT_MS_KEY)
+    .documentation(TopicConfig.SEGMENT_MS_DOC)
+    // ONE WEEK
+    .optional(SEGMENT_MS_DEFAULT)
+    .build()
 
   /**
     * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
     */
-  val TOPIC_DEFINITIONS: Seq[SettingDef] = {
-    val coreGroup = "core"
-    val count = new AtomicInteger(0)
-    def toDefWithDefault(key: String, group: String, doc: String, valueType: Type, default: Any): SettingDef =
-      toDef(key, group, doc, valueType, Some(default))
-    def toDefWithoutDefault(key: String, group: String, doc: String, valueType: Type): SettingDef =
-      toDef(key, group, doc, valueType, None)
-    def toDef(key: String, group: String, doc: String, valueType: Type, default: Option[Any]): SettingDef = {
-      val builder = SettingDef
-        .builder()
-        .key(key)
-        .displayName(key)
-        .documentation(doc)
-        .group(group)
-        .orderInGroup(count.getAndIncrement())
-        .valueType(valueType)
-      if (default.isDefined) builder.optional(default.get.toString) else builder.optional()
-      builder.build()
-    }
-    Seq(
-      //-----------[kafka prerequisite]-----------
-      toDefWithDefault(key = GROUP_KEY,
-                       group = coreGroup,
-                       doc = "the group of this topic",
-                       valueType = Type.STRING,
-                       default = GROUP_DEFAULT),
-      toDefWithoutDefault(key = NAME_KEY, group = coreGroup, doc = "the name of this topic", valueType = Type.STRING),
-      toDefWithDefault(key = NUMBER_OF_PARTITIONS_KEY,
-                       group = coreGroup,
-                       doc = "the number of partitions",
-                       valueType = Type.INT,
-                       default = DEFAULT_NUMBER_OF_PARTITIONS),
-      toDefWithDefault(key = NUMBER_OF_REPLICATIONS_KEY,
-                       group = coreGroup,
-                       doc = "the number of replications",
-                       valueType = Type.SHORT,
-                       default = NUMBER_OF_REPLICATIONS_KEY),
-      SettingDef
-        .builder()
-        .key(BROKER_CLUSTER_KEY_KEY)
-        .displayName(BROKER_CLUSTER_KEY_KEY)
-        .documentation("the broker cluster to deploy this topic")
-        .group(coreGroup)
-        .orderInGroup(count.getAndIncrement())
-        .valueType(Type.OBJECT_KEY)
-        .reference(Reference.BROKER_CLUSTER)
-        .build(),
-      toDefWithoutDefault(key = TAGS_KEY, group = coreGroup, doc = "the tags to this topic", valueType = Type.TAGS),
-      //-----------[kafka custom]-----------
-      toDefWithDefault(key = TopicConfig.SEGMENT_BYTES_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.SEGMENT_BYTES_DOC,
-                       valueType = Type.LONG,
-                       default = 1 * 1024 * 1024 * 1024),
-      toDefWithDefault(key = TopicConfig.SEGMENT_MS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.SEGMENT_MS_DOC,
-                       valueType = Type.LONG,
-                       default = 24 * 7 * 60 * 60 * 1000L),
-      toDefWithDefault(key = TopicConfig.SEGMENT_JITTER_MS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.SEGMENT_JITTER_MS_DOC,
-                       valueType = Type.LONG,
-                       default = 0 * 60 * 60 * 1000L),
-      toDefWithDefault(
-        key = TopicConfig.SEGMENT_INDEX_BYTES_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.SEGMENT_INDEX_BYTES_DOC,
-        valueType = Type.LONG,
-        default = 10 * 1024 * 1024
-      ),
-      toDefWithDefault(
-        key = TopicConfig.FLUSH_MESSAGES_INTERVAL_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.FLUSH_MESSAGES_INTERVAL_DOC,
-        valueType = Type.LONG,
-        default = Long.MaxValue
-      ),
-      toDefWithDefault(TopicConfig.FLUSH_MS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.FLUSH_MS_DOC,
-                       valueType = Type.LONG,
-                       default = Long.MaxValue),
-      toDefWithDefault(key = TopicConfig.RETENTION_BYTES_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.RETENTION_BYTES_DOC,
-                       valueType = Type.LONG,
-                       default = -1L),
-      toDefWithDefault(key = TopicConfig.RETENTION_MS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.RETENTION_MS_DOC,
-                       valueType = Type.LONG,
-                       default = 24 * 7 * 60 * 60 * 1000L),
-      toDefWithDefault(
-        key = TopicConfig.MAX_MESSAGE_BYTES_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.MAX_MESSAGE_BYTES_DOC,
-        valueType = Type.LONG,
-        default = 1000000 + Records.LOG_OVERHEAD
-      ),
-      toDefWithDefault(key = TopicConfig.INDEX_INTERVAL_BYTES_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.INDEX_INTERVAL_BYTES_DOCS,
-                       valueType = Type.INT,
-                       4096),
-      toDefWithDefault(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.FILE_DELETE_DELAY_MS_DOC,
-                       valueType = Type.INT,
-                       default = 60000),
-      toDefWithDefault(
-        key = TopicConfig.DELETE_RETENTION_MS_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.DELETE_RETENTION_MS_DOC,
-        valueType = Type.LONG,
-        default = 24 * 60 * 60 * 1000L
-      ),
-      toDefWithDefault(key = TopicConfig.MIN_COMPACTION_LAG_MS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.MIN_COMPACTION_LAG_MS_DOC,
-                       valueType = Type.LONG,
-                       default = 0L),
-      toDefWithDefault(
-        key = TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_DOC,
-        valueType = Type.DOUBLE,
-        default = 0.5d
-      ),
-      toDefWithDefault(key = TopicConfig.CLEANUP_POLICY_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.CLEANUP_POLICY_DOC,
-                       valueType = Type.STRING,
-                       default = "delete"),
-      toDefWithDefault(
-        key = TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_DOC,
-        valueType = Type.BOOLEAN,
-        default = false
-      ),
-      toDefWithDefault(key = TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.MIN_IN_SYNC_REPLICAS_DOC,
-                       valueType = Type.INT,
-                       default = 1),
-      toDefWithDefault(TopicConfig.COMPRESSION_TYPE_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.COMPRESSION_TYPE_DOC,
-                       valueType = Type.STRING,
-                       default = "producer"),
-      toDefWithDefault(key = TopicConfig.PREALLOCATE_CONFIG,
-                       group = GROUP_TO_EXTRA_CONFIG,
-                       doc = TopicConfig.PREALLOCATE_DOC,
-                       valueType = Type.BOOLEAN,
-                       default = false),
-      // this config impacts the available APIs so we don't expose it.
-      //      toDefWithDefault(TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG, TopicConfig.MESSAGE_FORMAT_VERSION_DOC, ApiVersion.latestVersion.toString),
-      toDefWithDefault(
-        key = TopicConfig.MESSAGE_TIMESTAMP_TYPE_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.MESSAGE_TIMESTAMP_TYPE_DOC,
-        valueType = Type.STRING,
-        default = "CreateTime"
-      ),
-      toDefWithDefault(
-        key = TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_DOC,
-        valueType = Type.LONG,
-        default = Long.MaxValue
-      ),
-      toDefWithDefault(
-        key = TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_CONFIG,
-        group = GROUP_TO_EXTRA_CONFIG,
-        doc = TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_DOC,
-        valueType = Type.BOOLEAN,
-        default = true
-      )
-    )
-  }
-
-  /**
-    * only the custom definitions.
-    */
-  val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
+  val DEFINITIONS: Seq[SettingDef] = Seq(
+    GROUP_DEFINITION,
+    NAME_DEFINITION,
+    TAGS_DEFINITION,
+    BROKER_CLUSTER_KEY_DEFINITION,
+    NUMBER_OF_PARTITIONS_DEFINITION,
+    NUMBER_OF_REPLICATIONS_DEFINITION,
+    SEGMENT_BYTES_DEFINITION,
+    SEGMENT_MS_DEFINITION
+  )
 
   final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
     def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -301,12 +164,16 @@ object TopicApi {
         override def write(obj: Creation): JsValue = JsObject(obj.settings)
       })
       .requireKey(BROKER_CLUSTER_KEY_KEY)
-      .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_PARTITIONS)
-      .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
+      .nullToInt(NUMBER_OF_PARTITIONS_KEY, NUMBER_OF_PARTITIONS_DEFAULT)
+      .requirePositiveNumber(NUMBER_OF_PARTITIONS_KEY)
+      .nullToInt(NUMBER_OF_REPLICATIONS_KEY, NUMBER_OF_REPLICATIONS_DEFAULT)
+      .requirePositiveNumber(NUMBER_OF_REPLICATIONS_KEY)
       .rejectEmptyString()
       .nullToEmptyObject(TAGS_KEY)
-      .requirePositiveNumber(NUMBER_OF_PARTITIONS_KEY)
-      .requirePositiveNumber(NUMBER_OF_REPLICATIONS_KEY)
+      .requirePositiveNumber(SEGMENT_BYTES_KEY)
+      .nullToLong(SEGMENT_BYTES_KEY, SEGMENT_BYTES_DEFAULT)
+      .requirePositiveNumber(SEGMENT_MS_KEY)
+      .nullToLong(SEGMENT_MS_KEY, SEGMENT_MS_DEFAULT)
       .refine
 
   import MetricsApi._
@@ -371,7 +238,7 @@ object TopicApi {
     def configs: Map[String, String] = noJsNull(settings)
       .filter {
         case (key, value) =>
-          TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG).exists(_.key() == key) &&
+          DEFINITIONS.filter(_.group() == EXTRA_GROUP).exists(_.key() == key) &&
             value.isInstanceOf[JsString]
       }
       .map {

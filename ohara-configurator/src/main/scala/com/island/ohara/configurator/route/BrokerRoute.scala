@@ -18,11 +18,11 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
+import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
@@ -44,7 +44,7 @@ object BrokerRoute {
           state = None,
           error = None,
           lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
+          topicDefinition = BrokerApi.TOPIC_DEFINITION
         )
     }
 
