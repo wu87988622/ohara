@@ -27,7 +27,7 @@ describe('Not found page', () => {
     // Another URL pattern, we can add more patterns here
     // to ensure different route patterns are all handled
     // properly
-    cy.visit('/jladkf/safkj')
+    cy.visit('/jladkf/safkj/ksjdl/jlkfsd/kjlfds')
       .findByText('Ooooops, page not found!')
       .should('exist');
   });

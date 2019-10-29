@@ -29,10 +29,12 @@ const Button = props => {
     testId,
     disabled = false,
     children,
+    ...rest
   } = props;
 
   return (
     <MuiButton
+      {...rest}
       component={component}
       className={className}
       color={color}

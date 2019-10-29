@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
 import { Link } from 'react-router-dom';
-import { get } from 'lodash';
 
-import * as workerApi from 'api/workerApi';
+import { useWorkspace } from 'context/WorkspaceConetxt';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
@@ -29,22 +28,7 @@ import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
-  const [workers, setWorkers] = useState([]);
-
-  useEffect(() => {
-    const fetchWorkers = async () => {
-      const response = await workerApi.fetchWorkers();
-      const workers = get(response, 'data.result', []);
-      // Sort by alphabetical order of the worker name
-      const sortedWorkers = workers.sort((a, b) =>
-        a.settings.name.localeCompare(b.settings.name),
-      );
-
-      setWorkers(sortedWorkers);
-    };
-
-    fetchWorkers();
-  }, []);
+  const { workspaces } = useWorkspace();
 
   return (
     <>
@@ -55,7 +39,7 @@ const AppBar = () => {
           </Link>
         </div>
         <WorkspaceList>
-          {workers.map(worker => {
+          {workspaces.map(worker => {
             const { name } = worker.settings;
             const displayName = name.substring(0, 2).toUpperCase();
 

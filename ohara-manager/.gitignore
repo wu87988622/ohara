@@ -1,13 +1,21 @@
-# Global ignores
+#### Global ignores
 node_modules
+
+# The reports are consumed by Jenkins, not locally
 test-reports
+
+# Unit test coverage genereated by Jest
 coverage
+
 yarn-error.log
 
-# Client
+#### Cypress
 /client/cypress/videos
 /client/cypress/screenshots
-/client/junit.xml
 
-# Cypress
+# Local environment veriables
 /client/cypress.env.json
+
+# Jar files that only used in tests
+/client/cypress/fixtures/plugin
+/client/cypress/fixtures/streamApp

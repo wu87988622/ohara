@@ -35,8 +35,17 @@ const WorkspaceProvider = ({ children }) => {
     fetchWorkers();
   }, []);
 
+  const sortedWorkspaces = workspaces.sort((a, b) =>
+    a.settings.name.localeCompare(b.settings.name),
+  );
+
   return (
-    <WorkspaceContext.Provider value={workspaces}>
+    <WorkspaceContext.Provider
+      value={{
+        workspaces: sortedWorkspaces,
+        unsortedWorkspaces: workspaces,
+      }}
+    >
       {children}
     </WorkspaceContext.Provider>
   );

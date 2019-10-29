@@ -20,6 +20,7 @@ import styled from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -55,7 +56,7 @@ const MuiDialog = props => {
     >
       <div data-testid={testId}>
         <StyledDialogTitle>{title}</StyledDialogTitle>
-        {children}
+        <DialogContent>{children}</DialogContent>
 
         {showActions && (
           <DialogActions>

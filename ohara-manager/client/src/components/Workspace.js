@@ -15,21 +15,19 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
+import { useHistory, useParams } from 'react-router-dom';
 
 import { useSnackbar } from 'context/SnackbarContext';
 import { useWorkspace } from 'context/WorkspaceConetxt';
 import { Button } from 'components/common/Form';
 
-const Workspace = props => {
-  const { history, match } = props;
+const Workspace = () => {
   const showMessage = useSnackbar();
-  const workspaces = useWorkspace().sort((a, b) =>
-    a.settings.name.localeCompare(b.settings.name),
-  );
+  const history = useHistory();
+  const { workspaces } = useWorkspace();
+  const { workspaceName } = useParams();
 
   const hasWorkspace = workspaces.length > 0;
-  const workspaceName = match.params.workspaceName;
 
   let currentWorkspace;
   if (workspaceName) {
@@ -60,17 +58,6 @@ const Workspace = props => {
   ) : (
     <h1>You don't have any workspace yet!</h1>
   );
-};
-
-Workspace.propTypes = {
-  match: PropTypes.shape({
-    params: PropTypes.shape({
-      workspaceName: PropTypes.string,
-    }).isRequired,
-  }).isRequired,
-  history: PropTypes.shape({
-    push: PropTypes.func.isRequired,
-  }).isRequired,
 };
 
 export default Workspace;

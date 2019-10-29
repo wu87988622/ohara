@@ -21,6 +21,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import GlobalStyle from 'theme/globalStyle';
 import Theme from 'components/Theme';
 import AppBar from 'components/Layout/AppBar';
+import PipelineNavigator from 'components/Pipeline/PipelineNavigator';
 import NotFoundPage from 'components/NotFoundPage';
 import Workspace from 'components/Workspace';
 
@@ -47,9 +48,18 @@ const App = () => {
       <Container className="container">
         <GlobalStyle />
         <AppBar />
+        <Route
+          exact
+          path="/:workspaceName/:pipelineName?"
+          component={PipelineNavigator}
+        />
         <Main>
           <Switch>
-            <Route exact path="/:workspaceName?" component={Workspace} />
+            <Route
+              exact
+              path="/:workspaceName?/:pipelineName?"
+              component={Workspace}
+            />
             <Route exact path="/temp/theme" component={Theme} />
             <Route path="*" component={NotFoundPage} />
           </Switch>
