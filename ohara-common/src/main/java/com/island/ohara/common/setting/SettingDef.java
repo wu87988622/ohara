@@ -60,6 +60,13 @@ public class SettingDef implements JsonObject, Serializable {
     FILE
   }
 
+  // -------------------------------[reference]-------------------------------//
+  public enum CheckRule {
+    NONE,
+    PERMISSIVE,
+    ENFORCING
+  }
+
   // -------------------------------[type]-------------------------------//
   public enum Type {
     BOOLEAN,

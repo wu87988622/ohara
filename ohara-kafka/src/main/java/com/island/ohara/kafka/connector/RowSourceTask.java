@@ -18,6 +18,9 @@ package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.data.Column;
+import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.metrics.basic.Counter;
@@ -93,26 +96,39 @@ public abstract class RowSourceTask extends SourceTask {
    */
   protected RowSourceContext rowContext = null;
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
-  @VisibleForTesting Counter rowCounter = null;
-  @VisibleForTesting Counter sizeCounter = null;
+  @VisibleForTesting Counter messageNumberCounter = null;
+  @VisibleForTesting Counter messageSizeCounter = null;
+  @VisibleForTesting Counter ignoredMessageNumberCounter = null;
+  @VisibleForTesting Counter ignoredMessageSizeCounter = null;
+  @VisibleForTesting TaskSetting taskSetting = null;
 
   @Override
   public final List<SourceRecord> poll() {
-    List<RowSourceRecord> value = _poll();
+    List<RowSourceRecord> records = _poll();
     // kafka connector doesn't support the empty list in testing. see
     // https://github.com/apache/kafka/pull/4958
-    if (value == null || value.isEmpty()) return null;
-    else {
-      List<SourceRecord> records =
-          value.stream().map(RowSourceRecord::toSourceRecord).collect(Collectors.toList());
-      try {
-        return records;
-      } finally {
-        if (rowCounter != null) rowCounter.addAndGet(records.size());
-        if (sizeCounter != null)
-          sizeCounter.addAndGet(records.stream().mapToLong(ConnectorUtils::sizeOf).sum());
-      }
-    }
+    if (CommonUtils.isEmpty(records)) return null;
+
+    SettingDef.CheckRule rule = taskSetting.checkRule();
+    List<Column> columns = taskSetting.columns();
+    List<SourceRecord> raw =
+        records.stream()
+            .filter(
+                record ->
+                    ConnectorUtils.match(
+                        rule,
+                        record.row(),
+                        columns,
+                        false,
+                        ignoredMessageNumberCounter,
+                        ignoredMessageSizeCounter))
+            .map(RowSourceRecord::toSourceRecord)
+            .collect(Collectors.toList());
+
+    if (messageNumberCounter != null) messageNumberCounter.addAndGet(raw.size());
+    if (messageSizeCounter != null)
+      messageSizeCounter.addAndGet(raw.stream().mapToLong(ConnectorUtils::sizeOf).sum());
+    return raw;
   }
 
   /**
@@ -128,13 +144,13 @@ public abstract class RowSourceTask extends SourceTask {
     return CounterBuilder.of().group(taskSetting.name());
   }
 
-  @VisibleForTesting TaskSetting taskSetting = null;
-
   @Override
   public final void start(Map<String, String> props) {
     taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
-    rowCounter = ConnectorUtils.rowCounter(taskSetting.name());
-    sizeCounter = ConnectorUtils.sizeCounter(taskSetting.name());
+    messageNumberCounter = ConnectorUtils.messageNumberCounter(taskSetting.name());
+    messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
+    ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());
+    ignoredMessageSizeCounter = ConnectorUtils.ignoredMessageSizeCounter(taskSetting.name());
     _start(taskSetting);
   }
 
@@ -143,8 +159,10 @@ public abstract class RowSourceTask extends SourceTask {
     try {
       _stop();
     } finally {
-      Releasable.close(rowCounter);
-      Releasable.close(sizeCounter);
+      Releasable.close(messageNumberCounter);
+      Releasable.close(messageSizeCounter);
+      Releasable.close(ignoredMessageNumberCounter);
+      Releasable.close(ignoredMessageSizeCounter);
     }
   }
 

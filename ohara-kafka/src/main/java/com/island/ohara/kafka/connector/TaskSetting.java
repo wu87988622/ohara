@@ -310,6 +310,25 @@ public class TaskSetting {
         .orElseGet(Collections::emptyList);
   }
 
+  /**
+   * the check rule for this connector
+   *
+   * @return check rule
+   */
+  public SettingDef.CheckRule checkRule() {
+    return stringOption(ConnectorDefUtils.CHECK_RULE_DEFINITION.key())
+        .map(
+            s -> {
+              try {
+                return SettingDef.CheckRule.valueOf(s.toUpperCase());
+              } catch (Throwable e) {
+                // unknown string is converted to none
+                return SettingDef.CheckRule.NONE;
+              }
+            })
+        .orElse(SettingDef.CheckRule.NONE);
+  }
+
   @VisibleForTesting
   Map<String, String> raw() {
     return Collections.unmodifiableMap(raw);

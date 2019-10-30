@@ -17,6 +17,8 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.SettingDef;
@@ -64,12 +66,12 @@ final class ConnectorUtils {
    * @param group group name. It is normally equal to connector name
    * @return row counter
    */
-  static Counter rowCounter(String group) {
+  static Counter messageNumberCounter(String group) {
     return Counter.builder()
         .group(group)
-        .name("row.counter")
-        .unit("rows")
-        .document("number of rows")
+        .name("message.number")
+        .unit("messages")
+        .document("number of messages")
         .startTime(CommonUtils.current())
         .value(0)
         .register();
@@ -81,25 +83,165 @@ final class ConnectorUtils {
    * @param group group name. It is normally equal to connector name
    * @return size counter
    */
-  static Counter sizeCounter(String group) {
+  static Counter messageSizeCounter(String group) {
     return Counter.builder()
         .group(group)
-        .name("row.size")
+        .name("message.size")
         .unit("bytes")
-        .document("size (in bytes) of rows")
+        .document("size (in bytes) of messages")
         .startTime(CommonUtils.current())
         .value(0)
         .register();
   }
 
   /**
-   * calculate the size of kafka record. NOTED: this method cares for only key and value in record
+   * Create and register a number counter for ignored messages
    *
-   * @param record kafka record
-   * @return size of record
+   * @param group group name. It is normally equal to connector name
+   * @return number counter
    */
-  static long sizeOf(ConnectRecord<?> record) {
-    return sizeOf(record.key()) + sizeOf(record.value());
+  static Counter ignoredMessageNumberCounter(String group) {
+    return Counter.builder()
+        .group(group)
+        .name("ignored.message.number")
+        .unit("messages")
+        .document("number of ignored messages")
+        .startTime(CommonUtils.current())
+        .value(0)
+        .register();
+  }
+
+  /**
+   * Create and register a size counter for ignored messages
+   *
+   * @param group group name. It is normally equal to connector name
+   * @return size counter
+   */
+  static Counter ignoredMessageSizeCounter(String group) {
+    return Counter.builder()
+        .group(group)
+        .name("ignored.message.size")
+        .unit("bytes")
+        .document("size of ignored messages")
+        .startTime(CommonUtils.current())
+        .value(0)
+        .register();
+  }
+
+  /**
+   * compare the schema with input/output data.
+   *
+   * @param row row
+   * @param columns columns
+   */
+  static boolean match(
+      SettingDef.CheckRule rule,
+      Row row,
+      List<Column> columns,
+      boolean isSink,
+      Counter ignoredMessageNumberCounter,
+      Counter ignoredMessageSizeCounter) {
+    switch (rule) {
+      case PERMISSIVE:
+      case ENFORCING:
+        try {
+          ConnectorUtils.match(row, columns, isSink);
+          return true;
+        } catch (Throwable e) {
+          if (rule == SettingDef.CheckRule.PERMISSIVE) {
+            if (ignoredMessageNumberCounter != null) ignoredMessageNumberCounter.incrementAndGet();
+            if (ignoredMessageSizeCounter != null)
+              ignoredMessageSizeCounter.addAndGet(ConnectorUtils.sizeOf(row));
+            return false;
+          } else throw e;
+        }
+      case NONE:
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * compare the schema with input/output data. this is a strict check that all columns MUST exist
+   * and the input/output data can't have "unknown" column
+   *
+   * @param row row
+   * @param columns columns
+   */
+  static void match(Row row, List<Column> columns, boolean isSink) {
+    List<String> requiredNames =
+        columns.stream()
+            .map(column -> isSink ? column.name() : column.newName())
+            .collect(Collectors.toList());
+    ;
+
+    if (!CommonUtils.isEmpty(columns)) {
+      if (row.size() != columns.size())
+        throw new IllegalArgumentException(
+            "expected size:" + columns.size() + ", actual:" + row.size());
+      List<String> dataColumnNames = row.names();
+      dataColumnNames.forEach(
+          name -> {
+            if (requiredNames.stream().noneMatch(requiredName -> requiredName.equals(name)))
+              throw new IllegalArgumentException(
+                  "column name:"
+                      + name
+                      + " is not matched by schema:"
+                      + String.join(",", requiredNames));
+          });
+      requiredNames.forEach(
+          requiredName -> {
+            if (dataColumnNames.stream().noneMatch(name -> name.equals(requiredName)))
+              throw new IllegalArgumentException("there is not data for column:" + requiredName);
+          });
+      columns.forEach(
+          column -> {
+            Cell<?> cell = row.cell(isSink ? column.name() : column.newName());
+            boolean match = false;
+            switch (column.dataType()) {
+              case BYTES:
+                if (cell.value() instanceof byte[]) match = true;
+                break;
+              case BOOLEAN:
+                if (cell.value() instanceof Boolean) match = true;
+                break;
+              case BYTE:
+                if (cell.value() instanceof Byte) match = true;
+                break;
+              case SHORT:
+                if (cell.value() instanceof Short) match = true;
+                break;
+              case INT:
+                if (cell.value() instanceof Integer) match = true;
+                break;
+              case LONG:
+                if (cell.value() instanceof Long) match = true;
+                break;
+              case FLOAT:
+                if (cell.value() instanceof Float) match = true;
+                break;
+              case DOUBLE:
+                if (cell.value() instanceof Double) match = true;
+                break;
+              case STRING:
+                if (cell.value() instanceof String) match = true;
+                break;
+              case ROW:
+                if (cell.value() instanceof Row) match = true;
+                break;
+              case OBJECT:
+              default:
+                if (cell.value() != null) match = true;
+                break;
+            }
+            if (!match)
+              throw new IllegalArgumentException(
+                  "expected type: "
+                      + column.dataType()
+                      + ", actual:"
+                      + cell.value().getClass().getName());
+          });
+    }
   }
 
   /**
@@ -119,6 +261,10 @@ final class ConnectorUtils {
     else if (obj instanceof Float) return ByteUtils.SIZE_OF_FLOAT;
     else if (obj instanceof Double) return ByteUtils.SIZE_OF_DOUBLE;
     else if (obj instanceof String) return ((String) obj).getBytes().length;
+    else if (obj instanceof ConnectRecord)
+      return sizeOf(((ConnectRecord) obj).key()) + sizeOf(((ConnectRecord) obj).value());
+    else if (obj instanceof RowSinkRecord) return sizeOf(((RowSinkRecord) obj).row());
+    else if (obj instanceof RowSourceRecord) return sizeOf(((RowSourceRecord) obj).row());
     else return 0;
   }
 

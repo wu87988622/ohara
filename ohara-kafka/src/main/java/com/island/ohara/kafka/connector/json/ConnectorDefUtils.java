@@ -135,7 +135,7 @@ public final class ConnectorDefUtils {
           .displayName("Schema")
           .key("columns")
           .valueType(Type.TABLE)
-          .documentation("output schema")
+          .documentation("the rules to connector in/out data")
           .optional()
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
@@ -151,6 +151,18 @@ public final class ConnectorDefUtils {
                       .name(COLUMN_NEW_NAME_KEY)
                       .type(TableColumn.Type.STRING)
                       .build()))
+          .build();
+
+  public static final SettingDef CHECK_RULE_DEFINITION =
+      SettingDef.builder()
+          .displayName("check rule")
+          .key("check.rule")
+          .valueType(Type.STRING)
+          .documentation(
+              "the strategy for unmatched data. It includes enforcing, permissive and none")
+          .optional(SettingDef.CheckRule.NONE.name())
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
 
   public static final SettingDef WORKER_CLUSTER_KEY_DEFINITION =
@@ -347,17 +359,18 @@ public final class ConnectorDefUtils {
   /** the default definitions for all ohara connector. */
   public static final List<SettingDef> DEFINITIONS_DEFAULT =
       Arrays.asList(
-          ConnectorDefUtils.CONNECTOR_NAME_DEFINITION,
-          ConnectorDefUtils.CONNECTOR_KEY_DEFINITION,
-          ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION,
-          ConnectorDefUtils.COLUMNS_DEFINITION,
-          ConnectorDefUtils.KEY_CONVERTER_DEFINITION,
-          ConnectorDefUtils.VALUE_CONVERTER_DEFINITION,
-          ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION,
-          ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION,
-          ConnectorDefUtils.TOPIC_KEYS_DEFINITION,
-          ConnectorDefUtils.TOPIC_NAMES_DEFINITION,
-          ConnectorDefUtils.TAGS_DEFINITION);
+          CONNECTOR_NAME_DEFINITION,
+          CONNECTOR_KEY_DEFINITION,
+          CONNECTOR_CLASS_DEFINITION,
+          COLUMNS_DEFINITION,
+          CHECK_RULE_DEFINITION,
+          KEY_CONVERTER_DEFINITION,
+          VALUE_CONVERTER_DEFINITION,
+          WORKER_CLUSTER_KEY_DEFINITION,
+          NUMBER_OF_TASKS_DEFINITION,
+          TOPIC_KEYS_DEFINITION,
+          TOPIC_NAMES_DEFINITION,
+          TAGS_DEFINITION);
 
   /**
    * find the default value of version from settings

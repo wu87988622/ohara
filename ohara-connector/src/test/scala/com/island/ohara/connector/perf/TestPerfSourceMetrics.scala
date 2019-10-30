@@ -56,7 +56,6 @@ class TestPerfSourceMetrics extends WithBrokerWorker with Matchers {
     val counters = BeanChannel.local().counterMBeans()
     counters.size should not be 0
     counters.asScala.foreach { counter =>
-      counter.getValue should not be 0
       counter.getStartTime should not be 0
       CommonUtils.requireNonEmpty(counter.getUnit)
       CommonUtils.requireNonEmpty(counter.getDocument)

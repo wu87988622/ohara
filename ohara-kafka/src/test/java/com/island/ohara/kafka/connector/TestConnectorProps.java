@@ -17,9 +17,14 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Column;
+import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.OharaTest;
+import com.island.ohara.common.setting.ConnectorKey;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.connector.json.ConnectorFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -57,56 +62,228 @@ public class TestConnectorProps extends OharaTest {
 
   @Test
   public void testCounterInSink() {
+    Column column =
+        Column.builder()
+            .name(CommonUtils.randomString())
+            .dataType(DataType.STRING)
+            .order(1)
+            .build();
     RowSinkTask task = new DumbSinkTask();
-    String connectorName = CommonUtils.randomString();
+    ConnectorKey connectorKey = ConnectorKey.of("g", "n");
     // we call start to initialize counter.
-    task.start(Collections.singletonMap("name", connectorName));
+    task.start(
+        ConnectorFormatter.of()
+            .connectorKey(connectorKey)
+            .checkRule(SettingDef.CheckRule.PERMISSIVE)
+            .column(column)
+            .raw());
     try {
-      Assert.assertNotNull(task.rowCounter);
-      Assert.assertNotNull(task.sizeCounter);
-      Assert.assertEquals(task.rowCounter.group(), connectorName);
-      Assert.assertEquals(task.sizeCounter.group(), connectorName);
-      Assert.assertEquals(task.rowCounter.getValue(), 0);
-      Assert.assertEquals(task.sizeCounter.getValue(), 0);
-      Row row = Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString()));
-      task.put(Collections.singletonList(new SinkRecord("topic", 0, null, row, null, null, 10)));
-      Assert.assertEquals(task.rowCounter.getValue(), 1);
-      Assert.assertNotEquals(task.sizeCounter.getValue(), 0);
+      Assert.assertNotNull(task.messageNumberCounter);
+      Assert.assertNotNull(task.messageSizeCounter);
+      Assert.assertNotNull(task.ignoredMessageSizeCounter);
+      Assert.assertNotNull(task.ignoredMessageNumberCounter);
+
+      Assert.assertEquals(task.messageNumberCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(task.messageSizeCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(
+          task.ignoredMessageSizeCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(
+          task.ignoredMessageNumberCounter.group(), connectorKey.connectorNameOnKafka());
+
+      Assert.assertEquals(task.messageNumberCounter.getValue(), 0);
+      Assert.assertEquals(task.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 0);
+
+      // add legal data
+      task.put(
+          Collections.singletonList(
+              new SinkRecord(
+                  "topic",
+                  0,
+                  null,
+                  Row.of(Cell.of(column.name(), CommonUtils.randomString())),
+                  null,
+                  null,
+                  10)));
+      Assert.assertEquals(task.messageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageSizeCounter.getValue(), 0);
+
+      // add illegal data
+      task.put(
+          Collections.singletonList(
+              new SinkRecord(
+                  "topic", 0, null, Row.of(Cell.of(column.name(), 12313)), null, null, 10)));
+      Assert.assertEquals(task.messageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task.ignoredMessageSizeCounter.getValue(), 0);
+
     } finally {
       task.stop();
-      Assert.assertTrue(task.rowCounter.isClosed());
-      Assert.assertTrue(task.sizeCounter.isClosed());
+      Assert.assertTrue(task.messageNumberCounter.isClosed());
+      Assert.assertTrue(task.messageSizeCounter.isClosed());
+      Assert.assertTrue(task.ignoredMessageSizeCounter.isClosed());
+      Assert.assertTrue(task.ignoredMessageNumberCounter.isClosed());
+    }
+
+    RowSinkTask task2 = new DumbSinkTask();
+    try {
+      // we call start to initialize counter.
+      task2.start(
+          ConnectorFormatter.of()
+              .connectorKey(ConnectorKey.of("g", "n"))
+              .checkRule(SettingDef.CheckRule.ENFORCING)
+              .column(column)
+              .raw());
+      assertException(
+          IllegalArgumentException.class,
+          () ->
+              task2.put(
+                  Collections.singletonList(
+                      new SinkRecord(
+                          "topic",
+                          0,
+                          null,
+                          Row.of(Cell.of(column.name(), 12313)),
+                          null,
+                          null,
+                          10))));
+    } finally {
+      task2.stop();
     }
   }
 
   @Test
   public void testCounterInSource() {
-    Row row = Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString()));
+    Column column =
+        Column.builder()
+            .name(CommonUtils.randomString())
+            .dataType(DataType.STRING)
+            .order(1)
+            .build();
+    Row goodRow = Row.of(Cell.of(column.newName(), CommonUtils.randomString()));
+    Row badRow = Row.of(Cell.of(column.newName(), 123123));
     RowSourceTask task =
+        new DumbSourceTask() {
+          private boolean good = true;
+
+          @Override
+          protected List<RowSourceRecord> _poll() {
+            try {
+              return Collections.singletonList(
+                  RowSourceRecord.builder()
+                      .row(good ? goodRow : badRow)
+                      .topicName(CommonUtils.randomString())
+                      .build());
+            } finally {
+              good = false;
+            }
+          }
+        };
+    ConnectorKey connectorKey = ConnectorKey.of("g", "n");
+    // we call start to initialize counter.
+    task.start(
+        ConnectorFormatter.of()
+            .connectorKey(connectorKey)
+            .checkRule(SettingDef.CheckRule.PERMISSIVE)
+            .column(column)
+            .raw());
+    try {
+      Assert.assertNotNull(task.messageNumberCounter);
+      Assert.assertNotNull(task.messageSizeCounter);
+      Assert.assertNotNull(task.ignoredMessageNumberCounter);
+      Assert.assertNotNull(task.ignoredMessageSizeCounter);
+
+      Assert.assertEquals(task.messageNumberCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(task.messageSizeCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(
+          task.ignoredMessageNumberCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(
+          task.ignoredMessageSizeCounter.group(), connectorKey.connectorNameOnKafka());
+
+      Assert.assertEquals(task.messageNumberCounter.getValue(), 0);
+      Assert.assertEquals(task.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageSizeCounter.getValue(), 0);
+
+      task.poll();
+      Assert.assertEquals(task.messageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageSizeCounter.getValue(), 0);
+
+      // this poll generates bad data
+      task.poll();
+      Assert.assertEquals(task.messageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task.ignoredMessageSizeCounter.getValue(), 0);
+
+    } finally {
+      task.stop();
+      Assert.assertTrue(task.messageNumberCounter.isClosed());
+      Assert.assertTrue(task.messageSizeCounter.isClosed());
+      Assert.assertTrue(task.ignoredMessageNumberCounter.isClosed());
+      Assert.assertTrue(task.ignoredMessageSizeCounter.isClosed());
+    }
+
+    RowSourceTask task2 =
         new DumbSourceTask() {
           @Override
           protected List<RowSourceRecord> _poll() {
             return Collections.singletonList(
-                RowSourceRecord.builder().row(row).topicName(CommonUtils.randomString()).build());
+                RowSourceRecord.builder()
+                    .row(badRow)
+                    .topicName(CommonUtils.randomString())
+                    .build());
           }
         };
-    String connectorName = CommonUtils.randomString();
-    // we call start to initialize counter.
-    task.start(Collections.singletonMap("name", connectorName));
+
     try {
-      Assert.assertNotNull(task.rowCounter);
-      Assert.assertNotNull(task.sizeCounter);
-      Assert.assertEquals(task.rowCounter.group(), connectorName);
-      Assert.assertEquals(task.sizeCounter.group(), connectorName);
-      Assert.assertEquals(task.rowCounter.getValue(), 0);
-      Assert.assertEquals(task.sizeCounter.getValue(), 0);
-      task.poll();
-      Assert.assertEquals(task.rowCounter.getValue(), 1);
-      Assert.assertNotEquals(task.sizeCounter.getValue(), 0);
+      // we call start to initialize counter.
+      task2.start(
+          ConnectorFormatter.of()
+              .connectorKey(connectorKey)
+              .checkRule(SettingDef.CheckRule.ENFORCING)
+              .column(column)
+              .raw());
+      // this poll generates bad data and the check rule is "enforcing"
+      assertException(IllegalArgumentException.class, task2::poll);
     } finally {
-      task.stop();
-      Assert.assertTrue(task.rowCounter.isClosed());
-      Assert.assertTrue(task.sizeCounter.isClosed());
+      task2.stop();
+    }
+
+    RowSourceTask task3 =
+        new DumbSourceTask() {
+          @Override
+          protected List<RowSourceRecord> _poll() {
+            return Collections.singletonList(
+                RowSourceRecord.builder()
+                    .row(badRow)
+                    .topicName(CommonUtils.randomString())
+                    .build());
+          }
+        };
+
+    try {
+      // we call start to initialize counter.
+      task3.start(
+          ConnectorFormatter.of()
+              .connectorKey(connectorKey)
+              .checkRule(SettingDef.CheckRule.NONE)
+              .column(column)
+              .raw());
+      // this poll generates bad data and the check rule is "enforcing"
+      task3.poll();
+      Assert.assertEquals(task3.messageNumberCounter.getValue(), 1);
+      Assert.assertNotEquals(task3.messageSizeCounter.getValue(), 0);
+      Assert.assertEquals(task3.ignoredMessageNumberCounter.getValue(), 0);
+      Assert.assertEquals(task3.ignoredMessageSizeCounter.getValue(), 0);
+    } finally {
+      task3.stop();
     }
   }
 

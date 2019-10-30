@@ -18,11 +18,12 @@ package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.data.Column;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.metrics.basic.Counter;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -115,19 +116,37 @@ public abstract class RowSinkTask extends SinkTask {
 
   protected RowSinkContext rowContext;
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
-  @VisibleForTesting Counter rowCounter = null;
-  @VisibleForTesting Counter sizeCounter = null;
+  @VisibleForTesting Counter messageNumberCounter = null;
+  @VisibleForTesting Counter messageSizeCounter = null;
+  @VisibleForTesting Counter ignoredMessageNumberCounter = null;
+  @VisibleForTesting Counter ignoredMessageSizeCounter = null;
+  @VisibleForTesting TaskSetting taskSetting = null;
 
   @Override
-  public final void put(Collection<SinkRecord> records) {
-    if (records == null) records = Collections.emptyList();
+  public final void put(Collection<SinkRecord> raw) {
+    SettingDef.CheckRule rule = taskSetting.checkRule();
+    List<Column> columns = taskSetting.columns();
+    if (raw == null) return;
+    List<RowSinkRecord> records =
+        raw.stream()
+            .map(RowSinkRecord::of)
+            .filter(
+                record ->
+                    ConnectorUtils.match(
+                        rule,
+                        record.row(),
+                        columns,
+                        true,
+                        ignoredMessageNumberCounter,
+                        ignoredMessageSizeCounter))
+            .collect(Collectors.toList());
     try {
-      _put(records.stream().map(RowSinkRecord::of).collect(Collectors.toList()));
+      _put(records);
     } finally {
       // rowCounter should not be null ....
-      if (rowCounter != null) rowCounter.addAndGet(records.size());
-      if (sizeCounter != null)
-        sizeCounter.addAndGet(records.stream().mapToLong(ConnectorUtils::sizeOf).sum());
+      if (messageNumberCounter != null) messageNumberCounter.addAndGet(records.size());
+      if (messageSizeCounter != null)
+        messageSizeCounter.addAndGet(records.stream().mapToLong(ConnectorUtils::sizeOf).sum());
     }
   }
 
@@ -144,13 +163,13 @@ public abstract class RowSinkTask extends SinkTask {
     return CounterBuilder.of().group(taskSetting.name());
   }
 
-  @VisibleForTesting TaskSetting taskSetting = null;
-
   @Override
   public final void start(Map<String, String> props) {
     taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
-    rowCounter = ConnectorUtils.rowCounter(taskSetting.name());
-    sizeCounter = ConnectorUtils.sizeCounter(taskSetting.name());
+    messageNumberCounter = ConnectorUtils.messageNumberCounter(taskSetting.name());
+    messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
+    ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());
+    ignoredMessageSizeCounter = ConnectorUtils.ignoredMessageSizeCounter(taskSetting.name());
     _start(taskSetting);
   }
 
@@ -159,8 +178,10 @@ public abstract class RowSinkTask extends SinkTask {
     try {
       _stop();
     } finally {
-      Releasable.close(rowCounter);
-      Releasable.close(sizeCounter);
+      Releasable.close(messageNumberCounter);
+      Releasable.close(messageSizeCounter);
+      Releasable.close(ignoredMessageNumberCounter);
+      Releasable.close(ignoredMessageSizeCounter);
     }
   }
 
