@@ -28,7 +28,7 @@ const generateNode = () => {
   return params;
 };
 
-describe('Node API', () => {
+describe.skip('Node API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createNode', () => {

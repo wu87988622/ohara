@@ -14,30 +14,56 @@
  * limitations under the License.
  */
 
-import { axiosInstance } from './apiUtils';
+import { get as lodashGet } from 'lodash';
 
-export const fetchPipelines = async group => {
-  try {
-    const response = await axiosInstance.get(`/api/pipelines?group=${group}`);
-    const { isSuccess } = response.data;
+import * as pipeline from './body/pipelineBody';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import * as URL from './utils/url';
+import wait from './waitApi';
+import * as waitUtil from './utils/waitUtils';
 
-    if (!isSuccess) throw new Error(response.data.errorMessage.message);
+const url = URL.PIPELINE_URL;
 
-    return response;
-  } catch (error) {
-    throw new Error(error);
-  }
+export const create = async (params = {}) => {
+  const requestBody = requestUtil(params, pipeline);
+  const res = await axiosInstance.post(url, requestBody);
+  return responseUtil(res, pipeline);
 };
 
-export const createPipeline = async params => {
-  try {
-    const response = await axiosInstance.post('/api/pipelines', params);
-    const { isSuccess } = response.data;
+export const update = async params => {
+  const { name, group } = params;
+  delete params[name];
+  delete params[group];
+  const body = params;
+  const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
+  return responseUtil(res, pipeline);
+};
 
-    if (!isSuccess) throw new Error(response.data.errorMessage.message);
+export const remove = async (params = {}) => {
+  const { name, group } = params.settings;
+  await axiosInstance.delete(`${url}/${name}?group=${group}`);
+  const res = await wait({
+    url,
+    checkFn: waitUtil.waitForClusterNonexistent,
+    paramRes: params,
+  });
+  return responseUtil(res, pipeline);
+};
 
-    return response;
-  } catch (error) {
-    throw new Error(error);
-  }
+export const get = async (params = {}) => {
+  const { name, group } = params.settings;
+  const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+  return responseUtil(res, pipeline);
+};
+
+export const getAll = async (params = {}) => {
+  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
+  const res = await axiosInstance.get(url + parameter);
+  return lodashGet(responseUtil(res, pipeline), '', []);
+};
+
+export const refresh = async (params = {}) => {
+  const { name, group } = params;
+  await axiosInstance.put(`${url}/${name}/refresh?group=${group}`);
+  return get(params);
 };

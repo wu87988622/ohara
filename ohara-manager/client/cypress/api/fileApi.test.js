@@ -25,7 +25,7 @@ const generateFile = () => {
   return params;
 };
 
-describe('File API', () => {
+describe.skip('File API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('uploadJar', () => {

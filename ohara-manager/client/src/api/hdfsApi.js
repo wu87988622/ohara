@@ -16,47 +16,41 @@
 
 import { get as lodashGet } from 'lodash';
 
-import * as node from './body/nodeBody';
+import * as hdfs from './body/hdfsBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
-import wait from './waitApi';
-import * as waitUtil from './utils/waitUtils';
 
-const url = URL.NODE_URL;
+const url = URL.HDFS_URL;
 
 export const create = async (params = {}) => {
-  const requestBody = requestUtil(params, node);
+  const requestBody = requestUtil(params, hdfs);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, node);
+  return responseUtil(res, hdfs);
 };
 
 export const update = async params => {
-  const { hostname } = params;
-  delete params[hostname];
+  const { name, group } = params;
+  delete params[name];
+  delete params[group];
   const body = params;
-  const res = await axiosInstance.put(`${url}/${hostname}`, body);
-  return responseUtil(res, node);
+  const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
+  return responseUtil(res, hdfs);
 };
 
 export const remove = async (params = {}) => {
-  const { hostname } = params;
-  await axiosInstance.delete(`${url}/${hostname}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForNodeNonexistent,
-    paramRes: params,
-  });
-  return responseUtil(res, node);
+  const { name, group } = params;
+  await axiosInstance.delete(`${url}/${name}?group=${group}`);
+  return await getAll();
 };
 
 export const get = async (params = {}) => {
-  const { hostname } = params;
-  const res = await axiosInstance.get(`${url}/${hostname}`);
-  return responseUtil(res, node);
+  const { name, group } = params;
+  const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+  return responseUtil(res, hdfs);
 };
 
 export const getAll = async (params = {}) => {
   const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
   const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, node), '', []);
+  return lodashGet(responseUtil(res, hdfs), '', []);
 };

@@ -52,7 +52,7 @@ const PipelineNavigator = () => {
   };
 
   const fetchPipelines = useCallback(async () => {
-    const response = await pipelineApi.fetchPipelines(workspaceName);
+    const response = await pipelineApi.getAll({ group: workspaceName });
     const pipelines = get(response, 'data.result', []).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
@@ -63,7 +63,7 @@ const PipelineNavigator = () => {
     // TODO: we should get rid of thie error handling logic
     // once #2995 is merged
     try {
-      const response = await pipelineApi.createPipeline({
+      const response = await pipelineApi.create({
         name: pipelineName,
         group: workspaceName,
       });

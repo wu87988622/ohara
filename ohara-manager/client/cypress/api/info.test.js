@@ -18,7 +18,7 @@
 
 import * as infoApi from '../../src/api/infoApi';
 
-describe('Info API', () => {
+describe.skip('Info API', () => {
   it('fetchConfiguratorInfo', () => {
     infoApi.fetchConfiguratorInfo().then(response => {
       const {
