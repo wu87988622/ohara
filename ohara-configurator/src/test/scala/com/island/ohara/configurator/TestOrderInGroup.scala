@@ -18,7 +18,6 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.configurator.fake.FakeWorkerClient
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -30,7 +29,7 @@ class TestOrderInGroup extends OharaTest with Matchers {
   @Test
   def test(): Unit = {
     val illegalConnectors =
-      FakeWorkerClient.localConnectorDefinitions
+      ReflectionUtils.localConnectorDefinitions
         .map(d => ConnectorDefinition(d.className, d.settingDefinitions.filter(_.orderInGroup() < 0)))
         .filter(_.settingDefinitions.nonEmpty)
     if (illegalConnectors.nonEmpty)

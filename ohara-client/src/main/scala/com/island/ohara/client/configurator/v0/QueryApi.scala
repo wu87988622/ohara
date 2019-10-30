@@ -102,6 +102,27 @@ object QueryApi {
     def query()(implicit executionContext: ExecutionContext): Future[TopicData]
   }
 
+  sealed trait FileRequest {
+    def key(key: ObjectKey): FileRequest
+    def query()(implicit executionContext: ExecutionContext): Future[FileContent]
+  }
+
+  val FILE_PREFIX_PATH: String = "file"
+  val SOURCE_CONNECTOR_KEY: String = "source connector"
+  val SINK_CONNECTOR_KEY: String = "sink connector"
+  val STREAM_APP_KEY: String = "streamApp"
+
+  case class ClassInfo(classType: String, className: String)
+
+  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat2(ClassInfo)
+
+  case class FileContent(classes: Seq[ClassInfo]) {
+    def sourceConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == SOURCE_CONNECTOR_KEY)
+    def sinkConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == SINK_CONNECTOR_KEY)
+    def streamAppClasses: Seq[ClassInfo] = classes.filter(_.classType == STREAM_APP_KEY)
+  }
+  implicit val FILE_CONTENT_FORMAT: RootJsonFormat[FileContent] = jsonFormat1(FileContent)
+
   final class Access private[QueryApi] extends BasicAccess(QUERY_PREFIX_PATH) {
     def rdbRequest: RdbRequest = new RdbRequest {
       private[this] var jdbcUrl: String = _
@@ -189,6 +210,18 @@ object QueryApi {
             .param(TOPIC_LIMIT_KEY, limit.toString)
             .param(TOPIC_TIMEOUT_KEY, timeout.toMillis.toString)
             .build())
+    }
+
+    def fileRequest: FileRequest = new FileRequest {
+      private[this] var key: ObjectKey = _
+
+      override def key(key: ObjectKey): FileRequest = {
+        this.key = Objects.requireNonNull(key)
+        this
+      }
+
+      override def query()(implicit executionContext: ExecutionContext): Future[FileContent] =
+        exec.get[FileContent, ErrorApi.Error](s"$url/$FILE_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
     }
   }
 

@@ -47,6 +47,7 @@ class TestQueryTopic extends WithBrokerWorker with Matchers {
   @Test
   def goodCase(): Unit = {
     val topicInfo = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(topicApi.start(topicInfo.key))
 
     val closed = new AtomicBoolean(false)
 
@@ -81,6 +82,7 @@ class TestQueryTopic extends WithBrokerWorker with Matchers {
   @Test
   def badCase(): Unit = {
     val topicInfo = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(topicApi.start(topicInfo.key))
 
     val closed = new AtomicBoolean(false)
 

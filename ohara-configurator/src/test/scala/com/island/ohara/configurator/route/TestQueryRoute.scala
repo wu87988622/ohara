@@ -16,7 +16,9 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{QueryApi, WorkerApi}
+import java.io.{File, FileOutputStream}
+
+import com.island.ohara.client.configurator.v0.{FileInfoApi, QueryApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
@@ -29,6 +31,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
 class TestQueryRoute extends OharaTest with Matchers {
   private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder.fake().build()
@@ -38,16 +41,15 @@ class TestQueryRoute extends OharaTest with Matchers {
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
+  private[this] def queryApi = QueryApi.access.hostname(configurator.hostname).port(configurator.port)
+
   @Test
   def testQueryDb(): Unit = {
     val tableName = CommonUtils.randomString(10)
     val dbClient = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
     try {
       val r = result(
-        QueryApi.access
-          .hostname(configurator.hostname)
-          .port(configurator.port)
-          .rdbRequest
+        queryApi.rdbRequest
           .jdbcUrl(db.url())
           .user(db.user())
           .password(db.password())
@@ -71,10 +73,7 @@ class TestQueryRoute extends OharaTest with Matchers {
 
       verify(
         result(
-          QueryApi.access
-            .hostname(configurator.hostname)
-            .port(configurator.port)
-            .rdbRequest
+          queryApi.rdbRequest
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
@@ -83,10 +82,7 @@ class TestQueryRoute extends OharaTest with Matchers {
 
       verify(
         result(
-          QueryApi.access
-            .hostname(configurator.hostname)
-            .port(configurator.port)
-            .rdbRequest
+          queryApi.rdbRequest
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
@@ -96,6 +92,39 @@ class TestQueryRoute extends OharaTest with Matchers {
             .query()))
       dbClient.dropTable(tableName)
     } finally dbClient.close()
+  }
+
+  @Test
+  def testQueryFile(): Unit = {
+    val currentPath = new File(".").getCanonicalPath
+    val streamFile = new File(currentPath, "../ohara-streams/build/libs/test-streamApp.jar")
+    streamFile.exists() shouldBe true
+    def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+    val fileInfo = result(fileApi.request.file(streamFile).upload())
+
+    val fileContent = result(queryApi.fileRequest.key(fileInfo.key).query())
+    fileContent.classes should not be Seq.empty
+    fileContent.sourceConnectorClasses.size shouldBe 0
+    fileContent.sinkConnectorClasses.size shouldBe 0
+    fileContent.streamAppClasses.size shouldBe 1
+  }
+
+  private[this] def tmpFile(bytes: Array[Byte]): File = {
+    val f = CommonUtils.createTempJar(CommonUtils.randomString(10))
+    val output = new FileOutputStream(f)
+    try output.write(bytes)
+    finally output.close()
+    f
+  }
+
+  @Test
+  def testQueryIllegalFile(): Unit = {
+    val file = tmpFile(CommonUtils.randomString(10).getBytes)
+    def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+    val fileInfo = result(fileApi.request.file(file).upload())
+
+    val fileContent = result(queryApi.fileRequest.key(fileInfo.key).query())
+    fileContent.classes shouldBe Seq.empty
   }
 
   @After

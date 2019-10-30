@@ -143,3 +143,31 @@ Example Response
     ]
   }
 
+Query File
+-----------
+
+This API enables you to "see" what in the file. The items in response are shown below.
+
+#. classes (**Array(Object)**) — the classes which extend the either connector or streamApp
+
+  - classes[i].classType (**String**) — "source connector", "sink connector" or "streamApp"
+  - classes[i].className (**String**) — the full name of class
+
+Example Response
+
+.. code-block:: json
+
+  {
+    "classes": [
+      {
+        "classType": "connector",
+        "className": "a.b.c.Source"
+      },
+      {
+        "classType": "streamApp",
+        "className": "a.b.c.bbb"
+      }
+    ]
+  }
+
+

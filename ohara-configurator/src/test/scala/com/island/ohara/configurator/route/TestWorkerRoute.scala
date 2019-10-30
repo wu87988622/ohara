@@ -21,7 +21,8 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.fake.{FakeWorkerClient, FakeWorkerCollie}
+import com.island.ohara.configurator.ReflectionUtils._
+import com.island.ohara.configurator.fake.FakeWorkerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -422,15 +423,17 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   @Test
   def testConnectorDefinitions(): Unit = {
-    FakeWorkerClient.localConnectorDefinitions.size should not be 0
-    result(workerApi.list()).foreach(_.connectorDefinitions shouldBe FakeWorkerClient.localConnectorDefinitions)
+    localConnectorDefinitions.size should not be 0
+    result(workerApi.list()).foreach(
+      _.connectorDefinitions shouldBe
+        localConnectorDefinitions)
   }
 
   @Test
   def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
     val configurator = Configurator.builder.fake(numberOfCluster, 1).build()
     try result(configurator.serviceCollie.workerCollie.clusters()).keys
-      .foreach(_.connectorDefinitions shouldBe FakeWorkerClient.localConnectorDefinitions)
+      .foreach(_.connectorDefinitions shouldBe localConnectorDefinitions)
     finally configurator.close()
   }
 

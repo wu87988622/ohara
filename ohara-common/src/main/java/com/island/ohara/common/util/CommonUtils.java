@@ -768,7 +768,7 @@ public final class CommonUtils {
    */
   public static File downloadUrl(URL url, Duration connectionTimeout, Duration readTimeout) {
     File tmpFolder = CommonUtils.createTempFolder("tmp-");
-    File outputFile = new File(tmpFolder, randomString(10));
+    File outputFile = new File(tmpFolder, url.getFile());
     try {
       FileUtils.copyURLToFile(
           Objects.requireNonNull(url),

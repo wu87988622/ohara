@@ -19,12 +19,14 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.setting.TopicKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
@@ -39,7 +41,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * used to handle the "QUERY" APIs
   */
 private[configurator] object QueryRoute {
-
   private[this] def topicData(records: Seq[Record[Array[Byte], Array[Byte]]]): TopicData =
     TopicData(
       records
@@ -83,7 +84,7 @@ private[configurator] object QueryRoute {
 
   def apply(implicit brokerCollie: BrokerCollie,
             adminCleaner: AdminCleaner,
-            store: DataStore,
+            dataStore: DataStore,
             workerCollie: WorkerCollie,
             objectChecker: ObjectChecker,
             executionContext: ExecutionContext): server.Route = pathPrefix(QUERY_PREFIX_PATH) {
@@ -171,6 +172,18 @@ private[configurator] object QueryRoute {
                 } finally Releasable.close(consumer)
               })
         }
+      }
+    } ~ path(FILE_PREFIX_PATH / Segment) { fileName =>
+      parameter(GROUP_KEY ?) { groupOption =>
+        complete(dataStore.value[FileInfo](ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), fileName)).map {
+          fileInfo =>
+            val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
+            FileContent(
+              sources.map(n => ClassInfo(SOURCE_CONNECTOR_KEY, n)) ++
+                sinks.map(n => ClassInfo(SINK_CONNECTOR_KEY, n)) ++
+                streamApps.map(n => ClassInfo(STREAM_APP_KEY, n))
+            )
+        })
       }
     }
   }

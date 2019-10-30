@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.fake
 
-import java.lang.reflect.Modifier
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,13 +32,11 @@ import com.island.ohara.client.kafka.WorkerJson.{
   KafkaTaskStatus
 }
 import com.island.ohara.common.setting.ConnectorKey
+import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.kafka.connector.json._
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
-import com.typesafe.scalalogging.Logger
 import org.apache.kafka.connect.runtime.AbstractHerder
 import org.apache.kafka.connect.sink.SinkConnector
 import org.apache.kafka.connect.source.SourceConnector
-import org.reflections.Reflections
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -130,40 +127,10 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   }
 
   override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]] =
-    Future.successful(FakeWorkerClient.localConnectorDefinitions)
+    Future.successful(ReflectionUtils.localConnectorDefinitions)
 }
 
 object FakeWorkerClient {
-  private[this] val LOG = Logger(FakeWorkerClient.getClass)
   def apply(): FakeWorkerClient = new FakeWorkerClient
 
-  /**
-    * Dynamically instantiate local connector classes and then fetch the definitions from them.
-    * @return local connector definitions
-    */
-  private[configurator] lazy val localConnectorDefinitions: Seq[ConnectorDefinition] = {
-    val reflections = new Reflections()
-    val classes = reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala ++ reflections
-      .getSubTypesOf(classOf[RowSinkConnector])
-      .asScala
-
-    classes
-    // the abstract class is not instantiable.
-      .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
-      .flatMap { clz =>
-        try Some((clz.getName, clz.newInstance().definitions().asScala))
-        catch {
-          case e: Throwable =>
-            LOG.error(s"failed to instantiate ${clz.getName} for RowSourceConnector", e)
-            None
-        }
-      }
-      .map { entry =>
-        ConnectorDefinition(
-          className = entry._1,
-          settingDefinitions = entry._2
-        )
-      }
-      .toSeq
-  }
 }
