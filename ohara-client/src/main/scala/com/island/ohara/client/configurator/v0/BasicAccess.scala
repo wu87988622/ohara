@@ -16,7 +16,10 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.util.Objects
+
 import com.island.ohara.client.HttpExecutor
+import com.island.ohara.client.configurator.v0.BasicAccess.UrlBuilder
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
@@ -45,15 +48,9 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   }
 
   protected final def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](url(key, action))
+    exec.put[ErrorApi.Error](urlBuilder.key(key).postfix(action).build())
 
   //-----------------------[URL Helpers]-----------------------//
-
-  protected def toString(params: Map[String, String]): String = params
-    .map {
-      case (key, value) => s"$key=$value"
-    }
-    .mkString("&")
 
   /**
     * Compose the url with hostname, port, version and prefix
@@ -67,19 +64,71 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     * @param key object key
     * @return url string
     */
-  protected final def url(key: ObjectKey): String =
-    s"$url/${key.name}?$GROUP_KEY=${key.group}"
+  protected final def url(key: ObjectKey): String = urlBuilder.key(key).build()
 
-  /**
-    * used by START, STOP, PAUSE and RESUME requests.
-    * the form is shown below:
-    * url/${key.name}/$postFix?group=${key.group}&param0=${param0}
-    * @param key object key
-    * @param postFix action string
-    * @return url string
-    */
-  protected final def url(key: ObjectKey, postFix: String, params: Map[String, String] = Map.empty): String =
+  protected def urlBuilder: UrlBuilder = (prefix, key, postfix, params) => {
+    var url = BasicAccess.this.url
+    prefix.foreach(s => url = s"$url/$s")
+    key.foreach(k => url = s"$url/${k.name()}")
+    postfix.foreach(s => url = s"$url/$s")
+    key.foreach(k => url = s"$url?$GROUP_KEY=${k.group()}")
+    val divider = key match {
+      case None    => "?"
+      case Some(_) => "&"
+    }
+
     if (params.nonEmpty)
-      s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?$GROUP_KEY=${key.group}&${toString(params)}"
-    else s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?$GROUP_KEY=${key.group}"
+      url = url + divider + params
+        .map {
+          case (key, value) => s"$key=$value"
+        }
+        .mkString("&")
+    url
+  }
+}
+
+object BasicAccess {
+  trait UrlBuilder extends com.island.ohara.common.pattern.Builder[String] {
+    private[this] var prefix: Option[String] = None
+    private[this] var key: Option[ObjectKey] = None
+    private[this] var postfix: Option[String] = None
+    private[this] var params: Map[String, String] = Map.empty
+
+    def prefix(prefix: String): UrlBuilder = {
+      this.prefix = Some(CommonUtils.requireNonEmpty(prefix))
+      this
+    }
+
+    def key(key: ObjectKey): UrlBuilder = {
+      this.key = Some(key)
+      this
+    }
+
+    def postfix(postfix: String): UrlBuilder = {
+      this.postfix = Some(CommonUtils.requireNonEmpty(postfix))
+      this
+    }
+
+    def param(key: String, value: String): UrlBuilder = {
+      this.params += (key -> value)
+      this
+    }
+
+    def params(params: Map[String, String]): UrlBuilder = {
+      this.params ++= Objects.requireNonNull(params)
+      this
+    }
+
+    override def build(): String = doBuild(
+      prefix = prefix,
+      key = key,
+      postfix = postfix,
+      params = params
+    )
+
+    protected def doBuild(prefix: Option[String],
+                          key: Option[ObjectKey],
+                          postfix: Option[String],
+                          params: Map[String, String]): String
+  }
 }

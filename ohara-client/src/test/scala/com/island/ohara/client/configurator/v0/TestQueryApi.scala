@@ -33,7 +33,7 @@ class TestQueryApi extends OharaTest with Matchers {
     val query = QueryApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
-      .request
+      .rdbRequest
       .jdbcUrl(url)
       .user(user)
       .password(password)
@@ -61,7 +61,7 @@ class TestQueryApi extends OharaTest with Matchers {
     val query = QueryApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
-      .request
+      .rdbRequest
       .jdbcUrl(url)
       .user(user)
       .password(password)
@@ -84,7 +84,7 @@ class TestQueryApi extends OharaTest with Matchers {
   def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy QueryApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request
+    .rdbRequest
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .query
@@ -93,7 +93,7 @@ class TestQueryApi extends OharaTest with Matchers {
   def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy QueryApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request
+    .rdbRequest
     .jdbcUrl(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .query
@@ -102,54 +102,54 @@ class TestQueryApi extends OharaTest with Matchers {
   def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy QueryApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request
+    .rdbRequest
     .jdbcUrl(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .query
 
   @Test
-  def nullUrl(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.jdbcUrl(null)
+  def nullUrl(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.jdbcUrl(null)
 
   @Test
-  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.jdbcUrl("")
+  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.rdbRequest.jdbcUrl("")
 
   @Test
-  def nullUser(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.user(null)
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.user(null)
 
   @Test
-  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.user("")
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.rdbRequest.user("")
 
   @Test
-  def nullPassword(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.password(null)
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.password(null)
 
   @Test
-  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.password("")
+  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.rdbRequest.password("")
 
   @Test
   def nullWorkerClusterKey(): Unit =
-    an[NullPointerException] should be thrownBy QueryApi.access.request.workerClusterKey(null)
+    an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.workerClusterKey(null)
 
   @Test
   def nullSchemaPattern(): Unit =
-    an[NullPointerException] should be thrownBy QueryApi.access.request.schemaPattern(null)
+    an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.schemaPattern(null)
 
   @Test
   def emptySchemaPattern(): Unit =
-    an[IllegalArgumentException] should be thrownBy QueryApi.access.request.schemaPattern("")
+    an[IllegalArgumentException] should be thrownBy QueryApi.access.rdbRequest.schemaPattern("")
 
   @Test
   def nullCatalogPattern(): Unit =
-    an[NullPointerException] should be thrownBy QueryApi.access.request.catalogPattern(null)
+    an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.catalogPattern(null)
 
   @Test
   def emptyCatalogPattern(): Unit =
-    an[IllegalArgumentException] should be thrownBy QueryApi.access.request.catalogPattern("")
+    an[IllegalArgumentException] should be thrownBy QueryApi.access.rdbRequest.catalogPattern("")
 
   @Test
-  def nullTableName(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.tableName(null)
+  def nullTableName(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.rdbRequest.tableName(null)
 
   @Test
-  def emptyTableName(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.tableName("")
+  def emptyTableName(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.rdbRequest.tableName("")
 
   @Test
   def testParseJson(): Unit = {

@@ -32,10 +32,10 @@ private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <
   def query: Query[Res]
 
   final def addNode(objectKey: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](url(objectKey, nodeName))
+    exec.put[ErrorApi.Error](urlBuilder.key(objectKey).postfix(nodeName).build())
   final def removeNode(objectKey: ObjectKey, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](url(objectKey, nodeName))
+    exec.delete[ErrorApi.Error](urlBuilder.key(objectKey).postfix(nodeName).build())
 
   /**
     *  start a cluster
@@ -66,7 +66,7 @@ private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <
     * @return none
     */
   final def forceStop(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](url(key = objectKey, postFix = STOP_COMMAND, params = Map(FORCE_KEY -> "true")))
+    exec.put[ErrorApi.Error](urlBuilder.key(objectKey).postfix(STOP_COMMAND).param(FORCE_KEY, "true").build())
 }
 
 object ClusterAccess {

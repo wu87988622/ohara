@@ -101,3 +101,45 @@ Example Response
        ]
      }
 
+
+Query Topic
+--------------
+
+*POST /v0/query/topic/$name?group=$group&timeout=$timeout&$limit=$limit*
+
+Fetch the latest data from a topic. the query arguments are shown below.
+
+#. timeout (**long**) — break the fetch if this timeout is reached
+#. limit (**long**) — the number of messages in topic
+
+the response includes following items.
+
+#. messages (**Array(Object)**) — messages
+
+  - messages[i].partition (**int**) — the index of partition
+  - messages[i].offset (**Long**) — the offset of this message
+  - messages[i].value (**Option(Object)**) — the value of this message
+  - messages[i].error (**Option(String)**) — error message happen in failing to parse value
+
+Example Response
+
+.. code-block:: json
+
+  {
+    "messages": [
+      {
+        "partition": 1,
+        "offset": 12,
+        "value": {
+          "a": "b",
+          "b": "c"
+        }
+      },
+      {
+        "partition": 1,
+        "offset": 13,
+        "error": "unknown message"
+      }
+    ]
+  }
+

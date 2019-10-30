@@ -66,6 +66,13 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     @Optional("default is empty")
+    public Builder<Key, Value> option(String key, String value) {
+      return options(
+          Collections.singletonMap(
+              CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
+    }
+
+    @Optional("default is empty")
     public Builder<Key, Value> options(Map<String, String> options) {
       this.options = CommonUtils.requireNonEmpty(options);
       return this;

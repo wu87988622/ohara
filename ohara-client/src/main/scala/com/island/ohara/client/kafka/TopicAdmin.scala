@@ -134,23 +134,30 @@ object TopicAdmin {
               }))
         promise.future
       }
+    type TopicName = String
+    type Partition = Int
+    type BeginningOffset = Long
+    type EndOffset = Long
 
-    private[this] def toTopicInfo(topicDescription: TopicDescription,
-                                  configs: Map[String, String],
-                                  offsets: TopicPartitionOffsets): KafkaTopicInfo = {
+    private[this] def toTopicInfo(
+      topicDescription: TopicDescription,
+      configs: Map[String, String],
+      offsets: Map[TopicName, Map[Partition, (BeginningOffset, EndOffset)]]): KafkaTopicInfo = {
 
       new KafkaTopicInfo(
         name = topicDescription.name(),
         numberOfPartitions = topicDescription.partitions().size(),
         numberOfReplications = topicDescription.partitions().get(0).replicas().size().asInstanceOf[Short],
         partitionInfos = topicDescription.partitions().asScala.map { kafkaPartition =>
+          val (beginningOffset, endOffset) =
+            offsets.get(topicDescription.name()).flatMap(ps => ps.get(kafkaPartition.partition())).getOrElse((-1L, -1L))
           new KafkaPartitionInfo(
             index = kafkaPartition.partition(),
             leaderNode = kafkaPartition.leader().host(),
             replicaNodes = kafkaPartition.replicas().asScala.map(_.host()).toSet,
             inSyncReplicaNodes = kafkaPartition.isr().asScala.map(_.host()).toSet,
-            beginningOffset = offsets.beginningOffset(topicDescription.name(), kafkaPartition.partition()),
-            endOffset = offsets.endOffset(topicDescription.name(), kafkaPartition.partition())
+            beginningOffset = beginningOffset,
+            endOffset = endOffset
           )
         },
         configs = configs
@@ -161,13 +168,13 @@ object TopicAdmin {
       * fetch the low/high offsets from all topics.
       * the client code is KafkaConsumer than KafkaAdmin since the later is unsupported to fetch offsets ...
       */
-    private[this] def topicOffsets(): TopicPartitionOffsets = {
+    private[this] def topicOffsets(): Map[TopicName, Map[Partition, (BeginningOffset, EndOffset)]] = {
       val config = new Properties
       config.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, _connectionProps)
       config.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, CommonUtils.randomString())
       val consumer =
         new KafkaConsumer[Array[Byte], Array[Byte]](config, new ByteArrayDeserializer, new ByteArrayDeserializer)
-      new TopicPartitionOffsets(try {
+      try {
         consumer
           .listTopics()
           .asScala
@@ -189,7 +196,7 @@ object TopicAdmin {
                 .toMap
           }
           .toMap
-      } finally Releasable.close(consumer))
+      } finally Releasable.close(consumer)
     }
 
     override def topics(): Future[Seq[KafkaTopicInfo]] = try {
@@ -295,22 +302,6 @@ object TopicAdmin {
             }))
       promise.future
     }
-  }
-
-  /**
-    * used by internal process.
-    * @param offsets raw offsets
-    */
-  private[this] class TopicPartitionOffsets(val offsets: Map[String, Map[Int, (Long, Long)]]) {
-
-    private[this] def offset(topicName: String, partition: Int): (Long, Long) = offsets
-      .getOrElse(topicName, throw new NoSuchElementException(s"topic:$topicName does not exist"))
-      .getOrElse(partition,
-                 throw new NoSuchElementException(s"partition:$partition does not exist in topic:$topicName"))
-
-    def beginningOffset(topicName: String, partition: Int): Long = offset(topicName, partition)._1
-
-    def endOffset(topicName: String, partition: Int): Long = offset(topicName, partition)._2
   }
 
   final class KafkaPartitionInfo(val index: Int,

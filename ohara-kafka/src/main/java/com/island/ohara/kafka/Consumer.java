@@ -105,7 +105,29 @@ public interface Consumer<K, V> extends Releasable {
   void seekToBeginning(Collection<TopicPartition> partitions);
 
   /** Seek to the first offset for all partitions */
-  void seekToBeginning();
+  default void seekToBeginning() {
+    seekToBeginning(assignment());
+  }
+
+  /**
+   * move the offset for all specific partition. if the offset is smaller or equal to zero, this
+   * method is equal to {@link #seekToBeginning(Collection)}
+   *
+   * @param partition message partition
+   * @param offset message offset
+   */
+  void seek(TopicPartition partition, long offset);
+
+  /**
+   * move the offset for all subscribed partitions
+   *
+   * @param offset message offset
+   */
+  default void seek(long offset) {
+    assignment().forEach(p -> seek(p, offset));
+  }
+
+  Map<TopicPartition, Long> endOffsets();
 
   /** break the poll right now. */
   void wakeup();
@@ -126,6 +148,13 @@ public interface Consumer<K, V> extends Releasable {
 
     private Builder() {
       // do nothing
+    }
+
+    @com.island.ohara.common.annotations.Optional("default is empty")
+    public Builder<Key, Value> option(String key, String value) {
+      return options(
+          Collections.singletonMap(
+              CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
     }
 
     @com.island.ohara.common.annotations.Optional("default is empty")
@@ -160,8 +189,7 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder<Key, Value> topicName(String topicName) {
-      this.topicNames = Collections.singletonList(Objects.requireNonNull(topicName));
-      return this;
+      return topicNames(Collections.singletonList(Objects.requireNonNull(topicName)));
     }
 
     /**
@@ -254,7 +282,13 @@ public interface Consumer<K, V> extends Releasable {
       kafkaConsumer.subscribe(topicNames);
 
       return new Consumer<Key, Value>() {
-        private ConsumerRecords<Key, Value> firstPoll = kafkaConsumer.poll(Duration.ofMillis(0));
+        private TopicPartition toTopicPartition(org.apache.kafka.common.TopicPartition tp) {
+          return new TopicPartition(tp.topic(), tp.partition());
+        }
+
+        private org.apache.kafka.common.TopicPartition toTopicPartition(TopicPartition tp) {
+          return new org.apache.kafka.common.TopicPartition(tp.topicName(), tp.partition());
+        }
 
         @Override
         public void close() {
@@ -263,13 +297,7 @@ public interface Consumer<K, V> extends Releasable {
 
         @Override
         public List<Record<Key, Value>> poll(Duration timeout) {
-
-          ConsumerRecords<Key, Value> r;
-          if (firstPoll == null || firstPoll.isEmpty()) r = kafkaConsumer.poll(timeout);
-          else {
-            r = firstPoll;
-            firstPoll = null;
-          }
+          ConsumerRecords<Key, Value> r = kafkaConsumer.poll(timeout);
 
           if (r == null || r.isEmpty()) return Collections.emptyList();
           else
@@ -279,6 +307,7 @@ public interface Consumer<K, V> extends Releasable {
                     cr ->
                         new Record<>(
                             cr.topic(),
+                            cr.partition(),
                             cr.timestamp(),
                             TimestampType.of(cr.timestampType()),
                             cr.offset(),
@@ -302,22 +331,25 @@ public interface Consumer<K, V> extends Releasable {
         @Override
         public Set<TopicPartition> assignment() {
           return kafkaConsumer.assignment().stream()
-              .map(x -> new TopicPartition(x.topic(), x.partition()))
+              .map(this::toTopicPartition)
               .collect(Collectors.toSet());
         }
 
         @Override
         public void seekToBeginning(Collection<TopicPartition> partitions) {
           kafkaConsumer.seekToBeginning(
-              partitions.stream()
-                  .map(
-                      x -> new org.apache.kafka.common.TopicPartition(x.topicName(), x.partition()))
-                  .collect(Collectors.toList()));
+              partitions.stream().map(this::toTopicPartition).collect(Collectors.toList()));
         }
 
         @Override
-        public void seekToBeginning() {
-          seekToBeginning(assignment());
+        public void seek(TopicPartition partition, long offset) {
+          kafkaConsumer.seek(toTopicPartition(partition), Math.max(0, offset));
+        }
+
+        @Override
+        public Map<TopicPartition, Long> endOffsets() {
+          return kafkaConsumer.endOffsets(kafkaConsumer.assignment()).entrySet().stream()
+              .collect(Collectors.toMap(e -> toTopicPartition(e.getKey()), Map.Entry::getValue));
         }
 
         @Override
@@ -336,6 +368,7 @@ public interface Consumer<K, V> extends Releasable {
    */
   class Record<K, V> {
     private final String topicName;
+    private final int partition;
     private final long timestamp;
     private final TimestampType timestampType;
     private final long offset;
@@ -351,6 +384,7 @@ public interface Consumer<K, V> extends Releasable {
      */
     private Record(
         String topicName,
+        int partition,
         long timestamp,
         TimestampType timestampType,
         long offset,
@@ -358,6 +392,7 @@ public interface Consumer<K, V> extends Releasable {
         K key,
         V value) {
       this.topicName = topicName;
+      this.partition = partition;
       this.timestamp = timestamp;
       this.timestampType = timestampType;
       this.offset = offset;
@@ -375,6 +410,9 @@ public interface Consumer<K, V> extends Releasable {
       return topicName;
     }
 
+    public int partition() {
+      return partition;
+    }
     /**
      * The timestamp of this record.
      *

@@ -19,16 +19,22 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 object QueryApi {
   val QUERY_PREFIX_PATH: String = "query"
   val RDB_PREFIX_PATH: String = "rdb"
+  val TOPIC_PREFIX_PATH: String = "topic"
+  val TOPIC_TIMEOUT_KEY: String = "timeout"
+  val TOPIC_TIMEOUT_DEFAULT: Duration = 3 seconds
+  val TOPIC_LIMIT_KEY: String = "limit"
+  val TOPIC_LIMIT_DEFAULT: Int = 5
   final case class RdbColumn(name: String, dataType: String, pk: Boolean)
   implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
   final case class RdbTable(catalogPattern: Option[String],
@@ -50,27 +56,33 @@ object QueryApi {
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
 
+  final case class Message(partition: Int, offset: Long, value: Option[JsValue], error: Option[String])
+  implicit val MESSAGE_JSON_FORMAT: RootJsonFormat[Message] = jsonFormat4(Message)
+
+  final case class TopicData(messages: Seq[Message])
+  implicit val TOPIC_DATA_JSON_FORMAT: RootJsonFormat[TopicData] = jsonFormat1(TopicData)
+
   /**
     * used to generate the payload and url for POST/PUT request.
     */
-  trait Request {
-    def jdbcUrl(url: String): Request
+  sealed trait RdbRequest {
+    def jdbcUrl(url: String): RdbRequest
 
     @Optional("server will match a broker cluster for you if the wk name is ignored")
-    def workerClusterKey(workerClusterKey: ObjectKey): Request
+    def workerClusterKey(workerClusterKey: ObjectKey): RdbRequest
 
-    def user(user: String): Request
+    def user(user: String): RdbRequest
 
-    def password(password: String): Request
-
-    @Optional("default is null")
-    def catalogPattern(catalogPattern: String): Request
+    def password(password: String): RdbRequest
 
     @Optional("default is null")
-    def schemaPattern(schemaPattern: String): Request
+    def catalogPattern(catalogPattern: String): RdbRequest
 
     @Optional("default is null")
-    def tableName(tableName: String): Request
+    def schemaPattern(schemaPattern: String): RdbRequest
+
+    @Optional("default is null")
+    def tableName(tableName: String): RdbRequest
 
     @VisibleForTesting
     private[v0] def query: RdbQuery
@@ -83,8 +95,15 @@ object QueryApi {
     def query()(implicit executionContext: ExecutionContext): Future[RdbInfo]
   }
 
+  sealed trait TopicRequest {
+    def key(key: TopicKey): TopicRequest
+    def limit(limit: Int): TopicRequest
+    def timeout(timeout: Duration): TopicRequest
+    def query()(implicit executionContext: ExecutionContext): Future[TopicData]
+  }
+
   final class Access private[QueryApi] extends BasicAccess(QUERY_PREFIX_PATH) {
-    def request: Request = new Request {
+    def rdbRequest: RdbRequest = new RdbRequest {
       private[this] var jdbcUrl: String = _
       private[this] var user: String = _
       private[this] var password: String = _
@@ -93,37 +112,37 @@ object QueryApi {
       private[this] var schemaPattern: String = _
       private[this] var tableName: String = _
 
-      override def jdbcUrl(jdbcUrl: String): Request = {
+      override def jdbcUrl(jdbcUrl: String): RdbRequest = {
         this.jdbcUrl = CommonUtils.requireNonEmpty(jdbcUrl)
         this
       }
 
-      override def workerClusterKey(workerClusterKey: ObjectKey): Request = {
+      override def workerClusterKey(workerClusterKey: ObjectKey): RdbRequest = {
         this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
         this
       }
 
-      override def user(user: String): Request = {
+      override def user(user: String): RdbRequest = {
         this.user = CommonUtils.requireNonEmpty(user)
         this
       }
 
-      override def password(password: String): Request = {
+      override def password(password: String): RdbRequest = {
         this.password = CommonUtils.requireNonEmpty(password)
         this
       }
 
-      override def catalogPattern(catalogPattern: String): Request = {
+      override def catalogPattern(catalogPattern: String): RdbRequest = {
         this.catalogPattern = CommonUtils.requireNonEmpty(catalogPattern)
         this
       }
 
-      override def schemaPattern(schemaPattern: String): Request = {
+      override def schemaPattern(schemaPattern: String): RdbRequest = {
         this.schemaPattern = CommonUtils.requireNonEmpty(schemaPattern)
         this
       }
 
-      override def tableName(tableName: String): Request = {
+      override def tableName(tableName: String): RdbRequest = {
         this.tableName = CommonUtils.requireNonEmpty(tableName)
         this
       }
@@ -140,6 +159,36 @@ object QueryApi {
 
       override def query()(implicit executionContext: ExecutionContext): Future[RdbInfo] =
         exec.post[RdbQuery, RdbInfo, ErrorApi.Error](s"$url/$RDB_PREFIX_PATH", query)
+    }
+
+    def topicRequest: TopicRequest = new TopicRequest {
+      private[this] var key: TopicKey = _
+      private[this] var limit = TOPIC_LIMIT_DEFAULT
+      private[this] var timeout = TOPIC_TIMEOUT_DEFAULT
+
+      override def key(key: TopicKey): TopicRequest = {
+        this.key = Objects.requireNonNull(key)
+        this
+      }
+
+      override def limit(limit: Int): TopicRequest = {
+        this.limit = CommonUtils.requirePositiveInt(limit)
+        this
+      }
+
+      override def timeout(timeout: Duration): TopicRequest = {
+        this.timeout = Objects.requireNonNull(timeout)
+        this
+      }
+
+      override def query()(implicit executionContext: ExecutionContext): Future[TopicData] =
+        exec.post[TopicData, ErrorApi.Error](
+          urlBuilder
+            .key(key)
+            .prefix(TOPIC_PREFIX_PATH)
+            .param(TOPIC_LIMIT_KEY, limit.toString)
+            .param(TOPIC_TIMEOUT_KEY, timeout.toMillis.toString)
+            .build())
     }
   }
 

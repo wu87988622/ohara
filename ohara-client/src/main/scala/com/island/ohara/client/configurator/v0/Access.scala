@@ -61,5 +61,5 @@ abstract class Access[Creation <: BasicCreation, Updating, Res] private[v0] (pre
     * @return results
     */
   protected def list(request: QueryRequest)(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
-    if (request.raw.isEmpty) list() else exec.get[Seq[Res], ErrorApi.Error](s"$url?${toString(request.raw)}")
+    if (request.raw.isEmpty) list() else exec.get[Seq[Res], ErrorApi.Error](urlBuilder.params(request.raw).build())
 }

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.junit.After;
 import org.junit.Assert;
@@ -58,7 +59,7 @@ public class TestProducerToConsumer extends WithBroker {
       producer.sender().key("a").value("b").topicName(topicName).timestamp(timestamp).send();
     }
     try (Consumer<String, String> consumer =
-        Consumer.<String, String>builder()
+        Consumer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
@@ -85,7 +86,7 @@ public class TestProducerToConsumer extends WithBroker {
     }
 
     try (Consumer<String, String> consumer =
-        Consumer.<String, String>builder()
+        Consumer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
@@ -115,7 +116,7 @@ public class TestProducerToConsumer extends WithBroker {
     }
 
     try (Consumer<String, String> consumer =
-        Consumer.<String, String>builder()
+        Consumer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
@@ -137,7 +138,7 @@ public class TestProducerToConsumer extends WithBroker {
   @Test
   public void testOffset() {
     try (Producer<String, String> producer =
-        Producer.<String, String>builder()
+        Producer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
@@ -147,7 +148,7 @@ public class TestProducerToConsumer extends WithBroker {
     }
 
     try (Consumer<String, String> consumer =
-        Consumer.<String, String>builder()
+        Consumer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
@@ -174,7 +175,7 @@ public class TestProducerToConsumer extends WithBroker {
   @Test
   public void normalCase() throws ExecutionException, InterruptedException {
     try (Producer<String, String> producer =
-        Producer.<String, String>builder()
+        Producer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
@@ -183,7 +184,7 @@ public class TestProducerToConsumer extends WithBroker {
           producer.sender().key("a").value("b").topicName(topicName).send().get();
       Assert.assertEquals(metadata.topicName(), topicName);
       try (Consumer<String, String> consumer =
-          Consumer.<String, String>builder()
+          Consumer.builder()
               .keySerializer(Serializer.STRING)
               .valueSerializer(Serializer.STRING)
               .offsetFromBegin()
@@ -203,7 +204,7 @@ public class TestProducerToConsumer extends WithBroker {
   public void withIdleTime() throws ExecutionException, InterruptedException {
     long timeout = 5000;
     try (Producer<String, String> producer =
-        Producer.<String, String>builder()
+        Producer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
@@ -215,15 +216,13 @@ public class TestProducerToConsumer extends WithBroker {
           producer.sender().key("a").value("b").topicName(topicName).send().get().topicName(),
           topicName);
       try (Consumer<String, String> consumer =
-          Consumer.<String, String>builder()
+          Consumer.builder()
               .keySerializer(Serializer.STRING)
               .valueSerializer(Serializer.STRING)
               .offsetFromBegin()
               .topicName(topicName)
               .connectionProps(testUtil().brokersConnProps())
-              .options(
-                  Collections.singletonMap(
-                      CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG, String.valueOf(timeout)))
+              .option(CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG, String.valueOf(timeout))
               .build()) {
         List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 1);
         Assert.assertEquals(1, records.size());
@@ -238,6 +237,50 @@ public class TestProducerToConsumer extends WithBroker {
         Assert.assertEquals(1, records2.size());
         Assert.assertEquals("c", records2.get(0).key().get());
         Assert.assertEquals("d", records2.get(0).value().get());
+      }
+    }
+  }
+
+  @Test
+  public void testSeek() {
+    try (Producer<String, String> producer =
+        Producer.builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      int count = 3;
+      IntStream.range(0, count)
+          .forEach(
+              index -> {
+                try {
+                  producer
+                      .sender()
+                      .key(String.valueOf(index))
+                      .value("b")
+                      .topicName(topicName)
+                      .send()
+                      .get();
+                } catch (Throwable e) {
+                  throw new RuntimeException(e);
+                }
+              });
+      try (Consumer<String, String> consumer =
+          Consumer.builder()
+              .keySerializer(Serializer.STRING)
+              .valueSerializer(Serializer.STRING)
+              .topicName(topicName)
+              .connectionProps(testUtil().brokersConnProps())
+              .offsetFromBegin()
+              .build()) {
+        Assert.assertEquals(consumer.poll(Duration.ofSeconds(5), count).size(), count);
+        consumer.seek(1);
+        List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(5), count);
+        Assert.assertEquals(
+            records.stream().filter(record -> record.key().isPresent()).count(), count - 1);
+        consumer
+            .endOffsets()
+            .forEach((tp, offset) -> Assert.assertEquals(offset.longValue(), count));
       }
     }
   }

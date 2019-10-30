@@ -47,7 +47,7 @@ class TestQueryRoute extends OharaTest with Matchers {
         QueryApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request
+          .rdbRequest
           .jdbcUrl(db.url())
           .user(db.user())
           .password(db.password())
@@ -74,7 +74,7 @@ class TestQueryRoute extends OharaTest with Matchers {
           QueryApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .request
+            .rdbRequest
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
@@ -86,7 +86,7 @@ class TestQueryRoute extends OharaTest with Matchers {
           QueryApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .request
+            .rdbRequest
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
