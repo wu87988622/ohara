@@ -32,8 +32,9 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers {
   private[this] val db = Database.local()
@@ -41,6 +42,8 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers
   private[this] val tableName = "table1"
   private[this] val timestampColumnName = "column1"
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorKey1 = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
+  private[this] val connectorKey2 = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
 
   @Before
   def setup(): Unit = {
@@ -68,17 +71,13 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
-
   }
 
   @Test
   def testRunningTwoConnector(): Unit = {
-    val connectorKey1 = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-    val connectorKey2 = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
-    Await.result(
+    result(
       workerClient
         .connectorCreator()
         .connectorKey(connectorKey1)
@@ -86,9 +85,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props.toMap)
-        .create(),
-      10 seconds
-    )
+        .create())
 
     val consumer =
       Consumer
@@ -103,7 +100,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers
       val record1 = consumer.poll(java.time.Duration.ofSeconds(30), 6).asScala
       record1.size shouldBe 6
 
-      Await.result(
+      result(
         workerClient
           .connectorCreator()
           .connectorKey(connectorKey2)
@@ -111,9 +108,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers
           .topicKey(topicKey)
           .numberOfTasks(1)
           .settings(props.toMap)
-          .create(),
-        10 seconds
-      )
+          .create())
 
       consumer.seekToBeginning()
       val record2 = consumer.poll(java.time.Duration.ofSeconds(30), 12).asScala
@@ -143,15 +138,18 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers
         "2018-09-02 00:00:05.0,a81,a82,8",
         "2018-09-02 00:00:05.0,a81,a82,8"
       )
-      val result: Seq[String] = record3.map(x => x.key.get).map(x => x.cells().asScala.map(_.value).mkString(","))
+      val resultData: Seq[String] = record3.map(x => x.key.get).map(x => x.cells().asScala.map(_.value).mkString(","))
 
-      (0 to expectResult.size - 1).foreach(i => result(i) shouldBe expectResult(i))
-
+      (0 to expectResult.size - 1).foreach(i => resultData(i) shouldBe expectResult(i))
     } finally consumer.close()
   }
 
+  private[this] def result[T](future: Future[T]): T = Await.result(future, 10 seconds)
+
   @After
   def tearDown(): Unit = {
+    result(workerClient.delete(connectorKey2))
+    result(workerClient.delete(connectorKey1))
     Releasable.close(client)
     Releasable.close(db)
   }
