@@ -14,30 +14,17 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+// Return `undefined` means the test has passed!
+export const required = value => (value ? undefined : 'Required');
 
-export const validateName = params => {
-  const { values, keys = [] } = params;
-  let errors = {};
-  keys.forEach(key => {
-    if (!get(values, key)) {
-      errors[key] = 'Required field';
-    } else if (get(values, key).match(/[^0-9a-z]/g)) {
-      errors[key] = 'You only can use lower case letters and numbers';
-    } else if (get(values, key).length > 20) {
-      errors[key] = 'Must be between 1 and 20 characters long';
-    }
-  });
-  return errors;
+export const validServiceName = value => {
+  return /[^0-9a-z]/g.test(value)
+    ? 'You only can use lower case letters and numbers'
+    : undefined;
 };
 
-export const validateNumber = params => {
-  const { values, keys = [] } = params;
-  let errors = {};
-  keys.forEach(key => {
-    if (get(values, key) <= 0) {
-      errors[key] = 'Only digits larger than zero can be entered';
-    }
-  });
-  return errors;
-};
+export const lessThanTweenty = value =>
+  value.length <= 20 ? undefined : 'Must be between 1 and 20 characters long';
+
+export const composeValidators = (...validators) => value =>
+  validators.reduce((error, validator) => error || validator(value), undefined);

@@ -20,7 +20,7 @@ const generateFile = () => {
   const params = {
     // we use an existing file to simulate upload jar
     name: 'ohara-it-source.jar',
-    group: generate.name({ prefix: 'group' }),
+    group: generate.serviceName({ prefix: 'group' }),
   };
   return params;
 };

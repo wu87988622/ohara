@@ -26,7 +26,7 @@ export const port = ({ min = 5000, max = 65535 } = {}) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export const name = ({ length = 10, prefix } = {}) => {
+export const serviceName = ({ length = 10, prefix } = {}) => {
   let name = '';
   const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -37,10 +37,6 @@ export const name = ({ length = 10, prefix } = {}) => {
   if (prefix) return `${prefix}${name}`;
 
   return name;
-};
-
-export const serverHost = () => {
-  return 'http://' + window.location.hostname;
 };
 
 export {

@@ -12,7 +12,7 @@
     "lint": "eslint --max-warnings 0 src cypress",
     "lint:ci": "cross-env CI=true eslint --max-warnings 0 src cypress",
     "vet": "yarn audit",
-    "test": "react-scripts test --env=jsdom --passWithNoTests",
+    "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
     "test:report": "cross-env CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage --watchAll=false",
@@ -65,14 +65,16 @@
       "jest/valid-describe": "warn",
       "jest/no-identical-title": "warn",
       "no-alert": "warn",
-      "no-template-curly-in-string": "warn",
-      "array-callback-return": "warn",
-      "object-shorthand": "warn",
+      "no-debugger": "warn",
       "no-console": "warn",
       "no-unused-vars": "warn",
-      "no-debugger": "warn",
+      "no-template-curly-in-string": "warn",
+      "no-case-declarations": "off",
+      "array-callback-return": "warn",
+      "object-shorthand": "warn",
       "react/prop-types": "warn",
-      "no-case-declarations": "off"
+      "camelcase": "warn",
+      "eqeqeq": "warn"
     }
   },
   "browserslist": [

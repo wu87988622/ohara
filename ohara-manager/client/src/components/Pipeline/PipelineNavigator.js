@@ -29,6 +29,12 @@ import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { useSnackbar } from 'context/SnackbarContext';
 import {
+  required,
+  validServiceName,
+  lessThanTweenty,
+  composeValidators,
+} from 'utils/validate';
+import {
   Navigator,
   StyledButton,
   StyledExpansionPanel,
@@ -121,6 +127,11 @@ const PipelineNavigator = () => {
                 type="text"
                 label="Pipeline name"
                 placeholder="pipelinename"
+                validate={composeValidators(
+                  required,
+                  lessThanTweenty,
+                  validServiceName,
+                )}
                 component={InputField}
                 autoFocus
                 required

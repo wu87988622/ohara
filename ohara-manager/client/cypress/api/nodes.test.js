@@ -18,7 +18,7 @@ import * as generate from '../../src/utils/generate';
 
 const generateNode = () => {
   const params = {
-    hostname: generate.name({ prefix: 'node' }),
+    hostname: generate.serviceName({ prefix: 'node' }),
     port: generate.port(),
     user: generate.userName(),
     password: generate.password(),
