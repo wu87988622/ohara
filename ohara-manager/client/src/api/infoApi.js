@@ -14,30 +14,39 @@
  * limitations under the License.
  */
 
-import { axiosInstance } from './apiUtils';
+import * as info from './body/infoBody';
+import { responseUtil, axiosInstance } from './utils/apiUtils';
+import * as URL from './utils/url';
 
-export const fetchConfiguratorInfo = async () => {
-  try {
-    const response = await axiosInstance.get('/api/info/configurator');
-    const { isSuccess } = response.data;
-
-    if (!isSuccess) throw new Error(response.errorMessage);
-
-    return response;
-  } catch (error) {
-    throw new Error(error);
-  }
+const url = URL.INFO_URL;
+const service = {
+  zookeeper: 'zookeeper',
+  broker: 'broker',
+  worker: 'worker',
 };
 
-export const fetchServiceInfo = async service => {
-  try {
-    const response = await axiosInstance.get(`/api/info/${service}`);
-    const { isSuccess } = response.data;
+export const getConfiguratorInfo = async (params = {}) => {
+  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
+  const res = await axiosInstance.get(url + '/configurator' + parameter);
+  return responseUtil(res, info);
+};
 
-    if (!isSuccess) throw new Error(response.errorMessage);
+export const getZookeeperInfo = async (params = {}) => {
+  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
+  const res = await axiosInstance.get(
+    url + '/' + service.zookeeper + parameter,
+  );
+  return responseUtil(res, info);
+};
 
-    return response;
-  } catch (error) {
-    throw new Error(error);
-  }
+export const getBrokerInfo = async (params = {}) => {
+  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
+  const res = await axiosInstance.get(url + '/' + service.broker + parameter);
+  return responseUtil(res, info);
+};
+
+export const getWorkerInfo = async (params = {}) => {
+  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
+  const res = await axiosInstance.get(url + '/' + service.worker + parameter);
+  return responseUtil(res, info);
 };

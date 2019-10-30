@@ -16,7 +16,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { get } from 'lodash';
 
 import * as workerApi from 'api/workerApi';
 
@@ -27,9 +26,8 @@ const WorkspaceProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchWorkers = async () => {
-      const response = await workerApi.fetchWorkers();
-      const workers = get(response, 'data.result', []);
-      setWorkspaces(workers);
+      const response = await workerApi.getAll();
+      setWorkspaces(response);
     };
 
     fetchWorkers();
