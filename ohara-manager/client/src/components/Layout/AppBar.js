@@ -18,7 +18,7 @@ import React from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
 import { Link } from 'react-router-dom';
 
-import { useWorkspace } from 'context/WorkspaceConetxt';
+import { useWorkspace } from 'context/WorkspaceContext';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs

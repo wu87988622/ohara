@@ -77,9 +77,8 @@ export const get = async (params = {}) => {
 };
 
 export const getAll = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, worker), '', []);
+  const res = await axiosInstance.get(url + URL.toQueryParameters(params));
+  return lodashGet(res, 'data.result', []);
 };
 
 export const addNode = async (params = {}) => {

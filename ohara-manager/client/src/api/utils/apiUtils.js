@@ -219,7 +219,6 @@ const regularObject = (objs, originKey, changeKey) => {
       objs[obj] = obj;
     } else if (key.indexOf(originKey) !== -1) {
       const newKey = key.split(originKey).join(changeKey);
-      console.log(newKey);
       objs[newKey] = objs[key];
       delete objs[key];
     }
@@ -274,7 +273,6 @@ const createAxios = () => {
       if (response.data) {
         response.data = regularObject(response.data, '.', '__');
       }
-      console.log(response.data);
       return {
         data: {
           result: response.data,

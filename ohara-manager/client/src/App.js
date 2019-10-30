@@ -17,12 +17,13 @@
 import React from 'react';
 import styled from 'styled-components';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+
 import GlobalStyle from 'theme/globalStyle';
 import Theme from 'components/Theme';
 import AppBar from 'components/Layout/AppBar';
 import PipelineNavigator from 'components/Pipeline/PipelineNavigator';
+import PipelineGraph from 'components/Pipeline/PipelineGraph';
 import NotFoundPage from 'components/NotFoundPage';
-import Workspace from 'components/Workspace';
 
 const Container = styled.div`
   display: flex;
@@ -57,7 +58,7 @@ const App = () => {
             <Route
               exact
               path="/:workspaceName?/:pipelineName?"
-              component={Workspace}
+              component={PipelineGraph}
             />
             <Route exact path="/temp/theme" component={Theme} />
             <Route path="*" component={NotFoundPage} />

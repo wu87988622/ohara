@@ -14,18 +14,39 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import { useSnackbar } from 'context/SnackbarContext';
-import { useWorkspace } from 'context/WorkspaceConetxt';
-import { Button } from 'components/common/Form';
+import { useWorkspace } from 'context/WorkspaceContext';
+import { usePipeline } from 'context/PipelineContext';
 
-const Workspace = () => {
-  const showMessage = useSnackbar();
+const PipelineGraph = () => {
   const history = useHistory();
   const { workspaces } = useWorkspace();
-  const { workspaceName } = useParams();
+  const { pipelines, doFetch: fetchPipelines } = usePipeline();
+  const { workspaceName, pipelineName } = useParams();
+
+  useEffect(() => {
+    fetchPipelines(workspaceName);
+  }, [fetchPipelines, workspaceName]);
+
+  const hasPipeline = pipelines.length > 0;
+  let currentPipeline;
+
+  if (pipelineName) {
+    const current = pipelines.find(pipeline => pipeline.name === pipelineName);
+
+    // If the `current` pipeline is found in the pipeline list
+    if (current) currentPipeline = current;
+
+    // If the `current` pipeline is not found in the list but the
+    // list is not empty, let's display the first pipeline
+    if (current === undefined && hasPipeline) {
+      history.push(`/${workspaceName}/${pipelines[0].name}`);
+    }
+  } else if (hasPipeline) {
+    history.push(`/${workspaceName}/${pipelines[0].name}`);
+  }
 
   const hasWorkspace = workspaces.length > 0;
 
@@ -50,14 +71,15 @@ const Workspace = () => {
 
   return currentWorkspace ? (
     <>
-      <h1>Workerspace name: {currentWorkspace.settings.name}</h1>
-      <Button onClick={() => showMessage(currentWorkspace.settings.name)}>
-        Show me the name
-      </Button>
+      {currentPipeline ? (
+        <h1>Current pipeline : {pipelineName}</h1>
+      ) : (
+        <h1>{`You don't have any pipeline in ${workspaceName} yet!`}</h1>
+      )}
     </>
   ) : (
     <h1>You don't have any workspace yet!</h1>
   );
 };
 
-export default Workspace;
+export default PipelineGraph;

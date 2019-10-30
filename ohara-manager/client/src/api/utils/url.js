@@ -42,3 +42,11 @@ export const VALIDATE_CONNECTOR_URL = `${BASE_URL}/validate/connector`;
 export const CONTAINER_URL = `${BASE_URL}/containers`;
 export const INFO_URL = `${BASE_URL}/info`;
 export const FILE_URL = `${BASE_URL}/files`;
+
+export const toQueryParameters = params => {
+  const esc = encodeURIComponent;
+  const result = Object.keys(params)
+    .map(key => `${key}=${esc(params[key])}`)
+    .join('&');
+  return result ? '?'.concat(result) : '';
+};

@@ -38,10 +38,13 @@ export const StyledButton = styled(Button)`
   padding: 0;
 
   .menu-name {
-    width: 160px;
+    height: 28px;
     overflow: hidden;
     letter-spacing: 1px;
     text-align: left;
+    display: inline-block;
+    /* Prevent a "half cut" text */
+    word-break: break-all;
   }
 
   i {
@@ -65,7 +68,7 @@ export const StyledExpansionPanel = styled(ExpansionPanel)`
   .Mui-expanded {
     .new-pipeline-button {
       transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
-      top: 26px;
+      top: 16px;
       transform: rotate(180deg);
     }
   }
@@ -107,9 +110,10 @@ export const StyledExpansionPanel = styled(ExpansionPanel)`
     transform: rotate(0deg);
     transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
     margin-left: 20px;
+    padding: 10px;
     position: absolute;
     right: 50px;
-    top: 16px;
+    top: 6px;
     font-size: 15px;
   }
 `;

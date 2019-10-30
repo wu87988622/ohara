@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Menu from '@material-ui/core/Menu';
 import { NavLink, useParams } from 'react-router-dom';
-import { get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import * as pipelineApi from 'api/pipelineApi';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { useSnackbar } from 'context/SnackbarContext';
+import { usePipeline } from 'context/PipelineContext';
 import {
   required,
   validServiceName,
@@ -43,11 +43,11 @@ import {
 } from './Styles';
 
 const PipelineNavigator = () => {
-  const [pipelines, setPipelines] = useState([]);
+  const showMessage = useSnackbar();
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const { workspaceName } = useParams();
-  const showMessage = useSnackbar();
+  const { pipelines, doFetch: fetchPipelines } = usePipeline();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -57,37 +57,25 @@ const PipelineNavigator = () => {
     setAnchorEl(null);
   };
 
-  const fetchPipelines = useCallback(async () => {
-    const response = await pipelineApi.getAll({ group: workspaceName });
-    const pipelines = get(response, 'data.result', []).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
-    setPipelines(pipelines);
-  }, [workspaceName]);
-
   const onSubmit = async ({ pipelineName }, form) => {
-    // TODO: we should get rid of thie error handling logic
-    // once #2995 is merged
-    try {
-      const response = await pipelineApi.create({
-        name: pipelineName,
-        group: workspaceName,
-      });
-      if (response.data.isSuccess) {
-        showMessage(`Pipeline ${pipelineName} has been added`);
-        await fetchPipelines();
-        setTimeout(form.reset);
-      }
-    } catch (error) {
-      showMessage(error.message);
+    const response = await pipelineApi.create({
+      name: pipelineName,
+      group: workspaceName,
+    });
+
+    // TODO: this logic can be simplify once #3124 is done
+    if (response && response.name === pipelineName) {
+      showMessage(`Pipeline ${pipelineName} has been added`);
+      await fetchPipelines(workspaceName);
+      setTimeout(form.reset);
     }
 
     setIsOpen(false);
   };
 
   React.useEffect(() => {
-    fetchPipelines();
-  }, [fetchPipelines]);
+    fetchPipelines(workspaceName);
+  }, [fetchPipelines, workspaceName]);
 
   return (
     <Navigator>
