@@ -98,7 +98,7 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matche
       }
       val wkCluster = result(wkApi.list()).head
       wkCluster.freePorts shouldBe Set(freePort)
-      _workerClient = WorkerClient(result(wkApi.list()).head.connectionProps)
+      _workerClient = WorkerClient(result(wkApi.list()).head)
       _brokersConnProps = result(bkApi.list()).head.connectionProps
       // wait worker cluster
       await { () =>

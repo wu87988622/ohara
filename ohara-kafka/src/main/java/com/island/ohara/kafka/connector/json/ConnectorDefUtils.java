@@ -161,7 +161,6 @@ public final class ConnectorDefUtils {
           .documentation("the cluster name of running this connector.")
           .reference(Reference.WORKER_CLUSTER)
           .group(CORE_GROUP)
-          .optional()
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
 

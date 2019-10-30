@@ -212,7 +212,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .required() shouldBe true
 
     response.settings().asScala.filter(_.value().key() == DB_URL).head.definition().required() shouldBe true
 

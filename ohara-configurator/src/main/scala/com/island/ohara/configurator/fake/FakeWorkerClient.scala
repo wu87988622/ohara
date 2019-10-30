@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.client.kafka.WorkerClient.Validator
+import com.island.ohara.client.kafka.WorkerClient.{Creator, Validator}
 import com.island.ohara.client.kafka.WorkerJson.{
   KafkaConnectorConfig,
   KafkaConnectorCreationResponse,
@@ -50,15 +50,17 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
 
-  override def connectorCreator(): WorkerClient.Creator = (_, creation) => {
-    if (cachedConnectors.contains(creation.name()))
-      Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
-    else {
-      import scala.collection.JavaConverters._
-      cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
-      cachedConnectorsState.put(creation.name(), State.RUNNING)
-      Future.successful(KafkaConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
-    }
+  override def connectorCreator(): Creator = new Creator(ConnectorFormatter.of()) {
+    override protected def doCreate(executionContext: ExecutionContext,
+                                    creation: Creation): Future[KafkaConnectorCreationResponse] =
+      if (cachedConnectors.contains(creation.name()))
+        Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
+      else {
+        import scala.collection.JavaConverters._
+        cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
+        cachedConnectorsState.put(creation.name(), State.RUNNING)
+        Future.successful(KafkaConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
+      }
   }
 
   override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
@@ -110,9 +112,10 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
       Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
     else Future.successful(cachedConnectorsState.put(connectorKey.connectorNameOnKafka(), State.RUNNING))
 
-  override def connectorValidator(): Validator =
-    // TODO: this implementation use kafka private APIs ... by chia
-    (executionContext, validation) =>
+  override def connectorValidator(): Validator = new Validator(ConnectorFormatter.of()) {
+    override protected def doValidate(executionContext: ExecutionContext,
+                                      validation: Validation): Future[SettingInfo] = {
+      // TODO: this implementation use kafka private APIs ... by chia
       Future {
         val instance = Class.forName(validation.className).newInstance()
         val (connectorType, configDef, values) = instance match {
@@ -123,6 +126,8 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
         SettingInfo.of(
           AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList()))
       }(executionContext)
+    }
+  }
 
   override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]] =
     Future.successful(FakeWorkerClient.localConnectorDefinitions)

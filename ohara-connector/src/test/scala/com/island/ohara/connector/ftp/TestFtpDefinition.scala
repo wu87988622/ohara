@@ -82,7 +82,7 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .required() shouldBe true
     // we don't pass all arguments so it should contain error.
     response.errorCount() should not be 0
   }
@@ -135,7 +135,7 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .required() shouldBe true
     response.errorCount() should not be 0
   }
 }

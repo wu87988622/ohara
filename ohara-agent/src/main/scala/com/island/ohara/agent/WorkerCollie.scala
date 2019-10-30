@@ -228,7 +228,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     */
   def workerClient(workerClusterInfo: WorkerClusterInfo)(
     implicit executionContext: ExecutionContext): Future[WorkerClient] =
-    cluster(workerClusterInfo.key).map(_ => WorkerClient(workerClusterInfo.connectionProps))
+    cluster(workerClusterInfo.key).map(_ => WorkerClient(workerClusterInfo))
 
   /**
     * Get all counter beans from specific worker cluster
@@ -255,12 +255,19 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
             * However, it may be too slow to get latest connector information.
             * We don't throw exception since it is a common case, and Skipping retry can make quick response
             */
-          WorkerClient.builder.connectionProps(connectionProps).disableRetry().build.connectorDefinitions().recover {
-            case e: Throwable =>
-              ServiceCollie.LOG
-                .error(s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead", e)
-              Seq.empty
-          }
+          WorkerClient.builder
+            .connectionProps(connectionProps)
+            .workerClusterKey(key)
+            .disableRetry()
+            .build
+            .connectorDefinitions()
+            .recover {
+              case e: Throwable =>
+                ServiceCollie.LOG.error(
+                  s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead",
+                  e)
+                Seq.empty
+            }
 
       connectorDefinitionsFuture.map { connectorDefinitions =>
         new WorkerClusterStatus(

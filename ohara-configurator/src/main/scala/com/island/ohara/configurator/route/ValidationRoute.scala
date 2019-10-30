@@ -178,7 +178,6 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                     .connectorValidator()
                     .settings(req.plain)
                     .className(req.className)
-                    .workerClusterKey(cluster.key)
                     // the topic name is composed by group and name. However, the kafka topic is still a pure string.
                     // Hence, we can't just push Ohara topic "key" to kafka topic "name".
                     // The name of topic is a required for connector and hence we have to fill the filed when starting

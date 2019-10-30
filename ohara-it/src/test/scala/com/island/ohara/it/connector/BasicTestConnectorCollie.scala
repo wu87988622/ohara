@@ -167,7 +167,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     result(wk_clusters()).isEmpty shouldBe false
     testConnectors(wkCluster)
 
-    runningJDBCSourceConnector(wkCluster.connectionProps)
+    runningJDBCSourceConnector(wkCluster)
     checkTopicData(bkCluster.connectionProps, topicKey.topicNameOnKafka())
 
     result(wk_stop(wkCluster.key))
@@ -182,9 +182,9 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
     wk_delete(wkCluster.key)
   }
 
-  private[this] def runningJDBCSourceConnector(workerConnProps: String): Unit =
+  private[this] def runningJDBCSourceConnector(workerClusterInfo: WorkerClusterInfo): Unit =
     result(
-      WorkerClient(workerConnProps)
+      WorkerClient(workerClusterInfo)
         .connectorCreator()
         .connectorKey(connectorKey)
         .connectorClass(classOf[JDBCSourceConnector])
@@ -310,7 +310,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
       () =>
         try {
           log.info(s"worker node head: ${cluster.nodeNames.head}:${cluster.clientPort}")
-          result(WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}").connectorDefinitions()).nonEmpty
+          result(WorkerClient(cluster).connectorDefinitions()).nonEmpty
         } catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)

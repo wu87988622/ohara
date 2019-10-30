@@ -155,7 +155,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .required() shouldBe true
     response.errorCount() shouldBe 0
   }
 

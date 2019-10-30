@@ -130,7 +130,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     }
     // make sure all workers have loaded the test-purposed connector.
     result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
-      val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
+      val workerClient = WorkerClient(wkCluster)
       await(
         () =>
           try result(workerClient.plugins()).exists(_.className == classOf[DumbSinkConnector].getName)

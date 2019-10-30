@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
@@ -70,7 +71,8 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
         val fake = FakeWorkerClient()
         val r = fakeClientCache.putIfAbsent(cluster, fake)
         if (r == null) fake else r
-      } else WorkerClient.builder.connectionProps(wkConnectionProps).build
+      } else
+        WorkerClient.builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(wkConnectionProps).build
     }
 
   override protected def doCreator(executionContext: ExecutionContext,

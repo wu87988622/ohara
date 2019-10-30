@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
@@ -178,19 +179,47 @@ trait WorkerClient {
 
 object WorkerClient {
 
-  def apply(connectionProps: String): WorkerClient = builder.connectionProps(connectionProps).build
+  /**
+    * THIS METHOD SHOULD BE USED BY TESTING ONLY.
+    * Worker cluster key is a required config to ohara connectors. However, there are many tests against "connectors"
+    * only so there is no Ohara configurator and worker cluster info. Hence, this method fake all required information
+    * to make all ohara connectors work well.
+    * @param connectionProps connection props
+    * @return worker client
+    */
+  def apply(connectionProps: String): WorkerClient =
+    builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(connectionProps).build
+
+  /**
+    * Generate a worker client with worker cluster meta
+    * @param workerClusterInfo worker cluster
+    * @return worker client
+    */
+  def apply(workerClusterInfo: WorkerClusterInfo): WorkerClient =
+    builder.workerClusterKey(workerClusterInfo.key).connectionProps(workerClusterInfo.connectionProps).build
 
   def builder: Builder = new Builder
 
   private[this] val LOG = Logger(WorkerClient.getClass)
 
   class Builder private[WorkerClient] extends com.island.ohara.common.pattern.Builder[WorkerClient] {
-    private[this] var _workerAddress: Seq[String] = Seq.empty
+
+    /**
+      * set the fake key to following operations. This is workaround to avoid we encounter the error of lacking
+      * worker key in communicating with kafka connectors.
+      */
+    private[this] var workerClusterKey: ObjectKey = ObjectKey.of("fake", "fake")
+    private[this] var connectionProps: String = _
     private[this] var retryLimit: Int = 3
     private[this] var retryInternal: Duration = 3 seconds
 
+    def workerClusterKey(workerClusterKey: ObjectKey): Builder = {
+      this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
+      this
+    }
+
     def connectionProps(connectionProps: String): Builder = {
-      this._workerAddress = CommonUtils.requireNonEmpty(connectionProps).split(",")
+      this.connectionProps = CommonUtils.requireNonEmpty(connectionProps)
       this
     }
 
@@ -218,7 +247,11 @@ object WorkerClient {
       * @return worker client
       */
     override def build: WorkerClient = new WorkerClient() {
-      private[this] def workerAddress: String = _workerAddress(Random.nextInt(_workerAddress.size))
+      val connectionProps: String = CommonUtils.requireNonEmpty(Builder.this.connectionProps)
+      private[this] def workerAddress: String = {
+        val hostAddress = connectionProps.split(",")
+        hostAddress(Random.nextInt(hostAddress.size))
+      }
 
       /**
         * kafka worker has weakness of doing consistent operation so it is easy to encounter conflict error. Wrapping all operations with
@@ -238,16 +271,25 @@ object WorkerClient {
             } else throw e
         }
 
-      override def connectorCreator(): Creator = (executionContext, creation) => {
-        implicit val exec: ExecutionContext = executionContext
-        retry(
-          () =>
-            HttpExecutor.SINGLETON.post[Creation, KafkaConnectorCreationResponse, KafkaError](
-              s"http://$workerAddress/connectors",
-              creation
-          ),
-          "connectorCreator"
-        )
+      /**
+        * Generate the format with basic information
+        * @return formatter
+        */
+      private[this] def format = ConnectorFormatter.of().workerClusterKey(Objects.requireNonNull(workerClusterKey))
+
+      override def connectorCreator(): Creator = new Creator(format) {
+        override protected def doCreate(executionContext: ExecutionContext,
+                                        creation: Creation): Future[KafkaConnectorCreationResponse] = {
+          implicit val exec: ExecutionContext = executionContext
+          retry(
+            () =>
+              HttpExecutor.SINGLETON.post[Creation, KafkaConnectorCreationResponse, KafkaError](
+                s"http://$workerAddress/connectors",
+                creation
+            ),
+            "connectorCreator"
+          )
+        }
       }
 
       override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
@@ -279,8 +321,6 @@ object WorkerClient {
       override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[String], KafkaError](s"http://$workerAddress/connectors"),
         "fetch active connectors")
-
-      override def connectionProps: String = _workerAddress.mkString(",")
 
       override def status(connectorKey: ConnectorKey)(
         implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] = retry(
@@ -318,8 +358,9 @@ object WorkerClient {
                   .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/resume"),
               s"resume $connectorKey")
 
-      override def connectorValidator(): Validator =
-        (executionContext, validation) => {
+      override def connectorValidator(): Validator = new Validator(format) {
+        override protected def doValidate(executionContext: ExecutionContext,
+                                          validation: Validation): Future[SettingInfo] = {
           implicit val exec: ExecutionContext = executionContext
           retry(
             () => {
@@ -336,6 +377,7 @@ object WorkerClient {
             "connectorValidator"
           )
         }
+      }
     }
   }
 
@@ -353,8 +395,8 @@ object WorkerClient {
   /**
     * a base class used to collect the setting from source/sink connector when creating
     */
-  trait Creator extends com.island.ohara.common.pattern.Creator[Future[KafkaConnectorCreationResponse]] {
-    private[this] val connectorFormatter = ConnectorFormatter.of()
+  abstract class Creator(format: ConnectorFormatter)
+      extends com.island.ohara.common.pattern.Creator[Future[KafkaConnectorCreationResponse]] {
     private[this] var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
     /**
@@ -364,7 +406,7 @@ object WorkerClient {
       * @return this one
       */
     def connectorKey(connectorKey: ConnectorKey): Creator = {
-      connectorFormatter.connectorKey(connectorKey)
+      format.connectorKey(connectorKey)
       this
     }
 
@@ -375,7 +417,7 @@ object WorkerClient {
       * @return this one
       */
     def className(className: String): Creator = {
-      connectorFormatter.className(className)
+      format.className(className)
       this
     }
 
@@ -395,13 +437,13 @@ object WorkerClient {
       */
     @Optional("default is 1")
     def numberOfTasks(numberOfTasks: Int): Creator = {
-      connectorFormatter.numberOfTasks(numberOfTasks)
+      format.numberOfTasks(numberOfTasks)
       this
     }
 
     @Optional("default is empty")
     def setting(key: String, value: String): Creator = {
-      connectorFormatter.setting(key, value)
+      format.setting(key, value)
       this
     }
 
@@ -413,7 +455,7 @@ object WorkerClient {
       */
     @Optional("default is empty")
     def settings(settings: Map[String, String]): Creator = {
-      connectorFormatter.settings(settings.asJava)
+      format.settings(settings.asJava)
       this
     }
 
@@ -424,14 +466,14 @@ object WorkerClient {
       */
     @Optional("default is all columns")
     def columns(columns: Seq[Column]): Creator = {
-      connectorFormatter.columns(columns.asJava)
+      format.columns(columns.asJava)
       this
     }
 
     def topicKey(topicKey: TopicKey): Creator = topicKeys((Set(topicKey)))
 
     def topicKeys(topicKeys: Set[TopicKey]): Creator = {
-      connectorFormatter.topicKeys(topicKeys.asJava)
+      format.topicKeys(topicKeys.asJava)
       this
     }
 
@@ -444,7 +486,7 @@ object WorkerClient {
       */
     @Optional("default key converter is ConverterType.NONE")
     def converterTypeOfKey(converterTypeOfKey: ConverterType): Creator = {
-      connectorFormatter.converterTypeOfKey(converterTypeOfKey)
+      format.converterTypeOfKey(converterTypeOfKey)
       this
     }
 
@@ -457,7 +499,12 @@ object WorkerClient {
       */
     @Optional("default key converter is ConverterType.NONE")
     def converterTypeOfValue(converterTypeOfValue: ConverterType): Creator = {
-      connectorFormatter.converterTypeOfValue(converterTypeOfValue)
+      format.converterTypeOfValue(converterTypeOfValue)
+      this
+    }
+
+    def workerClusterKey(clusterKey: ObjectKey): Creator = {
+      this.format.workerClusterKey(clusterKey)
       this
     }
 
@@ -480,7 +527,7 @@ object WorkerClient {
     override def create(): Future[KafkaConnectorCreationResponse] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        creation = connectorFormatter.requestOfCreation()
+        creation = format.requestOfCreation()
       )
 
     /**
@@ -492,8 +539,7 @@ object WorkerClient {
                            creation: Creation): Future[KafkaConnectorCreationResponse]
   }
 
-  trait Validator {
-    private[this] val formatter: ConnectorFormatter = ConnectorFormatter.of()
+  abstract class Validator(formatter: ConnectorFormatter) {
 
     def className(className: String): Validator = {
       this.formatter.className(CommonUtils.requireNonEmpty(className))
@@ -512,7 +558,7 @@ object WorkerClient {
       this
     }
 
-    def topicKey(topicKey: TopicKey): Validator = topicKeys((Set(topicKey)))
+    def topicKey(topicKey: TopicKey): Validator = topicKeys(Set(topicKey))
 
     /**
       * set the topic in which you have interest.
@@ -551,11 +597,6 @@ object WorkerClient {
 
     def connectorKey(connectorKey: ConnectorKey): Validator = {
       this.formatter.connectorKey(connectorKey)
-      this
-    }
-
-    def workerClusterKey(clusterKey: ObjectKey): Validator = {
-      this.formatter.workerClusterKey(clusterKey)
       this
     }
 
