@@ -16,12 +16,8 @@
 
 import { isEmpty } from 'lodash';
 
-import { fetchInfo } from '../../src/api/infoApi';
 import * as nodeApi from '../../src/api/nodeApi';
 import * as fileApi from '../../src/api/fileApi';
-
-// Info API
-Cypress.Commands.add('fetchInfo', () => fetchInfo());
 
 // Node API
 Cypress.Commands.add('fetchNodes', () => nodeApi.fetchNodes());

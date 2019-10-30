@@ -16,9 +16,22 @@
 
 import { axiosInstance } from './apiUtils';
 
-export const fetchInfo = async () => {
+export const fetchConfiguratorInfo = async () => {
   try {
-    const response = await axiosInstance.get('/api/info');
+    const response = await axiosInstance.get('/api/info/configurator');
+    const { isSuccess } = response.data;
+
+    if (!isSuccess) throw new Error(response.errorMessage);
+
+    return response;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+export const fetchServiceInfo = async service => {
+  try {
+    const response = await axiosInstance.get(`/api/info/${service}`);
     const { isSuccess } = response.data;
 
     if (!isSuccess) throw new Error(response.errorMessage);

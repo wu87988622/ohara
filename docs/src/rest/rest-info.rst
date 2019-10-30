@@ -32,9 +32,9 @@ get Ohara Configurator info
 
 the format of response of Ohara Configurator is shown below.
 
-#. name (**string**) — the name of configurator. Normally, it is equal to hostname of configurator container
 #. versionInfo (**object**) — version details of Ohara Configurator
 
+   - branch (**string**) — the branch name of Ohara Configurator
    - version (**string**) — the release version of Ohara Configurator
    - revision (**string**) — commit hash of Ohara Configurator. You can trace the hash code via `Github <https://github.com/oharastream/ohara/commits/master>`__
    - user (**string**) — the release manager of Ohara Configurator.
@@ -42,22 +42,22 @@ the format of response of Ohara Configurator is shown below.
 
 #. mode (**string**) — the mode of this configurator. There are three modes now:
 
-   - First, k8s mode is for the production.
-   - Second, ssh is useful to simple env.
-   - Third, fake mode is used to test APIs.
+   - K8S: k8s mode is for the production.
+   - SSH: ssh is useful to simple env.
+   - FAKE: fake mode is used to test APIs.
 
 Example Response
   .. code-block:: json
 
     {
-      "name": "ab333",
       "versionInfo": {
+        "branch": "$|branch|",
         "version": "$|version|",
         "user": "chia",
         "revision": "b86742ca03a0ca02cc3578f8686e38e5cf2fb461",
         "date": "2019-05-13 09:59:38"
       },
-      "mode": "ssh"
+      "mode": "FAKE"
     }
 
 get zookeeper/broker/worker info
@@ -79,7 +79,7 @@ Example Response
   .. code-block:: json
 
     {
-      "imageName": "oharastream/zookeeper:xxx",
+      "imageName": "oharastream/zookeeper:$|version|",
       "settingDefinitions": [
         {
           "reference": "NONE",

@@ -88,9 +88,6 @@ object InfoRoute extends SprayJsonSupport {
         }
       } ~ path(CONFIGURATOR_PREFIX_PATH) {
         routeToConfiguratorInf(mode)
-      } ~ pathEnd {
-        // TODO: remove this route (see https://github.com/oharastream/ohara/issues/3093)
-        routeToConfiguratorInf(mode)
       }
     }
 }
