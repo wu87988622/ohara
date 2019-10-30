@@ -532,4 +532,11 @@ public class TestSettingDef extends OharaTest {
     }
     def.checker().accept(port);
   }
+
+  @Test
+  public void doubleUnderScoreIsIllegal() {
+    SettingDef.builder().key("aaa").build();
+    assertException(
+        IllegalArgumentException.class, () -> SettingDef.builder().key("aaa__").build());
+  }
 }

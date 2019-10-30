@@ -159,6 +159,9 @@ public class SettingDef implements JsonObject, Serializable {
     this.orderInGroup = orderInGroup;
     this.editable = editable;
     this.key = CommonUtils.requireNonEmpty(key);
+    if (this.key.contains("__"))
+      throw new IllegalArgumentException(
+          "the __ is keyword so it is illegal word to definition key");
     this.valueType = Objects.requireNonNull(valueType);
     this.required = required;
     this.defaultValue = defaultValue;
