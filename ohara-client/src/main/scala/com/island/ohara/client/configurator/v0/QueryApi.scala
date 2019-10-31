@@ -56,8 +56,13 @@ object QueryApi {
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
 
-  final case class Message(partition: Int, offset: Long, value: Option[JsValue], error: Option[String])
-  implicit val MESSAGE_JSON_FORMAT: RootJsonFormat[Message] = jsonFormat4(Message)
+  final case class Message(partition: Int,
+                           offset: Long,
+                           sourceClass: Option[String],
+                           sourceKey: Option[ObjectKey],
+                           value: Option[JsValue],
+                           error: Option[String])
+  implicit val MESSAGE_JSON_FORMAT: RootJsonFormat[Message] = jsonFormat6(Message)
 
   final case class TopicData(messages: Seq[Message])
   implicit val TOPIC_DATA_JSON_FORMAT: RootJsonFormat[TopicData] = jsonFormat1(TopicData)

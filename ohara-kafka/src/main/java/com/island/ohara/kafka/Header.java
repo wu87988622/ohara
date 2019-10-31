@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class Header {
+  public static final String SOURCE_CLASS_KEY = "SOURCE_CLASS";
+  public static final String SOURCE_KEY_KEY = "SOURCE_KEY";
 
   private final String key;
   private final byte[] value;

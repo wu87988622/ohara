@@ -21,6 +21,7 @@ import static com.island.ohara.common.util.CommonUtils.toDuration;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.setting.ObjectKey;
 import com.island.ohara.common.setting.PropGroups;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
@@ -308,6 +309,10 @@ public class TaskSetting {
     return propGroupsOption(ConnectorDefUtils.COLUMNS_DEFINITION.key())
         .map(PropGroups::toColumns)
         .orElseGet(Collections::emptyList);
+  }
+
+  public ObjectKey connectorKey() {
+    return ObjectKey.toObjectKey(stringValue(ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()));
   }
 
   /**

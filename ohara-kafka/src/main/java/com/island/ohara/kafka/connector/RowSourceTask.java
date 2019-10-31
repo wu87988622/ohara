@@ -19,14 +19,19 @@ package com.island.ohara.kafka.connector;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.ObjectKey;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
+import com.island.ohara.kafka.Header;
 import com.island.ohara.metrics.basic.Counter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.source.SourceTaskContext;
@@ -102,6 +107,34 @@ public abstract class RowSourceTask extends SourceTask {
   @VisibleForTesting Counter ignoredMessageSizeCounter = null;
   @VisibleForTesting TaskSetting taskSetting = null;
 
+  /**
+   * a helper method used to handle the fucking null produced by kafka...
+   *
+   * @return kafka's source
+   */
+  private SourceRecord toKafka(RowSourceRecord record) {
+    ObjectKey key = taskSetting.connectorKey();
+    ConnectHeaders headers = new ConnectHeaders();
+    // add the header to mark the source of this data
+    // we convert the string to bytes manually since we don't want to use the schema in order to
+    // make this
+    // header is readable to consumer.
+    headers.addBytes(Header.SOURCE_CLASS_KEY, getClass().getName().getBytes());
+    headers.addBytes(Header.SOURCE_KEY_KEY, ObjectKey.toJsonString(key).getBytes());
+    return new SourceRecord(
+        record.sourcePartition(),
+        record.sourceOffset(),
+        record.topicName(),
+        record.partition().orElse(null),
+        Schema.BYTES_SCHEMA,
+        Serializer.ROW.to(record.row()),
+        // TODO: we keep empty value in order to reduce data size in transmission
+        Schema.BYTES_SCHEMA,
+        null,
+        record.timestamp().orElse(null),
+        headers);
+  }
+
   @Override
   public final List<SourceRecord> poll() {
     List<RowSourceRecord> records = _poll();
@@ -122,7 +155,7 @@ public abstract class RowSourceTask extends SourceTask {
                         false,
                         ignoredMessageNumberCounter,
                         ignoredMessageSizeCounter))
-            .map(RowSourceRecord::toSourceRecord)
+            .map(this::toKafka)
             .collect(Collectors.toList());
 
     if (messageNumberCounter != null) messageNumberCounter.addAndGet(raw.size());

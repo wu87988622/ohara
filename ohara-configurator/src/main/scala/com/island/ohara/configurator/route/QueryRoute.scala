@@ -30,7 +30,7 @@ import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.Consumer
+import com.island.ohara.kafka.{Consumer, Header}
 import com.island.ohara.kafka.Consumer.Record
 import spray.json.{DeserializationException, JsBoolean, JsNumber, JsObject, JsString}
 
@@ -45,40 +45,55 @@ private[configurator] object QueryRoute {
     TopicData(
       records
         .filter(_.key().isPresent)
-        .map(record => (record.partition(), record.offset(), record.key().get()))
+        .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
         .map {
-          case (partition, offset, bytes) =>
-            try {
-              Message(
-                partition = partition,
-                offset = offset,
-                value = Some(
-                  JsObject(
-                    Serializer.ROW
-                      .from(bytes)
-                      .cells()
-                      .asScala
-                      .map { cell =>
-                        cell.name() -> (cell.value() match {
-                          case _: Array[Byte]          => JsString("bytes")
-                          case b: Boolean              => JsBoolean(b)
-                          case s: String               => JsString(s)
-                          case n: Short                => JsNumber(n)
-                          case n: Int                  => JsNumber(n)
-                          case n: Long                 => JsNumber(n)
-                          case n: Float                => JsNumber(n)
-                          case n: Double               => JsNumber(n)
-                          case n: java.math.BigDecimal => JsNumber(n)
-                          case n: BigDecimal           => JsNumber(n)
-                          case _                       => JsString(cell.value().toString)
-                        })
-                      }
-                      .toMap)),
-                error = None
-              )
-            } catch {
+          case (partition, offset, bytes, headers) =>
+            try Message(
+              partition = partition,
+              offset = offset,
+              sourceClass = try headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value()))
+              catch {
+                case _: Throwable => None
+              },
+              sourceKey = try headers
+                .find(_.key() == Header.SOURCE_KEY_KEY)
+                .map(h => new String(h.value()))
+                .map(ObjectKey.toObjectKey)
+              catch {
+                case _: Throwable => None
+              },
+              value = Some(
+                JsObject(
+                  Serializer.ROW
+                    .from(bytes)
+                    .cells()
+                    .asScala
+                    .map { cell =>
+                      cell.name() -> (cell.value() match {
+                        case _: Array[Byte]          => JsString("bytes")
+                        case b: Boolean              => JsBoolean(b)
+                        case s: String               => JsString(s)
+                        case n: Short                => JsNumber(n)
+                        case n: Int                  => JsNumber(n)
+                        case n: Long                 => JsNumber(n)
+                        case n: Float                => JsNumber(n)
+                        case n: Double               => JsNumber(n)
+                        case n: java.math.BigDecimal => JsNumber(n)
+                        case n: BigDecimal           => JsNumber(n)
+                        case _                       => JsString(cell.value().toString)
+                      })
+                    }
+                    .toMap)),
+              error = None
+            )
+            catch {
               case e: Throwable =>
-                Message(partition = partition, offset = offset, value = None, error = Some(e.getMessage))
+                Message(partition = partition,
+                        offset = offset,
+                        sourceClass = None,
+                        sourceKey = None,
+                        value = None,
+                        error = Some(e.getMessage))
             }
         })
 

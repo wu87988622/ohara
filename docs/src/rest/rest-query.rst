@@ -118,6 +118,8 @@ the response includes following items.
 
   - messages[i].partition (**int**) — the index of partition
   - messages[i].offset (**Long**) — the offset of this message
+  - messages[i].sourceClass (**Option(String)**) — class name of the component which generate this data
+  - messages[i].sourceKey (**Option(Object)**) — object key of the component which generate this data
   - messages[i].value (**Option(Object)**) — the value of this message
   - messages[i].error (**Option(String)**) — error message happen in failing to parse value
 
@@ -130,6 +132,11 @@ Example Response
       {
         "partition": 1,
         "offset": 12,
+        "sourceClass": "com.abc.SourceTask",
+        "sourceKey": {
+          "group": "g",
+          "name": "n"
+        },
         "value": {
           "a": "b",
           "b": "c"

@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 
 /** A wrap to SourceRecord. Currently, only value columns and value are changed. */
@@ -107,25 +106,6 @@ public class RowSourceRecord {
     if (record.timestamp() != null) builder.timestamp(record.timestamp());
     builder.row(Serializer.ROW.from((byte[]) record.key()));
     return builder.build();
-  }
-
-  /**
-   * a helper method used to handle the fucking null produced by kafka...
-   *
-   * @return kafka's source
-   */
-  SourceRecord toSourceRecord() {
-    return new SourceRecord(
-        sourcePartition(),
-        sourceOffset(),
-        topicName(),
-        partition,
-        Schema.BYTES_SCHEMA,
-        Serializer.ROW.to(row()),
-        // TODO: we keep empty value in order to reduce data size in transmission
-        Schema.BYTES_SCHEMA,
-        null,
-        timestamp);
   }
 
   public static Builder builder() {
