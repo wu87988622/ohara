@@ -18,9 +18,8 @@ package com.island.ohara.client.configurator
 
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import spray.json.{JsNull, JsValue, RootJsonFormat, _}
-
 import spray.json.DefaultJsonProtocol._
+import spray.json.{JsNull, JsValue, RootJsonFormat, _}
 package object v0 {
 
   /**
@@ -35,6 +34,11 @@ package object v0 {
     */
   val GROUP_DEFAULT: String = "default"
   val GROUP_KEY: String = "group"
+
+  /**
+    * All services are able to bind a port to provide access.
+    */
+  val CLIENT_PORT_KEY = "clientPort"
 
   /**
     * Noted: there are other two definition having "name"

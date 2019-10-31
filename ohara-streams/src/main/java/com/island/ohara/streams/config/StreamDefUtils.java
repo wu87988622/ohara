@@ -159,7 +159,6 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Node name list")
           .documentation("The used node name list of this streamApp")
-          .internal()
           .valueType(Type.ARRAY)
           .build();
 

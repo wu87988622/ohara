@@ -513,4 +513,19 @@ class TestZookeeperApi extends OharaTest with Matchers {
       string should include(definition.defaultValue())
     }
   }
+
+  @Test
+  def checkNameDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == NAME_KEY) should not be None
+
+  @Test
+  def checkGroupDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == GROUP_KEY) should not be None
+
+  @Test
+  def checkNodeNamesDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == NODE_NAMES_KEY) should not be None
+
+  @Test
+  def checkTagDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == TAGS_KEY) should not be None
+
+  @Test
+  def checkClientPortDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == CLIENT_PORT_KEY) should not be None
 }

@@ -16,18 +16,17 @@
 
 package com.island.ohara.client.configurator.v0
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-
 object ZookeeperApi {
 
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
@@ -41,71 +40,51 @@ object ZookeeperApi {
 
   //------------------------ The key name list in settings field ---------------------------------/
   val ZOOKEEPER_HOME_FOLDER: String = "/home/ohara/default"
-  private[this] val COUNTER = new AtomicInteger(0)
-  private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
+  private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
+  private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
+    val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
+    assert(!_DEFINITIONS.contains(settingDef.key()), "duplicate key is illegal")
+    _DEFINITIONS += (settingDef.key() -> settingDef)
+    settingDef
+  }
   val GROUP_DEFINITION: SettingDef =
-    definitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+    createDef(_.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
   val NAME_DEFINITION: SettingDef =
-    definitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+    createDef(_.key(NAME_KEY).documentation("name of this worker cluster").optional().build())
+  val NODE_NAMES_DEFINITION: SettingDef =
+    createDef(_.key(NODE_NAMES_KEY).documentation("the nodes hosting this cluster").valueType(Type.ARRAY).build())
   val TAGS_DEFINITION: SettingDef =
-    definitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
-  private[this] val CLIENT_PORT_KEY = "clientPort"
-  val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
-    .key(CLIENT_PORT_KEY)
-    .documentation("the port exposed to client to connect to zookeeper")
-    .optional()
-    .build()
+    createDef(_.key(TAGS_KEY).documentation("the tags to this cluster").optional().build())
+  val CLIENT_PORT_DEFINITION: SettingDef = createDef(
+    _.key(CLIENT_PORT_KEY).documentation("the port exposed to client to connect to zookeeper").optional().build())
   private[this] val PEER_PORT_KEY = "peerPort"
   val PEER_PORT_DEFINITION: SettingDef =
-    definitionBuilder.key(PEER_PORT_KEY).documentation("the port exposed to each quorum").optional().build()
+    createDef(_.key(PEER_PORT_KEY).documentation("the port exposed to each quorum").optional().build())
   private[this] val ELECTION_PORT_KEY = "electionPort"
   val ELECTION_PORT_DEFINITION: SettingDef =
-    definitionBuilder.key(ELECTION_PORT_KEY).documentation("quorum leader election port").optional().build()
+    createDef(_.key(ELECTION_PORT_KEY).documentation("quorum leader election port").optional().build())
   // export these variables to collie for creating
   private[this] val TICK_TIME_KEY = "tickTime"
   private[this] val TICK_TIME_DEFAULT: Int = 2000
-  val TICK_TIME_DEFINITION: SettingDef = definitionBuilder
-    .key(TICK_TIME_KEY)
-    .documentation("basic time unit in zookeeper")
-    .optional(TICK_TIME_DEFAULT)
-    .build()
+  val TICK_TIME_DEFINITION: SettingDef = createDef(
+    _.key(TICK_TIME_KEY).documentation("basic time unit in zookeeper").optional(TICK_TIME_DEFAULT).build())
   private[this] val INIT_LIMIT_KEY = "initLimit"
   private[this] val INIT_LIMIT_DEFAULT: Int = 10
-  val INIT_LIMIT_DEFINITION: SettingDef = definitionBuilder
-    .key(INIT_LIMIT_KEY)
-    .documentation("timeout to connect to leader")
-    .optional(INIT_LIMIT_DEFAULT)
-    .build()
+  val INIT_LIMIT_DEFINITION: SettingDef = createDef(
+    _.key(INIT_LIMIT_KEY).documentation("timeout to connect to leader").optional(INIT_LIMIT_DEFAULT).build())
   private[this] val SYNC_LIMIT_KEY = "syncLimit"
   private[this] val SYNC_LIMIT_DEFAULT: Int = 5
-  val SYNC_LIMIT_DEFINITION: SettingDef = definitionBuilder
-    .key(SYNC_LIMIT_KEY)
-    .documentation("the out-of-date of a sever from leader")
-    .optional(SYNC_LIMIT_DEFAULT)
-    .build()
+  val SYNC_LIMIT_DEFINITION: SettingDef = createDef(
+    _.key(SYNC_LIMIT_KEY).documentation("the out-of-date of a sever from leader").optional(SYNC_LIMIT_DEFAULT).build())
   private[this] val DATA_DIR_KEY = "dataDir"
   private[this] val DATA_DIR_DEFAULT = s"$ZOOKEEPER_HOME_FOLDER/data"
-  val DATA_DIR_DEFINITION: SettingDef = definitionBuilder
-    .key(DATA_DIR_KEY)
-    .documentation("the folder used to store zookeeper data")
-    .optional(DATA_DIR_DEFAULT)
-    .build()
+  val DATA_DIR_DEFINITION: SettingDef = createDef(
+    _.key(DATA_DIR_KEY).documentation("the folder used to store zookeeper data").optional(DATA_DIR_DEFAULT).build())
 
   /**
     * all public configs
     */
-  val DEFINITIONS: Seq[SettingDef] = Seq(
-    GROUP_DEFINITION,
-    NAME_DEFINITION,
-    TAGS_DEFINITION,
-    CLIENT_PORT_DEFINITION,
-    PEER_PORT_DEFINITION,
-    ELECTION_PORT_DEFINITION,
-    TICK_TIME_DEFINITION,
-    INIT_LIMIT_DEFINITION,
-    SYNC_LIMIT_DEFINITION,
-    DATA_DIR_DEFINITION,
-  )
+  def DEFINITIONS: Seq[SettingDef] = _DEFINITIONS.values.toSeq
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 

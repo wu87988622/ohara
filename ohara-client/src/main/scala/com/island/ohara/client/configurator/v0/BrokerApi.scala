@@ -17,7 +17,6 @@
 package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
-import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
@@ -28,8 +27,8 @@ import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-
 object BrokerApi {
 
   val BROKER_PREFIX_PATH: String = "brokers"
@@ -43,83 +42,71 @@ object BrokerApi {
 
   //------------------------ The key name list in settings field ---------------------------------/
   val BROKER_HOME_FOLDER: String = "/home/ohara/default"
-  private[this] val COUNTER = new AtomicInteger(0)
-  private[this] def definitionBuilder = SettingDef.builder().orderInGroup(COUNTER.incrementAndGet()).group("core")
-  val GROUP_DEFINITION: SettingDef =
-    definitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
-  val NAME_DEFINITION: SettingDef =
-    definitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+  private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
+  private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
+    val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
+    assert(!_DEFINITIONS.contains(settingDef.key()), "duplicate key is illegal")
+    _DEFINITIONS += (settingDef.key() -> settingDef)
+    settingDef
+  }
+
+  val GROUP_DEFINITION: SettingDef = createDef(
+    _.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
+  val NAME_DEFINITION: SettingDef = createDef(
+    _.key(NAME_KEY).documentation("name of this worker cluster").optional().build())
+  val NODE_NAMES_DEFINITION: SettingDef =
+    createDef(_.key(NODE_NAMES_KEY).documentation("the nodes hosting this cluster").valueType(Type.ARRAY).build())
   val TAGS_DEFINITION: SettingDef =
-    definitionBuilder.key(TAGS_KEY).documentation("the tags to this cluster").optional().build()
+    createDef(_.key(TAGS_KEY).documentation("the tags to this cluster").optional().build())
   private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
-  val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = definitionBuilder
-    .key(ZOOKEEPER_CLUSTER_KEY_KEY)
-    .documentation("the zookeeper cluster used to manage broker nodes")
-    .valueType(Type.OBJECT_KEYS)
-    .reference(Reference.ZOOKEEPER_CLUSTER)
-    .build()
-  private[this] val CLIENT_PORT_KEY: String = "clientPort"
-  val CLIENT_PORT_DEFINITION: SettingDef = definitionBuilder
-    .key(CLIENT_PORT_KEY)
-    .documentation("the port exposed to client to connect to broker")
-    .optional()
-    .build()
+  val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
+    _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
+      .documentation("the zookeeper cluster used to manage broker nodes")
+      .valueType(Type.OBJECT_KEYS)
+      .reference(Reference.ZOOKEEPER_CLUSTER)
+      .build())
+  val CLIENT_PORT_DEFINITION: SettingDef = createDef(
+    _.key(CLIENT_PORT_KEY).documentation("the port exposed to client to connect to broker").optional().build())
   private[this] val JMX_PORT_KEY: String = "jmxPort"
-  val JMX_PORT_DEFINITION: SettingDef = definitionBuilder
-    .key(JMX_PORT_KEY)
-    .documentation("the port exposed to client to connect to broker jmx")
-    .optional()
-    .build()
+  val JMX_PORT_DEFINITION: SettingDef = createDef(
+    _.key(JMX_PORT_KEY).documentation("the port exposed to client to connect to broker jmx").optional().build())
   private[this] val LOG_DIRS_KEY: String = "log.dirs"
   private[this] val LOG_DIRS_DEFAULT = s"$BROKER_HOME_FOLDER/data"
-  val LOG_DIRS_DEFINITION: SettingDef = definitionBuilder
-    .key(LOG_DIRS_KEY)
-    .documentation("the folder used to store data of broker")
-    .optional(LOG_DIRS_DEFAULT)
-    .build()
+  val LOG_DIRS_DEFINITION: SettingDef = createDef(
+    _.key(LOG_DIRS_KEY).documentation("the folder used to store data of broker").optional(LOG_DIRS_DEFAULT).build())
   private[this] val NUMBER_OF_PARTITIONS_KEY: String = "num.partitions"
   private[this] val NUMBER_OF_PARTITIONS_DEFAULT = 1
-  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = definitionBuilder
-    .key(NUMBER_OF_PARTITIONS_KEY)
-    .documentation("the number of partitions for all topics by default")
-    .optional(NUMBER_OF_PARTITIONS_DEFAULT)
-    .build()
+  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createDef(
+    _.key(NUMBER_OF_PARTITIONS_KEY)
+      .documentation("the number of partitions for all topics by default")
+      .optional(NUMBER_OF_PARTITIONS_DEFAULT)
+      .build())
   private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
   private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT = 1
-  val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = definitionBuilder
-    .key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
-    .documentation("the number of replications for internal offset topic")
-    .optional(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
-    .build()
+  val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = createDef(
+    _.key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
+      .documentation("the number of replications for internal offset topic")
+      .optional(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
+      .build())
   private[this] val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
   private[this] val NUMBER_OF_NETWORK_THREADS_DEFAULT = 1
-  val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = definitionBuilder
-    .key(NUMBER_OF_NETWORK_THREADS_KEY)
-    .documentation("the number of threads used to accept network requests")
-    .optional(NUMBER_OF_NETWORK_THREADS_DEFAULT)
-    .build()
+  val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = createDef(
+    _.key(NUMBER_OF_NETWORK_THREADS_KEY)
+      .documentation("the number of threads used to accept network requests")
+      .optional(NUMBER_OF_NETWORK_THREADS_DEFAULT)
+      .build())
   private[this] val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
   private[this] val NUMBER_OF_IO_THREADS_DEFAULT = 1
-  val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = definitionBuilder
-    .key(NUMBER_OF_IO_THREADS_KEY)
-    .documentation("the number of threads used to process network requests")
-    .optional(NUMBER_OF_IO_THREADS_DEFAULT)
-    .build()
+  val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = createDef(
+    _.key(NUMBER_OF_IO_THREADS_KEY)
+      .documentation("the number of threads used to process network requests")
+      .optional(NUMBER_OF_IO_THREADS_DEFAULT)
+      .build())
 
   /**
     * all public configs
     */
-  val DEFINITIONS: Seq[SettingDef] = Seq(
-    GROUP_DEFINITION,
-    NAME_DEFINITION,
-    TAGS_DEFINITION,
-    CLIENT_PORT_DEFINITION,
-    LOG_DIRS_DEFINITION,
-    NUMBER_OF_PARTITIONS_DEFINITION,
-    NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION,
-    NUMBER_OF_NETWORK_THREADS_DEFINITION,
-    NUMBER_OF_IO_THREADS_DEFINITION
-  )
+  def DEFINITIONS: Seq[SettingDef] = _DEFINITIONS.values.toSeq
 
   val TOPIC_DEFINITION: TopicDefinition = TopicDefinition(TopicApi.DEFINITIONS)
 

@@ -671,4 +671,19 @@ class TestBrokerApi extends OharaTest with Matchers {
       string should include(definition.defaultValue())
     }
   }
+
+  @Test
+  def checkNameDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == NAME_KEY) should not be None
+
+  @Test
+  def checkGroupDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY) should not be None
+
+  @Test
+  def checkNodeNamesDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == NODE_NAMES_KEY) should not be None
+
+  @Test
+  def checkTagDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == TAGS_KEY) should not be None
+
+  @Test
+  def checkClientPortDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == CLIENT_PORT_KEY) should not be None
 }
