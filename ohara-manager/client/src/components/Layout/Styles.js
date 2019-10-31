@@ -21,6 +21,7 @@ export const Header = styled.header`
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 70px;
   min-width: 70px;
   background: ${props => props.theme.palette.primary[900]};
 
@@ -57,9 +58,12 @@ export const WorkspaceList = styled.ul`
   }
 
   .add-workspace {
-    border: 1px solid ${props => props.theme.palette.common.white};
     background-color: transparent;
+    border: 1px solid ${props => props.theme.palette.common.white};
     color: ${props => props.theme.palette.common.white};
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
@@ -80,14 +84,6 @@ export const Tools = styled.ul`
     &:hover {
       opacity: 0.9;
     }
-  }
-
-  .workspace {
-    width: 100%;
-    text-align: center;
-    /* We don't have this color #1b4778 in our theme */
-    border-bottom: 1px solid #1b4778;
-    padding-bottom: ${props => props.theme.spacing(2)}px;
   }
 `;
 

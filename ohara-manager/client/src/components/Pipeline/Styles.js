@@ -109,12 +109,12 @@ export const StyledExpansionPanel = styled(ExpansionPanel)`
   .new-pipeline-button {
     transform: rotate(0deg);
     transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
-    margin-left: 20px;
-    padding: 10px;
+    padding: 5px;
     position: absolute;
     right: 50px;
-    top: 6px;
-    font-size: 15px;
+    top: 8px;
+    width: 30px;
+    height: 30px;
   }
 `;
 
@@ -134,6 +134,8 @@ export const PipelineList = styled.ul`
       text-decoration: none;
       width: 100%;
       padding: 0 26px;
+      display: flex;
+      align-items: center;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.3);
@@ -143,8 +145,9 @@ export const PipelineList = styled.ul`
         background-color: rgba(255, 255, 255, 0.3);
       }
 
-      i {
+      .link-icon {
         margin-right: ${props => props.theme.spacing(1)}px;
+        width: 16px;
       }
     }
   }

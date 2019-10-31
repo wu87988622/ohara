@@ -27,6 +27,7 @@ import MuiTheme from './theme/muiTheme';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
+import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
 
 ReactDOM.render(
   <StrictMode>
@@ -34,11 +35,13 @@ ReactDOM.render(
       <MuiThemeProvider theme={MuiTheme}>
         <ThemeProvider theme={MuiTheme}>
           <SnackbarProvider>
-            <WorkspaceProvider>
-              <PipelineProvider>
-                <App />
-              </PipelineProvider>
-            </WorkspaceProvider>
+            <NewWorkspaceProvider>
+              <WorkspaceProvider>
+                <PipelineProvider>
+                  <App />
+                </PipelineProvider>
+              </WorkspaceProvider>
+            </NewWorkspaceProvider>
           </SnackbarProvider>
         </ThemeProvider>
       </MuiThemeProvider>

@@ -16,8 +16,14 @@
 
 import React from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
+import AppsIcon from '@material-ui/icons/Apps';
+import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
+import AssignmentIcon from '@material-ui/icons/Assignment';
+import StorageIcon from '@material-ui/icons/Storage';
+import AddIcon from '@material-ui/icons/Add';
 import { Link } from 'react-router-dom';
 
+import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { useWorkspace } from 'context/WorkspaceContext';
 
 // Import this logo as a React component
@@ -29,6 +35,9 @@ import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
   const { workspaces } = useWorkspace();
+  const { setIsOpen } = useNewWorkspace();
+
+  const openNewWorkspace = () => setIsOpen(true);
 
   return (
     <>
@@ -66,15 +75,17 @@ const AppBar = () => {
             placement="right"
             enterDelay={1000}
           >
-            <i className="add-workspace item fas fa-plus"></i>
+            <div onClick={openNewWorkspace} className="add-workspace item">
+              <AddIcon />
+            </div>
           </Tooltip>
         </WorkspaceList>
 
         <Tools>
-          <i className="workspace item fas fa-th"></i>
-          <i className="fas item fa-envelope-open-text"></i>
-          <i className="fas item fa-code"></i>
-          <i className="fas item fa-server"></i>
+          <AppsIcon className="item workspace" />
+          <AssignmentIcon className="item" />
+          <DeveloperModeIcon className="item" />
+          <StorageIcon className="item" />
         </Tools>
       </Header>
     </>

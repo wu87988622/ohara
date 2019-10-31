@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import DeleteDialog from './DeleteDialog';
-import Dialog from './Dialog';
-import FullScreenDialog from './FullScreenDialog';
+import Card from './Card';
 
-export { DeleteDialog, Dialog, FullScreenDialog };
+export { Card };

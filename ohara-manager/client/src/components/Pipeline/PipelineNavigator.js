@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import AddIcon from '@material-ui/icons/Add';
+import ShareIcon from '@material-ui/icons/Share';
 import Menu from '@material-ui/core/Menu';
 import { NavLink, useParams } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
@@ -81,7 +84,7 @@ const PipelineNavigator = () => {
     <Navigator>
       <StyledButton disableRipple onClick={handleClick}>
         <span className="menu-name">{workspaceName}</span>
-        <i className="fas fa-angle-down" />
+        <ExpandMoreIcon />
       </StyledButton>
       <Menu
         anchorEl={anchorEl}
@@ -130,13 +133,10 @@ const PipelineNavigator = () => {
       />
 
       <StyledExpansionPanel defaultExpanded={true}>
-        <ExpansionPanelSummary
-          disableRipple
-          expandIcon={<i className="fas fa-angle-down" />}
-        >
+        <ExpansionPanelSummary disableRipple expandIcon={<ExpandMoreIcon />}>
           <StyledSubtitle1>Pipelines</StyledSubtitle1>
-          <i
-            className="new-pipeline-button fas fa-plus"
+          <AddIcon
+            className="new-pipeline-button"
             onClick={event => {
               event.stopPropagation();
               setIsOpen(true);
@@ -151,7 +151,7 @@ const PipelineNavigator = () => {
                   activeClassName="active-link"
                   to={`/${workspaceName}/${pipeline.name}`}
                 >
-                  <i className="fas fa-project-diagram"></i>
+                  <ShareIcon className="link-icon" />
                   {pipeline.name}
                 </NavLink>
               </li>
