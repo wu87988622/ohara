@@ -52,7 +52,9 @@ export const request = () => {
 };
 
 export const response = () => {
-  const aliveNode = [array];
+  const aliveNodes = [array];
+  const state = [string];
+  const error = [string];
   const lastModified = [number];
   const settings = {
     name: [string],
@@ -70,7 +72,9 @@ export const response = () => {
   };
 
   return {
-    aliveNode,
+    aliveNodes,
+    state,
+    error,
     lastModified,
     settings,
   };

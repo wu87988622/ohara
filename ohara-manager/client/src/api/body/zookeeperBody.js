@@ -47,18 +47,20 @@ export const request = () => {
 };
 
 export const response = () => {
-  const aliveNodes = [];
-  const lastModified = [];
+  const aliveNodes = [array];
+  const state = [string];
+  const error = [string];
+  const lastModified = [number];
   const settings = {
-    name: [],
-    group: [],
-    imageName: [],
-    clientPort: [],
-    peerPort: [],
-    electionPort: [],
-    nodeName: [],
-    tags: [],
+    name: [string],
+    group: [string],
+    imageName: [string],
+    clientPort: [number],
+    peerPort: [number],
+    electionPort: [number],
+    nodeNames: [array],
+    tags: [object],
   };
 
-  return { aliveNodes, lastModified, settings };
+  return { aliveNodes, state, error, lastModified, settings };
 };

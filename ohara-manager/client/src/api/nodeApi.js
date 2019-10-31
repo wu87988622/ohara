@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as node from './body/nodeBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
@@ -56,7 +54,6 @@ export const get = async (params = {}) => {
 };
 
 export const getAll = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, node), '', []);
+  const res = await axiosInstance.get(url + URL.toQueryParameters(params));
+  return res ? responseUtil(res, node) : [];
 };

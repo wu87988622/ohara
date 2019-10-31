@@ -14,19 +14,25 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as file from './body/fileBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
-import wait from './waitApi';
-import * as waitUtil from './utils/waitUtils';
 
-const url = URL.BROKER_URL;
+const url = URL.FILE_URL;
 
 export const create = async (params = {}) => {
   const requestBody = requestUtil(params, file);
-  const res = await axiosInstance.post(url, requestBody);
+  const config = {
+    headers: {
+      'content-type': 'multipart/form-data',
+    },
+  };
+  let formData = new FormData();
+  formData.append('file', requestBody.file);
+  formData.append('group', requestBody.group);
+  formData.append('tags', JSON.stringify(requestBody.tags));
+  const res = await axiosInstance.post(url, formData, config);
+
   return responseUtil(res, file);
 };
 
@@ -40,24 +46,19 @@ export const update = async params => {
 };
 
 export const remove = async (params = {}) => {
-  const { name, group } = params.settings;
-  await axiosInstance.delete(`${url}/${name}?group=${group}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForClusterNonexistent,
-    paramRes: params,
-  });
+  const { name, group } = params;
+  const res = await axiosInstance.delete(`${url}/${name}?group=${group}`);
+
   return responseUtil(res, file);
 };
 
 export const get = async (params = {}) => {
-  const { name, group } = params.settings;
+  const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, file);
 };
 
 export const getAll = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, file), '', []);
+  const res = await axiosInstance.get(url + URL.toQueryParameters(params));
+  return res ? responseUtil(res, file) : [];
 };

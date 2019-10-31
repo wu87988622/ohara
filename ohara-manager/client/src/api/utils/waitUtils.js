@@ -32,7 +32,7 @@ export const waitForStop = res => {
 };
 
 export const waitForClusterNonexistent = (res, params) => {
-  const { name, group } = params.settings;
+  const { name, group } = params;
   const result = res.data.result
     .map(res => res.settings)
     .some(settings => settings.name === name && settings.group === group);

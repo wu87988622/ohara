@@ -25,14 +25,13 @@ import {
   defaultValue,
 } from '../utils/validation';
 
-export const reqConverter = {
-  node: 'nodeNames',
-};
+// convert the request parameter to another key
+// ex: { node: 'nodeNames' }
+export const reqConverter = {};
 
-export const resConverter = {
-  lastModified: 'wkTime',
-  'settings.name': 'name',
-};
+// convert the response parameter to another key
+// ex: { 'settings.name': 'name' }
+export const resConverter = {};
 
 export const request = () => {
   const name = [string, generateName];
@@ -79,9 +78,11 @@ export const request = () => {
 };
 
 export const response = () => {
+  const aliveNodes = [array];
+  const state = [string];
+  const error = [string];
   const lastModified = [number];
   const connectors = [array];
-  const aliveNodes = [array];
   const settings = {
     statusTopicName: [string],
     name: [string],
@@ -108,9 +109,11 @@ export const response = () => {
   const nodeNames = [array];
 
   return [
+    aliveNodes,
+    state,
+    error,
     lastModified,
     connectors,
-    aliveNodes,
     settings,
     tags,
     jarInfos,

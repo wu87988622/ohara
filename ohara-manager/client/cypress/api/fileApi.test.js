@@ -16,8 +16,12 @@
 
 import * as generate from '../../src/utils/generate';
 
+import * as fileApi from '../../src/api/fileApi';
+import { deleteAllServices } from '../support/defaultCommands';
+
 const generateFile = () => {
   const params = {
+    fixturePath: 'plugin',
     // we use an existing file to simulate upload jar
     name: 'ohara-it-source.jar',
     group: generate.serviceName({ prefix: 'group' }),
@@ -25,19 +29,13 @@ const generateFile = () => {
   return params;
 };
 
-describe.skip('File API', () => {
-  beforeEach(() => cy.deleteAllServices());
+describe('File API', () => {
+  beforeEach(() => deleteAllServices());
 
   it('uploadJar', () => {
     const file = generateFile();
-    cy.createJar(file.name, file.group).then(response => {
-      const {
-        data: { isSuccess, result },
-      } = response;
-      const { group, name, size, url, lastModified, tags } = result;
-
-      expect(isSuccess).to.eq(true);
-
+    cy.createJar(file.fixturePath, file.name, file.group).then(data => {
+      const { group, name, size, url, lastModified, tags } = data;
       expect(group).to.be.a('string');
       expect(group).to.eq(file.group);
 
@@ -59,39 +57,26 @@ describe.skip('File API', () => {
 
   it('fetchJars', () => {
     const file = generateFile();
-    cy.createJar(file.name, file.group)
-      .fetchFiles(file.group)
-      .then(response => {
-        const {
-          data: { isSuccess, result },
-        } = response;
-
-        expect(isSuccess).to.eq(true);
-
+    const group = { group: file.group };
+    cy.createJar(file.fixturePath, file.name, file.group).then(() => {
+      fileApi.getAll(group).then(result => {
         expect(result).to.be.a('array');
         expect(result.length).to.eq(1);
 
         const fileInfo = result[0];
-
         expect(fileInfo).to.include.keys('name', 'group');
         expect(fileInfo.name).to.be.a('string');
         expect(fileInfo.group).to.be.a('string');
         expect(fileInfo.tags.name).to.eq(fileInfo.name);
       });
+    });
   });
 
   it('fetchJar', () => {
     const file = generateFile();
-    cy.createJar(file.name, file.group)
-      .fetchFile(file)
-      .then(response => {
-        const {
-          data: { isSuccess, result },
-        } = response;
+    cy.createJar(file.fixturePath, file.name, file.group).then(() => {
+      fileApi.get(file).then(result => {
         const { group, name, size, url, lastModified, tags } = result;
-
-        expect(isSuccess).to.eq(true);
-
         expect(group).to.be.a('string');
         expect(group).to.eq(file.group);
 
@@ -109,23 +94,16 @@ describe.skip('File API', () => {
         expect(tags).to.be.an('object');
         expect(tags.name).to.eq(file.name);
       });
+    });
   });
 
-  it('updateJar - tags', () => {
+  it('updateJarTags', () => {
     const file = generateFile();
-
     const newFile = Object.assign({}, file, { tags: { tag: 'aaa' } });
 
-    cy.createJar(file.name, file.group)
-      .updateFile(newFile)
-      .then(response => {
-        const {
-          data: { isSuccess, result },
-        } = response;
+    cy.createJar(file.fixturePath, file.name, file.group).then(() => {
+      fileApi.update(newFile).then(result => {
         const { group, name, size, url, lastModified, tags } = result;
-
-        expect(isSuccess).to.eq(true);
-
         expect(group).to.be.a('string');
         expect(group).to.eq(file.group);
 
@@ -143,20 +121,17 @@ describe.skip('File API', () => {
         expect(tags).to.be.an('object');
         expect(tags.tag).to.eq('aaa');
       });
+    });
   });
 
   it('deleteJar', () => {
     const file = generateFile();
-    cy.createJar(file.name, file.group).deleteFile(file);
-
-    cy.fetchFiles(file.group).then(response => {
-      const {
-        data: { isSuccess, result },
-      } = response;
-
-      expect(isSuccess).to.eq(true);
-
-      expect(result.length).to.eq(0);
+    const group = { group: file.group };
+    cy.createJar(file.fixturePath, file.name, file.group).then(async () => {
+      await fileApi.remove(file);
+      await fileApi
+        .getAll(group)
+        .then(result => expect(result.length).to.eq(0));
     });
   });
 });

@@ -14,28 +14,14 @@
  * limitations under the License.
  */
 
-import { object, string, number, option } from '../utils/validation';
-
-export const request = () => {
-  const file = [object];
-  const group = [string];
-  const tags = [object, option];
-
-  return { file, group, tags };
-};
+import { string, array } from '../utils/validation';
 
 export const response = () => {
-  const name = [string];
-  const lastModified = [number];
-  const group = [string];
-  const url = [string];
-  const size = [number];
+  const imageName = [string];
+  const settingDefinitions = [array];
 
   return {
-    name,
-    group,
-    size,
-    url,
-    lastModified,
+    imageName,
+    settingDefinitions,
   };
 };

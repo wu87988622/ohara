@@ -14,39 +14,43 @@
  * limitations under the License.
  */
 
-import * as info from './body/infoBody';
+import * as infoConfiguratorBody from './body/infoConfiguratorBody';
+import * as infoServiceBody from './body/infoServiceBody';
 import { responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.INFO_URL;
-const service = {
+export const service = {
+  configurator: 'configurator',
   zookeeper: 'zookeeper',
   broker: 'broker',
   worker: 'worker',
 };
 
 export const getConfiguratorInfo = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + '/configurator' + parameter);
-  return responseUtil(res, info);
+  const res = await axiosInstance.get(
+    url + '/' + service.configurator + URL.toQueryParameters(params),
+  );
+  return responseUtil(res, infoConfiguratorBody);
 };
 
 export const getZookeeperInfo = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
   const res = await axiosInstance.get(
-    url + '/' + service.zookeeper + parameter,
+    url + '/' + service.zookeeper + URL.toQueryParameters(params),
   );
-  return responseUtil(res, info);
+  return responseUtil(res, infoServiceBody);
 };
 
 export const getBrokerInfo = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + '/' + service.broker + parameter);
-  return responseUtil(res, info);
+  const res = await axiosInstance.get(
+    url + '/' + service.broker + URL.toQueryParameters(params),
+  );
+  return responseUtil(res, infoServiceBody);
 };
 
 export const getWorkerInfo = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + '/' + service.worker + parameter);
-  return responseUtil(res, info);
+  const res = await axiosInstance.get(
+    url + '/' + service.worker + URL.toQueryParameters(params),
+  );
+  return responseUtil(res, infoServiceBody);
 };

@@ -18,62 +18,44 @@
 
 import * as infoApi from '../../src/api/infoApi';
 
-describe.skip('Info API', () => {
-  it('fetchConfiguratorInfo', () => {
-    infoApi.fetchConfiguratorInfo().then(response => {
-      const {
-        data: { isSuccess, result },
-      } = response;
+describe('Info API', () => {
+  it('fetchConfiguratorInfo', async () => {
+    const infoRes = await infoApi.getConfiguratorInfo();
+    const { mode, versionInfo } = infoRes;
+    const { branch, version, user, revision, date } = versionInfo;
 
-      const { mode, versionInfo } = result;
-      const { branch, version, user, revision, date } = versionInfo;
+    // we're using fake configurator in our tests; so this value should be "FAKE"
+    expect(mode).to.be.a('string');
+    expect(mode).to.eq('FAKE');
 
-      expect(isSuccess).to.eq(true);
+    expect(branch).to.be.a('string');
 
-      // we're using fake configurator in our tests; so this value should be "FAKE"
-      expect(mode).to.be.a('string');
-      expect(mode).to.eq('FAKE');
+    expect(version).to.be.a('string');
 
-      expect(branch).to.be.a('string');
+    expect(revision).to.be.a('string');
 
-      expect(version).to.be.a('string');
+    expect(user).to.be.a('string');
 
-      expect(revision).to.be.a('string');
-
-      expect(user).to.be.a('string');
-
-      expect(date).to.be.a('string');
-    });
+    expect(date).to.be.a('string');
   });
 
-  it('fetchServiceInfo', () => {
-    function expectResult(serviceName, response) {
-      const {
-        data: { isSuccess, result },
-      } = response;
-
-      const { imageName, definitions } = result;
-
-      expect(isSuccess).to.eq(true);
-
+  it('fetchServiceInfo', async () => {
+    function expectResult(serviceName, data) {
+      const { imageName, settingDefinitions } = data;
       expect(imageName).to.be.a('string');
       expect(imageName).to.include(serviceName);
 
-      expect(definitions).to.be.an('array');
-      expect(definitions.length > 0).to.be.true;
-
-      // expect each service type should have it's own objectKey: {name, group}
-      const objectKeyDefinitions = definitions
-        .map(definition => definition.key)
-        .filter(key => key === 'group' || key === 'name');
-      expect(objectKeyDefinitions.length).to.eq(2);
+      expect(settingDefinitions).to.be.an('array');
+      expect(settingDefinitions.length > 0).to.be.true;
     }
 
-    const serviceNames = ['zookeeper', 'broker', 'worker'];
-    serviceNames.forEach(serviceName => {
-      infoApi
-        .fetchServiceInfo(serviceName)
-        .then(response => expectResult(serviceName, response));
-    });
+    const infoZookeeper = await infoApi.getZookeeperInfo();
+    expectResult(infoApi.service.zookeeper, infoZookeeper);
+
+    const infoBroker = await infoApi.getBrokerInfo();
+    expectResult(infoApi.service.broker, infoBroker);
+
+    const infoWorker = await infoApi.getWorkerInfo();
+    expectResult(infoApi.service.worker, infoWorker);
   });
 });

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as worker from './body/workerBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
@@ -24,14 +22,14 @@ import * as waitUtil from './utils/waitUtils';
 
 const url = URL.WORKER_URL;
 
-export const create = async (params = {}) => {
+export const create = async params => {
   const requestBody = requestUtil(params, worker);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, worker);
 };
 
-export const start = async (params = {}) => {
-  const { name, group } = params.settings;
+export const start = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/start?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
@@ -49,8 +47,8 @@ export const update = async params => {
   return responseUtil(res, worker);
 };
 
-export const stop = async (params = {}) => {
-  const { name, group } = params.settings;
+export const stop = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
@@ -59,8 +57,8 @@ export const stop = async (params = {}) => {
   return responseUtil(res, worker);
 };
 
-export const remove = async (params = {}) => {
-  const { name, group } = params.settings;
+export const remove = async params => {
+  const { name, group } = params;
   await axiosInstance.delete(`${url}/${name}?group=${group}`);
   const res = await wait({
     url,
@@ -70,29 +68,29 @@ export const remove = async (params = {}) => {
   return responseUtil(res, worker);
 };
 
-export const get = async (params = {}) => {
-  const { name, group } = params.settings;
+export const get = async params => {
+  const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, worker);
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return lodashGet(res, 'data.result', []);
+  return res ? responseUtil(res, worker) : [];
 };
 
-export const addNode = async (params = {}) => {
+export const addNode = async params => {
   const { name, group, nodeName } = params;
   await axiosInstance.put(`${url}/${name}/${nodeName}?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForNodeNonexistentInCluster,
+    checkFn: waitUtil.waitForNodeReady,
     paramRes: nodeName,
   });
   return responseUtil(res, worker);
 };
 
-export const removeNode = async (params = {}) => {
+export const removeNode = async params => {
   const { name, group, nodeName } = params;
   await axiosInstance.delete(`${url}/${name}/${nodeName}?group=${group}`);
   const res = await wait({

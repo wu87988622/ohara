@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as zookeeper from './body/zookeeperBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
@@ -24,14 +22,14 @@ import * as waitUtil from './utils/waitUtils';
 
 const url = URL.ZOOKEEPER_URL;
 
-export const create = async (params = {}) => {
+export const create = async params => {
   const requestBody = requestUtil(params, zookeeper);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, zookeeper);
 };
 
-export const start = async (params = {}) => {
-  const { name, group } = params.settings;
+export const start = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/start?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
@@ -49,8 +47,8 @@ export const update = async params => {
   return responseUtil(res, zookeeper);
 };
 
-export const stop = async (params = {}) => {
-  const { name, group } = params.settings;
+export const stop = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
@@ -59,8 +57,8 @@ export const stop = async (params = {}) => {
   return responseUtil(res, zookeeper);
 };
 
-export const remove = async (params = {}) => {
-  const { name, group } = params.settings;
+export const remove = async params => {
+  const { name, group } = params;
   await axiosInstance.delete(`${url}/${name}?group=${group}`);
   const res = await wait({
     url,
@@ -70,14 +68,13 @@ export const remove = async (params = {}) => {
   return responseUtil(res, zookeeper);
 };
 
-export const get = async (params = {}) => {
-  const { name, group } = params.settings;
+export const get = async params => {
+  const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, zookeeper);
 };
 
 export const getAll = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, zookeeper), '', []);
+  const res = await axiosInstance.get(url + URL.toQueryParameters(params));
+  return res ? responseUtil(res, zookeeper) : [];
 };

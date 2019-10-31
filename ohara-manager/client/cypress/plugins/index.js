@@ -33,10 +33,10 @@ const path = require('path');
 
 module.exports = (on, config) => {
   const configFile = process.env.CYPRESS_CONFIG_FILE;
-  const configForEnviroment = getConfigurationByFile(configFile);
+  const configForEnvironment = getConfigurationByFile(configFile);
 
   // we overwrite default config by cypress.{api|e2e}.json file
-  let newConfig = Object.assign({}, config, configForEnviroment);
+  let newConfig = Object.assign({}, config, configForEnvironment);
 
   // if we don't define baseUrl yet, use default: localhost:3000
   if (!newConfig.baseUrl) newConfig.baseUrl = 'http://localhost:3000';

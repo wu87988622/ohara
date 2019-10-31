@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
+import * as generate from '../../src/utils/generate';
 
 import * as nodeApi from '../../src/api/nodeApi';
 import * as fileApi from '../../src/api/fileApi';
-
-// Node API
-Cypress.Commands.add('fetchNodes', () => nodeApi.fetchNodes());
-Cypress.Commands.add('fetchNode', params => nodeApi.fetchNode(params));
-Cypress.Commands.add('createNode', params => nodeApi.createNode(params));
-Cypress.Commands.add('updateNode', params => nodeApi.updateNode(params));
-Cypress.Commands.add('deleteNode', params => nodeApi.deleteNode(params));
-
-// File API
-Cypress.Commands.add('fetchFiles', group => fileApi.fetchFiles(group));
-Cypress.Commands.add('fetchFile', params => fileApi.fetchFile(params));
-Cypress.Commands.add('uploadFile', params => fileApi.uploadFile(params));
-Cypress.Commands.add('updateFile', params => fileApi.updateFile(params));
-Cypress.Commands.add('deleteFile', params => fileApi.deleteFile(params));
+import * as zkApi from '../../src/api/zookeeperApi';
+import * as bkApi from '../../src/api/brokerApi';
+import * as wkApi from '../../src/api/workerApi';
 
 // Utility commands
-Cypress.Commands.add('createJar', (jarName, jarGroup) => {
-  cy.fixture(`plugin/${jarName}`, 'base64')
+Cypress.Commands.add('createJar', (fixturePath, jarName, jarGroup) => {
+  cy.fixture(`${fixturePath}/${jarName}`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
     .then(blob => {
       const type = 'application/java-archive';
@@ -50,28 +39,107 @@ Cypress.Commands.add('createJar', (jarName, jarGroup) => {
           name: jarName,
         },
       };
-      return cy.uploadFile(params);
+      return fileApi.create(params);
     });
 });
 
-Cypress.Commands.add('deleteAllServices', () => {
+export const createServices = async ({
+  withWorker = false,
+  withBroker = false,
+  withZookeeper = false,
+  withNode = false,
+} = {}) => {
+  let result = {};
+
+  if (withNode) {
+    const node = {
+      hostname: generate.serviceName({ prefix: 'node' }),
+      port: generate.port(),
+      user: generate.userName(),
+      password: generate.password(),
+    };
+    const nodeRes = await nodeApi.create(node);
+    result['node'] = nodeRes;
+
+    if (withZookeeper) {
+      const zookeeper = {
+        name: generate.serviceName({ prefix: 'zk' }),
+        group: generate.serviceName({ prefix: 'group' }),
+        nodeNames: [node.hostname],
+      };
+      await zkApi.create(zookeeper);
+      // zookeeper api will make sure the service is starting, we can skip the checking
+      const zkRes = await zkApi.start(zookeeper);
+      result['zookeeper'] = zkRes.settings;
+
+      if (withBroker) {
+        const broker = {
+          name: generate.serviceName({ prefix: 'bk' }),
+          group: generate.serviceName({ prefix: 'group' }),
+          nodeNames: [node.hostname],
+          zookeeperClusterKey: {
+            name: zookeeper.name,
+            group: zookeeper.group,
+          },
+        };
+        await bkApi.create(broker);
+        // broker api will make sure the service is starting, we can skip the checking
+        const bkRes = await bkApi.start(broker);
+        result['broker'] = bkRes.settings;
+
+        if (withWorker) {
+          const worker = {
+            name: generate.serviceName({ prefix: 'wk' }),
+            group: generate.serviceName({ prefix: 'group' }),
+            nodeNames: [node.hostname],
+            brokerClusterKey: {
+              name: broker.name,
+              group: broker.group,
+            },
+          };
+          await wkApi.create(worker);
+          // worker api will make sure the service is starting, we can skip the checking
+          const wkRes = await wkApi.start(worker);
+          result['worker'] = wkRes.settings;
+        }
+      }
+    }
+  }
+
+  return result;
+};
+
+export const deleteAllServices = async () => {
+  // delete all workers
+  const workers = await wkApi.getAll();
+  // we don't care the execute order of each individual worker was done or not.
+  // Using Promise.all() to make sure all workers were stopped & deleted.
+  await Promise.all(workers.map(wk => wkApi.stop(wk.settings)));
+  await Promise.all(workers.map(wk => wkApi.remove(wk.settings)));
+
+  // delete all brokers
+  const brokers = await bkApi.getAll();
+  // we don't care the execute order of each individual broker was done or not.
+  // Using Promise.all() to make sure all brokers were stopped & deleted.
+  await Promise.all(brokers.map(bk => bkApi.stop(bk.settings)));
+  await Promise.all(brokers.map(bk => bkApi.remove(bk.settings)));
+
+  // delete all zookeepers
+  const zookeepers = await zkApi.getAll();
+  // we don't care the execute order of each individual zookeeper was done or not.
+  // Using Promise.all() to make sure all zookeepers were stopped & deleted.
+  await Promise.all(zookeepers.map(zk => zkApi.stop(zk.settings)));
+  await Promise.all(zookeepers.map(zk => zkApi.remove(zk.settings)));
+
   // delete all nodes
-  cy.fetchNodes().then(response => {
-    const { result: nodes } = response.data;
-    if (!isEmpty(nodes)) {
-      nodes
-        // since there may have other nodes data exist (by configurator),
-        // we should remove the generate nodes by us only.
-        // TODO: remove this line after we handle the service part
-        .filter(node => node.hostname.startsWith('node'))
-        .forEach(node => cy.deleteNode(node));
-    }
-  });
+  const nodes = await nodeApi.getAll();
+  // we don't care the execute order of each individual node was done or not.
+  // Using Promise.all() to make sure all nodes were deleted.
+  await Promise.all(nodes.map(node => nodeApi.remove(node)));
+
   // delete all files
-  cy.fetchFiles().then(response => {
-    const { result: fileInfos } = response.data;
-    if (!isEmpty(fileInfos)) {
-      fileInfos.forEach(fileInfo => cy.deleteFile(fileInfo));
-    }
-  });
-});
+  const files = await fileApi.getAll();
+  // we don't care the execute order of each individual file was done or not.
+  // Using Promise.all() to make sure all files were deleted.
+  await Promise.all(files.map(file => fileApi.remove(file)));
+};
