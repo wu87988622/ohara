@@ -107,8 +107,7 @@ class TestLogRoute extends OharaTest with Matchers {
     * in unit test, the configurator is NOT on docker container. Hence, we can't get log...
     */
   @Test
-  def fetchLogFromConfigurator(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4Configurator())
+  def fetchLogFromConfigurator(): Unit = result(logApi.log4Configurator())
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

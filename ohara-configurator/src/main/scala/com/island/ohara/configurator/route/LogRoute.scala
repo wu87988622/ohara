@@ -53,13 +53,26 @@ object LogRoute {
   def apply(implicit collie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LOG_PREFIX_PATH) {
       path(CONFIGURATOR_PREFIX_PATH) {
-        complete(collie.configuratorContainerName().map(_.name).flatMap(collie.log).map {
-          case (containerName, log) =>
-            ClusterLog(
-              clusterKey = ObjectKey.of("N/A", containerName.name),
-              logs = Seq(NodeLog(hostname = containerName.nodeName, value = log))
-            )
-        })
+        complete(
+          collie
+            .configuratorContainerName()
+            .map(_.name)
+            .flatMap(collie.log)
+            .map {
+              case (containerName, log) =>
+                ClusterLog(
+                  clusterKey = ObjectKey.of("N/A", containerName.name),
+                  logs = Seq(NodeLog(hostname = containerName.nodeName, value = log))
+                )
+            }
+            .recover {
+              // the configurator may be not accessible to us so we convert the error to log.
+              case e: Throwable =>
+                ClusterLog(
+                  clusterKey = ObjectKey.of("N/A", "unknown"),
+                  logs = Seq(NodeLog(hostname = "unknown", value = e.getMessage))
+                )
+            })
       } ~ path(ZOOKEEPER_PREFIX_PATH / Segment) { clusterName =>
         parameter(GROUP_KEY ?) { groupOption =>
           val clusterKey =
