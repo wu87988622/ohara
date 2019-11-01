@@ -19,11 +19,13 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
+import * as info from './infoApi';
 
 const url = URL.WORKER_URL;
 
-export const create = async params => {
-  const requestBody = requestUtil(params, worker);
+export const create = async (params = {}, body) => {
+  body = body ? body : await info.getWorkerInfo();
+  const requestBody = requestUtil(params, worker, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, worker);
 };

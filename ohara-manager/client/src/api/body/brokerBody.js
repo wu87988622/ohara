@@ -14,41 +14,15 @@
  * limitations under the License.
  */
 
-import {
-  string,
-  number,
-  array,
-  object,
-  option,
-  generatePort,
-  generateName,
-} from '../utils/validation';
+import { number, array, object, string } from '../utils/validation';
+import { createBody, getCluster } from '../utils/definitionsUtils';
 
-export const request = () => {
-  const name = [string, generateName];
-  const group = [string];
-  const imageName = [string, option];
-  const clientPort = [number, generatePort];
-  const exporterPort = [number, generatePort];
-  const jmxPort = [number, generatePort];
-  const zookeeperClusterKey = {
-    name: [string],
-    group: [string],
-  };
-  const nodeNames = [array];
-  const tags = [object, option];
-
-  return {
-    name,
-    group,
-    imageName,
-    clientPort,
-    exporterPort,
-    jmxPort,
-    zookeeperClusterKey,
-    nodeNames,
-    tags,
-  };
+export const request = params => {
+  const definitions = getCluster(params);
+  const body = createBody(definitions);
+  //TODO : Temporary modification waiting for backend repair #3162
+  body['zookeeperClusterKey'] = { name: [string], group: [string] };
+  return body;
 };
 
 export const response = () => {
@@ -56,20 +30,7 @@ export const response = () => {
   const state = [string];
   const error = [string];
   const lastModified = [number];
-  const settings = {
-    name: [string],
-    group: [string],
-    zookeeperClusterKey: {
-      name: [string],
-      group: [string],
-    },
-    imageName: [string],
-    exporterPort: [number],
-    clientPort: [number],
-    jmxPort: [number],
-    nodeNames: [array],
-    tags: [object],
-  };
+  const settings = [object];
 
   return {
     aliveNodes,

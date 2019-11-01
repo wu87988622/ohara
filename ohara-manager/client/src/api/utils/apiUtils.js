@@ -46,7 +46,7 @@ const converterUtil = (params, api) => {
   return params;
 };
 
-const generateUtil = (params, api) => {
+const generateUtil = (params = {}, api) => {
   const requestBody = {};
   const requestKeys = Object.keys(api);
   const paramsKeys = Object.keys(params);
@@ -74,14 +74,14 @@ const generateUtil = (params, api) => {
   return requestBody;
 };
 
-const optionUtil = (params, api, requestBody = {}) => {
+const optionUtil = (params = {}, api, requestBody = {}, parentKey) => {
   const requestKeys = Object.keys(api);
   const paramsKeys = Object.keys(params);
   const requestBodyKeys = Object.keys(requestBody);
   requestKeys
     .map(rKey => {
       if (isObject(api[rKey])) {
-        optionUtil(params[rKey], api[rKey], requestBody[rKey]);
+        optionUtil(params[rKey], api[rKey], requestBody[rKey], rKey);
         return null;
       } else {
         return rKey;
@@ -94,12 +94,13 @@ const optionUtil = (params, api, requestBody = {}) => {
         !requestBodyKeys.includes(rKey) &&
         !api[rKey].includes(isOption)
       ) {
-        console.error(rKey + ' is not the option!');
+        const errorKey = parentKey ? `${parentKey}.${rKey}` : rKey;
+        console.error(errorKey + ' is not the option!');
       }
     });
 };
 
-const typeUtil = (params, api, requestBody) => {
+const typeUtil = (params, api, requestBody, parentKey) => {
   const requestKeys = Object.keys(api);
   const paramsKeys = Object.keys(params);
 
@@ -108,7 +109,7 @@ const typeUtil = (params, api, requestBody) => {
       .filter(pKey => rKey === pKey)
       .map(pKey => {
         if (isObject(api[rKey])) {
-          const obj = typeUtil(params[pKey], api[rKey], {});
+          const obj = typeUtil(params[pKey], api[rKey], {}, parentKey);
           requestBody[pKey] = Object.assign(obj, requestBody[pKey]);
           return null;
         } else {
@@ -120,7 +121,8 @@ const typeUtil = (params, api, requestBody) => {
         if (getType(api[rKey])(params[pKey])) {
           requestBody[rKey] = params[pKey];
         } else {
-          console.error(pKey + ' type is wrong!');
+          const errorKey = parentKey ? `${parentKey}.${rKey}` : rKey;
+          console.error(errorKey + ' type is wrong!');
         }
       }),
   );
@@ -138,12 +140,12 @@ const getNestObjectByString = (resKey, params) => {
   return obj;
 };
 
-export const requestUtil = (params, api) => {
+export const requestUtil = (params, api, definitionsBody) => {
   let requestBody = {};
   const converterParams = converterUtil(params, api);
-  requestBody = generateUtil(converterParams, api.request());
-  optionUtil(params, api.request(), requestBody);
-  requestBody = typeUtil(params, api.request(), requestBody);
+  requestBody = generateUtil(converterParams, api.request(definitionsBody));
+  optionUtil(params, api.request(definitionsBody), requestBody);
+  requestBody = typeUtil(params, api.request(definitionsBody), requestBody);
 
   return requestBody;
 };
@@ -213,17 +215,20 @@ export const handleConnectorValidationError = res => {
 };
 
 const regularObject = (objs, originKey, changeKey) => {
-  Object.keys(objs).forEach(key => {
-    if (isObject(objs[key])) {
-      const obj = regularObject(objs[key], originKey, changeKey);
-      objs[obj] = obj;
-    } else if (key.indexOf(originKey) !== -1) {
-      const newKey = key.split(originKey).join(changeKey);
-      objs[newKey] = objs[key];
-      delete objs[key];
-    }
+  const newObjs = isArray(objs) ? objs : [objs];
+  newObjs.forEach((newObj, i) => {
+    Object.keys(newObj).forEach(key => {
+      if (isObject(newObjs[i][key])) {
+        const obj = regularObject(newObjs[i][key], originKey, changeKey);
+        newObjs[i][key] = obj;
+      } else if (key.indexOf(originKey) !== -1) {
+        const newKey = key.split(originKey).join(changeKey);
+        newObjs[i][newKey] = newObjs[i][key];
+        delete newObjs[i][key];
+      }
+    });
   });
-  return objs;
+  return isArray(objs) ? newObjs : newObjs[0];
 };
 
 export const handleNodeValidationError = res => {

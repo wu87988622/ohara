@@ -25,6 +25,7 @@ export const service = {
   zookeeper: 'zookeeper',
   broker: 'broker',
   worker: 'worker',
+  streams: 'stream',
 };
 
 export const getConfiguratorInfo = async (params = {}) => {
@@ -51,6 +52,14 @@ export const getBrokerInfo = async (params = {}) => {
 export const getWorkerInfo = async (params = {}) => {
   const res = await axiosInstance.get(
     url + '/' + service.worker + URL.toQueryParameters(params),
+  );
+  return responseUtil(res, infoServiceBody);
+};
+
+export const getStreamsInfo = async (params = {}) => {
+  const { name, group } = params;
+  const res = await axiosInstance.get(
+    `${url}/${service.streams}/${name}?group=${group}`,
   );
   return responseUtil(res, infoServiceBody);
 };

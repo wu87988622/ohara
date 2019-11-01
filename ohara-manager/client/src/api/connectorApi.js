@@ -21,11 +21,15 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
+import * as workerApi from './workerApi';
 
 const url = URL.CONNECTOR_URL;
 
 export const create = async (params = {}) => {
-  const requestBody = requestUtil(params, connector);
+  const body = {};
+  body['className'] = params.className;
+  body['allConnectorDefinitions'] = await workerApi.getAll();
+  const requestBody = requestUtil(params, connector, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, connector);
 };

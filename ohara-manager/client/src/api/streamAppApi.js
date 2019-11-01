@@ -21,11 +21,13 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
+import * as info from './infoApi';
 
 const url = URL.STREAM_URL;
 
-export const create = async (params = {}) => {
-  const requestBody = requestUtil(params, streamApp);
+export const create = async (params = {}, file) => {
+  const body = await info.getStreamsInfo(file);
+  const requestBody = requestUtil(params, streamApp, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, streamApp);
 };

@@ -14,69 +14,19 @@
  * limitations under the License.
  */
 
-import {
-  string,
-  number,
-  array,
-  object,
-  option,
-  generatePort,
-  generateName,
-} from '../utils/validation';
+import { number, array } from '../utils/validation';
+import { createBody, getCluster } from '../utils/definitionsUtils';
 
-export const request = () => {
-  const name = [string, generateName];
-  const group = [string];
-  const imageName = [string, option];
-  const jmxPort = [number, generatePort];
-  const brokerClusterKey = {
-    name: [string],
-    group: [string],
-  };
-  const nodeNames = [array];
-  const tags = [object, option];
-  const jarKey = {
-    group: [string],
-    name: [string],
-  };
-  const from = [array];
-  const to = [array];
-
-  return {
-    name,
-    group,
-    imageName,
-    brokerClusterKey,
-    jarKey,
-    jmxPort,
-    from,
-    to,
-    nodeNames,
-    tags,
-  };
+export const request = parmas => {
+  const definitions = getCluster(parmas);
+  const body = createBody(definitions);
+  return body;
 };
 
 export const response = () => {
   const aliveNode = [array];
   const lastModified = [number];
-  const settings = {
-    name: [string],
-    group: [string],
-    brokerClusterKey: {
-      name: [string],
-      group: [string],
-    },
-    imageName: [string],
-    jmxPort: [number],
-    nodeNames: [array],
-    tags: [object],
-    from: [],
-    to: [],
-    jarKey: {
-      name: [],
-      group: [],
-    },
-  };
+  const settings = [];
   const metrics = {
     meters: [],
   };
