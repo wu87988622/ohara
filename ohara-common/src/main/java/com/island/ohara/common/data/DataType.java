@@ -32,7 +32,8 @@ public enum DataType {
   DOUBLE((short) 7),
   STRING((short) 8),
   OBJECT((short) 9),
-  ROW((short) 10);
+  ROW((short) 10),
+  CELL((short) 11);
 
   public final short order;
 
@@ -65,6 +66,7 @@ public enum DataType {
     else if (obj instanceof Float) return FLOAT;
     else if (obj instanceof Double) return DOUBLE;
     else if (obj instanceof String) return STRING;
+    else if (obj instanceof Cell) return CELL;
     else if (obj instanceof Row) return ROW;
     else if (obj instanceof Serializable) return OBJECT;
     else throw new UnsupportedOperationException(obj.getClass() + " is not supported");

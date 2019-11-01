@@ -81,9 +81,20 @@ public class TestSerializer extends OharaTest {
   }
 
   @Test
+  public void testCell() {
+    List<Cell<?>> data =
+        Arrays.asList(
+            Cell.of("abc", Cell.of("abc", "aaa")),
+            Cell.of("abc", "aaa"),
+            Cell.of("abc", Row.of(Cell.of("abc", "aaa"))));
+    data.forEach(v -> Assert.assertEquals(v, Serializer.CELL.from(Serializer.CELL.to(v))));
+  }
+
+  @Test
   public void testRow() {
     List<Row> data =
         Arrays.asList(
+            Row.of(Cell.of("abc", Cell.of("abc", "aaa"))),
             Row.of(Cell.of("abc", "aaa")),
             Row.of(Cell.of("abc", "aaa"), Cell.of("AA", "aaa")),
             Row.of(Collections.singletonList("tag"), Cell.of("abc", 123)),
