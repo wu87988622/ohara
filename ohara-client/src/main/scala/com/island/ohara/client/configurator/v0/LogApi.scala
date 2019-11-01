@@ -47,7 +47,7 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](_url(WorkerApi.WORKER_PREFIX_PATH, clusterKey))
 
     def log4StreamCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.STREAMS_PREFIX_PATH, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.STREAM_PREFIX_PATH, clusterKey))
 
     def log4Configurator()(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")

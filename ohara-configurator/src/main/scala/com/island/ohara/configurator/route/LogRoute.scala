@@ -91,7 +91,7 @@ object LogRoute {
             ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)
           route(clusterKey, collie.workerCollie.logs(clusterKey))
         }
-      } ~ path(STREAMS_PREFIX_PATH / Segment) { clusterName =>
+      } ~ path(STREAM_PREFIX_PATH / Segment) { clusterName =>
         parameter(GROUP_KEY ?) { groupOption =>
           val clusterKey =
             ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)

@@ -32,14 +32,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object StreamApi {
 
+  val STREAM_PREFIX_PATH: String = "streams"
+
   /**
-    * container name is controlled by streamRoute, the service name here use five words was ok.
-    * TODO: "stream" is derpecated now. see https://github.com/oharastream/ohara/issues/2115
+    * container name is controlled by streamRoute, the service name here use six words was ok.
     */
-  val STREAM_SERVICE_NAME: String = "stream"
-  // TODO: TODO: "stream" is derpecated now. see https://github.com/oharastream/ohara/issues/2115
-  val STREAM_PREFIX_PATH: String = STREAM_SERVICE_NAME
-  val STREAMS_PREFIX_PATH: String = "streams"
+  val STREAM_SERVICE_NAME: String = STREAM_PREFIX_PATH
 
   /**
     * StreamApp Docker Image name

@@ -99,7 +99,7 @@ Manage clusters
    rest-workers
    rest-validation
    rest-containers
-   rest-stream
+   rest-streams
    rest-files
    rest-logs
    rest-query

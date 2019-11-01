@@ -14,7 +14,7 @@
 .. limitations under the License.
 ..
 
-.. _rest-stream:
+.. _rest-streams:
 
 StreamApp
 =========
@@ -86,14 +86,14 @@ streamApp stored data
 
 #. lastModified (**long**) — last modified this jar time
 
-.. _rest-stream-create-properties:
+.. _rest-streams-create-properties:
 
 create properties of specific streamApp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create the properties of a streamApp.
 
-*POST /v0/stream*
+*POST /v0/streams*
 
 Example Request
   #. name (**string**) — new streamApp name. This is the object unique name ; default is random string.
@@ -161,12 +161,12 @@ Example Response
      The streamApp, which is just created, does not have any metrics.
 
 
-.. _rest-stream-get-information:
+.. _rest-streams-get-information:
 
 get information from a specific streamApp cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*GET /v0/stream/${name}?group=$group*
+*GET /v0/streams/${name}?group=$group*
 
 .. note::
    We will use the default value as the query parameter "?group=" if you don't specify it.
@@ -205,7 +205,7 @@ Example Response
 list information of streamApp cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*GET /v0/stream*
+*GET /v0/streams*
 
 the accepted query keys are listed below.
 #. group
@@ -249,18 +249,18 @@ Example Response
        }
      ]
 
-.. _rest-stream-update-information:
+.. _rest-streams-update-information:
 
 update properties of specific streamApp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Update the properties of a non-started streamApp.
 
-*PUT /v0/stream/${name}?group=$group*
+*PUT /v0/streams/${name}?group=$group*
 
 .. note::
    If the required streamApp (group, name) was not exists, we will try to use this request as
-   :ref:`create streamApp <rest-stream-create-properties>`
+   :ref:`create streamApp <rest-streams-create-properties>`
 
 #. imageName (**option(string)**) — image name of streamApp used to.
 #. nodeNames (**option(array(string))**) — node name list of streamApp used to.
@@ -342,7 +342,7 @@ delete properties of specific streamApp
 Delete the properties of a non-started streamApp. This api only remove
 the streamApp component which is stored in pipeline.
 
-*DELETE /v0/stream/${name}?group=$group*
+*DELETE /v0/streams/${name}?group=$group*
 
 .. note::
    We will use the default value as the query parameter "?group=" if you don't specify it.
@@ -361,7 +361,7 @@ the streamApp component which is stored in pipeline.
 start a StreamApp
 ~~~~~~~~~~~~~~~~~
 
-*PUT /v0/stream/${name}/start?group=$group*
+*PUT /v0/streams/${name}/start?group=$group*
 
 .. note::
    We will use the default value as the query parameter "?group=" if you don't specify it.
@@ -372,7 +372,7 @@ Example Response
     202 Accepted
 
   .. note::
-     You should use :ref:`get streamapp <rest-stream-get-information>` to fetch up-to-date status
+     You should use :ref:`get streamapp <rest-streams-get-information>` to fetch up-to-date status
 
 .. _rest-stop-streamapp:
 
@@ -382,7 +382,7 @@ stop a StreamApp
 This action will graceful stop and remove all docker containers belong
 to this streamApp. Note: successful stop streamApp will have no status.
 
-*PUT /v0/stream/${name}/stop?group=$group[&force=true]*
+*PUT /v0/streams/${name}/stop?group=$group[&force=true]*
 
 Query Parameters
   #. force (**boolean**) — true if you don’t want to wait the graceful shutdown
@@ -398,14 +398,14 @@ Example Response
 
   .. note::
 
-     You should use :ref:`get streamapp <rest-stream-get-information>` to fetch up-to-date status
+     You should use :ref:`get streamapp <rest-streams-get-information>` to fetch up-to-date status
 
 get topology tree graph from specific streamApp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [TODO] This is not implemented yet !
 
-*GET /v0/stream/view/${name}*
+*GET /v0/streams/view/${name}*
 
 Example Response
   #. jarInfo (**string**) — the upload jar information
