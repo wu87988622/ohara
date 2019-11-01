@@ -23,16 +23,16 @@ import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.{Consumer, Header}
 import com.island.ohara.kafka.Consumer.Record
-import spray.json.{DeserializationException, JsBoolean, JsNumber, JsObject, JsString}
+import com.island.ohara.kafka.{Consumer, Header}
+import spray.json.{DeserializationException, JsObject}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,61 +41,40 @@ import scala.concurrent.{ExecutionContext, Future}
   * used to handle the "QUERY" APIs
   */
 private[configurator] object QueryRoute {
+
+  /**
+    * we reuse the great conversion of JIO connectors
+    * @param row row
+    * @return json representation
+    */
+  def toJson(row: Row): JsObject = com.island.ohara.client.configurator.v0.toJson(row)
+
   private[this] def topicData(records: Seq[Record[Array[Byte], Array[Byte]]]): TopicData =
-    TopicData(
-      records
-        .filter(_.key().isPresent)
-        .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
-        .map {
-          case (partition, offset, bytes, headers) =>
-            try Message(
-              partition = partition,
-              offset = offset,
-              sourceClass = try headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value()))
-              catch {
-                case _: Throwable => None
-              },
-              sourceKey = try headers
-                .find(_.key() == Header.SOURCE_KEY_KEY)
-                .map(h => new String(h.value()))
-                .map(ObjectKey.toObjectKey)
-              catch {
-                case _: Throwable => None
-              },
-              value = Some(
-                JsObject(
-                  Serializer.ROW
-                    .from(bytes)
-                    .cells()
-                    .asScala
-                    .map { cell =>
-                      cell.name() -> (cell.value() match {
-                        case _: Array[Byte]          => JsString("bytes")
-                        case b: Boolean              => JsBoolean(b)
-                        case s: String               => JsString(s)
-                        case n: Short                => JsNumber(n)
-                        case n: Int                  => JsNumber(n)
-                        case n: Long                 => JsNumber(n)
-                        case n: Float                => JsNumber(n)
-                        case n: Double               => JsNumber(n)
-                        case n: java.math.BigDecimal => JsNumber(n)
-                        case n: BigDecimal           => JsNumber(n)
-                        case _                       => JsString(cell.value().toString)
-                      })
-                    }
-                    .toMap)),
-              error = None
-            )
-            catch {
-              case e: Throwable =>
-                Message(partition = partition,
-                        offset = offset,
-                        sourceClass = None,
-                        sourceKey = None,
-                        value = None,
-                        error = Some(e.getMessage))
-            }
-        })
+    TopicData(records
+      .filter(_.key().isPresent)
+      .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
+      .map {
+        case (partition, offset, bytes, headers) =>
+          try Message(
+            partition = partition,
+            offset = offset,
+            // only Ohara source connectors have this header
+            sourceClass = headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value())),
+            sourceKey =
+              headers.find(_.key() == Header.SOURCE_KEY_KEY).map(h => new String(h.value())).map(ObjectKey.toObjectKey),
+            value = Some(toJson(Serializer.ROW.from(bytes))),
+            error = None
+          )
+          catch {
+            case e: Throwable =>
+              Message(partition = partition,
+                      offset = offset,
+                      sourceClass = None,
+                      sourceKey = None,
+                      value = None,
+                      error = Some(e.getMessage))
+          }
+      })
 
   def apply(implicit brokerCollie: BrokerCollie,
             adminCleaner: AdminCleaner,

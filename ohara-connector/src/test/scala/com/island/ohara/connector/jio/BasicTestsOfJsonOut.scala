@@ -16,8 +16,6 @@
 
 package com.island.ohara.connector.jio
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -33,7 +31,7 @@ import com.island.ohara.kafka.Producer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -101,12 +99,14 @@ trait BasicTestsOfJsonOut extends Matchers {
     val data = Seq(
       JioData(
         Map(
-          "a" -> JsString(CommonUtils.randomString())
+          "a" -> JsString(CommonUtils.randomString()),
+          "tags" -> JsArray(JsString(CommonUtils.randomString()))
         )),
       JioData(
         Map(
           "c" -> JsString(CommonUtils.randomString()),
-          "d" -> JsNumber(100)
+          "d" -> JsNumber(100),
+          "tags" -> JsArray(JsString(CommonUtils.randomString()))
         ))
     )
     pushData(data, topicKey)
@@ -116,22 +116,19 @@ trait BasicTestsOfJsonOut extends Matchers {
     receivedData.size shouldBe data.size
     data.foreach { d =>
       // the order of sending data is random so we use the size to fetch correct data to compare
-      d shouldBe receivedData.find(_.raw.size == d.raw.size).get
+      d shouldBe receivedData.find(_.fields.size == d.fields.size).get
     }
   }
 
   @Test
-  def testUnsupportedData(): Unit = {
+  def testNestedRowData(): Unit = {
     val (connectorHostname, topicKey) = setupConnector()
-    // array is not supported
-    val unsupportedData = Row.of(Cell.of("abc", Row.of(Cell.of("a", "b"))))
-    pushRawData(Seq(unsupportedData), topicKey)
-    // the unsupported data is filter out so we can't fetch any data from JsonOut
-    pollData(connectorHostname, topicKey) shouldBe Seq.empty
-    TimeUnit.SECONDS.sleep(5)
-    // sleep to make sure there is no data :)
-    pollData(connectorHostname, topicKey) shouldBe Seq.empty
+    val data = Row.of(Cell.of("abc", Row.of(Cell.of("a", "b"))))
+    pushRawData(Seq(data), topicKey)
+    CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
+    pollData(connectorHostname, topicKey).head.fields("abc").asJsObject.fields("a") shouldBe JsString("b")
   }
+
   @Test
   def testBufferSize(): Unit = {
     val bufferSize = 3

@@ -16,10 +16,12 @@
 
 package com.island.ohara.client.configurator
 
+import com.island.ohara.common.data.{Cell, Row}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsValue, RootJsonFormat, _}
+import scala.collection.JavaConverters._
 package object v0 {
 
   /**
@@ -278,4 +280,76 @@ package object v0 {
       else false
     case _ => false
   }
+
+  private[this] def toJson(value: Any): JsValue = value match {
+    //--------[primitive type]--------//
+    case b: Boolean     => JsBoolean(b)
+    case s: String      => JsString(s)
+    case i: Short       => JsNumber(i)
+    case i: Int         => JsNumber(i)
+    case i: Long        => JsNumber(i)
+    case i: Float       => JsNumber(i)
+    case i: Double      => JsNumber(i)
+    case _: Array[Byte] => JsString("binary data")
+    case b: Byte        => JsNumber(b)
+    //--------[for scala]--------//
+    case i: BigDecimal  => JsNumber(i)
+    case s: Iterable[_] => JsArray(s.map(toJson).toVector)
+    //--------[ohara data]--------//
+    case c: Cell[_] => JsObject(c.name() -> toJson(c.value()))
+    case r: Row     => toJson(r)
+    //--------[for java]--------//
+    case i: java.math.BigDecimal  => JsNumber(i)
+    case s: java.lang.Iterable[_] => JsArray(s.asScala.map(toJson).toVector)
+    //--------[other]--------//
+    case _ => throw new IllegalArgumentException(s"${value.getClass.getName} is unsupported!!!")
+  }
+
+  /**
+    * convert the row to json representation.
+    * This is a common conversion in Ohara since it is the bridge between http and data in topic.
+    * @param row row
+    * @return json representation
+    */
+  def toJson(row: Row): JsObject = JsObject(
+    row.cells().asScala.map(cell => cell.name() -> toJson(cell.value())).toMap + (TAGS_KEY -> JsArray(
+      row.tags().asScala.map(JsString(_)).toVector))
+  )
+
+  private[this] def toValue(value: JsValue): Any = value match {
+    case JsNull       => throw new IllegalArgumentException("null should be eliminated")
+    case JsBoolean(b) => b
+    case JsNumber(i)  => i
+    case JsString(s)  => s
+    case JsArray(es) =>
+      es.filter {
+          case JsNull => false
+          case _      => true
+        }
+        .map(toValue)
+        .toList
+    case obj: JsObject => toRow(obj)
+  }
+
+  /**
+    * convert the json representation to row.
+    * This is a common conversion in Ohara since it is the bridge between http and data in topic.
+    * @param obj json represention
+    * @return row
+    */
+  def toRow(obj: JsObject): Row = Row.of(
+    noJsNull(obj.fields)
+      .get(TAGS_KEY)
+      .map {
+        case s: JsArray => s
+        case _          => throw DeserializationException(s"$TAGS_KEY must be array type", fieldNames = List(TAGS_KEY))
+      }
+      .map(_.elements.map(_.convertTo[String]))
+      .getOrElse(Seq.empty)
+      .asJava,
+    noJsNull(obj.fields.filter(_._1 != TAGS_KEY)).map {
+      case (name, value) =>
+        Cell.of(name, toValue(value))
+    }.toSeq: _*
+  )
 }

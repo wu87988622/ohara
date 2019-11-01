@@ -21,7 +21,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray, JsString}
+
 import scala.collection.JavaConverters._
 class TestJioData extends OharaTest with Matchers {
 
@@ -37,6 +37,9 @@ class TestJioData extends OharaTest with Matchers {
       Cell.of(CommonUtils.randomString(5), 100.asInstanceOf[Double])
     )
     val copy = JioData(row).row
+    copy.cells().asScala.foreach { cell =>
+      println(s"[CHIA] cell:${cell.name()}")
+    }
     copy.size shouldBe row.size()
     row.cells.asScala.foreach { cell =>
       copy.cell(cell.name()).value() match {
@@ -48,15 +51,4 @@ class TestJioData extends OharaTest with Matchers {
       }
     }
   }
-
-  @Test
-  def testUnsupportedTypesInRow(): Unit =
-    an[IllegalArgumentException] should be thrownBy JioData(Row.of(Cell.of(CommonUtils.randomString(5), Map.empty)))
-
-  @Test
-  def testUnsupportedTypesInJson(): Unit =
-    an[DeserializationException] should be thrownBy JioData(
-      Map(
-        "a" -> JsArray(Vector(JsString("b")))
-      ))
 }

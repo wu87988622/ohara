@@ -109,12 +109,14 @@ trait BasicTestsOfJsonIn extends Matchers {
     val data = Seq(
       JioData(
         Map(
-          "a" -> JsString(CommonUtils.randomString())
+          "a" -> JsString(CommonUtils.randomString()),
+          "tags" -> JsArray(JsString(CommonUtils.randomString()))
         )),
       JioData(
         Map(
           "c" -> JsString(CommonUtils.randomString()),
-          "d" -> JsNumber(100)
+          "d" -> JsNumber(100),
+          "tags" -> JsArray(JsString(CommonUtils.randomString()))
         ))
     )
     pushData(connectorHostname, data).foreach(_.isSuccess() shouldBe true)
@@ -122,16 +124,16 @@ trait BasicTestsOfJsonIn extends Matchers {
     receivedData.size shouldBe data.size
     data.foreach { d =>
       // the order of sending data is random so we use the size to fetch correct data to compare
-      d shouldBe receivedData.find(_.raw.size == d.raw.size).get
+      d shouldBe receivedData.find(_.fields.size == d.fields.size).get
     }
   }
 
   @Test
-  def testUnsupportedData(): Unit = {
+  def testArrayData(): Unit = {
     val (connectorHostname, _) = setupConnector()
     // array is not supported
-    val unsupportedData = JsObject("a" -> JsArray(Vector(JsString(CommonUtils.randomString()))))
-    pushRawData(connectorHostname, Seq(unsupportedData)).foreach(_.isSuccess() shouldBe false)
+    val data = JsObject("a" -> JsArray(Vector(JsString(CommonUtils.randomString()))))
+    pushRawData(connectorHostname, Seq(data)).foreach(_.isSuccess() shouldBe true)
   }
 
   @Test

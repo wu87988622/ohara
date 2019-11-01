@@ -18,7 +18,9 @@ package com.island.ohara.connector
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.SettingDef
+import spray.json.JsObject
 
 import scala.concurrent.duration._
 package object jio {
@@ -88,4 +90,9 @@ package object jio {
     BINDING_PORT_DEFINITION,
     BINDING_PATH_DEFINITION
   )
+
+  def toJson(row: Row): JsObject = com.island.ohara.client.configurator.v0.toJson(row)
+
+  def toRow(obj: JsObject): Row = com.island.ohara.client.configurator.v0.toRow(obj)
+
 }
