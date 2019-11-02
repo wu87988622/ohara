@@ -34,6 +34,7 @@ import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
 
 class TestJDBCSourceTask extends OharaTest with Matchers with MockitoSugar {
   private[this] val db = Database.local()
@@ -86,6 +87,8 @@ class TestJDBCSourceTask extends OharaTest with Matchers with MockitoSugar {
     when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
     when(taskSetting.intOption(JDBC_FETCHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(2000)))
     when(taskSetting.intOption(JDBC_FLUSHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(2000)))
+    when(taskSetting.durationOption(JDBC_FREQUENCE_TIME))
+      .thenReturn(java.util.Optional.of(java.time.Duration.ofMillis(0)))
 
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
@@ -210,7 +213,8 @@ class TestJDBCSourceTask extends OharaTest with Matchers with MockitoSugar {
 
     when(taskSetting.columns).thenReturn(columns.asJava)
     when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
-
+    when(taskSetting.durationOption(JDBC_FREQUENCE_TIME))
+      .thenReturn(java.util.Optional.of(java.time.Duration.ofMillis(0)))
     jdbcSourceTask._start(taskSetting)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
@@ -233,6 +237,31 @@ class TestJDBCSourceTask extends OharaTest with Matchers with MockitoSugar {
     )
     val timestamp: String = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
     timestamp shouldBe "2018-09-21 14:21:40.0"
+  }
+
+  @Test
+  def testIsRunningQuery(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val frequenceTime = Duration("5 second")
+    // Test first call _poll function
+    var currentTime: Long = System.currentTimeMillis()
+    var lastTime: Long = -1
+    jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe true
+
+    // Test second call _poll function
+    lastTime = currentTime
+    currentTime = System.currentTimeMillis()
+    jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe false
+
+    // Test third call _poll function
+    Thread.sleep(6000L)
+    lastTime = currentTime
+    currentTime = System.currentTimeMillis()
+    jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe true
+
+    lastTime = currentTime
+    currentTime = System.currentTimeMillis()
+    jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe false
   }
 
   @After

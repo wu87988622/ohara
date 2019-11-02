@@ -16,13 +16,15 @@
 
 package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
+
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{Releasable, VersionUtils}
+import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
 
 class JDBCSourceTask extends RowSourceTask {
 
@@ -33,6 +35,7 @@ class JDBCSourceTask extends RowSourceTask {
   private[this] var topics: Seq[String] = _
   private[this] var inMemoryOffsets: Offsets = _
   private[this] var topicOffsets: Offsets = _
+  private[this] var lastPoll: Long = -1
 
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup from the task.
@@ -58,24 +61,26 @@ class JDBCSourceTask extends RowSourceTask {
     * @return a array from RowSourceRecord
     */
   override protected[source] def _poll(): java.util.List[RowSourceRecord] = try {
-    val tableName: String = jdbcSourceConnectorConfig.dbTableName
-    val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
-    val flushDataSize: Int = jdbcSourceConnectorConfig.jdbcFlushDataSize
-    var inMemoryOffset = inMemoryOffsets.readOffset()
-    var topicOffset = topicOffsets.readOffset()
-    val resultSet: QueryResultIterator =
-      dbTableDataProvider
-        .executeQuery(tableName, timestampColumnName, Timestamp.valueOf(parseOffsetInfo(inMemoryOffset).timestamp))
+    val current = CommonUtils.current()
+    val frequenceTime: Duration = jdbcSourceConnectorConfig.jdbcFrequenceTime
 
-    var recoveryQueryRecordCount = 0
-    recoveryQueryRecordCount = parseOffsetInfo(topicOffset).queryRecordCount
+    if (isRunningQuery(current, lastPoll, frequenceTime)) {
+      val tableName: String = jdbcSourceConnectorConfig.dbTableName
+      val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
+      val flushDataSize: Int = jdbcSourceConnectorConfig.jdbcFlushDataSize
+      var inMemoryOffset = inMemoryOffsets.readOffset()
+      var topicOffset = topicOffsets.readOffset()
+      val resultSet: QueryResultIterator =
+        dbTableDataProvider
+          .executeQuery(tableName, timestampColumnName, Timestamp.valueOf(parseOffsetInfo(inMemoryOffset).timestamp))
 
-    // Running empty loop for recovery
-    resultSet.slice(0, recoveryQueryRecordCount).foreach(x => x.seq)
+      var recoveryQueryRecordCount = parseOffsetInfo(topicOffset).queryRecordCount
 
-    val rowSourceRecords: Iterator[RowSourceRecord] = resultSet
-      .slice(0, flushDataSize)
-      .flatMap(columns => {
+      // Running empty loop for recovery
+      resultSet.slice(0, recoveryQueryRecordCount).foreach(x => x.seq)
+
+      lastPoll = current
+      Option(resultSet.slice(0, flushDataSize).flatMap { columns =>
         val newSchema =
           if (schema.isEmpty)
             columns.map(c => Column.builder().name(c.columnName).dataType(DataType.OBJECT).order(0).build())
@@ -106,14 +111,19 @@ class JDBCSourceTask extends RowSourceTask {
             .row(row(newSchema, columns))
             .topicName(_)
             .build())
-      })
-
-    val result = if (rowSourceRecords.isEmpty) {
-      inMemoryOffsets.updateOffset(inMemoryOffset)
-      dbTableDataProvider.releaseResultSet(true)
-      Seq.empty
-    } else rowSourceRecords
-    result.toList.asJava
+      }).map { rowSourceRecords =>
+          if (rowSourceRecords.isEmpty) {
+            inMemoryOffsets.updateOffset(inMemoryOffset)
+            dbTableDataProvider.releaseResultSet(true)
+            Seq.empty
+          } else rowSourceRecords
+        }
+        .get
+        .toList
+        .asJava
+    } else {
+      Seq.empty.asJava
+    }
   } catch {
     case e: Throwable =>
       logger.error(e.getMessage, e)
@@ -172,6 +182,9 @@ class JDBCSourceTask extends RowSourceTask {
       .map(_.value.asInstanceOf[Timestamp].toString)
       .getOrElse(
         throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table."))
+
+  private[source] def isRunningQuery(currentTime: Long, lastPoll: Long, frequenceTime: Duration): Boolean =
+    (currentTime - lastPoll) > frequenceTime.toMillis
 
   /**
     * Offset format is ${TimestampOffset},${QueryRecordCount}

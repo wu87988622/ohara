@@ -24,12 +24,14 @@ import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.island.ohara.connector.jdbc.datatype.{RDBDataTypeConverter, RDBDataTypeConverterFactory}
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
+import com.typesafe.scalalogging.Logger
 
 /**
   * Connection to database and query data
   *
   */
 class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) extends ReleaseOnce {
+  private[this] lazy val logger = Logger(getClass.getName)
 
   private[this] val client: DatabaseClient = DatabaseClient.builder
     .url(jdbcSourceConnectorConfig.dbURL)
@@ -43,7 +45,11 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
 
   private[this] var resultSet: ResultSet = _
 
-  def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
+  private[this] val rdbColumnInfo = columns(jdbcSourceConnectorConfig.dbTableName)
+
+  private[source] def executeQuery(tableName: String,
+                                   timeStampColumnName: String,
+                                   tsOffset: Timestamp): QueryResultIterator = {
     if (queryFlag) {
       val sql =
         s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? AND $timeStampColumnName < ? ORDER BY $timeStampColumnName"
@@ -58,14 +64,16 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
       preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)
       preparedStatement.setTimestamp(2, currentTimestamp, DateTimeUtils.CALENDAR)
 
+      logger.debug(s"Run executeQuery function. current time is ${currentTimestamp}")
       resultSet = preparedStatement.executeQuery()
       queryFlag = false
     }
     val rdbDataTypeConverter: RDBDataTypeConverter = RDBDataTypeConverterFactory.dataTypeConverter(dbProduct)
-    new QueryResultIterator(rdbDataTypeConverter, resultSet, columns(tableName))
+    new QueryResultIterator(rdbDataTypeConverter, resultSet, rdbColumnInfo)
   }
 
-  def releaseResultSet(queryFlag: Boolean): Unit = {
+  private[source] def releaseResultSet(queryFlag: Boolean): Unit = {
+    logger.debug("close ResultSet ........")
     Releasable.close(resultSet.getStatement())
     Releasable.close(resultSet)
     resultSet = null
@@ -76,15 +84,15 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
     this.queryFlag = queryFlag
   }
 
-  def columns(tableName: String): Seq[RdbColumn] = {
+  private[source] def columns(tableName: String): Seq[RdbColumn] = {
     val rdbTables: Seq[RdbTable] = client.tableQuery.tableName(tableName).execute()
     rdbTables.head.columns
   }
 
-  def isTableExists(tableName: String): Boolean = client.tableQuery.tableName(tableName).execute().nonEmpty
+  private[source] def isTableExists(tableName: String): Boolean =
+    client.tableQuery.tableName(tableName).execute().nonEmpty
 
-  def dbCurrentTime(cal: Calendar): Timestamp = {
-
+  private[source] def dbCurrentTime(cal: Calendar): Timestamp = {
     val query = dbProduct.toLowerCase match {
       case ORACLE_DB_NAME => "SELECT CURRENT_TIMESTAMP FROM dual"
       case _              => "SELECT CURRENT_TIMESTAMP;"
