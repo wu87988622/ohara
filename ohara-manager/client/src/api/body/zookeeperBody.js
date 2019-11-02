@@ -14,36 +14,13 @@
  * limitations under the License.
  */
 
-import {
-  string,
-  number,
-  array,
-  object,
-  option,
-  generatePort,
-  generateName,
-} from '../utils/validation';
+import { string, number, array, object } from '../utils/validation';
+import { createBody, getCluster } from '../utils/definitionsUtils';
 
-export const request = () => {
-  const name = [string, generateName];
-  const group = [string];
-  const imageName = [string, option];
-  const clientPort = [number, generatePort];
-  const electionPort = [number, generatePort];
-  const peerPort = [number, generatePort];
-  const nodeNames = [array];
-  const tags = [object, option];
-
-  return {
-    name,
-    group,
-    imageName,
-    clientPort,
-    electionPort,
-    peerPort,
-    nodeNames,
-    tags,
-  };
+export const request = params => {
+  const definitions = getCluster(params);
+  const body = createBody(definitions);
+  return body;
 };
 
 export const response = () => {
@@ -51,16 +28,7 @@ export const response = () => {
   const state = [string];
   const error = [string];
   const lastModified = [number];
-  const settings = {
-    name: [string],
-    group: [string],
-    imageName: [string],
-    clientPort: [number],
-    peerPort: [number],
-    electionPort: [number],
-    nodeNames: [array],
-    tags: [object],
-  };
+  const settings = [object];
 
   return { aliveNodes, state, error, lastModified, settings };
 };

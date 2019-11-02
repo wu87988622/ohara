@@ -14,49 +14,18 @@
  * limitations under the License.
  */
 
-import {
-  string,
-  number,
-  defaultValue,
-  option,
-  object,
-} from '../utils/validation';
+import { createBody, getTopic } from '../utils/definitionsUtils';
 
-export const request = () => {
-  const name = [string];
-  const group = [string];
-  const brokerClusterKey = {
-    name: [string],
-    group: [string],
-  };
-  const numberOfReplications = [number, defaultValue];
-  const numberOfPartitions = [number, defaultValue];
-  const tags = [object, option];
-
-  return {
-    name,
-    group,
-    brokerClusterKey,
-    numberOfReplications,
-    numberOfPartitions,
-    tags,
-  };
+export const request = params => {
+  const definitions = getTopic(params);
+  const body = createBody(definitions);
+  return body;
 };
 
 export const response = () => {
   const lastModified = [];
   const metrics = [];
-  const settings = {
-    group: [],
-    name: [],
-    brokerClusterKey: {
-      group: [],
-      name: [],
-    },
-    numberOfReplications: [],
-    numberOfPartitions: [],
-    tags: [],
-  };
+  const settings = [];
 
   return { lastModified, metrics, settings };
 };

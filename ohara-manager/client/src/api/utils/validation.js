@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-import { isString, isNumber, isArray, isObject } from 'lodash';
+import {
+  isString,
+  isNumber,
+  isArray,
+  isObject,
+  isBoolean,
+  isFunction,
+} from 'lodash';
 import * as generate from './generate';
 
 export const string = value => isString(value);
@@ -26,6 +33,8 @@ export const array = value => isArray(value);
 export const object = value => {
   return isObject(value) && !array(value);
 };
+
+export const boolean = value => isBoolean(value);
 
 export const generateName = (params, length = 5) => {
   const type = getType(params);
@@ -75,19 +84,32 @@ export const defaultValue = params => {
   }
 };
 
+export const generateValueWithDefaultValue = (value, type) => {
+  return get => {
+    //TODO : Temporary modification waiting for backend repair #3162
+    return type === number && string(value) ? Number(value) : value;
+  };
+};
+
 export const getType = params => {
   if (object(params)) {
     params = [];
   }
   const type = params.filter(param =>
-    [string, number, array, object].includes(param),
+    [string, number, array, object, boolean].includes(param),
   )[0];
   if (type) return type;
   return object;
 };
 
-export const getGenerate = params =>
-  params.filter(param =>
+export const getGenerate = params => {
+  const defaultGenerate = params.filter(param =>
     [generateName, generatePort, defaultValue].includes(param),
   )[0];
+
+  if (defaultGenerate) return defaultGenerate;
+  return params
+    .filter(param => isFunction(param))
+    .filter(param => param.name === generateValueWithDefaultValue().name)[0];
+};
 export const option = 'option';

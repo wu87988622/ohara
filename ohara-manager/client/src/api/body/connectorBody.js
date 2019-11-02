@@ -14,53 +14,18 @@
  * limitations under the License.
  */
 
-import {
-  string,
-  number,
-  array,
-  object,
-  option,
-  generateName,
-} from '../utils/validation';
+import { createBody, getConnect } from '../utils/definitionsUtils';
 
-export const request = () => {
-  const name = [string, generateName];
-  const group = [string];
-  const topicKeys = [array];
-  const columns = [array];
-  const numberOfTasks = [number];
-  const workerClusterKey = {
-    group: [string],
-    name: [string],
-  };
-  const tags = [object, option];
-
-  return {
-    name,
-    group,
-    topicKeys,
-    columns,
-    numberOfTasks,
-    workerClusterKey,
-    tags,
-  };
+export const request = params => {
+  const definitions = getConnect(params);
+  const body = createBody(definitions);
+  return body;
 };
 
 export const response = () => {
   const lastModified = [];
   const metrics = [];
-
-  const settings = {
-    topicKeys: [],
-    name: [],
-    tags: [],
-    workerClusterKey: {
-      group: [],
-      name: [],
-    },
-    columns: [],
-    group: [],
-  };
+  const settings = [];
 
   return { lastModified, metrics, settings };
 };
