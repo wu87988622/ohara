@@ -16,18 +16,8 @@
 
 package com.island.ohara.shabondi
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.Route
-import com.island.ohara.shabondi.Model.{HttpSink, HttpSource, _}
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.scalatest.Suite
+import org.scalatest.concurrent.ScalaFutures
 
-private class WebServer(private val serverType: ServerType) extends AbstractWebServer with SourceRoute with SinkRoute {
-  private val _system = ActorSystem("shabondi")
-
-  override implicit def actorSystem: ActorSystem = _system
-
-  override protected def routes: Route = serverType match {
-    case HttpSource => sourceRoute
-    case HttpSink   => sinkRoute
-  }
-
-}
+object ShabondiRouteTest extends Suite with ScalaFutures with ScalatestRouteTest

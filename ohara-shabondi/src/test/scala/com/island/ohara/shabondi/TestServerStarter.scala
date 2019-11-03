@@ -16,37 +16,26 @@
 
 package com.island.ohara.shabondi
 
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.shabondi.Model.{CmdArgs, HttpSink, HttpSource}
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestWebServer extends OharaTest with Matchers {
+import scala.util.{Failure, Success}
 
-  import HttpMethods._
-  import ShabondiRouteTest._
-  import com.island.ohara.shabondi.Model._
+class TestServerStarter extends OharaTest with Matchers {
 
   @Test
-  def testSourceRoute(): Unit = {
-    val webServer = new WebServer(HttpSource)
+  def testParseArgs(): Unit = {
+    ServerStarter.parseArgs(Array("--source", "9090")) shouldBe
+      Success(CmdArgs(serverType = HttpSource, port = 9090))
 
-    val request = HttpRequest(uri = "/v0", method = POST)
+    ServerStarter.parseArgs(Array("--sink", "9090")) shouldBe
+      Success(CmdArgs(serverType = HttpSink, port = 9090))
 
-    request ~> webServer.sourceRoute ~> check {
-      entityAs[String] should ===("sourceRoute OK")
-    }
-  }
-
-  @Test
-  def testSinkRoute(): Unit = {
-    val webServer = new WebServer(HttpSink)
-
-    val request = HttpRequest(uri = "/v0", method = POST)
-
-    request ~> webServer.sinkRoute ~> check {
-      entityAs[String] should ===("sinkRoute OK")
-    }
+    ServerStarter.parseArgs(Array()) shouldBe a[Failure[_]]
+    ServerStarter.parseArgs(Array("--sink")) shouldBe a[Failure[_]]
+    ServerStarter.parseArgs(Array("9090")) shouldBe a[Failure[_]]
   }
 
 }

@@ -17,17 +17,25 @@
 package com.island.ohara.shabondi
 
 import akka.actor.ActorSystem
+import akka.event.Logging
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import com.island.ohara.shabondi.Model.{HttpSink, HttpSource, _}
+import akka.http.scaladsl.server.directives.MethodDirectives._
+import akka.http.scaladsl.server.directives.PathDirectives._
+import akka.http.scaladsl.server.directives.RouteDirectives._
 
-private class WebServer(private val serverType: ServerType) extends AbstractWebServer with SourceRoute with SinkRoute {
-  private val _system = ActorSystem("shabondi")
+private trait SinkRoute {
 
-  override implicit def actorSystem: ActorSystem = _system
+  implicit def actorSystem: ActorSystem
 
-  override protected def routes: Route = serverType match {
-    case HttpSource => sourceRoute
-    case HttpSink   => sinkRoute
-  }
+  lazy private val log = Logging(actorSystem, classOf[SinkRoute])
+
+  lazy val sinkRoute: Route =
+    path("v0") {
+      post {
+        log.info("[sink route]")
+        complete((StatusCodes.OK, "sinkRoute OK"))
+      }
+    }
 
 }

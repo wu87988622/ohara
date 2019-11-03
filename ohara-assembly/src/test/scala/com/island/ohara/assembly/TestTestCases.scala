@@ -20,7 +20,6 @@ import java.lang.reflect.Method
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.shabondi.TestWebServer
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -97,7 +96,7 @@ class TestTestCases extends OharaTest with Matchers {
 
   @Test
   def testCaseShouldHaveAnnotation(): Unit = {
-    val ignoredClasses: Set[Class[_]] = Set(classOf[TestWebServer])
+    val ignoredClasses: Set[Class[_]] = Set.empty
     val illegalCases: Map[Class[_], Set[Method]] = testClasses()
       .filter(clz => clz.getMethods != null)
       .filterNot(ignoredClasses.contains)

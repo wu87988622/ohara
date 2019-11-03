@@ -16,18 +16,10 @@
 
 package com.island.ohara.shabondi
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.Route
-import com.island.ohara.shabondi.Model.{HttpSink, HttpSource, _}
+private[shabondi] object Model {
+  sealed trait ServerType
+  final case object HttpSource extends ServerType
+  final case object HttpSink extends ServerType
 
-private class WebServer(private val serverType: ServerType) extends AbstractWebServer with SourceRoute with SinkRoute {
-  private val _system = ActorSystem("shabondi")
-
-  override implicit def actorSystem: ActorSystem = _system
-
-  override protected def routes: Route = serverType match {
-    case HttpSource => sourceRoute
-    case HttpSink   => sinkRoute
-  }
-
+  final case class CmdArgs(serverType: ServerType, interface: String = "0.0.0.0", port: Int = 8080)
 }
