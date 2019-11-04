@@ -102,6 +102,5 @@ Manage clusters
    rest-streams
    rest-files
    rest-logs
-   rest-query
    rest-info
    rest-inspect

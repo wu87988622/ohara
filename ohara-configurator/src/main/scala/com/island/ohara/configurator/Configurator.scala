@@ -229,8 +229,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       JdbcInfoRoute.apply,
       PipelineRoute.apply,
       ValidationRoute.apply,
-      // TODO: remove this https://github.com/oharastream/ohara/issues/3164
-      QueryRoute.apply,
       ConnectorRoute.apply,
       // TODO: remove this https://github.com/oharastream/ohara/issues/3164
       InfoRoute.apply(mode),
