@@ -64,6 +64,14 @@ export const WorkspaceList = styled.ul`
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: ${props => props.theme.transitions.create('background-color')};
+
+    &:hover {
+      background-color: ${props => props.theme.palette.common.white};
+      svg {
+        fill: ${props => props.theme.palette.primary[900]};
+      }
+    }
   }
 `;
 

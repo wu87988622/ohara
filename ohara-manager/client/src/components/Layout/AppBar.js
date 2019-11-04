@@ -29,7 +29,7 @@ import { useNodeDialog } from 'context/NodeDialogContext';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
-import { ReactComponent as Logo } from './logo.svg';
+import { ReactComponent as Logo } from 'images/logo.svg';
 import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
 
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
@@ -76,8 +76,8 @@ const AppBar = () => {
             enterDelay={1000}
           >
             <div
-              onClick={() => setIsNewWorkspaceOpen(true)}
               className="add-workspace item"
+              onClick={() => setIsNewWorkspaceOpen(true)}
             >
               <AddIcon />
             </div>

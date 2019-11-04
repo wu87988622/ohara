@@ -15,37 +15,21 @@
  */
 
 import React, { useEffect } from 'react';
-import styled from 'styled-components';
 import Typography from '@material-ui/core/Typography';
 import { useHistory, useParams } from 'react-router-dom';
 
 import NodeDialog from 'components/Node/NodeDialog';
+import IntroDialog from './IntroDialog';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
-import { FullScreenDialog } from 'components/common/Dialog';
-import { Card } from 'components/common/Card';
 
-const Container = styled.div`
-  display: flex;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-
-  .quick-mode {
-    margin-right: ${props => props.theme.spacing(4)}px;
-  }
-`;
-
-const PipelineGraph = () => {
+const Pipeline = () => {
   const history = useHistory();
-  const { workspaces } = useWorkspace();
+  const { workspaces, isFetching: isFetchingWorkspace } = useWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
   const { workspaceName, pipelineName } = useParams();
-  const {
-    isOpen: isNewWorksapceDialogOpen,
-    setIsOpen: setIsNewWorksapceDialogOpen,
-  } = useNewWorkspace();
+  const { setIsOpen: setIsNewWorksapceDialogOpen } = useNewWorkspace();
 
   useEffect(() => {
     fetchPipelines(workspaceName);
@@ -106,39 +90,22 @@ const PipelineGraph = () => {
             <h1>Current pipeline : {pipelineName}</h1>
           ) : (
             <Typography variant="h5" component="h2">
-              {`You don't have any pipeline in ${workspaceName} yet! Click here to create one!`}
+              {`You don't have any pipeline in ${workspaceName} yet!`}
             </Typography>
           )}
         </>
       ) : (
         <>
           <Typography variant="h5" component="h2">
-            You don't have any workspace yet! Click here to create one!
+            You don't have any workspace yet!
           </Typography>
         </>
       )}
-      <FullScreenDialog
-        title="Create a new workspace"
-        open={isNewWorksapceDialogOpen}
-        handleClose={() => setIsNewWorksapceDialogOpen(false)}
-      >
-        <Container>
-          <Card
-            className="quick-mode card-item"
-            title="Quick"
-            description="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
-          />
-          <Card
-            className="expert-mode card-item"
-            title="Expert"
-            description="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using"
-          />
-        </Container>
-      </FullScreenDialog>
 
+      {!isFetchingWorkspace && <IntroDialog />}
       <NodeDialog />
     </>
   );
 };
 
-export default PipelineGraph;
+export default Pipeline;

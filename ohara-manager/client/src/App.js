@@ -20,9 +20,8 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
 import AppBar from 'components/Layout/AppBar';
-import PipelineNavigator from 'components/Pipeline/PipelineNavigator';
-import PipelineGraph from 'components/Pipeline/PipelineGraph';
 import NotFoundPage from 'components/NotFoundPage';
+import { Pipeline, PipelineNavigator } from 'components/Pipeline';
 
 const Container = styled.div`
   display: flex;
@@ -57,7 +56,7 @@ const App = () => {
             <Route
               exact
               path="/:workspaceName?/:pipelineName?"
-              component={PipelineGraph}
+              component={Pipeline}
             />
             <Route path="*" component={NotFoundPage} />
           </Switch>

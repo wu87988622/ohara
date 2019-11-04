@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
+import Pipeline from './Pipeline';
+import PipelineNavigator from './PipelineNavigator';
 
-import AppProviders from './AppProviders';
-import App from './App';
-
-ReactDOM.render(
-  <AppProviders>
-    <App />
-  </AppProviders>,
-  document.getElementById('root'),
-);
+export { Pipeline, PipelineNavigator };
