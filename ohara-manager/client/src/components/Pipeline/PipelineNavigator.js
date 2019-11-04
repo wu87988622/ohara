@@ -115,19 +115,19 @@ const PipelineNavigator = () => {
           >
             <form onSubmit={handleSubmit}>
               <Field
-                name="pipelineName"
                 type="text"
+                name="pipelineName"
                 label="Pipeline name"
                 placeholder="pipelinename"
+                component={InputField}
+                autoFocus
+                required
                 validate={composeValidators(
                   required,
                   minLength(2),
                   maxLength(20),
                   validServiceName,
                 )}
-                component={InputField}
-                autoFocus
-                required
               />
             </form>
           </Dialog>

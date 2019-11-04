@@ -17,6 +17,35 @@
 import { createMuiTheme } from '@material-ui/core/styles';
 
 const MuiTheme = createMuiTheme({
+  overrides: {
+    MuiInputBase: {
+      input: {
+        background: 'white',
+      },
+    },
+    MuiFilledInput: {
+      input: {
+        paddingRight: 0,
+        paddingLeft: 0,
+      },
+    },
+    MuiInputLabel: {
+      filled: {
+        transform: 'translate(0, 30px) scale(1)',
+        '&$shrink': {
+          transform: 'translate(0, 4px) scale(1)',
+        },
+      },
+      formControl: {
+        transform: 'translate(0, 30px) scale(1)',
+      },
+    },
+    MuiFormHelperText: {
+      contained: {
+        marginLeft: 0,
+      },
+    },
+  },
   palette: {
     primary: {
       50: '#E2F5FD',

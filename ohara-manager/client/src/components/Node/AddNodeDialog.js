@@ -16,6 +16,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import { isEmpty } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
@@ -31,6 +32,10 @@ import {
   maxValue,
   composeValidators,
 } from 'utils/validate';
+
+const TestConnection = styled(Button)`
+  margin-top: 20px;
+`;
 
 const AddNodeDialog = props => {
   const { isOpen, handleClose, fetchNodes } = props;
@@ -101,25 +106,27 @@ const AddNodeDialog = props => {
           >
             <form onSubmit={handleSubmit}>
               <Field
+                type="text"
                 name="hostname"
                 label="Hostname"
                 placeholder="node-01"
                 margin="normal"
                 helperText="hostname of the node"
-                validate={composeValidators(required, maxLength(63))}
                 component={InputField}
-                fullWidth
                 autoFocus
+                required
+                validate={composeValidators(required, maxLength(63))}
               />
 
               <Field
+                type="number"
                 name="port"
                 label="Port"
                 placeholder="22"
-                type="number"
                 margin="normal"
                 helperText="SSH port of the node"
                 component={InputField}
+                required
                 validate={composeValidators(
                   required,
                   minValue(1),
@@ -132,34 +139,37 @@ const AddNodeDialog = props => {
               />
 
               <Field
+                type="text"
                 name="user"
                 label="User"
                 placeholder="admin"
                 margin="normal"
                 helperText="SSH username"
-                validate={required}
                 component={InputField}
                 fullWidth
+                required
+                validate={required}
               />
 
               <Field
+                type="password"
                 name="password"
                 label="Password"
-                type="password"
                 margin="normal"
                 placeholder="password"
                 helperText="SSH password"
+                required
                 validate={required}
                 component={InputField}
                 fullWidth
               />
-              <Button
-                color="primary"
+              <TestConnection
                 disabled={invalid}
+                color="primary"
                 onClick={() => testConnection(values)}
               >
                 TEST CONNECTION
-              </Button>
+              </TestConnection>
             </form>
           </Dialog>
         );
