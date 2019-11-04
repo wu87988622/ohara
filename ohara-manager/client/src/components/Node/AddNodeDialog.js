@@ -65,10 +65,11 @@ const AddNodeDialog = props => {
       ...rest,
     };
 
-    await validateApi.validateNode(params);
-    const pass = true;
-    setIsValidConnection(pass);
-    if (pass) {
+    const nodes = await validateApi.validateNode(params);
+    const isPassed = nodes.every(node => node.pass);
+
+    if (isPassed) {
+      setIsValidConnection(isPassed);
       showMessage('Test passed!');
     }
   };
@@ -152,7 +153,11 @@ const AddNodeDialog = props => {
                 component={InputField}
                 fullWidth
               />
-              <Button color="primary" onClick={() => testConnection(values)}>
+              <Button
+                color="primary"
+                disabled={invalid}
+                onClick={() => testConnection(values)}
+              >
                 TEST CONNECTION
               </Button>
             </form>
