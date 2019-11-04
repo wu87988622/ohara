@@ -30,14 +30,19 @@ const StyledDialogTitle = styled(DialogTitle)`
   cursor: move;
 `;
 
+const StyledDialogActions = styled(DialogActions)`
+  padding: ${props => props.theme.spacing(1)}px
+    ${props => props.theme.spacing(3)}px ${props => props.theme.spacing(3)}px;
+`;
+
 const MuiDialog = props => {
   const {
     open,
     handleConfirm,
     handleClose,
     title,
-    confirmBtnText = 'ADD',
-    cancelBtnText = 'CANCEL',
+    confirmText = 'ADD',
+    cancelText = 'CANCEL',
     children,
     confirmDisabled = false,
     maxWidth = 'xs',
@@ -59,23 +64,22 @@ const MuiDialog = props => {
         <DialogContent>{children}</DialogContent>
 
         {showActions && (
-          <DialogActions>
-            <Button onClick={handleClose} color="primary">
-              {cancelBtnText}
-            </Button>
+          <StyledDialogActions>
+            <Button onClick={handleClose}>{cancelText}</Button>
 
             <Button
               onClick={handleConfirm}
-              color="primary"
               disabled={confirmDisabled}
+              color="primary"
+              variant="contained"
               autoFocus
             >
-              {!loading && confirmBtnText}
+              {!loading && confirmText}
               {loading && (
                 <CircularProgress data-testid="dialog-loader" size={24} />
               )}
             </Button>
-          </DialogActions>
+          </StyledDialogActions>
         )}
       </div>
     </Dialog>
@@ -87,11 +91,11 @@ MuiDialog.propTypes = {
   title: PropTypes.string.isRequired,
   children: PropTypes.any.isRequired,
   handleClose: PropTypes.func.isRequired,
-  confirmBtnText: PropTypes.string,
-  cancelBtnText: PropTypes.string,
+  confirmText: PropTypes.string,
+  confirmDisabled: PropTypes.bool,
+  cancelText: PropTypes.string,
   maxWidth: PropTypes.string,
   handleConfirm: PropTypes.func,
-  confirmDisabled: PropTypes.bool,
   loading: PropTypes.bool,
   testId: PropTypes.string,
   showActions: PropTypes.bool,

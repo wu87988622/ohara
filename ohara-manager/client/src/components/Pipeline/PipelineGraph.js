@@ -19,6 +19,7 @@ import styled from 'styled-components';
 import Typography from '@material-ui/core/Typography';
 import { useHistory, useParams } from 'react-router-dom';
 
+import NodeDialog from 'components/Node/NodeDialog';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
@@ -41,9 +42,10 @@ const PipelineGraph = () => {
   const { workspaces } = useWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
   const { workspaceName, pipelineName } = useParams();
-  const { isOpen: isDialogOpen, setIsOpen } = useNewWorkspace();
-
-  const closeNewWorkspace = () => setIsOpen(false);
+  const {
+    isOpen: isNewWorksapceDialogOpen,
+    setIsOpen: setIsNewWorksapceDialogOpen,
+  } = useNewWorkspace();
 
   useEffect(() => {
     fetchPipelines(workspaceName);
@@ -88,26 +90,38 @@ const PipelineGraph = () => {
     history.push(`/${workspaces[0].settings.name}`);
   }
 
-  if (isDialogOpen && currentWorkspace) {
-    closeNewWorkspace();
-  }
+  useEffect(() => {
+    if (hasWorkspace) {
+      setIsNewWorksapceDialogOpen(false);
+    } else {
+      setIsNewWorksapceDialogOpen(true);
+    }
+  }, [hasWorkspace, setIsNewWorksapceDialogOpen]);
 
-  return currentWorkspace ? (
+  return (
     <>
-      {currentPipeline ? (
-        <h1>Current pipeline : {pipelineName}</h1>
+      {currentWorkspace ? (
+        <>
+          {currentPipeline ? (
+            <h1>Current pipeline : {pipelineName}</h1>
+          ) : (
+            <Typography variant="h5" component="h2">
+              {`You don't have any pipeline in ${workspaceName} yet! Click here to create one!`}
+            </Typography>
+          )}
+        </>
       ) : (
-        <Typography gutterBottom variant="h5" component="h2">
-          {`You don't have any pipeline in ${workspaceName} yet! Click here to create one!`}
-        </Typography>
+        <>
+          <Typography variant="h5" component="h2">
+            You don't have any workspace yet! Click here to create one!
+          </Typography>
+        </>
       )}
-    </>
-  ) : (
-    <>
-      <Typography gutterBottom variant="h5" component="h2">
-        You don't have any workspace yet! Click here to create one!
-      </Typography>
-      <FullScreenDialog open={isDialogOpen} handleClose={closeNewWorkspace}>
+      <FullScreenDialog
+        title="Create a new workspace"
+        open={isNewWorksapceDialogOpen}
+        handleClose={() => setIsNewWorksapceDialogOpen(false)}
+      >
         <Container>
           <Card
             className="quick-mode card-item"
@@ -121,6 +135,8 @@ const PipelineGraph = () => {
           />
         </Container>
       </FullScreenDialog>
+
+      <NodeDialog />
     </>
   );
 };

@@ -20,17 +20,9 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import styled from 'styled-components';
 
-import Tooltip from './Tooltip';
-
 const InputWrap = styled.div`
   position: relative;
   width: 100%;
-`;
-
-const TooltipWrap = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
 `;
 
 const MuiCheckbox = ({
@@ -57,10 +49,6 @@ const MuiCheckbox = ({
         }
         label={label}
       />
-
-      <TooltipWrap data-testid="tooltip">
-        <Tooltip text={helperText} />
-      </TooltipWrap>
     </InputWrap>
   );
 };

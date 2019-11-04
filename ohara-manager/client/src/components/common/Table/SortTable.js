@@ -25,7 +25,7 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 
-import { TableLoader } from 'components/common/Mui/Loader';
+import { TableLoader } from 'components/common/Loader';
 import TableToolbar from './TableToolbar';
 
 const SortTable = props => {

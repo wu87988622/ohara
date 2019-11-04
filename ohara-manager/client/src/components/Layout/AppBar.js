@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { useWorkspace } from 'context/WorkspaceContext';
+import { useNodeDialog } from 'context/NodeDialogContext';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
@@ -35,9 +36,8 @@ import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
   const { workspaces } = useWorkspace();
-  const { setIsOpen } = useNewWorkspace();
-
-  const openNewWorkspace = () => setIsOpen(true);
+  const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
+  const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
 
   return (
     <>
@@ -75,17 +75,23 @@ const AppBar = () => {
             placement="right"
             enterDelay={1000}
           >
-            <div onClick={openNewWorkspace} className="add-workspace item">
+            <div
+              onClick={() => setIsNewWorkspaceOpen(true)}
+              className="add-workspace item"
+            >
               <AddIcon />
             </div>
           </Tooltip>
         </WorkspaceList>
 
         <Tools>
-          <AppsIcon className="item workspace" />
+          <AppsIcon className="workspace item" />
           <AssignmentIcon className="item" />
           <DeveloperModeIcon className="item" />
-          <StorageIcon className="item" />
+          <StorageIcon
+            className="nodes item"
+            onClick={() => setIsNodeDialogOpen(true)}
+          />
         </Tools>
       </Header>
     </>

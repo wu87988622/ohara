@@ -39,6 +39,17 @@ export const serviceName = ({ length = 10, prefix } = {}) => {
   return name;
 };
 
+export const randomString = ({ length = 50 }) => {
+  let string = '';
+  const possible =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < length; i++) {
+    string += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+
+  return string;
+};
+
 export {
   commonFileName,
   id,

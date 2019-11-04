@@ -15,12 +15,33 @@
  */
 
 // Return `undefined` means the test has passed!
-export const required = value => (value ? undefined : 'Required');
+export const required = value =>
+  value ? undefined : 'This is a required field';
 
 export const validServiceName = value => {
   return /[^0-9a-z]/g.test(value)
     ? 'You only can use lower case letters and numbers'
     : undefined;
+};
+
+export const minLength = min => value => {
+  return value.length >= min
+    ? undefined
+    : `The value must be greater than ${min} characters long`;
+};
+
+export const maxLength = max => value => {
+  return value.length <= max
+    ? undefined
+    : `The value must be less than ${max} characters long`;
+};
+
+export const minValue = min => value => {
+  return value >= min ? undefined : `The value must be greater than ${min}`;
+};
+
+export const maxValue = max => value => {
+  return value <= max ? undefined : `The value must be less than ${max}`;
 };
 
 export const lessThanTweenty = value =>

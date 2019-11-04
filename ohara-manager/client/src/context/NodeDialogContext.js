@@ -17,37 +17,35 @@
 import React, { createContext, useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 
-const NewWorkspaceContext = createContext();
+const NodeDialogContext = createContext();
 
-const NewWorkspaceProvider = ({ children }) => {
+const NodeDialogProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <NewWorkspaceContext.Provider
+    <NodeDialogContext.Provider
       value={{
         isOpen,
         setIsOpen,
       }}
     >
       {children}
-    </NewWorkspaceContext.Provider>
+    </NodeDialogContext.Provider>
   );
 };
 
-const useNewWorkspace = () => {
-  const context = useContext(NewWorkspaceContext);
+const useNodeDialog = () => {
+  const context = useContext(NodeDialogContext);
 
   if (context === undefined) {
-    throw new Error(
-      'useNewWorkspace must be used within a NewWorkspaceProvider',
-    );
+    throw new Error('useNodeDialog must be used within a NodeDialogProvider');
   }
 
   return context;
 };
 
-NewWorkspaceProvider.propTypes = {
+NodeDialogProvider.propTypes = {
   children: PropTypes.any.isRequired,
 };
 
-export { NewWorkspaceProvider, useNewWorkspace };
+export { NodeDialogProvider, useNodeDialog };

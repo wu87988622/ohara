@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-describe('Root route', () => {
+// TODO: skip these tests for now, this is tracked in #3161
+describe.skip('Root route', () => {
   it('should display root route', () => {
     cy.visit('/')
       .findByText(`You don't have any workspace yet!`)
@@ -22,7 +23,7 @@ describe('Root route', () => {
   });
 });
 
-describe('Not found page', () => {
+describe.skip('Not found page', () => {
   it('should display page not found route', () => {
     // Another URL pattern, we can add more patterns here
     // to ensure different route patterns are all handled

@@ -29,8 +29,18 @@ const StyledIconButton = styled(IconButton)`
   margin-right: ${props => props.theme.spacing(2)}px;
 `;
 
+const StyledDialogContent = styled(DialogContent)`
+  max-width: 1400px;
+  width: 1024px;
+  margin: ${props => props.theme.spacing(12)}px auto;
+  padding: 0 ${props => props.theme.spacing(3)}px;
+
+  /* We want to use browser's scrollbar instead of DialogContent's */
+  overflow-y: visible;
+`;
+
 const FullScreenDialog = props => {
-  const { children, open, handleClose } = props;
+  const { title, children, open, handleClose } = props;
   return (
     <>
       <Dialog fullScreen open={open} onClose={handleClose}>
@@ -43,10 +53,10 @@ const FullScreenDialog = props => {
             >
               <KeyboardBackspaceIcon />
             </StyledIconButton>
-            <Typography variant="h6">Create a new workspace</Typography>
+            <Typography variant="h6">{title}</Typography>
           </Toolbar>
         </AppBar>
-        <DialogContent>{children}</DialogContent>
+        <StyledDialogContent>{children}</StyledDialogContent>
       </Dialog>
     </>
   );
@@ -56,6 +66,7 @@ FullScreenDialog.propTypes = {
   children: PropTypes.any.isRequired,
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
 };
 
 export default FullScreenDialog;

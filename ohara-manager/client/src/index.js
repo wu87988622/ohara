@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { StrictMode } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import { ThemeProvider } from 'styled-components';
 import {
@@ -28,24 +28,25 @@ import { SnackbarProvider } from './context/SnackbarContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
+import { NodeDialogProvider } from './context/NodeDialogContext';
 
 ReactDOM.render(
-  <StrictMode>
-    <StylesProvider injectFirst>
-      <MuiThemeProvider theme={MuiTheme}>
-        <ThemeProvider theme={MuiTheme}>
-          <SnackbarProvider>
-            <NewWorkspaceProvider>
-              <WorkspaceProvider>
-                <PipelineProvider>
+  <StylesProvider injectFirst>
+    <MuiThemeProvider theme={MuiTheme}>
+      <ThemeProvider theme={MuiTheme}>
+        <SnackbarProvider>
+          <NewWorkspaceProvider>
+            <WorkspaceProvider>
+              <PipelineProvider>
+                <NodeDialogProvider>
                   <App />
-                </PipelineProvider>
-              </WorkspaceProvider>
-            </NewWorkspaceProvider>
-          </SnackbarProvider>
-        </ThemeProvider>
-      </MuiThemeProvider>
-    </StylesProvider>
-  </StrictMode>,
+                </NodeDialogProvider>
+              </PipelineProvider>
+            </WorkspaceProvider>
+          </NewWorkspaceProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
+    </MuiThemeProvider>
+  </StylesProvider>,
   document.getElementById('root'),
 );

@@ -16,46 +16,72 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
 
-import { TableLoader } from 'components/common/Mui/Loader';
+import { TableLoader } from 'components/common/Loader';
+
+const Wrapper = styled.div`
+  border: 1px solid ${props => props.theme.palette.grey[300]};
+  border-radius: ${props => props.theme.shape.borderRadius}px;
+  overflow: hidden;
+
+  &.has-title {
+    h6 {
+      padding: ${props => props.theme.spacing(2)}px;
+      border-bottom: 1px solid ${props => props.theme.palette.grey[300]};
+    }
+  }
+`;
+
+const StyledTableHead = styled(TableHead)`
+  background-color: ${props => props.theme.palette.grey[100]};
+`;
 
 const MuiTable = props => {
-  const { headers, isLoading = false, children } = props;
+  const { headers, title = '', isLoading = false, children } = props;
   const lastIdx = headers.length - 1; // Make sure we have the same length as idx
+
+  const hasTitle = title.length > 0 ? true : false;
+  const titleClass = hasTitle ? 'has-title' : '';
 
   if (isLoading) return <TableLoader />;
 
   return (
-    <Paper>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {headers.map((header, idx) => {
-              // The last table cell should be aligned to right
-              const align = idx === lastIdx ? 'right' : 'left';
-              return (
-                <TableCell align={align} key={header}>
-                  {header}
-                </TableCell>
-              );
-            })}
-          </TableRow>
-        </TableHead>
-        <TableBody>{children}</TableBody>
-      </Table>
-    </Paper>
+    <Wrapper className={`${titleClass}`}>
+      <Paper elevation={1}>
+        {hasTitle && <Typography variant="h6">{title}</Typography>}
+        <Table>
+          <StyledTableHead>
+            <TableRow>
+              {headers.map((header, idx) => {
+                // The last table cell should be aligned to right
+                const align = idx === lastIdx ? 'right' : 'left';
+                return (
+                  <TableCell align={align} key={header}>
+                    {header}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          </StyledTableHead>
+          <TableBody>{children}</TableBody>
+        </Table>
+      </Paper>
+    </Wrapper>
   );
 };
 
 MuiTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
   children: PropTypes.any.isRequired,
+  title: PropTypes.string,
   isLoading: PropTypes.bool,
 };
 

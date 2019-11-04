@@ -15,7 +15,15 @@
  */
 
 import * as generate from '../generate';
-import { required, validServiceName, lessThanTweenty } from '../validate';
+import {
+  required,
+  validServiceName,
+  lessThanTweenty,
+  minLength,
+  maxLength,
+  minValue,
+  maxValue,
+} from '../validate';
 
 describe('required()', () => {
   it('returns `undefined` if the value is given', () => {
@@ -23,8 +31,8 @@ describe('required()', () => {
   });
 
   it('reutuns the error message if the given value is falsy', () => {
-    expect(required('')).toBe('Required');
-    expect(required(undefined)).toBe('Required');
+    expect(required('')).toBe('This is a required field');
+    expect(required(undefined)).toBe('This is a required field');
   });
 });
 
@@ -40,6 +48,60 @@ describe('validServiceName()', () => {
     expect(validServiceName('ABC')).toBe(error);
     expect(validServiceName('!#@$%^&')).toBe(error);
     expect(validServiceName(' ')).toBe(error);
+  });
+});
+
+describe('minLength()', () => {
+  const min = minLength(50);
+  it('returns `undefined` if the given value length is greater than 50', () => {
+    expect(min(generate.randomString({ length: 100 }))).toBeUndefined();
+  });
+
+  it('returns the error message if the given value is less than 50', () => {
+    const error = 'The value must be greater than 50 characters long';
+    expect(min(generate.randomString({ length: 21 }))).toBe(error);
+    expect(min(generate.randomString({ length: 49 }))).toBe(error);
+    expect(min(generate.randomString({ length: -1 }))).toBe(error);
+  });
+});
+
+describe('maxLength()', () => {
+  const max = maxLength(50);
+  it('returns `undefined` if the given value length is less than 50', () => {
+    expect(max(generate.randomString({ length: 35 }))).toBeUndefined();
+  });
+
+  it('returns the error message if the given value is greater than 50', () => {
+    const error = 'The value must be less than 50 characters long';
+    expect(max(generate.randomString({ length: 51 }))).toBe(error);
+    expect(max(generate.randomString({ length: 100 }))).toBe(error);
+  });
+});
+
+describe('minValue()', () => {
+  const min = minValue(50);
+  it('returns `undefined` if the given value is greater than 50', () => {
+    expect(min(100)).toBeUndefined();
+  });
+
+  it('returns the error message if the given value is less than 50', () => {
+    const error = 'The value must be greater than 50';
+    expect(min(21)).toBe(error);
+    expect(min(49)).toBe(error);
+    expect(min(-1)).toBe(error);
+  });
+});
+
+describe('maxValue()', () => {
+  const max = maxValue(50);
+  it('returns `undefined` if the given value is less than 50', () => {
+    expect(max(35)).toBeUndefined();
+  });
+
+  it('returns the error message if the given value is greater than 50', () => {
+    const error = 'The value must be less than 50';
+    expect(max(51)).toBe(error);
+    expect(max(100)).toBe(error);
   });
 });
 

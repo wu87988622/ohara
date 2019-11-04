@@ -34,7 +34,8 @@ import { usePipeline } from 'context/PipelineContext';
 import {
   required,
   validServiceName,
-  lessThanTweenty,
+  minLength,
+  maxLength,
   composeValidators,
 } from 'utils/validate';
 import {
@@ -120,7 +121,8 @@ const PipelineNavigator = () => {
                 placeholder="pipelinename"
                 validate={composeValidators(
                   required,
-                  lessThanTweenty,
+                  minLength(2),
+                  maxLength(20),
                   validServiceName,
                 )}
                 component={InputField}
