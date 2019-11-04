@@ -29,6 +29,7 @@ import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
+import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object TopicRoute {
@@ -228,7 +229,13 @@ private[configurator] object TopicRoute {
                     .topicKey(topicInfo.key)
                     .numberOfPartitions(topicInfo.numberOfPartitions)
                     .numberOfReplications(topicInfo.numberOfReplications)
-                    .configs(topicInfo.configs)
+                    .configs(topicInfo.configs.map {
+                      case (key, value) =>
+                        key -> (value match {
+                          case JsString(value) => value
+                          case _               => value.toString()
+                        })
+                    })
                     .create()
                     .flatMap(_ =>
                       try Future.unit

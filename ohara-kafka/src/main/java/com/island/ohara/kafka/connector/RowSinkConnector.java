@@ -107,7 +107,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   @Override
   public final void start(Map<String, String> props) {
-    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props), definitions());
+    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
     _start(taskSetting);
   }
 

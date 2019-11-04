@@ -83,6 +83,7 @@ object BrokerRoute {
                                 executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
     (brokerClusterInfo: BrokerClusterInfo, _, _) =>
       objectChecker.checkList
+      // node names check is covered in super route
         .zookeeperCluster(brokerClusterInfo.zookeeperClusterKey, RUNNING)
         .allBrokers()
         .check()

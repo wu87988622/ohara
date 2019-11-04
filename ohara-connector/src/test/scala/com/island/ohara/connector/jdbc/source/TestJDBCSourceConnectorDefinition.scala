@@ -17,7 +17,7 @@
 package com.island.ohara.connector.jdbc.source
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.SettingDef.Reference
+import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -38,7 +38,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkDbURL(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_URL).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -49,7 +49,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkDbUserName(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_USERNAME).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -60,7 +60,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkDbPassword(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_PASSWORD).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -71,7 +71,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkFetchDataSize(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == JDBC_FETCHDATA_SIZE).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe String.valueOf(JDBC_FETCHDATA_SIZE_DEFAULT)
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -82,7 +82,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkFlushDataSize(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == JDBC_FLUSHDATA_SIZE).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe String.valueOf(JDBC_FLUSHDATA_SIZE_DEFAULT)
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -93,8 +93,9 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkFrequenceTime(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == JDBC_FREQUENCE_TIME).get
-    definition.required shouldBe false
-    definition.defaultValue shouldBe String.valueOf(JDBC_FREQUENCE_TIME_DEFAULT)
+    definition.necessary should not be Necessary.REQUIRED
+    CommonUtils.toDuration(definition.defaultValue) shouldBe java.time.Duration
+      .ofMillis(JDBC_FREQUENCE_TIME_DEFAULT.toMillis)
     definition.editable() shouldBe true
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
@@ -104,7 +105,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkTableName(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_TABLENAME).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -115,7 +116,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkCatalogPattern(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_CATALOG_PATTERN).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -126,7 +127,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkSchemaPattern(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_SCHEMA_PATTERN).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -137,7 +138,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkMode(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == MODE).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe MODE_DEFAULT
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -148,7 +149,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkTimeStampColumnName(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == TIMESTAMP_COLUMN_NAME).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -192,7 +193,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
 
     response
       .settings()
@@ -200,7 +201,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
 
     response
       .settings()
@@ -208,7 +209,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.OPTIONAL_WITH_DEFAULT
 
     response
       .settings()
@@ -216,7 +217,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .necessary() should not be Necessary.REQUIRED
 
     response
       .settings()
@@ -224,15 +225,39 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
 
-    response.settings().asScala.filter(_.value().key() == DB_URL).head.definition().required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.value().key() == DB_URL)
+      .head
+      .definition()
+      .necessary() shouldBe Necessary.REQUIRED
 
-    response.settings().asScala.filter(_.value().key() == DB_USERNAME).head.definition().required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.value().key() == DB_USERNAME)
+      .head
+      .definition()
+      .necessary() shouldBe Necessary.REQUIRED
 
-    response.settings().asScala.filter(_.value().key() == DB_PASSWORD).head.definition().required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.value().key() == DB_PASSWORD)
+      .head
+      .definition()
+      .necessary() shouldBe Necessary.REQUIRED
 
-    response.settings().asScala.filter(_.value().key() == DB_TABLENAME).head.definition().required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.value().key() == DB_TABLENAME)
+      .head
+      .definition()
+      .necessary() shouldBe Necessary.REQUIRED
 
     response
       .settings()
@@ -240,7 +265,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.value().key() == JDBC_FREQUENCE_TIME)
       .head
       .definition()
-      .required() shouldBe false
+      .necessary() should not be Necessary.REQUIRED
 
     response
       .settings()
@@ -248,7 +273,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.value().key() == TIMESTAMP_COLUMN_NAME)
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
 
     response
       .settings()
@@ -256,9 +281,15 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
       .filter(_.value().key() == DB_CATALOG_PATTERN)
       .head
       .definition()
-      .required() shouldBe false
+      .necessary() should not be Necessary.REQUIRED
 
-    response.settings().asScala.filter(_.value().key() == DB_SCHEMA_PATTERN).head.definition().required() shouldBe false
+    response
+      .settings()
+      .asScala
+      .filter(_.value().key() == DB_SCHEMA_PATTERN)
+      .head
+      .definition()
+      .necessary() should not be Necessary.REQUIRED
 
     response.errorCount() shouldBe 0
   }

@@ -17,7 +17,7 @@
 package com.island.ohara.connector.hdfs.sink
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.SettingDef.Reference
+import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -38,7 +38,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkHdfsURL(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == HDFS_URL_KEY).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -49,7 +49,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkTopicsDir(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
-    definition.required shouldBe true
+    definition.necessary() shouldBe Necessary.REQUIRED
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -60,7 +60,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkFlushSize(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == FLUSH_SIZE_KEY).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe FLUSH_SIZE_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -71,7 +71,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkRotateIntervalMS(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == ROTATE_INTERVAL_MS_KEY).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe ROTATE_INTERVAL_MS_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -82,7 +82,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkFileNeedHeader(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe FILE_NEED_HEADER_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -93,7 +93,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkFileEncode(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
-    definition.required shouldBe false
+    definition.necessary() should not be Necessary.REQUIRED
     definition.defaultValue shouldBe FILE_ENCODE_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
@@ -127,35 +127,35 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.OPTIONAL_WITH_DEFAULT
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .necessary() should not be Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response.errorCount() shouldBe 0
   }
 

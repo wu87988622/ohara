@@ -18,7 +18,6 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.setting.ObjectKey
@@ -27,7 +26,7 @@ import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STO
 import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.streams.config.StreamDefUtils
-import spray.json._
+import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object StreamRoute {
@@ -36,7 +35,7 @@ private[configurator] object StreamRoute {
     * The group for a stream application metrics
     * Since each streamApp has it's own metrics, it is OK to use same value
     */
-  private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue()
+  private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT
 
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
@@ -111,55 +110,31 @@ private[configurator] object StreamRoute {
             }
     }
 
-  /**
-    * create an new cluster info based on definitions. It reject the nonexistent but required fields and auto-fill the
-    * value to the fields having default value.
-    * @param streamClusterInfo origin cluster info
-    * @return updated cluster info
-    */
-  private[this] def updateSettings(streamClusterInfo: StreamClusterInfo, fileInfo: FileInfo)(
-    implicit streamCollie: StreamCollie,
-    executionContext: ExecutionContext): Future[StreamClusterInfo] =
-    streamCollie.loadDefinition(fileInfo.url).map { settingDefinition =>
-      // check the values by definition
-      //TODO move this to RouteUtils in #2191
-      val copy = streamClusterInfo.settings ++
-        // add the (key, defaultValue) to settings if absent
-        settingDefinition.settingDefinitions.flatMap { settingDef =>
-          if (streamClusterInfo.settings.contains(settingDef.key()) || CommonUtils.isEmpty(settingDef.defaultValue()))
-            None
-          else Some(settingDef.key() -> JsString(settingDef.defaultValue()))
-        }.toMap
-
-      copy
-        .map {
-          case (k, v) =>
-            k -> (v match {
-              case JsString(s) => s
-              case _           => v.toString
-            })
-        }
-        .foreach {
-          case (k, v) =>
-            settingDefinition.settingDefinitions
-              .find(_.key() == k)
-              .getOrElse(throw DeserializationException(s"$k is required!!!", fieldNames = List(k)))
-              .checker()
-              .accept(v)
-        }
-      streamClusterInfo.copy(settings = copy)
-    }
-
   private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
                                 streamCollie: StreamCollie,
                                 executionContext: ExecutionContext): HookOfAction[StreamClusterInfo] =
     (streamClusterInfo: StreamClusterInfo, _, _) => {
       objectChecker.checkList
+      // node names check is covered in super route
         .streamApp(streamClusterInfo.key)
         .file(streamClusterInfo.jarKey)
         .brokerCluster(streamClusterInfo.brokerClusterKey, RUNNING)
-        .topics(streamClusterInfo.toTopicKeys, RUNNING)
-        .topics(streamClusterInfo.fromTopicKeys, RUNNING)
+        .topics(
+          // our UI needs to create a stream without topics so the stream info may has no topics...
+          if (streamClusterInfo.toTopicKeys.isEmpty)
+            throw DeserializationException(s"to topics can't be empty",
+                                           fieldNames = List(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()))
+          else streamClusterInfo.toTopicKeys,
+          RUNNING
+        )
+        .topics(
+          // our UI needs to create a stream without topics so the stream info may has no topics...
+          if (streamClusterInfo.fromTopicKeys.isEmpty)
+            throw DeserializationException(s"from topics can't be empty",
+                                           fieldNames = List(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()))
+          else streamClusterInfo.fromTopicKeys,
+          RUNNING
+        )
         .check()
         .map(
           report =>
@@ -177,22 +152,19 @@ private[configurator] object StreamRoute {
                     s"stream app counts on broker cluster:${streamClusterInfo.brokerClusterKey} " +
                       s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
                 }
-
-                updateSettings(streamClusterInfo, fileInfo).flatMap { clusterInfo =>
-                  streamCollie.creator
-                  // these settings will send to container environment
-                  // we convert all value to string for convenient
-                    .settings(clusterInfo.settings)
-                    .name(clusterInfo.name)
-                    .group(clusterInfo.group)
-                    .imageName(clusterInfo.imageName)
-                    .nodeNames(clusterInfo.nodeNames)
-                    .jarInfo(fileInfo)
-                    .brokerClusterKey(brokerClusterInfo.key)
-                    .connectionProps(brokerClusterInfo.connectionProps)
-                    .threadPool(executionContext)
-                    .create()
-                }
+                streamCollie.creator
+                // these settings will send to container environment
+                // we convert all value to string for convenient
+                  .settings(streamClusterInfo.settings)
+                  .name(streamClusterInfo.name)
+                  .group(streamClusterInfo.group)
+                  .imageName(streamClusterInfo.imageName)
+                  .nodeNames(streamClusterInfo.nodeNames)
+                  .jarKey(fileInfo.key)
+                  .brokerClusterKey(brokerClusterInfo.key)
+                  .connectionProps(brokerClusterInfo.connectionProps)
+                  .threadPool(executionContext)
+                  .create()
             }
         }
     }

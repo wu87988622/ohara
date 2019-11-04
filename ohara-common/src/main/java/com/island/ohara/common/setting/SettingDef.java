@@ -17,6 +17,7 @@
 package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
  * <p>SettingDef is stored by Configurator Store now, and the serialization is based on java
  * serializable. Hence, we add this Serializable interface here.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SettingDef implements JsonObject, Serializable {
   private static final long serialVersionUID = 1L;
   // -------------------------------[groups]-------------------------------//
@@ -60,7 +62,15 @@ public class SettingDef implements JsonObject, Serializable {
     FILE
   }
 
-  // -------------------------------[reference]-------------------------------//
+  // -------------------------------[value required]-------------------------------//
+  public enum Necessary {
+    REQUIRED,
+    OPTIONAL,
+    OPTIONAL_WITH_DEFAULT,
+    OPTIONAL_WITH_RANDOM_DEFAULT
+  }
+
+  // -------------------------------[Check rule]-------------------------------//
   public enum CheckRule {
     NONE,
     PERMISSIVE,
@@ -71,9 +81,13 @@ public class SettingDef implements JsonObject, Serializable {
   public enum Type {
     BOOLEAN,
     STRING,
+    POSITIVE_SHORT,
     SHORT,
+    POSITIVE_INT,
     INT,
+    POSITIVE_LONG,
     LONG,
+    POSITIVE_DOUBLE,
     DOUBLE,
     /**
      * ARRAY is a better naming than LIST as LIST has another meaning to ohara manager.
@@ -126,10 +140,14 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String KEY_KEY = "key";
   private static final String VALUE_TYPE_KEY = "valueType";
   private static final String REQUIRED_KEY = "required";
+  private static final String NECESSARY_KEY = "necessary";
   private static final String DEFAULT_VALUE_KEY = "defaultValue";
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
   private static final String TABLE_KEYS_KEY = "tableKeys";
+  // exposed to TableColumn
+  static final String RECOMMENDED_VALUES_KEY = "recommendedValues";
+  private static final String BLACKLIST_KEY = "blacklist";
 
   public static SettingDef ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
@@ -142,11 +160,13 @@ public class SettingDef implements JsonObject, Serializable {
   private final String key;
   private final Type valueType;
   @Nullable private final String defaultValue;
-  private final boolean required;
+  private final Necessary necessary;
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
   private final List<TableColumn> tableKeys;
+  private final List<String> recommendedValues;
+  private final List<String> blacklist;
 
   @JsonCreator
   private SettingDef(
@@ -156,12 +176,14 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(EDITABLE_KEY) boolean editable,
       @JsonProperty(KEY_KEY) String key,
       @JsonProperty(VALUE_TYPE_KEY) Type valueType,
-      @JsonProperty(REQUIRED_KEY) boolean required,
+      @JsonProperty(NECESSARY_KEY) Necessary necessary,
       @Nullable @JsonProperty(DEFAULT_VALUE_KEY) String defaultValue,
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) Reference reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
-      @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys) {
+      @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
+      @JsonProperty(RECOMMENDED_VALUES_KEY) List<String> recommendedValues,
+      @JsonProperty(BLACKLIST_KEY) List<String> blacklist) {
     this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
     this.editable = editable;
@@ -170,7 +192,7 @@ public class SettingDef implements JsonObject, Serializable {
       throw new IllegalArgumentException(
           "the __ is keyword so it is illegal word to definition key");
     this.valueType = Objects.requireNonNull(valueType);
-    this.required = required;
+    this.necessary = necessary;
     this.defaultValue = defaultValue;
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Objects.requireNonNull(reference);
@@ -179,6 +201,8 @@ public class SettingDef implements JsonObject, Serializable {
     // It is legal to ignore the display name.
     // However, we all hate null so we set the default value equal to key.
     this.displayName = CommonUtils.isEmpty(displayName) ? this.key : displayName;
+    this.recommendedValues = Objects.requireNonNull(recommendedValues);
+    this.blacklist = Objects.requireNonNull(blacklist);
   }
 
   /**
@@ -189,7 +213,8 @@ public class SettingDef implements JsonObject, Serializable {
   public Consumer<Object> checker() {
     return (Object value) -> {
       // we don't check the optional key with null value
-      if (!this.required && this.defaultValue == null && value == null) return;
+      if (this.necessary != Necessary.REQUIRED && this.defaultValue == null && value == null)
+        return;
 
       // besides the first rule, any other combination of settings should check the value is not
       // null (default or from api)
@@ -217,6 +242,7 @@ public class SettingDef implements JsonObject, Serializable {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
+        case POSITIVE_SHORT:
         case SHORT:
           if (trueValue instanceof Short) return;
           try {
@@ -225,6 +251,7 @@ public class SettingDef implements JsonObject, Serializable {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
+        case POSITIVE_INT:
         case INT:
           if (trueValue instanceof Integer) return;
           try {
@@ -233,6 +260,7 @@ public class SettingDef implements JsonObject, Serializable {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
+        case POSITIVE_LONG:
         case LONG:
           if (trueValue instanceof Long) return;
           try {
@@ -241,6 +269,7 @@ public class SettingDef implements JsonObject, Serializable {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
+        case POSITIVE_DOUBLE:
         case DOUBLE:
           if (trueValue instanceof Double) return;
           try {
@@ -279,10 +308,10 @@ public class SettingDef implements JsonObject, Serializable {
           break;
         case TABLE:
           try {
-            PropGroups propGroups = PropGroups.ofJson(String.valueOf(trueValue));
+            PropGroup propGroup = PropGroup.ofJson(String.valueOf(trueValue));
             if (tableKeys.isEmpty()) return;
-            if (propGroups.isEmpty()) throw new IllegalArgumentException("row is empty");
-            propGroups
+            if (propGroup.isEmpty()) throw new IllegalArgumentException("row is empty");
+            propGroup
                 .raw()
                 .forEach(
                     row -> {
@@ -302,7 +331,7 @@ public class SettingDef implements JsonObject, Serializable {
 
           } catch (Exception e) {
             throw new OharaConfigException(
-                this.key, trueValue, "can't be converted to PropGroups type");
+                this.key, trueValue, "can't be converted to PropGroup type");
           }
           break;
         case DURATION:
@@ -400,9 +429,15 @@ public class SettingDef implements JsonObject, Serializable {
     return valueType;
   }
 
+  @JsonProperty(NECESSARY_KEY)
+  public Necessary necessary() {
+    return necessary;
+  }
+
+  @Deprecated
   @JsonProperty(REQUIRED_KEY)
   public boolean required() {
-    return required;
+    return necessary == Necessary.REQUIRED;
   }
 
   @Nullable
@@ -423,7 +458,17 @@ public class SettingDef implements JsonObject, Serializable {
 
   @JsonProperty(TABLE_KEYS_KEY)
   public List<TableColumn> tableKeys() {
-    return new ArrayList<>(tableKeys);
+    return Collections.unmodifiableList(tableKeys);
+  }
+
+  @JsonProperty(RECOMMENDED_VALUES_KEY)
+  public List<String> recommendedValues() {
+    return Collections.unmodifiableList(recommendedValues);
+  }
+
+  @JsonProperty(BLACKLIST_KEY)
+  public List<String> blacklist() {
+    return Collections.unmodifiableList(blacklist);
   }
 
   @Override
@@ -446,56 +491,27 @@ public class SettingDef implements JsonObject, Serializable {
     return new Builder();
   }
 
-  public static Builder builder(SettingDef definition) {
-    return new Builder(definition);
-  }
-
   public static class Builder implements com.island.ohara.common.pattern.Builder<SettingDef> {
     private String displayName;
     private String group = COMMON_GROUP;
     private int orderInGroup = -1;
     private boolean editable = true;
     private String key;
-    private Type valueType = Type.STRING;
-    private boolean required = true;
+    private Type valueType = null;
+    private Necessary necessary = null;
     @Nullable private String defaultValue = null;
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
     private List<TableColumn> tableKeys = Collections.emptyList();
+    private List<String> recommendedValues = Collections.emptyList();
+    private List<String> blacklist = Collections.emptyList();
 
     private Builder() {}
-
-    private Builder(SettingDef definition) {
-      this.displayName = definition.displayName;
-      this.group = definition.group;
-      this.orderInGroup = definition.orderInGroup;
-      this.editable = definition.editable;
-      this.key = definition.key;
-      this.valueType = definition.valueType;
-      this.required = definition.required;
-      this.defaultValue = definition.defaultValue;
-      this.documentation = definition.documentation;
-      this.reference = definition.reference;
-      this.internal = definition.internal;
-      this.tableKeys = definition.tableKeys;
-    }
 
     @Optional("default value is false")
     public Builder internal() {
       this.internal = true;
-      return this;
-    }
-
-    /**
-     * this is a specific field fot Type.TABLE. It defines the keys' name for table.
-     *
-     * @param tableKeys key name of table
-     * @return this builder
-     */
-    @Optional("default value is empty")
-    public Builder tableKeys(List<TableColumn> tableKeys) {
-      this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
       return this;
     }
 
@@ -504,69 +520,227 @@ public class SettingDef implements JsonObject, Serializable {
       return this;
     }
 
-    @Optional("default type is STRING")
-    public Builder valueType(Type valueType) {
+    /** check and set all related fields at once. */
+    private Builder checkAndSet(Type valueType, Necessary necessary, String defaultValue) {
+      if (this.valueType != null)
+        throw new IllegalArgumentException(
+            "type is defined to " + this.valueType + ", new one:" + valueType);
       this.valueType = Objects.requireNonNull(valueType);
+      if (this.necessary != null)
+        throw new IllegalArgumentException(
+            "necessary is defined to " + this.necessary + ", new one:" + necessary);
+      this.necessary = Objects.requireNonNull(necessary);
+      if (this.defaultValue != null)
+        throw new IllegalArgumentException(
+            "defaultValue is defined to " + this.defaultValue + ", new one:" + defaultValue);
+      this.defaultValue = defaultValue;
       return this;
     }
 
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type. Noted: the following types are filled with default empty. 1) {@link
+     * SettingDef.Type#ARRAY} 2) {@link SettingDef.Type#TAGS} 3) {@link SettingDef.Type#TABLE} 4)
+     * {@link SettingDef.Type#OBJECT_KEYS}
+     *
+     * @param valueType value type
+     * @return this builder
+     */
+    public Builder required(Type valueType) {
+      return checkAndSet(valueType, Necessary.REQUIRED, null);
+    }
+
+    /**
+     * set the type and announce the empty/null value is legal
+     *
+     * @param valueType value type
+     * @return this builder
+     */
+    public Builder optional(Type valueType) {
+      return checkAndSet(valueType, Necessary.OPTIONAL, null);
+    }
+
+    /**
+     * set the value type to TABLE and give a rule to table schema.
+     *
+     * @param tableKeys key name of table
+     * @return this builder
+     */
+    public Builder optional(List<TableColumn> tableKeys) {
+      this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
+      return checkAndSet(Type.TABLE, Necessary.OPTIONAL, null);
+    }
+
+    /**
+     * set the string type and this definition generate random default value if the value is not
+     * defined.
+     *
+     * @return this builder
+     */
+    public Builder stringWithRandomDefault() {
+      return checkAndSet(Type.STRING, Necessary.OPTIONAL_WITH_RANDOM_DEFAULT, null);
+    }
+
+    /**
+     * set the binding port type and this definition generate random default value if the value is
+     * not defined.
+     *
+     * @return this builder
+     */
+    public Builder bindingPortWithRandomDefault() {
+      return checkAndSet(Type.BINDING_PORT, Necessary.OPTIONAL_WITH_RANDOM_DEFAULT, null);
+    }
+
+    /**
+     * set the type to boolean and add the default value.
+     *
+     * @param defaultValue the default boolean value
+     * @return builder
+     */
     public Builder optional(boolean defaultValue) {
-      return optional(String.valueOf(defaultValue));
+      return checkAndSet(
+          Type.BOOLEAN, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
     }
 
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type to short and add the default value.
+     *
+     * @param defaultValue the default short value
+     * @return builder
+     */
     public Builder optional(short defaultValue) {
-      return optional(String.valueOf(defaultValue));
+      return checkAndSet(Type.SHORT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
     }
 
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type to positive short and add the default value.
+     *
+     * @param defaultValue the default short value
+     * @return builder
+     */
+    public Builder positiveNumber(short defaultValue) {
+      return checkAndSet(
+          Type.POSITIVE_SHORT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+    }
+
+    /**
+     * set the type to int and add the default value.
+     *
+     * @param defaultValue the default int value
+     * @return builder
+     */
     public Builder optional(int defaultValue) {
-      return optional(String.valueOf(defaultValue));
+      return checkAndSet(Type.INT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
     }
 
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type to positive int and add the default value.
+     *
+     * @param defaultValue the default int value
+     * @return builder
+     */
+    public Builder positiveNumber(int defaultValue) {
+      return checkAndSet(
+          Type.POSITIVE_INT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+    }
+
+    /**
+     * set the type to long and add the default value.
+     *
+     * @param defaultValue the default long value
+     * @return builder
+     */
     public Builder optional(long defaultValue) {
-      return optional(String.valueOf(defaultValue));
+      return checkAndSet(Type.LONG, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
     }
 
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type to positive long and add the default value.
+     *
+     * @param defaultValue the default long value
+     * @return builder
+     */
+    public Builder positiveNumber(long defaultValue) {
+      return checkAndSet(
+          Type.POSITIVE_LONG, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+    }
+
+    /**
+     * set the type to double and add the default value.
+     *
+     * @param defaultValue the default double value
+     * @return builder
+     */
     public Builder optional(double defaultValue) {
-      return optional(String.valueOf(defaultValue));
+      return checkAndSet(
+          Type.DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
     }
 
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type to positive double and add the default value.
+     *
+     * @param defaultValue the default double value
+     * @return builder
+     */
+    public Builder positiveNumber(double defaultValue) {
+      return checkAndSet(
+          Type.POSITIVE_DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+    }
+
+    /**
+     * set the type to Duration and add the default value.
+     *
+     * @param defaultValue the default Duration value
+     * @return builder
+     */
     public Builder optional(Duration defaultValue) {
-      return optional(defaultValue.toString());
+      return checkAndSet(Type.DURATION, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue.toString());
     }
 
-    @Optional("default is \"required!\" value")
-    public Builder optional(ObjectKey key) {
-      return optional(ObjectKey.toJsonString(key));
-    }
-
-    @Optional("default is \"required!\" value")
-    public Builder optional(TopicKey key) {
-      return optional(TopicKey.toJsonString(key));
-    }
-
-    @Optional("default is \"required!\" value")
-    public Builder optional(ConnectorKey key) {
-      return optional(ConnectorKey.toJsonString(key));
-    }
-
-    @Optional("default is \"required!\" value")
+    /**
+     * set the type to string and add the default value.
+     *
+     * @param defaultValue the default string value
+     * @return builder
+     */
     public Builder optional(String defaultValue) {
-      this.required = false;
-      this.defaultValue = Objects.requireNonNull(defaultValue);
-      return this;
+      return checkAndSet(
+          Type.STRING, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
     }
 
-    @Optional("default is \"required!\" value")
-    public Builder optional() {
-      this.required = false;
-      this.defaultValue = null;
-      return this;
+    /**
+     * set the type to string and add the recommended values
+     *
+     * @param defaultValue the default string value
+     * @param recommendedValues recommended string value
+     * @return builder
+     */
+    public Builder optional(String defaultValue, List<String> recommendedValues) {
+      this.recommendedValues = Objects.requireNonNull(recommendedValues);
+      return checkAndSet(
+          Type.STRING, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
+    }
+
+    /**
+     * set the type to CLASS
+     *
+     * @param defaultValue the default CLASS value
+     * @return builder
+     */
+    public Builder optionalClassValue(String defaultValue) {
+      return checkAndSet(
+          Type.CLASS, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
+    }
+
+    /**
+     * this method includes following settings. 1. set the type to ARRAY 2. disable specific values
+     * 3. set the value to be required
+     *
+     * @param blacklist the values in this list is illegal
+     * @return builder
+     */
+    public Builder blacklist(List<String> blacklist) {
+      this.blacklist = Objects.requireNonNull(blacklist);
+      return checkAndSet(Type.ARRAY, Necessary.REQUIRED, null);
     }
 
     @Optional("this is no documentation for this setting by default")
@@ -620,13 +794,15 @@ public class SettingDef implements JsonObject, Serializable {
           orderInGroup,
           editable,
           key,
-          valueType,
-          required,
+          valueType == null ? Type.STRING : valueType,
+          necessary == null ? Necessary.REQUIRED : necessary,
           defaultValue,
           documentation,
           reference,
           internal,
-          tableKeys);
+          tableKeys,
+          recommendedValues,
+          blacklist);
     }
   }
 }

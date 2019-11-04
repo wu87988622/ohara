@@ -45,38 +45,23 @@ object BrokerApi {
   private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
-    assert(!_DEFINITIONS.contains(settingDef.key()), "duplicate key is illegal")
+    assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
     _DEFINITIONS += (settingDef.key() -> settingDef)
     settingDef
   }
-
-  val GROUP_DEFINITION: SettingDef = createDef(
-    _.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
-  val NAME_DEFINITION: SettingDef = createDef(
-    _.key(NAME_KEY).documentation("name of this worker cluster").optional().build())
-  val NODE_NAMES_DEFINITION: SettingDef =
-    createDef(_.key(NODE_NAMES_KEY).documentation("the nodes hosting this cluster").valueType(Type.ARRAY).build())
-  val TAGS_DEFINITION: SettingDef =
-    createDef(_.key(TAGS_KEY).documentation("the tags to this cluster").valueType(Type.TAGS).optional().build())
+  val GROUP_DEFINITION: SettingDef = createDef(groupDefinition)
+  val NAME_DEFINITION: SettingDef = createDef(nameDefinition)
+  val IMAGE_NAME_DEFINITION: SettingDef = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
+  val CLIENT_PORT_DEFINITION: SettingDef = createDef(clientPortDefinition)
+  val JMX_PORT_DEFINITION: SettingDef = createDef(jmxPortDefinition)
+  val NODE_NAMES_DEFINITION: SettingDef = createDef(nodeDefinition)
+  val TAGS_DEFINITION: SettingDef = createDef(tagDefinition)
   private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
   val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
       .documentation("the zookeeper cluster used to manage broker nodes")
-      .valueType(Type.OBJECT_KEYS)
+      .required(Type.OBJECT_KEY)
       .reference(Reference.ZOOKEEPER_CLUSTER)
-      .build())
-  val CLIENT_PORT_DEFINITION: SettingDef = createDef(
-    _.key(CLIENT_PORT_KEY)
-      .documentation("the port exposed to client to connect to broker")
-      .valueType(Type.PORT)
-      .optional()
-      .build())
-  private[this] val JMX_PORT_KEY: String = "jmxPort"
-  val JMX_PORT_DEFINITION: SettingDef = createDef(
-    _.key(JMX_PORT_KEY)
-      .documentation("the port exposed to client to connect to broker jmx")
-      .valueType(Type.PORT)
-      .optional()
       .build())
   private[this] val LOG_DIRS_KEY: String = "log.dirs"
   private[this] val LOG_DIRS_DEFAULT = s"$BROKER_HOME_FOLDER/data"
@@ -87,7 +72,7 @@ object BrokerApi {
   val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_PARTITIONS_KEY)
       .documentation("the number of partitions for all topics by default")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_PARTITIONS_DEFAULT)
       .build())
   private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
@@ -95,7 +80,7 @@ object BrokerApi {
   val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
       .documentation("the number of replications for internal offset topic")
-      .valueType(Type.SHORT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
       .build())
   private[this] val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
@@ -103,7 +88,7 @@ object BrokerApi {
   val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_NETWORK_THREADS_KEY)
       .documentation("the number of threads used to accept network requests")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_NETWORK_THREADS_DEFAULT)
       .build())
   private[this] val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
@@ -111,7 +96,6 @@ object BrokerApi {
   val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_IO_THREADS_KEY)
       .documentation("the number of threads used to process network requests")
-      .valueType(Type.INT)
       .optional(NUMBER_OF_IO_THREADS_DEFAULT)
       .build())
 
@@ -157,26 +141,13 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
-      .format(new RootJsonFormat[Creation] {
+    rulesOfCreation[Creation](
+      new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
-      })
-      .nullToRandomPort(CLIENT_PORT_KEY)
-      .requireBindPort(CLIENT_PORT_KEY)
-      .nullToRandomPort(JMX_PORT_KEY)
-      .requireBindPort(JMX_PORT_KEY)
-      .requireKey(ZOOKEEPER_CLUSTER_KEY_KEY)
-      .nullToString(LOG_DIRS_KEY, LOG_DIRS_DEFAULT)
-      .nullToInt(NUMBER_OF_PARTITIONS_KEY, NUMBER_OF_PARTITIONS_DEFAULT)
-      .requirePositiveNumber(NUMBER_OF_PARTITIONS_KEY)
-      .nullToInt(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY, NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
-      .requirePositiveNumber(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
-      .nullToInt(NUMBER_OF_NETWORK_THREADS_KEY, NUMBER_OF_NETWORK_THREADS_DEFAULT)
-      .requirePositiveNumber(NUMBER_OF_NETWORK_THREADS_KEY)
-      .nullToInt(NUMBER_OF_IO_THREADS_KEY, NUMBER_OF_IO_THREADS_DEFAULT)
-      .requirePositiveNumber(NUMBER_OF_IO_THREADS_KEY)
-      .refine
+      },
+      DEFINITIONS
+    )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
@@ -214,14 +185,10 @@ object BrokerApi {
   }
 
   implicit val BROKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
-    basicRulesOfUpdating[Updating]
-      .format(new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
-      })
-      .requireBindPort(CLIENT_PORT_KEY)
-      .requireBindPort(JMX_PORT_KEY)
-      .refine
+    rulesOfUpdating[Updating](new RootJsonFormat[Updating] {
+      override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+      override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
+    })
 
   final case class TopicDefinition(settingDefinitions: Seq[SettingDef])
 

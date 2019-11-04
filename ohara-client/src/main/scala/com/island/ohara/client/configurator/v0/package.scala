@@ -17,11 +17,14 @@
 package com.island.ohara.client.configurator
 
 import com.island.ohara.common.data.{Cell, Row}
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.common.setting.SettingDef.Type
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroup, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsValue, RootJsonFormat, _}
+
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 package object v0 {
 
   /**
@@ -41,6 +44,11 @@ package object v0 {
     * All services are able to bind a port to provide access.
     */
   val CLIENT_PORT_KEY = "clientPort"
+
+  /**
+    * All services are able to bind a port to provide metrics access.
+    */
+  val JMX_PORT_KEY = "jmxPort"
 
   /**
     * Noted: there are other two definition having "name"
@@ -147,6 +155,23 @@ package object v0 {
     }
   }
 
+  private[v0] implicit val PROP_GROUP_FORMAT: RootJsonFormat[PropGroup] = new RootJsonFormat[PropGroup] {
+    override def write(obj: PropGroup): JsValue = JsArray(
+      obj
+        .raw()
+        .asScala
+        .map(_.asScala.map {
+          case (key, value) => key -> JsString(value)
+        }.toMap)
+        .map(JsObject(_))
+        .toVector)
+    override def read(json: JsValue): PropGroup = try PropGroup.ofJson(json.toString())
+    catch {
+      case e: Throwable =>
+        throw DeserializationException(s"failed to convert $json to PropGroup", e)
+    }
+  }
+
   /**
     * exposed to configurator
     */
@@ -154,6 +179,21 @@ package object v0 {
     new RootJsonFormat[SettingDef] {
       override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
       override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
+    }
+
+  private[v0] implicit val DURATION_JSON_FORMAT: RootJsonFormat[Duration] =
+    new RootJsonFormat[Duration] {
+      override def read(json: JsValue): Duration = json match {
+        case JsString(s) =>
+          try CommonUtils.toDuration(s).toMillis milliseconds
+          catch {
+            case _: Throwable =>
+              throw DeserializationException(s"the value must be duration value, actual:$s")
+          }
+        case _ => throw DeserializationException(s"must be string type, actual:${json.getClass.getName}")
+      }
+
+      override def write(obj: Duration): JsValue = JsString(obj.toString)
     }
 
   /**
@@ -166,17 +206,23 @@ package object v0 {
     * @tparam T type of object
     * @return json refiner object
     */
-  private[v0] def basicRulesOfKey[T]: JsonRefiner[T] =
-    JsonRefiner[T]
-    //------------------------------ "name" and "group" rules ----------------------------------//
+  private[v0] def rulesOfKey[T]: JsonRefiner[T] =
+    limitsOfKey[T]
     // we random a default name for this object
       .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_KEY_LENGTH / 2))
       .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
+
+  /**
+    * add limits to group and name.
+    * @return refiner
+    */
+  private[v0] def limitsOfKey[T]: JsonRefiner[T] =
+    JsonRefiner[T]
+    // we random a default name for this object
       .stringRestriction(Set(NAME_KEY, GROUP_KEY))
       .withNumber()
       .withLowerCase()
       .toRefiner
-      //-------------------------------------- restrict rules -------------------------------------//
       // the sum of length: name + group <= LIMIT_OF_KEY_LENGTH
       .stringSumLengthLimit(Set(NAME_KEY, GROUP_KEY), LIMIT_OF_KEY_LENGTH)
 
@@ -187,16 +233,16 @@ package object v0 {
     * 3) nodeName cannot be empty array.
     * 4) imageName will use {defaultImage} if not defined.
     * 5) tags will use empty map if not defined.
-    * @param defaultImage this cluster default images
     * @tparam T type of creation
     * @return json refiner object
     */
-  private[v0] def basicRulesOfCreation[T <: ClusterCreation](defaultImage: String): JsonRefiner[T] =
-    basicRulesOfKey[T]
-    // for each field, we should reject any empty string
+  private[v0] def rulesOfCreation[T <: ClusterCreation](format: RootJsonFormat[T],
+                                                        definitions: Seq[SettingDef]): OharaJsonFormat[T] =
+    limitsOfKey[T]
+      .format(format)
+      .definitions(definitions)
+      // for each field, we should reject any empty string
       .rejectEmptyString()
-      // cluster creation should use the default image of current version
-      .nullToString(IMAGE_NAME_KEY, defaultImage)
       //-------------------------------------- "nodeNames" rules ---------------------------------//
       // nodeNames is the only required field in creating cluster, add the requirement for it
       .requireKey(NODE_NAMES_KEY)
@@ -210,8 +256,7 @@ package object v0 {
       // the node names can't be empty
       .rejectEmpty()
       .toRefiner
-      // default is empty tags
-      .nullToEmptyObject(TAGS_KEY)
+      .refine
 
   /**
     * use basic check rules of update request for json refiner.
@@ -221,20 +266,23 @@ package object v0 {
     * @tparam T type of update
     * @return json refiner object
     */
-  private[v0] def basicRulesOfUpdating[T <: ClusterUpdating]: JsonRefiner[T] = JsonRefiner[T]
-  // for each field, we should reject any empty string
-    .rejectEmptyString()
-    //-------------------------------------- "nodeNames" rules ---------------------------------//
-    .arrayRestriction(NODE_NAMES_KEY)
-    // we use the same sub-path for "node" and "actions" urls:
-    // xxx/cluster/{name}/{node}
-    // xxx/cluster/{name}/[start|stop]
-    // the "actions" keywords must be avoided in nodeNames parameter
-    .rejectKeyword(START_COMMAND)
-    .rejectKeyword(STOP_COMMAND)
-    // the node names can't be empty
-    .rejectEmpty()
-    .toRefiner
+  private[v0] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): OharaJsonFormat[T] =
+    JsonRefiner[T]
+      .format(format)
+      // for each field, we should reject any empty string
+      .rejectEmptyString()
+      //-------------------------------------- "nodeNames" rules ---------------------------------//
+      .arrayRestriction(NODE_NAMES_KEY)
+      // we use the same sub-path for "node" and "actions" urls:
+      // xxx/cluster/{name}/{node}
+      // xxx/cluster/{name}/[start|stop]
+      // the "actions" keywords must be avoided in nodeNames parameter
+      .rejectKeyword(START_COMMAND)
+      .rejectKeyword(STOP_COMMAND)
+      // the node names can't be empty
+      .rejectEmpty()
+      .toRefiner
+      .refine
 
   /**
     * there are many objects containing "settings", and it is filterable so we separate the related code for reusing.
@@ -273,13 +321,6 @@ package object v0 {
     */
   def matchOptionString(optionString: Option[String], value: String): Boolean =
     optionString.exists(_.toLowerCase == value.toLowerCase) || (optionString.isEmpty && value.toLowerCase == "none")
-
-  def matchArray(array: Set[String], value: String): Boolean = value.parseJson match {
-    case JsArray(es) =>
-      if (es.forall(_.isInstanceOf[JsString])) es.map(_.convertTo[String]).toSet == array
-      else false
-    case _ => false
-  }
 
   private[this] def toJson(value: Any): JsValue = value match {
     //--------[primitive type]--------//
@@ -352,4 +393,32 @@ package object v0 {
         Cell.of(name, toValue(value))
     }.toSeq: _*
   )
+
+  //------------------[quick builder for cluster services]------------------//
+  private[v0] def groupDefinition: SettingDef.Builder => SettingDef =
+    _.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+
+  private[v0] def nameDefinition: SettingDef.Builder => SettingDef =
+    _.key(NAME_KEY).documentation("name of this worker cluster").stringWithRandomDefault().build()
+
+  private[v0] def imageNameDefinition(defaultImage: String): SettingDef.Builder => SettingDef =
+    _.key(IMAGE_NAME_KEY).optional(defaultImage).documentation("the docker image of this service").build()
+
+  private[v0] def clientPortDefinition: SettingDef.Builder => SettingDef =
+    _.key(CLIENT_PORT_KEY).documentation("the port used to expose the service").bindingPortWithRandomDefault().build()
+
+  private[v0] def jmxPortDefinition: SettingDef.Builder => SettingDef =
+    _.key(JMX_PORT_KEY)
+      .documentation("the port used to expose the metrics of this cluster")
+      .bindingPortWithRandomDefault()
+      .build()
+
+  private[v0] def nodeDefinition: SettingDef.Builder => SettingDef =
+    _.key(NODE_NAMES_KEY)
+      .documentation("the nodes hosting this cluster")
+      .blacklist(Seq(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
+      .build()
+
+  private[v0] def tagDefinition: SettingDef.Builder => SettingDef =
+    _.key(TAGS_KEY).documentation("the tags to this cluster").optional(Type.TAGS).build()
 }

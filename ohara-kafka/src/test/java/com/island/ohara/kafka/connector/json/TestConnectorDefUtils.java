@@ -20,12 +20,11 @@ import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.rule.OharaTest;
-import com.island.ohara.common.setting.PropGroups;
+import com.island.ohara.common.setting.PropGroup;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.kafka.common.config.ConfigDef;
@@ -37,27 +36,11 @@ import org.mockito.Mockito;
 
 public class TestConnectorDefUtils extends OharaTest {
 
-  @Test(expected = NoSuchElementException.class)
-  public void noVersion() {
-    ConnectorDefUtils.version(ConnectorDefUtils.DEFINITIONS_DEFAULT);
-  }
-
-  @Test(expected = NoSuchElementException.class)
-  public void noRevision() {
-    ConnectorDefUtils.revision(ConnectorDefUtils.DEFINITIONS_DEFAULT);
-  }
-
-  @Test(expected = NoSuchElementException.class)
-  public void noAuthor() {
-    ConnectorDefUtils.author(ConnectorDefUtils.DEFINITIONS_DEFAULT);
-  }
-
   @Test
   public void testToConfigDefKey() {
     SettingDef settingDef =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.STRING)
             .displayName(CommonUtils.randomString())
             .group(CommonUtils.randomString())
             .reference(SettingDef.Reference.WORKER_CLUSTER)
@@ -82,7 +65,6 @@ public class TestConnectorDefUtils extends OharaTest {
     SettingDef settingDef =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.STRING)
             .displayName(CommonUtils.randomString())
             .group(CommonUtils.randomString())
             .reference(SettingDef.Reference.WORKER_CLUSTER)
@@ -170,31 +152,15 @@ public class TestConnectorDefUtils extends OharaTest {
   }
 
   @Test
-  public void testCopy() {
-    ConnectorDefUtils.DEFINITIONS_DEFAULT.forEach(
-        d -> Assert.assertEquals(d.toJsonString(), SettingDef.builder(d).build().toJsonString()));
-  }
-
-  @Test
-  public void testTableValidatorWithRequired() {
-    testTableValidator(false);
-  }
-
-  @Test
-  public void testTableValidatorWithOptional() {
-    testTableValidator(true);
-  }
-
-  private void testTableValidator(boolean optional) {
-    SettingDef.Builder builder =
-        SettingDef.builder().key(CommonUtils.randomString()).valueType(SettingDef.Type.TABLE);
-    SettingDef settingDef = optional ? builder.optional().build() : builder.build();
+  public void testTableValidator() {
+    SettingDef settingDef =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .optional(SettingDef.Type.TABLE)
+            .build();
     ConfigDef.ConfigKey key = ConnectorDefUtils.toConfigKey(settingDef);
     Assert.assertNotNull(key.validator);
-    if (optional) key.validator.ensureValid(settingDef.key(), null);
-    else
-      assertException(
-          ConfigException.class, () -> key.validator.ensureValid(settingDef.key(), null));
+    key.validator.ensureValid(settingDef.key(), null);
     assertException(ConfigException.class, () -> key.validator.ensureValid(settingDef.key(), 123));
     assertException(
         ConfigException.class,
@@ -204,7 +170,7 @@ public class TestConnectorDefUtils extends OharaTest {
 
     key.validator.ensureValid(
         settingDef.key(),
-        PropGroups.ofColumns(
+        PropGroup.ofColumns(
                 Collections.singletonList(
                     Column.builder()
                         .name(CommonUtils.randomString())
@@ -343,7 +309,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(s -> s.key().equals(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()))
             .findFirst()
             .get();
-    Assert.assertTrue(setting.required());
+    Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL_WITH_RANDOM_DEFAULT);
     Assert.assertFalse(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
@@ -358,7 +324,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(s -> s.key().equals(ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()))
             .findFirst()
             .get();
-    Assert.assertTrue(setting.required());
+    Assert.assertEquals(setting.necessary(), SettingDef.Necessary.REQUIRED);
     Assert.assertTrue(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
@@ -374,8 +340,8 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(s -> s.key().equals(ConnectorDefUtils.TAGS_DEFINITION.key()))
             .findFirst()
             .get();
-    Assert.assertFalse(setting.required());
-    Assert.assertTrue(setting.internal());
+    Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL);
+    Assert.assertFalse(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());
@@ -389,7 +355,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(s -> s.key().equals(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
             .findFirst()
             .get();
-    Assert.assertTrue(setting.required());
+    Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL);
     Assert.assertFalse(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDef.Reference.TOPIC, setting.reference());

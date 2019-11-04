@@ -19,7 +19,6 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
@@ -43,39 +42,32 @@ object ZookeeperApi {
   private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
-    assert(!_DEFINITIONS.contains(settingDef.key()), "duplicate key is illegal")
+    assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
     _DEFINITIONS += (settingDef.key() -> settingDef)
     settingDef
   }
-  val GROUP_DEFINITION: SettingDef =
-    createDef(_.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
-  val NAME_DEFINITION: SettingDef =
-    createDef(_.key(NAME_KEY).documentation("name of this worker cluster").optional().build())
-  val NODE_NAMES_DEFINITION: SettingDef =
-    createDef(_.key(NODE_NAMES_KEY).documentation("the nodes hosting this cluster").valueType(Type.ARRAY).build())
-  val TAGS_DEFINITION: SettingDef =
-    createDef(_.key(TAGS_KEY).documentation("the tags to this cluster").valueType(Type.TAGS).optional().build())
-  val CLIENT_PORT_DEFINITION: SettingDef = createDef(
-    _.key(CLIENT_PORT_KEY)
-      .documentation("the port exposed to client to connect to zookeeper")
-      .valueType(Type.PORT)
-      .optional()
-      .build())
+  val GROUP_DEFINITION: SettingDef = createDef(groupDefinition)
+  val NAME_DEFINITION: SettingDef = createDef(nameDefinition)
+  val IMAGE_NAME_DEFINITION: SettingDef = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
+  val CLIENT_PORT_DEFINITION: SettingDef = createDef(clientPortDefinition)
+  val JMX_PORT_DEFINITION: SettingDef = createDef(jmxPortDefinition)
+  val NODE_NAMES_DEFINITION: SettingDef = createDef(nodeDefinition)
+  val TAGS_DEFINITION: SettingDef = createDef(tagDefinition)
   private[this] val PEER_PORT_KEY = "peerPort"
   val PEER_PORT_DEFINITION: SettingDef =
     createDef(
-      _.key(PEER_PORT_KEY).documentation("the port exposed to each quorum").valueType(Type.PORT).optional().build())
+      _.key(PEER_PORT_KEY).documentation("the port exposed to each quorum").bindingPortWithRandomDefault().build())
   private[this] val ELECTION_PORT_KEY = "electionPort"
   val ELECTION_PORT_DEFINITION: SettingDef =
     createDef(
-      _.key(ELECTION_PORT_KEY).documentation("quorum leader election port").valueType(Type.PORT).optional().build())
+      _.key(ELECTION_PORT_KEY).documentation("quorum leader election port").bindingPortWithRandomDefault().build())
   // export these variables to collie for creating
   private[this] val TICK_TIME_KEY = "tickTime"
   private[this] val TICK_TIME_DEFAULT: Int = 2000
   val TICK_TIME_DEFINITION: SettingDef = createDef(
     _.key(TICK_TIME_KEY)
       .documentation("basic time unit in zookeeper")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(TICK_TIME_DEFAULT)
       .build())
   private[this] val INIT_LIMIT_KEY = "initLimit"
@@ -83,7 +75,7 @@ object ZookeeperApi {
   val INIT_LIMIT_DEFINITION: SettingDef = createDef(
     _.key(INIT_LIMIT_KEY)
       .documentation("timeout to connect to leader")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(INIT_LIMIT_DEFAULT)
       .build())
   private[this] val SYNC_LIMIT_KEY = "syncLimit"
@@ -91,7 +83,7 @@ object ZookeeperApi {
   val SYNC_LIMIT_DEFINITION: SettingDef = createDef(
     _.key(SYNC_LIMIT_KEY)
       .documentation("the out-of-date of a sever from leader")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(SYNC_LIMIT_DEFAULT)
       .build())
   private[this] val DATA_DIR_KEY = "dataDir"
@@ -137,25 +129,13 @@ object ZookeeperApi {
     * exposed to configurator
     */
   private[ohara] implicit val ZOOKEEPER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
-      .format(new RootJsonFormat[Creation] {
+    rulesOfCreation[Creation](
+      new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
-      })
-      .nullToRandomPort(CLIENT_PORT_KEY)
-      .requireBindPort(CLIENT_PORT_KEY)
-      .nullToRandomPort(PEER_PORT_KEY)
-      .requireBindPort(PEER_PORT_KEY)
-      .nullToRandomPort(ELECTION_PORT_KEY)
-      .requireBindPort(ELECTION_PORT_KEY)
-      .nullToInt(TICK_TIME_KEY, TICK_TIME_DEFAULT)
-      .requirePositiveNumber(TICK_TIME_KEY)
-      .nullToInt(INIT_LIMIT_KEY, INIT_LIMIT_DEFAULT)
-      .requirePositiveNumber(INIT_LIMIT_KEY)
-      .nullToInt(SYNC_LIMIT_KEY, SYNC_LIMIT_DEFAULT)
-      .requirePositiveNumber(SYNC_LIMIT_KEY)
-      .nullToString(DATA_DIR_KEY, DATA_DIR_DEFAULT)
-      .refine
+      },
+      DEFINITIONS
+    )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
@@ -189,16 +169,12 @@ object ZookeeperApi {
   }
 
   implicit val ZOOKEEPER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
-    basicRulesOfUpdating[Updating]
-      .format(new RootJsonFormat[Updating] {
+    rulesOfUpdating[Updating](
+      new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
-      })
-      // restrict rules
-      .requireBindPort(CLIENT_PORT_KEY)
-      .requireBindPort(PEER_PORT_KEY)
-      .requireBindPort(ELECTION_PORT_KEY)
-      .refine
+      }
+    )
 
   /**
     * There is no extra information for a running zookeeper cluster :)

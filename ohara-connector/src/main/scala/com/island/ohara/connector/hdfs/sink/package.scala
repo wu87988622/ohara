@@ -33,7 +33,7 @@ package object sink {
     .builder()
     .displayName("HDFS URL")
     .documentation("Input HDFS namenode location")
-    .valueType(SettingDef.Type.STRING)
+    .required(SettingDef.Type.STRING)
     .key(HDFS_URL_KEY)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()

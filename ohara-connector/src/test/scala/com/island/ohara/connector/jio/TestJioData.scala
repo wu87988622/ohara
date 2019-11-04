@@ -37,9 +37,6 @@ class TestJioData extends OharaTest with Matchers {
       Cell.of(CommonUtils.randomString(5), 100.asInstanceOf[Double])
     )
     val copy = JioData(row).row
-    copy.cells().asScala.foreach { cell =>
-      println(s"[CHIA] cell:${cell.name()}")
-    }
     copy.size shouldBe row.size()
     row.cells.asScala.foreach { cell =>
       copy.cell(cell.name()).value() match {

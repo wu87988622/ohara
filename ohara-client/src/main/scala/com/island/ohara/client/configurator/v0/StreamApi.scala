@@ -19,7 +19,6 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
@@ -28,8 +27,8 @@ import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-
 object StreamApi {
 
   val STREAM_PREFIX_PATH: String = "streams"
@@ -38,6 +37,8 @@ object StreamApi {
     * container name is controlled by streamRoute, the service name here use six words was ok.
     */
   val STREAM_SERVICE_NAME: String = STREAM_PREFIX_PATH
+
+  def DEFINITIONS: Seq[SettingDef] = StreamDefUtils.DEFAULT.asScala
 
   /**
     * StreamApp Docker Image name
@@ -77,11 +78,6 @@ object StreamApi {
 
     def jarKey: ObjectKey = settings.jarKey.get
 
-    /**
-      * exposed to StreamCollie
-      */
-    private[ohara] def jarInfo: Option[FileInfo] = settings.jarInfo
-
     private[ohara] def connectionProps: String = settings.connectionProps.get
 
     def jmxPort: Int = settings.jmxPort.get
@@ -91,24 +87,13 @@ object StreamApi {
 
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    // TODO: reuse the global checks for streamapp in #2288
-    // the following checkers is a part of global cluster checks.
-    // We don't reuse the global checks since streamapp accept empty/null nodeNames ... by chia
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
-      .format(new RootJsonFormat[Creation] {
+    rulesOfCreation[Creation](
+      new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
-      })
-      //----------------------------------------//
-      .nullToRandomPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      .requireKey(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
-      .rejectEmptyArray(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
-      .requireKey(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
-      .rejectEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
-      // restrict rules
-      .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      .requireKey(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key())
-      .refine
+      },
+      DEFINITIONS
+    )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
@@ -121,17 +106,8 @@ object StreamApi {
     override def imageName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
 
-    def jarKey: Option[ObjectKey] = jarInfo
-      .map(_.key)
-      .orElse(noJsNull(settings).get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read))
-
-    /**
-      * Normally, Update request should not carry the jar info since the jar info is returned by file store according
-      * to input jar key. Hence, this method is not public and it is opened to this scope only.
-      * @return jar info
-      */
-    private[StreamApi] def jarInfo: Option[FileInfo] =
-      noJsNull(settings).get(StreamDefUtils.JAR_INFO_DEFINITION.key()).map(FileInfoApi.FILE_INFO_JSON_FORMAT.read)
+    def jarKey: Option[ObjectKey] =
+      noJsNull(settings).get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
 
     private[StreamApi] def connectionProps: Option[String] =
       noJsNull(settings).get(StreamDefUtils.BROKER_DEFINITION.key()).map(_.convertTo[String])
@@ -155,15 +131,12 @@ object StreamApi {
       }
   }
   implicit val STREAM_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
-    basicRulesOfUpdating[Updating]
-      .format(new RootJsonFormat[Updating] {
+    rulesOfUpdating[Updating](
+      new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
-      })
-      .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      .rejectEmptyArray(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
-      .rejectEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
-      .refine
+      }
+    )
 
   final case class StreamClusterDefinition(className: String, settingDefinitions: Seq[SettingDef])
 
@@ -229,8 +202,6 @@ object StreamApi {
       */
     def jarKey: ObjectKey = settings.jarKey
 
-    def jarInfo: FileInfo = settings.jarInfo.get
-
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
     def toTopicKeys: Set[TopicKey] = settings.toTopicKeys
@@ -258,11 +229,6 @@ object StreamApi {
   trait Request extends ClusterRequest {
     def jarKey(jarKey: ObjectKey): Request.this.type =
       setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarKey).parseJson)
-    def jarInfo(jarInfo: FileInfo): Request.this.type = {
-      setting(StreamDefUtils.JAR_INFO_DEFINITION.key(), FileInfoApi.FILE_INFO_JSON_FORMAT.write(jarInfo))
-      // Since the jarKey is required in API, we fill the "required" field by jarInfo
-      setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarInfo.key).parseJson)
-    }
     def fromTopicKey(fromTopicKey: TopicKey): Request.this.type = fromTopicKeys(Set(fromTopicKey))
     def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request.this.type =
       setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),

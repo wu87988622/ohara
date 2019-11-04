@@ -41,7 +41,7 @@ class MyConnector extends RowSourceConnector {
 
   override protected def _definitions(): util.List[SettingDef] = Collections.singletonList(
     // used by TestWorkerClient.passIncorrectDuration
-    SettingDef.builder().key(MyConnector.DURATION_KEY).optional().valueType(Type.DURATION).build()
+    SettingDef.builder().key(MyConnector.DURATION_KEY).optional(Type.DURATION).build()
   )
 }
 

@@ -44,7 +44,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Broker cluster key")
           .documentation("the key of broker cluster used to transfer data for this streamApp")
-          .valueType(Type.OBJECT_KEY)
+          .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.BROKER_CLUSTER)
           .build();
 
@@ -55,7 +55,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Broker list")
           .documentation("The broker list of current workspace")
-          .valueType(Type.STRING)
+          .required(Type.STRING)
           .internal()
           .build();
 
@@ -66,8 +66,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Image name")
           .documentation("The image name of this streamApp running with")
-          .valueType(Type.STRING)
-          .optional()
+          .optional("oharastream/streamapp:" + VersionUtils.VERSION)
           // In manager, user cannot change the image name
           .readonly()
           .build();
@@ -79,8 +78,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("StreamApp name")
           .documentation("The unique name of this streamApp")
-          .valueType(Type.STRING)
-          .optional()
+          .stringWithRandomDefault()
           .build();
 
   public static final SettingDef GROUP_DEFINITION =
@@ -90,9 +88,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("StreamApp group")
           .documentation("The unique group of this streamApp")
-          .valueType(Type.STRING)
-          .internal()
-          .readonly()
+          .optional("default")
           .build();
 
   public static final SettingDef JAR_KEY_DEFINITION =
@@ -103,20 +99,8 @@ public final class StreamDefUtils {
           .displayName("Jar primary key")
           .documentation("The jar key of this streamApp using")
           .readonly()
-          .valueType(Type.OBJECT_KEY)
+          .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.FILE)
-          .build();
-
-  /** this field is used to store whole info for a jar file */
-  public static final SettingDef JAR_INFO_DEFINITION =
-      SettingDef.builder()
-          .key("jarInfo")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Jar Info")
-          .documentation("The jar info of this streamApp using")
-          .valueType(Type.STRING)
-          .internal()
           .build();
 
   public static final SettingDef FROM_TOPIC_KEYS_DEFINITION =
@@ -127,7 +111,9 @@ public final class StreamDefUtils {
           .reference(SettingDef.Reference.TOPIC)
           .displayName("From topic of data consuming from")
           .documentation("The topic name of this streamApp should consume from")
-          .valueType(Type.OBJECT_KEYS)
+          // we have to make this field optional since our UI needs to create stream without
+          // topics...
+          .optional(Type.OBJECT_KEYS)
           .build();
 
   public static final SettingDef TO_TOPIC_KEYS_DEFINITION =
@@ -138,7 +124,9 @@ public final class StreamDefUtils {
           .reference(SettingDef.Reference.TOPIC)
           .displayName("To topic of data produce to")
           .documentation("The topic name of this streamApp should produce to")
-          .valueType(Type.OBJECT_KEYS)
+          // we have to make this field optional since our UI needs to create stream without
+          // topics...
+          .optional(Type.OBJECT_KEYS)
           .build();
 
   public static final SettingDef JMX_PORT_DEFINITION =
@@ -148,8 +136,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("JMX export port")
           .documentation("The port of this streamApp using to export jmx metrics")
-          .valueType(Type.PORT)
-          .optional()
+          .bindingPortWithRandomDefault()
           .build();
 
   public static final SettingDef NODE_NAMES_DEFINITION =
@@ -159,7 +146,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Node name list")
           .documentation("The used node name list of this streamApp")
-          .valueType(Type.ARRAY)
+          .blacklist(Arrays.asList("stop", "start", "pause", "resume"))
           .build();
 
   public static final SettingDef VERSION_DEFINITION =
@@ -170,7 +157,6 @@ public final class StreamDefUtils {
           .displayName("Version")
           .documentation("Version of streamApp")
           .readonly()
-          .valueType(Type.STRING)
           .optional(VersionUtils.VERSION)
           .build();
 
@@ -182,7 +168,6 @@ public final class StreamDefUtils {
           .displayName("Revision")
           .readonly()
           .documentation("Revision of streamApp")
-          .valueType(Type.STRING)
           .optional(VersionUtils.REVISION)
           .build();
 
@@ -194,7 +179,6 @@ public final class StreamDefUtils {
           .displayName("Author")
           .readonly()
           .documentation("Author of streamApp")
-          .valueType(Type.STRING)
           .optional(VersionUtils.USER)
           .build();
 
@@ -205,34 +189,14 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Tags")
           .documentation("Tags of streamApp")
-          .valueType(Type.TAGS)
-          // In manager, the tags field is for internal use
-          .internal()
-          .optional()
+          .optional(Type.TAGS)
           .build();
 
   // this is the jar url definition that used in container start argument
-  public static final SettingDef JAR_URL_DEFINITION =
-      SettingDef.builder()
-          .key("jarUrl")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Jar url key")
-          .documentation("The jar url that will be used in streamApp")
-          .internal()
-          .valueType(Type.STRING)
-          .build();
+  public static final String JAR_URL_KEY = "jarUrl";
 
   // this is the streamApp metric group definition
-  public static final SettingDef STREAMAPP_METRIC_GROUP_DEFINITION =
-      SettingDef.builder()
-          .key("streamMetricGroup")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .optional("streamapp")
-          .internal()
-          .valueType(Type.STRING)
-          .build();
+  public static final String STREAM_METRICS_GROUP_DEFAULT = "streamapp";
 
   /**
    * Load configDefs from default definitions.

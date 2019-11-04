@@ -28,71 +28,62 @@ package object connector {
       .builder()
       .displayName("dumb boolean")
       .key("dumb.boolean")
-      .valueType(Type.BOOLEAN)
       .documentation("boolean for testing")
-      .optional("false")
+      .optional(false)
       .build(),
     SettingDef
       .builder()
       .displayName("dumb short")
       .key("dumb.short")
-      .valueType(Type.SHORT)
       .documentation("short for testing")
-      .optional("10")
+      .optional(10.asInstanceOf[Short])
       .build(),
     SettingDef
       .builder()
       .displayName("dumb integer")
       .key("dumb.integer")
-      .valueType(Type.INT)
       .documentation("integer for testing")
-      .optional("10")
+      .optional(10)
       .build(),
     SettingDef
       .builder()
       .displayName("dumb long")
       .key("dumb.long")
-      .valueType(Type.LONG)
       .documentation("long for testing")
-      .optional("10")
+      .optional(10L)
       .build(),
     SettingDef
       .builder()
       .displayName("dumb double")
       .key("dumb.double")
-      .valueType(Type.DOUBLE)
       .documentation("double for testing")
-      .optional("10")
+      .optional(10D)
       .build(),
     SettingDef
       .builder()
       .displayName("dumb array")
       .key("dumb.array")
-      .valueType(Type.ARRAY)
+      .optional(Type.ARRAY)
       .documentation("array for testing")
-      .optional()
       .build(),
     SettingDef
       .builder()
       .displayName("dumb password")
       .key("dumb.password")
-      .valueType(Type.PASSWORD)
+      .optional(Type.PASSWORD)
       .documentation("password for testing")
-      .optional()
       .build(),
     SettingDef
       .builder()
       .displayName("dumb jdbc table")
       .key("dumb.jdbc.table")
-      .valueType(Type.JDBC_TABLE)
+      .optional(Type.JDBC_TABLE)
       .documentation("jdbc table for testing")
-      .optional()
       .build(),
     SettingDef
       .builder()
       .displayName("dumb duration")
       .key("dumb.duration")
-      .valueType(Type.DURATION)
       .documentation("duration for testing")
       .optional(java.time.Duration.ofSeconds(30))
       .build(),
@@ -100,17 +91,9 @@ package object connector {
       .builder()
       .displayName("dumb port")
       .key("dumb.port")
-      .valueType(Type.PORT)
       .documentation("port for testing")
       .optional("9999")
       .build(),
-    SettingDef
-      .builder()
-      .displayName("dumb tags")
-      .key("dumb.tags")
-      .valueType(Type.TAGS)
-      .documentation("Tags")
-      .optional()
-      .build(),
+    SettingDef.builder().displayName("dumb tags").key("dumb.tags").optional(Type.TAGS).documentation("Tags").build(),
   )
 }

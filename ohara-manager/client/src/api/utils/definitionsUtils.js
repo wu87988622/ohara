@@ -23,7 +23,14 @@ import {
   option,
   generateValueWithDefaultValue,
 } from '../utils/validation';
-import { isString, isArray, isFunction } from 'lodash';
+import { isArray, isFunction } from 'lodash';
+
+const necessaryType = {
+  required: 'REQUIRED',
+  optional: 'OPTIONAL',
+  defaultValue: 'OPTIONAL_WITH_DEFAULT',
+  randomValue: 'OPTIONAL_WITH_RANDOM_DEFAULT',
+};
 
 const getTypeWithValueType = key => {
   switch (key) {
@@ -79,12 +86,13 @@ export const getCluster = params => {
   settingDefinitions.forEach(definition => {
     const obj = definition;
     const keys = Object.keys(obj);
-    keys.forEach(key => {
-      if (!isString(obj[key])) return;
-      if (obj[key].indexOf('.') !== -1) {
-        obj[key] = obj[key].replace(/\./g, '__');
-      }
-    });
+    keys
+      .filter(key => key === 'key')
+      .forEach(key => {
+        if (obj[key].indexOf('.') !== -1) {
+          obj[key] = obj[key].replace(/\./g, '__');
+        }
+      });
     definitionsObj[obj.key] = obj;
   });
   return definitionsObj;
@@ -108,12 +116,15 @@ export const createBody = params => {
       body = [];
       body.push(type);
     }
-    if (!params[key].required && isArray(body)) {
+    if (params[key].necessary === necessaryType.optional && isArray(body)) {
       body.push(option);
     }
 
-    if (params[key].defaultValue && params[key].editable && isArray(body)) {
-      //TODO : Temporary modification waiting for backend repair #3162
+    if (
+      params[key].necessary === necessaryType.defaultValue &&
+      params[key].editable &&
+      isArray(body)
+    ) {
       body.push(generateValueWithDefaultValue(params[key].defaultValue, type));
     }
     bodyObj[key] = body;

@@ -35,18 +35,14 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
 
 final class ConnectorUtils {
-  private static SettingDef copy(String value, SettingDef definition) {
-    return SettingDef.builder(definition).optional(value).build();
-  }
-
   static List<SettingDef> toSettingDefinitions(
       List<SettingDef> settingDefinitions, ConnectorVersion version, boolean needColumnDefinition) {
     return Stream.of(
             settingDefinitions,
             Arrays.asList(
-                copy(version.version(), ConnectorDefUtils.VERSION_DEFINITION),
-                copy(version.revision(), ConnectorDefUtils.REVISION_DEFINITION),
-                copy(version.author(), ConnectorDefUtils.AUTHOR_DEFINITION)))
+                ConnectorDefUtils.createVersionDefinition(version.version()),
+                ConnectorDefUtils.createRevisionDefinition(version.revision()),
+                ConnectorDefUtils.createAuthorDefinition(version.author())))
         .flatMap(Collection::stream)
         .filter(
             definition ->

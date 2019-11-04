@@ -24,7 +24,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -69,15 +69,11 @@ class TestConnectorRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def runConnectorWithoutTopic(): Unit =
-    intercept[DeserializationException] {
-      result(
-        connectorApi.request
-          .name(CommonUtils.randomString(10))
-          .className(CommonUtils.randomString(10))
-          .workerClusterKey(workerClusterInfo.key)
-          .create())
-    }.getMessage should include("topicKeys")
+  def createConnectorWithoutTopics(): Unit = result(
+    connectorApi.request
+      .className(CommonUtils.randomString())
+      .workerClusterKey(workerClusterInfo.key)
+      .create()).topicKeys shouldBe Set.empty
 
   @Test
   def test(): Unit = {

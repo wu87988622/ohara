@@ -39,7 +39,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import spray.json.{JsArray, JsString, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsString, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -216,7 +216,8 @@ package object route {
     objectChecker: ObjectChecker,
     serviceCollie: ServiceCollie): Future[Unit] =
     objectChecker.checkList
-      .nodeNames(req.nodeNames)
+      .nodeNames(
+        if (req.nodeNames.isEmpty) throw DeserializationException("node names can't be empty") else req.nodeNames)
       .allZookeepers()
       .allBrokers()
       .allWorkers()

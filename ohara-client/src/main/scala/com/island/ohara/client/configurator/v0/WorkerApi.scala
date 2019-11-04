@@ -45,67 +45,54 @@ object WorkerApi {
   private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
-    assert(!_DEFINITIONS.contains(settingDef.key()), "duplicate key is illegal")
+    assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
     _DEFINITIONS += (settingDef.key() -> settingDef)
     settingDef
   }
-  val GROUP_DEFINITION: SettingDef =
-    createDef(_.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
-  val NAME_DEFINITION: SettingDef =
-    createDef(_.key(NAME_KEY).documentation("name of this worker cluster").optional().build())
-  val NODE_NAMES_DEFINITION: SettingDef =
-    createDef(_.key(NODE_NAMES_KEY).documentation("the nodes hosting this cluster").valueType(Type.ARRAY).build())
-  val TAGS_DEFINITION: SettingDef =
-    createDef(_.key(TAGS_KEY).documentation("the tags to this cluster").valueType(Type.TAGS).optional().build())
+  val GROUP_DEFINITION: SettingDef = createDef(groupDefinition)
+  val NAME_DEFINITION: SettingDef = createDef(nameDefinition)
+  val IMAGE_NAME_DEFINITION: SettingDef = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
+  val CLIENT_PORT_DEFINITION: SettingDef = createDef(clientPortDefinition)
+  val JMX_PORT_DEFINITION: SettingDef = createDef(jmxPortDefinition)
+  val NODE_NAMES_DEFINITION: SettingDef = createDef(nodeDefinition)
+  val TAGS_DEFINITION: SettingDef = createDef(tagDefinition)
   private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
   val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(BROKER_CLUSTER_KEY_KEY)
       .documentation("broker cluster used to store data for this worker cluster")
-      .valueType(Type.OBJECT_KEY)
+      .required(Type.OBJECT_KEY)
       .reference(Reference.BROKER_CLUSTER)
       .build())
-  val CLIENT_PORT_DEFINITION: SettingDef =
-    createDef(
-      _.key(CLIENT_PORT_KEY)
-        .documentation("the port used to receive HTTP request")
-        .valueType(Type.PORT)
-        .optional()
-        .build())
-  private[this] val JMX_PORT_KEY = "jmxPort"
-  val JMX_PORT_DEFINITION: SettingDef =
-    createDef(_.key(JMX_PORT_KEY).documentation("the port used to expose jmx").valueType(Type.PORT).optional().build())
   private[this] val FILE_KEYS_KEY = "fileKeys"
   val FILE_KEYS_DEFINITION: SettingDef = createDef(
     _.key(FILE_KEYS_KEY)
       .documentation("the files you want to deploy on worker cluster")
-      .valueType(Type.OBJECT_KEYS)
+      .optional(Type.OBJECT_KEYS)
       .reference(Reference.FILE)
-      .optional()
       .build())
   private[this] val FREE_PORTS_KEY = "freePorts"
   val FREE_PORTS_DEFINITION: SettingDef = createDef(
     _.key(FREE_PORTS_KEY)
       .documentation(
         "the pre-binding ports for this worker cluster. If your connectors have to use socket, please bind the port in running worker cluster")
-      .valueType(Type.PORT)
-      .optional()
+      .optional(Type.ARRAY)
       .build())
   private[this] val GROUP_ID_KEY = "group.id"
   val GROUP_ID_DEFINITION: SettingDef =
-    createDef(_.key(GROUP_ID_KEY).documentation("group ID of this worker cluster").optional().build())
+    createDef(_.key(GROUP_ID_KEY).documentation("group ID of this worker cluster").stringWithRandomDefault().build())
   //-------------[status topic]-------------//
   private[this] val STATUS_TOPIC_NAME_KEY = "status.storage.topic"
   val STATUS_TOPIC_NAME_DEFINITION: SettingDef = createDef(
     _.key(STATUS_TOPIC_NAME_KEY)
       .documentation("name of status topic which is used to store connector status")
-      .optional()
+      .stringWithRandomDefault()
       .build())
   private[this] val STATUS_TOPIC_PARTITIONS_KEY = "status.storage.partitions"
   private[this] val STATUS_TOPIC_PARTITIONS_DEFAULT = 1
   val STATUS_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(STATUS_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for status topic")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(STATUS_TOPIC_PARTITIONS_DEFAULT)
       .build())
   private[this] val STATUS_TOPIC_REPLICATIONS_KEY = "status.storage.replication.factor"
@@ -113,20 +100,23 @@ object WorkerApi {
   val STATUS_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
     _.key(STATUS_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for status topic")
-      .valueType(Type.SHORT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(STATUS_TOPIC_REPLICATIONS_DEFAULT)
       .build())
 
   //-------------[config topic]-------------//
   private[this] val CONFIG_TOPIC_NAME_KEY = "config.storage.topic"
   val CONFIG_TOPIC_NAME_DEFINITION: SettingDef = createDef(
-    _.key(CONFIG_TOPIC_NAME_KEY).documentation("number of replications for config topic").optional().build())
+    _.key(CONFIG_TOPIC_NAME_KEY)
+      .documentation("number of replications for config topic")
+      .stringWithRandomDefault()
+      .build())
   private[this] val CONFIG_TOPIC_PARTITIONS_KEY = "config.storage.partitions"
   private[this] val CONFIG_TOPIC_PARTITIONS_DEFAULT = 1
   val CONFIG_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(CONFIG_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for config topic. this value MUST be 1")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(CONFIG_TOPIC_PARTITIONS_DEFAULT)
       .readonly()
       .build())
@@ -135,19 +125,22 @@ object WorkerApi {
   val CONFIG_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
     _.key(CONFIG_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for config topic")
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(CONFIG_TOPIC_REPLICATIONS_DEFAULT)
-      .valueType(Type.SHORT)
       .build())
   //-------------[offset topic]-------------//
   private[this] val OFFSET_TOPIC_NAME_KEY = "offset.storage.topic"
   val OFFSET_TOPIC_NAME_DEFINITION: SettingDef = createDef(
-    _.key(OFFSET_TOPIC_NAME_KEY).documentation("number of replications for offset topic").optional().build())
+    _.key(OFFSET_TOPIC_NAME_KEY)
+      .documentation("number of replications for offset topic")
+      .stringWithRandomDefault()
+      .build())
   private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offset.storage.partitions"
   private[this] val OFFSET_TOPIC_PARTITIONS_DEFAULT = 1
   val OFFSET_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(OFFSET_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for offset topic")
-      .valueType(Type.INT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(OFFSET_TOPIC_PARTITIONS_DEFAULT)
       .build())
   private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offset.storage.replication.factor"
@@ -155,7 +148,7 @@ object WorkerApi {
   val OFFSET_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
     _.key(OFFSET_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for offset topic")
-      .valueType(Type.SHORT)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(OFFSET_TOPIC_REPLICATIONS_DEFAULT)
       .build())
 
@@ -204,31 +197,13 @@ object WorkerApi {
     * exposed to configurator
     */
   private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
-      .format(new RootJsonFormat[Creation] {
-        override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
+    rulesOfCreation[Creation](
+      new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-      })
-      .rejectNegativeNumber()
-      // number of config topic's partition is always be 1
-      .rejectKey(CONFIG_TOPIC_PARTITIONS_KEY)
-      .nullToRandomPort(CLIENT_PORT_KEY)
-      .requireBindPort(CLIENT_PORT_KEY)
-      .nullToRandomPort(JMX_PORT_KEY)
-      .requireBindPort(JMX_PORT_KEY)
-      .nullToRandomString(GROUP_ID_KEY)
-      .nullToRandomString(CONFIG_TOPIC_NAME_KEY)
-      .nullToShort(CONFIG_TOPIC_REPLICATIONS_KEY, CONFIG_TOPIC_REPLICATIONS_DEFAULT)
-      .nullToRandomString(OFFSET_TOPIC_NAME_KEY)
-      .nullToInt(OFFSET_TOPIC_PARTITIONS_KEY, OFFSET_TOPIC_PARTITIONS_DEFAULT)
-      .nullToShort(OFFSET_TOPIC_REPLICATIONS_KEY, OFFSET_TOPIC_REPLICATIONS_DEFAULT)
-      .nullToRandomString(STATUS_TOPIC_NAME_KEY)
-      .nullToInt(STATUS_TOPIC_PARTITIONS_KEY, STATUS_TOPIC_PARTITIONS_DEFAULT)
-      .nullToShort(STATUS_TOPIC_REPLICATIONS_KEY, STATUS_TOPIC_REPLICATIONS_DEFAULT)
-      .nullToEmptyArray(FILE_KEYS_KEY)
-      .nullToEmptyArray(FREE_PORTS_KEY)
-      .requireKey(BROKER_CLUSTER_KEY_KEY)
-      .refine
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
+      },
+      DEFINITIONS
+    )
 
   final class Updating private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
@@ -260,15 +235,12 @@ object WorkerApi {
       noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
   }
   implicit val WORKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
-    basicRulesOfUpdating[Updating]
-      .format(new RootJsonFormat[Updating] {
-        override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
-        override def write(obj: Updating): JsValue = JsObject(obj.settings)
-      })
-      .rejectNegativeNumber()
-      .requireBindPort(CLIENT_PORT_KEY)
-      .requireBindPort(JMX_PORT_KEY)
-      .refine
+    rulesOfUpdating[Updating](
+      new RootJsonFormat[Updating] {
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
+      }
+    )
 
   final case class ConnectorDefinition(className: String, settingDefinitions: Seq[SettingDef])
 

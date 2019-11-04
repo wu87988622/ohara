@@ -35,7 +35,6 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.typesafe.scalalogging.Logger
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
   private[this] lazy val LOG = Logger(PipelineRoute.getClass)
@@ -50,7 +49,11 @@ private[configurator] object PipelineRoute {
           ObjectAbstract(
             group = data.group,
             name = data.name,
-            kind = ConnectorDefUtils.kind(connectorDefinition.settingDefinitions.asJava),
+            kind = connectorDefinition.settingDefinitions
+              .filter(_.defaultValue() != null)
+              .find(_.key() == ConnectorDefUtils.KIND_KEY)
+              .map(_.defaultValue())
+              .getOrElse("connector"),
             className = Some(data.className),
             state = None,
             error = None,

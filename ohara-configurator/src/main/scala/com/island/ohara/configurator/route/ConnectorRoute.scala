@@ -27,7 +27,9 @@ import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STO
 import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.typesafe.scalalogging.Logger
+import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
@@ -159,7 +161,14 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList
         .connector(connectorInfo.key)
-        .topics(connectorInfo.topicKeys, RUNNING)
+        .topics(
+          // our UI needs to create a connector without topics so the connector info may has no topics...
+          if (connectorInfo.topicKeys.isEmpty)
+            throw DeserializationException(s"topics can't be empty",
+                                           fieldNames = List(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
+          else connectorInfo.topicKeys,
+          RUNNING
+        )
         .workerCluster(connectorInfo.workerClusterKey, RUNNING)
         .check()
         .map(report => (report.connectorInfos.head._2, report.runningWorkers.head, report.runningTopics))

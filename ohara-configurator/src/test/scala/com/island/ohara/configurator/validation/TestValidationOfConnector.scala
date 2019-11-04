@@ -81,7 +81,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .verify())
 
   @Test
-  def ignoreTopicName(): Unit = an[DeserializationException] should be thrownBy result(
+  def ignoreTopicName(): Unit = an[IllegalArgumentException] should be thrownBy result(
     ValidationApi.access
       .hostname(configurator.hostname)
       .port(configurator.port)

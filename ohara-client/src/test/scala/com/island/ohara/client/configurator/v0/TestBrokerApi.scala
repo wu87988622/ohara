@@ -245,44 +245,44 @@ class TestBrokerApi extends OharaTest with Matchers {
       """.stripMargin.parseJson).name.nonEmpty shouldBe true
 
   @Test
-  def parseNameField(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": ["n"],
-      |    "name": ""
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"name\" can't be empty string")
-  }
+  def parseNameField(): Unit =
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": ["n"],
+           |    "name": ""
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"name\" can't be empty string")
 
   @Test
-  def parseImageNameField(): Unit = {
-    val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": ["n"],
-      |    "imageName": ""
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"imageName\" can't be empty string")
-  }
+  def parseImageNameField(): Unit =
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": ["n"],
+           |    "imageName": ""
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"imageName\" can't be empty string")
 
   @Test
-  def parseImageNameOnUpdate(): Unit = {
-    val thrown = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "imageName": ""
-      |  }
+  def parseImageNameOnUpdate(): Unit =
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "imageName": ""
+           |  }
       """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
-  }
+    }.getMessage should include("the value of \"imageName\" can't be empty string")
 
   @Test
   def testEmptyNodeNames(): Unit =
@@ -298,14 +298,14 @@ class TestBrokerApi extends OharaTest with Matchers {
       """.stripMargin.parseJson)
 
   @Test
-  def parseNodeNamesOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": ""
-      |  }
+  def parseNodeNamesOnUpdate(): Unit =
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": ""
+           |  }
       """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
-  }
+    }.getMessage should include("the value of \"nodeNames\" can't be empty string")
 
   @Test
   def parseZeroClientPort(): Unit =
@@ -351,47 +351,50 @@ class TestBrokerApi extends OharaTest with Matchers {
 
   @Test
   def parseClientPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "clientPort": 0
-      |  }
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "clientPort": 0
+           |  }
       """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+    }.getMessage should include("the number must be")
 
-    val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "clientPort": -9
-      |  }
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "clientPort": -9
+           |  }
       """.stripMargin.parseJson)
-    thrown2.getMessage should include("the connection port must be [1024, 65535)")
+    }.getMessage should include("the number must be")
 
-    val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "clientPort": 99999
-      |  }
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "clientPort": 99999
+           |  }
       """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+    }.getMessage should include("the number must be")
   }
 
   @Test
@@ -434,47 +437,50 @@ class TestBrokerApi extends OharaTest with Matchers {
 
   @Test
   def parseJmxPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "jmxPort": 0
-      |  }
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "jmxPort": 0
+           |  }
       """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+    }.getMessage should include("the number must be")
 
-    val thrown2 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "jmxPort": -9
-      |  }
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "jmxPort": -9
+           |  }
       """.stripMargin.parseJson)
-    thrown2.getMessage should include("the connection port must be [1024, 65535)")
+    }.getMessage should include("the number must be")
 
-    val thrown3 = the[DeserializationException] thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "jmxPort": 99999
-      |  }
+    intercept[DeserializationException] {
+      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "jmxPort": 99999
+           |  }
       """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+    }.getMessage should include("the number must be")
   }
 
   @Test

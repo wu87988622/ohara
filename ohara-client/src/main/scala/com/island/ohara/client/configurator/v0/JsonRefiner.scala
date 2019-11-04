@@ -19,8 +19,26 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.JsonRefiner.{ArrayRestriction, StringRestriction}
+import com.island.ohara.common.setting.SettingDef.{Necessary, Type}
+import com.island.ohara.common.setting.{ObjectKey, PropGroup, SettingDef}
 import com.island.ohara.common.util.CommonUtils
-import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol._
+import spray.json.{
+  DeserializationException,
+  JsArray,
+  JsBoolean,
+  JsNull,
+  JsNumber,
+  JsObject,
+  JsString,
+  JsValue,
+  RootJsonFormat,
+  _
+}
+
+import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
+import scala.reflect.{ClassTag, classTag}
 
 /**
   * this is a akka-json representation++ which offers many useful sugar conversion of input json.
@@ -36,14 +54,157 @@ import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject
 trait JsonRefiner[T] {
   def format(format: RootJsonFormat[T]): JsonRefiner[T]
 
-  //-------------------------[null to default]-------------------------//
-
   /**
-    * convert the null value to random string
-    * @param key  key
+    * config this refiner according to setting definitions
+    * @param definitions setting definitions
     * @return this refiner
     */
-  def nullToRandomString(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsString(CommonUtils.randomString(10)))
+  def definitions(definitions: Seq[SettingDef]): JsonRefiner[T] = {
+    definitions.foreach(definition)
+    this
+  }
+
+  /**
+    * config this refiner according to setting definition
+    * @param definition setting definition
+    * @return this refiner
+    */
+  def definition(definition: SettingDef): JsonRefiner[T] = {
+    // the internal is not exposed to user so we skip it.
+    if (!definition.internal()) {
+      if (definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
+      definition.valueType() match {
+        case Type.BOOLEAN =>
+          if (definition.defaultValue() != null) nullToBoolean(definition.key(), definition.defaultValue().toBoolean)
+          requireJsonType[JsBoolean](definition.key())
+        case Type.POSITIVE_SHORT =>
+          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          requireNumberType(key = definition.key(), min = 1, max = Short.MaxValue)
+        case Type.SHORT =>
+          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          requireNumberType(key = definition.key(), min = Short.MinValue, max = Short.MaxValue)
+        case Type.POSITIVE_INT =>
+          if (definition.defaultValue() != null) nullToInt(definition.key(), definition.defaultValue().toInt)
+          requireNumberType(key = definition.key(), min = 1, max = Int.MaxValue)
+        case Type.INT =>
+          if (definition.defaultValue() != null) nullToInt(definition.key(), definition.defaultValue().toInt)
+          requireNumberType(key = definition.key(), min = Int.MinValue, max = Int.MaxValue)
+        case Type.POSITIVE_LONG =>
+          if (definition.defaultValue() != null) nullToLong(definition.key(), definition.defaultValue().toLong)
+          requireNumberType(key = definition.key(), min = 1, max = Long.MaxValue)
+        case Type.LONG =>
+          if (definition.defaultValue() != null) nullToLong(definition.key(), definition.defaultValue().toLong)
+          requireNumberType(key = definition.key(), min = Long.MinValue, max = Long.MaxValue)
+        case Type.POSITIVE_DOUBLE =>
+          if (definition.defaultValue() != null) nullToDouble(definition.key(), definition.defaultValue().toDouble)
+          requireNumberType(key = definition.key(), min = 1, max = Double.MaxValue)
+        case Type.DOUBLE =>
+          if (definition.defaultValue() != null) nullToDouble(definition.key(), definition.defaultValue().toDouble)
+          requireNumberType(key = definition.key(), min = Double.MinValue, max = Double.MaxValue)
+        case Type.ARRAY =>
+          // SettingDef expects that the null to array is converted to empty
+          nullToJsValue(
+            definition.key(),
+            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsArray.empty)
+          definition.necessary() match {
+            case SettingDef.Necessary.REQUIRED =>
+              requireJsonType[JsArray](
+                definition.key(),
+                (array: JsArray) =>
+                  if (array.elements.isEmpty)
+                    throw DeserializationException(s"empty array is illegal", fieldNames = List(definition.key()))
+              )
+            case _ =>
+              requireJsonType[JsArray](definition.key())
+          }
+          // check black list
+          requireJsonType[JsArray](
+            definition.key(),
+            (array: JsArray) => {
+              array.elements.foreach {
+                case JsString(s) =>
+                  if (definition.blacklist().asScala.contains(s))
+                    throw DeserializationException(s"the $s is protected word", fieldNames = List(definition.key()))
+                case _ => // we only check the string value
+              }
+            }
+          )
+        case Type.DURATION =>
+          if (definition.defaultValue() != null) nullToString(definition.key(), definition.defaultValue())
+          requireType[Duration](definition.key())
+        case Type.PORT =>
+          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          requireConnectionPort(definition.key())
+        case Type.BINDING_PORT =>
+          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
+            nullToJsValue(definition.key(), () => JsNumber(CommonUtils.availablePort()))
+          requireConnectionPort(definition.key())
+        case Type.OBJECT_KEY =>
+          if (definition.defaultValue() != null)
+            nullToJsValue(definition.key(), () => definition.defaultValue().parseJson)
+          requireType[ObjectKey](definition.key())
+        case Type.OBJECT_KEYS =>
+          // SettingDef expects that the null to object keys is converted to empty
+          nullToJsValue(
+            definition.key(),
+            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsArray.empty)
+          definition.necessary() match {
+            case SettingDef.Necessary.REQUIRED =>
+              requireType[Seq[ObjectKey]](
+                definition.key(),
+                (keys: Seq[ObjectKey]) =>
+                  if (keys.isEmpty)
+                    throw DeserializationException(s"empty keys is illegal", fieldNames = List(definition.key())))
+            case _ =>
+              requireType[Seq[ObjectKey]](definition.key())
+          }
+        case Type.TAGS =>
+          // SettingDef expects that the null to tags is converted to empty
+          nullToJsValue(
+            definition.key(),
+            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsObject.empty)
+          definition.necessary() match {
+            case SettingDef.Necessary.REQUIRED =>
+              requireJsonType[JsObject](
+                definition.key(),
+                (tags: JsObject) =>
+                  if (tags.fields.isEmpty)
+                    throw DeserializationException(s"empty tags is illegal", fieldNames = List(definition.key())))
+            case _ =>
+              requireJsonType[JsObject](definition.key())
+          }
+        case Type.TABLE =>
+          // SettingDef expects that the null to table is converted to empty
+          nullToJsValue(
+            definition.key(),
+            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsArray.empty)
+          definition.necessary() match {
+            case SettingDef.Necessary.REQUIRED =>
+              requireType[PropGroup](
+                definition.key(),
+                (table: PropGroup) =>
+                  if (table.raw().isEmpty)
+                    throw DeserializationException(s"empty table is illegal", fieldNames = List(definition.key()))
+              )
+            case _ =>
+              requireType[PropGroup](definition.key())
+          }
+        case Type.STRING =>
+          if (definition.defaultValue() != null) nullToString(definition.key(), definition.defaultValue())
+          else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
+            nullToJsValue(definition.key(), () => JsString(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH / 2)))
+          requireJsonType[JsString](definition.key())
+        case _ @(Type.CLASS | Type.PASSWORD | Type.JDBC_TABLE) =>
+          if (definition.defaultValue() != null) nullToString(definition.key(), definition.defaultValue())
+          requireJsonType[JsString](definition.key())
+      }
+    }
+    this
+  }
+  //-------------------------[null to default]-------------------------//
+
+  def nullToBoolean(key: String, value: Boolean): JsonRefiner[T] = nullToJsValue(key, () => JsBoolean(value))
 
   def nullToString(key: String, defaultValue: String): JsonRefiner[T] = nullToJsValue(key, () => JsString(defaultValue))
 
@@ -53,13 +214,6 @@ trait JsonRefiner[T] {
   def nullToEmptyArray(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsArray.empty)
 
   def nullToEmptyObject(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsObject.empty)
-
-  /**
-    * convert the null value to random port and check the existent port.
-    * @param key keys
-    * @return this refiner
-    */
-  def nullToRandomPort(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(CommonUtils.availablePort()))
 
   def nullToShort(key: String, value: Short): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(value))
 
@@ -145,38 +299,91 @@ trait JsonRefiner[T] {
     * @param key key
     * @return this refiner
     */
-  def requireConnectionPort(key: String): JsonRefiner[T] = valueChecker(
-    key, {
-      case s: JsNumber if s.value.toInt > 0 && s.value <= 65535 => // pass
-      case s: JsNumber =>
-        throw DeserializationException(
-          s"""the connection port must be bigger than zero and small than 65536, but actual port is \"${s.value}\"""",
-          fieldNames = List(key))
-      case _ => // we don't care for other types
+  def requireConnectionPort(key: String): JsonRefiner[T] = requireNumberType(key = key, min = 1, max = 65535)
+
+  /**
+    * require the number type and check the legal number.
+    * @param key key
+    * @param min the min value (included). if input value is bigger than min, DeserializationException is thrown
+    * @param max the max value (included). if input value is smaller than max, DeserializationException is thrown
+    * @return this refiner
+    */
+  def requireNumberType(key: String, min: Long, max: Long): JsonRefiner[T] = requireJsonType[JsNumber](
+    key,
+    (jsNumber: JsNumber) => {
+      val number = jsNumber.value.toLong
+      if (number < min || number > max)
+        throw DeserializationException(s"the number must be [$min, $max], actual:$number")
     }
   )
 
   /**
-    * check whether target port is legal to bind. The legal range is (1024, 65535]
+    * require the number type and check the legal number.
     * @param key key
+    * @param min the min value (included). if input value is bigger than min, DeserializationException is thrown
+    * @param max the max value (included). if input value is smaller than max, DeserializationException is thrown
     * @return this refiner
     */
-  def requireBindPort(key: String): JsonRefiner[T] = valueChecker(
-    key, {
-      case s: JsNumber if s.value.toInt > 1024 && s.value <= 65535 => // pass
-      case s: JsNumber =>
-        throw DeserializationException(
-          s"""the connection port must be [1024, 65535), but actual port is \"${s.value}\"""",
-          fieldNames = List(key))
-      case _ => // we don't care for other types
-    }
-  )
-  def rejectKey(key: String): JsonRefiner[T] = valueChecker(
-    key, {
-      case JsNull => // nothing
-      case _      => throw DeserializationException(s"""the \"$key\" is a illegal word!!!""")
-    }
-  )
+  private[this] def requireNumberType(key: String, min: Double, max: Double): JsonRefiner[T] =
+    requireJsonType[JsNumber](
+      key,
+      (jsNumber: JsNumber) => {
+        val number = jsNumber.value.toDouble
+        if (number < min || number > max)
+          throw DeserializationException(s"the number must be [$min, $max], actual:$number")
+      }
+    )
+
+  /**
+    * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
+    * @param key key
+    * @tparam Json expected value type
+    * @return this refiner
+    */
+  private[this] def requireJsonType[Json <: JsValue: ClassTag](key: String): JsonRefiner[T] =
+    requireJsonType(key, (_: Json) => Unit)
+
+  /**
+    * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
+    * @param key key
+    * @param checker checker
+    * @tparam Json expected value type
+    * @return this refiner
+    */
+  private[this] def requireJsonType[Json <: JsValue: ClassTag](key: String, checker: Json => Unit): JsonRefiner[T] =
+    valueChecker(
+      key,
+      json => {
+        if (!classTag[Json].runtimeClass.isInstance(json))
+          throw DeserializationException(
+            s"""the $key must be ${classTag[Json].runtimeClass.getSimpleName} type, but actual type is \"${json.getClass.getSimpleName}\"""",
+            fieldNames = List(key)
+          )
+        checker(json.asInstanceOf[Json])
+      }
+    )
+
+  /**
+    * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
+    * @param key key
+    * @tparam C expected value type
+    * @return this refiner
+    */
+  private[this] def requireType[C](key: String)(implicit format: RootJsonFormat[C]): JsonRefiner[T] =
+    requireType(key, (_: C) => Unit)
+
+  /**
+    * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
+    * @param key key
+    * @param checker checker
+    * @return this refiner
+    */
+  private[this] def requireType[C](key: String, checker: C => Unit)(
+    implicit format: RootJsonFormat[C]): JsonRefiner[T] =
+    valueChecker(
+      key,
+      json => checker(format.read(json))
+    )
 
   /**
     * reject the request having a key which is associated to empty string.
@@ -193,50 +400,11 @@ trait JsonRefiner[T] {
     */
   def rejectEmptyString(key: String): JsonRefiner[T] = valueChecker(
     key, {
-      case s: JsString if s.value.isEmpty =>
+      case JsString(s) if s.isEmpty =>
         throw DeserializationException(s"""the value of \"$key\" can't be empty string!!!""", fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
-
-  /**
-    * throw exception if the specific key of input json is associated to either negative number or zero.
-    * @param key key
-    * @return this refiner
-    */
-  def requirePositiveNumber(key: String): JsonRefiner[T] = valueChecker(
-    key, {
-      case s: JsNumber if s.value <= 0 =>
-        throw DeserializationException(s"""the \"${s.value}\" of \"$key\" can't be either negative or zero!!!""",
-                                       fieldNames = List(key))
-      case _ => // we don't care for other types
-    }
-  )
-
-  /**
-    * throw exception if the specific key of input json is associated to negative number.
-    * This method check only the specific key. By contrast, rejectNegativeNumber() checks values for all keys.
-    * @param key key
-    * @return this refiner
-    */
-  def rejectNegativeNumber(key: String): JsonRefiner[T] = valueChecker(
-    key, {
-      case s: JsNumber if s.value < 0 =>
-        throw DeserializationException(s"""the \"${s.value}\" of \"$key\" can't be negative value!!!""",
-                                       fieldNames = List(key))
-      case _ => // we don't care for other types
-    }
-  )
-
-  /**
-    * reject the value having negative number. For instance, the following request will be rejected.
-    * {
-    *   "a": -1
-    * }
-    * Noted: this rule is applied to all key-value even if the pair is in nested object.
-    * @return this refiner
-    */
-  def rejectNegativeNumber(): JsonRefiner[T]
 
   /**
     * throw exception if the input json has empty array.
@@ -260,16 +428,7 @@ trait JsonRefiner[T] {
     * @return this refiner
     */
   def arrayRestriction(key: String): ArrayRestriction[T] = (checkers: Seq[(String, JsArray) => Unit]) =>
-    valueChecker(
-      key, {
-        case arr: JsArray => checkers.foreach(_.apply(key, arr))
-        case _ =>
-          throw DeserializationException(
-            s"""the value mapped to \"$key\" must be array type""",
-            fieldNames = List(key)
-          )
-      }
-  )
+    requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
 
   def stringRestriction(key: String): StringRestriction[T] = stringRestriction(Set(key))
 
@@ -283,24 +442,20 @@ trait JsonRefiner[T] {
   def stringRestriction(keys: Set[String]): StringRestriction[T] =
     (legalPairs: Seq[(Char, Char)], lengthLimit: Int) => {
       keys.foreach { key =>
-        valueChecker(
-          key, {
-            case s: JsString =>
-              if (legalPairs.nonEmpty) s.value.foreach { c =>
-                if (!legalPairs.exists {
-                      case (start, end) => c >= start && c <= end
-                    })
-                  throw DeserializationException(
-                    s"""the \"${s.value}\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
-                    fieldNames = List(key))
-              }
-              if (s.value.length > lengthLimit)
-                throw DeserializationException(s"the length of $s exceeds $lengthLimit", fieldNames = List(key))
-            case _ =>
-              throw DeserializationException(
-                s"""the value mapped to \"$key\" must be String type""",
-                fieldNames = List(key)
-              )
+        requireJsonType[JsString](
+          key,
+          (jsString: JsString) => {
+            val string = jsString.value
+            if (legalPairs.nonEmpty) string.foreach { c =>
+              if (!legalPairs.exists {
+                    case (start, end) => c >= start && c <= end
+                  })
+                throw DeserializationException(
+                  s"""the \"$string\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
+                  fieldNames = List(key))
+            }
+            if (string.length > lengthLimit)
+              throw DeserializationException(s"the length of $string exceeds $lengthLimit", fieldNames = List(key))
           }
         )
       }
@@ -308,7 +463,7 @@ trait JsonRefiner[T] {
     }
 
   /**
-    * add your custom check for specific (key, value).
+    * add your custom check for specific (key, value). the checker is executed only if the key exists.
     *
     * Noted: we recommend you to throw DeserializationException when the input value is illegal.
     * @param key key
@@ -358,10 +513,10 @@ trait JsonRefiner[T] {
     * to do an "aggregation" check, like sum or length check.
     *
     * @param keys keys
-    * @param checkers checkers
+    * @param checker checker
     * @return this refiner
     */
-  protected def valuesChecker(keys: Set[String], checkers: Map[String, JsValue] => Unit): JsonRefiner[T]
+  protected def valuesChecker(keys: Set[String], checker: Map[String, JsValue] => Unit): JsonRefiner[T]
 
   protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T]
 
@@ -493,7 +648,6 @@ object JsonRefiner {
     private[this] var nullToJsValue: Map[String, () => JsValue] = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
-    private[this] var _rejectNegativeNumber: Boolean = false
     private[this] var _rejectEmptyArray: Boolean = false
 
     override def format(format: RootJsonFormat[T]): JsonRefiner[T] = {
@@ -506,9 +660,19 @@ object JsonRefiner {
     }
 
     override protected def valuesChecker(keys: Set[String], checkers: Map[String, JsValue] => Unit): JsonRefiner[T] = {
-      if (valuesCheckers.contains(keys))
-        throw new IllegalArgumentException(s"""the \"$keys\" already has checker""")
-      this.valuesCheckers = this.valuesCheckers ++ Map(keys -> Objects.requireNonNull(checkers))
+
+      /**
+        * compose the new checker with older one.
+        */
+      val composedChecker = valuesCheckers
+        .get(keys)
+        .map(origin =>
+          (fields: Map[String, JsValue]) => {
+            origin(fields)
+            checkers(fields)
+        })
+        .getOrElse(checkers)
+      this.valuesCheckers = this.valuesCheckers ++ Map(keys -> Objects.requireNonNull(composedChecker))
       this
     }
 
@@ -521,11 +685,6 @@ object JsonRefiner {
 
     override def rejectEmptyString(): JsonRefiner[T] = {
       this._rejectEmptyString = true
-      this
-    }
-
-    override def rejectNegativeNumber(): JsonRefiner[T] = {
-      this._rejectNegativeNumber = true
       this
     }
 
@@ -543,7 +702,8 @@ object JsonRefiner {
 
     override protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T] = {
       if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"""the \"$key\" have been associated to default value""")
+        throw new IllegalArgumentException(
+          s"""the \"$key\" have been associated to default value:${nullToJsValue(key)}""")
       this.nullToJsValue = this.nullToJsValue ++ Map(key -> Objects.requireNonNull(defaultValue))
       this
     }
@@ -581,9 +741,6 @@ object JsonRefiner {
             case _ => // nothing
           }
 
-          // 2) check negative number
-          if (_rejectNegativeNumber) checkJsValueForNegativeNumber(key, value)
-
           def checkEmptyArray(k: String, s: JsArray): Unit = if (s.elements.isEmpty)
             throw DeserializationException(s"""the value of \"$k\" MUST be NOT empty array!!!""", fieldNames = List(k))
           def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
@@ -593,7 +750,7 @@ object JsonRefiner {
             case _ => // nothing
           }
 
-          // 3) check empty array
+          // 2) check empty array
           if (_rejectEmptyArray) checkJsValueForEmptyArray(key, value)
         }
 

@@ -18,8 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.rule.OharaTest;
-import com.island.ohara.common.setting.PropGroups;
-import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.setting.PropGroup;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.time.Duration;
@@ -133,48 +132,24 @@ public class TestTaskSetting extends OharaTest {
   }
 
   @Test
-  public void testToPropGroups() {
+  public void testToPropGroup() {
     String key = CommonUtils.randomString();
-    PropGroups propGroups =
-        PropGroups.of(
+    PropGroup propGroup =
+        PropGroup.of(
             Arrays.asList(
                 ImmutableMap.of("k0", "v0", "k1", "v1", "k2", "v2"),
                 ImmutableMap.of("k0", "v0", "k1", "v1")));
-    TaskSetting config = TaskSetting.of(ImmutableMap.of(key, propGroups.toJsonString()));
-    PropGroups another = config.propGroups(key);
-    Assert.assertEquals(propGroups, another);
-    Assert.assertTrue(config.propGroupsOption(key).isPresent());
-    Assert.assertFalse(config.propGroupsOption(CommonUtils.randomString()).isPresent());
+    TaskSetting config = TaskSetting.of(ImmutableMap.of(key, propGroup.toJsonString()));
+    PropGroup another = config.propGroup(key);
+    Assert.assertEquals(propGroup, another);
+    Assert.assertTrue(config.propGroupOption(key).isPresent());
+    Assert.assertFalse(config.propGroupOption(CommonUtils.randomString()).isPresent());
   }
 
   @Test
   public void getEmptyColumn() {
     TaskSetting config = TaskSetting.of(ImmutableMap.of("pgs", "asdasd"));
     Assert.assertTrue(config.columns().isEmpty());
-  }
-
-  @Test
-  public void testFillDefaultValue() {
-    String key = CommonUtils.randomString();
-    String defaultValue = CommonUtils.randomString();
-    SettingDef settingDefinition = SettingDef.builder().key(key).optional(defaultValue).build();
-    TaskSetting config =
-        TaskSetting.of(Collections.emptyMap(), Collections.singletonList(settingDefinition));
-    Assert.assertEquals(1, config.raw().size());
-    Assert.assertEquals(defaultValue, config.stringValue(key));
-  }
-
-  @Test
-  public void skipDefaultValueIfValueExists() {
-    String key = CommonUtils.randomString();
-    String value = CommonUtils.randomString();
-    String defaultValue = CommonUtils.randomString();
-    SettingDef settingDefinition = SettingDef.builder().key(key).optional(defaultValue).build();
-    TaskSetting config =
-        TaskSetting.of(
-            Collections.singletonMap(key, value), Collections.singletonList(settingDefinition));
-    Assert.assertEquals(1, config.raw().size());
-    Assert.assertEquals(value, config.stringValue(key));
   }
 
   @Test

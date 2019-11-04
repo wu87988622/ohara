@@ -92,11 +92,6 @@ class TestStreamCreator extends OharaTest with Matchers {
   }
 
   @Test
-  def nullJarInfo(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().jarInfo(null)
-  }
-
-  @Test
   def nullGroup(): Unit = {
     an[NullPointerException] should be thrownBy streamCreator().group(null)
   }
@@ -131,7 +126,7 @@ class TestStreamCreator extends OharaTest with Matchers {
       .toTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
       .nodeName(CommonUtils.randomString())
-      .jarInfo(fileInfo)
+      .jarKey(fileInfo.key)
       .create()
 
     // name + group length > 100
@@ -140,7 +135,7 @@ class TestStreamCreator extends OharaTest with Matchers {
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
-      .jarInfo(fileInfo)
+      .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())
       .toTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
@@ -162,14 +157,7 @@ class TestStreamCreator extends OharaTest with Matchers {
     val info = StreamClusterInfo(
       settings = StreamApi.access.request
         .nodeNames(Set("n0"))
-        .jarInfo(new FileInfo(
-          group = CommonUtils.randomString(5),
-          name = CommonUtils.randomString(5),
-          url = new URL("http://localhost:12345/in.jar"),
-          bytes = Array.empty,
-          lastModified = CommonUtils.current(),
-          tags = Map.empty
-        ))
+        .jarKey(ObjectKey.of("g", "f"))
         .brokerClusterKey(brokerKey())
         .fromTopicKey(topicKey())
         .toTopicKey(topicKey())
@@ -195,7 +183,7 @@ class TestStreamCreator extends OharaTest with Matchers {
         .group(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterKey(brokerKey())
-        .jarInfo(fileInfo)
+        .jarKey(fileInfo.key)
         .fromTopicKey(topicKey())
         .toTopicKey(topicKey())
         .jmxPort(CommonUtils.availablePort())
@@ -215,37 +203,39 @@ class TestStreamCreator extends OharaTest with Matchers {
       .fromTopicKey(topicKey())
       .toTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
-      .jarInfo(jarInfo)
+      .jarKey(jarInfo.key)
       .creation
     res.jarKey.group() shouldBe jarInfo.group
     res.jarKey.name() shouldBe jarInfo.name
   }
 
   @Test
-  def ignoreFromTopic(): Unit = an[DeserializationException] should be thrownBy
+  def ignoreFromTopic(): Unit =
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
-      .jarInfo(fileInfo)
+      .jarKey(fileInfo.key)
       .toTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
       .nodeName(CommonUtils.randomString())
-      .create()
+      .creation
+      .fromTopicKeys shouldBe Set.empty
 
   @Test
-  def ignoreToTopic(): Unit = an[DeserializationException] should be thrownBy
+  def ignoreToTopic(): Unit =
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
-      .jarInfo(fileInfo)
+      .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
       .nodeName(CommonUtils.randomString())
-      .create()
+      .creation
+      .toTopicKeys shouldBe Set.empty
 
   /**
     * the ignored jmx port is replaced by random one.
@@ -257,7 +247,7 @@ class TestStreamCreator extends OharaTest with Matchers {
       .group(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
-      .jarInfo(fileInfo)
+      .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())
       .toTopicKey(topicKey())
       .nodeName(CommonUtils.randomString())

@@ -32,7 +32,7 @@ package object smb {
     .key(SMB_HOSTNAME_KEY)
     .displayName("Hostname")
     .documentation("the hostname of SMB server")
-    .valueType(SettingDef.Type.STRING)
+    .required(SettingDef.Type.STRING)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
@@ -42,7 +42,7 @@ package object smb {
     .key(SMB_PORT_KEY)
     .displayName("Port")
     .documentation("the port of SMB server")
-    .valueType(SettingDef.Type.PORT)
+    .required(SettingDef.Type.PORT)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
@@ -53,7 +53,7 @@ package object smb {
     .displayName("Username")
     .documentation(
       "the username of SMB server. This account must have read/delete permission of input folder and error folder")
-    .valueType(SettingDef.Type.STRING)
+    .required(SettingDef.Type.STRING)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
@@ -63,7 +63,7 @@ package object smb {
     .key(SMB_PASSWORD_KEY)
     .displayName("Password")
     .documentation("the password of SMB server")
-    .valueType(SettingDef.Type.PASSWORD)
+    .required(SettingDef.Type.PASSWORD)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 
@@ -73,7 +73,7 @@ package object smb {
     .key(SMB_SHARE_NAME_KEY)
     .displayName("Share Name")
     .documentation("the share name of SMB server")
-    .valueType(SettingDef.Type.STRING)
+    .required(SettingDef.Type.STRING)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 

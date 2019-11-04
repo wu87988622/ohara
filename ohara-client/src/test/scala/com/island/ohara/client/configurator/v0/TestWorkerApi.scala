@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
@@ -308,20 +308,20 @@ class TestWorkerApi extends OharaTest with Matchers {
       |    "nodeNames": []
       |  }
       |  """.stripMargin.parseJson)
-  @Test
-  def parseNodeNamesOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": ""
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
-  }
 
+  @Test
+  def parseNodeNamesOnUpdate(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": ""
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"nodeNames\" can't be empty string")
   @Test
   def parseZeroClientPort(): Unit =
     an[DeserializationException] should be thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
@@ -366,47 +366,50 @@ class TestWorkerApi extends OharaTest with Matchers {
 
   @Test
   def parseClientPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "clientPort": 0
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "clientPort": 0
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
-    val thrown2 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "clientPort": -9
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("\"clientPort\" MUST be bigger than or equal to zero")
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "clientPort": -9
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
-    val thrown3 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "clientPort": 99999
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "clientPort": 99999
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
   }
 
   @Test
@@ -452,49 +455,265 @@ class TestWorkerApi extends OharaTest with Matchers {
       |  """.stripMargin.parseJson)
 
   @Test
-  def parseJmxPortOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": 0
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+  def parseJmxPortOnCreation(): Unit = {
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "jmxPort": 0
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
-    val thrown2 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": -9
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("\"jmxPort\" MUST be bigger than or equal to zero")
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "jmxPort": -9
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
-    val thrown3 = the[DeserializationException] thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "nodeNames": [
-      |      "node"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": 99999
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "jmxPort": 99999
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
   }
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def zeroNumberOfPartitionsForConfigTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": [
+           |      "node"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION.key()}": 0
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def negativeNumberOfPartitionsForConfigTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION.key()}": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def zeroNumberOfReplicationForConfigTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${CONFIG_TOPIC_REPLICATIONS_DEFINITION.key()}": 0
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def negativeNumberOfReplicationForConfigTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${CONFIG_TOPIC_REPLICATIONS_DEFINITION.key()}": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def zeroNumberOfPartitionsForOffsetTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${OFFSET_TOPIC_PARTITIONS_DEFINITION.key()}": 0
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def negativeNumberOfPartitionsForOffsetTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${OFFSET_TOPIC_PARTITIONS_DEFINITION.key()}": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def zeroNumberOfReplicationForOffsetTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${OFFSET_TOPIC_REPLICATIONS_DEFINITION.key()}": 0
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def negativeNumberOfReplicationForOffsetTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${OFFSET_TOPIC_REPLICATIONS_DEFINITION.key()}": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def zeroNumberOfPartitionsForStatusTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${STATUS_TOPIC_PARTITIONS_DEFINITION.key()}": 0
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def negativeNumberOfPartitionsForStatusTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${STATUS_TOPIC_PARTITIONS_DEFINITION.key()}": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def zeroNumberOfReplicationForStatusTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${STATUS_TOPIC_REPLICATIONS_DEFINITION.key()}": 0
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
+
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  @Test
+  def negativeNumberOfReplicationForStatusTopic(): Unit =
+    intercept[DeserializationException] {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                    |  {
+                                                    |    "nodeNames": [
+                                                    |      "node"
+                                                    |    ],
+                                                    |    "brokerClusterKey": {
+                                                    |      "group": "g",
+                                                    |      "name": "n"
+                                                    |    },
+                                                    |    "${STATUS_TOPIC_REPLICATIONS_DEFINITION.key()}": -1
+                                                    |  }
+                                                    |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
   @Test
   def testDeadNodes(): Unit = {

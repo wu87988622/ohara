@@ -423,97 +423,97 @@ class TestStreamApi extends OharaTest with Matchers {
      """.stripMargin.parseJson).name.nonEmpty shouldBe true
 
   @Test
-  def parseNameField(): Unit = {
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "name": "",
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"name\" can't be empty string")
-  }
+  def parseNameField(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "name": "",
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"name\" can't be empty string")
 
   @Test
-  def parseGroupField(): Unit = {
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "group": "",
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"group\" can't be empty string")
-  }
+  def parseGroupField(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "group": "",
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"group\" can't be empty string")
 
   @Test
-  def parseImageNameField(): Unit = {
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "imageName": "",
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
-  }
+  def parseImageNameField(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "imageName": "",
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"imageName\" can't be empty string")
 
   @Test
   def parseJarKeyField(): Unit = {
@@ -544,122 +544,126 @@ class TestStreamApi extends OharaTest with Matchers {
       |  }
       |  """.stripMargin.parseJson)
 
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": "",
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"jarKey\" can't be empty string")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": "",
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"jarKey\" can't be empty string")
   }
 
   @Test
   def parseJmxPortField(): Unit = {
     // zero port
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "name": "${CommonUtils.randomString(10)}",
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": 0,
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "name": "${CommonUtils.randomString(10)}",
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "jmxPort": 0,
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
     // negative port
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "name": "${CommonUtils.randomString(10)}",
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": -99,
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-99\"")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "name": "${CommonUtils.randomString(10)}",
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "jmxPort": -99,
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
 
     // not connection port
-    val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "name": "${CommonUtils.randomString(10)}",
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": 999999,
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535)")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "name": "${CommonUtils.randomString(10)}",
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "jmxPort": 999999,
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the number must be")
   }
 
   @Test
@@ -683,202 +687,168 @@ class TestStreamApi extends OharaTest with Matchers {
   }
 
   @Test
-  def parseImageNameFieldOnUpdate(): Unit = {
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "imageName": "",
-      |    "nodeNames": ["n"],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
-  }
+  def parseImageNameFieldOnUpdate(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "imageName": "",
+           |    "nodeNames": ["n"],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"imageName\" can't be empty string")
 
   @Test
-  def parseFromFieldOnCreation(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": [
-      |      "n"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [""],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"from\" can't be empty string")
-  }
+  def parseFromFieldOnCreation(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": [
+           |      "n"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [""],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"from\" can't be empty string")
 
   @Test
-  def parseFromFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [""]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"from\" can't be empty string")
-  }
+  def parseFromFieldOnUpdate(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [""]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"from\" can't be empty string")
 
   @Test
-  def parseToFieldOnCreation(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "to": [""],
-      |    "nodeNames": [
-      |      "n"
-      |    ],
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [""]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"to\" can't be empty string")
-  }
+  def parseToFieldOnCreation(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "to": [""],
+           |    "nodeNames": [
+           |      "n"
+           |    ],
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [""]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"to\" can't be empty string")
 
   @Test
-  def parseToFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "to": [""]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"to\" can't be empty string")
-  }
+  def parseToFieldOnUpdate(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "to": [""]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"to\" can't be empty string")
 
   @Test
-  def parseJmxPortFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": 0
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the connection port must be [1024, 65535)")
-
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": -9
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-9\"")
-
-    val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "jmxPort": 99999
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown3.getMessage should include("the connection port must be [1024, 65535)")
-  }
-
-  @Test
-  def parseNodeNamesFieldOnCreation(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": "",
-      |    "brokerClusterKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "from": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ],
-      |    "to": [
-      |      {
-      |        "group": "g",
-      |        "name": "n"
-      |      }
-      |    ]
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
-  }
+  def parseNodeNamesFieldOnCreation(): Unit =
+    intercept[DeserializationException] {
+      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": "",
+           |    "brokerClusterKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "from": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ],
+           |    "to": [
+           |      {
+           |        "group": "g",
+           |        "name": "n"
+           |      }
+           |    ]
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"nodeNames\" can't be empty string")
 
   @Test
   def parseNodeNamesFieldOnUpdate(): Unit = {
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": ""
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": ""
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("the value of \"nodeNames\" can't be empty string")
 
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
-      |  {
-      |    "jarKey": {
-      |      "group": "g",
-      |      "name": "n"
-      |    },
-      |    "nodeNames": []
-      |  }
-      |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("nodeNames cannot be an empty array")
+    intercept[DeserializationException] {
+      StreamApi.STREAM_UPDATING_JSON_FORMAT.read(s"""
+           |  {
+           |    "jarKey": {
+           |      "group": "g",
+           |      "name": "n"
+           |    },
+           |    "nodeNames": []
+           |  }
+           |  """.stripMargin.parseJson)
+    }.getMessage should include("nodeNames cannot be an empty array")
   }
 
   @Test

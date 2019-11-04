@@ -21,7 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroups, TopicKey}
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroup, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
@@ -37,7 +37,6 @@ object ConnectorApi {
   private[v0] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
   private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
-  private[this] val TOPIC_NAMES_KEY: String = ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()
   @VisibleForTesting
   private[ohara] val CONNECTOR_CLASS_KEY: String = ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()
   @VisibleForTesting
@@ -46,7 +45,6 @@ object ConnectorApi {
   private[v0] val CONNECTOR_KEY_KEY: String = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
   private[this] val GROUP_KEY: String = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
   private[this] val NAME_KEY: String = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
-  private[this] val DEFAULT_NUMBER_OF_TASKS: Int = 1
 
   /**
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
@@ -100,30 +98,18 @@ object ConnectorApi {
 
   implicit val CONNECTOR_CREATION_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
-    basicRulesOfKey[Creation]
+    limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
-      .requireKey(TOPIC_KEYS_KEY)
-      .rejectEmptyArray(TOPIC_KEYS_KEY)
-      // set the default number of tasks
-      .nullToInt(NUMBER_OF_TASKS_KEY, DEFAULT_NUMBER_OF_TASKS)
+      .definitions(ConnectorDefUtils.DEFINITIONS_DEFAULT.asScala)
       .rejectEmptyString()
-      .nullToEmptyObject(TAGS_KEY)
-      .nullToEmptyArray(COLUMNS_KEY)
-      // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
-      // to users to save their life :)
-      .rejectKey(TOPIC_NAMES_KEY)
-      // CONNECTOR_KEY_KEY is internal keyword
-      .rejectKey(CONNECTOR_KEY_KEY)
-      .requireKey(WORKER_CLUSTER_KEY_KEY)
-      .requireKey(CONNECTOR_CLASS_KEY)
       .valueChecker(
         COLUMNS_KEY, {
           case v: JsArray if v.elements.nonEmpty =>
             try {
-              val columns = PropGroups.ofJson(v.toString()).toColumns.asScala
+              val columns = PropGroup.ofJson(v.toString()).toColumns.asScala
               // name can't be empty
               if (columns.exists(_.name().isEmpty))
                 throw DeserializationException(msg = s"name can't be empty", fieldNames = List("name"))
@@ -157,7 +143,7 @@ object ConnectorApi {
     def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
 
     def columns: Option[Seq[Column]] =
-      noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroups.ofJson(s.toString).toColumns.asScala)
+      noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala)
     def numberOfTasks: Option[Int] = noJsNull(settings).get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
 
     def workerClusterKey: Option[ObjectKey] = noJsNull(settings).get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -173,11 +159,6 @@ object ConnectorApi {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
-    // TOPIC_NAME_KEYS is used internal, and its value is always replaced by topic key. Hence, we produce a quick failure
-    // to users to save their life :)
-    .rejectKey(TOPIC_NAMES_KEY)
-    // CONNECTOR_KEY_KEY is internal keyword
-    .rejectKey(CONNECTOR_KEY_KEY)
     .rejectEmptyString()
     .valueChecker(
       COLUMNS_KEY, {
@@ -258,7 +239,7 @@ object ConnectorApi {
 
     @Optional("Not all connectors demand this field. See connectors document for more details")
     def columns(columns: Seq[Column]): BasicRequest.this.type =
-      setting(COLUMNS_KEY, PropGroups.ofColumns(columns.asJava).toJsonString.parseJson)
+      setting(COLUMNS_KEY, PropGroup.ofColumns(columns.asJava).toJsonString.parseJson)
 
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")

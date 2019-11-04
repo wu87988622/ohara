@@ -20,8 +20,6 @@ import { createBody, getCluster } from '../utils/definitionsUtils';
 export const request = params => {
   const definitions = getCluster(params);
   const body = createBody(definitions);
-  //TODO : Temporary modification waiting for backend repair #3165
-  body['zookeeperClusterKey'] = { name: [string], group: [string] };
   return body;
 };
 

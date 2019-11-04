@@ -162,7 +162,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
     settingInfo.topicNamesOnKafka.isEmpty shouldBe false
-    settingInfo.numberOfTasks.isPresent shouldBe false
+    settingInfo.numberOfTasks.isPresent shouldBe true
   }
 
   @Test
@@ -224,7 +224,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
-      .defaultValue() shouldBe null
+      .defaultValue() shouldBe "1"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -253,51 +253,33 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .head
       .defaultValue() shouldBe null
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()).head.editable() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()).head.defaultValue() shouldBe "unknown"
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.AUTHOR_KEY) shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.editable() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultValue() shouldBe "unknown"
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key()).head.editable() shouldBe false
-    settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe "unknown"
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_KEY) shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.editable() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultValue() shouldBe "unknown"
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_KEY) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.REVISION_KEY)
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key()).head.editable() shouldBe false
-    settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.editable() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultValue() shouldBe "unknown"
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()).head.editable() shouldBe false
-    (settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()).head.defaultValue() == "source"
-    || settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key())
-      .head
-      .defaultValue() == "sink") shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_KEY) shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.editable() shouldBe false
+    (settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultValue() == "source"
+    || settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultValue() == "sink") shouldBe true
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -339,7 +321,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .create())
     }
     //see SettingDef.checker
-    e.getMessage.contains("can't be converted to PropGroups type") shouldBe true
+    e.getMessage.contains("can't be converted to PropGroup type") shouldBe true
   }
 
   @Test

@@ -126,7 +126,7 @@ public abstract class StreamApp {
    */
   public static void main(String[] args) throws OharaException {
     Properties props = loadArgs(args);
-    String jarUrl = props.getProperty(StreamDefUtils.JAR_URL_DEFINITION.key());
+    String jarUrl = props.getProperty(StreamDefUtils.JAR_URL_KEY);
     if (CommonUtils.isEmpty(jarUrl))
       throw new RuntimeException("It seems you are not running in Ohara Environment?");
     File jarFile = downloadJarByUrl(jarUrl);

@@ -79,6 +79,46 @@ export const defaultValue = params => {
     case object:
       return {};
 
+    case boolean:
+      return false;
+
+    default:
+      return;
+  }
+};
+
+const converterBooleanWithString = string => {
+  const lowerCaseString = string.toLowerCase();
+  switch (lowerCaseString) {
+    case 'true':
+      return true;
+
+    case 'false':
+      return false;
+
+    default:
+      return;
+  }
+};
+
+export const converterValueWithDefaultValue = (value, type) => {
+  switch (type) {
+    case string:
+      return value;
+
+    case number:
+      return Number(value);
+
+    case array:
+      //TODO : The conversion mode that has not been determined is not handled at present
+      return value;
+
+    case object:
+      return JSON.parse(value);
+
+    case boolean:
+      return converterBooleanWithString(value);
+
     default:
       return;
   }
@@ -86,8 +126,7 @@ export const defaultValue = params => {
 
 export const generateValueWithDefaultValue = (value, type) => {
   return get => {
-    //TODO : Temporary modification waiting for backend repair #3162
-    return type === number && string(value) ? Number(value) : value;
+    return converterValueWithDefaultValue(value, type);
   };
 };
 

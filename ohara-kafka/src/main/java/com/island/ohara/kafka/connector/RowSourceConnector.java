@@ -105,7 +105,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
 
   @Override
   public final void start(Map<String, String> props) {
-    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props), definitions());
+    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
     _start(taskSetting);
   }
 

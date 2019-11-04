@@ -29,27 +29,25 @@ public class TestConnectorConfigDef extends OharaTest {
   @Test
   public void testVersion() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(
-        sink.config().configKeys().get(ConnectorDefUtils.VERSION_DEFINITION.key()));
+    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.VERSION_KEY));
   }
 
   @Test
   public void testRevision() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(
-        sink.config().configKeys().get(ConnectorDefUtils.REVISION_DEFINITION.key()));
+    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.REVISION_KEY));
   }
 
   @Test
   public void testAuthor() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.AUTHOR_DEFINITION.key()));
+    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.AUTHOR_KEY));
   }
 
   @Test
   public void testKind() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.KIND_DEFINITION.key()));
+    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.KIND_KEY));
   }
 
   /** make sure all types from SettingDef are acceptable to kafka type. */
@@ -59,6 +57,6 @@ public class TestConnectorConfigDef extends OharaTest {
         .forEach(
             type ->
                 ConnectorDefUtils.toConfigKey(
-                    SettingDef.builder().key(CommonUtils.randomString()).valueType(type).build()));
+                    SettingDef.builder().key(CommonUtils.randomString()).required(type).build()));
   }
 }

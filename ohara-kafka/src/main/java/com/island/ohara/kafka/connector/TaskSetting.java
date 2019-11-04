@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.ObjectKey;
-import com.island.ohara.common.setting.PropGroups;
+import com.island.ohara.common.setting.PropGroup;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
@@ -48,26 +48,6 @@ public class TaskSetting {
   @VisibleForTesting
   public static TaskSetting of(Map<String, String> options) {
     return new TaskSetting(options);
-  }
-
-  /**
-   * Create TaskSetting with default values from custom setting definitions. This method is used by
-   * connector only. The task should call {@link #of(Map)} instead
-   *
-   * @param options raw input
-   * @param settingDefinitions custom settings
-   * @return a TaskSetting
-   */
-  static TaskSetting of(Map<String, String> options, List<SettingDef> settingDefinitions) {
-    Map<String, String> copy = new HashMap<>(options);
-    // add (key, defaultValue) of settingDefinitions to options if absent
-    // TODO move this to RouteUtils in #2191
-    settingDefinitions.forEach(
-        setting -> {
-          if (!copy.containsKey(setting.key()) && !CommonUtils.isEmpty(setting.defaultValue()))
-            copy.put(setting.key(), setting.defaultValue());
-        });
-    return new TaskSetting(copy);
   }
 
   private final Map<String, String> raw;
@@ -260,8 +240,8 @@ public class TaskSetting {
    * @throws NoSuchElementException if no existent value for input key
    * @return value
    */
-  public PropGroups propGroups(String key) {
-    return PropGroups.ofJson(stringValue(key));
+  public PropGroup propGroup(String key) {
+    return PropGroup.ofJson(stringValue(key));
   }
 
   /**
@@ -271,8 +251,8 @@ public class TaskSetting {
    * @throws NoSuchElementException if no existent value for input key
    * @return value
    */
-  public Optional<PropGroups> propGroupsOption(String key) {
-    return Optional.ofNullable(raw.get(key)).map(PropGroups::ofJson);
+  public Optional<PropGroup> propGroupOption(String key) {
+    return Optional.ofNullable(raw.get(key)).map(PropGroup::ofJson);
   }
 
   /**
@@ -306,8 +286,8 @@ public class TaskSetting {
   }
 
   public List<Column> columns() {
-    return propGroupsOption(ConnectorDefUtils.COLUMNS_DEFINITION.key())
-        .map(PropGroups::toColumns)
+    return propGroupOption(ConnectorDefUtils.COLUMNS_DEFINITION.key())
+        .map(PropGroup::toColumns)
         .orElseGet(Collections::emptyList);
   }
 

@@ -72,19 +72,22 @@ object ZookeeperRoute {
                                 objectChecker: ObjectChecker,
                                 executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _, _) =>
-      objectChecker.checkList.nodeNames(zookeeperClusterInfo.nodeNames).check().flatMap { _ =>
-        serviceCollie.zookeeperCollie.creator
-          .settings(zookeeperClusterInfo.settings)
-          .name(zookeeperClusterInfo.name)
-          .group(zookeeperClusterInfo.group)
-          .clientPort(zookeeperClusterInfo.clientPort)
-          .electionPort(zookeeperClusterInfo.electionPort)
-          .peerPort(zookeeperClusterInfo.peerPort)
-          .imageName(zookeeperClusterInfo.imageName)
-          .nodeNames(zookeeperClusterInfo.nodeNames)
-          .threadPool(executionContext)
-          .create()
-    }
+      objectChecker.checkList
+      // node names check is covered in super route
+        .check()
+        .flatMap { _ =>
+          serviceCollie.zookeeperCollie.creator
+            .settings(zookeeperClusterInfo.settings)
+            .name(zookeeperClusterInfo.name)
+            .group(zookeeperClusterInfo.group)
+            .clientPort(zookeeperClusterInfo.clientPort)
+            .electionPort(zookeeperClusterInfo.electionPort)
+            .peerPort(zookeeperClusterInfo.peerPort)
+            .imageName(zookeeperClusterInfo.imageName)
+            .nodeNames(zookeeperClusterInfo.nodeNames)
+            .threadPool(executionContext)
+            .create()
+      }
 
   private[this] def checkConflict(zookeeperClusterInfo: ZookeeperClusterInfo,
                                   brokerClusterInfos: Seq[BrokerClusterInfo]): Unit = {

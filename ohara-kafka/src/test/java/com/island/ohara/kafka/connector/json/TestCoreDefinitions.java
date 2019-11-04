@@ -90,34 +90,25 @@ public class TestCoreDefinitions extends OharaTest {
   @Test
   public void testVersionDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorDefUtils.VERSION_DEFINITION.key());
-    Assert.assertEquals(ConnectorDefUtils.VERSION_DEFINITION.key(), key.name);
-    Assert.assertEquals(ConnectorDefUtils.VERSION_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(ConnectorDefUtils.VERSION_DEFINITION.group(), key.group);
-    Assert.assertEquals(ConnectorDefUtils.VERSION_DEFINITION.valueType().name(), key.type.name());
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.VERSION_KEY);
+    Assert.assertEquals(ConnectorDefUtils.VERSION_KEY, key.name);
+    Assert.assertEquals(ConnectorDefUtils.VERSION_ORDER, key.orderInGroup);
   }
 
   @Test
   public void testRevisionDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorDefUtils.REVISION_DEFINITION.key());
-    Assert.assertEquals(ConnectorDefUtils.REVISION_DEFINITION.key(), key.name);
-    Assert.assertEquals(ConnectorDefUtils.REVISION_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(ConnectorDefUtils.REVISION_DEFINITION.group(), key.group);
-    Assert.assertEquals(ConnectorDefUtils.REVISION_DEFINITION.valueType().name(), key.type.name());
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.REVISION_KEY);
+    Assert.assertEquals(ConnectorDefUtils.REVISION_KEY, key.name);
+    Assert.assertEquals(ConnectorDefUtils.REVISION_ORDER, key.orderInGroup);
   }
 
   @Test
   public void testAuthorDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorDefUtils.AUTHOR_DEFINITION.key());
-    Assert.assertEquals(ConnectorDefUtils.AUTHOR_DEFINITION.key(), key.name);
-    Assert.assertEquals(ConnectorDefUtils.AUTHOR_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(ConnectorDefUtils.AUTHOR_DEFINITION.group(), key.group);
-    Assert.assertEquals(ConnectorDefUtils.AUTHOR_DEFINITION.valueType().name(), key.type.name());
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.AUTHOR_KEY);
+    Assert.assertEquals(ConnectorDefUtils.AUTHOR_KEY, key.name);
+    Assert.assertEquals(ConnectorDefUtils.AUTHOR_ORDER, key.orderInGroup);
   }
 
   @Test
@@ -136,12 +127,12 @@ public class TestCoreDefinitions extends OharaTest {
   @Test
   public void testConnectorType() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorDefUtils.KIND_DEFINITION.key());
-    Assert.assertEquals(ConnectorDefUtils.KIND_DEFINITION.key(), key.name);
-    Assert.assertEquals(ConnectorDefUtils.KIND_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(ConnectorDefUtils.KIND_DEFINITION.group(), key.group);
-    Assert.assertEquals(ConnectorDefUtils.KIND_DEFINITION.valueType().name(), key.type.name());
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.KIND_KEY);
+    Assert.assertEquals(ConnectorDefUtils.KIND_KEY, key.name);
+    Assert.assertEquals(ConnectorDefUtils.SOURCE_KIND_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(ConnectorDefUtils.SOURCE_KIND_DEFINITION.group(), key.group);
+    Assert.assertEquals(
+        ConnectorDefUtils.SOURCE_KIND_DEFINITION.valueType().name(), key.type.name());
   }
 
   @Test(expected = NullPointerException.class)

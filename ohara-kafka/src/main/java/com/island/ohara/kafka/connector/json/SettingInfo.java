@@ -151,15 +151,15 @@ public final class SettingInfo implements JsonObject {
   }
 
   public Optional<String> author() {
-    return value(ConnectorDefUtils.AUTHOR_DEFINITION.key());
+    return value(ConnectorDefUtils.AUTHOR_KEY);
   }
 
   public Optional<String> version() {
-    return value(ConnectorDefUtils.VERSION_DEFINITION.key());
+    return value(ConnectorDefUtils.VERSION_KEY);
   }
 
   public Optional<String> revision() {
-    return value(ConnectorDefUtils.REVISION_DEFINITION.key());
+    return value(ConnectorDefUtils.REVISION_KEY);
   }
 
   public Optional<ObjectKey> workerClusterKey() {
@@ -167,7 +167,7 @@ public final class SettingInfo implements JsonObject {
   }
 
   public Optional<String> connectorType() {
-    return value(ConnectorDefUtils.KIND_DEFINITION.key());
+    return value(ConnectorDefUtils.KIND_KEY);
   }
 
   // ------------------------[json]------------------------//

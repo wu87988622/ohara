@@ -29,7 +29,7 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Input Folder")
           .documentation("Connector will load csv file from this folder")
-          .valueType(SettingDef.Type.STRING)
+          .required(SettingDef.Type.STRING)
           .key(INPUT_FOLDER_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
@@ -39,9 +39,8 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Completed Folder")
           .documentation("This folder is used to store the completed files")
-          .valueType(SettingDef.Type.STRING)
+          .optional(SettingDef.Type.STRING)
           .key(COMPLETED_FOLDER_KEY)
-          .optional()
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 
@@ -50,7 +49,7 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Error Folder")
           .documentation("This folder is used to keep the invalid files. For example, non-csv file")
-          .valueType(SettingDef.Type.STRING)
+          .required(SettingDef.Type.STRING)
           .key(ERROR_FOLDER_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
@@ -60,7 +59,7 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Output Folder")
           .documentation("Read csv data from topic and then write to this folder")
-          .valueType(SettingDef.Type.STRING)
+          .required(SettingDef.Type.STRING)
           .key(TOPICS_DIR_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
@@ -71,9 +70,8 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Flush Size")
           .documentation("Number of records write to store before invoking file commits")
-          .valueType(SettingDef.Type.INT)
-          .key(FLUSH_SIZE_KEY)
           .optional(FLUSH_SIZE_DEFAULT)
+          .key(FLUSH_SIZE_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 
@@ -83,7 +81,6 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Rotate Interval(MS)")
           .documentation("Commit file time")
-          .valueType(SettingDef.Type.LONG)
           .key(ROTATE_INTERVAL_MS_KEY)
           .optional(ROTATE_INTERVAL_MS_DEFAULT)
           .orderInGroup(COUNTER.getAndIncrement())
@@ -95,9 +92,8 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("File Need Header")
           .documentation("File need header for flush data")
-          .valueType(SettingDef.Type.BOOLEAN)
-          .key(FILE_NEED_HEADER_KEY)
           .optional(FILE_NEED_HEADER_DEFAULT)
+          .key(FILE_NEED_HEADER_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 
@@ -107,7 +103,6 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("File Encode")
           .documentation("File encode for write to file")
-          .valueType(SettingDef.Type.STRING)
           .key(FILE_ENCODE_KEY)
           .optional(FILE_ENCODE_DEFAULT)
           .orderInGroup(COUNTER.getAndIncrement())

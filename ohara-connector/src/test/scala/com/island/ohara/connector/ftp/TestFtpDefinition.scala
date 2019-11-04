@@ -17,6 +17,7 @@
 package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.SettingDef.Necessary
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -54,35 +55,35 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.OPTIONAL_WITH_DEFAULT
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .necessary() should not be Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     // we don't pass all arguments so it should contain error.
     response.errorCount() should not be 0
   }
@@ -107,35 +108,35 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.OPTIONAL_WITH_DEFAULT
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe false
+      .necessary() should not be Necessary.REQUIRED
     response
       .settings()
       .asScala
       .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
       .definition()
-      .required() shouldBe true
+      .necessary() shouldBe Necessary.REQUIRED
     response.errorCount() should not be 0
   }
 }

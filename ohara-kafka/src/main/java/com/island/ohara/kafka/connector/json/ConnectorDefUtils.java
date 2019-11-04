@@ -29,10 +29,12 @@ import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.setting.TableColumn;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
@@ -45,32 +47,42 @@ public final class ConnectorDefUtils {
   // -------------------------------[groups]-------------------------------//
   public static final String CORE_GROUP = "core";
   // -------------------------------[default setting]-------------------------------//
-  private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
+  private static final Map<String, SettingDef> _DEFINITIONS = new HashMap<>();
+
+  private static SettingDef createDef(Function<SettingDef.Builder, SettingDef> f) {
+    SettingDef settingDef =
+        f.apply(SettingDef.builder().orderInGroup(_DEFINITIONS.size()).group(CORE_GROUP));
+    // source kind and sink kind have identical key :)
+    assert !(_DEFINITIONS.containsKey(settingDef.key()) && !settingDef.key().equals(KIND_KEY))
+        : "duplicate key:" + settingDef.key() + " is illegal";
+    _DEFINITIONS.put(settingDef.key(), settingDef);
+    return settingDef;
+  }
 
   /**
    * A internal field used to indicate the real group/name to connector. the name exists in both
    * Ohara and Kafka but it has different value to both as well...
    */
   public static final SettingDef CONNECTOR_KEY_DEFINITION =
-      SettingDef.builder()
-          .displayName("Connector key")
-          .key("connectorKey")
-          .valueType(Type.OBJECT_KEY)
-          .documentation("the key of this connector")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .internal()
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Connector key")
+                  .key("connectorKey")
+                  .required(Type.OBJECT_KEY)
+                  .documentation("the key of this connector")
+                  .internal()
+                  .build());
 
   public static final SettingDef CONNECTOR_GROUP_DEFINITION =
-      SettingDef.builder()
-          .displayName("Connector group")
-          .key("group")
-          .valueType(Type.STRING)
-          .documentation("the group of this connector")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Connector group")
+                  .key("group")
+                  .optional("default")
+                  .documentation("the group of this connector")
+                  .build());
 
   /**
    * this is a embarrassed field to Ohara since we also have a filed called name for all objects.
@@ -78,195 +90,218 @@ public final class ConnectorDefUtils {
    * creating connector.
    */
   public static final SettingDef CONNECTOR_NAME_DEFINITION =
-      SettingDef.builder()
-          .displayName("Connector name")
-          .key("name")
-          .valueType(Type.STRING)
-          .documentation("the name of this connector")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Connector name")
+                  .key("name")
+                  .stringWithRandomDefault()
+                  .documentation("the name of this connector")
+                  .build());
 
   public static final SettingDef CONNECTOR_CLASS_DEFINITION =
-      SettingDef.builder()
-          .displayName("Connector class")
-          .key("connector.class")
-          .valueType(Type.CLASS)
-          .documentation("the class name of connector")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Connector class")
+                  .key("connector.class")
+                  .required(Type.CLASS)
+                  .documentation("the class name of connector")
+                  .build());
 
   public static final SettingDef TOPIC_KEYS_DEFINITION =
-      SettingDef.builder()
-          .displayName("Topics")
-          .key("topicKeys")
-          .valueType(Type.OBJECT_KEYS)
-          .documentation("the topics used by connector")
-          .reference(Reference.TOPIC)
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Topics")
+                  .key("topicKeys")
+                  // we have to make this field optional since our UI needs to create connector
+                  // without topics...
+                  .optional(Type.OBJECT_KEYS)
+                  .documentation("the topics used by connector")
+                  .reference(Reference.TOPIC)
+                  .build());
 
   public static final SettingDef TOPIC_NAMES_DEFINITION =
-      SettingDef.builder()
-          .displayName("Topics")
-          .key("topics")
-          .valueType(Type.ARRAY)
-          .documentation(
-              "the topic names in kafka form used by connector."
-                  + "This field is internal and is generated from topicKeys. Normally, it is composed by group and name")
-          .reference(Reference.TOPIC)
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .internal()
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Topics")
+                  .key("topics")
+                  .required(Type.ARRAY)
+                  .documentation(
+                      "the topic names in kafka form used by connector."
+                          + "This field is internal and is generated from topicKeys. Normally, it is composed by group and name")
+                  .reference(Reference.TOPIC)
+                  .internal()
+                  .build());
   public static final SettingDef NUMBER_OF_TASKS_DEFINITION =
-      SettingDef.builder()
-          .displayName("Number of tasks")
-          .key("tasks.max")
-          .valueType(Type.INT)
-          .documentation("the number of tasks invoked by connector")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Number of tasks")
+                  .key("tasks.max")
+                  // TODO: use positive number instead (see
+                  // https://github.com/oharastream/ohara/issues/3168)
+                  .optional(1)
+                  .documentation("the number of tasks invoked by connector")
+                  .build());
   public static final SettingDef COLUMNS_DEFINITION =
-      SettingDef.builder()
-          .displayName("Schema")
-          .key("columns")
-          .valueType(Type.TABLE)
-          .documentation("the rules to connector in/out data")
-          .optional()
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .tableKeys(
-              Arrays.asList(
-                  TableColumn.builder().name(ORDER_KEY).type(TableColumn.Type.NUMBER).build(),
-                  TableColumn.builder()
-                      .name(COLUMN_DATA_TYPE_KEY)
-                      .type(TableColumn.Type.STRING)
-                      .build(),
-                  TableColumn.builder().name(COLUMN_NAME_KEY).type(TableColumn.Type.STRING).build(),
-                  TableColumn.builder()
-                      .name(COLUMN_NEW_NAME_KEY)
-                      .type(TableColumn.Type.STRING)
-                      .build()))
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("Schema")
+                  .key("columns")
+                  .documentation("the rules to connector in/out data")
+                  .optional(
+                      Arrays.asList(
+                          TableColumn.builder()
+                              .name(ORDER_KEY)
+                              .type(TableColumn.Type.NUMBER)
+                              .build(),
+                          TableColumn.builder()
+                              .name(COLUMN_DATA_TYPE_KEY)
+                              .type(TableColumn.Type.STRING)
+                              .build(),
+                          TableColumn.builder()
+                              .name(COLUMN_NAME_KEY)
+                              .type(TableColumn.Type.STRING)
+                              .build(),
+                          TableColumn.builder()
+                              .name(COLUMN_NEW_NAME_KEY)
+                              .type(TableColumn.Type.STRING)
+                              .build()))
+                  .build());
 
   public static final SettingDef CHECK_RULE_DEFINITION =
-      SettingDef.builder()
-          .displayName("check rule")
-          .key("check.rule")
-          .valueType(Type.STRING)
-          .documentation(
-              "the strategy for unmatched data. It includes enforcing, permissive and none")
-          .optional(SettingDef.CheckRule.NONE.name())
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("check rule")
+                  .key("check.rule")
+                  .documentation(
+                      "the strategy for unmatched data. It includes enforcing, permissive and none")
+                  .optional(
+                      SettingDef.CheckRule.NONE.name(),
+                      Stream.of(SettingDef.CheckRule.values())
+                          .map(SettingDef.CheckRule::name)
+                          .collect(Collectors.toList()))
+                  .build());
 
   public static final SettingDef WORKER_CLUSTER_KEY_DEFINITION =
-      SettingDef.builder()
-          .displayName("worker cluster")
-          .key("workerClusterKey")
-          .valueType(Type.OBJECT_KEY)
-          .documentation("the cluster name of running this connector.")
-          .reference(Reference.WORKER_CLUSTER)
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("worker cluster")
+                  .key("workerClusterKey")
+                  .required(Type.OBJECT_KEY)
+                  .documentation("the cluster name of running this connector.")
+                  .reference(Reference.WORKER_CLUSTER)
+                  .build());
 
   public static final SettingDef KEY_CONVERTER_DEFINITION =
-      SettingDef.builder()
-          .displayName("key converter")
-          .key("key.converter")
-          .valueType(Type.CLASS)
-          .documentation("key converter")
-          .group(CORE_GROUP)
-          .optional(ConverterType.NONE.className())
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .internal()
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("key converter")
+                  .key("key.converter")
+                  .documentation("key converter")
+                  .optionalClassValue(ConverterType.NONE.className())
+                  .internal()
+                  .build());
 
   public static final SettingDef VALUE_CONVERTER_DEFINITION =
-      SettingDef.builder()
-          .displayName("value converter")
-          .key("value.converter")
-          .valueType(Type.STRING)
-          .documentation("value converter")
-          .group(CORE_GROUP)
-          .optional(ConverterType.NONE.className())
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .internal()
-          .build();
-
-  public static final SettingDef VERSION_DEFINITION =
-      SettingDef.builder()
-          .displayName("version")
-          .key("version")
-          .valueType(Type.STRING)
-          .documentation("version of connector")
-          .group(CORE_GROUP)
-          .optional("unknown")
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .readonly()
-          .build();
-
-  public static final SettingDef REVISION_DEFINITION =
-      SettingDef.builder()
-          .displayName("revision")
-          .key("revision")
-          .valueType(Type.STRING)
-          .documentation("revision of connector")
-          .group(CORE_GROUP)
-          .optional("unknown")
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .readonly()
-          .build();
-
-  public static final SettingDef AUTHOR_DEFINITION =
-      SettingDef.builder()
-          .displayName("author")
-          .key("author")
-          .valueType(Type.STRING)
-          .documentation("author of connector")
-          .group(CORE_GROUP)
-          .optional("unknown")
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .readonly()
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("value converter")
+                  .key("value.converter")
+                  .documentation("value converter")
+                  .optionalClassValue(ConverterType.NONE.className())
+                  .internal()
+                  .build());
 
   /** this is the base of source/sink definition. */
-  public static final SettingDef KIND_DEFINITION =
-      SettingDef.builder()
-          .displayName("kind")
-          .key("kind")
-          .valueType(Type.STRING)
-          .documentation("kind of connector")
-          .group(CORE_GROUP)
-          .optional("connector")
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .readonly()
-          .build();
+  public static final String KIND_KEY = "kind";
 
   public static final SettingDef SOURCE_KIND_DEFINITION =
-      SettingDef.builder(KIND_DEFINITION).optional("source").build();
+      createDef(
+          builder ->
+              builder
+                  .displayName(KIND_KEY)
+                  .key(KIND_KEY)
+                  .documentation("kind of connector")
+                  .optional("source")
+                  .readonly()
+                  .build());
 
   public static final SettingDef SINK_KIND_DEFINITION =
-      SettingDef.builder(KIND_DEFINITION).optional("sink").build();
+      createDef(
+          builder ->
+              builder
+                  .displayName(SOURCE_KIND_DEFINITION.displayName())
+                  .key(SOURCE_KIND_DEFINITION.key())
+                  .documentation(SOURCE_KIND_DEFINITION.documentation())
+                  .group(SOURCE_KIND_DEFINITION.group())
+                  .optional("sink")
+                  .orderInGroup(SOURCE_KIND_DEFINITION.orderInGroup())
+                  .readonly()
+                  .build());
 
   public static final SettingDef TAGS_DEFINITION =
-      SettingDef.builder()
-          .displayName("tags")
-          .key("tags")
-          .valueType(Type.TAGS)
-          .documentation("tags to this connector")
-          .group(CORE_GROUP)
-          // the tags in connector
-          .internal()
-          .optional()
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
+      createDef(
+          builder ->
+              builder
+                  .displayName("tags")
+                  .key("tags")
+                  .optional(Type.TAGS)
+                  .documentation("tags to this connector")
+                  .build());
+
+  static final int VERSION_ORDER = _DEFINITIONS.size();
+  public static final String VERSION_KEY = "version";
+
+  public static SettingDef createVersionDefinition(String version) {
+    return SettingDef.builder()
+        .displayName(VERSION_KEY)
+        .key(VERSION_KEY)
+        .documentation("version of connector")
+        .group(CORE_GROUP)
+        .optional(version)
+        .orderInGroup(VERSION_ORDER)
+        .readonly()
+        .build();
+  }
+
+  static final int REVISION_ORDER = VERSION_ORDER + 1;
+  public static final String REVISION_KEY = "revision";
+
+  public static SettingDef createRevisionDefinition(String revision) {
+    return SettingDef.builder()
+        .displayName(REVISION_KEY)
+        .key(REVISION_KEY)
+        .documentation("revision of connector")
+        .group(CORE_GROUP)
+        .optional(revision)
+        .orderInGroup(REVISION_ORDER)
+        .readonly()
+        .build();
+  }
+
+  static final int AUTHOR_ORDER = REVISION_ORDER + 1;
+  public static final String AUTHOR_KEY = "author";
+
+  public static SettingDef createAuthorDefinition(String author) {
+    return SettingDef.builder()
+        .displayName(AUTHOR_KEY)
+        .key(AUTHOR_KEY)
+        .documentation("author of connector")
+        .group(CORE_GROUP)
+        .optional(author)
+        .orderInGroup(AUTHOR_ORDER)
+        .readonly()
+        .build();
+  }
 
   @VisibleForTesting
   static ConfigDef.Type toType(Type type) {
@@ -281,14 +316,18 @@ public final class ConnectorDefUtils {
       case OBJECT_KEY:
       case TAGS:
         return ConfigDef.Type.STRING;
+      case POSITIVE_SHORT:
       case SHORT:
         return ConfigDef.Type.SHORT;
       case PORT:
       case BINDING_PORT:
+      case POSITIVE_INT:
       case INT:
         return ConfigDef.Type.INT;
+      case POSITIVE_LONG:
       case LONG:
         return ConfigDef.Type.LONG;
+      case POSITIVE_DOUBLE:
       case DOUBLE:
         return ConfigDef.Type.DOUBLE;
       case ARRAY:
@@ -329,7 +368,9 @@ public final class ConnectorDefUtils {
         // Above rules are important to us since we depends on the validation from kafka. We will
         // retrieve a wrong
         // report from kafka if we don't follow the rule.
-        def.required() ? ConfigDef.NO_DEFAULT_VALUE : def.defaultValue(),
+        def.necessary() == SettingDef.Necessary.REQUIRED
+            ? ConfigDef.NO_DEFAULT_VALUE
+            : def.defaultValue(),
         (String key, Object value) -> {
           // TODO move this to RouteUtils in #2191
           try {
@@ -358,77 +399,10 @@ public final class ConnectorDefUtils {
   // --------------------------[helper method]------------------------------//
   /** the default definitions for all ohara connector. */
   public static final List<SettingDef> DEFINITIONS_DEFAULT =
-      Arrays.asList(
-          CONNECTOR_NAME_DEFINITION,
-          CONNECTOR_KEY_DEFINITION,
-          CONNECTOR_CLASS_DEFINITION,
-          COLUMNS_DEFINITION,
-          CHECK_RULE_DEFINITION,
-          KEY_CONVERTER_DEFINITION,
-          VALUE_CONVERTER_DEFINITION,
-          WORKER_CLUSTER_KEY_DEFINITION,
-          NUMBER_OF_TASKS_DEFINITION,
-          TOPIC_KEYS_DEFINITION,
-          TOPIC_NAMES_DEFINITION,
-          TAGS_DEFINITION);
-
-  /**
-   * find the default value of version from settings
-   *
-   * @param settingDefinitions settings
-   * @return default value of version. Otherwise, NoSuchElementException will be thrown
-   */
-  public static String version(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefUtils.VERSION_DEFINITION.key());
-  }
-
-  /**
-   * find the default value of revision from settings
-   *
-   * @param settingDefinitions settings
-   * @return default value of revision. Otherwise, NoSuchElementException will be thrown
-   */
-  public static String revision(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefUtils.REVISION_DEFINITION.key());
-  }
-
-  /**
-   * find the default value of author from settings
-   *
-   * @param settingDefinitions settings
-   * @return default value of author. Otherwise, NoSuchElementException will be thrown
-   */
-  public static String author(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefUtils.AUTHOR_DEFINITION.key());
-  }
-
-  /**
-   * find the default value of type name from settings
-   *
-   * @param settingDefinitions settings
-   * @return default value of type name. Otherwise, NoSuchElementException will be thrown
-   */
-  public static String kind(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefUtils.KIND_DEFINITION.key());
-  }
-
-  private static String defaultValue(List<SettingDef> settingDefinitions, String key) {
-    return Optional.ofNullable(
-            settingDefinitions.stream()
-                .filter(s -> s.key().equals(key))
-                .findAny()
-                .orElseGet(
-                    () -> {
-                      throw new NoSuchElementException(
-                          key + " doesn't exist! Are you using a stale worker image?");
-                    })
-                .defaultValue())
-        .orElseGet(
-            () -> {
-              throw new NoSuchElementException(
-                  "there is no value matched to " + key + ". Are you using a stale worker image?");
-            });
-  }
+      _DEFINITIONS.values().stream()
+          // the kind is different between source and sink so we include it from default definitions
+          .filter(d -> !d.key().equals(KIND_KEY))
+          .collect(Collectors.toList());
 
   // disable constructor
   private ConnectorDefUtils() {}

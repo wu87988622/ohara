@@ -45,7 +45,7 @@ object FtpInfoApi {
       extends com.island.ohara.client.configurator.v0.BasicCreation
   implicit val FTP_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
-    basicRulesOfKey[Creation]
+    rulesOfKey[Creation]
       .format(jsonFormat7(Creation))
       .requireConnectionPort("port")
       .rejectEmptyString()

@@ -16,7 +16,6 @@
 
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
-import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.{Data, QueryRequest}
@@ -44,81 +43,75 @@ object TopicApi {
     * in order to filter the custom from settings (see Creation).
     */
   private[this] val EXTRA_GROUP = "extra"
-
-  private[this] val CORE_COUNTER = new AtomicInteger(0)
-  private[this] val EXTRA_COUNTER = new AtomicInteger(0)
-  private[this] def coreDefinitionBuilder =
-    SettingDef.builder().orderInGroup(CORE_COUNTER.incrementAndGet()).group("core")
-  private[this] def extraDefinitionBuilder =
-    SettingDef.builder().orderInGroup(EXTRA_COUNTER.incrementAndGet()).group(EXTRA_GROUP)
+  private[this] val CORE_DEFINITIONS = mutable.Map[String, SettingDef]()
+  private[this] val EXTRA_DEFINITIONS = mutable.Map[String, SettingDef]()
+  private[this] def createExtraDef(f: SettingDef.Builder => SettingDef): SettingDef = {
+    val settingDef = f(SettingDef.builder().orderInGroup(EXTRA_DEFINITIONS.size).group(EXTRA_GROUP))
+    assert(!CORE_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
+    assert(!EXTRA_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
+    EXTRA_DEFINITIONS += (settingDef.key() -> settingDef)
+    settingDef
+  }
+  private[this] def createCoreDef(f: SettingDef.Builder => SettingDef): SettingDef = {
+    val settingDef = f(SettingDef.builder().orderInGroup(CORE_DEFINITIONS.size).group("core"))
+    assert(!CORE_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
+    assert(!EXTRA_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
+    CORE_DEFINITIONS += (settingDef.key() -> settingDef)
+    settingDef
+  }
   val GROUP_DEFINITION: SettingDef =
-    coreDefinitionBuilder.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+    createCoreDef(_.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
   val NAME_DEFINITION: SettingDef =
-    coreDefinitionBuilder.key(NAME_KEY).documentation("name of this worker cluster").optional().build()
+    createCoreDef(_.key(NAME_KEY).documentation("name of this worker cluster").stringWithRandomDefault().build())
   val TAGS_DEFINITION: SettingDef =
-    coreDefinitionBuilder
-      .key(TAGS_KEY)
-      .documentation("the tags to this cluster")
-      .optional()
-      .valueType(Type.TAGS)
-      .build()
+    createCoreDef(_.key(TAGS_KEY).documentation("the tags to this cluster").optional(Type.TAGS).build())
   private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
-  val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = coreDefinitionBuilder
-    .key(BROKER_CLUSTER_KEY_KEY)
-    .documentation("broker cluster used to store data for this worker cluster")
-    .valueType(Type.OBJECT_KEY)
-    .reference(Reference.BROKER_CLUSTER)
-    .build()
+  val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = createCoreDef(
+    _.key(BROKER_CLUSTER_KEY_KEY)
+      .documentation("broker cluster used to store data for this worker cluster")
+      .required(Type.OBJECT_KEY)
+      .reference(Reference.BROKER_CLUSTER)
+      .build())
   private[this] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
   private[this] val NUMBER_OF_PARTITIONS_DEFAULT: Int = 1
-  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = coreDefinitionBuilder
-    .key(NUMBER_OF_PARTITIONS_KEY)
-    .documentation("the number of partitions")
-    .valueType(Type.INT)
-    .optional(NUMBER_OF_PARTITIONS_DEFAULT)
-    .build()
+  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createCoreDef(
+    _.key(NUMBER_OF_PARTITIONS_KEY)
+      .documentation("the number of partitions")
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
+      .optional(NUMBER_OF_PARTITIONS_DEFAULT)
+      .build())
   private[this] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
   private[this] val NUMBER_OF_REPLICATIONS_DEFAULT: Short = 1
-  val NUMBER_OF_REPLICATIONS_DEFINITION: SettingDef = coreDefinitionBuilder
-    .key(NUMBER_OF_REPLICATIONS_KEY)
-    .documentation("the number of replications")
-    .valueType(Type.SHORT)
-    .optional(NUMBER_OF_REPLICATIONS_DEFAULT)
-    .build()
+  val NUMBER_OF_REPLICATIONS_DEFINITION: SettingDef = createCoreDef(
+    _.key(NUMBER_OF_REPLICATIONS_KEY)
+      .documentation("the number of replications")
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
+      .optional(NUMBER_OF_REPLICATIONS_DEFAULT)
+      .build())
 
   private[this] val SEGMENT_BYTES_KEY = TopicConfig.SEGMENT_BYTES_CONFIG
   private[this] val SEGMENT_BYTES_DEFAULT: Long = 1 * 1024 * 1024 * 1024L
-  val SEGMENT_BYTES_DEFINITION: SettingDef = extraDefinitionBuilder
-    .key(SEGMENT_BYTES_KEY)
-    .documentation(TopicConfig.SEGMENT_BYTES_DOC)
-    // ONE WEEK
-    .valueType(Type.LONG)
-    .optional(SEGMENT_BYTES_DEFAULT)
-    .build()
+  val SEGMENT_BYTES_DEFINITION: SettingDef = createExtraDef(
+    _.key(SEGMENT_BYTES_KEY)
+      .documentation(TopicConfig.SEGMENT_BYTES_DOC)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
+      .optional(SEGMENT_BYTES_DEFAULT)
+      .build())
 
   private[this] val SEGMENT_MS_KEY = TopicConfig.SEGMENT_MS_CONFIG
+  // ONE WEEK
   private[this] val SEGMENT_MS_DEFAULT: Long = 7 * 24 * 60 * 60 * 1000L
-  val SEGMENT_MS_DEFINITION: SettingDef = extraDefinitionBuilder
-    .key(SEGMENT_MS_KEY)
-    .documentation(TopicConfig.SEGMENT_MS_DOC)
-    .valueType(Type.LONG)
-    // ONE WEEK
-    .optional(SEGMENT_MS_DEFAULT)
-    .build()
+  val SEGMENT_MS_DEFINITION: SettingDef = createExtraDef(
+    _.key(SEGMENT_MS_KEY)
+      .documentation(TopicConfig.SEGMENT_MS_DOC)
+      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
+      .optional(SEGMENT_MS_DEFAULT)
+      .build())
 
   /**
     * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
     */
-  val DEFINITIONS: Seq[SettingDef] = Seq(
-    GROUP_DEFINITION,
-    NAME_DEFINITION,
-    TAGS_DEFINITION,
-    BROKER_CLUSTER_KEY_DEFINITION,
-    NUMBER_OF_PARTITIONS_DEFINITION,
-    NUMBER_OF_REPLICATIONS_DEFINITION,
-    SEGMENT_BYTES_DEFINITION,
-    SEGMENT_MS_DEFINITION
-  )
+  def DEFINITIONS: Seq[SettingDef] = (CORE_DEFINITIONS.values ++ EXTRA_DEFINITIONS.values).toSeq
 
   final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
     def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -141,9 +134,6 @@ object TopicApi {
         override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
         override def write(obj: Updating): JsValue = JsObject(obj.settings)
       })
-      .rejectEmptyString()
-      .requirePositiveNumber(NUMBER_OF_PARTITIONS_KEY)
-      .requirePositiveNumber(NUMBER_OF_REPLICATIONS_KEY)
       .refine
 
   final class Creation private[TopicApi] (val settings: Map[String, JsValue])
@@ -167,22 +157,13 @@ object TopicApi {
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
-    basicRulesOfKey[Creation]
+    limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
         override def write(obj: Creation): JsValue = JsObject(obj.settings)
       })
-      .requireKey(BROKER_CLUSTER_KEY_KEY)
-      .nullToInt(NUMBER_OF_PARTITIONS_KEY, NUMBER_OF_PARTITIONS_DEFAULT)
-      .requirePositiveNumber(NUMBER_OF_PARTITIONS_KEY)
-      .nullToInt(NUMBER_OF_REPLICATIONS_KEY, NUMBER_OF_REPLICATIONS_DEFAULT)
-      .requirePositiveNumber(NUMBER_OF_REPLICATIONS_KEY)
-      .rejectEmptyString()
-      .nullToEmptyObject(TAGS_KEY)
-      .requirePositiveNumber(SEGMENT_BYTES_KEY)
-      .nullToLong(SEGMENT_BYTES_KEY, SEGMENT_BYTES_DEFAULT)
-      .requirePositiveNumber(SEGMENT_MS_KEY)
-      .nullToLong(SEGMENT_MS_KEY, SEGMENT_MS_DEFAULT)
+      // TODO: topic definitions may be changed by different Broker images so this check is dangerous
+      .definitions(DEFINITIONS)
       .refine
 
   import MetricsApi._
@@ -244,15 +225,10 @@ object TopicApi {
     /**
       * @return the custom configs. the core configs are not included
       */
-    def configs: Map[String, String] = noJsNull(settings)
-      .filter {
-        case (key, value) =>
-          DEFINITIONS.filter(_.group() == EXTRA_GROUP).exists(_.key() == key) &&
-            value.isInstanceOf[JsString]
-      }
-      .map {
-        case (key, value) => key -> value.convertTo[String]
-      }
+    def configs: Map[String, JsValue] = noJsNull(settings).filter {
+      case (key, value) =>
+        DEFINITIONS.filter(_.group() == EXTRA_GROUP).exists(_.key() == key)
+    }
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat5(TopicInfo)
@@ -291,14 +267,6 @@ object TopicApi {
     @Optional("default value is DEFAULT_NUMBER_OF_REPLICATIONS")
     def numberOfReplications(numberOfReplications: Short): Request =
       setting(NUMBER_OF_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(numberOfReplications)))
-
-    @Optional("default configs is empty array")
-    def configs(configs: Map[String, String]): Request = {
-      configs.foreach {
-        case (key, value) => setting(key, JsString(value))
-      }
-      this
-    }
 
     @Optional("default value is empty array")
     def tags(tags: Map[String, JsValue]): Request =

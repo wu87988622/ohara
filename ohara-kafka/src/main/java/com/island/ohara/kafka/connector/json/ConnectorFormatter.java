@@ -22,7 +22,7 @@ import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.ConnectorKey;
 import com.island.ohara.common.setting.ObjectKey;
-import com.island.ohara.common.setting.PropGroups;
+import com.island.ohara.common.setting.PropGroup;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
@@ -154,8 +154,8 @@ public final class ConnectorFormatter {
     return setting(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key(), type.className());
   }
 
-  public ConnectorFormatter propGroups(String key, PropGroups propGroups) {
-    return setting(key, propGroups.toJsonString());
+  public ConnectorFormatter propGroup(String key, PropGroup propGroup) {
+    return setting(key, propGroup.toJsonString());
   }
 
   public ConnectorFormatter column(Column column) {
@@ -163,9 +163,9 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter columns(List<Column> columns) {
-    return propGroups(
+    return propGroup(
         ConnectorDefUtils.COLUMNS_DEFINITION.key(),
-        PropGroups.ofColumns(CommonUtils.requireNonEmpty(columns)));
+        PropGroup.ofColumns(CommonUtils.requireNonEmpty(columns)));
   }
 
   public Creation requestOfCreation() {

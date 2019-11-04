@@ -47,7 +47,7 @@ public class TableColumn implements JsonObject, Serializable {
 
     private String name = null;
     private Type type = Type.STRING;
-    private Set<String> recommendedItems = Collections.emptySet();
+    private Set<String> recommendedValues = Collections.emptySet();
 
     public Builder name(String name) {
       this.name = CommonUtils.requireNonEmpty(name);
@@ -60,8 +60,8 @@ public class TableColumn implements JsonObject, Serializable {
       return this;
     }
 
-    public Builder recommendedItems(Set<String> recommendedItems) {
-      this.recommendedItems = Objects.requireNonNull(recommendedItems);
+    public Builder recommendedItems(Set<String> recommendedValues) {
+      this.recommendedValues = Objects.requireNonNull(recommendedValues);
       return this;
     }
 
@@ -69,26 +69,26 @@ public class TableColumn implements JsonObject, Serializable {
 
     @Override
     public TableColumn build() {
-      return new TableColumn(name, type.name().toLowerCase(), recommendedItems);
+      return new TableColumn(name, type.name().toLowerCase(), recommendedValues);
     }
   }
 
   private static final String NAME_KEY = "name";
   private static final String TYPE_KEY = "string";
-  private static final String RECOMMENDED_ITEMS = "recommended.items";
+  private static final String RECOMMENDED_VALUES_KEY = SettingDef.RECOMMENDED_VALUES_KEY;
 
   private final String name;
   private final String type;
-  private final Set<String> recommendedItems;
+  private final Set<String> recommendedValues;
 
   @JsonCreator
   private TableColumn(
       @JsonProperty(NAME_KEY) String name,
       @JsonProperty(TYPE_KEY) String type,
-      @JsonProperty(RECOMMENDED_ITEMS) Set<String> recommendedItems) {
+      @JsonProperty(RECOMMENDED_VALUES_KEY) Set<String> recommendedValues) {
     this.name = CommonUtils.requireNonEmpty(name);
     this.type = CommonUtils.requireNonEmpty(type);
-    this.recommendedItems = Objects.requireNonNull(recommendedItems);
+    this.recommendedValues = Objects.requireNonNull(recommendedValues);
   }
 
   @JsonProperty(NAME_KEY)
@@ -101,9 +101,9 @@ public class TableColumn implements JsonObject, Serializable {
     return type;
   }
 
-  @JsonProperty(RECOMMENDED_ITEMS)
-  public Set<String> recommendedItems() {
-    return Collections.unmodifiableSet(recommendedItems);
+  @JsonProperty(RECOMMENDED_VALUES_KEY)
+  public Set<String> recommendedValues() {
+    return Collections.unmodifiableSet(recommendedValues);
   }
 
   // ------------------------[object]------------------------//
@@ -113,7 +113,7 @@ public class TableColumn implements JsonObject, Serializable {
       TableColumn another = (TableColumn) obj;
       return name.equals(another.name)
           && type.equals(another.type)
-          && recommendedItems.equals(another.recommendedItems);
+          && recommendedValues.equals(another.recommendedValues);
     }
     return false;
   }

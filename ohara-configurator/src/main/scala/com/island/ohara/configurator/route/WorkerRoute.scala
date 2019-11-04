@@ -88,6 +88,7 @@ object WorkerRoute {
                                 executionContext: ExecutionContext): HookOfAction[WorkerClusterInfo] =
     (workerClusterInfo: WorkerClusterInfo, _, _) =>
       objectChecker.checkList
+      // node names check is covered in super route
         .brokerCluster(workerClusterInfo.brokerClusterKey, RUNNING)
         .allWorkers()
         .check()

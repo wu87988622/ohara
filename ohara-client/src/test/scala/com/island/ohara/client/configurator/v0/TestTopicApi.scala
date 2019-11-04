@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers
 import spray.json._
 
@@ -150,6 +150,7 @@ class TestTopicApi extends OharaTest with Matchers {
       .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
       .creation
 
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
@@ -161,8 +162,9 @@ class TestTopicApi extends OharaTest with Matchers {
                                            |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("negative")
+  }.getMessage should include("the number must")
 
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativePartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
@@ -174,34 +176,9 @@ class TestTopicApi extends OharaTest with Matchers {
                                            |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("negative")
+  }.getMessage should include("the number must")
 
-  @Test
-  def negativeReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
-                                           |      "group": "g",
-                                           |      "name": "n"
-                                           |    },
-                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": -1
-                                           |  }
-       """.stripMargin.parseJson)
-  }.getMessage should include("negative")
-
-  @Test
-  def negativePartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
-                                           |      "group": "g",
-                                           |      "name": "n"
-                                           |    },
-                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": -1
-                                           |  }
-       """.stripMargin.parseJson)
-  }.getMessage should include("negative")
-
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def zeroReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
@@ -213,8 +190,9 @@ class TestTopicApi extends OharaTest with Matchers {
                                            |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("negative")
+  }.getMessage should include("the number must")
 
+  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def zeroPartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
     TopicApi.TOPIC_CREATION_FORMAT.read(s"""
@@ -226,31 +204,5 @@ class TestTopicApi extends OharaTest with Matchers {
                                            |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("negative")
-
-  @Test
-  def zeroReplicationsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
-                                           |      "group": "g",
-                                           |      "name": "n"
-                                           |    },
-                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": 0
-                                           |  }
-       """.stripMargin.parseJson)
-  }.getMessage should include("negative")
-
-  @Test
-  def zeroPartitionsIsIllegalInUpdating(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
-                                           |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
-                                           |      "group": "g",
-                                           |      "name": "n"
-                                           |    },
-                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": 0
-                                           |  }
-       """.stripMargin.parseJson)
-  }.getMessage should include("negative")
+  }.getMessage should include("the number must")
 }

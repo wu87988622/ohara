@@ -21,8 +21,9 @@ import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, PropGroups, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, PropGroup, TopicKey}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
@@ -88,7 +89,7 @@ class TestConnectorApi extends OharaTest with Matchers {
        |  "name": ${JsString(name).toString()},
        |  "workerClusterKey": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
-       |  "$COLUMNS_KEY": ${PropGroups.ofColumn(column).toJsonString},
+       |  "$COLUMNS_KEY": ${PropGroup.ofColumn(column).toJsonString},
        |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
        |  "$anotherKey": "$anotherValue"
@@ -185,7 +186,7 @@ class TestConnectorApi extends OharaTest with Matchers {
   }
 
   @Test
-  def parsePropGroups(): Unit = {
+  def parsePropGroup(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
       |  {
       |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -209,7 +210,7 @@ class TestConnectorApi extends OharaTest with Matchers {
       |    ]
       |  }
       | """.stripMargin.parseJson)
-    val column = PropGroups.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
+    val column = PropGroup.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
     column.order() shouldBe 1
     column.name() shouldBe "abc"
     column.newName() shouldBe "ccc"
@@ -620,8 +621,8 @@ class TestConnectorApi extends OharaTest with Matchers {
       |     """.stripMargin.parseJson).tags shouldBe Map.empty
 
   @Test
-  def parseConnectorKey(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+  def defaultNumberOfTasks(): Unit =
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
        |  {
        |    "$WORKER_CLUSTER_KEY_KEY": {
        |      "group": "g",
@@ -633,13 +634,11 @@ class TestConnectorApi extends OharaTest with Matchers {
        |        "name": "n"
        |      }
        |    ],
-       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource",
-       |    "$CONNECTOR_KEY_KEY": {
-       |      "group": "g",
-       |      "name": "n"
-       |    }
+       |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
        |  }
-       |     """.stripMargin.parseJson)
+       |     """.stripMargin.parseJson).numberOfTasks shouldBe ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION
+      .defaultValue()
+      .toInt
 
   @Test
   def testCustomGroup(): Unit = ConnectorApi.access
@@ -663,24 +662,4 @@ class TestConnectorApi extends OharaTest with Matchers {
     .topicKey(TopicKey.of("g", "n"))
     .creation
     .group shouldBe GROUP_DEFAULT
-
-  @Test
-  def rejectTopicKeyword(): Unit = intercept[DeserializationException] {
-    CONNECTOR_CREATION_FORMAT.read(s"""
-                                      |  {
-                                      |    "$WORKER_CLUSTER_KEY_KEY": {
-                                      |      "group": "g",
-                                      |      "name": "n"
-                                      |    },
-                                      |    "topicKeys": [
-                                      |      {
-                                      |        "group": "g",
-                                      |        "name": "n"
-                                      |      }
-                                      |    ],
-                                      |    "connector.class": "aa",
-                                      |    "topics": []
-                                      |  }
-      """.stripMargin.parseJson)
-  }.getMessage should include("illegal word")
 }

@@ -126,8 +126,8 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )
-                  val arguments = Seq(StreamCollie.MAIN_ENTRY,
-                                      s"${StreamDefUtils.JAR_URL_DEFINITION.key()}=${fileInfo.url.toURI.toASCIIString}")
+                  val arguments =
+                    Seq(StreamCollie.MAIN_ENTRY, s"${StreamDefUtils.JAR_URL_KEY}=${fileInfo.url.toURI.toASCIIString}")
 
                   doCreator(executionContext, containerInfo, newNode, route, arguments)
                     .map(_ => Some(containerInfo))
@@ -180,8 +180,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
       import sys.process._
       val classpath = System.getProperty("java.class.path")
       val command =
-        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_DEFINITION
-          .key()}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
+        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_KEY}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)
       StreamClusterDefinition(className, StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala)
@@ -230,19 +229,10 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
 
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator with StreamApi.Request {
-    override def create(): Future[Unit] = {
-      val request = creation
-      // TODO: the to/from topics should not be empty in building creation ... However, our stream route
-      // allowed user to enter empty for both fields... With a view to keeping the compatibility
-      // we have to move the check from "parsing json" to "running cluster"
-      // I'd say it is inconsistent to our cluster route ... by chia
-      CommonUtils.requireNonEmpty(request.fromTopicKeys.asJava)
-      CommonUtils.requireNonEmpty(request.toTopicKeys.asJava)
-      doCreate(
-        executionContext = Objects.requireNonNull(executionContext),
-        creation = request
-      )
-    }
+    override def create(): Future[Unit] = doCreate(
+      executionContext = Objects.requireNonNull(executionContext),
+      creation = creation
+    )
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }

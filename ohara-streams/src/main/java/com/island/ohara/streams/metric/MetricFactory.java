@@ -33,7 +33,7 @@ public final class MetricFactory {
     return Counter.builder()
         // the group is individual for each streamApp
         // so it is OK to use same group value
-        .group(StreamDefUtils.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue())
+        .group(StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT)
         .name(type.name())
         .unit("row")
         .document(type.value + ": the number of rows")

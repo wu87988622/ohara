@@ -17,12 +17,12 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
-import spray.json._
+import spray.json.{RootJsonFormat, _}
 class TestJsonRefiner extends OharaTest with Matchers {
   private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat6(SimpleData)
   private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
@@ -37,14 +37,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
   @Test
   def emptyToNullToEmptyArray(): Unit =
     an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToEmptyArray("")
-
-  @Test
-  def emptyToNullToRandomPort(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToRandomPort("")
-
-  @Test
-  def emptyToNullToRandomString(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToRandomString("")
 
   @Test
   def testDuplicateKeyForFromAnotherKey(): Unit = {
@@ -63,13 +55,11 @@ class TestJsonRefiner extends OharaTest with Matchers {
   @Test
   def testDuplicateKeyForDefaultValue(): Unit = {
     val actions: Seq[JsonRefiner[SimpleData] => Unit] = Seq(
-      _.nullToRandomPort("a"),
       _.nullToShort("a", 1),
       _.nullToInt("a", 1),
       _.nullToLong("a", 1),
       _.nullToDouble("a", 1),
       _.nullToEmptyArray("a"),
-      _.nullToRandomString("a"),
       _.nullToString("a", "ccc")
     )
     actions.foreach { action0 =>
@@ -84,14 +74,15 @@ class TestJsonRefiner extends OharaTest with Matchers {
   @Test
   def testDuplicateKeyForChecker(): Unit = {
     val actions: Seq[JsonRefiner[SimpleData] => Unit] = Seq(
-      _.requireBindPort("a"),
+      _.requireConnectionPort("a"),
       _.requireConnectionPort("a")
     )
     actions.foreach { action0 =>
       actions.foreach { action1 =>
         val refiner = JsonRefiner[SimpleData].format(format)
+        // duplicate checks will be merge to single one
         action0(refiner)
-        an[IllegalArgumentException] should be thrownBy action1(refiner)
+        action1(refiner)
       }
     }
   }
@@ -204,68 +195,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
             """.stripMargin.parseJson).connectionPort shouldBe -1
 
   @Test
-  def testBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
-          |{
-          | "stringValue": "abc",
-          | "group": "default",
-          | "bindPort": 11111,
-          | "connectionPort": 77,
-          | "stringArray": ["aa"],
-          | "objects":{}
-          |}
-        """.stripMargin.parseJson).bindPort shouldBe 11111
-
-  @Test
-  def testNullBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
-        |{
-        | "stringValue": "abc",
-        | "group": "default",
-        | "bindPort": null,
-        | "connectionPort": 77,
-        | "stringArray": ["aa"],
-        | "objects":{}
-        |}
-      """.stripMargin.parseJson).bindPort should not be 0
-
-  @Test
-  def testIgnoreBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
-      |{
-      | "stringValue": "abc",
-      | "group": "default",
-      | "connectionPort": 77,
-      | "stringArray": ["aa"],
-      | "objects":{}
-      |}
-    """.stripMargin.parseJson).bindPort should not be 0
-
-  @Test
-  def testNegativeBindPort(): Unit = testIllegalBindPort(-1)
-
-  @Test
-  def testPrivilegePort(): Unit = testIllegalBindPort(123)
-
-  @Test
-  def testLargeBindPort(): Unit = testIllegalBindPort(1000000)
-
-  private[this] def testIllegalBindPort(port: Int): Unit =
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .requireBindPort("bindPort")
-      .refine
-      .read(s"""
-               |{
-               | "stringValue": "abc",
-               | "bindPort": $port,
-               | "connectionPort": 111,
-               | "stringArray": ["aa"],
-               | "objects":{}
-               |}
-            """.stripMargin.parseJson)
-
-  @Test
   def testNegativeBindPortWithoutCheck(): Unit =
     JsonRefiner[SimpleData].format(format).refine.read("""
                      |{
@@ -277,18 +206,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
                      | "objects":{}
                      |}
                    """.stripMargin.parseJson).bindPort shouldBe -1
-
-  @Test
-  def testNullToRandomString(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomString("stringValue").refine.read("""
-                                                         |{
-                                                         | "bindPort": -1,
-                                                         | "group": "default",
-                                                         | "connectionPort": 123,
-                                                         | "stringArray": ["aa"],
-                                                         | "objects":{}
-                                                         |}
-                                                       """.stripMargin.parseJson).stringValue.length should not be 0
 
   @Test
   def testNullToEmptyArray(): Unit =
@@ -384,21 +301,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
       .bindPort shouldBe 9999
 
   @Test
-  def testNegativeNumber(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .rejectNegativeNumber()
-    .refine
-    .read("""
-            |{
-            | "stringValue": "abc",
-            | "bindPort": -1,
-            | "connectionPort": 123,
-            | "stringArray": [],
-            | "objects":{}
-            |}
-          """.stripMargin.parseJson)
-
-  @Test
   def testNestedObjectForEmptyString(): Unit =
     JsonRefiner[SimpleData2].format(format2).rejectEmptyString().refine.read("""
             |{
@@ -480,62 +382,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
             |
             |}
           """.stripMargin.parseJson)
-
-  @Test
-  def testNestedObjectForNegativeNumberWithEmptyInFirstElement(): Unit =
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData2]
-      .format(format2)
-      .rejectNegativeNumber()
-      .refine
-      .read("""
-              |{
-              |  "data": {
-              |    "stringValue": "aaa",
-              |    "bindPort": -1,
-              |    "connectionPort": 123,
-              |    "stringArray": [],
-              |    "objects":{}
-              |  },
-              |  "data2": [
-              |    {
-              |      "stringValue": "abc",
-              |      "bindPort": 22,
-              |      "connectionPort": 123,
-              |      "stringArray": [],
-              |      "objects":{}
-              |    }
-              |  ]
-              |
-              |}
-            """.stripMargin.parseJson)
-
-  @Test
-  def testNestedObjectForNegativeNumberWithEmptyInSecondElement(): Unit =
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData2]
-      .format(format2)
-      .rejectNegativeNumber()
-      .refine
-      .read("""
-              |{
-              |  "data": {
-              |    "stringValue": "aaa",
-              |    "bindPort": 22,
-              |    "connectionPort": 123,
-              |    "stringArray": [],
-              |    "objects":{}
-              |  },
-              |  "data2": [
-              |    {
-              |      "stringValue": "aaa",
-              |      "bindPort": -1,
-              |      "connectionPort": 123,
-              |      "stringArray": [],
-              |      "objects":{}
-              |    }
-              |  ]
-              |
-              |}
-            """.stripMargin.parseJson)
 
   @Test
   def testRejectEmptyArray(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
@@ -651,23 +497,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": 123,
             | "connectionPort": "123",
-            | "stringArray": [],
-            | "objects":{}
-            |}
-          """.stripMargin.parseJson)
-
-  @Test
-  def testRejectNegativeNumberInParsingString(): Unit =
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .acceptStringToNumber("connectionPort")
-      .rejectNegativeNumber()
-      .refine
-      .read("""
-            |{
-            | "stringValue": "abc",
-            | "bindPort": 123,
-            | "connectionPort": "-1",
             | "stringArray": [],
             | "objects":{}
             |}
@@ -1069,82 +898,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
            """.stripMargin.parseJson).objects shouldBe Map("a" -> JsString("bb"), "b" -> JsNumber(123))
 
   @Test
-  def testRejectNegativeNumberForSpecificKey(): Unit = {
-    val f = JsonRefiner[SimpleData].format(format).rejectNegativeNumber("bindPort").refine
-    f.read(s"""
-         |{
-         | "stringValue": "111",
-         | "group": "default",
-         | "bindPort": 123,
-         | "connectionPort": -1,
-         | "stringArray": [],
-         | "objects": {
-         |   "a": "bb",
-         |   "b": 123
-         | }
-         |}
-           """.stripMargin.parseJson).connectionPort shouldBe -1
-    an[DeserializationException] should be thrownBy f.read(s"""
-         |{
-         | "stringValue": "111",
-         | "bindPort": -123,
-         | "connectionPort": 123,
-         | "stringArray": [],
-         | "objects": {
-         |   "a": "bb",
-         |   "b": 123
-         | }
-         |}
-           """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testRequirePositiveNumber(): Unit = {
-    val f = JsonRefiner[SimpleData].format(format).requirePositiveNumber("bindPort").refine
-    f.read(s"""
-              |{
-              | "stringValue": "111",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 100,
-              | "stringArray": [],
-              | "objects": {
-              |   "a": "bb",
-              |   "b": 123
-              | }
-              |}
-           """.stripMargin.parseJson).bindPort shouldBe 123
-
-    // negative number is illegal
-    an[DeserializationException] should be thrownBy f.read(s"""
-                                                              |{
-                                                              | "stringValue": "111",
-                                                              | "bindPort": -123,
-                                                              | "connectionPort": 123,
-                                                              | "stringArray": [],
-                                                              | "objects": {
-                                                              |   "a": "bb",
-                                                              |   "b": 123
-                                                              | }
-                                                              |}
-           """.stripMargin.parseJson)
-
-    // zero is illegal
-    an[DeserializationException] should be thrownBy f.read(s"""
-                                                              |{
-                                                              | "stringValue": "111",
-                                                              | "bindPort": 0,
-                                                              | "connectionPort": 123,
-                                                              | "stringArray": [],
-                                                              | "objects": {
-                                                              |   "a": "bb",
-                                                              |   "b": 123
-                                                              | }
-                                                              |}
-           """.stripMargin.parseJson)
-  }
-
-  @Test
   def testKeywordsInArray(): Unit = {
     // pass
     JsonRefiner[SimpleData]
@@ -1197,23 +950,6 @@ class TestJsonRefiner extends OharaTest with Matchers {
                |}
                            """.stripMargin.parseJson)
   }
-
-  @Test
-  def testRejectKeyword(): Unit =
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .rejectKey("abc")
-      .refine
-      .read(s"""
-               |{
-               | "stringValue": "start",
-               | "bindPort": 123,
-               | "connectionPort": 111,
-               | "stringArray": [],
-               | "objects":{},
-               | "abc":[]
-               |}
-                           """.stripMargin.parseJson)
 
   @Test
   def testRequireKeys(): Unit = {
@@ -1320,4 +1056,573 @@ class TestJsonRefiner extends OharaTest with Matchers {
     an[DeserializationException] should be thrownBy f.read(
       format.write(data.copy(group = "aa", stringValue = CommonUtils.randomString(100))))
   }
+
+  @Test
+  def testNumberRange(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .requireNumberType(key, 0, 100)
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 50
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(50)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+         |  {
+         |    "$key": -1
+         |  }
+         |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 999
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testStringDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.STRING).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": "50"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsString("50")
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 123
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "asdasdsad": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testStringDefinitionWithDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val default = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).optional(default).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": "50"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsString("50")
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 123
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    format.read(s"""
+                   |  {
+                   |    "asdasdsad": "a"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsString(default)
+  }
+
+  @Test
+  def testShortDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.SHORT).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 50
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(50)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": ${Long.MaxValue}
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": ${Long.MinValue}
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "asdasdsad": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testShortDefinitionWithDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val default: Short = 100
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).optional(default).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 50
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(50)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": ${Long.MaxValue}
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": ${Long.MinValue}
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    format.read(s"""
+                   |  {
+                   |    "asdasdsad": "a"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(default)
+  }
+
+  @Test
+  def testObjectKeyDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.OBJECT_KEY).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": {
+                   |      "group": "g",
+                   |      "name": "n"
+                   |    }
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsObject(
+      Map("group" -> JsString("g"), "name" -> JsString("n")))
+
+    // this form is ok to ObjectKey - the default value of group is "default"
+    format.read(s"""
+                   |  {
+                   |    "$key": "a"
+                   |  }
+                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": {
+                                                                   |      "b": "b"
+                                                                   |    }
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "asdasdsad": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testTagsDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.TAGS).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": {
+                   |      "group": "g",
+                   |      "name": "n"
+                   |    }
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsObject(
+      Map("group" -> JsString("g"), "name" -> JsString("n")))
+
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "$key": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("must be JsObject type")
+
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "asdasdsad": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("empty")
+  }
+
+  @Test
+  def testObjectKeysDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.OBJECT_KEYS).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": [
+                   |      {
+                   |        "group": "g",
+                   |        "name": "n"
+                   |      }
+                   |    ]
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsArray(
+      Vector(JsObject(Map("group" -> JsString("g"), "name" -> JsString("n")))))
+
+    // this error is generated by akka so the error message is a bit different.
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "$key": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("but got")
+
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "asdasdsad": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("empty")
+  }
+
+  @Test
+  def testArrayDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.ARRAY).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": ["a", "b"]
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsArray(Vector(JsString("a"), JsString("b")))
+
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "$key": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("must be JsArray type")
+
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "asdasdsad": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("empty")
+  }
+
+  @Test
+  def testPortDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.PORT).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 2222
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(2222)
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 1
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(1)
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 65535
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(65535)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": -1
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 0
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 65536
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "asdasdsad": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testBindingPortDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.BINDING_PORT).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 2222
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(2222)
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 1
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(1)
+
+    format.read(s"""
+                   |  {
+                   |    "$key": 65535
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(65535)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": -1
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 0
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": 65536
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "$key": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy format.read(s"""
+                                                                   |  {
+                                                                   |    "asdasdsad": "a"
+                                                                   |  }
+                                                                   |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testTableDefinitionWithoutDefaultValue(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.TABLE).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": [
+                   |      {
+                   |        "a": "b",
+                   |        "b": "c"
+                   |      },
+                   |      {
+                   |        "a1": "b",
+                   |        "b1": "c"
+                   |      }
+                   |    ]
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsArray(
+      Vector(
+        JsObject(Map("a" -> JsString("b"), "b" -> JsString("c"))),
+        JsObject(Map("a1" -> JsString("b"), "b1" -> JsString("c")))
+      ))
+
+    // the error is generated by jackson so the error message is a bit different
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "$key": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("failed to convert")
+
+    intercept[DeserializationException] {
+      format.read(s"""
+                     |  {
+                     |    "asdasdsad": "a"
+                     |  }
+                     |  """.stripMargin.parseJson)
+    }.getMessage should include("empty")
+  }
+
+  @Test
+  def testNumber(): Unit = {
+    val key = CommonUtils.randomString()
+
+    val types = Seq(SettingDef.Type.SHORT, SettingDef.Type.INT, SettingDef.Type.LONG, SettingDef.Type.DOUBLE)
+
+    types.foreach { t =>
+      val format = JsonRefiner[JsObject]
+        .format(new RootJsonFormat[JsObject] {
+          override def read(json: JsValue): JsObject = json.asJsObject
+          override def write(obj: JsObject): JsValue = obj
+        })
+        .definition(SettingDef.builder().key(key).required(t).build())
+        .refine
+
+      val nonPositiveNumber = Seq(Short.MinValue, -1, 0)
+
+      nonPositiveNumber.foreach { illegal =>
+        format.read(s"""
+           |  {
+           |    "$key": $illegal
+           |  }
+           |  """.stripMargin.parseJson)
+      }
+
+      format.read(s"""
+                     |  {
+                     |    "$key": 100
+                     |  }
+                     |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(100)
+    }
+  }
+  @Test
+  def testPositiveNumber(): Unit = {
+    val key = CommonUtils.randomString()
+
+    val types = Seq(SettingDef.Type.POSITIVE_SHORT,
+                    SettingDef.Type.POSITIVE_INT,
+                    SettingDef.Type.POSITIVE_LONG,
+                    SettingDef.Type.POSITIVE_DOUBLE)
+
+    types.foreach { t =>
+      val format = JsonRefiner[JsObject]
+        .format(new RootJsonFormat[JsObject] {
+          override def read(json: JsValue): JsObject = json.asJsObject
+          override def write(obj: JsObject): JsValue = obj
+        })
+        .definition(SettingDef.builder().key(key).required(t).build())
+        .refine
+
+      val nonPositiveNumber = Seq(Short.MinValue, -1, 0)
+
+      nonPositiveNumber.foreach { illegal =>
+        an[DeserializationException] should be thrownBy format.read(s"""
+                                                                         |  {
+                                                                         |    "$key": $illegal
+                                                                         |  }
+                                                                         |  """.stripMargin.parseJson)
+      }
+
+      format.read(s"""
+                     |  {
+                     |    "$key": 100
+                     |  }
+                     |  """.stripMargin.parseJson).fields(key) shouldBe JsNumber(100)
+    }
+  }
+
 }

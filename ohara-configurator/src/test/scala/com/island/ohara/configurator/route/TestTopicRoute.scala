@@ -321,8 +321,8 @@ class TestTopicRoute extends OharaTest with Matchers {
     val key = TopicApi.SEGMENT_BYTES_DEFINITION.key()
     val value = 1024 * 1024
     val topicDesc = result(
-      topicApi.request.configs(Map(key -> value.toString)).brokerClusterKey(brokerClusterInfo.key).create())
-    topicDesc.configs(key) shouldBe value.toString
+      topicApi.request.setting(key, JsNumber(value)).brokerClusterKey(brokerClusterInfo.key).create())
+    topicDesc.configs(key) shouldBe JsNumber(value)
   }
 
   @Test

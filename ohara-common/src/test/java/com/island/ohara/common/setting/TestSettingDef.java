@@ -46,27 +46,12 @@ public class TestSettingDef extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullType() {
-    SettingDef.builder().valueType(null);
+    SettingDef.builder().required(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void nullDefaultWithString() {
     SettingDef.builder().optional((String) null);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void nullDefaultWithObjectKey() {
-    SettingDef.builder().optional((ObjectKey) null);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void nullDefaultWithTopicKey() {
-    SettingDef.builder().optional((TopicKey) null);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void nullDefaultWithConnectorKey() {
-    SettingDef.builder().optional((ConnectorKey) null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -126,7 +111,6 @@ public class TestSettingDef extends OharaTest {
   @Test
   public void testGetterWithEditableAndDefaultValue() {
     String key = CommonUtils.randomString(5);
-    SettingDef.Type type = SettingDef.Type.TABLE;
     String displayName = CommonUtils.randomString(5);
     String group = CommonUtils.randomString(5);
     SettingDef.Reference reference = SettingDef.Reference.WORKER_CLUSTER;
@@ -136,7 +120,6 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(key)
-            .valueType(type)
             .displayName(displayName)
             .group(group)
             .reference(reference)
@@ -146,14 +129,14 @@ public class TestSettingDef extends OharaTest {
             .build();
 
     Assert.assertEquals(key, def.key());
-    Assert.assertEquals(type, def.valueType());
+    Assert.assertEquals(SettingDef.Type.STRING, def.valueType());
     Assert.assertEquals(displayName, def.displayName());
     Assert.assertEquals(group, def.group());
     Assert.assertEquals(reference, def.reference());
     Assert.assertEquals(orderInGroup, def.orderInGroup());
     Assert.assertEquals(valueDefault, def.defaultValue());
     Assert.assertEquals(documentation, def.documentation());
-    Assert.assertFalse(def.required());
+    Assert.assertEquals(def.necessary(), SettingDef.Necessary.OPTIONAL_WITH_DEFAULT);
     Assert.assertTrue(def.editable());
     Assert.assertFalse(def.internal());
   }
@@ -170,12 +153,11 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(key)
-            .valueType(type)
+            .required(type)
             .displayName(displayName)
             .group(group)
             .reference(reference)
             .orderInGroup(orderInGroup)
-            .optional()
             .documentation(documentation)
             .readonly()
             .internal()
@@ -189,7 +171,7 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(orderInGroup, def.orderInGroup());
     Assert.assertNull(def.defaultValue());
     Assert.assertEquals(documentation, def.documentation());
-    Assert.assertFalse(def.required());
+    Assert.assertEquals(def.necessary(), SettingDef.Necessary.REQUIRED);
     Assert.assertFalse(def.editable());
     Assert.assertTrue(def.internal());
   }
@@ -199,8 +181,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef settingDef =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.TABLE)
-            .tableKeys(
+            .optional(
                 Arrays.asList(
                     TableColumn.builder()
                         .name("a")
@@ -208,8 +189,8 @@ public class TestSettingDef extends OharaTest {
                         .build(),
                     TableColumn.builder().name("b").build()))
             .build();
-    // illegal format
-    assertException(OharaConfigException.class, () -> settingDef.checker().accept(null));
+    // there is default value so null is ok
+    settingDef.checker().accept(null);
     // illegal format
     assertException(OharaConfigException.class, () -> settingDef.checker().accept(123));
     // illegal format
@@ -227,7 +208,7 @@ public class TestSettingDef extends OharaTest {
     Map<String, String> goodMap = new HashMap<>();
     goodMap.put("a", "a0");
     goodMap.put("b", "c");
-    settingDef.checker().accept(PropGroups.of(Collections.singletonList(goodMap)).toJsonString());
+    settingDef.checker().accept(PropGroup.of(Collections.singletonList(goodMap)).toJsonString());
 
     Map<String, String> illegalColumnMap = new HashMap<>(goodMap);
     illegalColumnMap.put("dddd", "fff");
@@ -236,7 +217,7 @@ public class TestSettingDef extends OharaTest {
         () ->
             settingDef
                 .checker()
-                .accept(PropGroups.of(Collections.singletonList(illegalColumnMap)).toJsonString()));
+                .accept(PropGroup.of(Collections.singletonList(illegalColumnMap)).toJsonString()));
   }
 
   @Test
@@ -244,7 +225,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef settingDef =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.DURATION)
+            .required(SettingDef.Type.DURATION)
             .build();
     assertException(OharaConfigException.class, () -> settingDef.checker().accept(null));
     assertException(OharaConfigException.class, () -> settingDef.checker().accept(123));
@@ -262,14 +243,14 @@ public class TestSettingDef extends OharaTest {
         SettingDef.builder()
             .displayName(displayName)
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.STRING)
+            .required(SettingDef.Type.STRING)
             .build();
     Assert.assertEquals(displayName, settingDef.displayName());
   }
 
   @Test
   public void testPortType() {
-    SettingDef s = SettingDef.builder().valueType(SettingDef.Type.PORT).key("port.key").build();
+    SettingDef s = SettingDef.builder().required(SettingDef.Type.PORT).key("port.key").build();
     // pass
     s.checker().accept(100);
     assertException(OharaConfigException.class, () -> s.checker().accept(-1));
@@ -279,7 +260,7 @@ public class TestSettingDef extends OharaTest {
 
   @Test
   public void testTagsType() {
-    SettingDef s = SettingDef.builder().valueType(SettingDef.Type.TAGS).key("tags.key").build();
+    SettingDef s = SettingDef.builder().required(SettingDef.Type.TAGS).key("tags.key").build();
     // pass
     s.checker().accept("{\"a\": \"b\"}");
     s.checker().accept("{\"123\":456}");
@@ -294,7 +275,7 @@ public class TestSettingDef extends OharaTest {
   @Test
   public void testSerialization() {
     SettingDef setting =
-        SettingDef.builder().valueType(SettingDef.Type.TAGS).key("tags.key").build();
+        SettingDef.builder().required(SettingDef.Type.TAGS).key("tags.key").build();
     SettingDef copy = (SettingDef) Serializer.OBJECT.from(Serializer.OBJECT.to(setting));
     Assert.assertEquals(setting, copy);
   }
@@ -304,7 +285,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.OBJECT_KEYS)
+            .required(SettingDef.Type.OBJECT_KEYS)
             .build();
     // pass
     def.checker()
@@ -328,27 +309,6 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(Duration.parse(def.defaultValue()), duration);
   }
 
-  @Test
-  public void testObjectKey() {
-    ObjectKey key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString());
-    SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
-    Assert.assertEquals(ObjectKey.toObjectKey(def.defaultValue()), key);
-  }
-
-  @Test
-  public void testTopicKey() {
-    TopicKey key = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
-    SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
-    Assert.assertEquals(TopicKey.toTopicKey(def.defaultValue()), key);
-  }
-
-  @Test
-  public void testConnectorKey() {
-    ConnectorKey key = ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString());
-    SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
-    Assert.assertEquals(ConnectorKey.toConnectorKey(def.defaultValue()), key);
-  }
-
   @Test(expected = OharaConfigException.class)
   public void testRejectNullValue() {
     SettingDef.builder().key(CommonUtils.randomString()).build().checker().accept(null);
@@ -357,7 +317,12 @@ public class TestSettingDef extends OharaTest {
   @Test
   public void testOptionNullValue() {
     // pass
-    SettingDef.builder().key(CommonUtils.randomString()).optional().build().checker().accept(null);
+    SettingDef.builder()
+        .key(CommonUtils.randomString())
+        .optional(SettingDef.Type.STRING)
+        .build()
+        .checker()
+        .accept(null);
   }
 
   @Test
@@ -365,7 +330,6 @@ public class TestSettingDef extends OharaTest {
     // pass
     SettingDef.builder()
         .key(CommonUtils.randomString())
-        .valueType(SettingDef.Type.STRING)
         .optional("abc")
         .build()
         .checker()
@@ -377,7 +341,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.BOOLEAN)
+            .required(SettingDef.Type.BOOLEAN)
             .build();
     // only accept "true" or "false"
     assertException(OharaConfigException.class, () -> def.checker().accept("aaa"));
@@ -392,8 +356,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef defOption =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.BOOLEAN)
-            .optional()
+            .optional(SettingDef.Type.BOOLEAN)
             .build();
     // only accept "true" or "false"
     assertException(OharaConfigException.class, () -> defOption.checker().accept("aaa"));
@@ -411,7 +374,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.STRING)
+            .required(SettingDef.Type.STRING)
             .build();
 
     def.checker().accept("aaa");
@@ -423,7 +386,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.SHORT)
+            .required(SettingDef.Type.SHORT)
             .build();
 
     def.checker().accept(111);
@@ -437,7 +400,7 @@ public class TestSettingDef extends OharaTest {
   @Test
   public void testIntType() {
     SettingDef def =
-        SettingDef.builder().key(CommonUtils.randomString()).valueType(SettingDef.Type.INT).build();
+        SettingDef.builder().key(CommonUtils.randomString()).required(SettingDef.Type.INT).build();
 
     def.checker().accept(111);
 
@@ -450,10 +413,7 @@ public class TestSettingDef extends OharaTest {
   @Test
   public void testLongType() {
     SettingDef def =
-        SettingDef.builder()
-            .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.LONG)
-            .build();
+        SettingDef.builder().key(CommonUtils.randomString()).required(SettingDef.Type.LONG).build();
 
     def.checker().accept(111);
     def.checker().accept(11111111111L);
@@ -468,7 +428,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.DOUBLE)
+            .required(SettingDef.Type.DOUBLE)
             .build();
 
     def.checker().accept(111);
@@ -484,7 +444,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.ARRAY)
+            .required(SettingDef.Type.ARRAY)
             .build();
     // pass
     def.checker().accept("[gg]");
@@ -502,7 +462,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.ARRAY)
+            .required(SettingDef.Type.ARRAY)
             .build();
     // since connector use "xxx,yyy" to use in kafka format
     // we should pass this (these cases are not json array)
@@ -521,7 +481,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder()
             .key(CommonUtils.randomString())
-            .valueType(SettingDef.Type.BINDING_PORT)
+            .required(SettingDef.Type.BINDING_PORT)
             .build();
     def.checker().accept(CommonUtils.availablePort());
 
@@ -538,5 +498,21 @@ public class TestSettingDef extends OharaTest {
     SettingDef.builder().key("aaa").build();
     assertException(
         IllegalArgumentException.class, () -> SettingDef.builder().key("aaa__").build());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullRecommendedValues() {
+    SettingDef.builder().optional("aa", null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullBlacklist() {
+    SettingDef.builder().blacklist(null);
+  }
+
+  @Test
+  public void defaultBuild() {
+    // all fields should have default value except for key
+    SettingDef.builder().key(CommonUtils.randomString()).build();
   }
 }

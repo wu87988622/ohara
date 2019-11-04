@@ -28,26 +28,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class PropGroups implements Iterable<Map<String, String>> {
-  public static PropGroups of(List<Map<String, String>> values) {
-    return new PropGroups(values);
+public final class PropGroup implements Iterable<Map<String, String>> {
+  public static PropGroup of(List<Map<String, String>> values) {
+    return new PropGroup(values);
   }
 
-  public static PropGroups ofJson(String json) {
+  public static PropGroup ofJson(String json) {
     return of(JsonUtils.toObject(json, new TypeReference<List<Map<String, String>>>() {}));
   }
 
-  public static PropGroups ofColumn(Column column) {
+  public static PropGroup ofColumn(Column column) {
     return ofColumns(Collections.singletonList(column));
   }
 
-  public static PropGroups ofColumns(List<Column> columns) {
-    return of(columns.stream().map(PropGroups::toPropGroup).collect(Collectors.toList()));
+  public static PropGroup ofColumns(List<Column> columns) {
+    return of(columns.stream().map(PropGroup::toPropGroup).collect(Collectors.toList()));
   }
 
   private final List<Map<String, String>> values;
 
-  private PropGroups(List<Map<String, String>> values) {
+  private PropGroup(List<Map<String, String>> values) {
     this.values =
         Collections.unmodifiableList(
             values.stream()
@@ -64,10 +64,10 @@ public final class PropGroups implements Iterable<Map<String, String>> {
   }
 
   public List<Column> toColumns() {
-    return values.stream().map(PropGroups::toColumn).collect(Collectors.toList());
+    return values.stream().map(PropGroup::toColumn).collect(Collectors.toList());
   }
 
-  public Map<String, String> propGroup(int index) {
+  public Map<String, String> props(int index) {
     return ImmutableMap.copyOf(values.get(index));
   }
 
@@ -95,7 +95,7 @@ public final class PropGroups implements Iterable<Map<String, String>> {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof PropGroups) return ((PropGroups) obj).toJsonString().equals(toJsonString());
+    if (obj instanceof PropGroup) return ((PropGroup) obj).toJsonString().equals(toJsonString());
     return false;
   }
 

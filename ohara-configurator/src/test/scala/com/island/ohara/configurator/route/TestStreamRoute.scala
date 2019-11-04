@@ -286,9 +286,7 @@ class TestStreamRoute extends OharaTest with Matchers {
         .nodeNames(nodeNames)
         .update())
 
-    // we can't update the topics to empty (the topic checking is moving to start phase)
-    an[DeserializationException] should be thrownBy result(
-      streamApi.request.name(streamAppName).jarKey(fileInfo.key).toTopicKeys(Set.empty).update())
+    result(streamApi.request.name(streamAppName).jarKey(fileInfo.key).toTopicKeys(Set.empty).update())
 
     // delete non-exists object should do nothing
     result(streamApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
@@ -392,11 +390,7 @@ class TestStreamRoute extends OharaTest with Matchers {
     result(topicApi.request.key(from).brokerClusterKey(brokerClusterInfo.key).create())
     // update from topic
     result(streamApi.request.name(streamDesc.name).fromTopicKey(from).update()).fromTopicKeys shouldBe Set(from)
-    // update from topic to empty
-    an[DeserializationException] should be thrownBy streamApi.request
-      .name(streamDesc.name)
-      .fromTopicKeys(Set.empty)
-      .update()
+    streamApi.request.name(streamDesc.name).fromTopicKeys(Set.empty).update()
   }
 
   @Test
@@ -760,6 +754,25 @@ class TestStreamRoute extends OharaTest with Matchers {
       result(streamApi.start(streamApp.key))
     }.getMessage should include("another broker cluster")
   }
+
+  @Test
+  def testEmptyToTopics(): Unit = result(
+    streamApi.request
+      .name(CommonUtils.randomString(10))
+      .jarKey(fileInfo.key)
+      .brokerClusterKey(brokerClusterInfo.key)
+      .fromTopicKey(fromTopicKey)
+      .nodeNames(nodeNames)
+      .create()).toTopicKeys shouldBe Set.empty
+  @Test
+  def testEmptyFromTopics(): Unit = result(
+    streamApi.request
+      .name(CommonUtils.randomString(10))
+      .jarKey(fileInfo.key)
+      .brokerClusterKey(brokerClusterInfo.key)
+      .toTopicKey(toTopicKey)
+      .nodeNames(nodeNames)
+      .create()).fromTopicKeys shouldBe Set.empty
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)
