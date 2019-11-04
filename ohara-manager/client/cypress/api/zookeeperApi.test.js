@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import * as generate from '../../src/utils/generate';
-
-import * as zkApi from '../../src/api/zookeeperApi';
-import { createServices, deleteAllServices } from '../support/defaultCommands';
-
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
+
+import * as generate from '../../src/utils/generate';
+import * as zkApi from '../../src/api/zookeeperApi';
+import { createServices, deleteAllServices } from '../utils';
 
 const generateZookeeper = async () => {
   const { node } = await createServices({ withNode: true });
@@ -163,7 +162,7 @@ describe('Zookeeper API', () => {
       electionPort: 3333,
       peerPort: 4444,
     };
-    const newZk = Object.assign({}, zkCluster, newParams);
+    const newZk = { ...zkCluster, ...newParams };
 
     await zkApi.create(zkCluster);
 

@@ -14,16 +14,42 @@
  * limitations under the License.
  */
 
+import * as validateBasicBody from './body/validateBasicBody';
+import * as validateRdbBody from './body/validateRdbBody';
 import { responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
-const url = URL.VALIDATE_CONNECTOR_URL;
+const url = URL.VALIDATE_URL;
 
-export const validate = async params => {
-  const { name, group } = params;
-  delete params[name];
-  delete params[group];
-  const body = params;
-  const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
+export const resource = {
+  hdfs: 'hdfs',
+  rdb: 'rdb',
+  ftp: 'ftp',
+  node: 'node',
+  connector: 'connector',
+};
+
+export const validateHdfs = async params => {
+  const res = await axiosInstance.put(url + '/' + resource.hdfs, params);
+  return responseUtil(res, validateBasicBody);
+};
+
+export const validateRdb = async params => {
+  const res = await axiosInstance.put(url + '/' + resource.rdb, params);
+  return responseUtil(res, validateRdbBody);
+};
+
+export const validateFtp = async params => {
+  const res = await axiosInstance.put(url + '/' + resource.ftp, params);
+  return responseUtil(res, validateBasicBody);
+};
+
+export const validateNode = async params => {
+  const res = await axiosInstance.put(url + '/' + resource.node, params);
+  return responseUtil(res, validateBasicBody);
+};
+
+export const validateConnector = async params => {
+  const res = await axiosInstance.put(url + '/' + resource.connector, params);
   return responseUtil(res, {});
 };

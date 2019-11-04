@@ -15,6 +15,7 @@
  */
 
 /* eslint-disable no-unused-expressions */
+// eslint is complaining about `expect(thing).to.be.undefined`
 
 import * as infoApi from '../../src/api/infoApi';
 

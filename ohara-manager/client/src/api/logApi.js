@@ -14,52 +14,55 @@
  * limitations under the License.
  */
 
-import * as infoConfigurator from './body/infoConfiguratorBody';
-import * as infoService from './body/infoServiceBody';
+import * as log from './body/logBody';
 import { responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
-const url = URL.INFO_URL;
-export const service = {
+const url = URL.LOG_URL;
+
+const service = {
   configurator: 'configurator',
-  zookeeper: 'zookeeper',
-  broker: 'broker',
-  worker: 'worker',
-  streams: 'stream',
+  zookeeper: 'zookeepers',
+  broker: 'brokers',
+  worker: 'workers',
+  stream: 'streams',
 };
 
-export const getConfiguratorInfo = async (params = {}) => {
+export const getConfiguratorLog = async (params = {}) => {
   const res = await axiosInstance.get(
     url + '/' + service.configurator + URL.toQueryParameters(params),
   );
-  return responseUtil(res, infoConfigurator);
+  return responseUtil(res, log);
 };
 
-export const getZookeeperInfo = async (params = {}) => {
-  const res = await axiosInstance.get(
-    url + '/' + service.zookeeper + URL.toQueryParameters(params),
-  );
-  return responseUtil(res, infoService);
-};
-
-export const getBrokerInfo = async (params = {}) => {
-  const res = await axiosInstance.get(
-    url + '/' + service.broker + URL.toQueryParameters(params),
-  );
-  return responseUtil(res, infoService);
-};
-
-export const getWorkerInfo = async (params = {}) => {
-  const res = await axiosInstance.get(
-    url + '/' + service.worker + URL.toQueryParameters(params),
-  );
-  return responseUtil(res, infoService);
-};
-
-export const getStreamsInfo = async (params = {}) => {
+export const getZookeeperLog = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(
-    `${url}/${service.streams}/${name}?group=${group}`,
+    `${url}/${service.zookeeper}/${name}?group=${group}`,
   );
-  return responseUtil(res, infoService);
+  return responseUtil(res, log);
+};
+
+export const getBrokerLog = async params => {
+  const { name, group } = params;
+  const res = await axiosInstance.get(
+    `${url}/${service.broker}/${name}?group=${group}`,
+  );
+  return responseUtil(res, log);
+};
+
+export const getWorkerLog = async params => {
+  const { name, group } = params;
+  const res = await axiosInstance.get(
+    `${url}/${service.worker}/${name}?group=${group}`,
+  );
+  return responseUtil(res, log);
+};
+
+export const getStreamLog = async params => {
+  const { name, group } = params;
+  const res = await axiosInstance.get(
+    `${url}/${service.stream}/${name}?group=${group}`,
+  );
+  return responseUtil(res, log);
 };

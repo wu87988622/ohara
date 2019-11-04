@@ -35,8 +35,7 @@ export const TOPIC_URL = `${BASE_URL}/topics`;
 export const LOG_URL = `${BASE_URL}/logs`;
 
 // Validate
-export const VALIDATE_NODE_URL = `${BASE_URL}/validate/node`;
-export const VALIDATE_CONNECTOR_URL = `${BASE_URL}/validate/connector`;
+export const VALIDATE_URL = `${BASE_URL}/validate`;
 
 // Others
 export const CONTAINER_URL = `${BASE_URL}/containers`;

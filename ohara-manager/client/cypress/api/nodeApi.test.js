@@ -15,9 +15,8 @@
  */
 
 import * as generate from '../../src/utils/generate';
-
 import * as nodeApi from '../../src/api/nodeApi';
-import { deleteAllServices } from '../support/defaultCommands';
+import { deleteAllServices } from '../utils';
 
 const generateNode = () => {
   const params = {

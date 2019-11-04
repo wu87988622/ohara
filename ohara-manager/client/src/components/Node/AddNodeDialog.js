@@ -65,8 +65,7 @@ const AddNodeDialog = props => {
       ...rest,
     };
 
-    // TODO: after #3028 is merged, we can use the real API instead of this mocked one...
-    await validateApi.validate(params);
+    await validateApi.validateNode(params);
     const pass = true;
     setIsValidConnection(pass);
     if (pass) {

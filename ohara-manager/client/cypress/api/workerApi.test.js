@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import * as generate from '../../src/utils/generate';
-
-import * as wkApi from '../../src/api/workerApi';
-import { createServices, deleteAllServices } from '../support/defaultCommands';
-
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
+
+import * as generate from '../../src/utils/generate';
+import * as wkApi from '../../src/api/workerApi';
+import { createServices, deleteAllServices } from '../utils';
 
 const generateWorker = async () => {
   const { node, broker } = await createServices({
@@ -110,11 +109,11 @@ describe('Worker API', () => {
 
     expect(fileKeys).to.be.an('array');
 
-    expect(freePorts).to.be.a('array');
+    expect(freePorts).to.be.an('array');
 
     expect(imageName).to.be.a('string');
 
-    expect(brokerClusterKey).to.be.a('object');
+    expect(brokerClusterKey).to.be.an('object');
     expect(brokerClusterKey).to.be.deep.eq(wkCluster.brokerClusterKey);
 
     expect(tags.name).to.eq(wkCluster.name);
@@ -185,11 +184,11 @@ describe('Worker API', () => {
 
     expect(fileKeys).to.be.an('array');
 
-    expect(freePorts).to.be.a('array');
+    expect(freePorts).to.be.an('array');
 
     expect(imageName).to.be.a('string');
 
-    expect(brokerClusterKey).to.be.a('object');
+    expect(brokerClusterKey).to.be.an('object');
     expect(brokerClusterKey).to.be.deep.eq(wkCluster.brokerClusterKey);
 
     expect(tags.name).to.eq(wkCluster.name);
@@ -233,7 +232,7 @@ describe('Worker API', () => {
       clientPort: 2222,
       jmxPort: 3333,
     };
-    const newBk = Object.assign({}, wkCluster, newParams);
+    const newBk = { ...wkCluster, ...newParams };
 
     await wkApi.create(wkCluster);
 

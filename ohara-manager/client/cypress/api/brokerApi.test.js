@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import * as generate from '../../src/utils/generate';
-
-import * as bkApi from '../../src/api/brokerApi';
-import { createServices, deleteAllServices } from '../support/defaultCommands';
-
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
+
+import * as generate from '../../src/utils/generate';
+import * as bkApi from '../../src/api/brokerApi';
+import { createServices, deleteAllServices } from '../utils';
 
 const generateBroker = async () => {
   const { node, zookeeper } = await createServices({
@@ -84,7 +83,7 @@ describe('Broker API', () => {
 
     expect(imageName).to.be.a('string');
 
-    expect(zookeeperClusterKey).to.be.a('object');
+    expect(zookeeperClusterKey).to.be.an('object');
     expect(zookeeperClusterKey).to.be.deep.eq(bkCluster.zookeeperClusterKey);
 
     expect(tags.name).to.eq(bkCluster.name);
@@ -130,7 +129,7 @@ describe('Broker API', () => {
 
     expect(imageName).to.be.a('string');
 
-    expect(zookeeperClusterKey).to.be.a('object');
+    expect(zookeeperClusterKey).to.be.an('object');
     expect(zookeeperClusterKey).to.be.deep.eq(bkCluster.zookeeperClusterKey);
 
     expect(tags.name).to.eq(bkCluster.name);
@@ -173,7 +172,7 @@ describe('Broker API', () => {
       clientPort: 2222,
       jmxPort: 3333,
     };
-    const newBk = Object.assign({}, bkCluster, newParams);
+    const newBk = { ...bkCluster, ...newParams };
 
     await bkApi.create(bkCluster);
 

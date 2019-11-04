@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as topic from './body/topicBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
@@ -25,15 +23,15 @@ import * as brokerApi from './brokerApi';
 
 const url = URL.TOPIC_URL;
 
-export const create = async (params = {}, body) => {
+export const create = async (params, body) => {
   body = body ? body : await brokerApi.getAll();
   const requestBody = requestUtil(params, topic, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, topic);
 };
 
-export const start = async (params = {}) => {
-  const { name, group } = params.settings;
+export const start = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/start?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
@@ -51,8 +49,8 @@ export const update = async params => {
   return responseUtil(res, topic);
 };
 
-export const stop = async (params = {}) => {
-  const { name, group } = params.settings;
+export const stop = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
@@ -61,8 +59,8 @@ export const stop = async (params = {}) => {
   return responseUtil(res, topic);
 };
 
-export const remove = async (params = {}) => {
-  const { name, group } = params.settings;
+export const remove = async params => {
+  const { name, group } = params;
   await axiosInstance.delete(`${url}/${name}?group=${group}`);
   const res = await wait({
     url,
@@ -72,14 +70,13 @@ export const remove = async (params = {}) => {
   return responseUtil(res, topic);
 };
 
-export const get = async (params = {}) => {
-  const { name, group } = params.settings;
+export const get = async params => {
+  const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, topic);
 };
 
 export const getAll = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, topic), '', []);
+  const res = await axiosInstance.get(url + URL.toQueryParameters(params));
+  return res ? responseUtil(res, topic) : [];
 };

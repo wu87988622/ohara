@@ -15,9 +15,8 @@
  */
 
 import * as generate from '../../src/utils/generate';
-
 import * as fileApi from '../../src/api/fileApi';
-import { deleteAllServices } from '../support/defaultCommands';
+import { deleteAllServices } from '../utils';
 
 const generateFile = () => {
   const params = {
@@ -60,7 +59,7 @@ describe('File API', () => {
     const group = { group: file.group };
     cy.createJar(file.fixturePath, file.name, file.group).then(() => {
       fileApi.getAll(group).then(result => {
-        expect(result).to.be.a('array');
+        expect(result).to.be.an('array');
         expect(result.length).to.eq(1);
 
         const fileInfo = result[0];
