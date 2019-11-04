@@ -21,7 +21,7 @@ import java.sql.{PreparedStatement, Statement, Timestamp}
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, FileInfoApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.database.DatabaseClient

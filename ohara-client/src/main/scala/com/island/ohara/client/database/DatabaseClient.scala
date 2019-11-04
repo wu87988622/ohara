@@ -18,8 +18,8 @@ package com.island.ohara.client.database
 
 import java.sql.{Connection, DriverManager, ResultSet}
 
-import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
-import com.island.ohara.client.database.DatabaseClient.TableQuery
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient.{Table, TableQuery}
 import com.island.ohara.common.annotations.{Nullable, Optional}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 
@@ -34,7 +34,7 @@ trait DatabaseClient extends Releasable {
     * a helper method to fetch all table from remote database
     * @return all database readable to user
     */
-  def tables(): Seq[RdbTable] = tableQuery.execute()
+  def tables(): Seq[Table] = tableQuery.execute()
 
   /**
     * Query the table from remote database. Please fill the related arguments to reduce the size of data sent by remote database
@@ -152,7 +152,7 @@ object DatabaseClient {
           this
         }
 
-        override def execute(): Seq[RdbTable] = {
+        override def execute(): Seq[Table] = {
           val md = conn.getMetaData
 
           // catalog, schema, tableName
@@ -184,19 +184,25 @@ object DatabaseClient {
               case (c, s, t, pks) =>
                 implicit val rs: ResultSet = md.getColumns(c, null, t, null)
                 val columns = try {
-                  val buf = new ArrayBuffer[RdbColumn]()
-                  while (rs.next()) buf += RdbColumn(name = toColumnName(rs),
-                                                     dataType = toColumnType(rs),
-                                                     pk = pks.contains(toColumnName(rs)))
+                  val buf = new ArrayBuffer[DatabaseClient.Column]()
+                  while (rs.next()) buf += new DatabaseClient.Column(name = toColumnName(rs),
+                                                                     dataType = toColumnType(rs),
+                                                                     pk = pks.contains(toColumnName(rs)))
                   buf
                 } finally rs.close()
-                RdbTable(Option(c), Option(s), t, columns)
+                new DatabaseClient.Table(Option(c), Option(s), t, columns)
             }
             .filterNot(_.columns.isEmpty)
         }
       }
     }
   }
+
+  class Column(val name: String, val dataType: String, val pk: Boolean)
+  class Table(val catalogPattern: Option[String],
+              val schemaPattern: Option[String],
+              val name: String,
+              val columns: Seq[Column])
 
   /**
     * a simple builder to create a suitable query by fluent pattern.
@@ -215,6 +221,6 @@ object DatabaseClient {
     @Nullable
     def tableName(tableName: String): TableQuery.this.type
 
-    def execute(): Seq[RdbTable]
+    def execute(): Seq[Table]
   }
 }

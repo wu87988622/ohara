@@ -16,16 +16,16 @@
 
 package com.island.ohara.connector.jdbc.datatype
 
-import com.island.ohara.common.rule.OharaTest
-import org.scalatest.Matchers
-import org.scalatest.mockito.MockitoSugar
 import java.sql.{ResultSet, Time, Timestamp}
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 import org.junit.Test
 import org.mockito.Mockito.when
+import org.scalatest.Matchers
 import org.scalatest.exceptions.TestFailedException
+import org.scalatest.mockito.MockitoSugar
 
 class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with MockitoSugar {
   private[this] val BOOLEAN: String = "BOOL"
@@ -39,7 +39,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConverterBooleanValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getBoolean("column1")).thenReturn(true)
-    val column = RdbColumn("column1", BOOLEAN, false)
+    val column = new DatabaseClient.Column("column1", BOOLEAN, false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Boolean] shouldBe true
@@ -51,7 +51,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
     val resultSet: ResultSet = mock[ResultSet]
     val value: Byte = 1
     when(resultSet.getByte("column1")).thenReturn(value)
-    val column = RdbColumn("column1", BIT, false)
+    val column = new DatabaseClient.Column("column1", BIT, false)
     val rDBDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rDBDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Boolean] shouldBe true
@@ -66,7 +66,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConverterIntegerValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getInt("column1")).thenReturn(100)
-    val column = RdbColumn("column1", INT, false)
+    val column = new DatabaseClient.Column("column1", INT, false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Integer] shouldBe true
@@ -77,7 +77,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConverterCharValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn("h")
-    val column = RdbColumn("column1", BPCHAR, false)
+    val column = new DatabaseClient.Column("column1", BPCHAR, false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[String] shouldBe true
@@ -88,7 +88,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConveterTimestampValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
-    val column = RdbColumn("column1", TIMESTAMP, false)
+    val column = new DatabaseClient.Column("column1", TIMESTAMP, false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Timestamp] shouldBe true
@@ -100,7 +100,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConverterVarcharValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn("hello")
-    val column = RdbColumn("column1", VARCHAR, false)
+    val column = new DatabaseClient.Column("column1", VARCHAR, false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[String] shouldBe true
@@ -111,7 +111,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConverterByteaValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn("aaa".getBytes)
-    val column = RdbColumn("column1", "BYTEA", false)
+    val column = new DatabaseClient.Column("column1", "BYTEA", false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Array[Byte]] shouldBe true
@@ -122,7 +122,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testConverterTimeValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getTime("column1", DateTimeUtils.CALENDAR)).thenReturn(Time.valueOf("11:00:00"))
-    val column = RdbColumn("column1", "TIME", false)
+    val column = new DatabaseClient.Column("column1", "TIME", false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     val result: Any = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Time] shouldBe true
@@ -133,7 +133,7 @@ class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with Mocki
   def testErrorDataType(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn("aaa")
-    val column = RdbColumn("column1", "AAA", false)
+    val column = new DatabaseClient.Column("column1", "AAA", false)
     val rdbDataTypeConverter: RDBDataTypeConverter = new PostgresqlDataTypeConverter()
     an[UnsupportedOperationException] should be thrownBy
       rdbDataTypeConverter.converterValue(resultSet, column)

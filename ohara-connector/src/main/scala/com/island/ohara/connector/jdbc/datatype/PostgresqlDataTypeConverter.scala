@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.jdbc.datatype
-import com.island.ohara.client.configurator.v0.QueryApi
+import com.island.ohara.client.database.DatabaseClient
 
 class PostgresqlDataTypeConverter extends RDBDataTypeConverter {
   private[this] val TYPE_NAME_INT2 = "INT2"
@@ -37,7 +37,7 @@ class PostgresqlDataTypeConverter extends RDBDataTypeConverter {
 
   override protected[datatype] def dataBaseProductName: String = "postgresql"
 
-  override protected[datatype] def converterDataType(column: QueryApi.RdbColumn): DataTypeEnum = {
+  override protected[datatype] def converterDataType(column: DatabaseClient.Column): DataTypeEnum = {
     val typeName: String = column.dataType.toUpperCase
     typeName match {
       case TYPE_NAME_INT2 | TYPE_NAME_INT4 =>

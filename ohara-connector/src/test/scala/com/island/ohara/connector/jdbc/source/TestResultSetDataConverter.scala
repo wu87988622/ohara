@@ -16,16 +16,16 @@
 
 package com.island.ohara.connector.jdbc.source
 
-import com.island.ohara.common.rule.OharaTest
-import org.scalatest.Matchers
-import org.scalatest.mockito.MockitoSugar
 import java.sql.{ResultSet, Time, Timestamp}
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.connector.jdbc.datatype.{MySQLDataTypeConverter, RDBDataTypeConverter}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import org.junit.Test
 import org.mockito.Mockito._
+import org.scalatest.Matchers
+import org.scalatest.mockito.MockitoSugar
 
 class TestResultSetDataConverter extends OharaTest with Matchers with MockitoSugar {
   private[this] val VARCHAR: String = "VARCHAR"
@@ -42,9 +42,9 @@ class TestResultSetDataConverter extends OharaTest with Matchers with MockitoSug
     when(resultSet.getInt("column3")).thenReturn(10)
 
     val columnList = Seq(
-      RdbColumn("column1", TIMESTAMP, true),
-      RdbColumn("column2", VARCHAR, false),
-      RdbColumn("column3", INT, false)
+      new DatabaseClient.Column("column1", TIMESTAMP, true),
+      new DatabaseClient.Column("column2", VARCHAR, false),
+      new DatabaseClient.Column("column3", INT, false)
     )
     val dataTypeConverter: RDBDataTypeConverter = new MySQLDataTypeConverter()
     val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)
@@ -70,10 +70,10 @@ class TestResultSetDataConverter extends OharaTest with Matchers with MockitoSug
     when(resultSet.getTime("column4")).thenReturn(null)
 
     val columnList = Seq(
-      RdbColumn("column1", TIMESTAMP, true),
-      RdbColumn("column2", VARCHAR, false),
-      RdbColumn("column3", DATE, false),
-      RdbColumn("column4", TIME, false)
+      new DatabaseClient.Column("column1", TIMESTAMP, true),
+      new DatabaseClient.Column("column2", VARCHAR, false),
+      new DatabaseClient.Column("column3", DATE, false),
+      new DatabaseClient.Column("column4", TIME, false)
     )
     val dataTypeConverter: RDBDataTypeConverter = new MySQLDataTypeConverter()
     val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)

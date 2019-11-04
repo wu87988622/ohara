@@ -18,7 +18,7 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.Statement
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Row, Serializer}

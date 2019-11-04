@@ -17,7 +17,8 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.ResultSet
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 
@@ -34,7 +35,7 @@ object ResultSetDataConverter {
     */
   protected[source] def converterRecord(rdbDataTypeConverter: RDBDataTypeConverter,
                                         resultSet: ResultSet,
-                                        columns: Seq[RdbColumn]): Seq[ColumnInfo[_]] = {
+                                        columns: Seq[DatabaseClient.Column]): Seq[ColumnInfo[_]] = {
     columns.map(column => {
       val resultValue: Any = rdbDataTypeConverter.converterValue(resultSet, column)
       // Setting data value to ColumnInfo case class

@@ -104,3 +104,4 @@ Manage clusters
    rest-logs
    rest-query
    rest-info
+   rest-inspect

@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
+import com.island.ohara.client.configurator.v0.InspectApi.RdbInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils

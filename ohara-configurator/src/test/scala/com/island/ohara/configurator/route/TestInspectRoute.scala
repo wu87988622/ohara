@@ -19,11 +19,12 @@ package com.island.ohara.configurator.route
 import java.io.{File, FileOutputStream}
 
 import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
-import com.island.ohara.client.configurator.v0.{FileInfoApi, QueryApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, FileInfoApi, InspectApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -32,7 +33,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestQueryRoute extends OharaTest with Matchers {
+class TestInspectRoute extends OharaTest with Matchers {
   private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder.fake().build()
 
@@ -41,7 +42,7 @@ class TestQueryRoute extends OharaTest with Matchers {
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
-  private[this] def queryApi = QueryApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] def inspectApi = InspectApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testQueryDb(): Unit = {
@@ -49,7 +50,7 @@ class TestQueryRoute extends OharaTest with Matchers {
     val dbClient = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
     try {
       val r = result(
-        queryApi.rdbRequest
+        inspectApi.rdbRequest
           .jdbcUrl(db.url())
           .user(db.user())
           .password(db.password())
@@ -73,7 +74,7 @@ class TestQueryRoute extends OharaTest with Matchers {
 
       verify(
         result(
-          queryApi.rdbRequest
+          inspectApi.rdbRequest
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
@@ -82,7 +83,7 @@ class TestQueryRoute extends OharaTest with Matchers {
 
       verify(
         result(
-          queryApi.rdbRequest
+          inspectApi.rdbRequest
             .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
@@ -102,7 +103,7 @@ class TestQueryRoute extends OharaTest with Matchers {
     def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val fileInfo = result(fileApi.request.file(streamFile).upload())
 
-    val fileContent = result(queryApi.fileRequest.key(fileInfo.key).query())
+    val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
     fileContent.classes should not be Seq.empty
     fileContent.sourceConnectorClasses.size shouldBe 0
     fileContent.sinkConnectorClasses.size shouldBe 0
@@ -123,8 +124,49 @@ class TestQueryRoute extends OharaTest with Matchers {
     def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val fileInfo = result(fileApi.request.file(file).upload())
 
-    val fileContent = result(queryApi.fileRequest.key(fileInfo.key).query())
+    val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
     fileContent.classes shouldBe Seq.empty
+  }
+
+  @Test
+  def testConfiguratorInfo(): Unit = {
+    // only test the configurator based on mini cluster
+    val clusterInformation = result(inspectApi.configuratorInfo())
+    clusterInformation.versionInfo.version shouldBe VersionUtils.VERSION
+    clusterInformation.versionInfo.branch shouldBe VersionUtils.BRANCH
+    clusterInformation.versionInfo.user shouldBe VersionUtils.USER
+    clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION
+    clusterInformation.versionInfo.date shouldBe VersionUtils.DATE
+    clusterInformation.mode shouldBe Mode.FAKE.toString
+  }
+
+  @Test
+  def testZookeeperInfo(): Unit = {
+    val info = result(inspectApi.zookeeperInfo())
+    info.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    info.settingDefinitions shouldBe ZookeeperApi.DEFINITIONS
+  }
+
+  @Test
+  def testBrokerInfo(): Unit = {
+    val info = result(inspectApi.brokerInfo())
+    info.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
+    info.settingDefinitions shouldBe BrokerApi.DEFINITIONS
+  }
+
+  @Test
+  def testWorkerInfo(): Unit = {
+    val info = result(inspectApi.workerInfo())
+    info.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
+    info.settingDefinitions shouldBe WorkerApi.DEFINITIONS
+  }
+
+  @Test
+  def testStreamInfo(): Unit = {
+    val info = result(inspectApi.streamInfo())
+    info.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    // the jar is empty but we still see the default definitions
+    info.settingDefinitions should not be Seq.empty
   }
 
   @After

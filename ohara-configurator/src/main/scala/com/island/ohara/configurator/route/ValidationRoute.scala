@@ -23,7 +23,7 @@ import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
+import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils

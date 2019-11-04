@@ -18,7 +18,7 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.{Statement, Timestamp}
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -27,8 +27,9 @@ import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import scala.collection.mutable.ListBuffer
+
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends OharaTest with Matchers {
 
@@ -89,7 +90,7 @@ class TestDBTableDataProvider extends OharaTest with Matchers {
   @Test
   def testColumnList(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
-    val columns: Seq[RdbColumn] = dbTableDataProvider.columns(tableName)
+    val columns = dbTableDataProvider.columns(tableName)
     columns.head.name shouldBe "column1"
     columns(1).name shouldBe "column2"
     columns(2).name shouldBe "column3"

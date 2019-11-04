@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.jdbc.datatype
-import com.island.ohara.client.configurator.v0.QueryApi
+import com.island.ohara.client.database.DatabaseClient
 
 class MySQLDataTypeConverter extends RDBDataTypeConverter {
   private[this] val TYPE_NAME_BIT = "BIT"
@@ -51,7 +51,7 @@ class MySQLDataTypeConverter extends RDBDataTypeConverter {
 
   override protected[datatype] def dataBaseProductName: String = "mysql"
 
-  override protected[datatype] def converterDataType(column: QueryApi.RdbColumn): DataTypeEnum = {
+  override protected[datatype] def converterDataType(column: DatabaseClient.Column): DataTypeEnum = {
     val typeName: String = column.dataType.toUpperCase
     typeName match {
       case TYPE_NAME_TINYINT | TYPE_NAME_SMALLINT | TYPE_NAME_MEDIUMINT | TYPE_NAME_INT | TYPE_NAME_INTEGER =>

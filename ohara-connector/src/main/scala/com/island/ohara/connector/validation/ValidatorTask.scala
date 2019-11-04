@@ -19,7 +19,7 @@ package com.island.ohara.connector.validation
 import java.util
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
+import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidation,
@@ -96,7 +96,20 @@ class ValidatorTask extends SourceTask {
       rdbInfo = Some(
         RdbInfo(
           client.databaseType,
-          client.tables()
+          client.tables().map { table =>
+            RdbTable(
+              catalogPattern = table.catalogPattern,
+              schemaPattern = table.schemaPattern,
+              name = table.name,
+              columns = table.columns.map { column =>
+                RdbColumn(
+                  name = column.name,
+                  dataType = column.dataType,
+                  pk = column.pk
+                )
+              }
+            )
+          }
         ))
     )
     finally client.close()

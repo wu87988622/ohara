@@ -21,6 +21,7 @@ import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
+// TODO: remove this https://github.com/oharastream/ohara/issues/3164
 object InfoApi {
   val INFO_PREFIX_PATH: String = "info"
 

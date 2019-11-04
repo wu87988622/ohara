@@ -18,7 +18,7 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.{PreparedStatement, ResultSet}
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import org.junit.Test
@@ -36,9 +36,9 @@ class TestQueryResultIterator extends OharaTest with Matchers with MockitoSugar 
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
 
     val columnList = Seq(
-      RdbColumn("column1", VARCHAR, false),
-      RdbColumn("column2", VARCHAR, false),
-      RdbColumn("column3", VARCHAR, false)
+      new DatabaseClient.Column("column1", VARCHAR, false),
+      new DatabaseClient.Column("column2", VARCHAR, false),
+      new DatabaseClient.Column("column3", VARCHAR, false)
     )
 
     val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
@@ -59,9 +59,9 @@ class TestQueryResultIterator extends OharaTest with Matchers with MockitoSugar 
     when(resultSet.getString("column3")).thenReturn("value1-3")
 
     val columnList = Seq(
-      RdbColumn("column1", VARCHAR, false),
-      RdbColumn("column2", VARCHAR, false),
-      RdbColumn("column3", VARCHAR, false)
+      new DatabaseClient.Column("column1", VARCHAR, false),
+      new DatabaseClient.Column("column2", VARCHAR, false),
+      new DatabaseClient.Column("column3", VARCHAR, false)
     )
 
     val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
@@ -85,9 +85,9 @@ class TestQueryResultIterator extends OharaTest with Matchers with MockitoSugar 
     when(resultSet.getString("column3")).thenReturn("value1-3").thenReturn("value2-3").thenReturn("value3-3")
 
     val columnList = Seq(
-      RdbColumn("column1", VARCHAR, false),
-      RdbColumn("column2", VARCHAR, false),
-      RdbColumn("column3", VARCHAR, false)
+      new DatabaseClient.Column("column1", VARCHAR, false),
+      new DatabaseClient.Column("column2", VARCHAR, false),
+      new DatabaseClient.Column("column3", VARCHAR, false)
     )
 
     val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
@@ -108,9 +108,9 @@ class TestQueryResultIterator extends OharaTest with Matchers with MockitoSugar 
     when(resultSet.next()).thenReturn(false)
 
     val columnList = Seq(
-      RdbColumn("column1", VARCHAR, false),
-      RdbColumn("column2", VARCHAR, false),
-      RdbColumn("column3", VARCHAR, false)
+      new DatabaseClient.Column("column1", VARCHAR, false),
+      new DatabaseClient.Column("column2", VARCHAR, false),
+      new DatabaseClient.Column("column3", VARCHAR, false)
     )
 
     val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]

@@ -15,32 +15,33 @@
  */
 
 package com.island.ohara.configurator.route
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
-import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.InspectApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
+import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
+import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.{Consumer, Header}
+import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.{DeserializationException, JsObject}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * used to handle the "QUERY" APIs
-  */
-private[configurator] object QueryRoute {
+private[configurator] object InspectRoute {
 
   /**
     * we reuse the great conversion of JIO connectors
@@ -76,12 +77,13 @@ private[configurator] object QueryRoute {
           }
       })
 
-  def apply(implicit brokerCollie: BrokerCollie,
-            adminCleaner: AdminCleaner,
-            dataStore: DataStore,
-            workerCollie: WorkerCollie,
-            objectChecker: ObjectChecker,
-            executionContext: ExecutionContext): server.Route = pathPrefix(QUERY_PREFIX_PATH) {
+  def apply(mode: Mode)(implicit brokerCollie: BrokerCollie,
+                        adminCleaner: AdminCleaner,
+                        dataStore: DataStore,
+                        streamCollie: StreamCollie,
+                        workerCollie: WorkerCollie,
+                        objectChecker: ObjectChecker,
+                        executionContext: ExecutionContext): server.Route = pathPrefix(QUERY_PREFIX_PATH) {
     path(RDB_PREFIX_PATH) {
       post {
         entity(as[RdbQuery]) { query =>
@@ -183,16 +185,73 @@ private[configurator] object QueryRoute {
       }
     } ~ path(FILE_PREFIX_PATH / Segment) { fileName =>
       parameter(GROUP_KEY ?) { groupOption =>
-        complete(dataStore.value[FileInfo](ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), fileName)).map {
-          fileInfo =>
-            val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
-            FileContent(
-              sources.map(n => ClassInfo(SOURCE_CONNECTOR_KEY, n, Seq.empty)) ++
-                sinks.map(n => ClassInfo(SINK_CONNECTOR_KEY, n, Seq.empty)) ++
-                streamApps.map(n => ClassInfo(STREAM_APP_KEY, n, Seq.empty))
-            )
-        })
+        complete(
+          dataStore
+            .value[FileInfo](ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), fileName))
+            .flatMap { fileInfo =>
+              val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
+              // if user input 0 or > 1 streamapp, we do nothing for it.
+              if (streamApps.size != 1) Future.successful((sources, sinks, streamApps, Seq.empty))
+              else
+                streamCollie
+                  .loadDefinition(fileInfo.url)
+                  .map(_.settingDefinitions)
+                  .recover {
+                    case _: Throwable =>
+                      StreamDefUtils.DEFAULT.asScala
+                  }
+                  .map((sources, sinks, streamApps, _))
+            }
+            .map {
+              case (sources, sinks, streamApps, streamDefinitions) =>
+                FileContent(
+                  sources.map(n =>
+                    ClassInfo(classType = SOURCE_CONNECTOR_KEY, className = n, settingDefinitions = Seq.empty)) ++
+                    sinks.map(n =>
+                      ClassInfo(classType = SINK_CONNECTOR_KEY, className = n, settingDefinitions = Seq.empty)) ++
+                    streamApps.map(n =>
+                      ClassInfo(classType = STREAM_APP_KEY, className = n, settingDefinitions = streamDefinitions))
+                )
+            })
       }
+    } ~ path(CONFIGURATOR_PREFIX_PATH) {
+      complete(
+        ConfiguratorInfo(
+          versionInfo = ConfiguratorVersion(
+            version = VersionUtils.VERSION,
+            branch = VersionUtils.BRANCH,
+            user = VersionUtils.USER,
+            revision = VersionUtils.REVISION,
+            date = VersionUtils.DATE
+          ),
+          mode = mode.toString
+        ))
+    } ~ path(IMAGE_PREFIX_KEY / Segment) {
+      case WORKER_PREFIX_PATH =>
+        complete(
+          ServiceDefinition(
+            imageName = WorkerApi.IMAGE_NAME_DEFAULT,
+            settingDefinitions = WorkerApi.DEFINITIONS
+          ))
+      case BROKER_PREFIX_PATH =>
+        complete(
+          ServiceDefinition(
+            imageName = BrokerApi.IMAGE_NAME_DEFAULT,
+            settingDefinitions = BrokerApi.DEFINITIONS
+          ))
+      case ZOOKEEPER_PREFIX_PATH =>
+        complete(
+          ServiceDefinition(
+            imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
+            settingDefinitions = ZookeeperApi.DEFINITIONS
+          ))
+      case STREAM_PREFIX_PATH =>
+        complete(
+          ServiceDefinition(
+            imageName = StreamApi.IMAGE_NAME_DEFAULT,
+            settingDefinitions = StreamDefUtils.DEFAULT.asScala
+          ))
+      case e: Any => throw new IllegalArgumentException(s"image:$e is NOT supported")
     }
   }
 }

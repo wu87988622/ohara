@@ -16,7 +16,7 @@
 
 package com.island.ohara.client
 
-import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}

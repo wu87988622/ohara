@@ -19,7 +19,6 @@ package com.island.ohara.connector.jdbc.source
 import java.sql._
 import java.util.Calendar
 
-import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.island.ohara.connector.jdbc.datatype.{RDBDataTypeConverter, RDBDataTypeConverterFactory}
@@ -84,8 +83,8 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
     this.queryFlag = queryFlag
   }
 
-  private[source] def columns(tableName: String): Seq[RdbColumn] = {
-    val rdbTables: Seq[RdbTable] = client.tableQuery.tableName(tableName).execute()
+  private[source] def columns(tableName: String): Seq[DatabaseClient.Column] = {
+    val rdbTables: Seq[DatabaseClient.Table] = client.tableQuery.tableName(tableName).execute()
     rdbTables.head.columns
   }
 
