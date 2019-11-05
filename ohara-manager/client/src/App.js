@@ -21,7 +21,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import GlobalStyle from 'theme/globalStyle';
 import AppBar from 'components/Layout/AppBar';
 import NotFoundPage from 'components/NotFoundPage';
-import { Pipeline, PipelineNavigator } from 'components/Pipeline';
+import { Pipeline, Navigator } from 'components/Pipeline';
 
 const Container = styled.div`
   display: flex;
@@ -37,7 +37,7 @@ const Container = styled.div`
 `;
 
 const Main = styled.main`
-  padding: ${props => props.theme.spacing(2)}px;
+  width: 100%;
 `;
 
 const App = () => {
@@ -49,7 +49,7 @@ const App = () => {
         <Route
           exact
           path="/:workspaceName/:pipelineName?"
-          component={PipelineNavigator}
+          component={Navigator}
         />
         <Main>
           <Switch>

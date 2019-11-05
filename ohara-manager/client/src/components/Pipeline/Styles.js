@@ -20,7 +20,7 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 
 import { Button } from 'components/common/Form';
 
-export const Navigator = styled.nav`
+export const StyledNavigator = styled.nav`
   min-width: 220px;
   width: 220px;
   background-color: ${props => props.theme.palette.primary[500]};

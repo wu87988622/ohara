@@ -33,7 +33,7 @@ const StyledCard = styled(Card)`
 `;
 
 const MuiCard = props => {
-  const { title, description, avatar, ...rest } = props;
+  const { title, description, ...rest } = props;
 
   return (
     <StyledCard {...rest}>
@@ -59,7 +59,6 @@ const MuiCard = props => {
 MuiCard.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
-  avatar: PropTypes.string,
 };
 
 export default MuiCard;

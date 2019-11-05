@@ -73,7 +73,7 @@ const StyledDialogActions = styled(DialogActions)`
   }
 `;
 
-const MuiDialog = props => {
+const MuiDialog = () => {
   const { isOpen, setIsOpen } = useNewWorkspace();
 
   const onClose = () => setIsOpen(false);

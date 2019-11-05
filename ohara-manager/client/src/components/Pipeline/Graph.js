@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import Pipeline from './Pipeline';
-import Navigator from './Navigator';
+import React from 'react';
+import Typography from '@material-ui/core/Typography';
 
-export { Pipeline, Navigator };
+const Graph = () => {
+  return (
+    <Typography variant="h5" component="h2">
+      I am the pipeline graph
+    </Typography>
+  );
+};
+
+export default Graph;

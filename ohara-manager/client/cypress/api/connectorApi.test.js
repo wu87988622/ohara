@@ -16,8 +16,6 @@
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
-/* eslint-disable camelcase */
-// eslint is complaining about parameters of format "XXX__XXX"
 
 import * as generate from '../../src/utils/generate';
 import * as connectorApi from '../../src/api/connectorApi';

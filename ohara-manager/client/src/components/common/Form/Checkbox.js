@@ -27,9 +27,7 @@ const InputWrap = styled.div`
 
 const MuiCheckbox = ({
   input: { name, onChange, checked = false, ...restInput },
-  meta,
   label,
-  helperText,
   testId,
   ...rest
 }) => {

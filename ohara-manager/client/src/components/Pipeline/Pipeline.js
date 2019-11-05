@@ -15,14 +15,24 @@
  */
 
 import React, { useEffect } from 'react';
-import Typography from '@material-ui/core/Typography';
+import styled from 'styled-components';
 import { useHistory, useParams } from 'react-router-dom';
 
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
+import Toolbar from './Toolbar';
+import Toolbox from './Toolbox';
+import Graph from './Graph';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
+
+const GraphWrapper = styled.div`
+  position: relative;
+
+  /* Subtract the height of Toolbar  */
+  height: calc(100vh - 72px);
+`;
 
 const Pipeline = () => {
   const history = useHistory();
@@ -84,21 +94,17 @@ const Pipeline = () => {
 
   return (
     <>
-      {currentWorkspace ? (
+      {currentWorkspace && (
         <>
-          {currentPipeline ? (
-            <h1>Current pipeline : {pipelineName}</h1>
-          ) : (
-            <Typography variant="h5" component="h2">
-              {`You don't have any pipeline in ${workspaceName} yet!`}
-            </Typography>
+          {currentPipeline && (
+            <>
+              <Toolbar />
+              <GraphWrapper>
+                <Graph />
+                <Toolbox />
+              </GraphWrapper>
+            </>
           )}
-        </>
-      ) : (
-        <>
-          <Typography variant="h5" component="h2">
-            You don't have any workspace yet!
-          </Typography>
         </>
       )}
 

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 import MenuItem from '@material-ui/core/MenuItem';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -31,6 +30,7 @@ import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { useSnackbar } from 'context/SnackbarContext';
 import { usePipeline } from 'context/PipelineContext';
+import { useWorkspace } from 'context/WorkspaceContext';
 import {
   required,
   validServiceName,
@@ -39,18 +39,19 @@ import {
   composeValidators,
 } from 'utils/validate';
 import {
-  Navigator,
+  StyledNavigator,
   StyledButton,
   StyledExpansionPanel,
   StyledSubtitle1,
   PipelineList,
 } from './Styles';
 
-const PipelineNavigator = () => {
+const Navigator = () => {
   const showMessage = useSnackbar();
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const { workspaceName } = useParams();
+  const { workspaces } = useWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
 
   const handleClick = event => {
@@ -77,12 +78,18 @@ const PipelineNavigator = () => {
     setIsOpen(false);
   };
 
-  React.useEffect(() => {
+  const validWorkspaceName = workspaces.find(
+    workspace => workspace.settings.name === workspaceName,
+  );
+
+  useEffect(() => {
     fetchPipelines(workspaceName);
   }, [fetchPipelines, workspaceName]);
 
+  if (!validWorkspaceName) return null;
+
   return (
-    <Navigator>
+    <StyledNavigator>
       <StyledButton disableRipple onClick={handleClick}>
         <span className="menu-name">{workspaceName}</span>
         <ExpandMoreIcon />
@@ -93,10 +100,10 @@ const PipelineNavigator = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleClose}>Node settings</MenuItem>
-        <MenuItem onClick={handleClose}>Worker settings</MenuItem>
-        <MenuItem onClick={handleClose}>Broker settings</MenuItem>
-        <MenuItem onClick={handleClose}>Zookeeper settings</MenuItem>
+        <MenuItem onClick={handleClose}>Overview</MenuItem>
+        <MenuItem onClick={handleClose}>Topics</MenuItem>
+        <MenuItem onClick={handleClose}>Files</MenuItem>
+        <MenuItem onClick={handleClose}>Settings</MenuItem>
       </Menu>
 
       <Form
@@ -161,12 +168,8 @@ const PipelineNavigator = () => {
           </PipelineList>
         </ExpansionPanelDetails>
       </StyledExpansionPanel>
-    </Navigator>
+    </StyledNavigator>
   );
 };
 
-PipelineNavigator.propTypes = {
-  prop: PropTypes.any,
-};
-
-export default PipelineNavigator;
+export default Navigator;

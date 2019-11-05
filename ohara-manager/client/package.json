@@ -68,13 +68,25 @@
       "no-alert": "warn",
       "no-debugger": "warn",
       "no-console": "warn",
-      "no-unused-vars": "warn",
+      "no-unused-vars": [
+        "warn",
+        {
+          "args": "after-used"
+        }
+      ],
       "no-template-curly-in-string": "warn",
       "no-case-declarations": "off",
       "array-callback-return": "warn",
       "object-shorthand": "warn",
       "react/prop-types": "warn",
-      "camelcase": "warn",
+      "react/no-unused-prop-types": "warn",
+      "camelcase": [
+        "warn",
+        {
+          "properties": "never",
+          "ignoreDestructuring": true
+        }
+      ],
       "eqeqeq": "warn"
     }
   },

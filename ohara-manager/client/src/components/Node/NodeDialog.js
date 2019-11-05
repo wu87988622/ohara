@@ -15,7 +15,6 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import styled from 'styled-components';
@@ -39,7 +38,7 @@ const Actions = styled.div`
   }
 `;
 
-const NodeDialog = props => {
+const NodeDialog = () => {
   const {
     isOpen: isNodeDialogOpen,
     setIsOpen: setIsNodeDialogOpen,
@@ -110,10 +109,6 @@ const NodeDialog = props => {
       </>
     </FullScreenDialog>
   );
-};
-
-NodeDialog.propTypes = {
-  prop: PropTypes.array,
 };
 
 export default NodeDialog;

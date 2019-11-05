@@ -125,7 +125,7 @@ export const converterValueWithDefaultValue = (value, type) => {
 };
 
 export const generateValueWithDefaultValue = (value, type) => {
-  return get => {
+  return () => {
     return converterValueWithDefaultValue(value, type);
   };
 };
