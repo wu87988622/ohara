@@ -17,8 +17,8 @@
 import { number, array } from '../utils/validation';
 import { createBody, getCluster } from '../utils/definitionsUtils';
 
-export const request = parmas => {
-  const definitions = getCluster(parmas);
+export const request = params => {
+  const definitions = getCluster(params);
   const body = createBody(definitions);
   return body;
 };

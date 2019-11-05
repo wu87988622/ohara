@@ -30,7 +30,7 @@ export const CONNECTOR_URL = `${BASE_URL}/connectors`;
 
 export const NODE_URL = `${BASE_URL}/nodes`;
 export const PIPELINE_URL = `${BASE_URL}/pipelines`;
-export const STREAM_URL = `${BASE_URL}/stream`;
+export const STREAM_URL = `${BASE_URL}/streams`;
 export const TOPIC_URL = `${BASE_URL}/topics`;
 export const LOG_URL = `${BASE_URL}/logs`;
 

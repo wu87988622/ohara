@@ -22,6 +22,7 @@ import * as bkApi from '../src/api/brokerApi';
 import * as wkApi from '../src/api/workerApi';
 import * as connectorApi from '../src/api/connectorApi';
 import * as topicApi from '../src/api/topicApi';
+import * as streamApi from '../src/api/streamApi';
 
 export const createServices = async ({
   withWorker = false,
@@ -107,6 +108,13 @@ export const deleteAllServices = async () => {
   // Using Promise.all() to make sure all workers were stopped & deleted.
   await Promise.all(workers.map(wk => wkApi.stop(wk.settings)));
   await Promise.all(workers.map(wk => wkApi.remove(wk.settings)));
+
+  // delete all streams
+  const streams = await streamApi.getAll();
+  // we don't care the execute order of each individual stream was done or not.
+  // Using Promise.all() to make sure all streams were stopped & deleted.
+  await Promise.all(streams.map(stream => streamApi.stop(stream.settings)));
+  await Promise.all(streams.map(stream => streamApi.remove(stream.settings)));
 
   // delete all topics
   const topics = await topicApi.getAll();
