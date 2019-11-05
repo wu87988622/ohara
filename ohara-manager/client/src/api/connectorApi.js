@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as connector from './body/connectorBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
@@ -25,21 +23,39 @@ import * as workerApi from './workerApi';
 
 const url = URL.CONNECTOR_URL;
 
-export const create = async (params = {}) => {
-  const body = {};
-  body['className'] = params.className;
-  body['allConnectorDefinitions'] = await workerApi.getAll();
-  const requestBody = requestUtil(params, connector, body);
+export const connectorSources = {
+  jdbc: 'com.island.ohara.connector.jdbc.source.JDBCSourceConnector',
+  json: 'com.island.ohara.connector.jio.JsonIn',
+  ftp: 'com.island.ohara.connector.ftp.FtpSource',
+  smb: 'com.island.ohara.connector.smb.SmbSource',
+  perf: 'com.island.ohara.connector.perf.PerfSource',
+};
+
+export const connectorSinks = {
+  json: 'com.island.ohara.connector.jio.JsonOut',
+  ftp: 'com.island.ohara.connector.ftp.FtpSink',
+  hdfs: 'com.island.ohara.connector.hdfs.sink.HDFSSink',
+  smb: 'com.island.ohara.connector.smb.SmbSink',
+  console: 'com.island.ohara.connector.console.ConsoleSink',
+};
+
+export const create = async (params, body) => {
+  body = body ? body : await workerApi.get(params.workerClusterKey);
+  // the "connector.class" is key of each connector
+  // we can use it to filter the correct definition
+  // the connector__class here is meant to be "connector.class" of definitions
+  const newBody = { ...body, className: params.connector__class };
+  const requestBody = requestUtil(params, connector, newBody);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, connector);
 };
 
-export const start = async (params = {}) => {
-  const { name, group } = params.settings;
+export const start = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/start?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForRunning,
+    checkFn: waitUtil.waitForConnectRunning,
   });
   return responseUtil(res, connector);
 };
@@ -53,18 +69,18 @@ export const update = async params => {
   return responseUtil(res, connector);
 };
 
-export const stop = async (params = {}) => {
-  const { name, group } = params.settings;
+export const stop = async params => {
+  const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForStop,
+    checkFn: waitUtil.waitForConnectStop,
   });
   return responseUtil(res, connector);
 };
 
-export const remove = async (params = {}) => {
-  const { name, group } = params.settings;
+export const remove = async params => {
+  const { name, group } = params;
   await axiosInstance.delete(`${url}/${name}?group=${group}`);
   const res = await wait({
     url,
@@ -74,14 +90,13 @@ export const remove = async (params = {}) => {
   return responseUtil(res, connector);
 };
 
-export const get = async (params = {}) => {
-  const { name, group } = params.settings;
+export const get = async params => {
+  const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, connector);
 };
 
 export const getAll = async (params = {}) => {
-  const parameter = Object.keys(params).map(key => `?${key}=${params[key]}&`);
-  const res = await axiosInstance.get(url + parameter);
-  return lodashGet(responseUtil(res, connector), '', []);
+  const res = await axiosInstance.get(url + URL.toQueryParameters(params));
+  return res ? responseUtil(res, connector) : [];
 };

@@ -16,18 +16,45 @@
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
+/* eslint-disable camelcase */
+// eslint is complaining about parameters of format "XXX__XXX"
 
 import * as generate from '../../src/utils/generate';
+import * as topicApi from '../../src/api/topicApi';
+import * as connectorApi from '../../src/api/connectorApi';
 import * as validateApi from '../../src/api/validateApi';
 import { createServices, deleteAllServices } from '../utils';
 
 const generateValidation = async () => {
-  const { worker } = await createServices({
+  const { node, broker, worker } = await createServices({
     withWorker: true,
     withBroker: true,
     withZookeeper: true,
     withNode: true,
   });
+  const topic = {
+    name: generate.serviceName({ prefix: 'topic' }),
+    group: generate.serviceName({ prefix: 'group' }),
+    nodeNames: [node.hostname],
+    brokerClusterKey: {
+      name: broker.name,
+      group: broker.group,
+    },
+  };
+  await topicApi.create(topic);
+  await topicApi.start(topic);
+
+  const connector = {
+    name: generate.serviceName({ prefix: 'connector' }),
+    group: generate.serviceName({ prefix: 'group' }),
+    connector__class: connectorApi.connectorSources.perf,
+    topicKeys: [{ name: topic.name, group: topic.group }],
+    workerClusterKey: {
+      name: worker.name,
+      group: worker.group,
+    },
+  };
+
   const validation = {
     uri: generate.url(),
     url: generate.url(),
@@ -40,14 +67,14 @@ const generateValidation = async () => {
       group: worker.group,
     },
   };
-  return validation;
+  return { connector, validation };
 };
 
 describe('Validate API', () => {
   beforeEach(() => deleteAllServices());
 
   it('validateHdfs', async () => {
-    const hdfs = await generateValidation();
+    const { validation: hdfs } = await generateValidation();
     const result = await validateApi.validateHdfs(hdfs);
 
     result.forEach(report => {
@@ -59,7 +86,7 @@ describe('Validate API', () => {
   });
 
   it('validateRdb', async () => {
-    const rdb = await generateValidation();
+    const { validation: rdb } = await generateValidation();
     const result = await validateApi.validateRdb(rdb);
 
     result.forEach(report => {
@@ -71,7 +98,7 @@ describe('Validate API', () => {
   });
 
   it('validateFtp', async () => {
-    const ftp = await generateValidation();
+    const { validation: ftp } = await generateValidation();
     const result = await validateApi.validateFtp(ftp);
 
     result.forEach(report => {
@@ -83,7 +110,7 @@ describe('Validate API', () => {
   });
 
   it('validateNode', async () => {
-    const node = await generateValidation();
+    const { validation: node } = await generateValidation();
     const result = await validateApi.validateNode(node);
 
     result.forEach(report => {
@@ -94,8 +121,17 @@ describe('Validate API', () => {
     });
   });
 
-  it.skip('validateConnector', async () => {
-    //TODO : implement stream part in " Add connector, pipeline API tests"
-    // See https://github.com/oharastream/ohara/issues/3028
+  it('validateConnector', async () => {
+    const { connector } = await generateValidation();
+    const result = await validateApi.validateConnector(connector);
+
+    result.settings.forEach(report => {
+      const { definition, value } = report;
+      expect(definition).to.be.an('object');
+
+      expect(value).to.be.an('object');
+      expect(value.errors).to.be.an('array');
+      expect(value.errors).have.lengthOf(0);
+    });
   });
 });

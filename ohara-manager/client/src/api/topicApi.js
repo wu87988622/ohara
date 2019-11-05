@@ -24,7 +24,7 @@ import * as brokerApi from './brokerApi';
 const url = URL.TOPIC_URL;
 
 export const create = async (params, body) => {
-  body = body ? body : await brokerApi.getAll();
+  body = body ? body : await brokerApi.get(params.brokerClusterKey);
   const requestBody = requestUtil(params, topic, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, topic);

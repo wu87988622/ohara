@@ -37,7 +37,7 @@ export const response = () => {
   const state = [string];
   const error = [string];
   const lastModified = [number];
-  const connectors = [array];
+  const connectorDefinitions = [array];
   const settings = [object];
 
   return {
@@ -45,7 +45,7 @@ export const response = () => {
     state,
     error,
     lastModified,
-    connectors,
+    connectorDefinitions,
     settings,
   };
 };

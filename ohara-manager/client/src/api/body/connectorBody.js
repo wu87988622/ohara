@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { number, array, object } from '../utils/validation';
 import { createBody, getConnect } from '../utils/definitionsUtils';
 
 export const request = params => {
@@ -23,9 +24,11 @@ export const request = params => {
 };
 
 export const response = () => {
-  const lastModified = [];
-  const metrics = [];
+  const lastModified = [number];
+  const metrics = [object];
+  const status = [object];
   const settings = [];
+  const tasksStatus = [array];
 
-  return { lastModified, metrics, settings };
+  return { lastModified, metrics, settings, status, tasksStatus };
 };

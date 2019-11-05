@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-import { get as lodashGet } from 'lodash';
-
 import * as pipeline from './body/pipelineBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
-import wait from './waitApi';
-import * as waitUtil from './utils/waitUtils';
 
 const url = URL.PIPELINE_URL;
 
-export const create = async (params = {}) => {
+export const create = async params => {
   const requestBody = requestUtil(params, pipeline);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, pipeline);
@@ -39,29 +35,24 @@ export const update = async params => {
   return responseUtil(res, pipeline);
 };
 
-export const remove = async (params = {}) => {
-  const { name, group } = params.settings;
-  await axiosInstance.delete(`${url}/${name}?group=${group}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForClusterNonexistent,
-    paramRes: params,
-  });
+export const remove = async params => {
+  const { name, group } = params;
+  const res = await axiosInstance.delete(`${url}/${name}?group=${group}`);
   return responseUtil(res, pipeline);
 };
 
-export const get = async (params = {}) => {
-  const { name, group } = params.settings;
+export const get = async params => {
+  const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, pipeline);
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return lodashGet(res, 'data.result', []);
+  return res ? responseUtil(res, pipeline) : [];
 };
 
-export const refresh = async (params = {}) => {
+export const refresh = async params => {
   const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/refresh?group=${group}`);
   return get(params);

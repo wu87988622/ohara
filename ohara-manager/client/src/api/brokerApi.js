@@ -23,7 +23,7 @@ import * as info from './infoApi';
 
 const url = URL.BROKER_URL;
 
-export const create = async (params = {}, body) => {
+export const create = async (params, body) => {
   body = body ? body : await info.getBrokerInfo();
   const requestBody = requestUtil(params, broker, body);
   const res = await axiosInstance.post(url, requestBody);

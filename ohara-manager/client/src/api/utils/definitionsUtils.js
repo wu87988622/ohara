@@ -72,12 +72,21 @@ const getTypeWithValueType = key => {
 };
 
 export const getConnect = params => {
-  const connectorDefinition = params.allConnectorDefinitions
-    .filter(param => param.state === 'RUNNING')
-    .map(param => param.connectorDefinitions)
-    .flatMap(param => param)
-    .filter(param => param.className === params.className);
-  return getCluster(connectorDefinition[0]);
+  let connectorDefinition = {};
+  if (params.state === 'RUNNING') {
+    connectorDefinition = params.connectorDefinitions
+      .reduce((acc, cur) => acc.concat(cur), [])
+      .find(param => param.className === params.className);
+  }
+  return getCluster(connectorDefinition);
+};
+
+export const getTopic = params => {
+  let topicDefinition = {};
+  if (params.state === 'RUNNING') {
+    topicDefinition = params.topicDefinition;
+  }
+  return getCluster(topicDefinition);
 };
 
 export const getCluster = params => {
@@ -96,12 +105,6 @@ export const getCluster = params => {
     definitionsObj[obj.key] = obj;
   });
   return definitionsObj;
-};
-
-export const getTopic = params => {
-  const topic = params.filter(param => param.state === 'RUNNING')[0];
-  const { topicDefinition } = topic;
-  return getCluster(topicDefinition);
 };
 
 export const createBody = params => {

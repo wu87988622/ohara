@@ -20,6 +20,7 @@ import * as fileApi from '../src/api/fileApi';
 import * as zkApi from '../src/api/zookeeperApi';
 import * as bkApi from '../src/api/brokerApi';
 import * as wkApi from '../src/api/workerApi';
+import * as connectorApi from '../src/api/connectorApi';
 import * as topicApi from '../src/api/topicApi';
 
 export const createServices = async ({
@@ -89,6 +90,17 @@ export const createServices = async ({
 };
 
 export const deleteAllServices = async () => {
+  // delete all connectors
+  const connects = await connectorApi.getAll();
+  // we don't care the execute order of each individual connect was done or not.
+  // Using Promise.all() to make sure all connects were stopped & deleted.
+  await Promise.all(
+    connects.map(connect => connectorApi.stop(connect.settings)),
+  );
+  await Promise.all(
+    connects.map(connect => connectorApi.remove(connect.settings)),
+  );
+
   // delete all workers
   const workers = await wkApi.getAll();
   // we don't care the execute order of each individual worker was done or not.

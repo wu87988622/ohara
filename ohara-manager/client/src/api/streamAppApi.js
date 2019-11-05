@@ -25,7 +25,7 @@ import * as info from './infoApi';
 
 const url = URL.STREAM_URL;
 
-export const create = async (params = {}, file) => {
+export const create = async (params, file) => {
   const body = await info.getStreamsInfo(file);
   const requestBody = requestUtil(params, streamApp, body);
   const res = await axiosInstance.post(url, requestBody);
