@@ -139,7 +139,6 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String EDITABLE_KEY = "editable";
   private static final String KEY_KEY = "key";
   private static final String VALUE_TYPE_KEY = "valueType";
-  private static final String REQUIRED_KEY = "required";
   private static final String NECESSARY_KEY = "necessary";
   private static final String DEFAULT_VALUE_KEY = "defaultValue";
   private static final String DOCUMENTATION_KEY = "documentation";
@@ -432,12 +431,6 @@ public class SettingDef implements JsonObject, Serializable {
   @JsonProperty(NECESSARY_KEY)
   public Necessary necessary() {
     return necessary;
-  }
-
-  @Deprecated
-  @JsonProperty(REQUIRED_KEY)
-  public boolean required() {
-    return necessary == Necessary.REQUIRED;
   }
 
   @Nullable
