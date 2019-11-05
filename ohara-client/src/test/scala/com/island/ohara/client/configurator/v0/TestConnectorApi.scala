@@ -636,9 +636,7 @@ class TestConnectorApi extends OharaTest with Matchers {
        |    ],
        |    "$CONNECTOR_CLASS_KEY": "com.island.ohara.connector.ftp.FtpSource"
        |  }
-       |     """.stripMargin.parseJson).numberOfTasks shouldBe ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION
-      .defaultValue()
-      .toInt
+       |     """.stripMargin.parseJson).numberOfTasks shouldBe ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.defaultInt
 
   @Test
   def testCustomGroup(): Unit = ConnectorApi.access

@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -105,7 +106,7 @@ public class TestSettingDef extends OharaTest {
     Assert.assertNotNull(def.group());
     Assert.assertNotNull(def.reference());
     // yep. the default value should be null
-    Assert.assertNull(def.defaultValue());
+    Assert.assertFalse(def.hasDefault());
   }
 
   @Test
@@ -134,7 +135,7 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(group, def.group());
     Assert.assertEquals(reference, def.reference());
     Assert.assertEquals(orderInGroup, def.orderInGroup());
-    Assert.assertEquals(valueDefault, def.defaultValue());
+    Assert.assertEquals(valueDefault, def.defaultString());
     Assert.assertEquals(documentation, def.documentation());
     Assert.assertEquals(def.necessary(), SettingDef.Necessary.OPTIONAL_WITH_DEFAULT);
     Assert.assertTrue(def.editable());
@@ -169,7 +170,7 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(group, def.group());
     Assert.assertEquals(reference, def.reference());
     Assert.assertEquals(orderInGroup, def.orderInGroup());
-    Assert.assertNull(def.defaultValue());
+    Assert.assertFalse(def.hasDefault());
     Assert.assertEquals(documentation, def.documentation());
     Assert.assertEquals(def.necessary(), SettingDef.Necessary.REQUIRED);
     Assert.assertFalse(def.editable());
@@ -306,7 +307,7 @@ public class TestSettingDef extends OharaTest {
     Duration duration = Duration.ofHours(10);
     SettingDef def =
         SettingDef.builder().key(CommonUtils.randomString()).optional(duration).build();
-    Assert.assertEquals(Duration.parse(def.defaultValue()), duration);
+    Assert.assertEquals(def.defaultDuration(), duration);
   }
 
   @Test(expected = OharaConfigException.class)
@@ -514,5 +515,85 @@ public class TestSettingDef extends OharaTest {
   public void defaultBuild() {
     // all fields should have default value except for key
     SettingDef.builder().key(CommonUtils.randomString()).build();
+  }
+
+  @Test
+  public void testShortDefault() {
+    short defaultValue = 123;
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    // jackson convert the number to int or long only
+    Assert.assertEquals(copy.defaultShort(), defaultValue);
+  }
+
+  @Test
+  public void testIntDefault() {
+    int defaultValue = 123;
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    Assert.assertEquals(copy.defaultInt(), defaultValue);
+  }
+
+  @Test
+  public void testLongDefault() {
+    long defaultValue = Long.MAX_VALUE;
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    Assert.assertEquals(copy.defaultLong(), defaultValue);
+  }
+
+  @Test
+  public void testDoubleDefault() {
+    double defaultValue = 123;
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    Assert.assertEquals(copy.defaultDouble(), defaultValue, 0);
+  }
+
+  @Test
+  public void testStringDefault() {
+    String defaultValue = "asd";
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    Assert.assertEquals(copy.defaultString(), defaultValue);
+  }
+
+  @Test
+  public void testDurationDefault() {
+    Duration defaultValue = Duration.ofMillis(12345);
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    Assert.assertEquals(copy.defaultDuration(), defaultValue);
+  }
+
+  @Test
+  public void testBooleanDefault() {
+    boolean defaultValue = true;
+    SettingDef settingDef =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(defaultValue).build();
+    SettingDef copy = SettingDef.ofJson(settingDef.toString());
+    Assert.assertEquals(copy.defaultBoolean(), defaultValue);
+  }
+
+  @Test
+  public void testRecommendedValues() {
+    Set<String> recommendedValues =
+        new HashSet<>(
+            Arrays.asList(
+                CommonUtils.randomString(),
+                CommonUtils.randomString(),
+                CommonUtils.randomString()));
+    SettingDef settingDef =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .optional(CommonUtils.randomString(), recommendedValues)
+            .build();
+    Assert.assertEquals(settingDef.recommendedValues(), recommendedValues);
   }
 }

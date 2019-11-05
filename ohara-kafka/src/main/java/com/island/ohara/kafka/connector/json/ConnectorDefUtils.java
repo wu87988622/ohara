@@ -185,7 +185,7 @@ public final class ConnectorDefUtils {
                       SettingDef.CheckRule.NONE.name(),
                       Stream.of(SettingDef.CheckRule.values())
                           .map(SettingDef.CheckRule::name)
-                          .collect(Collectors.toList()))
+                          .collect(Collectors.toSet()))
                   .build());
 
   public static final SettingDef WORKER_CLUSTER_KEY_DEFINITION =

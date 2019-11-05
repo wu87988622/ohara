@@ -200,7 +200,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
-      .defaultValue() shouldBe null
+      .hasDefault shouldBe false
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -209,7 +209,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.internal() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.editable() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.defaultValue() shouldBe null
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.hasDefault shouldBe false
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -221,10 +221,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .head
       .internal() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()).head.editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe "1"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()).head.defaultInt() shouldBe 1
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -233,7 +230,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.defaultValue() shouldBe null
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.hasDefault shouldBe false
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -251,19 +248,19 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
-      .defaultValue() shouldBe null
+      .hasDefault shouldBe false
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.AUTHOR_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.internal() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.editable() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultValue() shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultString shouldBe "unknown"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.internal() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.editable() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultValue() shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultString shouldBe "unknown"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_KEY) shouldBe true
     settingDefinitionS
@@ -272,14 +269,14 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.internal() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.editable() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultValue() shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultString shouldBe "unknown"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.internal() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.editable() shouldBe false
-    (settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultValue() == "source"
-    || settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultValue() == "sink") shouldBe true
+    (settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultString == "source"
+    || settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultString == "sink") shouldBe true
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -291,7 +288,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
       .head
-      .defaultValue() shouldBe ConverterType.NONE.className()
+      .defaultString shouldBe ConverterType.NONE.className()
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -303,7 +300,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
       .head
-      .defaultValue() shouldBe ConverterType.NONE.className()
+      .defaultString shouldBe ConverterType.NONE.className()
   }
 
   @Test

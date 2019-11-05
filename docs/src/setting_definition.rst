@@ -45,7 +45,8 @@ SettingDef is a class used to describe the details of **a** setting. It consists
   - OPTIONAL_WITH_DEFAULT — this field has a fixed default value
   - OPTIONAL_WITH_RANDOM_DEFAULT — this field has a "random" default value
 
-#. defaultValue (**string**) — the default value
+#. defaultValue (**object**) — the default value. the type is equal to what valueType defines
+                               but we only allow string, number and boolean type to have default value currently.
 #. documentation (**string**) — the explanation of this definition
 #. internal (**string**) — true if this setting is assigned by system automatically.
 #. tableKeys (**array(object)**) — the description to Type.TABLE

@@ -158,14 +158,14 @@ public class SettingDef implements JsonObject, Serializable {
   private final boolean editable;
   private final String key;
   private final Type valueType;
-  @Nullable private final String defaultValue;
+  @Nullable private final Object defaultValue;
   private final Necessary necessary;
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
   private final List<TableColumn> tableKeys;
-  private final List<String> recommendedValues;
-  private final List<String> blacklist;
+  private final Set<String> recommendedValues;
+  private final Set<String> blacklist;
 
   @JsonCreator
   private SettingDef(
@@ -176,13 +176,13 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(KEY_KEY) String key,
       @JsonProperty(VALUE_TYPE_KEY) Type valueType,
       @JsonProperty(NECESSARY_KEY) Necessary necessary,
-      @Nullable @JsonProperty(DEFAULT_VALUE_KEY) String defaultValue,
+      @Nullable @JsonProperty(DEFAULT_VALUE_KEY) Object defaultValue,
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) Reference reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
       @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
-      @JsonProperty(RECOMMENDED_VALUES_KEY) List<String> recommendedValues,
-      @JsonProperty(BLACKLIST_KEY) List<String> blacklist) {
+      @JsonProperty(RECOMMENDED_VALUES_KEY) Set<String> recommendedValues,
+      @JsonProperty(BLACKLIST_KEY) Set<String> blacklist) {
     this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
     this.editable = editable;
@@ -192,7 +192,10 @@ public class SettingDef implements JsonObject, Serializable {
           "the __ is keyword so it is illegal word to definition key");
     this.valueType = Objects.requireNonNull(valueType);
     this.necessary = necessary;
-    this.defaultValue = defaultValue;
+    if (valueType == Type.SHORT && defaultValue instanceof Integer) {
+      // jackson convert the number to int by default so we have to cast it again.
+      this.defaultValue = (short) ((int) defaultValue);
+    } else this.defaultValue = defaultValue;
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Objects.requireNonNull(reference);
     this.internal = internal;
@@ -433,9 +436,98 @@ public class SettingDef implements JsonObject, Serializable {
     return necessary;
   }
 
+  /**
+   * get and convert the default value to boolean type
+   *
+   * @return default value in boolean type
+   */
+  public boolean defaultBoolean() {
+    if (valueType == Type.BOOLEAN) return (boolean) Objects.requireNonNull(defaultValue);
+    throw new IllegalStateException("expected type: boolean, but actual:" + valueType);
+  }
+
+  /**
+   * get and convert the default value to short type
+   *
+   * @return default value in short type
+   */
+  public short defaultShort() {
+    if (valueType == Type.SHORT) return (short) Objects.requireNonNull(defaultValue);
+    throw new IllegalStateException("expected type: short, but actual:" + valueType);
+  }
+
+  /**
+   * get and convert the default value to int type
+   *
+   * @return default value in int type
+   */
+  public int defaultInt() {
+    if (valueType == Type.INT) return (int) Objects.requireNonNull(defaultValue);
+    throw new IllegalStateException("expected type: int, but actual:" + valueType);
+  }
+
+  /**
+   * get and convert the default value to long type
+   *
+   * @return default value in long type
+   */
+  public long defaultLong() {
+    if (valueType == Type.LONG) return (long) Objects.requireNonNull(defaultValue);
+    throw new IllegalStateException("expected type: long, but actual:" + valueType);
+  }
+
+  /**
+   * get and convert the default value to double type
+   *
+   * @return default value in double type
+   */
+  public double defaultDouble() {
+    if (valueType == Type.DOUBLE) return (double) Objects.requireNonNull(defaultValue);
+    throw new IllegalStateException("expected type: double, but actual:" + valueType);
+  }
+
+  /**
+   * get and convert the default value to String type
+   *
+   * @return default value in String type
+   */
+  public String defaultString() {
+    switch (valueType) {
+      case STRING:
+      case CLASS:
+      case PASSWORD:
+      case JDBC_TABLE:
+        return (String) Objects.requireNonNull(defaultValue);
+      default:
+        throw new IllegalStateException("expected type: String, but actual:" + valueType);
+    }
+  }
+
+  /**
+   * get and convert the default value to Duration type
+   *
+   * @return default value in Duration type
+   */
+  public Duration defaultDuration() {
+    if (valueType == Type.DURATION)
+      return CommonUtils.toDuration((String) Objects.requireNonNull(defaultValue));
+    throw new IllegalStateException("expected type: Duration, but actual:" + valueType);
+  }
+
+  /** @return true if there is a default value. otherwise, false */
+  public boolean hasDefault() {
+    return defaultValue != null;
+  }
+
+  /**
+   * Normally, you should not use this method since it does not convert the value according to type.
+   * the main purpose of this method is exposed to jackson to render the json string.
+   *
+   * @return origin type (object type)
+   */
   @Nullable
   @JsonProperty(DEFAULT_VALUE_KEY)
-  public String defaultValue() {
+  public Object defaultValue() {
     return defaultValue;
   }
 
@@ -455,18 +547,34 @@ public class SettingDef implements JsonObject, Serializable {
   }
 
   @JsonProperty(RECOMMENDED_VALUES_KEY)
-  public List<String> recommendedValues() {
-    return Collections.unmodifiableList(recommendedValues);
+  public Set<String> recommendedValues() {
+    return Collections.unmodifiableSet(recommendedValues);
   }
 
   @JsonProperty(BLACKLIST_KEY)
-  public List<String> blacklist() {
-    return Collections.unmodifiableList(blacklist);
+  public Set<String> blacklist() {
+    return Collections.unmodifiableSet(blacklist);
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof SettingDef) return toJsonString().equals(((SettingDef) obj).toJsonString());
+    if (obj instanceof SettingDef) {
+      SettingDef another = (SettingDef) obj;
+      return Objects.equals(displayName, another.displayName)
+          && Objects.equals(group, another.group)
+          && Objects.equals(orderInGroup, another.orderInGroup)
+          && Objects.equals(editable, another.editable)
+          && Objects.equals(key, another.key)
+          && Objects.equals(valueType, another.valueType)
+          && Objects.equals(necessary, another.necessary)
+          && Objects.equals(defaultValue, another.defaultValue)
+          && Objects.equals(documentation, another.documentation)
+          && Objects.equals(reference, another.reference)
+          && Objects.equals(internal, another.internal)
+          && Objects.equals(tableKeys, another.tableKeys)
+          && Objects.equals(recommendedValues, another.recommendedValues)
+          && Objects.equals(blacklist, another.blacklist);
+    }
     return false;
   }
 
@@ -492,13 +600,13 @@ public class SettingDef implements JsonObject, Serializable {
     private String key;
     private Type valueType = null;
     private Necessary necessary = null;
-    @Nullable private String defaultValue = null;
+    @Nullable private Object defaultValue = null;
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
     private List<TableColumn> tableKeys = Collections.emptyList();
-    private List<String> recommendedValues = Collections.emptyList();
-    private List<String> blacklist = Collections.emptyList();
+    private Set<String> recommendedValues = Collections.emptySet();
+    private Set<String> blacklist = Collections.emptySet();
 
     private Builder() {}
 
@@ -514,7 +622,19 @@ public class SettingDef implements JsonObject, Serializable {
     }
 
     /** check and set all related fields at once. */
-    private Builder checkAndSet(Type valueType, Necessary necessary, String defaultValue) {
+    private Builder checkAndSet(Type valueType, Necessary necessary, Object defaultValue) {
+      if (defaultValue != null) {
+        switch (valueType) {
+          case ARRAY:
+          case TABLE:
+          case OBJECT_KEY:
+          case OBJECT_KEYS:
+          case TAGS:
+            throw new IllegalArgumentException("type:" + valueType + " can't have default value");
+          default:
+            break;
+        }
+      }
       if (this.valueType != null)
         throw new IllegalArgumentException(
             "type is defined to " + this.valueType + ", new one:" + valueType);
@@ -590,8 +710,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(boolean defaultValue) {
-      return checkAndSet(
-          Type.BOOLEAN, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.BOOLEAN, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -601,7 +720,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(short defaultValue) {
-      return checkAndSet(Type.SHORT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.SHORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -611,8 +730,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(short defaultValue) {
-      return checkAndSet(
-          Type.POSITIVE_SHORT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.POSITIVE_SHORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -622,7 +740,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(int defaultValue) {
-      return checkAndSet(Type.INT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.INT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -632,8 +750,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(int defaultValue) {
-      return checkAndSet(
-          Type.POSITIVE_INT, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.POSITIVE_INT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -643,7 +760,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(long defaultValue) {
-      return checkAndSet(Type.LONG, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.LONG, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -653,8 +770,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(long defaultValue) {
-      return checkAndSet(
-          Type.POSITIVE_LONG, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.POSITIVE_LONG, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -664,8 +780,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(double defaultValue) {
-      return checkAndSet(
-          Type.DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -675,8 +790,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(double defaultValue) {
-      return checkAndSet(
-          Type.POSITIVE_DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, String.valueOf(defaultValue));
+      return checkAndSet(Type.POSITIVE_DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**
@@ -707,7 +821,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @param recommendedValues recommended string value
      * @return builder
      */
-    public Builder optional(String defaultValue, List<String> recommendedValues) {
+    public Builder optional(String defaultValue, Set<String> recommendedValues) {
       this.recommendedValues = Objects.requireNonNull(recommendedValues);
       return checkAndSet(
           Type.STRING, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
@@ -731,7 +845,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @param blacklist the values in this list is illegal
      * @return builder
      */
-    public Builder blacklist(List<String> blacklist) {
+    public Builder blacklist(Set<String> blacklist) {
       this.blacklist = Objects.requireNonNull(blacklist);
       return checkAndSet(Type.ARRAY, Necessary.REQUIRED, null);
     }

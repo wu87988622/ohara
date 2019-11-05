@@ -672,9 +672,9 @@ class TestBrokerApi extends OharaTest with Matchers {
 
     val string = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
 
-    BrokerApi.DEFINITIONS.filter(_.defaultValue() != null).foreach { definition =>
+    BrokerApi.DEFINITIONS.filter(_.hasDefault).foreach { definition =>
       string should include(definition.key())
-      string should include(definition.defaultValue())
+      string should include(definition.defaultValue().toString)
     }
   }
 

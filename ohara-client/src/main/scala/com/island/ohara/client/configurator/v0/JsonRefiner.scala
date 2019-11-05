@@ -32,8 +32,7 @@ import spray.json.{
   JsObject,
   JsString,
   JsValue,
-  RootJsonFormat,
-  _
+  RootJsonFormat
 }
 
 import scala.collection.JavaConverters._
@@ -75,37 +74,44 @@ trait JsonRefiner[T] {
       if (definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
       definition.valueType() match {
         case Type.BOOLEAN =>
-          if (definition.defaultValue() != null) nullToBoolean(definition.key(), definition.defaultValue().toBoolean)
+          if (definition.hasDefault)
+            nullToBoolean(definition.key(), definition.defaultBoolean)
           requireJsonType[JsBoolean](definition.key())
         case Type.POSITIVE_SHORT =>
-          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          if (definition.hasDefault)
+            nullToShort(definition.key(), definition.defaultShort)
           requireNumberType(key = definition.key(), min = 1, max = Short.MaxValue)
         case Type.SHORT =>
-          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          if (definition.hasDefault)
+            nullToShort(definition.key(), definition.defaultShort)
           requireNumberType(key = definition.key(), min = Short.MinValue, max = Short.MaxValue)
         case Type.POSITIVE_INT =>
-          if (definition.defaultValue() != null) nullToInt(definition.key(), definition.defaultValue().toInt)
+          if (definition.hasDefault) nullToInt(definition.key(), definition.defaultInt)
           requireNumberType(key = definition.key(), min = 1, max = Int.MaxValue)
         case Type.INT =>
-          if (definition.defaultValue() != null) nullToInt(definition.key(), definition.defaultValue().toInt)
+          if (definition.hasDefault) nullToInt(definition.key(), definition.defaultInt)
           requireNumberType(key = definition.key(), min = Int.MinValue, max = Int.MaxValue)
         case Type.POSITIVE_LONG =>
-          if (definition.defaultValue() != null) nullToLong(definition.key(), definition.defaultValue().toLong)
+          if (definition.hasDefault) nullToLong(definition.key(), definition.defaultLong)
           requireNumberType(key = definition.key(), min = 1, max = Long.MaxValue)
         case Type.LONG =>
-          if (definition.defaultValue() != null) nullToLong(definition.key(), definition.defaultValue().toLong)
+          if (definition.hasDefault) nullToLong(definition.key(), definition.defaultLong)
           requireNumberType(key = definition.key(), min = Long.MinValue, max = Long.MaxValue)
         case Type.POSITIVE_DOUBLE =>
-          if (definition.defaultValue() != null) nullToDouble(definition.key(), definition.defaultValue().toDouble)
+          if (definition.hasDefault)
+            nullToDouble(definition.key(), definition.defaultDouble)
           requireNumberType(key = definition.key(), min = 1, max = Double.MaxValue)
         case Type.DOUBLE =>
-          if (definition.defaultValue() != null) nullToDouble(definition.key(), definition.defaultValue().toDouble)
+          if (definition.hasDefault)
+            nullToDouble(definition.key(), definition.defaultDouble)
           requireNumberType(key = definition.key(), min = Double.MinValue, max = Double.MaxValue)
         case Type.ARRAY =>
-          // SettingDef expects that the null to array is converted to empty
-          nullToJsValue(
-            definition.key(),
-            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsArray.empty)
+          // we don't allow to set default value to array type.
+          // see SettingDef
+          if (definition.hasDefault)
+            throw new IllegalArgumentException(
+              "the default value to array type is not allowed. default:" + definition.defaultValue)
+          nullToJsValue(definition.key(), () => JsArray.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
               requireJsonType[JsArray](
@@ -130,25 +136,32 @@ trait JsonRefiner[T] {
             }
           )
         case Type.DURATION =>
-          if (definition.defaultValue() != null) nullToString(definition.key(), definition.defaultValue())
+          if (definition.hasDefault) nullToString(definition.key(), definition.defaultDuration.toString)
           requireType[Duration](definition.key())
         case Type.PORT =>
-          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          if (definition.hasDefault)
+            nullToShort(definition.key(), definition.defaultShort)
           requireConnectionPort(definition.key())
         case Type.BINDING_PORT =>
-          if (definition.defaultValue() != null) nullToShort(definition.key(), definition.defaultValue().toShort)
+          if (definition.hasDefault)
+            nullToShort(definition.key(), definition.defaultShort)
           else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
             nullToJsValue(definition.key(), () => JsNumber(CommonUtils.availablePort()))
           requireConnectionPort(definition.key())
         case Type.OBJECT_KEY =>
-          if (definition.defaultValue() != null)
-            nullToJsValue(definition.key(), () => definition.defaultValue().parseJson)
+          // we don't allow to set default value to array type.
+          // see SettingDef
+          if (definition.hasDefault)
+            throw new IllegalArgumentException(
+              "the default value to array type is not allowed. default:" + definition.defaultValue())
           requireType[ObjectKey](definition.key())
         case Type.OBJECT_KEYS =>
-          // SettingDef expects that the null to object keys is converted to empty
-          nullToJsValue(
-            definition.key(),
-            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsArray.empty)
+          // we don't allow to set default value to array type.
+          // see SettingDef
+          if (definition.hasDefault)
+            throw new IllegalArgumentException(
+              "the default value to array type is not allowed. default:" + definition.defaultValue())
+          nullToJsValue(definition.key(), () => JsArray.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
               requireType[Seq[ObjectKey]](
@@ -160,10 +173,12 @@ trait JsonRefiner[T] {
               requireType[Seq[ObjectKey]](definition.key())
           }
         case Type.TAGS =>
-          // SettingDef expects that the null to tags is converted to empty
-          nullToJsValue(
-            definition.key(),
-            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsObject.empty)
+          // we don't allow to set default value to array type.
+          // see SettingDef
+          if (definition.hasDefault)
+            throw new IllegalArgumentException(
+              "the default value to array type is not allowed. default:" + definition.defaultValue())
+          nullToJsValue(definition.key(), () => JsObject.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
               requireJsonType[JsObject](
@@ -175,10 +190,12 @@ trait JsonRefiner[T] {
               requireJsonType[JsObject](definition.key())
           }
         case Type.TABLE =>
-          // SettingDef expects that the null to table is converted to empty
-          nullToJsValue(
-            definition.key(),
-            () => if (definition.defaultValue() != null) definition.defaultValue().parseJson else JsArray.empty)
+          // we don't allow to set default value to array type.
+          // see SettingDef
+          if (definition.hasDefault)
+            throw new IllegalArgumentException(
+              "the default value to array type is not allowed. default:" + definition.defaultValue())
+          nullToJsValue(definition.key(), () => JsArray.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
               requireType[PropGroup](
@@ -191,12 +208,12 @@ trait JsonRefiner[T] {
               requireType[PropGroup](definition.key())
           }
         case Type.STRING =>
-          if (definition.defaultValue() != null) nullToString(definition.key(), definition.defaultValue())
+          if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
           else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
             nullToJsValue(definition.key(), () => JsString(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH / 2)))
           requireJsonType[JsString](definition.key())
         case _ @(Type.CLASS | Type.PASSWORD | Type.JDBC_TABLE) =>
-          if (definition.defaultValue() != null) nullToString(definition.key(), definition.defaultValue())
+          if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
           requireJsonType[JsString](definition.key())
       }
     }

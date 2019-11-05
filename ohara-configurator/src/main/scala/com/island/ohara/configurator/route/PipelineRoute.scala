@@ -50,9 +50,9 @@ private[configurator] object PipelineRoute {
             group = data.group,
             name = data.name,
             kind = connectorDefinition.settingDefinitions
-              .filter(_.defaultValue() != null)
+              .filter(_.hasDefault)
               .find(_.key() == ConnectorDefUtils.KIND_KEY)
-              .map(_.defaultValue())
+              .map(_.defaultString)
               .getOrElse("connector"),
             className = Some(data.className),
             state = None,

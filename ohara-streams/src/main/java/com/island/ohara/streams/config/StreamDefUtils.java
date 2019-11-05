@@ -22,6 +22,7 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.util.VersionUtils;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -146,7 +147,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Node name list")
           .documentation("The used node name list of this streamApp")
-          .blacklist(Arrays.asList("stop", "start", "pause", "resume"))
+          .blacklist(new HashSet<>(Arrays.asList("stop", "start", "pause", "resume")))
           .build();
 
   public static final SettingDef VERSION_DEFINITION =

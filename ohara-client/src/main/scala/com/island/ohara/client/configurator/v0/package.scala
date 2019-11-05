@@ -416,7 +416,7 @@ package object v0 {
   private[v0] def nodeDefinition: SettingDef.Builder => SettingDef =
     _.key(NODE_NAMES_KEY)
       .documentation("the nodes hosting this cluster")
-      .blacklist(Seq(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
+      .blacklist(Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
       .build()
 
   private[v0] def tagDefinition: SettingDef.Builder => SettingDef =

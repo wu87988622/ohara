@@ -55,7 +55,7 @@ public class TestConnectorDefUtils extends OharaTest {
     Assert.assertEquals(
         settingDef.orderInGroup(), ConnectorDefUtils.toConfigKey(settingDef).orderInGroup);
     Assert.assertEquals(
-        settingDef.defaultValue(), ConnectorDefUtils.toConfigKey(settingDef).defaultValue);
+        settingDef.defaultString(), ConnectorDefUtils.toConfigKey(settingDef).defaultValue);
     Assert.assertEquals(
         settingDef.documentation(), ConnectorDefUtils.toConfigKey(settingDef).documentation);
   }
@@ -123,7 +123,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(d -> d.key().equals(ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()))
             .findAny()
             .get()
-            .defaultValue());
+            .defaultString());
   }
 
   @Test
@@ -134,7 +134,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(d -> d.key().equals(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()))
             .findAny()
             .get()
-            .defaultValue());
+            .defaultString());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -311,7 +311,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .get();
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL_WITH_RANDOM_DEFAULT);
     Assert.assertFalse(setting.internal());
-    Assert.assertNull(setting.defaultValue());
+    Assert.assertFalse(setting.hasDefault());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(ConnectorDefUtils.CORE_GROUP, setting.group());
@@ -326,7 +326,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .get();
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.REQUIRED);
     Assert.assertTrue(setting.internal());
-    Assert.assertNull(setting.defaultValue());
+    Assert.assertFalse(setting.hasDefault());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
     Assert.assertEquals(SettingDef.Type.OBJECT_KEY, setting.valueType());
     Assert.assertTrue(setting.tableKeys().isEmpty());
@@ -342,7 +342,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .get();
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL);
     Assert.assertFalse(setting.internal());
-    Assert.assertNull(setting.defaultValue());
+    Assert.assertFalse(setting.hasDefault());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(ConnectorDefUtils.CORE_GROUP, setting.group());
@@ -357,7 +357,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .get();
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL);
     Assert.assertFalse(setting.internal());
-    Assert.assertNull(setting.defaultValue());
+    Assert.assertFalse(setting.hasDefault());
     Assert.assertEquals(SettingDef.Reference.TOPIC, setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(ConnectorDefUtils.CORE_GROUP, setting.group());

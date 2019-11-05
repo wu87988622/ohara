@@ -436,9 +436,9 @@ class TestZookeeperApi extends OharaTest with Matchers {
 
     val string = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
 
-    ZookeeperApi.DEFINITIONS.filter(_.defaultValue() != null).foreach { definition =>
+    ZookeeperApi.DEFINITIONS.filter(_.hasDefault).foreach { definition =>
       string should include(definition.key())
-      string should include(definition.defaultValue())
+      string should include(definition.defaultValue().toString)
     }
   }
 

@@ -38,7 +38,7 @@ class TestConnectors extends OharaTest {
         settingDefs.foreach { settingDef =>
           val key = settingDef.key()
           if (key == "version" || key == "revision" || key == "author")
-            if (settingDef.defaultValue() == "unknown")
+            if (settingDef.defaultString() == "unknown")
               throw new AssertionError(s"The $connName $key cannot be unknown.")
         }
       }

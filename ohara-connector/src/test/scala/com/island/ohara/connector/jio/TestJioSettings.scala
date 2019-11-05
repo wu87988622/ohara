@@ -27,33 +27,31 @@ class TestJioSettings extends OharaTest with Matchers {
   @Test
   def testBufferSetting(): Unit = {
     DATA_BUFFER_SIZE_DEFINITION.key() shouldBe DATA_BUFFER_SIZE_KEY
-    DATA_BUFFER_SIZE_DEFINITION.defaultValue() shouldBe DATA_BUFFER_SIZE_DEFAULT.toString
+    DATA_BUFFER_SIZE_DEFINITION.defaultInt shouldBe DATA_BUFFER_SIZE_DEFAULT
   }
 
   @Test
   def testCloseTimeoutSetting(): Unit = {
     CLOSE_TIMEOUT_DEFINITION.key() shouldBe CLOSE_TIMEOUT_KEY
-    CLOSE_TIMEOUT_DEFINITION
-      .defaultValue() shouldBe java.time.Duration.ofMillis(CLOSE_TIMEOUT_DEFAULT.toMillis).toString
+    CLOSE_TIMEOUT_DEFINITION.defaultDuration() shouldBe java.time.Duration.ofMillis(CLOSE_TIMEOUT_DEFAULT.toMillis)
   }
 
   @Test
   def testBindingTimeoutSetting(): Unit = {
     BINDING_TIMEOUT_DEFINITION.key() shouldBe BINDING_TIMEOUT_KEY
-    BINDING_TIMEOUT_DEFINITION
-      .defaultValue() shouldBe java.time.Duration.ofMillis(BINDING_TIMEOUT_DEFAULT.toMillis).toString
+    BINDING_TIMEOUT_DEFINITION.defaultDuration() shouldBe java.time.Duration.ofMillis(BINDING_TIMEOUT_DEFAULT.toMillis)
   }
 
   @Test
   def testBindingPortSetting(): Unit = {
     BINDING_PORT_DEFINITION.key() shouldBe BINDING_PORT_KEY
-    BINDING_PORT_DEFINITION.defaultValue() shouldBe null
+    BINDING_PORT_DEFINITION.hasDefault shouldBe false
   }
 
   @Test
   def testBindingPathSetting(): Unit = {
     BINDING_PATH_DEFINITION.key() shouldBe BINDING_PATH_KEY
-    BINDING_PATH_DEFINITION.defaultValue() shouldBe BINDING_PATH_DEFAULT
+    BINDING_PATH_DEFINITION.defaultString() shouldBe BINDING_PATH_DEFAULT
   }
 
   @Test

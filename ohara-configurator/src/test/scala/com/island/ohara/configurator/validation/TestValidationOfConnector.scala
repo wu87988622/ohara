@@ -137,7 +137,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .filter(_.definition().key() == ConnectorDefUtils.TAGS_DEFINITION.key())
       .head
       .definition()
-      .defaultValue() shouldBe null
+      .hasDefault shouldBe false
 
     response.errorCount() shouldBe 0
 

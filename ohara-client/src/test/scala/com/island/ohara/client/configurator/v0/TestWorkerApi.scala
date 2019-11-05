@@ -818,12 +818,12 @@ class TestWorkerApi extends OharaTest with Matchers {
     val string = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
 
     WorkerApi.DEFINITIONS
-      .filter(_.defaultValue() != null)
+      .filter(_.hasDefault)
       // the immutable setting is not in custom field
       .filter(_.editable())
       .foreach { definition =>
         string should include(definition.key())
-        string should include(definition.defaultValue())
+        string should include(definition.defaultValue().toString)
       }
   }
 

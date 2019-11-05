@@ -28,7 +28,7 @@ class TestConsoleSink extends OharaTest with Matchers {
 
     val freqDef = sink.definitions().asScala.find(_.key() == CONSOLE_FREQUENCE).get
     freqDef.documentation() shouldBe CONSOLE_FREQUENCE_DOC
-    freqDef.defaultValue() shouldBe CONSOLE_FREQUENCE_DEFAULT.toString
+    freqDef.defaultDuration() shouldBe java.time.Duration.ofMillis(CONSOLE_FREQUENCE_DEFAULT.toMillis)
   }
 
   @Test
@@ -37,6 +37,6 @@ class TestConsoleSink extends OharaTest with Matchers {
 
     val dividerDef = sink.definitions().asScala.find(_.key() == CONSOLE_ROW_DIVIDER).get
     dividerDef.documentation() shouldBe CONSOLE_ROW_DIVIDER_DOC
-    dividerDef.defaultValue() shouldBe CONSOLE_ROW_DIVIDER_DEFAULT
+    dividerDef.defaultString() shouldBe CONSOLE_ROW_DIVIDER_DEFAULT
   }
 }

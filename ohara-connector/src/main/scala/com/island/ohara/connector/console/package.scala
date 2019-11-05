@@ -36,7 +36,7 @@ package object console {
     .displayName("the frequence of printing data")
     .key(CONSOLE_FREQUENCE)
     .documentation(CONSOLE_FREQUENCE_DOC)
-    .optional(CONSOLE_FREQUENCE_DEFAULT.toString)
+    .optional(java.time.Duration.ofMillis(CONSOLE_FREQUENCE_DEFAULT.toMillis))
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 

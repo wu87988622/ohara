@@ -144,21 +144,30 @@ class TestInspectRoute extends OharaTest with Matchers {
   def testZookeeperInfo(): Unit = {
     val info = result(inspectApi.zookeeperInfo())
     info.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
-    info.settingDefinitions shouldBe ZookeeperApi.DEFINITIONS
+    info.settingDefinitions.size shouldBe ZookeeperApi.DEFINITIONS.size
+    info.settingDefinitions.foreach { definition =>
+      definition shouldBe ZookeeperApi.DEFINITIONS.find(_.key() == definition.key()).get
+    }
   }
 
   @Test
   def testBrokerInfo(): Unit = {
     val info = result(inspectApi.brokerInfo())
     info.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
-    info.settingDefinitions shouldBe BrokerApi.DEFINITIONS
+    info.settingDefinitions.size shouldBe BrokerApi.DEFINITIONS.size
+    info.settingDefinitions.foreach { definition =>
+      definition shouldBe BrokerApi.DEFINITIONS.find(_.key() == definition.key()).get
+    }
   }
 
   @Test
   def testWorkerInfo(): Unit = {
     val info = result(inspectApi.workerInfo())
     info.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
-    info.settingDefinitions shouldBe WorkerApi.DEFINITIONS
+    info.settingDefinitions.size shouldBe WorkerApi.DEFINITIONS.size
+    info.settingDefinitions.foreach { definition =>
+      definition shouldBe WorkerApi.DEFINITIONS.find(_.key() == definition.key()).get
+    }
   }
 
   @Test
