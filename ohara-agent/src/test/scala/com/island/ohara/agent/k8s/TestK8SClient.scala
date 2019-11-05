@@ -35,6 +35,7 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 class TestK8SClient extends OharaTest with Matchers {
+  private[this] val namespace: String = K8SClient.NAMESPACE_DEFAULT_VALUE
 
   @Test
   def testCreatorEnumator(): Unit = {
@@ -330,7 +331,7 @@ class TestK8SClient extends OharaTest with Matchers {
        """.stripMargin
 
     toServer {
-      path("namespaces" / "default" / "configmaps" / configName) {
+      path("namespaces" / namespace / "configmaps" / configName) {
         delete {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response)))
         }
@@ -345,8 +346,8 @@ class TestK8SClient extends OharaTest with Matchers {
                        |  "apiVersion": "v1",
                        |  "metadata": {
                        |    "name": "${configName}",
-                       |    "namespace": "default",
-                       |    "selfLink": "/api/v1/namespaces/default/configmaps/configmap2",
+                       |    "namespace": "$namespace",
+                       |    "selfLink": "/api/v1/namespaces/$namespace/configmaps/configmap2",
                        |    "uid": "8ee6258d-efb9-11e9-8f70-8ae0e3c47d1e",
                        |    "resourceVersion": "5134262",
                        |    "creationTimestamp": "2019-10-16T02:06:25Z"
@@ -359,7 +360,7 @@ class TestK8SClient extends OharaTest with Matchers {
        """.stripMargin
 
     toServer {
-      path("namespaces" / "default" / "configmaps") {
+      path("namespaces" / namespace / "configmaps") {
         post {
           entity(as[ConfigMap]) { requestConfigMap =>
             {
@@ -393,7 +394,7 @@ class TestK8SClient extends OharaTest with Matchers {
                       |}
        """.stripMargin
     toServer {
-      path("namespaces" / "default" / "configmaps" / configMapName) {
+      path("namespaces" / namespace / "configmaps" / configMapName) {
         get {
           complete(
             HttpResponse(status = StatusCodes.BadRequest,
@@ -410,13 +411,13 @@ class TestK8SClient extends OharaTest with Matchers {
                       |  "apiVersion": "v1",
                       |  "metadata": {
                       |    "name": "${configMapName}",
-                      |    "namespace": "default",
-                      |    "selfLink": "/api/v1/namespaces/default/configmaps/myconfigyaml",
+                      |    "namespace": "$namespace",
+                      |    "selfLink": "/api/v1/namespaces/$namespace/configmaps/myconfigyaml",
                       |    "uid": "21afbca4-ef22-11e9-8f70-8ae0e3c47d1e",
                       |    "resourceVersion": "5035864",
                       |    "creationTimestamp": "2019-10-15T08:02:28Z",
                       |    "annotations": {
-                      |      "kubectl.kubernetes.io/last-applied-configuration": {\"apiVersion\":\"v1\",\"data\":{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"},\"kind\":\"ConfigMap\",\"metadata\":{\"annotations\":{},\"name\":\"myconfigyaml\",\"namespace\":\"default\"}}
+                      |      "kubectl.kubernetes.io/last-applied-configuration": {\"apiVersion\":\"v1\",\"data\":{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"},\"kind\":\"ConfigMap\",\"metadata\":{\"annotations\":{},\"name\":\"myconfigyaml\",\"namespace\":\"$namespace\"}}
                       |    }
                       |  },
                       |  "data": {
@@ -433,7 +434,7 @@ class TestK8SClient extends OharaTest with Matchers {
     configMap.metadata.name shouldBe configMapName
 
     toServer {
-      path("namespaces" / "default" / "configmaps" / configMapName) {
+      path("namespaces" / namespace / "configmaps" / configMapName) {
         get {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, response)))
         }
@@ -511,7 +512,7 @@ class TestK8SClient extends OharaTest with Matchers {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, nodesResponse)))
         }
       } ~
-        path("namespaces" / "default" / "pods") {
+        path("namespaces" / namespace / "pods") {
           post {
             entity(as[Pod]) { createPod =>
               createPod.spec.get.containers.head.imagePullPolicy shouldBe Some(expectImagePullPolicy)
@@ -525,7 +526,7 @@ class TestK8SClient extends OharaTest with Matchers {
   private[this] def log(podName: String): SimpleServer = {
     val logMessage = "start pods ......."
     toServer {
-      path("namespaces" / "default" / "pods" / podName / "log") {
+      path("namespaces" / namespace / "pods" / podName / "log") {
         get {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, logMessage)))
         }
@@ -589,7 +590,7 @@ class TestK8SClient extends OharaTest with Matchers {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, nodesResponse)))
         }
       } ~
-        path("namespaces" / "default" / "pods") {
+        path("namespaces" / namespace / "pods") {
           post {
             entity(as[Pod]) { _ =>
               complete(
@@ -644,7 +645,7 @@ class TestK8SClient extends OharaTest with Matchers {
 
     // test communication
     toServer {
-      path("namespaces" / "default" / "pods") {
+      path("namespaces" / namespace / "pods") {
         get {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, podsInfo)))
         }
