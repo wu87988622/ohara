@@ -590,6 +590,14 @@ class TestWorkerRoute extends OharaTest with Matchers {
     }.getMessage should include(connector.key.toString)
   }
 
+  @Test
+  def testInvalidNodeName(): Unit =
+    Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).foreach { nodeName =>
+      intercept[DeserializationException] {
+        result(workerApi.request.nodeName(nodeName).brokerClusterKey(brokerClusterKey).create())
+      }.getMessage should include(nodeName)
+    }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

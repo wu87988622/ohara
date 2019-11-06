@@ -565,6 +565,16 @@ class TestBrokerRoute extends OharaTest with Matchers {
     result(brokerApi.start(broker.key))
   }
 
+  @Test
+  def testInvalidNodeName(): Unit =
+    Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).foreach { nodeName =>
+      val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      result(zookeeperApi.start(zookeeper.key))
+      intercept[DeserializationException] {
+        result(brokerApi.request.nodeName(nodeName).zookeeperClusterKey(zookeeper.key).create())
+      }.getMessage should include(nodeName)
+    }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

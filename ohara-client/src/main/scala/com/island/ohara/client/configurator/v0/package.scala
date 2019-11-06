@@ -243,19 +243,6 @@ package object v0 {
       .definitions(definitions)
       // for each field, we should reject any empty string
       .rejectEmptyString()
-      //-------------------------------------- "nodeNames" rules ---------------------------------//
-      // nodeNames is the only required field in creating cluster, add the requirement for it
-      .requireKey(NODE_NAMES_KEY)
-      .arrayRestriction(NODE_NAMES_KEY)
-      // we use the same sub-path for "node" and "actions" urls:
-      // xxx/cluster/{name}/{node}
-      // xxx/cluster/{name}/[start|stop]
-      // the "actions" keywords must be avoided in nodeNames parameter
-      .rejectKeyword(START_COMMAND)
-      .rejectKeyword(STOP_COMMAND)
-      // the node names can't be empty
-      .rejectEmpty()
-      .toRefiner
       .refine
 
   /**

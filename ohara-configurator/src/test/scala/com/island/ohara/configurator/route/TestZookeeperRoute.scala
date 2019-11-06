@@ -442,6 +442,14 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     result(zookeeperApi.delete(zookeeper.key))
   }
 
+  @Test
+  def testInvalidNodeName(): Unit =
+    Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).foreach { nodeName =>
+      intercept[DeserializationException] {
+        result(zookeeperApi.request.nodeName(nodeName).create())
+      }.getMessage should include(nodeName)
+    }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

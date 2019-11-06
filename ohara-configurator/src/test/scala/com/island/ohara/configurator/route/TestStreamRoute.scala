@@ -774,6 +774,15 @@ class TestStreamRoute extends OharaTest with Matchers {
       .nodeNames(nodeNames)
       .create()).fromTopicKeys shouldBe Set.empty
 
+  @Test
+  def testInvalidNodeName(): Unit =
+    Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).foreach { nodeName =>
+      intercept[DeserializationException] {
+        result(
+          streamApi.request.nodeName(nodeName).jarKey(fileInfo.key).brokerClusterKey(brokerClusterInfo.key).create())
+      }.getMessage should include(nodeName)
+    }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
