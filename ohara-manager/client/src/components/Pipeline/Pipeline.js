@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory, useParams } from 'react-router-dom';
 
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
 import Toolbar from './Toolbar';
-import Toolbox from './Toolbox';
+import Toolbox from './Toolbox/Toolbox';
 import Graph from './Graph';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { usePipeline } from 'context/PipelineContext';
@@ -40,6 +40,24 @@ const Pipeline = () => {
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
   const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorksapceDialogOpen } = useNewWorkspace();
+  const [isToolboxOpen, setIsToolboxOpen] = useState(true);
+
+  const initialState = {
+    topic: false,
+    source: false,
+    sink: false,
+    streamApp: false,
+  };
+  const [toolboxExpanded, setToolboxExpanded] = useState(initialState);
+
+  const handleToolboxClick = panel => {
+    setToolboxExpanded(prevState => {
+      return {
+        ...prevState,
+        [panel]: !prevState[panel],
+      };
+    });
+  };
 
   useEffect(() => {
     fetchPipelines(workspaceName);
@@ -98,10 +116,22 @@ const Pipeline = () => {
         <>
           {currentPipeline && (
             <>
-              <Toolbar />
+              <Toolbar
+                isToolboxOpen={isToolboxOpen}
+                handleToolboxOpen={() => setIsToolboxOpen(true)}
+                handleToolboxClick={handleToolboxClick}
+              />
               <GraphWrapper>
                 <Graph />
-                <Toolbox />
+                <Toolbox
+                  isOpen={isToolboxOpen}
+                  expanded={toolboxExpanded}
+                  handleClick={handleToolboxClick}
+                  handleClose={() => {
+                    setIsToolboxOpen(false);
+                    setToolboxExpanded(initialState);
+                  }}
+                />
               </GraphWrapper>
             </>
           )}

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import Draggable from 'react-draggable'; // The default
+import React from 'react';
+import PropTypes from 'prop-types';
+import Draggable from 'react-draggable';
 import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import IconButton from '@material-ui/core/IconButton';
@@ -26,89 +26,32 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import AddIcon from '@material-ui/icons/Add';
+import CloseIcon from '@material-ui/icons/Close';
 
-const StyledToolbox = styled.div`
-  position: absolute;
-  top: ${props => props.theme.spacing(1)}px;
-  left: ${props => props.theme.spacing(1)}px;
-  width: 272px;
-  background-color: ${props => props.theme.palette.common.white};
-  box-shadow: ${props => props.theme.shadows[24]};
+import { StyledToolbox } from './Styles';
 
-  .title {
-    padding: ${props => props.theme.spacing(1)}px
-      ${props => props.theme.spacing(2)}px;
-    background-color: #f5f6fa;
-
-    &.box-title {
-      cursor: move;
-    }
-  }
-
-  .add-button {
-    display: flex;
-    align-items: center;
-    button {
-      margin-right: ${props => props.theme.spacing(1)}px;
-    }
-  }
-
-  .detail {
-    padding: ${props => props.theme.spacing(1)}px
-      ${props => props.theme.spacing(2)}px;
-  }
-
-  .panel-title {
-    background-color: #f5f6fa;
-  }
-
-  .MuiExpansionPanel-root {
-    box-shadow: none;
-  }
-
-  .MuiExpansionPanelSummary-root.Mui-expanded {
-    min-height: 48px;
-  }
-  .MuiExpansionPanelSummary-content.Mui-expanded,
-  .MuiExpansionPanel-root.Mui-expanded {
-    margin: 0;
-  }
-
-  .MuiExpansionPanel-root:before {
-    opacity: 1;
-  }
-
-  .MuiExpansionPanel-root.Mui-expanded:before {
-    opacity: 1;
-  }
-`;
-
-const Toolbox = () => {
-  const [expanded, setExpanded] = useState('topic-panel');
-
-  const handleChange = panel => (event, newExpanded) => {
-    setExpanded(newExpanded ? panel : false);
-  };
+const Toolbox = props => {
+  const { isOpen, expanded, handleClose, handleClick } = props;
 
   return (
     <Draggable bounds="parent">
-      <StyledToolbox>
+      <StyledToolbox className={`${isOpen ? 'is-open' : ''}`}>
         <div className="title box-title">
           <Typography variant="subtitle1">Toolbox</Typography>
+          <IconButton onClick={handleClose}>
+            <CloseIcon />
+          </IconButton>
         </div>
         <IconButton>
           <SearchIcon />
         </IconButton>
         <InputBase placeholder="Search topic & connector..." />
 
-        <ExpansionPanel
-          square
-          expanded={expanded === 'topic-panel'}
-          onChange={handleChange('topic-panel')}
-        >
+        <ExpansionPanel square expanded={expanded.topic}>
           <ExpansionPanelSummary
             className="panel-title"
             expandIcon={<ExpandMoreIcon />}
+            onClick={() => handleClick('topic')}
           >
             <Typography variant="subtitle1">Topic</Typography>
           </ExpansionPanelSummary>
@@ -121,14 +64,11 @@ const Toolbox = () => {
             </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>
-        <ExpansionPanel
-          square
-          expanded={expanded === 'source-panel'}
-          onChange={handleChange('source-panel')}
-        >
+        <ExpansionPanel square expanded={expanded.source}>
           <ExpansionPanelSummary
             className="panel-title"
             expandIcon={<ExpandMoreIcon />}
+            onClick={() => handleClick('source')}
           >
             <Typography variant="subtitle1">Source</Typography>
           </ExpansionPanelSummary>
@@ -141,34 +81,11 @@ const Toolbox = () => {
             </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>
-        <ExpansionPanel
-          square
-          expanded={expanded === 'sink-panel'}
-          onChange={handleChange('sink-panel')}
-        >
+        <ExpansionPanel square expanded={expanded.streamApp}>
           <ExpansionPanelSummary
             className="panel-title"
             expandIcon={<ExpandMoreIcon />}
-          >
-            <Typography variant="subtitle1">Sink</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails className="detail">
-            <div className="add-button">
-              <IconButton>
-                <AddIcon />
-              </IconButton>
-              <Typography variant="subtitle2">Add sink connectors</Typography>
-            </div>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-        <ExpansionPanel
-          square
-          expanded={expanded === 'streamapp-panel'}
-          onChange={handleChange('streamapp-panel')}
-        >
-          <ExpansionPanelSummary
-            className="panel-title"
-            expandIcon={<ExpandMoreIcon />}
+            onClick={() => handleClick('streamApp')}
           >
             <Typography variant="subtitle1">StreamApp</Typography>
           </ExpansionPanelSummary>
@@ -181,9 +98,38 @@ const Toolbox = () => {
             </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>
+        <ExpansionPanel square expanded={expanded.sink}>
+          <ExpansionPanelSummary
+            className="panel-title"
+            expandIcon={<ExpandMoreIcon />}
+            onClick={() => handleClick('sink')}
+          >
+            <Typography variant="subtitle1">Sink</Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className="detail">
+            <div className="add-button">
+              <IconButton>
+                <AddIcon />
+              </IconButton>
+              <Typography variant="subtitle2">Add sink connectors</Typography>
+            </div>
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
       </StyledToolbox>
     </Draggable>
   );
+};
+
+Toolbox.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  handleClick: PropTypes.func.isRequired,
+  expanded: PropTypes.shape({
+    topic: PropTypes.bool.isRequired,
+    source: PropTypes.bool.isRequired,
+    sink: PropTypes.bool.isRequired,
+    streamApp: PropTypes.bool.isRequired,
+  }).isRequired,
 };
 
 export default Toolbox;

@@ -15,7 +15,8 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+import PropTypes from 'prop-types';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import IconButton from '@material-ui/core/IconButton';
 import DnsIcon from '@material-ui/icons/Dns';
@@ -24,44 +25,60 @@ import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import Typography from '@material-ui/core/Typography';
 
-const StyledToolbar = styled.div`
-  height: 72px;
-  padding: 0 ${props => props.theme.spacing(3)}px;
-  background-color: #f5f6fa;
-  border-bottom: 1px solid ${props => props.theme.palette.grey[300]};
-  display: flex;
-  align-items: center;
-
-  .toolbox-toggle {
+const StyledToolbar = styled.div(
+  ({ theme }) => css`
+    height: 72px;
+    padding: 0 ${theme.spacing(3)}px;
+    background-color: #f5f6fa;
+    border-bottom: 1px solid ${theme.palette.grey[100]};
     display: flex;
-    flex-direction: column;
     align-items: center;
-  }
-`;
 
-const Toolbar = () => {
+    .toolbox-toggle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  `,
+);
+
+const Toolbar = props => {
+  const { handleToolboxOpen, handleToolboxClick, isToolboxOpen } = props;
+
+  const handleClick = panel => {
+    // If the Toolbox is not "open", we should open it before opening
+    // the expension panel
+    if (!isToolboxOpen) handleToolboxOpen();
+    handleToolboxClick(panel);
+  };
+
   return (
     <StyledToolbar>
       <div className="toolbox-toggle">
         <ButtonGroup variant="contained" color="default" size="small">
-          <IconButton>
+          <IconButton onClick={() => handleClick('topic')}>
             <FlightTakeoffIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => handleClick('source')}>
             <DnsIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => handleClick('streamApp')}>
             <WavesIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => handleClick('sink')}>
             <FlightLandIcon />
           </IconButton>
         </ButtonGroup>
-
         <Typography variant="body2">Insert</Typography>
       </div>
     </StyledToolbar>
   );
+};
+
+Toolbar.propTypes = {
+  handleToolboxOpen: PropTypes.func.isRequired,
+  handleToolboxClick: PropTypes.func.isRequired,
+  isToolboxOpen: PropTypes.bool.isRequired,
 };
 
 export default Toolbar;

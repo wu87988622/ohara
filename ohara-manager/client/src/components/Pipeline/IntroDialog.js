@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 import Typography from '@material-ui/core/Typography';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -37,41 +37,45 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const StyledDialogTitle = styled(DialogTitle)`
-  cursor: move;
-  color: ${props => props.theme.palette.primary[500]};
+const StyledDialogTitle = styled(DialogTitle)(
+  ({ theme }) => css`
+    cursor: move;
+    color: ${theme.palette.primary[500]};
 
-  .brand {
-    font-weight: 400;
-    display: flex;
-    align-items: center;
-
-    svg {
-      margin-right: ${props => props.theme.spacing(2)}px;
+    .brand {
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      svg {
+        margin-right: ${theme.spacing(2)}px;
+      }
     }
-  }
 
-  .close-button {
-    position: absolute;
-    right: ${props => props.theme.spacing(1)}px;
-    top: ${props => props.theme.spacing(1)}px;
-    color: ${props => props.theme.palette.grey[500]};
-  }
-`;
+    .close-button {
+      position: absolute;
+      right: ${theme.spacing(1)}px;
+      top: ${theme.spacing(1)}px;
+      color: ${theme.palette.grey[500]};
+    }
+  `,
+);
 
-const StyledDialogContent = styled(DialogContent)`
-  margin-bottom: ${props => props.theme.spacing(4)}px;
-`;
+const StyledDialogContent = styled(DialogContent)(
+  ({ theme }) => css`
+    margin-bottom: ${theme.spacing(4)}px;
+  `,
+);
 
-const StyledDialogActions = styled(DialogActions)`
-  justify-content: flex-start;
-  padding: ${props => props.theme.spacing(1)}px
-    ${props => props.theme.spacing(3)}px ${props => props.theme.spacing(3)}px;
+const StyledDialogActions = styled(DialogActions)(
+  ({ theme }) => css`
+    justify-content: flex-start;
+    padding: ${theme.spacing(1)}px ${theme.spacing(3)}px ${theme.spacing(3)}px;
 
-  .quick-start-button {
-    margin-right: ${props => props.theme.spacing(2)}px;
-  }
-`;
+    .quick-start-button {
+      margin-right: ${theme.spacing(2)}px;
+    }
+  `,
+);
 
 const MuiDialog = () => {
   const { isOpen, setIsOpen } = useNewWorkspace();
