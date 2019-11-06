@@ -17,8 +17,18 @@
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+import * as generate from '../../src/utils/generate';
 import * as logApi from '../../src/api/logApi';
+import * as topicApi from '../../src/api/topicApi';
+import * as streamApi from '../../src/api/streamApi';
 import { createServices, deleteAllServices } from '../utils';
+
+const file = {
+  fixturePath: 'streamApp',
+  // we use an existing file to simulate upload jar
+  name: 'ohara-streamapp.jar',
+  group: generate.serviceName({ prefix: 'group' }),
+};
 
 const generateCluster = async () => {
   const result = await createServices({
@@ -31,7 +41,10 @@ const generateCluster = async () => {
 };
 
 describe('Log API', () => {
-  beforeEach(() => deleteAllServices());
+  beforeEach(async () => {
+    await deleteAllServices();
+    cy.createJar(file.fixturePath, file.name, file.group);
+  });
 
   it('fetchConfiguratorLog', async () => {
     const result = await logApi.getConfiguratorLog();
@@ -43,7 +56,7 @@ describe('Log API', () => {
   });
 
   it('fetchServiceLog', async () => {
-    const { zookeeper, broker, worker } = await generateCluster();
+    const { node, zookeeper, broker, worker } = await generateCluster();
 
     const logZookeeper = await logApi.getZookeeperLog(zookeeper);
     expect(logZookeeper.clusterKey.name).to.be.eq(zookeeper.name);
@@ -60,7 +73,39 @@ describe('Log API', () => {
     expect(logWorker.clusterKey.group).to.be.eq(worker.group);
     expect(logWorker.logs).to.be.an('array');
 
-    //TODO : implement stream part in "Add stream API tests"
-    // See https://github.com/oharastream/ohara/issues/3028
+    const topic = {
+      name: generate.serviceName({ prefix: 'topic' }),
+      group: generate.serviceName({ prefix: 'group' }),
+      nodeNames: [node.hostname],
+      brokerClusterKey: {
+        name: broker.name,
+        group: broker.group,
+      },
+    };
+    await topicApi.create(topic);
+    await topicApi.start(topic);
+
+    const stream = {
+      name: generate.serviceName({ prefix: 'stream' }),
+      group: generate.serviceName({ prefix: 'group' }),
+      nodeNames: [node.hostname],
+      brokerClusterKey: {
+        name: broker.name,
+        group: broker.group,
+      },
+      jarKey: {
+        name: file.name,
+        group: file.group,
+      },
+      from: [{ name: topic.name, group: topic.group }],
+      to: [{ name: topic.name, group: topic.group }],
+    };
+    await streamApi.create(stream);
+    await streamApi.start(stream);
+
+    const logStream = await logApi.getStreamLog(stream);
+    expect(logStream.clusterKey.name).to.be.eq(stream.name);
+    expect(logStream.clusterKey.group).to.be.eq(stream.group);
+    expect(logStream.logs).to.be.an('array');
   });
 });
