@@ -48,7 +48,7 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
       .portMappings(
-        containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
       .routes(route)
       .envs(containerInfo.environments)
       .args(arguments)

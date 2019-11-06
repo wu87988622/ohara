@@ -20,7 +20,6 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
-import com.island.ohara.client.configurator.v0.ContainerApi.PortPair
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before, Test}
@@ -156,8 +155,9 @@ class TestDockerClient extends IntegrationTest with Matchers {
     try {
       val container = client.container(name)
       container.portMappings.size shouldBe 1
-      container.portMappings.head.portPairs.size shouldBe 1
-      container.portMappings.head.portPairs.head shouldBe PortPair(availablePort, availablePort)
+      container.portMappings.size shouldBe 1
+      container.portMappings.head.hostPort shouldBe availablePort
+      container.portMappings.head.containerPort shouldBe availablePort
     } finally client.forceRemove(name)
   }
 

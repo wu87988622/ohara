@@ -17,7 +17,7 @@
 package com.island.ohara.agent.fake
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.ContainerApi.{PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.PortMapping
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.{Before, Test}
@@ -58,8 +58,7 @@ class TestFakeDockerClient extends OharaTest with Matchers {
     result(fake.containers(_ == containerName)).head.nodeName shouldBe "fake_node"
     result(fake.containers(_ == containerName)).head.hostname shouldBe "localhost"
     result(fake.containers(_ == containerName)).head.environments shouldBe Map("bar" -> "foo")
-    result(fake.containers(_ == containerName)).head.portMappings.head shouldBe PortMapping("localhost",
-                                                                                            Seq(PortPair(1234, 5678)))
+    result(fake.containers(_ == containerName)).head.portMappings.head shouldBe PortMapping("localhost", 1234, 5678)
 
     fake.stop(containerName)
     result(fake.containers(_ == containerName)).head.state shouldBe ContainerState.EXITED.name

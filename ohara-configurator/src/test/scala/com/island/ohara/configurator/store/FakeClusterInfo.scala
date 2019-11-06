@@ -43,4 +43,6 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
   override def error: Option[String] = None
 
   override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
+
+  override def jmxPort: Int = -1
 }

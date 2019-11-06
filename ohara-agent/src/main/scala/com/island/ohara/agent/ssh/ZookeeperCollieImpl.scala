@@ -41,7 +41,7 @@ private class ZookeeperCollieImpl(val dataCollie: DataCollie,
             .containerCreator()
             .imageName(containerInfo.imageName)
             .portMappings(
-              containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+              containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
             .hostname(containerInfo.hostname)
             .envs(containerInfo.environments)
             .name(containerInfo.name)

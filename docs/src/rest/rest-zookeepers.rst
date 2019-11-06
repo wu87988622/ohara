@@ -35,7 +35,8 @@ The properties which can be set by user are shown below.
 #. name (**string**) — cluster name
 #. group (**string**) — cluster group
 #. imageName (**string**) — docker image
-#. clientPort (**int**) — broker client port.
+#. jmxPort (**int**) — zookeeper jmx port
+#. clientPort (**int**) — zookeeper client port
 #. electionPort (**int**) — used to select the zk node leader
 #. peerPort (**int**) — port used by internal communication
 #. nodeNames (**array(string)**) — the nodes running the zookeeper process
@@ -57,15 +58,6 @@ create a zookeeper properties
 -----------------------------
 
 *POST /v0/zookeepers*
-
-#. name (**string**) — cluster name ; default is random string
-#. group (**string**) — cluster group ; default value is "default"
-#. imageName (**string**) — docker image ; default is oharastream/zookeeper:|version|
-#. clientPort (**int**) — broker client port ; default is random port
-#. electionPort (**int**) — used to select the zk node leader ; default is random port
-#. peerPort (**int**) — port used by internal communication ; default is random port
-#. nodeNames (**array(string)**) — the nodes running the zookeeper process
-#. tags (**object**) — the user defined parameters ; default is empty
 
 Example Request
   .. code-block:: json
@@ -91,6 +83,7 @@ Example Response
          "name": "zk00",
          "group": "abc",
          "imageName": "oharastream/zookeeper:$|version|",
+         "jmxPort": 11111,
          "clientPort": 12345,
          "peerPort": 12346,
          "electionPort": 12347,
@@ -128,6 +121,7 @@ Example Response
          "name": "f6a867ae32",
          "group": "default",
          "imageName": "oharastream/zookeeper:$|version|",
+         "jmxPort": 11111,
          "clientPort": 12345,
          "peerPort": 12346,
          "electionPort": 12347,
@@ -164,6 +158,7 @@ Example Response
            "name": "zk00",
            "group": "default",
            "imageName": "oharastream/zookeeper:$|version|",
+           "jmxPort": 11111,
            "clientPort": 12345,
            "peerPort": 12346,
            "electionPort": 12347,
@@ -188,18 +183,12 @@ update zookeeper cluster properties
 .. note::
    If the required zookeeper (group, name) was not exists, we will try to use this request as POST
 
-#. imageName (**option(string)**) — docker image
-#. clientPort (**option(int)**) — broker client port
-#. electionPort (**option(int)**) — used to select the zk node leader
-#. peerPort (**option(int)**) — port used by internal communication
-#. nodeNames (**option(array(string))**) — the nodes running the zookeeper process
-#. tags (**option(object)**) — the user defined parameters
-
 Example Request
   .. code-block:: json
 
      {
        "imageName": "oharastream/zookeeper:$|version|",
+       "jmxPort": 11111,
        "clientPort": 12345,
        "peerPort": 12346,
        "electionPort": 12347,
@@ -217,6 +206,7 @@ Example Response
          "name": "zk01",
          "group": "default",
          "imageName": "oharastream/zookeeper:$|version|",
+         "jmxPort": 11111,
          "clientPort": 12345,
          "peerPort": 12346,
          "electionPort": 12347,
@@ -266,6 +256,7 @@ Example Response
          "name": "zk00",
          "group": "default",
          "imageName": "oharastream/zookeeper:$|version|",
+         "jmxPort": 11111,
          "clientPort": 12345,
          "peerPort": 12346,
          "electionPort": 12347,

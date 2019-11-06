@@ -175,6 +175,8 @@ class TestServiceCache extends OharaTest with Matchers {
       override def error: Option[String] = None
 
       override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
+
+      override def jmxPort: Int = -1
     }
     val cache = ServiceCache.builder
       .supplier(() => {

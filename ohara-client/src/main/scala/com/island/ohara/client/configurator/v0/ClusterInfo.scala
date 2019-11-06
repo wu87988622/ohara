@@ -50,6 +50,12 @@ trait ClusterInfo extends ClusterStatus with Data {
   def ports: Set[Int]
 
   /**
+    * the port used to expose the jmx service
+    * @return jmx port
+    */
+  def jmxPort: Int
+
+  /**
     * @return nodes running this cluster
     */
   def nodeNames: Set[String]

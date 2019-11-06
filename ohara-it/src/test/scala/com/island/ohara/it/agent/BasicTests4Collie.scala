@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, LogApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ContainerApi, LogApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.exception.{OharaExecutionException, OharaTimeoutException}
@@ -72,12 +72,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def zk_exist(clusterKey: ObjectKey): Future[Boolean] =
     zkApi.list().map(_.exists(_.key == clusterKey))
   private[this] def zk_create(clusterKey: ObjectKey,
+                              jmxPort: Int,
                               clientPort: Int,
                               electionPort: Int,
                               peerPort: Int,
                               nodeNames: Set[String]): Future[ZookeeperClusterInfo] =
     zkApi.request
       .key(clusterKey)
+      .jmxPort(jmxPort)
       .clientPort(clientPort)
       .electionPort(electionPort)
       .peerPort(peerPort)
@@ -205,12 +207,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val nodeName: String = nodes.head.name
     val clusterKey = nameHolder.generateClusterKey()
     result(zk_exist(clusterKey)) shouldBe false
+    val jmxPort = CommonUtils.availablePort()
     val clientPort = CommonUtils.availablePort()
     val electionPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
     def assert(zkCluster: ZookeeperClusterInfo): ZookeeperClusterInfo = {
       zkCluster.key shouldBe clusterKey
       zkCluster.nodeNames.head shouldBe nodeName
+      zkCluster.jmxPort shouldBe jmxPort
       zkCluster.clientPort shouldBe clientPort
       zkCluster.peerPort shouldBe peerPort
       zkCluster.electionPort shouldBe electionPort
@@ -221,6 +225,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       result(
         zk_create(
           clusterKey = clusterKey,
+          jmxPort = jmxPort,
           clientPort = clientPort,
           electionPort = electionPort,
           peerPort = peerPort,
@@ -247,12 +252,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.name.contains(clusterKey.name()) shouldBe true
       container.name should not be container.hostname
       container.name.length should be > container.hostname.length
-      container.portMappings.head.portPairs.size shouldBe 3
-      container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
-      container.portMappings.head.portPairs.exists(_.containerPort == electionPort) shouldBe true
-      container.portMappings.head.portPairs.exists(_.containerPort == peerPort) shouldBe true
+      container.portMappings.size shouldBe 4
+      container.portMappings.exists(_.containerPort == clientPort) shouldBe true
+      container.portMappings.exists(_.containerPort == electionPort) shouldBe true
+      container.portMappings.exists(_.containerPort == peerPort) shouldBe true
     }
     log.info(s"get containers from zk:$clusterKey... done")
+    testJmx(zkCluster)
+    log.info(s"test jmx from zk:$clusterKey... done")
     result(zk_stop(clusterKey))
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
@@ -270,6 +277,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkCluster = result(
       zk_create(
         clusterKey = nameHolder.generateClusterKey(),
+        jmxPort = CommonUtils.availablePort(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
@@ -315,8 +323,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.name.contains(clusterKey.name) shouldBe true
       container.name should not be container.hostname
       container.name.length should be > container.hostname.length
-      container.portMappings.head.portPairs.size shouldBe 2
-      container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
+      container.portMappings.size shouldBe 2
+      container.portMappings.exists(_.containerPort == clientPort) shouldBe true
     }
     result(bk_logs(clusterKey)).size shouldBe 1
     result(bk_logs(clusterKey)).foreach(log =>
@@ -474,6 +482,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkCluster = result(
       zk_create(
         clusterKey = nameHolder.generateClusterKey(),
+        jmxPort = CommonUtils.availablePort(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
@@ -542,8 +551,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       // [BEFORE] ServiceCollieImpl applies --network=host to all worker containers so there is no port mapping.
       // The following checks are disabled rather than deleted since it seems like a bug if we don't check the port mapping.
       // [AFTER] ServiceCollieImpl use bridge network now
-      container.portMappings.head.portPairs.size shouldBe 2
-      container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
+      container.portMappings.size shouldBe 2
+      container.portMappings.exists(_.containerPort == clientPort) shouldBe true
     }
     val logs = result(wk_logs(clusterKey))
     logs.size shouldBe 1
@@ -591,7 +600,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
     )
 
-  private[this] def testJmx(cluster: BrokerClusterInfo): Unit = cluster.nodeNames.foreach(
+  private[this] def testJmx(cluster: ClusterInfo): Unit = cluster.nodeNames.foreach(
     node =>
       await(
         () =>
@@ -601,17 +610,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             case _: Throwable =>
               false
 
-        }))
-
-  private[this] def testJmx(cluster: WorkerClusterInfo): Unit = cluster.nodeNames.foreach(
-    node =>
-      await(
-        () =>
-          try BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().nonEmpty()
-          catch {
-            // the jmx service may be not ready.
-            case _: Throwable =>
-              false
         }))
 
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
@@ -676,6 +674,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       result(
         zk_create(
           clusterKey = key,
+          jmxPort = CommonUtils.availablePort(),
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
@@ -716,6 +715,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       result(
         zk_create(
           clusterKey = key,
+          jmxPort = CommonUtils.availablePort(),
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
@@ -753,6 +753,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkCluster = result(
       zk_create(
         clusterKey = zkKey,
+        jmxPort = CommonUtils.availablePort(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),

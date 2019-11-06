@@ -18,7 +18,7 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{
@@ -112,7 +112,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                   .toSet
 
                 val containerInfo = ContainerInfo(
-                  nodeName = node.name,
+                  nodeName = node.hostname,
                   id = Collie.UNKNOWN,
                   imageName = creation.imageName,
                   created = Collie.UNKNOWN,
@@ -122,24 +122,27 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                   kind = Collie.UNKNOWN,
                   name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                   size = Collie.UNKNOWN,
-                  portMappings = Seq(PortMapping(
-                    hostIp = Collie.UNKNOWN,
-                    portPairs = Seq(
-                      PortPair(
-                        hostPort = creation.clientPort,
-                        containerPort = creation.clientPort
-                      ),
-                      PortPair(
-                        hostPort = creation.peerPort,
-                        containerPort = creation.peerPort
-                      ),
-                      PortPair(
-                        hostPort = creation.electionPort,
-                        containerPort = creation.electionPort
-                      )
-                    )
-                  )),
-                  environments = Map.empty,
+                  portMappings = creation.ports
+                    .map(
+                      port =>
+                        PortMapping(
+                          hostIp = Collie.UNKNOWN,
+                          hostPort = port,
+                          containerPort = port
+                      ))
+                    .toSeq,
+                  environments = Map(
+                    // zookeeper does not support java.rmi.server.hostname so we have to disable the default settings of jmx from zookeeper
+                    // and then add our custom settings.
+                    // see https://issues.apache.org/jira/browse/ZOOKEEPER-3606
+                    "JMXDISABLE" -> "true",
+                    "JVMFLAGS" -> (s"-Dcom.sun.management.jmxremote" +
+                      s" -Dcom.sun.management.jmxremote.authenticate=false" +
+                      s" -Dcom.sun.management.jmxremote.ssl=false" +
+                      s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
+                      s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
+                      s" -Djava.rmi.server.hostname=${node.hostname}")
+                  ),
                   hostname = hostname
                 )
 

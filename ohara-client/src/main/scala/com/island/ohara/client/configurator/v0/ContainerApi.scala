@@ -23,11 +23,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ContainerApi {
   val CONTAINER_PREFIX_PATH: String = "containers"
-  final case class PortPair(hostPort: Int, containerPort: Int)
-  implicit val PORT_PAIR_JSON_FORMAT: RootJsonFormat[PortPair] = jsonFormat2(PortPair)
 
-  final case class PortMapping(hostIp: String, portPairs: Seq[PortPair])
-  implicit val PORT_MAPPING_JSON_FORMAT: RootJsonFormat[PortMapping] = jsonFormat2(PortMapping)
+  final case class PortMapping(hostIp: String, hostPort: Int, containerPort: Int)
+  implicit val PORT_MAPPING_JSON_FORMAT: RootJsonFormat[PortMapping] = jsonFormat3(PortMapping)
 
   /**
     * Getting full information of container is a expensive operation. And most cases requires the name, id, image name

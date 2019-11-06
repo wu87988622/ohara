@@ -21,7 +21,7 @@ import java.util.Objects
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.DockerClientImpl._
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping}
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
@@ -67,8 +67,9 @@ private[docker] object DockerClientImpl {
         }
       }
       .groupBy(_._1)
-      .map {
-        case (key, value) => PortMapping(key, value.map(v => PortPair(v._2, v._3)).toSeq)
+      .flatten {
+        case (hostIp, ports) =>
+          ports.map(v => PortMapping(hostIp, v._2, v._3))
       }
       .toSeq
   }

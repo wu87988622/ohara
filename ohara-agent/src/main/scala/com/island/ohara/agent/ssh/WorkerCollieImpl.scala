@@ -57,7 +57,7 @@ private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           // [AFTER] Given that we have no use case about using port in custom connectors and there is no
           // similar case in other type (streamapp and k8s impl). Hence we change the network type from host to bridge
           .portMappings(
-            containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
           .arguments(arguments)
           .create()
       )

@@ -21,7 +21,7 @@ import java.util.{Date, Objects}
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.{ContainerCreator, ContainerState, DockerClient, NetworkDriver}
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -82,13 +82,10 @@ private[agent] class FakeDockerClient(nodeName: String) extends ReleaseOnce with
         kind = FAKE_KIND_NAME,
         name = name,
         size = "-999 MB",
-        portMappings =
-          if (ports.isEmpty) Seq.empty
-          else
-            Seq(PortMapping(hostname, ports.map {
-              case (port, containerPort) =>
-                PortPair(port, containerPort)
-            }.toSeq)),
+        portMappings = ports.map {
+          case (port, containerPort) =>
+            PortMapping(hostname, port, containerPort)
+        }.toSeq,
         environments = envs,
         hostname = hostname
       )

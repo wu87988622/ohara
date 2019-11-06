@@ -113,11 +113,12 @@ object ZookeeperApi {
 
     override def imageName: String = settings.imageName.get
     override def nodeNames: Set[String] = settings.nodeNames.get
-    override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
+    override def ports: Set[Int] = Set(clientPort, peerPort, electionPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags.get
 
     def clientPort: Int = settings.clientPort.get
     def peerPort: Int = settings.peerPort.get
+    def jmxPort: Int = settings.jmxPort.get
     def electionPort: Int = settings.electionPort.get
     def tickTime: Int = settings.tickTime.get
     def initLimit: Int = settings.initLimit.get
@@ -151,6 +152,8 @@ object ZookeeperApi {
         case other: JsValue =>
           throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
       }
+    def jmxPort: Option[Int] =
+      noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
 
     def clientPort: Option[Int] =
       noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
@@ -215,10 +218,11 @@ object ZookeeperApi {
     override def name: String = settings.name
     override def group: String = settings.group
     override def kind: String = ZOOKEEPER_SERVICE_NAME
-    override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
+    override def ports: Set[Int] = Set(clientPort, peerPort, electionPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags
     def nodeNames: Set[String] = settings.nodeNames
     def imageName: String = settings.imageName
+    def jmxPort: Int = settings.jmxPort
     def clientPort: Int = settings.clientPort
     def peerPort: Int = settings.peerPort
     def electionPort: Int = settings.electionPort
@@ -247,6 +251,8 @@ object ZookeeperApi {
     */
   trait Request extends ClusterRequest {
     @Optional("the default port is random")
+    def jmxPort(jmxPort: Int): Request.this.type =
+      setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
     def clientPort(clientPort: Int): Request.this.type =
       setting(CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
     @Optional("the default port is random")

@@ -97,6 +97,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
+    val jmxPort = CommonUtils.availablePort()
     val clientPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
     val electionPort = CommonUtils.availablePort()
@@ -105,6 +106,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
       .name(name)
       .group(group)
       .imageName(imageName)
+      .jmxPort(jmxPort)
       .clientPort(clientPort)
       .peerPort(peerPort)
       .electionPort(electionPort)
@@ -113,6 +115,7 @@ class TestZookeeperApi extends OharaTest with Matchers {
     creation.name shouldBe name
     creation.group shouldBe group
     creation.imageName shouldBe imageName
+    creation.jmxPort shouldBe jmxPort
     creation.clientPort shouldBe clientPort
     creation.peerPort shouldBe peerPort
     creation.electionPort shouldBe electionPort

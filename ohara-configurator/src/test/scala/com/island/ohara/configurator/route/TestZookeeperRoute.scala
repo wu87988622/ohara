@@ -186,6 +186,23 @@ class TestZookeeperRoute extends OharaTest with Matchers {
   }
 
   @Test
+  def jmxPortConflict(): Unit = {
+    val jmxPort = CommonUtils.availablePort()
+    val zk = result(
+      zookeeperApi.request.name(CommonUtils.randomString(10)).jmxPort(jmxPort).nodeNames(nodeNames).create()
+    )
+    result(zookeeperApi.start(zk.key))
+
+    val zk2 = result(
+      zookeeperApi.request.name(CommonUtils.randomString(10)).jmxPort(jmxPort).nodeNames(nodeNames).create()
+    )
+
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.start(zk2.key))
+    }.getMessage should include(jmxPort.toString)
+  }
+
+  @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
     val zk = result(
@@ -196,7 +213,10 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.key))
+
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.start(zk2.key))
+    }.getMessage should include(clientPort.toString)
   }
 
   @Test
@@ -210,7 +230,10 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.key))
+
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.start(zk2.key))
+    }.getMessage should include(peerPort.toString)
   }
 
   @Test
@@ -224,7 +247,10 @@ class TestZookeeperRoute extends OharaTest with Matchers {
     val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.key))
+
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.start(zk2.key))
+    }.getMessage should include(electionPort.toString)
   }
 
   @Test

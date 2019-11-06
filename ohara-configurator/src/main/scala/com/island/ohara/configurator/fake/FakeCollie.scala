@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{Collie, DataCollie, NoSuchClusterException, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -49,7 +49,6 @@ private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](da
   /**
     * update the in-memory cluster status and container infos
     * @param cluster cluster status
-    * @param nodeNames node names
     * @return cluster status
     */
   private[configurator] def addCluster(cluster: T, imageName: String, ports: Set[Int]): T = {
@@ -64,7 +63,7 @@ private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](da
         FAKE_KIND_NAME,
         name = CommonUtils.randomString(10),
         size = "unknown",
-        portMappings = Seq(PortMapping("fake host", ports.map(p => PortPair(p, p)).toSeq)),
+        portMappings = ports.map(p => PortMapping("fake", p, p)).toSeq,
         environments = Map.empty,
         hostname = CommonUtils.randomString(10)
       )

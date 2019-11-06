@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus, Creation}
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
@@ -95,20 +95,15 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                 kind = Collie.UNKNOWN,
                 name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                 size = Collie.UNKNOWN,
-                portMappings = Seq(
-                  PortMapping(
-                    hostIp = Collie.UNKNOWN,
-                    portPairs = Seq(
-                      PortPair(
-                        hostPort = creation.clientPort,
-                        containerPort = creation.clientPort
-                      ),
-                      PortPair(
-                        hostPort = creation.jmxPort,
-                        containerPort = creation.jmxPort
-                      )
-                    )
-                  )),
+                portMappings = creation.ports
+                  .map(
+                    port =>
+                      PortMapping(
+                        hostIp = Collie.UNKNOWN,
+                        hostPort = port,
+                        containerPort = port
+                    ))
+                  .toSeq,
                 environments = Map(
                   "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
                     s" -Dcom.sun.management.jmxremote.authenticate=false" +

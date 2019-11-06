@@ -35,4 +35,10 @@ trait ClusterCreation extends BasicCreation {
     * @return ports used by this cluster
     */
   def ports: Set[Int]
+
+  /**
+    * the port used to expose the jmx service
+    * @return jmx port
+    */
+  def jmxPort: Int
 }

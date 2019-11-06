@@ -39,7 +39,7 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .containerCreator()
       .imageName(containerInfo.imageName)
       .portMappings(
-        containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
 
       /**
         * the hostname of k8s/docker container has strict limit. Fortunately, we are aware of this issue and the hostname

@@ -21,7 +21,7 @@ import java.util.Objects
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.island.ohara.agent.k8s.K8SClient.ContainerCreator
 import com.island.ohara.agent.k8s.K8SJson._
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.{Enum, HttpExecutor}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -85,9 +85,7 @@ object K8SClient {
                 K8S_KIND_NAME,
                 pod.metadata.name,
                 "Unknown",
-                Seq(
-                  PortMapping(hostIP,
-                              containerInfo.ports.getOrElse(Seq()).map(x => PortPair(x.hostPort, x.containerPort)))),
+                containerInfo.ports.getOrElse(Seq.empty).map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
                 containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
                 spec.hostname
               )
@@ -340,7 +338,7 @@ object K8SClient {
                     kind = K8S_KIND_NAME,
                     name = pod.metadata.name,
                     size = "Unknown",
-                    portMappings = ports.map(x => PortMapping(hostname, Seq(PortPair(x._1, x._2)))).toSeq,
+                    portMappings = ports.map(x => PortMapping(hostname, x._1, x._2)).toSeq,
                     environments = envs,
                     hostname = hostname
                   ))

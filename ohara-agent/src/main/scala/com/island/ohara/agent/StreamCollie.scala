@@ -21,7 +21,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi
@@ -98,17 +98,15 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     kind = Collie.UNKNOWN,
                     name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                     size = Collie.UNKNOWN,
-                    portMappings = Seq(
-                      PortMapping(
-                        hostIp = Collie.UNKNOWN,
-                        portPairs = Seq(
-                          PortPair(
-                            hostPort = creation.jmxPort,
-                            containerPort = creation.jmxPort
-                          )
-                        )
-                      )
-                    ),
+                    portMappings = creation.ports
+                      .map(
+                        port =>
+                          PortMapping(
+                            hostIp = Collie.UNKNOWN,
+                            hostPort = port,
+                            containerPort = port
+                        ))
+                      .toSeq,
                     environments = creation.settings.map {
                       case (k, v) =>
                         k -> (v match {

@@ -19,7 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi
@@ -103,18 +103,15 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                 kind = Collie.UNKNOWN,
                 name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
                 size = Collie.UNKNOWN,
-                portMappings = Seq(
-                  PortMapping(
-                    hostIp = Collie.UNKNOWN,
-                    portPairs = creation.ports
-                      .map(
-                        port =>
-                          PortPair(
-                            hostPort = port,
-                            containerPort = port
-                        ))
-                      .toSeq
-                  )),
+                portMappings = creation.ports
+                  .map(
+                    port =>
+                      PortMapping(
+                        hostIp = Collie.UNKNOWN,
+                        hostPort = port,
+                        containerPort = port
+                    ))
+                  .toSeq,
                 environments = Map(
                   "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
                     s" -Dcom.sun.management.jmxremote.authenticate=false" +

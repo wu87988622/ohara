@@ -40,7 +40,7 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           .envs(containerInfo.environments)
           .name(containerInfo.name)
           .portMappings(
-            containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
           .route(route)
           .arguments(arguments)
           .create()

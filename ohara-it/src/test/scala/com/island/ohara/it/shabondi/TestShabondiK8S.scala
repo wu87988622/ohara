@@ -17,10 +17,9 @@
 package com.island.ohara.it.shabondi
 
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.client.configurator.v0.ContainerApi._
 import com.island.ohara.client.configurator.v0.ShabondiApi
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.it.{IntegrationTest, EnvTestingUtils}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{Before, Ignore, Test}
 import org.scalatest.{Inside, Matchers}
 
@@ -70,10 +69,10 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
 
     val containerInfo = containerInfoOpt.get
     containerInfo.portMappings should have size 1
-    inside(containerInfo.portMappings.head) {
-      case PortMapping(hostIp, portPairs) =>
-        hostIp should be(podHostname)
-        portPairs should be(Seq(PortPair(9090, 8080)))
+    containerInfo.portMappings.foreach { portMapping =>
+      portMapping.hostIp shouldBe podHostname
+      portMapping.hostPort shouldBe 9090
+      portMapping.containerPort shouldBe 8080
     }
 
     await(() => {
