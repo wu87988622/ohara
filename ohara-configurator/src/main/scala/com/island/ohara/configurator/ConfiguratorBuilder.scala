@@ -196,7 +196,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         new WorkerClusterStatus(
           group = wkCluster.group,
           name = wkCluster.name,
-          connectorDefinitions = wkCluster.connectorDefinitions,
           aliveNodes = wkCluster.nodeNames,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ServiceState.RUNNING.name),
@@ -289,7 +288,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           new WorkerClusterStatus(
             group = creation.group,
             name = creation.name,
-            connectorDefinitions = ReflectionUtils.localConnectorDefinitions,
             aliveNodes = bkCreation.nodeNames,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ServiceState.RUNNING.name),

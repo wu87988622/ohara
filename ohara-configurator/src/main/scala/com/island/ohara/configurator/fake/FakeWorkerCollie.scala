@@ -24,7 +24,6 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
@@ -50,7 +49,6 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
         new WorkerClusterStatus(
           group = creation.group,
           name = creation.name,
-          connectorDefinitions = ReflectionUtils.localConnectorDefinitions,
           aliveNodes = creation.nodeNames ++ clusterCache.asScala
             .find(_._1.key == creation.key)
             .map(_._2.map(_.nodeName))

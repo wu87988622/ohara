@@ -26,7 +26,6 @@ import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
@@ -171,8 +170,6 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
             new WorkerClusterStatus(
               group = creation.group,
               name = creation.name,
-              // the worker is not ready so there is not available connectors now :)
-              connectorDefinitions = Seq.empty,
               aliveNodes = aliveContainers.map(_.nodeName).toSet,
               state = state,
               error = None
@@ -238,49 +235,17 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterStatus] =
-    dataCollie.value[WorkerClusterInfo](key).flatMap { workerClusterInfo =>
-      val connectionProps = containers
-        .filter(_.state == ContainerState.RUNNING.name)
-        .map(c => s"${c.nodeName}:${workerClusterInfo.clientPort}")
-        .mkString(",")
-
-      val connectorDefinitionsFuture =
-        if (CommonUtils.isEmpty(connectionProps)) Future.successful(Seq.empty)
-        else
-          /**
-            * It tried to fetch connector information from starting worker cluster
-            * However, it may be too slow to get latest connector information.
-            * We don't throw exception since it is a common case, and Skipping retry can make quick response
-            */
-          WorkerClient.builder
-            .connectionProps(connectionProps)
-            .workerClusterKey(key)
-            .disableRetry()
-            .build
-            .connectorDefinitions()
-            .recover {
-              case e: Throwable =>
-                ServiceCollie.LOG.error(
-                  s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead",
-                  e)
-                Seq.empty
-            }
-
-      connectorDefinitionsFuture.map { connectorDefinitions =>
-        new WorkerClusterStatus(
-          group = key.group(),
-          name = key.name(),
-          connectorDefinitions = connectorDefinitions,
-          // Currently, docker and k8s has same naming rule for "Running",
-          // it is ok that we use the containerState.RUNNING here.
-          aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-          state = toClusterState(containers).map(_.name),
-          // TODO how could we fetch the error?...by Sam
-          error = None
-        )
-      }
-    }
-
+    Future.successful(
+      new WorkerClusterStatus(
+        group = key.group(),
+        name = key.name(),
+        // Currently, docker and k8s has same naming rule for "Running",
+        // it is ok that we use the containerState.RUNNING here.
+        aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
+        state = toClusterState(containers).map(_.name),
+        // TODO how could we fetch the error?...by Sam
+        error = None
+      ))
 }
 
 object WorkerCollie {

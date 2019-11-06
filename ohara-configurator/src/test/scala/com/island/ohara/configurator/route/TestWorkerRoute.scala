@@ -21,7 +21,6 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.ReflectionUtils._
 import com.island.ohara.configurator.fake.FakeWorkerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -422,22 +421,6 @@ class TestWorkerRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testConnectorDefinitions(): Unit = {
-    localConnectorDefinitions.size should not be 0
-    result(workerApi.list()).foreach(
-      _.connectorDefinitions shouldBe
-        localConnectorDefinitions)
-  }
-
-  @Test
-  def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
-    val configurator = Configurator.builder.fake(numberOfCluster, 1).build()
-    try result(configurator.serviceCollie.workerCollie.clusters()).keys
-      .foreach(_.connectorDefinitions shouldBe localConnectorDefinitions)
-    finally configurator.close()
-  }
-
-  @Test
   def testCustomTagsShouldExistAfterRunning(): Unit = {
     val tags = Map(
       "aa" -> JsString("bb"),
@@ -450,19 +433,16 @@ class TestWorkerRoute extends OharaTest with Matchers {
     // after create, tags should exist
     val res = result(workerApi.get(wk.key))
     res.tags shouldBe tags
-    res.connectorDefinitions shouldBe Seq.empty
 
     // after start, tags should still exist
     result(workerApi.start(wk.key))
     val res1 = result(workerApi.get(wk.key))
     res1.tags shouldBe tags
-    res1.connectorDefinitions should not be Seq.empty
 
     // after stop, tags should still exist
     result(workerApi.stop(wk.key))
     val res2 = result(workerApi.get(wk.key))
     res2.tags shouldBe tags
-    res2.connectorDefinitions shouldBe Seq.empty
   }
 
   @Test

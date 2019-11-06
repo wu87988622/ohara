@@ -59,13 +59,6 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   protected final def url: String = s"http://${CommonUtils.requireNonEmpty(hostname)}:${CommonUtils
     .requireConnectionPort(port)}/${CommonUtils.requireNonEmpty(version)}/${CommonUtils.requireNonEmpty(prefixPath)}"
 
-  /**
-    * used by UPDATE, DELETE and GET requests
-    * @param key object key
-    * @return url string
-    */
-  protected final def url(key: ObjectKey): String = urlBuilder.key(key).build()
-
   protected def urlBuilder: UrlBuilder = (prefix, key, postfix, params) => {
     var url = BasicAccess.this.url
     prefix.foreach(s => url = s"$url/$s")

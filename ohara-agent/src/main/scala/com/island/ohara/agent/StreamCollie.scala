@@ -23,14 +23,10 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi
-import com.island.ohara.client.configurator.v0.StreamApi.{
-  Creation,
-  StreamClusterDefinition,
-  StreamClusterInfo,
-  StreamClusterStatus
-}
+import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -173,7 +169,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
     * @return stream definition
     */
   //TODO : this workaround should be removed and use a new API instead in #2191...by Sam
-  def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[StreamClusterDefinition] =
+  def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[ClassInfo] =
     Future {
       import sys.process._
       val classpath = System.getProperty("java.class.path")
@@ -181,7 +177,9 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
         s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_KEY}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)
-      StreamClusterDefinition(className, StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala)
+      ClassInfo(className = className,
+                classType = "stream app",
+                settingDefinitions = StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala)
     }.recover {
       case e: Throwable =>
         // We cannot parse the provided jar, return nothing and log it

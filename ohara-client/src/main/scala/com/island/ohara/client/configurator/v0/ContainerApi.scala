@@ -56,8 +56,8 @@ object ContainerApi {
   implicit val CONTAINER_GROUP_JSON_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)
 
   class Access private[v0] extends BasicAccess(CONTAINER_PREFIX_PATH) {
-    def get(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
-      exec.get[Seq[ContainerGroup], ErrorApi.Error](url(clusterKey))
+    def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
+      exec.get[Seq[ContainerGroup], ErrorApi.Error](urlBuilder.key(key).build())
   }
 
   def access: Access = new Access

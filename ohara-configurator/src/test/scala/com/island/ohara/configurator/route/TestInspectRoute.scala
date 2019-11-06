@@ -19,11 +19,20 @@ package com.island.ohara.configurator.route
 import java.io.{File, FileOutputStream}
 
 import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
-import com.island.ohara.client.configurator.v0.{BrokerApi, FileInfoApi, InspectApi, StreamApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{
+  BrokerApi,
+  FileInfoApi,
+  InspectApi,
+  StreamApi,
+  TopicApi,
+  WorkerApi,
+  ZookeeperApi
+}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
-import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.{Configurator, ReflectionUtils}
 import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
@@ -148,6 +157,7 @@ class TestInspectRoute extends OharaTest with Matchers {
     info.settingDefinitions.foreach { definition =>
       definition shouldBe ZookeeperApi.DEFINITIONS.find(_.key() == definition.key()).get
     }
+    info.classInfos shouldBe Seq.empty
   }
 
   @Test
@@ -158,6 +168,9 @@ class TestInspectRoute extends OharaTest with Matchers {
     info.settingDefinitions.foreach { definition =>
       definition shouldBe BrokerApi.DEFINITIONS.find(_.key() == definition.key()).get
     }
+    info.classInfos.size shouldBe 1
+    info.classInfos.head.classType shouldBe "topic"
+    info.classInfos.head.settingDefinitions.size shouldBe TopicApi.DEFINITIONS.size
   }
 
   @Test
@@ -168,6 +181,18 @@ class TestInspectRoute extends OharaTest with Matchers {
     info.settingDefinitions.foreach { definition =>
       definition shouldBe WorkerApi.DEFINITIONS.find(_.key() == definition.key()).get
     }
+    info.classInfos shouldBe Seq.empty
+  }
+
+  @Test
+  def testWorkerInfoWithKey(): Unit = {
+    val info = result(inspectApi.workerInfo(workerClusterInfo.key))
+    info.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
+    info.settingDefinitions.size shouldBe WorkerApi.DEFINITIONS.size
+    info.settingDefinitions.foreach { definition =>
+      definition shouldBe WorkerApi.DEFINITIONS.find(_.key() == definition.key()).get
+    }
+    info.classInfos.size shouldBe ReflectionUtils.localConnectorDefinitions.size
   }
 
   @Test
@@ -176,6 +201,16 @@ class TestInspectRoute extends OharaTest with Matchers {
     info.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     // the jar is empty but we still see the default definitions
     info.settingDefinitions should not be Seq.empty
+    info.classInfos shouldBe Seq.empty
+  }
+
+  @Test
+  def testStreamInfoWithKey(): Unit = {
+    val info = result(inspectApi.streamInfo(ObjectKey.of("g", "n")))
+    info.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    // the jar is empty but we still see the default definitions
+    info.settingDefinitions should not be Seq.empty
+    info.classInfos shouldBe Seq.empty
   }
 
   @After

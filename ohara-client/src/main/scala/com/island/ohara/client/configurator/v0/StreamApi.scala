@@ -138,11 +138,6 @@ object StreamApi {
       }
     )
 
-  final case class StreamClusterDefinition(className: String, settingDefinitions: Seq[SettingDef])
-
-  val STREAM_CLUSTER_DEFINITION_JSON_FORMAT: OharaJsonFormat[StreamClusterDefinition] =
-    JsonRefiner[StreamClusterDefinition].format(jsonFormat2(StreamClusterDefinition)).rejectEmptyString().refine
-
   class StreamClusterStatus(val group: String,
                             val name: String,
                             val aliveNodes: Set[String],

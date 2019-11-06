@@ -22,8 +22,10 @@ import akka.http.scaladsl.server.Directives.{entity, _}
 import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.InspectApi._
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
-import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
@@ -83,7 +85,7 @@ private[configurator] object InspectRoute {
                         streamCollie: StreamCollie,
                         workerCollie: WorkerCollie,
                         objectChecker: ObjectChecker,
-                        executionContext: ExecutionContext): server.Route = pathPrefix(QUERY_PREFIX_PATH) {
+                        executionContext: ExecutionContext): server.Route = pathPrefix(INSPECT_PREFIX_PATH) {
     path(RDB_PREFIX_PATH) {
       post {
         entity(as[RdbQuery]) { query =>
@@ -184,10 +186,10 @@ private[configurator] object InspectRoute {
         }
       }
     } ~ path(FILE_PREFIX_PATH / Segment) { fileName =>
-      parameter(GROUP_KEY ?) { groupOption =>
+      parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
         complete(
           dataStore
-            .value[FileInfo](ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), fileName))
+            .value[FileInfo](ObjectKey.of(group, fileName))
             .flatMap { fileInfo =>
               val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
               // if user input 0 or > 1 streamapp, we do nothing for it.
@@ -215,43 +217,93 @@ private[configurator] object InspectRoute {
             })
       }
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
-      complete(
-        ConfiguratorInfo(
-          versionInfo = ConfiguratorVersion(
-            version = VersionUtils.VERSION,
-            branch = VersionUtils.BRANCH,
-            user = VersionUtils.USER,
-            revision = VersionUtils.REVISION,
-            date = VersionUtils.DATE
-          ),
-          mode = mode.toString
-        ))
-    } ~ path(IMAGE_PREFIX_KEY / Segment) {
-      case WORKER_PREFIX_PATH =>
+      complete(ConfiguratorInfo(
+        versionInfo = ConfiguratorVersion(
+          version = VersionUtils.VERSION,
+          branch = VersionUtils.BRANCH,
+          user = VersionUtils.USER,
+          revision = VersionUtils.REVISION,
+          date = VersionUtils.DATE
+        ),
+        mode = mode.toString
+      ))
+    } ~ pathPrefix(WORKER_PREFIX_PATH) {
+      path(Segment) { name =>
+        parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          complete(
+            dataStore
+              .value[WorkerClusterInfo](ObjectKey.of(group, name))
+              .flatMap(workerCollie.workerClient)
+              .flatMap(_.connectorDefinitions())
+              .recover {
+                case _: Throwable => Seq.empty
+              }
+              .map { classInfos =>
+                ServiceDefinition(
+                  imageName = WorkerApi.IMAGE_NAME_DEFAULT,
+                  settingDefinitions = WorkerApi.DEFINITIONS,
+                  classInfos = classInfos
+                )
+              })
+        }
+      } ~ pathEnd {
         complete(
           ServiceDefinition(
             imageName = WorkerApi.IMAGE_NAME_DEFAULT,
-            settingDefinitions = WorkerApi.DEFINITIONS
+            settingDefinitions = WorkerApi.DEFINITIONS,
+            classInfos = Seq.empty
           ))
-      case BROKER_PREFIX_PATH =>
-        complete(
-          ServiceDefinition(
-            imageName = BrokerApi.IMAGE_NAME_DEFAULT,
-            settingDefinitions = BrokerApi.DEFINITIONS
-          ))
-      case ZOOKEEPER_PREFIX_PATH =>
-        complete(
-          ServiceDefinition(
-            imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
-            settingDefinitions = ZookeeperApi.DEFINITIONS
-          ))
-      case STREAM_PREFIX_PATH =>
+      }
+    } ~ path(BROKER_PREFIX_PATH) {
+      complete(
+        ServiceDefinition(
+          imageName = BrokerApi.IMAGE_NAME_DEFAULT,
+          settingDefinitions = BrokerApi.DEFINITIONS,
+          classInfos = Seq(
+            ClassInfo(
+              className = "N/A",
+              classType = "topic",
+              settingDefinitions = TopicApi.DEFINITIONS
+            )
+          )
+        ))
+    } ~ path(ZOOKEEPER_PREFIX_PATH) {
+      complete(
+        ServiceDefinition(
+          imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
+          settingDefinitions = ZookeeperApi.DEFINITIONS,
+          classInfos = Seq.empty
+        ))
+    } ~ pathPrefix(STREAM_PREFIX_PATH) {
+      path(Segment) { name =>
+        parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          complete(
+            dataStore
+              .value[StreamClusterInfo](ObjectKey.of(group, name))
+              .map(_.jarKey)
+              .flatMap(dataStore.value[FileInfo])
+              .map(_.url)
+              .flatMap(streamCollie.loadDefinition)
+              .map(Seq(_))
+              .recover {
+                case _: Throwable => Seq.empty
+              }
+              .map { classInfos =>
+                ServiceDefinition(
+                  imageName = StreamApi.IMAGE_NAME_DEFAULT,
+                  settingDefinitions = StreamDefUtils.DEFAULT.asScala,
+                  classInfos = classInfos
+                )
+              })
+        }
+      } ~ pathEnd {
         complete(
           ServiceDefinition(
             imageName = StreamApi.IMAGE_NAME_DEFAULT,
-            settingDefinitions = StreamDefUtils.DEFAULT.asScala
+            settingDefinitions = StreamDefUtils.DEFAULT.asScala,
+            classInfos = Seq.empty
           ))
-      case e: Any => throw new IllegalArgumentException(s"image:$e is NOT supported")
+      }
     }
   }
 }

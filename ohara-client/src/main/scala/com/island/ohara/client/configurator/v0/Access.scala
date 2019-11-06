@@ -39,10 +39,10 @@ abstract class Access[Creation <: BasicCreation, Updating, Res] private[v0] (pre
   //-----------------------[Http Requests]-----------------------//
 
   def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.get[Res, ErrorApi.Error](url(key))
+    exec.get[Res, ErrorApi.Error](urlBuilder.key(key).build())
 
   def delete(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](url(key))
+    exec.delete[ErrorApi.Error](urlBuilder.key(key).build())
 
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](url)
@@ -52,7 +52,7 @@ abstract class Access[Creation <: BasicCreation, Updating, Res] private[v0] (pre
     exec.post[Creation, Res, ErrorApi.Error](url, creation)
 
   protected def put(key: ObjectKey, updating: Updating)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.put[Updating, Res, ErrorApi.Error](url(key), updating)
+    exec.put[Updating, Res, ErrorApi.Error](urlBuilder.key(key).build(), updating)
 
   /**
     * this is not a public method since we encourage users to call Query to set up parameters via fluent pattern.

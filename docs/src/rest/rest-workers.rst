@@ -82,76 +82,6 @@ The following information are updated by Ohara.
        dumb case. However, it is not a quick failure when you are using raw
        kafka rather than ohara. Please double check what you configure!
 
-    After building the worker cluster, ohara starts to fetch the details of
-    available connectors from the worker cluster. The details is the setting
-    definitions of connector. It shows how to assign the settings to a
-    connector correctly. The details of connector’s setting definitions can
-    be retrieved via :ref:`GET <rest-workers-get>` or :ref:`LIST <rest-workers-list>`,
-    and the JSON representation is shown below.
-
-    .. code-block:: json
-
-       {
-         "connectorDefinitions": [
-           {
-             "className": "xxx",
-             "definitions": [
-               {
-                 "reference": "NONE",
-                 "displayName": "connector.class",
-                 "internal": false,
-                 "documentation": "the class name of connector",
-                 "valueType": "CLASS",
-                 "tableKeys": [],
-                 "orderInGroup": 0,
-                 "key": "connector.class",
-                 "required": true,
-                 "defaultValue": null,
-                 "group": "core",
-                 "editable": true
-               }
-             ]
-           }
-         ]
-       }
-
-#. connectors (**array(string)**) — the available connectors of worker cluster
-
-   - connectors[i].className (**string**) — the class name of available connector
-   - connectors[i].definitions (**array(object)**) — the settings used by this connector
-
-     - connectors[i].definitions[j].displayName (**string**) — the
-       readable name of this setting
-     - connectors[i].definitions[j].group (**string**) — the group of
-       this setting (all core setting are in core group)
-     - connectors[i].definitions[j].orderInGroup (**int**) — the order in
-       group
-     - connectors[i].definitions[j].editable (**boolean**) — true if this
-       setting is modifiable
-     - connectors[i].definitions[j].key (**string**) — the key of
-       configuration
-     - connectors[i].definitions[j]. :ref:`valueType <setting-definition-type>` (**string**) — the type of value
-     - connectors[i].definitions[j].defaultValue (**string**) — the
-       default value
-     - connectors[i].definitions[j].documentation (**string**) — the
-       explanation of this definition
-     - connectors[i].definitions[j]. :ref:`reference <setting-definition-reference>` (**string**) — works for ohara manager.
-       It represents the reference of value.
-     - connectors[i].definitions[j].required (**boolean**) — true if
-       this setting has no default value and you have to assign a value.
-       Otherwise, you can’t start connector.
-     - connectors[i].definitions[j].internal (**string**) — true if this
-       setting is assigned by system automatically.
-     - connectors[i].definitions[j].tableKeys (**array(string)**) — the
-       column name when the type is TABLE
-
-  Apart from official settings (topics, columns, etc), a connector also
-  have custom settings. Those setting definition can be found through
-  :ref:`GET <rest-workers-get>` or :ref:`LIST <rest-workers-list>`.
-  And for another, the worker
-  cluster needs to take some time to load available connectors. If you
-  don’t see the setting definitions, please retry it later.
-
 .. _rest-workers-create:
 
 create a worker properties
@@ -188,7 +118,6 @@ Example Response
 
     {
       "lastModified": 1567177024356,
-      "connectorDefinitions": [],
       "aliveNodes": [],
       "settings": {
         "status.storage.topic": "statusTopic",
@@ -239,7 +168,6 @@ Example Response
 
     {
       "lastModified": 1567176877946,
-      "connectorDefinitions": [],
       "aliveNodes": [],
       "settings": {
         "status.storage.topic": "a6c5018531",
@@ -291,7 +219,6 @@ Example Response
     [
       {
         "lastModified": 1567177024356,
-        "connectorDefinitions": [],
         "aliveNodes": [],
         "settings": {
           "status.storage.topic": "statusTopic",
@@ -359,7 +286,6 @@ Example Response
 
     {
       "lastModified": 1567177024356,
-      "connectorDefinitions": [],
       "aliveNodes": [],
       "settings": {
         "status.storage.topic": "statusTopic",
@@ -420,288 +346,6 @@ Example Response
 
       {
          "lastModified":1567178933996,
-         "connectorDefinitions":[
-            {
-               "className":"com.island.ohara.connector.console.ConsoleSink",
-               "definitions":[
-                  {
-                     "reference":"NONE",
-                     "displayName":"Connector name",
-                     "internal":true,
-                     "documentation":"the name of this connector",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":1,
-                     "key":"name",
-                     "required":true,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"Connector class",
-                     "internal":false,
-                     "documentation":"the class name of connector",
-                     "valueType":"CLASS",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":2,
-                     "key":"connector.class",
-                     "required":true,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"Number of tasks",
-                     "internal":false,
-                     "documentation":"the number of tasks invoked by connector",
-                     "valueType":"INT",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":5,
-                     "key":"tasks.max",
-                     "required":true,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"key converter",
-                     "internal":true,
-                     "documentation":"key converter",
-                     "valueType":"CLASS",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":8,
-                     "key":"key.converter",
-                     "required":false,
-                     "defaultValue":"org.apache.kafka.connect.converters.ByteArrayConverter",
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"value converter",
-                     "internal":true,
-                     "documentation":"value converter",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":9,
-                     "key":"value.converter",
-                     "required":false,
-                     "defaultValue":"org.apache.kafka.connect.converters.ByteArrayConverter",
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"TOPIC",
-                     "displayName":"Topics",
-                     "internal":true,
-                     "documentation":"the topic names in kafka form used by connector.This field is internal and is generated from topicKeys. Normally, it is composed by group and name",
-                     "valueType":"ARRAY",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":4,
-                     "key":"topics",
-                     "required":true,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"kind",
-                     "internal":false,
-                     "documentation":"kind of connector",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":13,
-                     "key":"kind",
-                     "required":false,
-                     "defaultValue":"sink",
-                     "group":"core",
-                     "editable":false
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"the frequence of printing data",
-                     "internal":false,
-                     "documentation":"the frequence to print the row on log",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":-1,
-                     "key":"console.sink.frequence",
-                     "required":false,
-                     "defaultValue":"3 seconds",
-                     "group":"common",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"the divider charset to distinguish each row",
-                     "internal":false,
-                     "documentation":"the charset used to divide the rows.",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":-1,
-                     "key":"console.sink.row.divider",
-                     "required":false,
-                     "defaultValue":"|",
-                     "group":"common",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"Connector key",
-                     "internal":false,
-                     "documentation":"the key of this connector",
-                     "valueType":"OBJECT_KEY",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":0,
-                     "key":"connectorKey",
-                     "required":true,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"Schema",
-                     "internal":false,
-                     "documentation":"output schema",
-                     "valueType":"TABLE",
-                     "tableKeys":[
-                        "order",
-                        "dataType",
-                        "name",
-                        "newName"
-                     ],
-                     "orderInGroup":6,
-                     "key":"columns",
-                     "required":false,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"WORKER_CLUSTER",
-                     "displayName":"worker cluster",
-                     "internal":false,
-                     "documentation":"the cluster name of running this connector",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":7,
-                     "key":"workerClusterName",
-                     "required":false,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"TOPIC",
-                     "displayName":"Topics",
-                     "internal":false,
-                     "documentation":"the topics used by connector",
-                     "valueType":"OBJECT_KEYS",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":3,
-                     "key":"topicKeys",
-                     "required":true,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"tags",
-                     "internal":true,
-                     "documentation":"tags to this connector",
-                     "valueType":"TAGS",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":14,
-                     "key":"tags",
-                     "required":false,
-                     "defaultValue":null,
-                     "group":"core",
-                     "editable":true
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"version",
-                     "internal":false,
-                     "documentation":"version of connector",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":10,
-                     "key":"version",
-                     "required":false,
-                     "defaultValue":"unknown",
-                     "group":"core",
-                     "editable":false
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"revision",
-                     "internal":false,
-                     "documentation":"revision of connector",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":11,
-                     "key":"revision",
-                     "required":false,
-                     "defaultValue":"unknown",
-                     "group":"core",
-                     "editable":false
-                  },
-                  {
-                     "reference":"NONE",
-                     "displayName":"author",
-                     "internal":false,
-                     "documentation":"author of connector",
-                     "valueType":"STRING",
-                     "tableKeys":[
-
-                     ],
-                     "orderInGroup":12,
-                     "key":"author",
-                     "required":false,
-                     "defaultValue":"unknown",
-                     "group":"core",
-                     "editable":false
-                  }
-               ]
-            }
-         ],
          "aliveNodes":[
          ],
          "settings":{

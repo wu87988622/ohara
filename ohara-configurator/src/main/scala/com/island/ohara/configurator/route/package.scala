@@ -41,9 +41,9 @@ import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import spray.json.{DeserializationException, JsArray, JsString, RootJsonFormat}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-
+import scala.concurrent.duration._
 package object route {
 
   /** default we restrict the jar size to 50MB */
@@ -286,7 +286,19 @@ package object route {
             case status: BrokerClusterStatus =>
               cluster.asInstanceOf[BrokerClusterInfo].update(status)
             case status: WorkerClusterStatus =>
-              cluster.asInstanceOf[WorkerClusterInfo].update(status)
+              // TODO remove this hard code (see https://github.com/oharastream/ohara/issues/3201)
+              val connectorClassInfo = Await.result(
+                collie
+                  .asInstanceOf[WorkerCollie]
+                  .workerClient(cluster.asInstanceOf[WorkerClusterInfo])
+                  .flatMap(_.connectorDefinitions())
+                  .recover {
+                    case _: Throwable =>
+                      Seq.empty
+                  },
+                30 seconds
+              )
+              cluster.asInstanceOf[WorkerClusterInfo].update(status).copy(connectorDefinitions = connectorClassInfo)
             case status: StreamClusterStatus =>
               cluster
                 .asInstanceOf[StreamClusterInfo]

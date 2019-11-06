@@ -56,10 +56,15 @@ Example Response
       "mode": "FAKE"
     }
 
-get zookeeper/broker/worker info
---------------------------------
+get zookeeper/broker/worker/stream info
+---------------------------------------
 
-*GET /v0/inspect/image/$service*
+*GET /v0/inspect/$service*
+
+This API used to fetch the definitions for specific cluster service. The following fields are returned.
+
+#. imageName (**string**) — the image name of service
+#. settingDefinitions (**array(object)**) — the available settings for this service (see :ref:`setting <setting-definition>`)
 
 the available variables for $service are shown below.
 
@@ -88,6 +93,55 @@ Example Response
           "group": "core",
           "editable": true
         }
+      ]
+    }
+
+get running zookeeper/broker/worker/stream info
+-----------------------------------------------
+
+*GET /v0/inspect/$service/name=$name?group=$group*
+
+This API used to fetch the definitions for specific cluster service and the definitions of available classes in the service.
+The following fields are returned.
+
+#. imageName (**string**) — the image name of service
+#. settingDefinitions (**array(object)**) — the available settings for this service (see :ref:`setting <setting-definition>`)
+#. classInfos (**array(object)**) — the information available classes in this service
+
+  - classInfos[i].className — the name of this class
+  - classInfos[i].classType — the type of this class. for example, topic, source connector, sink connector or stream app
+  - classInfos[i].settingDefinitions — the definitions of this class
+
+the available variables for $service are shown below.
+
+#. zookeeper
+#. broker
+#. worker
+#. stream
+
+Example Response
+  .. code-block:: json
+
+    {
+      "imageName": "oharastream/streamapp:$|version|",
+      "settingDefinitions": [
+        {
+          "reference": "NONE",
+          "displayName": "group",
+          "internal": false,
+          "documentation": "group of this worker cluster",
+          "valueType": "STRING",
+          "tableKeys": [],
+          "orderInGroup": 1,
+          "key": "group",
+          "required": false,
+          "defaultValue": "default",
+          "group": "core",
+          "editable": true
+        }
+      ],
+      "classInfos": [
+
       ]
     }
 

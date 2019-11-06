@@ -20,7 +20,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
+import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.{Creator, Validator}
 import com.island.ohara.client.kafka.WorkerJson.{
@@ -126,7 +126,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     }
   }
 
-  override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]] =
+  override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ClassInfo]] =
     Future.successful(ReflectionUtils.localConnectorDefinitions)
 }
 

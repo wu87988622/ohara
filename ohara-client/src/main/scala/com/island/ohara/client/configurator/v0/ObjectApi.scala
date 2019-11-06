@@ -32,7 +32,7 @@ object ObjectApi {
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
     def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
-      exec.get[Seq[Object], ErrorApi.Error](url(key))
+      exec.get[Seq[Object], ErrorApi.Error](urlBuilder.key(key).build())
     def list()(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
       exec.get[Seq[Object], ErrorApi.Error](url)
   }

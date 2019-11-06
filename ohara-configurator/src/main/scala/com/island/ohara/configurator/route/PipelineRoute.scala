@@ -32,7 +32,6 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,15 +44,11 @@ private[configurator] object PipelineRoute {
     workerClient
       .connectorDefinition(data.className)
       .map(
-        connectorDefinition =>
+        classInfo =>
           ObjectAbstract(
             group = data.group,
             name = data.name,
-            kind = connectorDefinition.settingDefinitions
-              .filter(_.hasDefault)
-              .find(_.key() == ConnectorDefUtils.KIND_KEY)
-              .map(_.defaultString)
-              .getOrElse("connector"),
+            kind = classInfo.classType,
             className = Some(data.className),
             state = None,
             error = None,

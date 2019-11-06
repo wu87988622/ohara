@@ -197,7 +197,7 @@ object FileInfoApi {
       * @return file info
       */
     def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[FileInfo] =
-      exec.get[FileInfo, ErrorApi.Error](url(key))
+      exec.get[FileInfo, ErrorApi.Error](urlBuilder.key(key).build())
 
     /**
       * delete file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
@@ -206,7 +206,7 @@ object FileInfoApi {
       * @return file info
       */
     def delete(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.delete[ErrorApi.Error](url(key))
+      exec.delete[ErrorApi.Error](urlBuilder.key(key).build())
 
     /**
       * start a progress to upload file to remote Configurator
@@ -232,7 +232,7 @@ object FileInfoApi {
 
       override protected def doUpdate(group: String, name: String, update: Updating)(
         implicit executionContext: ExecutionContext): Future[FileInfo] =
-        exec.put[Updating, FileInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), update)
+        exec.put[Updating, FileInfo, ErrorApi.Error](urlBuilder.key(ObjectKey.of(group, name)).build(), update)
     }
   }
 

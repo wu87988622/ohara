@@ -19,7 +19,8 @@ package com.island.ohara.configurator
 import java.lang.reflect.Modifier
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
+import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector, WithDefinitions}
 import com.island.ohara.streams.StreamApp
 import com.typesafe.scalalogging.Logger
@@ -59,7 +60,7 @@ object ReflectionUtils {
     * Dynamically instantiate local connector classes and then fetch the definitions from them.
     * @return local connector definitions
     */
-  lazy val localConnectorDefinitions: Seq[ConnectorDefinition] =
+  lazy val localConnectorDefinitions: Seq[ClassInfo] =
     new Reflections()
       .getSubTypesOf(classOf[WithDefinitions])
       .asScala
@@ -74,11 +75,16 @@ object ReflectionUtils {
             None
         }
       }
-      .map { entry =>
-        ConnectorDefinition(
-          className = entry._1,
-          settingDefinitions = entry._2
-        )
+      .map {
+        case (className, definitions) =>
+          ClassInfo(
+            className = className,
+            classType = definitions
+              .filter(_.hasDefault)
+              .find(_.key() == ConnectorDefUtils.KIND_KEY)
+              .map(_.defaultString)
+              .getOrElse("connector"),
+            settingDefinitions = definitions
+          )
       }
-
 }

@@ -17,9 +17,9 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterDefinition, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.Test
@@ -66,13 +66,6 @@ class TestStreamApi extends OharaTest with Matchers {
       lastModified = CommonUtils.current()
     )
     streamClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
-  }
-
-  @Test
-  def testStreamDefinitionEquals(): Unit = {
-    val definition = StreamClusterDefinition("className", Seq(SettingDef.builder().key("key").group("group").build()))
-    definition shouldBe StreamApi.STREAM_CLUSTER_DEFINITION_JSON_FORMAT.read(
-      StreamApi.STREAM_CLUSTER_DEFINITION_JSON_FORMAT.write(definition))
   }
 
   @Test

@@ -28,7 +28,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 object InspectApi {
-  val QUERY_PREFIX_PATH: String = "query"
+  val INSPECT_PREFIX_PATH: String = "inspect"
   val RDB_PREFIX_PATH: String = "rdb"
   val TOPIC_PREFIX_PATH: String = "topic"
   val TOPIC_TIMEOUT_KEY: String = "timeout"
@@ -39,7 +39,6 @@ object InspectApi {
   val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
   //-------------[image]-------------//
-  val IMAGE_PREFIX_KEY = "images"
   val ZOOKEEPER_PREFIX_PATH: String = "zookeeper"
   val BROKER_PREFIX_PATH: String = "broker"
   val WORKER_PREFIX_PATH: String = "worker"
@@ -58,9 +57,21 @@ object InspectApi {
 
   implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat2(ConfiguratorInfo)
 
-  case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef])
+  case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
 
-  implicit val SERVICE_DEFINITION_FORMAT: RootJsonFormat[ServiceDefinition] = jsonFormat2(ServiceDefinition)
+  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat3(ClassInfo)
+
+  case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef], classInfos: Seq[ClassInfo])
+
+  implicit val SERVICE_DEFINITION_FORMAT: RootJsonFormat[ServiceDefinition] = jsonFormat3(ServiceDefinition)
+
+  case class FileContent(classes: Seq[ClassInfo]) {
+    def sourceConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == SOURCE_CONNECTOR_KEY)
+    def sinkConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == SINK_CONNECTOR_KEY)
+    def streamAppClasses: Seq[ClassInfo] = classes.filter(_.classType == STREAM_APP_KEY)
+  }
+  implicit val FILE_CONTENT_FORMAT: RootJsonFormat[FileContent] = jsonFormat1(FileContent)
+
   final case class RdbColumn(name: String, dataType: String, pk: Boolean)
   implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
   final case class RdbTable(catalogPattern: Option[String],
@@ -138,33 +149,28 @@ object InspectApi {
     def query()(implicit executionContext: ExecutionContext): Future[FileContent]
   }
 
-  case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
-
-  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat3(ClassInfo)
-
-  case class FileContent(classes: Seq[ClassInfo]) {
-    def sourceConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == SOURCE_CONNECTOR_KEY)
-    def sinkConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == SINK_CONNECTOR_KEY)
-    def streamAppClasses: Seq[ClassInfo] = classes.filter(_.classType == STREAM_APP_KEY)
-  }
-  implicit val FILE_CONTENT_FORMAT: RootJsonFormat[FileContent] = jsonFormat1(FileContent)
-
-  final class Access extends BasicAccess(QUERY_PREFIX_PATH) {
+  final class Access extends BasicAccess(INSPECT_PREFIX_PATH) {
 
     def configuratorInfo()(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =
       exec.get[ConfiguratorInfo, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
 
     def zookeeperInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$IMAGE_PREFIX_KEY/$ZOOKEEPER_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$ZOOKEEPER_PREFIX_PATH")
 
     def brokerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$IMAGE_PREFIX_KEY/$BROKER_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$BROKER_PREFIX_PATH")
 
     def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$IMAGE_PREFIX_KEY/$WORKER_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$WORKER_PREFIX_PATH")
+
+    def workerInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(WORKER_PREFIX_PATH).key(key).build())
 
     def streamInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$IMAGE_PREFIX_KEY/$STREAM_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$STREAM_PREFIX_PATH")
+
+    def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(STREAM_PREFIX_PATH).key(key).build())
 
     def rdbRequest: RdbRequest = new RdbRequest {
       private[this] var jdbcUrl: String = _

@@ -20,6 +20,7 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
+import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
@@ -242,21 +243,16 @@ object WorkerApi {
       }
     )
 
-  final case class ConnectorDefinition(className: String, settingDefinitions: Seq[SettingDef])
-
-  implicit val CONNECTOR_DEFINITION_JSON_FORMAT: OharaJsonFormat[ConnectorDefinition] =
-    JsonRefiner[ConnectorDefinition].format(jsonFormat2(ConnectorDefinition)).rejectEmptyString().refine
-
   class WorkerClusterStatus(val group: String,
                             val name: String,
-                            val connectorDefinitions: Seq[ConnectorDefinition],
                             val aliveNodes: Set[String],
                             val state: Option[String],
                             val error: Option[String])
       extends ClusterStatus
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
-                                                     connectorDefinitions: Seq[ConnectorDefinition],
+                                                     // TODO remove this (see https://github.com/oharastream/ohara/issues/3201)
+                                                     connectorDefinitions: Seq[ClassInfo],
                                                      aliveNodes: Set[String],
                                                      lastModified: Long,
                                                      state: Option[String],
@@ -269,7 +265,6 @@ object WorkerApi {
       * @return a updated cluster info
       */
     def update(status: WorkerClusterStatus): WorkerClusterInfo = copy(
-      connectorDefinitions = status.connectorDefinitions,
       aliveNodes = status.aliveNodes,
       state = status.state,
       error = status.error,
