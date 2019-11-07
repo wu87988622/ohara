@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.it.agent
+import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -116,12 +117,8 @@ object ClusterNameHolder {
       if (!finalClose || !KEEP_CONTAINERS)
         nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
           val client =
-            DockerClient.builder
-              .hostname(node.hostname)
-              .port(node._port)
-              .user(node._user)
-              .password(node._password)
-              .build
+            DockerClient(
+              Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
           try client
             .containerNames()
             .filter(containerName =>

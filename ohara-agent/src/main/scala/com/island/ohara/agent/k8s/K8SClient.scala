@@ -42,12 +42,6 @@ trait K8SClient {
   def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
   def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
   def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report]
-  def addConfig(name: String, configs: Map[String, String])(implicit executionContext: ExecutionContext): Future[String]
-  def addConfig(configs: Map[String, String])(implicit executionContext: ExecutionContext): Future[String] =
-    addConfig(CommonUtils.randomString(), configs)
-  def removeConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
-  def forceRemoveConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
-  def inspectConfig(name: String)(implicit executionContext: ExecutionContext): Future[Map[String, String]]
 }
 
 object K8SClient {
@@ -74,20 +68,20 @@ object K8SClient {
               val phase = pod.status.map(_.phase).getOrElse("Unknown")
               val hostIP = pod.status.fold("Unknown")(_.hostIP.getOrElse("Unknown"))
               ContainerInfo(
-                spec.nodeName.getOrElse("Unknown"),
-                pod.metadata.uid.getOrElse("Unknown"),
-                containerInfo.image,
-                pod.metadata.creationTimestamp.getOrElse("Unknown"),
-                K8sContainerState.all
+                nodeName = spec.nodeName.getOrElse("Unknown"),
+                id = pod.metadata.uid.getOrElse("Unknown"),
+                imageName = containerInfo.image,
+                state = K8sContainerState.all
                   .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
                   .getOrElse(K8sContainerState.UNKNOWN)
                   .name,
-                K8S_KIND_NAME,
-                pod.metadata.name,
-                "Unknown",
-                containerInfo.ports.getOrElse(Seq.empty).map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
-                containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
-                spec.hostname
+                kind = K8S_KIND_NAME,
+                size = -1,
+                name = pod.metadata.name,
+                portMappings =
+                  containerInfo.ports.getOrElse(Seq.empty).map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
+                environments = containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
+                hostname = spec.hostname
               )
             }))
 
@@ -115,36 +109,6 @@ object K8SClient {
                 .head)
           Report(nodeName, isK8SNode, statusInfo)
         }
-
-      override def addConfig(name: String, configs: Map[String, String])(
-        implicit executionContext: ExecutionContext): Future[String] = {
-        val request = ConfigMap("v1",
-                                "ConfigMap",
-                                configs,
-                                Metadata(uid = None, name = name, labels = None, creationTimestamp = None))
-        HttpExecutor.SINGLETON
-          .post[ConfigMap, ConfigMap, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$namespace/configmaps", request)
-          .map(_.metadata.name)
-      }
-
-      override def removeConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-        removeConfig(name, false)
-      override def forceRemoveConfig(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-        removeConfig(name, true)
-
-      private[this] def removeConfig(name: String, isForce: Boolean)(
-        implicit executionContext: ExecutionContext): Future[Boolean] = {
-        var url = s"$k8sApiServerURL/namespaces/$namespace/configmaps/$name"
-        if (isForce) url += "?gracePeriodSeconds=0"
-        HttpExecutor.SINGLETON.delete[K8SErrorResponse](url).map(_ => true)
-      }
-
-      override def inspectConfig(name: String)(
-        implicit executionContext: ExecutionContext): Future[Map[String, String]] = {
-        HttpExecutor.SINGLETON
-          .get[ConfigMap, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$namespace/configmaps/$name")
-          .map(_.data)
-      }
 
       override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
         removePod(name, true)
@@ -330,14 +294,13 @@ object K8SClient {
                     nodeName = nodeName,
                     id = pod.metadata.uid.getOrElse("Unknown"),
                     imageName = imageName,
-                    created = pod.metadata.creationTimestamp.getOrElse("Unknown"),
                     state = K8sContainerState.all
                       .find(s => pod.status.fold(false)(_.phase.toLowerCase.contains(s.name.toLowerCase)))
                       .getOrElse(K8sContainerState.UNKNOWN)
                       .name,
                     kind = K8S_KIND_NAME,
                     name = pod.metadata.name,
-                    size = "Unknown",
+                    size = -1,
                     portMappings = ports.map(x => PortMapping(hostname, x._1, x._2)).toSeq,
                     environments = envs,
                     hostname = hostname

@@ -25,16 +25,16 @@ import org.scalatest.Matchers
 
 class TestContainerCreator extends OharaTest with Matchers {
 
-  private[this] def fake(): ContainerCreator = (hostname: String,
-                                                imageName: String,
-                                                name: String,
-                                                command: String,
-                                                removeContainerOnExit: Boolean,
-                                                ports: Map[Int, Int],
-                                                envs: Map[String, String],
-                                                route: Map[String, String],
-                                                volumeMapping: Map[String, String],
-                                                networkDriver: NetworkDriver) => {
+  private[this] def fake(): DockerClient.Creator = (hostname: String,
+                                                    imageName: String,
+                                                    name: String,
+                                                    command: String,
+                                                    removeContainerOnExit: Boolean,
+                                                    ports: Map[Int, Int],
+                                                    envs: Map[String, String],
+                                                    route: Map[String, String],
+                                                    volumeMapping: Map[String, String],
+                                                    networkDriver: NetworkDriver) => {
     // we check only the required arguments
     CommonUtils.requireNonEmpty(hostname)
     CommonUtils.requireNonEmpty(imageName)

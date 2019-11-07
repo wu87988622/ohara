@@ -41,16 +41,15 @@ object ContainerApi {
   final case class ContainerInfo(nodeName: String,
                                  id: String,
                                  imageName: String,
-                                 created: String,
                                  state: String,
                                  kind: String,
                                  name: String,
-                                 size: String,
+                                 size: Long,
                                  portMappings: Seq[PortMapping],
                                  environments: Map[String, String],
                                  hostname: String)
 
-  implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat11(ContainerInfo)
+  implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat10(ContainerInfo)
 
   final case class ContainerGroup(clusterKey: ObjectKey, clusterType: String, containers: Seq[ContainerInfo])
   implicit val CONTAINER_GROUP_JSON_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)

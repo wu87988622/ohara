@@ -108,7 +108,8 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
       Try {
         val name = CommonUtils.randomString(10)
         val dockerClient =
-          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+          DockerClient(
+            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
         try {
           val helloWorldImage = "hello-world"
           dockerClient.containerCreator().name(name).imageName(helloWorldImage).create()

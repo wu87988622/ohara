@@ -58,11 +58,10 @@ private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](da
         nodeName = nodeName,
         id = CommonUtils.randomString(10),
         imageName = imageName,
-        created = "unknown",
         state = ContainerState.RUNNING.name,
         FAKE_KIND_NAME,
         name = CommonUtils.randomString(10),
-        size = "unknown",
+        size = -1,
         portMappings = ports.map(p => PortMapping("fake", p, p)).toSeq,
         environments = Map.empty,
         hostname = CommonUtils.randomString(10)

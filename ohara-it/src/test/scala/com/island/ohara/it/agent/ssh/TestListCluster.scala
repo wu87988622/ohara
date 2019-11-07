@@ -44,7 +44,8 @@ class TestListCluster extends IntegrationTest with Matchers {
   else
     nodes.foreach { node =>
       val dockerClient =
-        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+        DockerClient(
+          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
       try {
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
           dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)

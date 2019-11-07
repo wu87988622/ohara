@@ -55,7 +55,7 @@ class TestCollie extends OharaTest with Matchers {
     val node1Name = "node1"
     val node1 = node(node1Name)
     val containerInfo =
-      ContainerInfo("node2", "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
+      ContainerInfo("node2", "0", "fakeimage", "RUNNING", "", "container1", -1, Seq.empty, Map.empty, s"xxx")
     val fakeCollie = new FakeCollie(DataCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, node1Name)
     Await.result(removeNode, TIMEOUT) shouldBe false
@@ -66,7 +66,7 @@ class TestCollie extends OharaTest with Matchers {
     val node1Name = "node1"
     val node1 = node(node1Name)
     val containerInfo =
-      ContainerInfo(node1Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
+      ContainerInfo(node1Name, "0", "fakeimage", "RUNNING", "", "container1", -1, Seq(), Map(), s"xxx-$node1Name")
     val fakeCollie = new FakeCollie(DataCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, node1Name)
     intercept[IllegalArgumentException] {
@@ -79,7 +79,7 @@ class TestCollie extends OharaTest with Matchers {
     val node1Name = "node1"
     val node1 = node(node1Name)
     val containerInfo =
-      ContainerInfo(node1Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
+      ContainerInfo(node1Name, "0", "fakeimage", "RUNNING", "", "container1", -1, Seq(), Map(), s"xxx-$node1Name")
     val fakeCollie = new FakeCollie(DataCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, "node3")
     Await.result(removeNode, TIMEOUT) shouldBe false
@@ -93,10 +93,10 @@ class TestCollie extends OharaTest with Matchers {
     val node1 = node(node1Name)
     val node2 = node(node2Name)
     val container1 =
-      ContainerInfo(node1Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
+      ContainerInfo(node1Name, "0", "fakeimage", "RUNNING", "", "container1", -1, Seq(), Map(), s"xxx-$node1Name")
 
     val container2 =
-      ContainerInfo(node2Name, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx-$node1Name")
+      ContainerInfo(node2Name, "0", "fakeimage", "RUNNING", "", "container1", -1, Seq(), Map(), s"xxx-$node1Name")
 
     val fakeCollie = new FakeCollie(DataCollie(Seq(node1, node2)), Seq(container1, container2))
     val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterKey, "node1")
@@ -114,11 +114,10 @@ class TestCollie extends OharaTest with Matchers {
         nodeName = node1Name,
         id = s"$index",
         imageName = "fakeimage",
-        created = "",
         state = ContainerState.RUNNING.name,
         kind = "",
         name = s"container-$index",
-        size = "0",
+        size = -1,
         portMappings = Seq(),
         environments = Map(),
         hostname = s"xxx-$node1Name"
@@ -152,11 +151,10 @@ class TestCollie extends OharaTest with Matchers {
         nodeName = node1Name,
         id = s"$index",
         imageName = "fakeimage",
-        created = "",
         state = ContainerState.DEAD.name,
         kind = "",
         name = s"container-$index",
-        size = "0",
+        size = -1,
         portMappings = Seq(),
         environments = Map(),
         hostname = s"xxx-$node1Name"

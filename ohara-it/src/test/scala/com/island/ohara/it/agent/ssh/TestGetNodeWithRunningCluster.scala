@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.agent.ssh
 
+import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
@@ -43,7 +44,8 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
   def setup(): Unit = {
     nodes.foreach { node =>
       val dockerClient =
-        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+        DockerClient(
+          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
       try {
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
           dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)

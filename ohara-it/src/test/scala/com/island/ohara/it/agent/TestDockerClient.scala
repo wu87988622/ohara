@@ -16,9 +16,9 @@
 
 package com.island.ohara.it.agent
 
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
@@ -43,8 +43,8 @@ class TestDockerClient extends IntegrationTest with Matchers {
   @Before
   def setup(): Unit =
     EnvTestingUtils.sshNodes().headOption.foreach { node =>
-      client =
-        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+      client = DockerClient(
+        Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
       remoteHostname = node.hostname
     }
 
@@ -99,7 +99,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
       .create()
     TimeUnit.SECONDS.sleep(2)
-    await(() => client.nonExist(name))
+    await(() => !client.containerNames().exists(_.name == name))
   }
 
   @Test
@@ -115,7 +115,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
     try {
       client.containerNames().map(_.name).contains(name) shouldBe true
       TimeUnit.SECONDS.sleep(3)
-      client.container(name).state shouldBe ContainerState.EXITED.name
+      client.container(name).state.toUpperCase shouldBe ContainerState.EXITED.name
     } finally client.forceRemove(name)
   }
 
@@ -226,44 +226,6 @@ class TestDockerClient extends IntegrationTest with Matchers {
       client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
     } finally client.forceRemove(name)
   }
-
-  @Test
-  def testAddConfigs(): Unit = runTest { client =>
-    val name: String = CommonUtils.randomString()
-    val configs = (for (i <- 0 to 10) yield i.toString -> CommonUtils.randomString(i)).toMap
-
-    try {
-      client.addConfig(name, configs) shouldBe name
-      client.inspectConfig(name).keys.forall(configs.contains) shouldBe true
-
-      client.removeConfig(name) shouldBe true
-      an[IOException] should be thrownBy client.inspectConfig(name)
-    } finally client.forceRemoveConfig(name)
-  }
-
-  @Test
-  def nullHostname(): Unit = an[NullPointerException] should be thrownBy DockerClient.builder.hostname(null)
-
-  @Test
-  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy DockerClient.builder.hostname("")
-
-  @Test
-  def negativePort(): Unit = {
-    an[IllegalArgumentException] should be thrownBy DockerClient.builder.port(0)
-    an[IllegalArgumentException] should be thrownBy DockerClient.builder.port(-1)
-  }
-
-  @Test
-  def nullUser(): Unit = an[NullPointerException] should be thrownBy DockerClient.builder.user(null)
-
-  @Test
-  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy DockerClient.builder.user("")
-
-  @Test
-  def nullPassword(): Unit = an[NullPointerException] should be thrownBy DockerClient.builder.password(null)
-
-  @Test
-  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy DockerClient.builder.password("")
 
   @After
   def tearDown(): Unit = Releasable.close(client)

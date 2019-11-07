@@ -201,11 +201,10 @@ class TestServiceCache extends OharaTest with Matchers {
     nodeName = CommonUtils.randomString(),
     id = CommonUtils.randomString(),
     imageName = CommonUtils.randomString(),
-    created = CommonUtils.randomString(),
     state = CommonUtils.randomString(),
     kind = CommonUtils.randomString(),
     name = CommonUtils.randomString(),
-    size = CommonUtils.randomString(),
+    size = CommonUtils.current(),
     portMappings = Seq.empty,
     environments = Map.empty,
     hostname = CommonUtils.randomString()

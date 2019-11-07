@@ -30,6 +30,11 @@ import org.apache.sshd.client.SshClient
 trait Agent extends Releasable {
 
   /**
+    * @return the hostname of remote node
+    */
+  def hostname: String
+
+  /**
     * execute the command by ssh
     * @param command command
     * @return response from remote node
@@ -103,7 +108,7 @@ object Agent {
     }
 
     override def build: Agent = new Agent {
-      private[this] val hostname: String = CommonUtils.requireNonEmpty(Builder.this.hostname)
+      val hostname: String = CommonUtils.requireNonEmpty(Builder.this.hostname)
       private[this] val port: Int = CommonUtils.requireConnectionPort(Builder.this.port)
       private[this] val user: String = CommonUtils.requireNonEmpty(Builder.this.user)
       private[this] val password: String = CommonUtils.requireNonEmpty(Builder.this.password)

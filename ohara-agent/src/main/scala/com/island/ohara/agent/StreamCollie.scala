@@ -87,13 +87,12 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     nodeName = newNode.name,
                     id = Collie.UNKNOWN,
                     imageName = creation.imageName,
-                    created = Collie.UNKNOWN,
                     // this fake container will be cached before refreshing cache so we make it running.
                     // other, it will be filtered later ...
                     state = ContainerState.RUNNING.name,
                     kind = Collie.UNKNOWN,
                     name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
-                    size = Collie.UNKNOWN,
+                    size = -1,
                     portMappings = creation.ports
                       .map(
                         port =>

@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.client
 
+import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
@@ -45,12 +46,8 @@ abstract class WithRemoteConfigurator extends IntegrationTest with Matchers {
   protected val configuratorContainerName: String =
     s"${configuratorContainerKey.group()}-${configuratorContainerKey.name()}"
 
-  private[this] val dockerClient: DockerClient = DockerClient.builder
-    .hostname(node.hostname)
-    .port(node.port.get)
-    .user(node.user.get)
-    .password(node.password.get)
-    .build
+  private[this] val dockerClient: DockerClient = DockerClient(
+    Agent.builder.hostname(node.hostname).port(node.port.get).user(node.user.get).password(node.password.get).build)
   private[this] val imageName = s"oharastream/configurator:${VersionUtils.VERSION}"
 
   @Before

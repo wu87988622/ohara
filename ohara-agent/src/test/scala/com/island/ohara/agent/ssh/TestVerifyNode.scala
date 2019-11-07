@@ -116,7 +116,7 @@ class TestVerifyNode extends OharaTest with Matchers {
     Await.result(collie.verifyNode(node), 30 seconds) match {
       case Success(value) => throw new AssertionError("this should fail!!!")
       case Failure(exception) =>
-        withClue(exception.getMessage)(exception.getMessage.contains(messageWhenFailToRun) shouldBe true)
+        exception.getMessage should include(messageWhenFailToRun)
     }
   }
 
@@ -126,7 +126,7 @@ class TestVerifyNode extends OharaTest with Matchers {
     Await.result(collie.verifyNode(node), 30 seconds) match {
       case Success(value) => throw new AssertionError("this should fail!!!")
       case Failure(exception) =>
-        withClue(exception.getMessage)(exception.getMessage.contains(messageWhenFailToListImages) shouldBe true)
+        exception.getMessage should include(messageWhenFailToListImages)
     }
   }
 
@@ -136,7 +136,7 @@ class TestVerifyNode extends OharaTest with Matchers {
     Await.result(collie.verifyNode(node), 30 seconds) match {
       case Success(value) => throw new AssertionError("this should fail!!!")
       case Failure(exception) =>
-        withClue(exception.getMessage)(exception.getMessage.contains(messageWhenFailToPs) shouldBe true)
+        exception.getMessage should include(messageWhenFailToPs)
     }
   }
 
@@ -146,7 +146,7 @@ class TestVerifyNode extends OharaTest with Matchers {
     Await.result(collie.verifyNode(node), 30 seconds) match {
       case Success(value) => throw new AssertionError("this should fail!!!")
       case Failure(exception) =>
-        withClue(exception.getMessage)(exception.getMessage.contains(messageWhenFailToRemove) shouldBe true)
+        exception.getMessage should include(messageWhenFailToRemove)
     }
   }
 

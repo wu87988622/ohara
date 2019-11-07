@@ -15,12 +15,9 @@
  */
 
 package com.island.ohara.agent.ssh
-import java.util.concurrent.ConcurrentHashMap
-
+import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.agent.fake.FakeDockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.collection.mutable
@@ -31,12 +28,6 @@ trait DockerClientCache extends Releasable {
 
 object DockerClientCache {
   def apply(): DockerClientCache = new DockerClientCacheImpl()
-
-  @VisibleForTesting
-  def fake(): DockerClientCache = new DockerClientCacheImpl() {
-    private[this] val cache = new ConcurrentHashMap[Node, DockerClient]()
-    override def getClient(node: Node): DockerClient = cache.computeIfAbsent(node, _ => new FakeDockerClient(node.name))
-  }
 
   private[this] class DockerClientCacheImpl extends ReleaseOnce with DockerClientCache {
     private[this] val lock = new Object()
@@ -58,7 +49,8 @@ object DockerClientCache {
       lock.synchronized {
         cache.getOrElseUpdate(
           node,
-          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+          DockerClient(
+            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
         )
       }
     }
