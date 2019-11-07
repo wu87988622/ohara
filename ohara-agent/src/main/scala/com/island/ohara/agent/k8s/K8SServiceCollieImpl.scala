@@ -18,7 +18,7 @@ package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.common.util.ReleaseOnce
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -81,4 +81,7 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
         }))
       .map(_.toMap)
 
+  // TODO: complete this implementation (see https://github.com/oharastream/ohara/issues/3148)
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
+    Future.successful(Map.empty)
 }

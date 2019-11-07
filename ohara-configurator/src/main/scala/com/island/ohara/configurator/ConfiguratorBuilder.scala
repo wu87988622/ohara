@@ -127,6 +127,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             password = Some("fake"),
             lastModified = CommonUtils.current(),
             validationReport = None,
+            resources = Seq.empty,
             tags = Map.empty
           )
         }
@@ -355,6 +356,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             services = Seq.empty,
             lastModified = CommonUtils.current(),
             validationReport = None,
+            resources = Seq.empty,
             tags = Map.empty
         ))
         .foreach(store.addIfAbsent[Node])

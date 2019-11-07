@@ -72,6 +72,14 @@ The properties used in describing a node are shown below.
    Please make sure the account has permission to operate docker (and
    k8s service) without sudo.
 
+#. resources (**array(object)**) — the available resources of this node
+
+   - resources[i].name (**string**) — the resource name
+   - resources[i].value (**number**) — the "pure" number of resource
+   - resources[i].used (**option(double)**) — the used "value" in percentage. Noted: this value may be null if the impl is unable
+                                      to calculate the used resource.
+   - resources[i].unit (**string**) — the description of the "value" unit
+
 The following information are tagged by Ohara:
 
 #. lastModified (**long**) — the last time to update this node
@@ -122,6 +130,18 @@ Example Response
         {
           "name": "streamapp",
           "clusterKeys": []
+        }
+      ],
+      "resources": [
+        {
+          "name": "CPU",
+          "value": 4,
+          "unit": "core"
+        },
+        {
+          "name": "Memory",
+          "value": 2048,
+          "unit": "MB"
         }
       ],
       "hostname": "node00",
@@ -186,6 +206,18 @@ Example Response
           "clusterKeys": []
         }
       ],
+      "resources": [
+        {
+          "name": "CPU",
+          "value": 4,
+          "unit": "core"
+        },
+        {
+          "name": "Memory",
+          "value": 2048,
+          "unit": "MB"
+        }
+      ],
       "hostname": "node00",
       "lastModified": 1569569857613,
       "tags": {},
@@ -226,6 +258,18 @@ Example Response
           {
             "name": "streamapp",
             "clusterKeys": []
+          }
+        ],
+        "resources": [
+          {
+            "name": "CPU",
+            "value": 4,
+            "unit": "core"
+          },
+          {
+            "name": "Memory",
+            "value": 2048,
+            "unit": "MB"
           }
         ],
         "hostname": "node00",
@@ -284,6 +328,18 @@ Example Response
         {
           "name": "streamapp",
           "clusterKeys": []
+        }
+      ],
+      "resources": [
+        {
+          "name": "CPU",
+          "value": 4,
+          "unit": "core"
+        },
+        {
+          "name": "Memory",
+          "value": 2048,
+          "unit": "MB"
         }
       ],
       "hostname": "node00",

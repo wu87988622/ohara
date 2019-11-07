@@ -18,8 +18,12 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ServiceCollie
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
+import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.client.configurator.v0.NodeApi._
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
@@ -31,24 +35,96 @@ import scala.concurrent.{ExecutionContext, Future}
 object NodeRoute {
   private[this] lazy val LOG = Logger(NodeRoute.getClass)
 
-  private[this] def updateServices(node: Node)(implicit serviceCollie: ServiceCollie,
-                                               executionContext: ExecutionContext): Future[Node] =
-    updateServices(Seq(node)).map(_.head)
-
   private[this] def updateServices(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
                                                      executionContext: ExecutionContext): Future[Seq[Node]] =
-    serviceCollie.fetchServices(nodes).recover {
-      case e: Throwable =>
-        LOG.error("failed to seek cluster information", e)
-        nodes
-    }
+    serviceCollie
+      .clusters()
+      .map(_.keys.toSeq)
+      .flatMap(clusters =>
+        serviceCollie.configuratorContainerName().map(clusters -> Some(_)).recover {
+          case _: NoSuchElementException => clusters -> None
+      })
+      .map {
+        case (clusters, configuratorContainerOption) =>
+          nodes.map { node =>
+            node.copy(
+              services = Seq(
+                NodeService(
+                  name = NodeApi.ZOOKEEPER_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[ZookeeperClusterStatus])
+                    .map(_.asInstanceOf[ZookeeperClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                ),
+                NodeService(
+                  name = NodeApi.BROKER_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[BrokerClusterStatus])
+                    .map(_.asInstanceOf[BrokerClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                ),
+                NodeService(
+                  name = NodeApi.WORKER_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[WorkerClusterStatus])
+                    .map(_.asInstanceOf[WorkerClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                ),
+                NodeService(
+                  name = NodeApi.STREAM_SERVICE_NAME,
+                  clusterKeys = clusters
+                    .filter(_.isInstanceOf[StreamClusterStatus])
+                    .map(_.asInstanceOf[StreamClusterStatus])
+                    .filter(_.aliveNodes.contains(node.name))
+                    .map(_.key)
+                )
+              ) ++ configuratorContainerOption
+                .filter(_.nodeName == node.hostname)
+                .map(
+                  container =>
+                    Seq(
+                      NodeService(
+                        name = NodeApi.CONFIGURATOR_SERVICE_NAME,
+                        clusterKeys = Seq(ObjectKey.of("N/A", container.name))
+                      )))
+                .getOrElse(Seq.empty)
+            )
+          }
+      }
+      .recover {
+        case e: Throwable =>
+          LOG.error("failed to seek cluster information", e)
+          nodes
+      }
+
+  /**
+    * fetch the hardware resources.
+    */
+  private[this] def updateResources(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
+                                                      executionContext: ExecutionContext): Future[Seq[Node]] =
+    serviceCollie
+      .resources()
+      .map(rs =>
+        nodes.map { node =>
+          node.copy(resources = rs.find(_._1.hostname == node.hostname).map(_._2).getOrElse(Seq.empty))
+      })
+
+  private[this] def updateRuntimeInfo(node: Node)(implicit serviceCollie: ServiceCollie,
+                                                  executionContext: ExecutionContext): Future[Node] =
+    updateRuntimeInfo(Seq(node)).map(_.head)
+
+  private[this] def updateRuntimeInfo(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
+                                                        executionContext: ExecutionContext): Future[Seq[Node]] =
+    updateServices(nodes).flatMap(updateResources)
 
   private[this] def hookOfGet(implicit serviceCollie: ServiceCollie,
-                              executionContext: ExecutionContext): HookOfGet[Node] = updateServices(_)
+                              executionContext: ExecutionContext): HookOfGet[Node] = updateRuntimeInfo
 
   private[this] def hookOfList(implicit serviceCollie: ServiceCollie,
-                               executionContext: ExecutionContext): HookOfList[Node] =
-    Future.traverse(_)(updateServices)
+                               executionContext: ExecutionContext): HookOfList[Node] = updateRuntimeInfo
 
   private[this] def creationToNode(creation: Creation): Future[Node] = Future.successful(
     Node(
@@ -59,6 +135,7 @@ object NodeRoute {
       services = Seq.empty,
       lastModified = CommonUtils.current(),
       validationReport = None,
+      resources = Seq.empty,
       tags = creation.tags
     ))
 

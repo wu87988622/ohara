@@ -40,6 +40,7 @@ class TestCollie extends OharaTest with Matchers {
     services = Seq.empty,
     lastModified = CommonUtils.current(),
     validationReport = None,
+    resources = Seq.empty,
     tags = Map.empty
   )
 

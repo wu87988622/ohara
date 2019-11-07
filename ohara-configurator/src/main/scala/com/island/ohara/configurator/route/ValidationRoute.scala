@@ -135,6 +135,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
               services = Seq.empty,
               lastModified = CommonUtils.current(),
               validationReport = None,
+              resources = Seq.empty,
               tags = Map.empty
             ))
             .map {

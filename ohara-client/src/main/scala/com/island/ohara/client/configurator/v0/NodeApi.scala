@@ -84,6 +84,9 @@ object NodeApi {
   case class NodeService(name: String, clusterKeys: Seq[ObjectKey])
   implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
 
+  case class Resource(name: String, value: Double, unit: String, used: Option[Double])
+  implicit val RESOURCE_JSON_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource)
+
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
     */
@@ -94,6 +97,7 @@ object NodeApi {
                   services: Seq[NodeService],
                   lastModified: Long,
                   validationReport: Option[ValidationReport],
+                  resources: Seq[Resource],
                   tags: Map[String, JsValue])
       extends Data {
     // Node does not support to define group
@@ -106,7 +110,7 @@ object NodeApi {
     override def kind: String = "node"
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat8(Node)
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat9(Node)
 
   /**
     * used to generate the payload and url for POST/PUT request.

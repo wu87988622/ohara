@@ -20,16 +20,11 @@ import java.util.concurrent.{ExecutorService, Executors}
 
 import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import com.island.ohara.agent.ssh.ServiceCollieImpl
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
-import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
-import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 
@@ -86,70 +81,6 @@ trait ServiceCollie extends Releasable {
     * @return the images stored by each node
     */
   def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]]
-
-  /**
-    * fetch all clusters and then update the services of input nodes.
-    * NOTED: The input nodes which are not hosted by this cluster collie are not updated!!!
-    * @param nodes nodes
-    * @return updated nodes
-    */
-  def fetchServices(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
-    clusters()
-      .map(_.keys.toSeq)
-      .flatMap(clusters =>
-        configuratorContainerName().map(clusters -> Some(_)).recover {
-          case _: NoSuchElementException => clusters -> None
-      })
-      .map {
-        case (clusters, configuratorContainerOption) =>
-          nodes.map { node =>
-            node.copy(
-              services = Seq(
-                NodeService(
-                  name = NodeApi.ZOOKEEPER_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.isInstanceOf[ZookeeperClusterStatus])
-                    .map(_.asInstanceOf[ZookeeperClusterStatus])
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                ),
-                NodeService(
-                  name = NodeApi.BROKER_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.isInstanceOf[BrokerClusterStatus])
-                    .map(_.asInstanceOf[BrokerClusterStatus])
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                ),
-                NodeService(
-                  name = NodeApi.WORKER_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.isInstanceOf[WorkerClusterStatus])
-                    .map(_.asInstanceOf[WorkerClusterStatus])
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                ),
-                NodeService(
-                  name = NodeApi.STREAM_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.isInstanceOf[StreamClusterStatus])
-                    .map(_.asInstanceOf[StreamClusterStatus])
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                )
-              ) ++ configuratorContainerOption
-                .filter(_.nodeName == node.hostname)
-                .map(
-                  container =>
-                    Seq(
-                      NodeService(
-                        name = NodeApi.CONFIGURATOR_SERVICE_NAME,
-                        clusterKeys = Seq(ObjectKey.of("N/A", container.name))
-                      )))
-                .getOrElse(Seq.empty)
-            )
-          }
-      }
 
   /**
     * Verify the node are available to be used in collie.
@@ -217,6 +148,16 @@ trait ServiceCollie extends Releasable {
     * @return container and log
     */
   def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]]
+
+  /**
+    * Fetch the available hardware resources of hosted nodes.
+    * Noted: the different collie may return different resources. The caller should NOT assume the content of the
+    * resources.
+    *
+    * @param executionContext thread pool
+    * @return hardware resources of all hosted nodes
+    */
+  def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]]
 }
 
 object ServiceCollie {

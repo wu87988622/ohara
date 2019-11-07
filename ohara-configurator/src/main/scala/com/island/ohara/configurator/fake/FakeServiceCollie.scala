@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{DataCollie, ServiceCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.configurator.store.DataStore
 
@@ -67,5 +67,8 @@ private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
     Future.successful(Seq.empty)
 
   override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+    Future.successful(Map.empty)
+
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
     Future.successful(Map.empty)
 }

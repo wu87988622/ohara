@@ -21,7 +21,7 @@ import java.util.concurrent.{ExecutorService, TimeUnit}
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
@@ -160,4 +160,8 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
               }
           }
       )).toMap)
+
+  // TODO: complete this implementation (see https://github.com/oharastream/ohara/issues/3148)
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
+    Future.successful(Map.empty)
 }

@@ -60,6 +60,7 @@ object EnvTestingUtils {
             services = Seq.empty,
             lastModified = CommonUtils.current(),
             validationReport = None,
+            resources = Seq.empty,
             tags = Map.empty
         ))
         .toSeq)
@@ -86,6 +87,7 @@ object EnvTestingUtils {
         services = Seq.empty,
         lastModified = CommonUtils.current(),
         validationReport = None,
+        resources = Seq.empty,
         tags = Map.empty
       )
     }.toSeq)
