@@ -306,4 +306,16 @@ class TestNodeApi extends OharaTest with Matchers {
       .request
       .hostname(CommonUtils.randomString(LIMIT_OF_HOSTNAME_LENGTH + 1))
       .creation
+
+  @Test
+  def testCoresResource(): Unit = Resource.cpu(2, None).unit shouldBe "cores"
+
+  @Test
+  def testCoreResource(): Unit = Resource.cpu(1, None).unit shouldBe "core"
+
+  @Test
+  def testSmallMemoryResource(): Unit = Resource.memory(1024, None).unit shouldBe "bytes"
+
+  @Test
+  def testLargeMemoryResource(): Unit = Resource.memory(Long.MaxValue, None).unit shouldBe "MB"
 }

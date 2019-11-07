@@ -85,7 +85,43 @@ object NodeApi {
   implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
 
   case class Resource(name: String, value: Double, unit: String, used: Option[Double])
-  implicit val RESOURCE_JSON_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource)
+  object Resource {
+
+    /**
+      * generate a resource based on cores if the number of core is large than 1. Otherwise, the size is in core.
+      * @param cores cores
+      * @param used used
+      * @return memory resource
+      */
+    def cpu(cores: Int, used: Option[Double]): Resource = Resource(
+      name = "CPU",
+      value = cores,
+      unit = if (cores > 1) "cores" else "core",
+      used = used
+    )
+
+    /**
+      * generate a resource based on MB if the input value is large than MB. Otherwise, the size is in bytes.
+      * @param bytes bytes
+      * @param used used
+      * @return memory resource
+      */
+    def memory(bytes: Long, used: Option[Double]): Resource = if (bytes < 1024 * 1024)
+      Resource(
+        name = "Memory",
+        value = bytes,
+        unit = "bytes",
+        used = used
+      )
+    else
+      Resource(
+        name = "Memory",
+        value = (bytes / 1024).toDouble / 1024F,
+        unit = "MB",
+        used = used
+      )
+  }
+  implicit val RESOURCE_JSON_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource.apply)
 
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.

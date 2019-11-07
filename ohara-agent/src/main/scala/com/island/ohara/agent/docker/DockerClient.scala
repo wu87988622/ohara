@@ -21,6 +21,7 @@ import java.util.Objects
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient.{Creator, Inspector}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping}
+import com.island.ohara.client.configurator.v0.NodeApi.Resource
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
@@ -126,6 +127,8 @@ trait DockerClient extends Releasable {
   def imageNames(): Seq[String]
 
   def containerInspector(containerName: String): Inspector
+
+  def resources(): Seq[Resource]
 }
 
 object DockerClient {
@@ -172,6 +175,9 @@ object DockerClient {
                                    Config: Config,
                                    NetworkSettings: ContainerNetwork)
   private[this] implicit val DETAILS_FORMAT: RootJsonFormat[Details] = jsonFormat7(Details)
+
+  private[this] case class Info(NCPU: Int, MemTotal: Long)
+  private[this] implicit val INFO_FORMAT: RootJsonFormat[Info] = jsonFormat2(Info)
 
   //-----------------------------[constructor]-----------------------------//
   def apply(agent: Agent): DockerClient = new DockerClient {
@@ -327,6 +333,18 @@ object DockerClient {
       .execute("docker images --format {{.Repository}}:{{.Tag}}")
       .map(_.split("\n").toSeq)
       .filter(_.nonEmpty)
+      .getOrElse(Seq.empty)
+
+    override def resources(): Seq[Resource] = agent
+      .execute("docker info --format '{{json .}}'")
+      .map(_.parseJson)
+      .map(INFO_FORMAT.read)
+      .map { info =>
+        Seq(
+          Resource.cpu(info.NCPU, None),
+          Resource.memory(info.MemTotal, None)
+        )
+      }
       .getOrElse(Seq.empty)
   }
 

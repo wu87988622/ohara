@@ -161,7 +161,14 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
           }
       )).toMap)
 
-  // TODO: complete this implementation (see https://github.com/oharastream/ohara/issues/3148)
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
-    Future.successful(Map.empty)
+    dataCollie
+      .values[Node]()
+      .map(
+        _.map(
+          node =>
+            node -> dockerCache.exec(
+              node,
+              _.resources()
+          )).toMap)
 }
