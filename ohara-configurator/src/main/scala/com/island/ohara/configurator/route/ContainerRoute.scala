@@ -33,16 +33,16 @@ object ContainerRoute {
 
   def apply(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     path(CONTAINER_PREFIX_PATH / Segment)({ clusterName =>
-      parameter(GROUP_KEY ?) {
-        groupOption =>
+      parameter(GROUP_KEY ? GROUP_DEFAULT) {
+        group =>
           get {
             complete(
               serviceCollie
                 .clusters()
-                .map(_.filter(_._1.key == ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), clusterName)).map {
+                .map(_.filter(_._1.key == ObjectKey.of(group, clusterName)).map {
                   case (cluster, containers) =>
                     ContainerGroup(
-                      clusterKey = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), clusterName),
+                      clusterKey = ObjectKey.of(group, clusterName),
                       clusterType = cluster match {
                         case _: ZookeeperClusterStatus => "zookeeper"
                         case _: BrokerClusterStatus    => "broker"

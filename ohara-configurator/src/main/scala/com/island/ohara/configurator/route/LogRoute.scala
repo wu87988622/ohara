@@ -74,27 +74,24 @@ object LogRoute {
                 )
             })
       } ~ path(ZOOKEEPER_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ?) { groupOption =>
+        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
           val clusterKey =
-            ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)
+            ObjectKey.of(group, clusterName)
           route(clusterKey, collie.zookeeperCollie.logs(clusterKey))
         }
       } ~ path(BROKER_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ?) { groupOption =>
-          val clusterKey =
-            ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)
+        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          val clusterKey = ObjectKey.of(group, clusterName)
           route(clusterKey, collie.brokerCollie.logs(clusterKey))
         }
       } ~ path(WORKER_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ?) { groupOption =>
-          val clusterKey =
-            ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)
+        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          val clusterKey = ObjectKey.of(group, clusterName)
           route(clusterKey, collie.workerCollie.logs(clusterKey))
         }
       } ~ path(STREAM_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ?) { groupOption =>
-          val clusterKey =
-            ObjectKey.of(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT), clusterName)
+        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          val clusterKey = ObjectKey.of(group, clusterName)
           route(clusterKey, collie.streamCollie.logs(clusterKey))
         }
       }

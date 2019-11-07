@@ -217,12 +217,10 @@ object RouteBuilder {
               }
             }
         } ~ path(Segment) { name =>
-          parameter(GROUP_KEY ?) { groupOption =>
+          parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
             val key =
               ObjectKey.of(
-                rm.check(GROUP_KEY,
-                         JsString(groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)))
-                  .value,
+                rm.check(GROUP_KEY, JsString(group)).value,
                 rm.check(NAME_KEY, JsString(name)).value
               )
             get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~

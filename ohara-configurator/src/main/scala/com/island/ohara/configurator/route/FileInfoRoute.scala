@@ -26,6 +26,8 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
+import akka.http.scaladsl.unmarshalling.Unmarshaller
+import akka.stream.Materializer
 import akka.util.ByteString
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, OharaJsonFormat}
@@ -74,6 +76,14 @@ private[configurator] object FileInfoRoute {
         })
     }
 
+  /**
+    * we assume the tags in query parameter is written to tags={"a":"b", "b":111 ...}
+    */
+  private[this] val tagsUnmarshaller = new Unmarshaller[String, JsObject] {
+    override def apply(value: String)(implicit ec: ExecutionContext, materializer: Materializer): Future[JsObject] =
+      Future.successful(value.parseJson.asJsObject)
+  }
+
   private[this] def customPost(hostname: String, port: Int, version: String)(
     implicit store: DataStore,
     executionContext: ExecutionContext): () => Route = () =>
@@ -83,11 +93,10 @@ private[configurator] object FileInfoRoute {
       // timeout = DEFAULT_FILE_SIZE_BYTES(50MB) / 10Mbps upload = 40 seconds
       //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
       toStrictEntity(40.seconds) {
-        formFields((GROUP_KEY ?, TAGS_KEY ?)) {
-          case (groupOption, tagsString) =>
+        formFields((GROUP_KEY ? GROUP_DEFAULT, TAGS_KEY.as(tagsUnmarshaller) ? JsObject.empty)) {
+          case (group, tags) =>
             storeUploadedFile(FIELD_NAME, fileInfo => File.createTempFile(fileInfo.fileName, ".tmp")) {
               case (metadata, file) =>
-                val group = groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
                 val name = metadata.fileName
                 val key = ObjectKey.of(group, name)
                 complete(store.exist[FileInfo](key).flatMap {
@@ -100,7 +109,7 @@ private[configurator] object FileInfoRoute {
                       lastModified = CommonUtils.current(),
                       bytes = try Files.readAllBytes(file.toPath)
                       finally file.delete(),
-                      tags = tagsString.map(_.parseJson.asJsObject.fields).getOrElse(Map.empty)
+                      tags = tags.fields
                     ))
                 })
             }

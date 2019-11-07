@@ -49,10 +49,10 @@ object InfoRoute extends SprayJsonSupport {
                         executionContext: ExecutionContext): server.Route =
     pathPrefix(INFO_PREFIX_PATH) {
       path(STREAM_PREFIX_PATH / Segment) { fileName =>
-        parameter(GROUP_KEY ?) { groupOption =>
+        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
           complete(
             dataStore
-              .value[FileInfo](ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), fileName))
+              .value[FileInfo](ObjectKey.of(group, fileName))
               .map(_.url)
               .flatMap(streamCollie.loadDefinition)
               .map { definition =>

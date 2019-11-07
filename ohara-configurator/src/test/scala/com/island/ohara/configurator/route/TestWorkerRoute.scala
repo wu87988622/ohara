@@ -44,7 +44,7 @@ class TestWorkerRoute extends OharaTest with Matchers {
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   @Before
   def setup(): Unit = {

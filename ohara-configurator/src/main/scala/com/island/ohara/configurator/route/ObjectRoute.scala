@@ -37,8 +37,7 @@ private[configurator] object ObjectRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(OBJECT_PREFIX_PATH) {
       pathEnd(get(complete(store.raws().map(_.map(toObject))))) ~ path(Segment) { name =>
-        parameter(GROUP_KEY ?) { groupOption =>
-          val group = groupOption.getOrElse(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
+        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
           get(complete(store.raws(ObjectKey.of(group, name)).map(_.map(toObject))))
         }
       }
