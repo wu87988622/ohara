@@ -19,12 +19,12 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
-import * as info from './infoApi';
+import * as inspect from './inspectApi';
 
 const url = URL.BROKER_URL;
 
 export const create = async (params, body) => {
-  body = body ? body : await info.getBrokerInfo();
+  body = body ? body : await inspect.getBrokerInfo();
   const requestBody = requestUtil(params, broker, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, broker);

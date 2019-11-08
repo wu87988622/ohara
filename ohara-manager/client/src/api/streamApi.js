@@ -19,14 +19,14 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
-import * as info from './infoApi';
+import * as inspect from './inspectApi';
 
 const url = URL.STREAM_URL;
 
 export const create = async (params, body) => {
   body = body
     ? body
-    : await info.getStreamsInfo({
+    : await inspect.getStreamsInfo({
         group: params.jarKey.group,
         name: params.jarKey.name,
       });

@@ -20,26 +20,21 @@ const BASE_URL = '/api';
 export const ZOOKEEPER_URL = `${BASE_URL}/zookeepers`;
 export const BROKER_URL = `${BASE_URL}/brokers`;
 export const WORKER_URL = `${BASE_URL}/workers`;
+export const STREAM_URL = `${BASE_URL}/streams`;
 
-// Connectors
+// Others
 export const HDFS_URL = `${BASE_URL}/hdfs`;
 export const JDBC_URL = `${BASE_URL}/jdbc`;
 export const FTP_URL = `${BASE_URL}/ftp`;
 export const RDB_URL = `${BASE_URL}/rdb`;
 export const CONNECTOR_URL = `${BASE_URL}/connectors`;
-
 export const NODE_URL = `${BASE_URL}/nodes`;
 export const PIPELINE_URL = `${BASE_URL}/pipelines`;
-export const STREAM_URL = `${BASE_URL}/streams`;
 export const TOPIC_URL = `${BASE_URL}/topics`;
 export const LOG_URL = `${BASE_URL}/logs`;
-
-// Validate
 export const VALIDATE_URL = `${BASE_URL}/validate`;
-
-// Others
 export const CONTAINER_URL = `${BASE_URL}/containers`;
-export const INFO_URL = `${BASE_URL}/info`;
+export const INSPECT_URL = `${BASE_URL}/inspect`;
 export const FILE_URL = `${BASE_URL}/files`;
 
 // Helper function

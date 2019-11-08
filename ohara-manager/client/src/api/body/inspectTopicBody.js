@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import { string, array } from '../utils/validation';
+import { array } from '../utils/validation';
 
 export const response = () => {
-  const imageName = [string];
-  const settingDefinitions = [array];
+  const messages = [array];
 
   return {
-    imageName,
-    settingDefinitions,
+    messages,
   };
 };
