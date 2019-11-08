@@ -18,12 +18,13 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 import PropTypes from 'prop-types';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-import IconButton from '@material-ui/core/IconButton';
 import StorageIcon from '@material-ui/icons/Storage';
 import WavesIcon from '@material-ui/icons/Waves';
 import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import Typography from '@material-ui/core/Typography';
+
+import { Button } from 'components/common/Form';
 
 const StyledToolbar = styled.div(
   ({ theme }) => css`
@@ -55,19 +56,19 @@ const Toolbar = props => {
   return (
     <StyledToolbar>
       <div className="toolbox-toggle">
-        <ButtonGroup variant="contained" color="default" size="small">
-          <IconButton onClick={() => handleClick('source')}>
+        <ButtonGroup size="small">
+          <Button onClick={() => handleClick('source')}>
             <FlightTakeoffIcon />
-          </IconButton>
-          <IconButton onClick={() => handleClick('topic')}>
+          </Button>
+          <Button onClick={() => handleClick('topic')}>
             <StorageIcon />
-          </IconButton>
-          <IconButton onClick={() => handleClick('streamApp')}>
+          </Button>
+          <Button onClick={() => handleClick('streamApp')}>
             <WavesIcon />
-          </IconButton>
-          <IconButton onClick={() => handleClick('sink')}>
+          </Button>
+          <Button onClick={() => handleClick('sink')}>
             <FlightLandIcon />
-          </IconButton>
+          </Button>
         </ButtonGroup>
         <Typography variant="body2">Insert</Typography>
       </div>
