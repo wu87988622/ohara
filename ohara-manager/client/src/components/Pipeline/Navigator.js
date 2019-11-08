@@ -31,6 +31,7 @@ import { Dialog } from 'components/common/Dialog';
 import { useSnackbar } from 'context/SnackbarContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useWorkspace } from 'context/WorkspaceContext';
+import { useEditWorkspace } from 'context/EditWorkspaceContext';
 import {
   required,
   validServiceName,
@@ -52,6 +53,10 @@ const Navigator = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { workspaceName } = useParams();
   const { findByWorkspaceName } = useWorkspace();
+  const {
+    setIsOpen: setIsEditWorkspaceOpen,
+    setTab: setEditWorkspaceTab,
+  } = useEditWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
 
   const handleClick = event => {
@@ -60,6 +65,12 @@ const Navigator = () => {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleMenuItemClick = key => () => {
+    setIsEditWorkspaceOpen(true);
+    setEditWorkspaceTab(key);
+    handleClose();
   };
 
   const onSubmit = async ({ pipelineName }, form) => {
@@ -98,10 +109,18 @@ const Navigator = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleClose}>Overview</MenuItem>
-        <MenuItem onClick={handleClose}>Topics</MenuItem>
-        <MenuItem onClick={handleClose}>Files</MenuItem>
-        <MenuItem onClick={handleClose}>Settings</MenuItem>
+        <MenuItem key="overview" onClick={handleMenuItemClick('overview')}>
+          Overview
+        </MenuItem>
+        <MenuItem key="topics" onClick={handleMenuItemClick('topics')}>
+          Topics
+        </MenuItem>
+        <MenuItem key="files" onClick={handleMenuItemClick('files')}>
+          Files
+        </MenuItem>
+        <MenuItem key="settings" onClick={handleMenuItemClick('settings')}>
+          Settings
+        </MenuItem>
       </Menu>
 
       <Form

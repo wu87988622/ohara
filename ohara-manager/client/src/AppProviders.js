@@ -27,6 +27,7 @@ import { SnackbarProvider } from './context/SnackbarContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
+import { EditWorkspaceProvider } from './context/EditWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
 import { TopicProvider } from './context/TopicContext';
 
@@ -38,11 +39,13 @@ const AppProviders = ({ children }) => {
           <SnackbarProvider>
             <NewWorkspaceProvider>
               <WorkspaceProvider>
-                <PipelineProvider>
-                  <TopicProvider>
-                    <NodeDialogProvider>{children}</NodeDialogProvider>
-                  </TopicProvider>
-                </PipelineProvider>
+                <EditWorkspaceProvider>
+                  <PipelineProvider>
+                    <TopicProvider>
+                      <NodeDialogProvider>{children}</NodeDialogProvider>
+                    </TopicProvider>
+                  </PipelineProvider>
+                </EditWorkspaceProvider>
               </WorkspaceProvider>
             </NewWorkspaceProvider>
           </SnackbarProvider>
