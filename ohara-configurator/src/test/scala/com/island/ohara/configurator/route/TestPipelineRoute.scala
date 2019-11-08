@@ -51,6 +51,7 @@ class TestPipelineRoute extends OharaTest {
   private[this] val nodeNames = workerClusterInfo.nodeNames
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+
   @Test
   def testFlowAndObjects(): Unit = {
     val topic = result(
@@ -81,7 +82,7 @@ class TestPipelineRoute extends OharaTest {
 
     pipeline = result(pipelineApi.get(pipeline.key))
 
-    // topic is gone
+    // connector is gone
     pipeline.objects.size shouldBe 1
 
     val pipelines = result(pipelineApi.list())
@@ -95,9 +96,9 @@ class TestPipelineRoute extends OharaTest {
     val bk = result(brokerApi.list()).head.key
 
     // we can't remove the broker cluster via APIs since our strong check obstruct us from entering dangerous deletion
-    result(configurator.serviceCollie.brokerCollie.remove(bk))
+    result(configurator.serviceCollie.brokerCollie.remove(bk)) shouldBe true
 
-    // worker cluster is gone so the object abstract should contain error
+    // broker cluster is gone so the object abstract should contain error
     pipeline = result(pipelineApi.get(pipeline.key))
     // topic is gone
     pipeline.objects.size shouldBe 1

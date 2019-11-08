@@ -67,13 +67,13 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
 
   override def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(
     implicit executionContext: ExecutionContext): Future[TopicAdmin] =
-    if (bkConnectionProps == null) {
-      if (!clusterCache.keySet().asScala.exists(_.key == brokerClusterInfo.key))
-        Future.failed(new NoSuchClusterException(s"cluster:${brokerClusterInfo.key} is not running"))
+    if (bkConnectionProps != null) Future.successful(TopicAdmin(bkConnectionProps))
+    else if (clusterCache.keySet().asScala.exists(_.key == brokerClusterInfo.key)) {
       val fake = new FakeTopicAdmin
       val r = fakeAdminCache.putIfAbsent(brokerClusterInfo, fake)
       Future.successful(if (r == null) fake else r)
-    } else Future.successful(TopicAdmin(bkConnectionProps))
+    } else
+      Future.failed(new NoSuchClusterException(s"cluster:${brokerClusterInfo.key} is not running"))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    containerInfo: ContainerInfo,
