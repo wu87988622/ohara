@@ -28,14 +28,14 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.mockito.MockitoSugar._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestConfiguratorBuilder extends OharaTest with Matchers {
+class TestConfiguratorBuilder extends OharaTest {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   @Test

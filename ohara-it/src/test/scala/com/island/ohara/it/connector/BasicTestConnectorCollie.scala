@@ -20,10 +20,10 @@ import java.io.File
 import java.sql.{PreparedStatement, Statement, Timestamp}
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, FileInfoApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, FileInfoApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Row, Serializer}
@@ -38,13 +38,13 @@ import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.connector.TaskSetting
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
+abstract class BasicTestConnectorCollie extends IntegrationTest {
   private[this] val log = Logger(classOf[BasicTestConnectorCollie])
   private[this] val JAR_FOLDER_KEY: String = "ohara.it.jar.folder"
   private[this] val jarFolderPath = sys.env.getOrElse(JAR_FOLDER_KEY, "/jar")
@@ -69,8 +69,6 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   protected def dbPassword(): Option[String]
   protected def dbName(): String
   protected def insertDataSQL(): String
-  protected def createor(): Unit
-
   protected def BINARY_TYPE_NAME: String
 
   /**
@@ -93,7 +91,11 @@ abstract class BasicTestConnectorCollie extends IntegrationTest with Matchers {
   @Before
   final def setup(): Unit = {
     checkDataBaseInfo() //Check db info
-    createor()
+    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    nodes.foreach { node =>
+      result(
+        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+    }
     uploadJDBCJarToConfigurator() //For upload JDBC jar
 
     // Create database client

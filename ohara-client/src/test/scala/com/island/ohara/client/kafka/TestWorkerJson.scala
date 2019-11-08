@@ -23,9 +23,9 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{Creation, Validation}
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json._
-class TestWorkerJson extends OharaTest with Matchers {
+class TestWorkerJson extends OharaTest {
 
   @Test
   def testValidatedValue(): Unit = {

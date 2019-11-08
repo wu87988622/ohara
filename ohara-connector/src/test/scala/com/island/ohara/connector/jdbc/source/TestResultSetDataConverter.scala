@@ -24,10 +24,10 @@ import com.island.ohara.connector.jdbc.datatype.{MySQLDataTypeConverter, RDBData
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import org.junit.Test
 import org.mockito.Mockito._
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
 
-class TestResultSetDataConverter extends OharaTest with Matchers with MockitoSugar {
+class TestResultSetDataConverter extends OharaTest with MockitoSugar {
   private[this] val VARCHAR: String = "VARCHAR"
   private[this] val TIMESTAMP: String = "TIMESTAMP"
   private[this] val INT: String = "INT"

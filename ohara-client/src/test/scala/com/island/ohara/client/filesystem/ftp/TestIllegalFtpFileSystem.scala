@@ -20,9 +20,9 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestIllegalFtpFileSystem extends OharaTest with Matchers {
+class TestIllegalFtpFileSystem extends OharaTest {
 
   private[this] val server = FtpServer.local()
 

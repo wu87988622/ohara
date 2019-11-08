@@ -25,19 +25,18 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConfiguratorGroup
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import com.typesafe.scalalogging.Logger
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 @Category(Array(classOf[SshConfiguratorGroup]))
-class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
+class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
 
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 

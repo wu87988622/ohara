@@ -23,13 +23,13 @@ import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-class TestConnectorRoute extends OharaTest with Matchers {
+class TestConnectorRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)

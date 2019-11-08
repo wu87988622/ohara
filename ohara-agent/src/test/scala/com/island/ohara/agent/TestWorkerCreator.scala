@@ -22,12 +22,12 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DeserializationException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestWorkerCreator extends OharaTest with Matchers {
+class TestWorkerCreator extends OharaTest {
 
   private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext, creation) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.

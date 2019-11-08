@@ -26,13 +26,13 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStreamCreator extends OharaTest with Matchers {
+class TestStreamCreator extends OharaTest {
 
   private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of("group", name)

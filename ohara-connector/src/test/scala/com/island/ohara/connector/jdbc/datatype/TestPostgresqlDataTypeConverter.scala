@@ -23,11 +23,11 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 import org.junit.Test
 import org.mockito.Mockito.when
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.mockito.MockitoSugar
 
-class TestPostgresqlDataTypeConverter extends OharaTest with Matchers with MockitoSugar {
+class TestPostgresqlDataTypeConverter extends OharaTest with MockitoSugar {
   private[this] val BOOLEAN: String = "BOOL"
   private[this] val BIT: String = "BIT"
   private[this] val INT: String = "INT4"

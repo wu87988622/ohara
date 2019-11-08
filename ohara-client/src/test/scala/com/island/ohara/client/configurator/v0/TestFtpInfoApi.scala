@@ -19,12 +19,12 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.json._
-class TestFtpInfoApi extends OharaTest with Matchers {
+class TestFtpInfoApi extends OharaTest {
 
   @Test
   def nullKeyInGet(): Unit =

@@ -21,9 +21,9 @@ import java.util.Objects
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestContainerCreator extends OharaTest with Matchers {
+class TestContainerCreator extends OharaTest {
 
   private[this] def fake(): DockerClient.Creator = (hostname: String,
                                                     imageName: String,

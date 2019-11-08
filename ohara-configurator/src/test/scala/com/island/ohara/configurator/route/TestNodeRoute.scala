@@ -23,13 +23,13 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{DeserializationException, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
-class TestNodeRoute extends OharaTest with Matchers {
+class TestNodeRoute extends OharaTest {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, numberOfCluster).build()
 

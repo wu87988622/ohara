@@ -28,13 +28,13 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-class TestK8SClient extends OharaTest with Matchers {
+class TestK8SClient extends OharaTest {
   private[this] val namespace: String = K8SClient.NAMESPACE_DEFAULT_VALUE
 
   @Test

@@ -19,10 +19,10 @@ package com.island.ohara.connector.jio
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
-class TestJioSettings extends OharaTest with Matchers {
+class TestJioSettings extends OharaTest {
 
   @Test
   def testBufferSetting(): Unit = {

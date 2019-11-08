@@ -26,11 +26,11 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.JsValue
 
 import scala.concurrent.duration._
-class TestServiceCache extends OharaTest with Matchers {
+class TestServiceCache extends OharaTest {
 
   @Test
   def testRequestKey(): Unit = {

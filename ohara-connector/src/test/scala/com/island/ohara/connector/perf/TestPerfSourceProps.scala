@@ -24,12 +24,12 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
-class TestPerfSourceProps extends OharaTest with Matchers {
+class TestPerfSourceProps extends OharaTest {
   private[this] val props = PerfSourceProps(10, 10 seconds)
   private[this] val topicKeys = Set(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
   private[this] val schema = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())

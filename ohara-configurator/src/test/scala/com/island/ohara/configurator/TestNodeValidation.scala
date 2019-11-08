@@ -20,12 +20,12 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.service.SshdServer
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-class TestNodeValidation extends OharaTest with Matchers {
+class TestNodeValidation extends OharaTest {
 
   private[this] val configurator = Configurator.builder.fake().build()
   private[this] val sshd = SshdServer.local()

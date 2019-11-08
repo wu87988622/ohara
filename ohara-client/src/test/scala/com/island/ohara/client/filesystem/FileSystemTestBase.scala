@@ -20,11 +20,11 @@ import com.island.ohara.common.exception.OharaFileSystemException
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 
-abstract class FileSystemTestBase extends OharaTest with Matchers {
+abstract class FileSystemTestBase extends OharaTest {
 
   protected val fileSystem: FileSystem
 

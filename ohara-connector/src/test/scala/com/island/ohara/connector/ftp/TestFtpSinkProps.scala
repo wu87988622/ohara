@@ -18,9 +18,9 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestFtpSinkProps extends OharaTest with Matchers {
+class TestFtpSinkProps extends OharaTest {
 
   @Test
   def testGetter(): Unit = {

@@ -36,13 +36,13 @@ import com.island.ohara.configurator.{Configurator, ReflectionUtils}
 import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestInspectRoute extends OharaTest with Matchers {
+class TestInspectRoute extends OharaTest {
   private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder.fake().build()
 

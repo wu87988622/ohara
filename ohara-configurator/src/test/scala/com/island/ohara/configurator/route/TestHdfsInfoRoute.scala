@@ -23,14 +23,14 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{DeserializationException, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class TestHdfsInfoRoute extends OharaTest with Matchers {
+class TestHdfsInfoRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val hdfsApi = HdfsInfoApi.access.hostname(configurator.hostname).port(configurator.port)

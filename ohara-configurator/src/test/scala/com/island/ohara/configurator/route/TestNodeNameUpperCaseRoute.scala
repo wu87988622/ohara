@@ -21,13 +21,13 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestNodeNameUpperCaseRoute extends OharaTest with Matchers {
+class TestNodeNameUpperCaseRoute extends OharaTest {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
     Configurator.builder.fake(numberOfCluster, numberOfCluster, "zookeepercluster").build()

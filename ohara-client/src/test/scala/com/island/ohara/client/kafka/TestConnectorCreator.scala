@@ -18,9 +18,9 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestConnectorCreator extends OharaTest with Matchers {
+class TestConnectorCreator extends OharaTest {
 
   private[this] val notWorkingClient = WorkerClient("localhost:2222")
 

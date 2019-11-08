@@ -29,7 +29,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.ConnectorTestUtils
 import com.island.ohara.kafka.Producer
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsString}
 
@@ -41,7 +41,7 @@ import scala.concurrent.{Await, Future}
   * The basic test cases for JsonOut.
   * This class assumes that the clusters env is prepared and all clusters are accessible.
   */
-trait BasicTestsOfJsonOut extends Matchers {
+trait BasicTestsOfJsonOut {
   protected def workerClient: WorkerClient
   protected def brokersConnProps: String
   protected def freePort: Int

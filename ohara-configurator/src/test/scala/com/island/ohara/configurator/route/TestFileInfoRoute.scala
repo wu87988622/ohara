@@ -25,13 +25,13 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-class TestFileInfoRoute extends OharaTest with Matchers {
+class TestFileInfoRoute extends OharaTest {
 
   private[this] val configurator: Configurator = Configurator.builder.fake().build()
   private[this] val streamApi: StreamApi.Access =

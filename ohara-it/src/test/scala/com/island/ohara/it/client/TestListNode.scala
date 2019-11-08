@@ -18,7 +18,7 @@ package com.island.ohara.it.client
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import org.junit.Test
-
+import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestListNode extends WithRemoteConfigurator {

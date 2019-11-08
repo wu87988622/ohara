@@ -18,10 +18,10 @@ package com.island.ohara.client.filesystem.ftp
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
-class TestFtpFileSystemBuilder extends OharaTest with Matchers {
+class TestFtpFileSystemBuilder extends OharaTest {
 
   @Test
   def ignoreHostname(): Unit = {

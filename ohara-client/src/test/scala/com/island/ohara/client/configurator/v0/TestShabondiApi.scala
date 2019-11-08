@@ -19,9 +19,9 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.ShabondiApi._
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestShabondiApi extends OharaTest with Matchers {
+class TestShabondiApi extends OharaTest {
 
   @Test
   def testJsonConversion(): Unit = {

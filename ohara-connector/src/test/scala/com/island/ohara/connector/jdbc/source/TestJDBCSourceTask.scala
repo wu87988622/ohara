@@ -30,13 +30,13 @@ import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{After, Before, Test}
 import org.mockito.Mockito._
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
-class TestJDBCSourceTask extends OharaTest with Matchers with MockitoSugar {
+class TestJDBCSourceTask extends OharaTest with MockitoSugar {
   private[this] val db = Database.local()
   private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName = "TABLE1"

@@ -20,11 +20,11 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 
-class TestFtpSinkDefinitions extends OharaTest with Matchers {
+class TestFtpSinkDefinitions extends OharaTest {
 
   private[this] val ftpSink = new FtpSink
   @Test

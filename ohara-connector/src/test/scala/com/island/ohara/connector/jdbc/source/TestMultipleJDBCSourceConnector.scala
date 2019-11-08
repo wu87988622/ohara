@@ -29,14 +29,14 @@ import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestMultipleJDBCSourceConnector extends With3Brokers3Workers with Matchers {
+class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
   private[this] val db = Database.local()
   private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName = "table1"

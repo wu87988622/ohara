@@ -25,12 +25,12 @@ import com.island.ohara.common.setting.{ObjectKey, PropGroup, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestConnectorApi extends OharaTest with Matchers {
+class TestConnectorApi extends OharaTest {
 
   @Test
   def nullKeyInGet(): Unit =

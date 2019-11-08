@@ -32,14 +32,14 @@ import com.island.ohara.kafka.Producer
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{JsNumber, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestMetrics extends WithBrokerWorker with Matchers {
+class TestMetrics extends WithBrokerWorker {
 
   private[this] val configurator =
     Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()

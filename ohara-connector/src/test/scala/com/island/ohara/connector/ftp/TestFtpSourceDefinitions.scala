@@ -20,10 +20,10 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
-class TestFtpSourceDefinitions extends OharaTest with Matchers {
+class TestFtpSourceDefinitions extends OharaTest {
 
   private[this] val ftpSource = new FtpSource
   @Test

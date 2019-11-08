@@ -23,7 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * a basic setup offering a configurator running on remote node.
   * this stuff is also in charge of releasing the configurator after testing.
   */
-abstract class WithRemoteConfigurator extends IntegrationTest with Matchers {
+abstract class WithRemoteConfigurator extends IntegrationTest {
   private[this] val nodes = EnvTestingUtils.sshNodes()
   private[this] val node = nodes.head
   private[this] val clusterNameHolder = ClusterNameHolder(nodes)

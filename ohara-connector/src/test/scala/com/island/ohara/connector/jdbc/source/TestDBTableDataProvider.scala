@@ -26,12 +26,12 @@ import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-class TestDBTableDataProvider extends OharaTest with Matchers {
+class TestDBTableDataProvider extends OharaTest {
 
   private[this] val db = Database.local()
   private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build

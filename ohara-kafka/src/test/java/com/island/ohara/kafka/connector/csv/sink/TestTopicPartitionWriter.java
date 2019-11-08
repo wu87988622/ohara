@@ -43,7 +43,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
   }
 
   @Override
-  public void setUp() {
+  protected void setUp() {
     super.setUp();
     CsvRecordWriterProvider format = new CsvRecordWriterProvider(fs);
     writer = new TopicPartitionWriter(TOPIC_PARTITION, format, config, context);

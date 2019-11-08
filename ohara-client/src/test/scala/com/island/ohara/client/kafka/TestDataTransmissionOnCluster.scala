@@ -23,11 +23,11 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
+class TestDataTransmissionOnCluster extends WithBrokerWorker {
 
   private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())

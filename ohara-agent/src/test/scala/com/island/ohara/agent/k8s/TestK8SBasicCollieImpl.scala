@@ -25,13 +25,13 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class TestK8SBasicCollieImpl extends OharaTest with Matchers {
+class TestK8SBasicCollieImpl extends OharaTest {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] val tmpServiceName = "zk"

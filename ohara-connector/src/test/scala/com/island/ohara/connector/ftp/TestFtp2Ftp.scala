@@ -26,7 +26,7 @@ import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -36,7 +36,7 @@ import scala.concurrent.duration._
 /**
   * ftp csv -> topic -> ftp csv
   */
-class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
+class TestFtp2Ftp extends With3Brokers3Workers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val schema: Seq[Column] = Seq(
@@ -151,7 +151,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   }
 }
 
-object TestFtp2Ftp extends Matchers {
+object TestFtp2Ftp {
 
   /**
     * delete all stuffs in the path and then recreate it as a folder

@@ -23,9 +23,9 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.mockito.Mockito._
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import scala.concurrent.duration._
-class TestAdminCleaner extends OharaTest with Matchers {
+class TestAdminCleaner extends OharaTest {
 
   @Test
   def testTimeout(): Unit = {

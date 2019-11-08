@@ -26,11 +26,11 @@ import com.island.ohara.it.category.SshCollieGroup
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[SshCollieGroup]))
-class TestListCluster extends IntegrationTest with Matchers {
+class TestListCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   private[this] val nameHolder = ClusterNameHolder(nodes)
 

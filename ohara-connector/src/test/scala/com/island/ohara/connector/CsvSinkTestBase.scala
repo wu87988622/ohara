@@ -30,13 +30,13 @@ import com.island.ohara.kafka.connector.csv.CsvSinkConnector
 import com.island.ohara.kafka.Producer
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-abstract class CsvSinkTestBase extends With3Brokers3Workers with Matchers {
+abstract class CsvSinkTestBase extends With3Brokers3Workers {
   protected val fileSystem: FileSystem
   protected val connectorClass: Class[_ <: CsvSinkConnector]
   protected def setupProps: Map[String, String]

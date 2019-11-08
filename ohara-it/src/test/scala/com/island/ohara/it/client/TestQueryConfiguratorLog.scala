@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.LogApi
 import org.junit.Test
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import org.scalatest.Matchers._
 class TestQueryConfiguratorLog extends WithRemoteConfigurator {
 
   @Test

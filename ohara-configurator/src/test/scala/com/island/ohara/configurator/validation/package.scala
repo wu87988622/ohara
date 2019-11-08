@@ -17,11 +17,11 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ValidationApi.{RdbValidationReport, ValidationReport}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-package object validation extends Matchers {
+package object validation {
   val NUMBER_OF_TASKS = 3
   def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 

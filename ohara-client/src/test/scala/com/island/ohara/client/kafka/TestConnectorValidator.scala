@@ -18,9 +18,9 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestConnectorValidator extends OharaTest with Matchers {
+class TestConnectorValidator extends OharaTest {
 
   /**
     * we won't make connection in this test

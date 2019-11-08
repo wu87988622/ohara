@@ -16,14 +16,12 @@
 
 package com.island.ohara.it.connector
 
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.K8sConnectorGroup
 import org.junit.experimental.categories.Category
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[K8sConnectorGroup]))
 class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
@@ -36,12 +34,4 @@ class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnecto
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
 
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
-
-  override protected def createor(): Unit = {
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodes.foreach { node =>
-      result(
-        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
-    }
-  }
 }

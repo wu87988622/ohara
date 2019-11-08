@@ -31,11 +31,11 @@ import com.island.ohara.kafka.Producer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
+abstract class BasicTests4StreamApp extends IntegrationTest {
 
   private[this] val log = Logger(classOf[BasicTests4StreamApp])
 

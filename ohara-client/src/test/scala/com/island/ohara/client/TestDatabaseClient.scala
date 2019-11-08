@@ -22,9 +22,9 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestDatabaseClient extends OharaTest with Matchers {
+class TestDatabaseClient extends OharaTest {
 
   private[this] val db = Database.local()
 

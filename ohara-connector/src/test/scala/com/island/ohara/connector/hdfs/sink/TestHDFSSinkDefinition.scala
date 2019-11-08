@@ -23,14 +23,14 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
+class TestHDFSSinkDefinition extends WithBrokerWorker {
   private[this] val hdfsSink = new HDFSSink
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)

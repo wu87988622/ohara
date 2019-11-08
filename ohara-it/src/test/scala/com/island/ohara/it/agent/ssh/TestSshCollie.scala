@@ -24,7 +24,7 @@ import com.island.ohara.it.agent.{BasicTests4Collie, ClusterNameHolder}
 import com.island.ohara.it.category.SshConfiguratorGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
-
+import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[SshConfiguratorGroup]))
 class TestSshCollie extends BasicTests4Collie {

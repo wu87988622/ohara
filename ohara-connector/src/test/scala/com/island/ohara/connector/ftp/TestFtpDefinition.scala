@@ -23,13 +23,13 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestFtpDefinition extends WithBrokerWorker with Matchers {
+class TestFtpDefinition extends WithBrokerWorker {
 
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
 

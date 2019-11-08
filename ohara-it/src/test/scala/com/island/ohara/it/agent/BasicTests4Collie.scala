@@ -36,7 +36,7 @@ import com.island.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.InvalidReplicationFactorException
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -51,7 +51,7 @@ import scala.concurrent.Future
   * Noted: this test depends on the ClusterNameHolder which helps us to cleanup all containers for all tests cases.
   * Hence, you don't need to add "finally" hook to do the cleanup.
   */
-abstract class BasicTests4Collie extends IntegrationTest with Matchers {
+abstract class BasicTests4Collie extends IntegrationTest {
   private[this] val log = Logger(classOf[BasicTests4Collie])
   private[this] val numberOfClusters = 2
   protected def configurator: Configurator

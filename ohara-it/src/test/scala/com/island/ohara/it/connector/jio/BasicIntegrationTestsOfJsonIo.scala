@@ -23,7 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.ClusterNameHolder
 import org.junit.{After, Before}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * the test cases are placed at BasicTestsOfJsonIn, and this abstract class is used to implements the required methods
   * by the "true"env. The env is abstract since there are two "envs" to ohara - ssh and k8s.
   */
-abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest with Matchers {
+abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
   protected def configurator: Configurator
   protected def nameHolder: ClusterNameHolder
   protected val freePort: Int = CommonUtils.availablePort()

@@ -24,10 +24,10 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.MeterCache.RequestKey
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
-class TestMeterCache extends OharaTest with Matchers {
+class TestMeterCache extends OharaTest {
 
   @Test
   def testRequestKey(): Unit = {

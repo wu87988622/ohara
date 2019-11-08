@@ -23,7 +23,7 @@ import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStreamApi extends OharaTest with Matchers {
+class TestStreamApi extends OharaTest {
 
   private[this] final val accessRequest =
     StreamApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request

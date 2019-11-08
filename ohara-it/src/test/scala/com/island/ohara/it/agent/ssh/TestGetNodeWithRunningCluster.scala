@@ -27,12 +27,12 @@ import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConfiguratorGroup
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[SshConfiguratorGroup]))
-class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
+class TestGetNodeWithRunningCluster extends IntegrationTest {
 
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 

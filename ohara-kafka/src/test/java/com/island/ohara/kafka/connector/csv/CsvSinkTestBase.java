@@ -45,7 +45,7 @@ public abstract class CsvSinkTestBase extends OharaTest {
     return props;
   }
 
-  public void setUp() {
+  protected void setUp() {
     props = createProps();
     config = CsvSinkConfig.of(props, null);
     Set<TopicPartition> assignment = new HashSet<>();

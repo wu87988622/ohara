@@ -27,7 +27,7 @@ public abstract class WithMockStorage extends CsvSinkTestBase {
   protected FileSystem fs;
 
   @Override
-  public void setUp() {
+  protected void setUp() {
     super.setUp();
     fs = LocalFileSystem.of();
   }

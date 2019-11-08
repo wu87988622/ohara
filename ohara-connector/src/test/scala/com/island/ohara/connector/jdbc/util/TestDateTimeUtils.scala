@@ -20,9 +20,9 @@ import java.sql.Timestamp
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestDateTimeUtils extends OharaTest with Matchers {
+class TestDateTimeUtils extends OharaTest {
   @Test
   def testTaipeiTimeZone(): Unit = {
     val timestamp: Timestamp = new Timestamp(0)

@@ -21,12 +21,12 @@ import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestFakeWorkerClient extends OharaTest with Matchers {
+class TestFakeWorkerClient extends OharaTest {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test

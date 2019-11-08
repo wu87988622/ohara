@@ -22,10 +22,10 @@ import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.mockito.Mockito.when
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
 
-class TestMySQLDataTypeConverter extends OharaTest with Matchers with MockitoSugar {
+class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterBitValue(): Unit = {

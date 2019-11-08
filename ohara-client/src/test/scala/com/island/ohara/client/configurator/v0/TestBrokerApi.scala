@@ -21,11 +21,11 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
 
-class TestBrokerApi extends OharaTest with Matchers {
+class TestBrokerApi extends OharaTest {
 
   private[this] final val access =
     BrokerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request

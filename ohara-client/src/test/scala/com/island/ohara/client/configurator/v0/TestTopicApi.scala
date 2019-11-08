@@ -21,11 +21,11 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.{Ignore, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestTopicApi extends OharaTest with Matchers {
+class TestTopicApi extends OharaTest {
 
   @Test
   def nullKeyInGet(): Unit =

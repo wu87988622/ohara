@@ -23,14 +23,14 @@ import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 /**
   * all test cases here are executed on remote node. If no remote node is defined, all tests are skipped.
   * You can run following command to pass the information of remote node.
   * $ gradle clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
   */
-class TestDockerClient extends IntegrationTest with Matchers {
+class TestDockerClient extends IntegrationTest {
 
   private[this] var client: DockerClient = _
 

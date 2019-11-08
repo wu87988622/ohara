@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class TestK8SClientVerify extends OharaTest with Matchers {
+class TestK8SClientVerify extends OharaTest {
   private[this] val nodeCache = new ArrayBuffer[Node]()
   private[this] val dataCollie: DataCollie = DataCollie(nodeCache)
 

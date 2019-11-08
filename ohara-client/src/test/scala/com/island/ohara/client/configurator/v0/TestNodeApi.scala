@@ -20,12 +20,12 @@ import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{DeserializationException, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestNodeApi extends OharaTest with Matchers {
+class TestNodeApi extends OharaTest {
 
   @Test
   def ignorePortOnCreation(): Unit = NodeApi.access

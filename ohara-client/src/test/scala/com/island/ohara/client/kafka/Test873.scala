@@ -27,7 +27,7 @@ import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.Creation
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -37,7 +37,7 @@ import scala.concurrent.duration._
 /**
   * https://github.com/oharastream/ohara/issues/873.
   */
-class Test873 extends OharaTest with Matchers {
+class Test873 extends OharaTest {
 
   @Test
   def testCreateConnector(): Unit = {

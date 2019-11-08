@@ -19,11 +19,11 @@ package com.island.ohara.connector.hdfs.sink
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.kafka.connector.TaskSetting
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 
-class TestHDFSSinkConfig extends OharaTest with Matchers {
+class TestHDFSSinkConfig extends OharaTest {
   private[this] val HDFS_URL_VALUE = "hdfs://test:9000"
 
   private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkProps =

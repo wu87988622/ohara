@@ -22,12 +22,12 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
-class TestPerfSourceMetrics extends WithBrokerWorker with Matchers {
+class TestPerfSourceMetrics extends WithBrokerWorker {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(

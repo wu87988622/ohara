@@ -26,11 +26,11 @@ import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.json.{ConnectorDefUtils, ConverterType, StringList}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestWorkerClient extends With3Brokers3Workers with Matchers {
+class TestWorkerClient extends With3Brokers3Workers {
 
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   @Test

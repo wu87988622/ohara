@@ -18,9 +18,9 @@ package com.island.ohara.connector.console
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
-class TestConsoleSink extends OharaTest with Matchers {
+class TestConsoleSink extends OharaTest {
 
   @Test
   def testFrequenceDefinitions(): Unit = {

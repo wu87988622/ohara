@@ -23,13 +23,13 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{DeserializationException, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
-class TestFtpInfoRoute extends OharaTest with Matchers {
+class TestFtpInfoRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val ftpApi = FtpInfoApi.access.hostname(configurator.hostname).port(configurator.port)

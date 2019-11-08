@@ -18,7 +18,6 @@ package com.island.ohara.assembly
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
 
 /**
   * this is a QA-purposed test class that it offers two methods to show the required information for QA. It consists of
@@ -26,7 +25,7 @@ import org.scalatest.Matchers
   * 2) list full name of all test class (see displayAllCases_
   * Normally, this class should not fail.
   */
-class ListTestCases extends OharaTest with Matchers {
+class ListTestCases extends OharaTest {
 
   /**
     * DON'T change the output message since our QA will parse the output log to find the count of test cases.

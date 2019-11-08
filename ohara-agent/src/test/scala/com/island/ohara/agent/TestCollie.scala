@@ -22,13 +22,13 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestCollie extends OharaTest with Matchers {
+class TestCollie extends OharaTest {
   private[this] val fakeClusterKey: ObjectKey = FakeCollie.key
   private[this] val TIMEOUT = 10 seconds
 

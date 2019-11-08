@@ -19,11 +19,11 @@ package com.island.ohara.shabondi
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.shabondi.Model.{CmdArgs, HttpSink, HttpSource}
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.util.{Failure, Success}
 
-class TestServerStarter extends OharaTest with Matchers {
+class TestServerStarter extends OharaTest {
 
   @Test
   def testParseArgs(): Unit = {

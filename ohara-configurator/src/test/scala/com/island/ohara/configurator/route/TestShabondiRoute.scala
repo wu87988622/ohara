@@ -22,13 +22,13 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class TestShabondiRoute extends OharaTest with Matchers {
+class TestShabondiRoute extends OharaTest {
 
   private val configurator = Configurator.builder.fake().build()
   private val access = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)

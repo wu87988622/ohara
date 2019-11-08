@@ -24,13 +24,13 @@ import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestPerfSource extends With3Brokers3Workers with Matchers {
+class TestPerfSource extends With3Brokers3Workers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(

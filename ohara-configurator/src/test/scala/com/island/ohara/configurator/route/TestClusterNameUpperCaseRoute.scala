@@ -21,14 +21,14 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class TestClusterNameUpperCaseRoute extends OharaTest with Matchers {
+class TestClusterNameUpperCaseRoute extends OharaTest {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
     Configurator.builder.fake(numberOfCluster, numberOfCluster, "zk").build()

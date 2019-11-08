@@ -25,10 +25,10 @@ import com.island.ohara.testing.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.{InvalidPartitionsException, UnknownTopicOrPartitionException}
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestTopicAdmin extends With3Brokers with Matchers {
+class TestTopicAdmin extends With3Brokers {
 
   private[this] val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
   private[this] val GROUP = "topic_group"

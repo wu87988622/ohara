@@ -22,12 +22,12 @@ import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.Configurator.Mode
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-class TestInfoRoute extends OharaTest with Matchers {
+class TestInfoRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val infoApi = InfoApi.access.hostname(configurator.hostname).port(configurator.port)

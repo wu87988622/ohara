@@ -19,10 +19,10 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json._
 
-class TestKeyApi extends OharaTest with Matchers {
+class TestKeyApi extends OharaTest {
 
   @Test
   def testObjectKey(): Unit = {

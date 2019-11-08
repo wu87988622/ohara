@@ -28,7 +28,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.ConnectorTestUtils
 import com.island.ohara.kafka.Consumer
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue}
 
 import scala.collection.JavaConverters._
@@ -40,7 +40,7 @@ import scala.concurrent.{Await, Future}
   * The basic test cases for JsonIn.
   * This class assumes that the clusters env is prepared and all clusters are accessible.
   */
-trait BasicTestsOfJsonIn extends Matchers {
+trait BasicTestsOfJsonIn {
   protected def workerClient: WorkerClient
   protected def brokersConnProps: String
   protected def freePort: Int

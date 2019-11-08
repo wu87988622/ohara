@@ -20,10 +20,10 @@ import com.island.ohara.common.data.{Cell, Row}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
-class TestJioData extends OharaTest with Matchers {
+class TestJioData extends OharaTest {
 
   @Test
   def rowToJioData(): Unit = {

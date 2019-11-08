@@ -21,7 +21,8 @@ import com.island.ohara.client.configurator.v0.ShabondiApi
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{Before, Ignore, Test}
-import org.scalatest.{Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -29,7 +30,7 @@ import scala.concurrent.{Await, Future}
 
 // TODO: https://github.com/oharastream/ohara/issues/1008
 @Ignore
-class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
+class TestShabondiK8S extends IntegrationTest with Inside {
 
   private val podLabelName = "shabondi"
   private val domainName = "default"

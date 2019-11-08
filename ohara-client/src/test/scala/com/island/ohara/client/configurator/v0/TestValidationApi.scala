@@ -19,11 +19,11 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import ValidationApi.FTP_VALIDATION_JSON_FORMAT
 import com.island.ohara.common.setting.ObjectKey
 import spray.json._
-class TestValidationApi extends OharaTest with Matchers {
+class TestValidationApi extends OharaTest {
 
   @Test
   def testIntPortOfFtpRequest(): Unit = {

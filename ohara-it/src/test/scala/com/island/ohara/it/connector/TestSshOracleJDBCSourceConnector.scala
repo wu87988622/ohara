@@ -21,7 +21,6 @@ import com.island.ohara.it.EnvTestingUtils
 import com.island.ohara.it.agent.ClusterNameHolder
 import com.island.ohara.it.category.SshConnectorGroup
 import org.junit.experimental.categories.Category
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[SshConnectorGroup]))
 class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
@@ -33,12 +32,4 @@ class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnecto
   override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.sshNodes()
 
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
-
-  override protected def createor(): Unit = {
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodes.foreach { node =>
-      result(
-        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
-    }
-  }
 }

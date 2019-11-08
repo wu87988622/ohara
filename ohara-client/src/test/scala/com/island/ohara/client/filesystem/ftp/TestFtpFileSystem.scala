@@ -18,9 +18,8 @@ package com.island.ohara.client.filesystem.ftp
 
 import com.island.ohara.client.filesystem.{FileSystem, FileSystemTestBase}
 import com.island.ohara.testing.service.FtpServer
-import org.scalatest.Matchers
 
-class TestFtpFileSystem extends FileSystemTestBase with Matchers {
+class TestFtpFileSystem extends FileSystemTestBase {
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
   private[this] val hostname = ftpServer.hostname
   private[this] val port = ftpServer.port

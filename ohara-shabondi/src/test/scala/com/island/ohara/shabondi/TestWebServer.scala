@@ -19,9 +19,9 @@ package com.island.ohara.shabondi
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestWebServer extends OharaTest with Matchers {
+class TestWebServer extends OharaTest {
 
   import HttpMethods._
   import ShabondiRouteTest._

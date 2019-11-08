@@ -19,12 +19,11 @@ package com.island.ohara.configurator
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
-import org.scalatest.Matchers
 
 /**
   * the definitions of official connectors should define the "orderInGroup"
   */
-class TestOfficialConnectorsDefinition extends OharaTest with Matchers {
+class TestOfficialConnectorsDefinition extends OharaTest {
 
   @Test
   def testOrderInGroup(): Unit = {

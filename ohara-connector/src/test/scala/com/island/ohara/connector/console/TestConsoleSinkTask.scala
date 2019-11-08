@@ -23,11 +23,11 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.apache.kafka.connect.sink.SinkRecord
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
-class TestConsoleSinkTask extends OharaTest with Matchers {
+class TestConsoleSinkTask extends OharaTest {
 
   private[this] def configs(key: String, value: String): java.util.Map[String, String] = Map(
     "name" -> CommonUtils.randomString(),

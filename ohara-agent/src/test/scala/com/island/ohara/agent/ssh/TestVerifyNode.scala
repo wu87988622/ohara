@@ -25,7 +25,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.SshdServer
 import com.island.ohara.testing.service.SshdServer.CommandHandler
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -41,7 +41,7 @@ import scala.util.{Failure, Success}
   * 4) remove hello-world container
   * this test injects command handler for above actions that return correct response or throw exception.
   */
-class TestVerifyNode extends OharaTest with Matchers {
+class TestVerifyNode extends OharaTest {
   private[this] var messageWhenFailToRun: String = _
   private[this] var messageWhenFailToListImages: String = _
   private[this] var messageWhenFailToPs: String = _

@@ -23,11 +23,11 @@ import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestFileInfoApi extends OharaTest with Matchers {
+class TestFileInfoApi extends OharaTest {
 
   private[this] def access: FileInfoApi.Access = FileInfoApi.access.hostname(CommonUtils.hostname()).port(22)
 

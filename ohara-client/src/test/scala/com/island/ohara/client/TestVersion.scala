@@ -20,9 +20,9 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperA
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.VersionUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestVersion extends OharaTest with Matchers {
+class TestVersion extends OharaTest {
 
   @Test
   def testZookeeper(): Unit = {

@@ -18,9 +18,9 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
-class TestDataStoreBuilder extends OharaTest with Matchers {
+class TestDataStoreBuilder extends OharaTest {
 
   @Test
   def testNullValueSerializer(): Unit =

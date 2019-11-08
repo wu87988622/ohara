@@ -20,10 +20,10 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{RootJsonFormat, _}
-class TestJsonRefiner extends OharaTest with Matchers {
+class TestJsonRefiner extends OharaTest {
   private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat6(SimpleData)
   private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
 

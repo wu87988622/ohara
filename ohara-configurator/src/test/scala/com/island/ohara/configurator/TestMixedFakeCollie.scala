@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, Z
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 /**
   * Embedded mode with fake cluster.
   */
-class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
+class TestMixedFakeCollie extends WithBrokerWorker {
 
   @Test
   def test(): Unit = {

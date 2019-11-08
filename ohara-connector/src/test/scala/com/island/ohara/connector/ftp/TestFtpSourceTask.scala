@@ -28,11 +28,11 @@ import com.island.ohara.kafka.connector.csv.source.CsvDataReader
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 
-class TestFtpSourceTask extends OharaTest with Matchers {
+class TestFtpSourceTask extends OharaTest {
 
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
 

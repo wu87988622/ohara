@@ -23,14 +23,14 @@ import com.island.ohara.configurator.{Configurator, DumbSink}
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 import spray.json.{JsString, _}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
+class TestValidationOfConnector extends With3Brokers3Workers {
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 

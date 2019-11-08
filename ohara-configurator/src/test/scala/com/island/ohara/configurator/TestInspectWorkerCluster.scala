@@ -20,13 +20,13 @@ import com.island.ohara.client.configurator.v0.{InspectApi, WorkerApi}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
-import org.scalatest.Matchers
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestInspectWorkerCluster extends WithBrokerWorker with Matchers {
+class TestInspectWorkerCluster extends WithBrokerWorker {
 
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()

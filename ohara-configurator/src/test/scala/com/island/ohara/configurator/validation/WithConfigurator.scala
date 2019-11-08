@@ -22,11 +22,10 @@ import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.After
-import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-private[validation] abstract class WithConfigurator extends With3Brokers3Workers with Matchers {
+private[validation] abstract class WithConfigurator extends With3Brokers3Workers {
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
   private[this] val workerCluster = result(
