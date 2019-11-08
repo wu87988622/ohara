@@ -28,6 +28,7 @@ import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
+import { TopicProvider } from './context/TopicContext';
 
 const AppProviders = ({ children }) => {
   return (
@@ -38,7 +39,9 @@ const AppProviders = ({ children }) => {
             <NewWorkspaceProvider>
               <WorkspaceProvider>
                 <PipelineProvider>
-                  <NodeDialogProvider>{children}</NodeDialogProvider>
+                  <TopicProvider>
+                    <NodeDialogProvider>{children}</NodeDialogProvider>
+                  </TopicProvider>
                 </PipelineProvider>
               </WorkspaceProvider>
             </NewWorkspaceProvider>

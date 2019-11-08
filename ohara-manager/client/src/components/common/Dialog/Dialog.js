@@ -16,19 +16,30 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
 
 import DrabblePaper from './DrabblePaper';
 
-const StyledDialogTitle = styled(DialogTitle)`
-  cursor: move;
-`;
+const StyledDialogTitle = styled(DialogTitle)(
+  props => css`
+    cursor: move;
+
+    .close-button {
+      position: absolute;
+      right: ${props.theme.spacing(1)}px;
+      top: ${props.theme.spacing(1)}px;
+      color: ${props.theme.palette.grey[500]};
+    }
+  `,
+);
 
 const StyledDialogActions = styled(DialogActions)`
   padding: ${props => props.theme.spacing(1)}px
@@ -60,7 +71,12 @@ const MuiDialog = props => {
       data-testid="dialog-container"
     >
       <div data-testid={testId}>
-        <StyledDialogTitle>{title}</StyledDialogTitle>
+        <StyledDialogTitle>
+          {title}
+          <IconButton className="close-button" onClick={handleClose}>
+            <CloseIcon />
+          </IconButton>
+        </StyledDialogTitle>
         <DialogContent>{children}</DialogContent>
 
         {showActions && (

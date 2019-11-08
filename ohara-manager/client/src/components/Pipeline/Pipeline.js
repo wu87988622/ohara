@@ -48,6 +48,7 @@ const Pipeline = () => {
     sink: false,
     streamApp: false,
   };
+
   const [toolboxExpanded, setToolboxExpanded] = useState(initialState);
 
   const handleToolboxClick = panel => {
@@ -119,7 +120,11 @@ const Pipeline = () => {
               <Toolbar
                 isToolboxOpen={isToolboxOpen}
                 handleToolboxOpen={() => setIsToolboxOpen(true)}
-                handleToolboxClick={handleToolboxClick}
+                handleToolboxClick={panel => {
+                  // Reset the state first, then open the new panel
+                  setToolboxExpanded(initialState);
+                  handleToolboxClick(panel);
+                }}
               />
               <GraphWrapper>
                 <Graph />

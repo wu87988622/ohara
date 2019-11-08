@@ -39,12 +39,18 @@ const WorkspaceProvider = ({ children }) => {
     a.settings.name.localeCompare(b.settings.name),
   );
 
+  const findByWorkspaceName = workspaceName => {
+    return workspaces.find(
+      workspace => workspace.settings.name === workspaceName,
+    );
+  };
+
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces: sortedWorkspaces,
-        unsortedWorkspaces: workspaces,
         isFetching,
+        findByWorkspaceName,
       }}
     >
       {children}

@@ -30,15 +30,10 @@ const PipelineProvider = ({ children }) => {
     setPipelines(pipelines);
   }, []);
 
-  const sortedPipeilnes = pipelines.sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
-
   return (
     <PipelineContext.Provider
       value={{
-        pipelines: sortedPipeilnes,
-        unsortedPipelines: pipelines,
+        pipelines,
         doFetch: fetchPipelines,
       }}
     >

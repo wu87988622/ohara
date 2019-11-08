@@ -18,11 +18,7 @@ import React from 'react';
 import Typography from '@material-ui/core/Typography';
 
 const Graph = () => {
-  return (
-    <Typography variant="h5" component="h2">
-      I am the pipeline graph
-    </Typography>
-  );
+  return <Typography variant="h5" component="h2"></Typography>;
 };
 
 export default Graph;

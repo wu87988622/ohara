@@ -51,7 +51,7 @@ const Navigator = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const { workspaceName } = useParams();
-  const { workspaces } = useWorkspace();
+  const { findByWorkspaceName } = useWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
 
   const handleClick = event => {
@@ -78,9 +78,7 @@ const Navigator = () => {
     setIsOpen(false);
   };
 
-  const validWorkspaceName = workspaces.find(
-    workspace => workspace.settings.name === workspaceName,
-  );
+  const validWorkspaceName = findByWorkspaceName(workspaceName);
 
   useEffect(() => {
     fetchPipelines(workspaceName);

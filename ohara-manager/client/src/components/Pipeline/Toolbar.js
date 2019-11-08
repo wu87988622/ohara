@@ -19,7 +19,7 @@ import styled, { css } from 'styled-components';
 import PropTypes from 'prop-types';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import IconButton from '@material-ui/core/IconButton';
-import DnsIcon from '@material-ui/icons/Dns';
+import StorageIcon from '@material-ui/icons/Storage';
 import WavesIcon from '@material-ui/icons/Waves';
 import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
@@ -56,11 +56,11 @@ const Toolbar = props => {
     <StyledToolbar>
       <div className="toolbox-toggle">
         <ButtonGroup variant="contained" color="default" size="small">
-          <IconButton onClick={() => handleClick('topic')}>
+          <IconButton onClick={() => handleClick('source')}>
             <FlightTakeoffIcon />
           </IconButton>
-          <IconButton onClick={() => handleClick('source')}>
-            <DnsIcon />
+          <IconButton onClick={() => handleClick('topic')}>
+            <StorageIcon />
           </IconButton>
           <IconButton onClick={() => handleClick('streamApp')}>
             <WavesIcon />

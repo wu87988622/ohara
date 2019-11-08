@@ -48,13 +48,24 @@ export const StyledToolbox = styled.div(
     .add-button {
       display: flex;
       align-items: center;
+      padding: 0 ${theme.spacing(1)}px ${theme.spacing(1)}px;
+
       button {
         margin-right: ${theme.spacing(1)}px;
       }
     }
 
     .detail {
-      padding: ${theme.spacing(1)}px ${theme.spacing(2)}px;
+      padding: 0;
+      display: block;
+
+      .MuiListItemText-primary {
+        font-size: ${theme.typography.subtitle2.fontSize};
+      }
+
+      .MuiListItemIcon-root {
+        min-width: 32px;
+      }
     }
 
     .panel-title {
