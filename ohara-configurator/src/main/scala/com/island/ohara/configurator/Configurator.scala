@@ -19,7 +19,7 @@ package com.island.ohara.configurator
 import java.util.concurrent.{ExecutionException, Executors, TimeUnit}
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives.{handleRejections, path, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
@@ -28,13 +28,11 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.configurator.route._
@@ -54,8 +52,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
                                                                                val dataCollie: DataCollie,
                                                                                val serviceCollie: ServiceCollie,
                                                                                val k8sClient: Option[K8SClient])
-    extends ReleaseOnce
-    with SprayJsonSupport {
+    extends ReleaseOnce {
 
   private[this] val threadMax = {
     val value = Runtime.getRuntime.availableProcessors()
@@ -300,12 +297,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 object Configurator {
 
   def builder: ConfiguratorBuilder = new ConfiguratorBuilder()
-
-  private[configurator] val DATA_SERIALIZER: Serializer[Data] = new Serializer[Data] {
-    override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
-    override def from(bytes: Array[Byte]): Data =
-      Serializer.OBJECT.from(bytes).asInstanceOf[Data]
-  }
 
   //----------------[main]----------------//
   private[configurator] lazy val LOG = Logger(Configurator.getClass)
