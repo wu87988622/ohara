@@ -88,9 +88,6 @@ Manage clusters
 
    rest-version
    rest-topics
-   rest-ftp
-   rest-hdfs
-   rest-jdbc
    rest-connectors
    rest-pipelines
    rest-nodes

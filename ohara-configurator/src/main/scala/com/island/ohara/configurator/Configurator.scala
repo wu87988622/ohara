@@ -224,9 +224,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   private[this] def basicRoute: server.Route = pathPrefix(version)(
     Seq[server.Route](
       TopicRoute.apply,
-      HdfsInfoRoute.apply,
-      FtpInfoRoute.apply,
-      JdbcInfoRoute.apply,
       PipelineRoute.apply,
       ValidationRoute.apply,
       ConnectorRoute.apply,
