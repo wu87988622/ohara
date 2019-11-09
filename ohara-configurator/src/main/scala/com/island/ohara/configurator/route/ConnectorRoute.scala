@@ -182,7 +182,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                     s"Connector app counts on broker cluster:${workerClusterInfo.brokerClusterKey} " +
                       s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
                 }
-                workerCollie.workerClient(workerClusterInfo).map {
+                workerCollie.workerClient(workerClusterInfo).flatMap {
                   _.connectorCreator()
                     .settings(connectorInfo.plain)
                     // always override the name
