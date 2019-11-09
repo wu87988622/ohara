@@ -1625,4 +1625,74 @@ class TestJsonRefiner extends OharaTest {
     }
   }
 
+  @Test
+  def testCompleteObjectKey(): Unit = {
+    val key = CommonUtils.randomString()
+    val name = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.OBJECT_KEY).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": "$name"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key).asJsObject.fields(GROUP_KEY) shouldBe JsString(
+      GROUP_DEFAULT)
+
+    format.read(s"""
+                   |  {
+                   |    "$key": {
+                   |      "name": "$name"
+                   |    }
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key).asJsObject.fields(GROUP_KEY) shouldBe JsString(
+      GROUP_DEFAULT)
+  }
+
+  @Test
+  def testCompleteObjectKeys(): Unit = {
+    val key = CommonUtils.randomString()
+    val name = CommonUtils.randomString()
+    val name2 = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.OBJECT_KEYS).build())
+      .refine
+
+    format
+      .read(s"""
+                   |  {
+                   |    "$key": ["$name"]
+                   |  }
+                   |  """.stripMargin.parseJson)
+      .fields(key)
+      .asInstanceOf[JsArray]
+      .elements
+      .head
+      .asJsObject
+      .fields(GROUP_KEY) shouldBe JsString(GROUP_DEFAULT)
+
+    val values = format.read(s"""
+                   |  {
+                   |    "$key": [
+                   |      {
+                   |        "name": "$name"
+                   |      },
+                   |      "$name2"
+                   |    ]
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key).asInstanceOf[JsArray].elements
+    values.size shouldBe 2
+    values.map(_.asJsObject.fields).foreach(_(GROUP_KEY) shouldBe JsString(GROUP_DEFAULT))
+    values.head.asJsObject.fields(NAME_KEY) shouldBe JsString(name)
+    values.last.asJsObject.fields(NAME_KEY) shouldBe JsString(name2)
+  }
 }

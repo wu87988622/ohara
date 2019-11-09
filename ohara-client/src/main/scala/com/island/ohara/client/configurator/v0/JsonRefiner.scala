@@ -154,6 +154,8 @@ trait JsonRefiner[T] {
           if (definition.hasDefault)
             throw new IllegalArgumentException(
               "the default value to array type is not allowed. default:" + definition.defaultValue())
+          // convert the value to complete Object key
+          valueConverter(definition.key(), v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v)))
           requireType[ObjectKey](definition.key())
         case Type.OBJECT_KEYS =>
           // we don't allow to set default value to array type.
@@ -162,6 +164,13 @@ trait JsonRefiner[T] {
             throw new IllegalArgumentException(
               "the default value to array type is not allowed. default:" + definition.defaultValue())
           nullToJsValue(definition.key(), () => JsArray.empty)
+          // convert the value to complete Object key
+          valueConverter(
+            definition.key(), {
+              case JsArray(es) => JsArray(es.map(v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v))).toVector)
+              case v: JsValue  => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v))
+            }
+          )
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
               requireType[Seq[ObjectKey]](
@@ -747,19 +756,9 @@ object JsonRefiner {
           // 1) check empty string
           if (_rejectEmptyString) checkJsValueForEmptyString(key, value)
 
-          def checkNegativeNumber(k: String, s: JsNumber): Unit = if (s.value < 0)
-            throw DeserializationException(s"""the \"${s.value}\" of \"$k\" MUST be bigger than or equal to zero!!!""",
-                                           fieldNames = List(k))
-          def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
-            case s: JsNumber => checkNegativeNumber(k, s)
-            case s: JsArray  => s.elements.foreach(v => checkJsValueForNegativeNumber(k, v))
-            case s: JsObject =>
-              s.fields.foreach(pair => checkJsValueForNegativeNumber(pair._1, pair._2))
-            case _ => // nothing
-          }
-
           def checkEmptyArray(k: String, s: JsArray): Unit = if (s.elements.isEmpty)
             throw DeserializationException(s"""the value of \"$k\" MUST be NOT empty array!!!""", fieldNames = List(k))
+
           def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
             case s: JsArray => checkEmptyArray(k, s)
             case s: JsObject =>

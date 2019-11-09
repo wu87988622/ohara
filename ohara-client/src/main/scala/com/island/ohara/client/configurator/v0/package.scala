@@ -107,27 +107,23 @@ package object v0 {
   private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
+
+      private[this] def read(fields: Map[String, JsValue]): ObjectKey = {
+        def string(key: String): Option[String] = noJsNull(fields).get(key).map {
+          case JsString(s) if s.nonEmpty => s
+          case _ =>
+            throw DeserializationException(s"the $key in ObjectKey must be non-empty string", fieldNames = List(key))
+        }
+        ObjectKey.of(
+          string(GROUP_KEY).getOrElse(GROUP_DEFAULT),
+          string(NAME_KEY).getOrElse(
+            throw DeserializationException(s"$NAME_KEY is required field", fieldNames = List(NAME_KEY)))
+        )
+      }
+
       override def read(json: JsValue): ObjectKey = json match {
-        case JsString(s) => ObjectKey.of(GROUP_DEFAULT, s)
-        case JsObject(fields) =>
-          val group = noJsNull(fields)
-            .get(GROUP_KEY)
-            .map {
-              case JsString(s) => s
-              case _ =>
-                throw DeserializationException(s"the type of $GROUP_KEY must be string", fieldNames = List(GROUP_KEY))
-            }
-            .getOrElse(GROUP_DEFAULT)
-          val name = noJsNull(fields).getOrElse(NAME_KEY,
-                                                throw DeserializationException(s"$NAME_KEY is required field",
-                                                                               fieldNames = List(NAME_KEY))) match {
-            case JsString(s) => s
-            case _ =>
-              throw DeserializationException(s"the type of $NAME_KEY must be string", fieldNames = List(NAME_KEY))
-          }
-          if (group.isEmpty) throw DeserializationException(s"$GROUP_KEY can't be empty", fieldNames = List(GROUP_KEY))
-          if (name.isEmpty) throw DeserializationException(s"$NAME_KEY can't be empty", fieldNames = List(NAME_KEY))
-          ObjectKey.of(group, name)
+        case JsString(s)      => read(Map(GROUP_KEY -> JsString(GROUP_DEFAULT), NAME_KEY -> JsString(s)))
+        case JsObject(fields) => read(fields)
         case _ =>
           throw DeserializationException(
             "the form of key must be {\"group\": \"g\", \"name\": \"n\"}, {\"name\": \"n\"} or pure string")

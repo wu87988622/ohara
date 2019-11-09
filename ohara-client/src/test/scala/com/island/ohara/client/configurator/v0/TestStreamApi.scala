@@ -560,7 +560,7 @@ class TestStreamApi extends OharaTest {
            |    ]
            |  }
            |  """.stripMargin.parseJson)
-    }.getMessage should include("the value of \"jarKey\" can't be empty string")
+    }.getMessage should include("non-empty string")
   }
 
   @Test
@@ -735,7 +735,7 @@ class TestStreamApi extends OharaTest {
            |    ]
            |  }
            |  """.stripMargin.parseJson)
-    }.getMessage should include("the value of \"from\" can't be empty string")
+    }.getMessage should include("non-empty string")
 
   @Test
   def parseFromFieldOnUpdate(): Unit =
@@ -771,7 +771,7 @@ class TestStreamApi extends OharaTest {
            |    "from": [""]
            |  }
            |  """.stripMargin.parseJson)
-    }.getMessage should include("the value of \"to\" can't be empty string")
+    }.getMessage should include("non-empty string")
 
   @Test
   def parseToFieldOnUpdate(): Unit =
