@@ -246,36 +246,52 @@ public class SettingDef implements JsonObject, Serializable {
           break;
         case POSITIVE_SHORT:
         case SHORT:
-          if (trueValue instanceof Short) return;
           try {
-            Short.parseShort(String.valueOf(trueValue));
+            int v;
+            if (trueValue instanceof Short) v = (short) trueValue;
+            else v = Short.parseShort(String.valueOf(trueValue));
+            if (valueType == SettingDef.Type.POSITIVE_SHORT && v <= 0)
+              throw new OharaConfigException(
+                  this.key, trueValue, "the value must be bigger than zero but actual:" + v);
           } catch (NumberFormatException e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
         case POSITIVE_INT:
         case INT:
-          if (trueValue instanceof Integer) return;
           try {
-            Integer.parseInt(String.valueOf(trueValue));
+            int v;
+            if (trueValue instanceof Integer) v = (int) trueValue;
+            else v = Integer.parseInt(String.valueOf(trueValue));
+            if (valueType == SettingDef.Type.POSITIVE_INT && v <= 0)
+              throw new OharaConfigException(
+                  this.key, trueValue, "the value must be bigger than zero but actual:" + v);
           } catch (NumberFormatException e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
         case POSITIVE_LONG:
         case LONG:
-          if (trueValue instanceof Long) return;
           try {
-            Long.parseLong(String.valueOf(trueValue));
+            long v;
+            if (trueValue instanceof Long) v = (long) trueValue;
+            else v = Long.parseLong(String.valueOf(trueValue));
+            if (valueType == SettingDef.Type.POSITIVE_LONG && v <= 0)
+              throw new OharaConfigException(
+                  this.key, trueValue, "the value must be bigger than zero but actual:" + v);
           } catch (NumberFormatException e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
           break;
         case POSITIVE_DOUBLE:
         case DOUBLE:
-          if (trueValue instanceof Double) return;
           try {
-            Double.parseDouble(String.valueOf(trueValue));
+            double v;
+            if (trueValue instanceof Double) v = (double) trueValue;
+            else v = Double.parseDouble(String.valueOf(trueValue));
+            if (valueType == SettingDef.Type.POSITIVE_DOUBLE && v <= 0)
+              throw new OharaConfigException(
+                  this.key, trueValue, "the value must be bigger than zero but actual:" + v);
           } catch (NumberFormatException e) {
             throw new OharaConfigException(this.key, trueValue, e.getMessage());
           }
