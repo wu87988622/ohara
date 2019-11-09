@@ -122,7 +122,7 @@ private[configurator] object StreamRoute {
         .topics(
           // our UI needs to create a stream without topics so the stream info may has no topics...
           if (streamClusterInfo.toTopicKeys.isEmpty)
-            throw DeserializationException(s"to topics can't be empty",
+            throw DeserializationException(s"${StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()} can't be empty",
                                            fieldNames = List(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()))
           else streamClusterInfo.toTopicKeys,
           RUNNING
@@ -130,7 +130,7 @@ private[configurator] object StreamRoute {
         .topics(
           // our UI needs to create a stream without topics so the stream info may has no topics...
           if (streamClusterInfo.fromTopicKeys.isEmpty)
-            throw DeserializationException(s"from topics can't be empty",
+            throw DeserializationException(s"${StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()} topics can't be empty",
                                            fieldNames = List(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()))
           else streamClusterInfo.fromTopicKeys,
           RUNNING

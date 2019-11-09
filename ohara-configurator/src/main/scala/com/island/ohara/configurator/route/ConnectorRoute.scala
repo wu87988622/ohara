@@ -164,7 +164,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         .topics(
           // our UI needs to create a connector without topics so the connector info may has no topics...
           if (connectorInfo.topicKeys.isEmpty)
-            throw DeserializationException(s"topics can't be empty",
+            throw DeserializationException(s"${ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()} can't be empty",
                                            fieldNames = List(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
           else connectorInfo.topicKeys,
           RUNNING
