@@ -50,15 +50,16 @@ private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
     // do nothing
   }
 
-  override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
-    Future.successful(
+  override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+    dataCollie.values[Node]().map { nodes =>
       nodes
         .map(
           _ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT,
                    BrokerApi.IMAGE_NAME_DEFAULT,
                    WorkerApi.IMAGE_NAME_DEFAULT,
                    StreamApi.IMAGE_NAME_DEFAULT))
-        .toMap)
+        .toMap
+    }
 
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
     Future.successful(Try(s"This is fake mode so we didn't test connection actually..."))

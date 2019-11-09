@@ -95,8 +95,10 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     Releasable.close(clusterCache)
   }
 
-  override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
-    Future.traverse(nodes)(node => Future(dockerCache.exec(node, node -> _.imageNames()))).map(_.toMap)
+  override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+    dataCollie.values[Node]().flatMap { nodes =>
+      Future.traverse(nodes)(node => Future(dockerCache.exec(node, node -> _.imageNames()))).map(_.toMap)
+    }
 
   /**
     * The default implementation has the following checks.

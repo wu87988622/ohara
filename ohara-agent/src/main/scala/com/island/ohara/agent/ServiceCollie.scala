@@ -76,11 +76,10 @@ trait ServiceCollie extends Releasable {
     } yield zkMap ++ bkMap ++ wkMap ++ streamMap
 
   /**
-    * list the docker images hosted by input nodes
-    * @param nodes remote nodes
+    * list the docker images hosted by nodes
     * @return the images stored by each node
     */
-  def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]]
+  def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]]
 
   /**
     * Verify the node are available to be used in collie.

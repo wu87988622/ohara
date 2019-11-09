@@ -223,19 +223,18 @@ package object route {
       .allStreamApps()
       .check()
       .map(report =>
-        (report.nodes,
-         report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreamApps))
+        report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreamApps)
       // check the docker images
-      .flatMap {
-        case (nodes, clusters) =>
-          serviceCollie.images(nodes).map { nodesImages =>
-            nodesImages
-              .filterNot(_._2.contains(req.imageName))
-              .keys
-              .map(_.name)
-              .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:${req.imageName}"))
-            clusters
+      .flatMap { clusters =>
+        serviceCollie.images().map { nodesImages =>
+          req.nodeNames.foreach { nodeName =>
+            val images = nodesImages.find(_._1.hostname == nodeName).map(_._2).getOrElse(Seq.empty)
+            if (!images.contains(req.imageName))
+              throw new IllegalArgumentException(
+                s"$nodeName does not have image:${req.imageName}. It has images:${images.mkString(",")}")
           }
+          clusters
+        }
       }
       // check resources
       .map { clusters =>

@@ -41,12 +41,14 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
     //Nothing
   }
 
-  override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
-    Future
-      .traverse(nodes) { node =>
-        k8sClient.images(node.name).map(images => node -> images)
-      }
-      .map(_.toMap)
+  override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+    dataCollie.values[Node]().flatMap { nodes =>
+      Future
+        .traverse(nodes) { node =>
+          k8sClient.images(node.name).map(images => node -> images)
+        }
+        .map(_.toMap)
+    }
 
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
     k8sClient
