@@ -44,7 +44,7 @@ const validateUrl = async url => {
   // Ensure the API URL can be reach
   // Retry on failure
   const makeRequest = () =>
-    axios.get(`${url}/info/configurator`, { timeout: 10000 });
+    axios.get(`${url}/inspect/configurator`, { timeout: 10000 });
   const printSuccessMsg = () =>
     console.log(
       chalk.green(
