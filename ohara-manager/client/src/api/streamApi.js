@@ -24,12 +24,17 @@ import * as inspect from './inspectApi';
 const url = URL.STREAM_URL;
 
 export const create = async (params, body) => {
-  body = body
-    ? body
-    : await inspect.getStreamsInfo({
-        group: params.jarKey.group,
-        name: params.jarKey.name,
-      });
+  if (!body) {
+    // get the streamApp definition by the required jar file
+    const result = await inspect.getFileInfo({
+      group: params.jarKey.group,
+      name: params.jarKey.name,
+    });
+    const { classes } = result;
+    // we only support one stream class right now
+    // find the first match result
+    body = classes.find(info => info.classType === inspect.classType.stream);
+  }
   const requestBody = requestUtil(params, stream, body);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, stream);

@@ -34,6 +34,12 @@ export const kind = {
   file: 'file',
 };
 
+export const classType = {
+  stream: 'streamApp',
+  sink: 'sink connector',
+  source: 'source connector',
+};
+
 export const getConfiguratorInfo = async () => {
   const res = await axiosInstance.get(url + '/' + kind.configurator);
   return responseUtil(res, inspectConfiguratorBody);

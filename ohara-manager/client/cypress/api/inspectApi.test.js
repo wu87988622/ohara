@@ -134,7 +134,7 @@ describe('Inspect API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq('streamApp');
+        expect(classType).to.eq(inspect.classType.stream);
 
         expect(settingDefinitions).to.be.an('array');
       });
@@ -160,7 +160,7 @@ describe('Inspect API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq('source connector');
+        expect(classType).to.eq(inspect.classType.source);
 
         expect(settingDefinitions).to.be.an('array');
       });
@@ -186,7 +186,7 @@ describe('Inspect API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq('sink connector');
+        expect(classType).to.eq(inspect.classType.sink);
 
         expect(settingDefinitions).to.be.an('array');
       });
