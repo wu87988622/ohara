@@ -99,5 +99,4 @@ Manage clusters
    rest-streams
    rest-files
    rest-logs
-   rest-info
    rest-inspect

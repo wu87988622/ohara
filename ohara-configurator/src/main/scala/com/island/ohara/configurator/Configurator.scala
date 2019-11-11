@@ -224,8 +224,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       PipelineRoute.apply,
       ValidationRoute.apply,
       ConnectorRoute.apply,
-      // TODO: remove this https://github.com/oharastream/ohara/issues/3164
-      InfoRoute.apply(mode),
       InspectRoute.apply(mode),
       StreamRoute.apply,
       ShabondiRoute.apply,
