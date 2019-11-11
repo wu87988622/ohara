@@ -17,8 +17,8 @@
 import { isEmpty } from 'lodash';
 
 export const waitForConnectReady = res => {
-  const { connectorDefinitions } = res.data.result;
-  return !isEmpty(connectorDefinitions);
+  const { classInfos } = res.data.result;
+  return !isEmpty(classInfos);
 };
 
 export const waitForRunning = res => {

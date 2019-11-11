@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { createBody, getTopic } from '../utils/definitionsUtils';
+import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
 
 export const request = params => {
-  const definitions = getTopic(params);
+  const definitions = getDefinitionsBody(params);
   const body = createBody(definitions);
   return body;
 };

@@ -15,10 +15,10 @@
  */
 
 import { number, array, object } from '../utils/validation';
-import { createBody, getConnect } from '../utils/definitionsUtils';
+import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
 
 export const request = params => {
-  const definitions = getConnect(params);
+  const definitions = getDefinitionsBody(params);
   const body = createBody(definitions);
   return body;
 };

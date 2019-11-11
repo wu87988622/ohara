@@ -15,10 +15,10 @@
  */
 
 import { string, number, array, object } from '../utils/validation';
-import { createBody, getCluster } from '../utils/definitionsUtils';
+import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
 
 export const request = params => {
-  const definitions = getCluster(params);
+  const definitions = getDefinitionsBody(params);
   const body = createBody(definitions);
   return body;
 };

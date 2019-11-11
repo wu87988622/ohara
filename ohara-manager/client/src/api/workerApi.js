@@ -33,10 +33,11 @@ export const create = async (params, body) => {
 export const start = async params => {
   const { name, group } = params;
   await axiosInstance.put(`${url}/${name}/start?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
+  await wait({
+    url: `${URL.INSPECT_URL}/${inspect.kind.worker}/${name}?group=${group}`,
     checkFn: waitUtil.waitForConnectReady,
   });
+  const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   return responseUtil(res, worker);
 };
 

@@ -19,7 +19,7 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
-import * as workerApi from './workerApi';
+import * as inspectApi from './inspectApi';
 
 const url = URL.CONNECTOR_URL;
 
@@ -39,13 +39,14 @@ export const connectorSinks = {
   console: 'com.island.ohara.connector.console.ConsoleSink',
 };
 
-export const create = async (params, body) => {
-  body = body ? body : await workerApi.get(params.workerClusterKey);
-  // the "connector.class" is key of each connector
-  // we can use it to filter the correct definition
-  // the connector__class here is meant to be "connector.class" of definitions
-  const newBody = { ...body, className: params.connector__class };
-  const requestBody = requestUtil(params, connector, newBody);
+export const create = async params => {
+  const workerInfo = await inspectApi.getWorkerInfo(params.workerClusterKey);
+  const connectorDefinition = workerInfo.classInfos
+    .reduce((acc, cur) => acc.concat(cur), [])
+    // the "connector__class" will be convert to "connector.class" for request
+    // each connector creation must assign connector.class
+    .find(param => param.className === params.connector__class);
+  const requestBody = requestUtil(params, connector, connectorDefinition);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, connector);
 };

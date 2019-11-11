@@ -15,7 +15,7 @@
  */
 
 import { number, array, string } from '../utils/validation';
-import { createBody, getCluster } from '../utils/definitionsUtils';
+import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
 import { object } from 'prop-types';
 
 // convert the request parameter to another key
@@ -27,7 +27,7 @@ export const reqConverter = {};
 export const resConverter = {};
 
 export const request = params => {
-  const definitions = getCluster(params);
+  const definitions = getDefinitionsBody(params);
   const body = createBody(definitions);
   return body;
 };
@@ -37,7 +37,6 @@ export const response = () => {
   const state = [string];
   const error = [string];
   const lastModified = [number];
-  const connectorDefinitions = [array];
   const settings = [object];
 
   return {
@@ -45,7 +44,6 @@ export const response = () => {
     state,
     error,
     lastModified,
-    connectorDefinitions,
     settings,
   };
 };

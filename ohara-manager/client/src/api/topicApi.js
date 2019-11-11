@@ -19,13 +19,16 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
-import * as brokerApi from './brokerApi';
+import * as inspectApi from './inspectApi';
 
 const url = URL.TOPIC_URL;
 
-export const create = async (params, body) => {
-  body = body ? body : await brokerApi.get(params.brokerClusterKey);
-  const requestBody = requestUtil(params, topic, body);
+export const create = async params => {
+  const brokerInfo = await inspectApi.getBrokerInfo();
+  // broker only contain one topic definition (since they are all the same)
+  // we fetch the first element here
+  const topicDefinition = brokerInfo.classInfos[0];
+  const requestBody = requestUtil(params, topic, topicDefinition);
   const res = await axiosInstance.post(url, requestBody);
   return responseUtil(res, topic);
 };

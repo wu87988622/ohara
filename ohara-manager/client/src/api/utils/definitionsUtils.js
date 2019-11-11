@@ -71,25 +71,7 @@ const getTypeWithValueType = key => {
   }
 };
 
-export const getConnect = params => {
-  let connectorDefinition = {};
-  if (params.state === 'RUNNING') {
-    connectorDefinition = params.connectorDefinitions
-      .reduce((acc, cur) => acc.concat(cur), [])
-      .find(param => param.className === params.className);
-  }
-  return getCluster(connectorDefinition);
-};
-
-export const getTopic = params => {
-  let topicDefinition = {};
-  if (params.state === 'RUNNING') {
-    topicDefinition = params.topicDefinition;
-  }
-  return getCluster(topicDefinition);
-};
-
-export const getCluster = params => {
+export const getDefinitionsBody = params => {
   const { settingDefinitions } = params;
   const definitionsObj = {};
   settingDefinitions.forEach(definition => {
