@@ -15,11 +15,49 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
+import IconButton from '@material-ui/core/IconButton';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import MoreIcon from '@material-ui/icons/MoreVert';
+import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+
 import { FullScreenDialog } from 'components/common/Dialog';
 import { useEditWorkspace } from 'context/EditWorkspaceContext';
+import { StyledActions } from './Styles';
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <Typography
+      component="div"
+      role="tab-panel"
+      hidden={value !== index}
+      id={`edit-workspace-tab-panel-${index}`}
+      aria-labelledby={`edit-workspace-tab-${index}`}
+      {...other}
+    >
+      <Box p={3}>{children}</Box>
+    </Typography>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.any.isRequired,
+  index: PropTypes.any.isRequired,
+  value: PropTypes.any.isRequired,
+};
 
 const EditWorkspace = () => {
-  const { isOpen, setIsOpen, tab } = useEditWorkspace();
+  const { isOpen, setIsOpen, tab, setTab } = useEditWorkspace();
+
+  const handleChange = (event, newTab) => {
+    setTab(newTab);
+  };
 
   return (
     <FullScreenDialog
@@ -27,7 +65,45 @@ const EditWorkspace = () => {
       open={isOpen}
       handleClose={() => setIsOpen(false)}
     >
-      {tab}
+      <StyledActions>
+        <Button variant="contained" color="primary">
+          ADD TOPIC
+        </Button>
+        <Button variant="outlined" color="primary">
+          UPLOAD FILE
+        </Button>
+        <IconButton
+          aria-label="display more actions"
+          edge="end"
+          color="inherit"
+        >
+          <MoreIcon />
+        </IconButton>
+      </StyledActions>
+      <Tabs
+        value={tab}
+        onChange={handleChange}
+        indicatorColor="primary"
+        textColor="primary"
+      >
+        <Tab label="Overview" value="overview" />
+        <Tab label="Topics" value="topics" />
+        <Tab label="Files" value="files" />
+        <Tab label="Settings" value="settings" />
+      </Tabs>
+      <Divider />
+      <TabPanel value={tab} index={'overview'}>
+        Overview
+      </TabPanel>
+      <TabPanel value={tab} index={'topics'}>
+        Topics
+      </TabPanel>
+      <TabPanel value={tab} index={'files'}>
+        Files
+      </TabPanel>
+      <TabPanel value={tab} index={'settings'}>
+        Settings
+      </TabPanel>
     </FullScreenDialog>
   );
 };
