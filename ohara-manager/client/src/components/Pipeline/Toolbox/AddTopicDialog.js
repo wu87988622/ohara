@@ -39,12 +39,6 @@ const AddTopicDialog = props => {
     const { name: topicName } = values;
     const { name: topicGroup } = worker.settings;
 
-    const cleanup = () => {
-      setIsSaving(false);
-      setTimeout(form.reset);
-      handleClose();
-    };
-
     setIsSaving(true);
     const createTopicResponse = await topicApi.create({
       name: topicName,
@@ -59,12 +53,13 @@ const AddTopicDialog = props => {
 
     const isCreated = !isEmpty(createTopicResponse);
 
+    // Failed to create, show a custom error message here and keep the
+    // dialog open
     if (!isCreated) {
-      showMessage(
-        `Failed to add topic ${topicName}! Please see event log for detail error`,
-      );
-
-      cleanup();
+      // After the error handling logic is done in https://github.com/oharastream/ohara/issues/3124
+      // we can remove this custom message since it's handled higher up in the API layer
+      showMessage(`Failed to add topic ${topicName}`);
+      setIsSaving(false);
       return;
     }
 
@@ -74,13 +69,25 @@ const AddTopicDialog = props => {
     });
 
     const isStarted = get(startTopicResponse, 'state', undefined);
-    if (isStarted) {
-      showMessage(`Successfully added topic ${topicName}`);
+
+    // Failed to start, show a custom error message here and keep the
+    // dialog open
+    if (!isStarted) {
+      // After the error handling logic is done in https://github.com/oharastream/ohara/issues/3124
+      // we can remove this custom message since it's handled higher up in the API layer
+      showMessage(`Failed to start topic ${topicName}`);
+      setIsSaving(false);
+      return;
     }
 
+    // Topic successsfully created, display success message,
+    // update topic list and close the dialog
+    showMessage(`Successfully added topic ${topicName}`);
     await fetchTopics(worker.settings.name);
 
-    cleanup();
+    setIsSaving(false);
+    setTimeout(form.reset);
+    handleClose();
   };
 
   return (
@@ -91,7 +98,7 @@ const AddTopicDialog = props => {
         return (
           <Dialog
             open={isOpen}
-            title="New topic"
+            title="Add a new topic"
             handleClose={() => {
               form.reset();
               handleClose();

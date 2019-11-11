@@ -14,11 +14,35 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import Typography from '@material-ui/core/Typography';
+import React, { useEffect } from 'react';
+import * as joint from 'jointjs';
 
 const Graph = () => {
-  return <Typography variant="h5" component="h2"></Typography>;
+  const renderGraph = () => {
+    const graph = new joint.dia.Graph();
+
+    // This variable will be used in the future
+    // eslint-disable-next-line
+    const paper = new joint.dia.Paper({
+      el: document.getElementById('paper'),
+      model: graph,
+      width: '100%',
+      height: '100%',
+      gridSize: 10,
+      drawGrid: { name: 'dot', args: { color: 'black' } },
+      defaultConnectionPoint: { name: 'boundary' },
+      background: {
+        color: 'rgb(245, 245, 245, .1)',
+      },
+      linkPinning: false,
+    });
+  };
+
+  useEffect(() => {
+    renderGraph();
+  }, []);
+
+  return <div id="paper"></div>;
 };
 
 export default Graph;

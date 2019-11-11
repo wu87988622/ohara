@@ -23,6 +23,9 @@ import AppBar from 'components/Layout/AppBar';
 import NotFoundPage from 'components/NotFoundPage';
 import { Pipeline, Navigator } from 'components/Pipeline';
 
+// We need joint's CSS
+import '../node_modules/jointjs/dist/joint.min.css';
+
 const Container = styled.div`
   display: flex;
 
