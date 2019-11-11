@@ -32,6 +32,7 @@ import { useSnackbar } from 'context/SnackbarContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useEditWorkspace } from 'context/EditWorkspaceContext';
+import { EditWorkspace } from 'components/Workspace';
 import {
   required,
   validServiceName,
@@ -185,6 +186,7 @@ const Navigator = () => {
           </PipelineList>
         </ExpansionPanelDetails>
       </StyledExpansionPanel>
+      <EditWorkspace />
     </StyledNavigator>
   );
 };

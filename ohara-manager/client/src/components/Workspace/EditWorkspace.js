@@ -27,6 +27,7 @@ import Box from '@material-ui/core/Box';
 
 import { FullScreenDialog } from 'components/common/Dialog';
 import { useEditWorkspace } from 'context/EditWorkspaceContext';
+import { TopicsTab } from 'components/Workspace/TopicsTab';
 import { StyledActions } from './Styles';
 
 function TabPanel(props) {
@@ -96,7 +97,7 @@ const EditWorkspace = () => {
         Overview
       </TabPanel>
       <TabPanel value={tab} index={'topics'}>
-        Topics
+        <TopicsTab />
       </TabPanel>
       <TabPanel value={tab} index={'files'}>
         Files

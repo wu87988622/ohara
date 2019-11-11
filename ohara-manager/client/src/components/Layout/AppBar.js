@@ -26,7 +26,6 @@ import { Link } from 'react-router-dom';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useNodeDialog } from 'context/NodeDialogContext';
-import EditWorkspace from 'components/Workspace/EditWorkspace';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
@@ -94,8 +93,6 @@ const AppBar = () => {
             onClick={() => setIsNodeDialogOpen(true)}
           />
         </Tools>
-
-        <EditWorkspace />
       </Header>
     </>
   );
