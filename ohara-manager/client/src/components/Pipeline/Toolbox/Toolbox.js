@@ -39,12 +39,13 @@ import { useParams } from 'react-router-dom';
 import { isEmpty } from 'lodash';
 
 import * as fileApi from 'api/fileApi';
-import AddTopicDialog from './AddTopicDialog';
 import { StyledToolbox } from './Styles';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useSnackbar } from 'context/SnackbarContext';
+import { useAddTopic } from 'context/AddTopicContext';
 import { useTopic } from 'context/TopicContext';
 import { Label } from 'components/common/Form';
+import { AddTopicDialog } from 'components/Topic';
 
 export const StyledInputFile = styled.input`
   display: none;
@@ -58,10 +59,10 @@ const Toolbox = props => {
   const { isOpen: isToolboxOpen, expanded, handleClose, handleClick } = props;
   const { findByWorkspaceName } = useWorkspace();
   const { workspaceName } = useParams();
-  const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
   const [streamJars, setStreamJars] = useState([]);
   const { topics, doFetch: fetchTopics } = useTopic();
   const showMessage = useSnackbar();
+  const { setIsOpen: setIsAddTopicOpen } = useAddTopic();
 
   const currentWorkspace = findByWorkspaceName(workspaceName);
 
@@ -202,12 +203,7 @@ const Toolbox = props => {
           </ExpansionPanelDetails>
         </ExpansionPanel>
 
-        <AddTopicDialog
-          isOpen={isAddTopicOpen}
-          handleClose={() => setIsAddTopicOpen(false)}
-          worker={currentWorkspace}
-          fetchTopics={fetchTopics}
-        />
+        <AddTopicDialog />
 
         <ExpansionPanel square expanded={expanded.streamApp}>
           <ExpansionPanelSummary

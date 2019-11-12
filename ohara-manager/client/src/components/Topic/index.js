@@ -15,5 +15,6 @@
  */
 
 import TopicTable from './TopicTable';
+import AddTopicDialog from './AddTopicDialog';
 
-export { TopicTable };
+export { TopicTable, AddTopicDialog };
