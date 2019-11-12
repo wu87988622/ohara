@@ -180,7 +180,8 @@ private[configurator] object InspectRoute {
                     consumer
                     // even if the timeout reach the limit, we still give a last try :)
                       .poll(java.time.Duration.ofMillis(Math.max(1000L, endTime - CommonUtils.current())), limit)
-                      .asScala)
+                      .asScala
+                      .slice(0, limit))
                 } finally Releasable.close(consumer)
               })
         }

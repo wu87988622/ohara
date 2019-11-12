@@ -49,27 +49,21 @@ class TestInspectTopic extends WithBrokerWorker {
     val topicInfo = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(topicInfo.key))
 
-    val closed = new AtomicBoolean(false)
+    val count = 10
+    val producer =
+      Producer.builder().connectionProps(brokerClusterInfo.connectionProps).keySerializer(Serializer.ROW).build()
 
-    val latch = new CountDownLatch(1)
-    Future {
-      val producer =
-        Producer.builder().connectionProps(brokerClusterInfo.connectionProps).keySerializer(Serializer.ROW).build()
-      try while (!closed.get()) {
+    try {
+      (0 until count).foreach { _ =>
         producer
           .sender()
           .topicName(topicInfo.key.topicNameOnKafka())
           .key(Row.of(Cell.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
           .send()
           .get()
-        TimeUnit.MILLISECONDS.sleep(300)
-      } finally {
-        Releasable.close(producer)
-        latch.countDown()
       }
-    }
+      Releasable.close(producer)
 
-    try {
       val messages = result(inspectApi.topicRequest.key(topicInfo.key).query()).messages
       messages should not be Seq.empty
       messages.foreach { message =>
@@ -78,12 +72,10 @@ class TestInspectTopic extends WithBrokerWorker {
         message.value should not be None
         message.error shouldBe None
       }
-      result(inspectApi.topicRequest.key(topicInfo.key).limit(1).query()).messages.size should be >= 1
-      result(inspectApi.topicRequest.key(topicInfo.key).limit(2).query()).messages.size should be >= 2
-    } finally {
-      closed.set(true)
-      latch.await()
-    }
+      result(inspectApi.topicRequest.key(topicInfo.key).limit(1).query()).messages.size shouldBe 1
+      result(inspectApi.topicRequest.key(topicInfo.key).limit(2).query()).messages.size shouldBe 2
+      result(inspectApi.topicRequest.key(topicInfo.key).timeout(30 seconds).limit(count).query()).messages.size shouldBe count
+    } finally Releasable.close(producer)
   }
 
   @Test
