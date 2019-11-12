@@ -16,8 +16,8 @@
 
 const yargs = require('yargs');
 const chalk = require('chalk');
-const axios = require('axios');
 const { isNumber } = require('lodash');
+const net = require('net');
 
 const utils = require('./commonUtils');
 
@@ -41,10 +41,31 @@ const validateUrl = async url => {
     process.exit(1);
   }
 
-  // Ensure the API URL can be reach
+  // Ensure the API URL can be reached
   // Retry on failure
-  const makeRequest = () =>
-    axios.get(`${url}/inspect/configurator`, { timeout: 10000 });
+  const checkConfiguratorReady = () => {
+    const { hostname, port } = new URL(url);
+
+    return new Promise(resolve => {
+      const socket = new net.Socket();
+      const onError = err => {
+        console.log(err.message);
+        socket.destroy();
+        resolve(false);
+      };
+      socket.setTimeout(10000);
+      socket.once('error', err => onError(err));
+      socket.once('timeout', err => onError(err));
+
+      socket.connect(parseInt(port), hostname, () => {
+        socket.end();
+        resolve(true);
+      });
+    }).catch(error => {
+      console.log(error.message);
+    });
+  };
+
   const printSuccessMsg = () =>
     console.log(
       chalk.green(
@@ -54,7 +75,7 @@ const validateUrl = async url => {
       ),
     );
 
-  const printFailMsg = error => {
+  const printFailMsg = () => {
     console.log(
       chalk.yellow(
         `Couldn't connect to the configurator url you provided: ${chalk.bold(
@@ -62,50 +83,32 @@ const validateUrl = async url => {
         )}, retrying...`,
       ),
     );
-
-    console.log(chalk.bold.yellow(error.message));
   };
 
   let count = 0;
-  const retryConnection = async () => {
+  let isReady = false;
+  while (!isReady && count <= 10) {
     // The total waiting time : 10 (count) * 3000 (sleep) = 30000 ms = 30 seconds,
     // the actual time should be more since we have a 10 seconds timeout setting
-    // in axios
-
-    if (count >= 10) {
-      console.log();
-      console.log(
-        `--configurator: we're not able to connect to ${chalk.bold.red(
-          url,
-        )}\n\nPlease make sure your Configurator is running at ${chalk.bold.green(
-          url,
-        )}`,
-      );
-      console.log();
-
-      process.exit(1);
-    }
-
+    // in socket
+    isReady = await checkConfiguratorReady();
+    if (!isReady) printFailMsg();
     count++;
-
     await utils.sleep(3000); // wait for 3 sec and make another request
-
-    try {
-      await makeRequest();
-      printSuccessMsg();
-    } catch (error) {
-      printFailMsg(error);
-      await retryConnection();
-    }
-  };
-
-  try {
-    await makeRequest();
-    printSuccessMsg();
-  } catch (error) {
-    printFailMsg(error);
-    await retryConnection();
   }
+  if (!isReady) {
+    console.log();
+    console.log(
+      `--configurator: we're not able to connect to ${chalk.bold.red(
+        url,
+      )}\n\nPlease make sure your Configurator is running at ${chalk.bold.green(
+        url,
+      )}`,
+    );
+    console.log();
+    process.exit(1);
+  }
+  printSuccessMsg();
 };
 
 const validatePort = port => {
