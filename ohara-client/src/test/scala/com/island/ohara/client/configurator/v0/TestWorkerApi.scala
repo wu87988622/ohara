@@ -38,7 +38,6 @@ class TestWorkerApi extends OharaTest {
         .nodeName(CommonUtils.randomString(10))
         .creation
         .settings,
-      connectorDefinitions = Seq.empty,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -57,7 +56,6 @@ class TestWorkerApi extends OharaTest {
         .brokerClusterKey(ObjectKey.of("g", "n"))
         .creation
         .settings,
-      connectorDefinitions = Seq.empty,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -720,7 +718,6 @@ class TestWorkerApi extends OharaTest {
     val cluster = WorkerClusterInfo(
       settings =
         WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
-      connectorDefinitions = Seq.empty,
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
@@ -769,8 +766,7 @@ class TestWorkerApi extends OharaTest {
         aliveNodes = Set.empty,
         state = None,
         error = None,
-        lastModified = CommonUtils.current(),
-        connectorDefinitions = Seq.empty
+        lastModified = CommonUtils.current()
       ))
 
     // serialize to json should see the object key (group, name)
@@ -791,8 +787,7 @@ class TestWorkerApi extends OharaTest {
       aliveNodes = Set("nn"),
       state = None,
       error = None,
-      lastModified = CommonUtils.current(),
-      connectorDefinitions = Seq.empty
+      lastModified = CommonUtils.current()
     )
     cluster.connectionProps should not include "nn"
   }
@@ -808,7 +803,6 @@ class TestWorkerApi extends OharaTest {
     val cluster = WorkerClusterInfo(
       settings =
         WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
-      connectorDefinitions = Seq.empty,
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,

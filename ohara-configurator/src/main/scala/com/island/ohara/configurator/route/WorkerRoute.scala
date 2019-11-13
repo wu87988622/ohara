@@ -44,7 +44,6 @@ object WorkerRoute {
         WorkerClusterInfo(
           settings =
             WorkerApi.access.request.settings(creation.settings).fileKeys(fileInfos.map(_.key).toSet).creation.settings,
-          connectorDefinitions = Seq.empty,
           aliveNodes = Set.empty,
           state = None,
           error = None,

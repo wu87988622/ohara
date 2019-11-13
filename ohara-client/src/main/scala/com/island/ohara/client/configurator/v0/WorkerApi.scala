@@ -20,7 +20,6 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
@@ -251,8 +250,6 @@ object WorkerApi {
       extends ClusterStatus
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
-                                                     // TODO remove this (see https://github.com/oharastream/ohara/issues/3201)
-                                                     connectorDefinitions: Seq[ClassInfo],
                                                      aliveNodes: Set[String],
                                                      lastModified: Long,
                                                      state: Option[String],
@@ -318,7 +315,7 @@ object WorkerApi {
   private[ohara] implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
     JsonRefiner[WorkerClusterInfo]
       .format(new RootJsonFormat[WorkerClusterInfo] {
-        private[this] val format = jsonFormat6(WorkerClusterInfo)
+        private[this] val format = jsonFormat5(WorkerClusterInfo)
         override def write(obj: WorkerClusterInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
 
         override def read(json: JsValue): WorkerClusterInfo = format.read(json)

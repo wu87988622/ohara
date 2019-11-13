@@ -27,7 +27,6 @@ import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.setting.ObjectKey
@@ -166,7 +165,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .nodeName(host)
             .creation
             .settings,
-          connectorDefinitions = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ServiceState.RUNNING.name),
@@ -333,7 +331,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           creation =>
             WorkerClusterInfo(
               settings = creation.settings,
-              connectorDefinitions = ReflectionUtils.localConnectorDefinitions,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ServiceState.RUNNING.name),

@@ -330,22 +330,6 @@ package object route {
           // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
           .asInstanceOf[Cluster]
       )
-      // TODO remove this hard code (see https://github.com/oharastream/ohara/issues/3201)
-      .flatMap {
-        case workerCluster: WorkerClusterInfo =>
-          collie
-            .asInstanceOf[WorkerCollie]
-            .workerClient(workerCluster)
-            .flatMap(_.connectorDefinitions())
-            .recover {
-              case _: Throwable =>
-                Seq.empty
-            }
-            .map { connectorClassInfo =>
-              workerCluster.copy(connectorDefinitions = connectorClassInfo).asInstanceOf[Cluster]
-            }
-        case cluster => Future.successful(cluster)
-      }
 
   /**
     * Create a topic admin according to passed cluster name.
