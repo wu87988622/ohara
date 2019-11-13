@@ -188,34 +188,25 @@ private[configurator] object InspectRoute {
       }
     } ~ path(FILE_PREFIX_PATH / Segment) { fileName =>
       parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
-        complete(
-          dataStore
-            .value[FileInfo](ObjectKey.of(group, fileName))
-            .flatMap { fileInfo =>
-              val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
-              // if user input 0 or > 1 streamapp, we do nothing for it.
-              if (streamApps.size != 1) Future.successful((sources, sinks, streamApps, Seq.empty))
-              else
-                streamCollie
-                  .loadDefinition(fileInfo.url)
-                  .map(_.settingDefinitions)
-                  .recover {
-                    case _: Throwable =>
-                      StreamDefUtils.DEFAULT.asScala
-                  }
-                  .map((sources, sinks, streamApps, _))
-            }
-            .map {
-              case (sources, sinks, streamApps, streamDefinitions) =>
-                FileContent(
-                  sources.map(n =>
-                    ClassInfo(classType = SOURCE_CONNECTOR_KEY, className = n, settingDefinitions = Seq.empty)) ++
-                    sinks.map(n =>
-                      ClassInfo(classType = SINK_CONNECTOR_KEY, className = n, settingDefinitions = Seq.empty)) ++
-                    streamApps.map(n =>
-                      ClassInfo(classType = STREAM_APP_KEY, className = n, settingDefinitions = streamDefinitions))
-                )
-            })
+        complete(dataStore.value[FileInfo](ObjectKey.of(group, fileName)).flatMap { fileInfo =>
+          val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
+          for {
+            streamDefinitions <- if (streamApps.isEmpty) Future.successful(StreamDefUtils.DEFAULT.asScala)
+            else
+              streamCollie.loadDefinition(fileInfo.url).map(_.settingDefinitions).recover {
+                case _: Throwable =>
+                  StreamDefUtils.DEFAULT.asScala
+              }
+            connectorClassInfos <- if (sources.isEmpty && sinks.isEmpty) Future.successful(Seq.empty)
+            else
+              workerCollie.classInfos(Seq(fileInfo)).recover {
+                case _: Throwable =>
+                  Seq.empty
+              }
+          } yield
+            FileContent(connectorClassInfos ++ streamApps.map(n =>
+              ClassInfo.streamApp(className = n, settingDefinitions = streamDefinitions)))
+        })
       }
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
       complete(ConfiguratorInfo(

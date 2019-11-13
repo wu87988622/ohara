@@ -17,6 +17,7 @@
 package com.island.ohara.common.util;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.data.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -38,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -815,6 +817,22 @@ public final class CommonUtils {
    */
   public static String fromEnvString(String string) {
     return string.replaceAll(INTERNAL_STRING_FOR_ENV, "\"");
+  }
+
+  public static Map<String, String> parse(List<String> lines) {
+    return lines.stream()
+        .filter(
+            line ->
+                !line.isEmpty()
+                    && line.contains("=")
+                    && line.charAt(0) != '='
+                    && line.charAt(line.length() - 1) != '=')
+        .map(
+            line -> {
+              int index = line.indexOf("=");
+              return Pair.of(line.substring(0, index), line.substring(index + 1));
+            })
+        .collect(Collectors.toMap(Pair::left, Pair::right));
   }
 
   /** disable to instantiate CommonUtils. */

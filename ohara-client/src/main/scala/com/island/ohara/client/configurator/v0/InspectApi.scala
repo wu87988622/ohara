@@ -21,6 +21,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -48,6 +49,7 @@ object InspectApi {
   val FILE_PREFIX_PATH: String = "file"
   val SOURCE_CONNECTOR_KEY: String = "source connector"
   val SINK_CONNECTOR_KEY: String = "sink connector"
+  val UNKNOWN_CONNECTOR_KEY: String = "unknown connector"
   val STREAM_APP_KEY: String = "streamApp"
 
   final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
@@ -58,8 +60,44 @@ object InspectApi {
   implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat2(ConfiguratorInfo)
 
   case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
+  object ClassInfo {
+    def streamApp(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo = ClassInfo(
+      classType = STREAM_APP_KEY,
+      className = className,
+      settingDefinitions = settingDefinitions
+    )
 
-  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat3(ClassInfo)
+    /**
+      * create connector class information. The type is from setting definitions.
+      * @param className class name
+      * @param settingDefinitions setting definitions
+      * @return class information
+      */
+    def connector(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo =
+      settingDefinitions.find(_.key() == ConnectorDefUtils.KIND_KEY).map(_.defaultString()) match {
+        case Some(ConnectorDefUtils.SOURCE_CONNECTOR) => sourceConnector(className, settingDefinitions)
+        case Some(ConnectorDefUtils.SINK_CONNECTOR)   => sinkConnector(className, settingDefinitions)
+        case _ =>
+          ClassInfo(
+            classType = UNKNOWN_CONNECTOR_KEY,
+            className = className,
+            settingDefinitions = settingDefinitions
+          )
+      }
+
+    def sourceConnector(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo = ClassInfo(
+      classType = SOURCE_CONNECTOR_KEY,
+      className = className,
+      settingDefinitions = settingDefinitions
+    )
+
+    def sinkConnector(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo = ClassInfo(
+      classType = SINK_CONNECTOR_KEY,
+      className = className,
+      settingDefinitions = settingDefinitions
+    )
+  }
+  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat3(ClassInfo.apply)
 
   case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef], classInfos: Seq[ClassInfo])
 

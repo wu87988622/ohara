@@ -171,7 +171,7 @@ package object v0 {
   /**
     * exposed to configurator
     */
-  private[v0] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
+  implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
     new RootJsonFormat[SettingDef] {
       override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
       override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson

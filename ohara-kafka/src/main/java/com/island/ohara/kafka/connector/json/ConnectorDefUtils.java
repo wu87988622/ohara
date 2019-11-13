@@ -224,6 +224,9 @@ public final class ConnectorDefUtils {
   /** this is the base of source/sink definition. */
   public static final String KIND_KEY = "kind";
 
+  public static final String SOURCE_CONNECTOR = "source";
+  public static final String SINK_CONNECTOR = "sink";
+
   public static final SettingDef SOURCE_KIND_DEFINITION =
       createDef(
           builder ->
@@ -231,7 +234,7 @@ public final class ConnectorDefUtils {
                   .displayName(KIND_KEY)
                   .key(KIND_KEY)
                   .documentation("kind of connector")
-                  .optional("source")
+                  .optional(SOURCE_CONNECTOR)
                   .readonly()
                   .build());
 
@@ -243,7 +246,7 @@ public final class ConnectorDefUtils {
                   .key(SOURCE_KIND_DEFINITION.key())
                   .documentation(SOURCE_KIND_DEFINITION.documentation())
                   .group(SOURCE_KIND_DEFINITION.group())
-                  .optional("sink")
+                  .optional(SINK_CONNECTOR)
                   .orderInGroup(SOURCE_KIND_DEFINITION.orderInGroup())
                   .readonly()
                   .build());

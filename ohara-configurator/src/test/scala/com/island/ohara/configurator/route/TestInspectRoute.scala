@@ -46,7 +46,7 @@ class TestInspectRoute extends OharaTest {
   private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
@@ -105,7 +105,7 @@ class TestInspectRoute extends OharaTest {
   }
 
   @Test
-  def testQueryFile(): Unit = {
+  def testQueryStreamFile(): Unit = {
     val currentPath = new File(".").getCanonicalPath
     val streamFile = new File(currentPath, "../ohara-streams/build/libs/test-streamApp.jar")
     streamFile.exists() shouldBe true
@@ -117,6 +117,28 @@ class TestInspectRoute extends OharaTest {
     fileContent.sourceConnectorClasses.size shouldBe 0
     fileContent.sinkConnectorClasses.size shouldBe 0
     fileContent.streamAppClasses.size shouldBe 1
+  }
+
+  @Test
+  def testQueryConnectorFile(): Unit = {
+    val connectorFile = {
+      val folder = new File(new File(".").getCanonicalPath, "../ohara-connector/build/libs/")
+      val files = folder.listFiles()
+      files should not be null
+      files.size should not be 0
+      files.filter(_.getName.endsWith("jar")).head
+    }
+    connectorFile.exists() shouldBe true
+    def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+    val fileInfo = result(fileApi.request.file(connectorFile).upload())
+
+    val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
+    fileContent.classes should not be Seq.empty
+    fileContent.sourceConnectorClasses.size should not be 0
+    fileContent.sourceConnectorClasses.foreach(d => d.settingDefinitions should not be Seq.empty)
+    fileContent.sinkConnectorClasses.size should not be 0
+    fileContent.sinkConnectorClasses.foreach(d => d.settingDefinitions should not be Seq.empty)
+    fileContent.streamAppClasses.size shouldBe 0
   }
 
   private[this] def tmpFile(bytes: Array[Byte]): File = {

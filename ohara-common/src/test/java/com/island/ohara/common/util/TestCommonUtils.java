@@ -560,4 +560,12 @@ public class TestCommonUtils extends OharaTest {
       Assert.assertTrue(e.getMessage().contains(url.toString()));
     }
   }
+
+  @Test
+  public void testParseLines() {
+    Map<String, String> args = CommonUtils.parse(Arrays.asList("=aaa", "aaa=", "ccc", "a=b"));
+
+    Assert.assertEquals(args.size(), 1);
+    Assert.assertEquals(args.get("a"), "b");
+  }
 }

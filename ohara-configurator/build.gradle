@@ -77,3 +77,4 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
 }
 // this testing jar is useful in testing /info route
 test.dependsOn(':ohara-streams:streamAppJar')
+test.dependsOn(':ohara-connector:jar')
