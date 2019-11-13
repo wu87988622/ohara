@@ -102,12 +102,6 @@ class TestWorkerApi extends OharaTest {
   def nullBrokerClusterKey(): Unit = an[NullPointerException] should be thrownBy accessApi.brokerClusterKey(null)
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy accessApi.imageName(null)
-
-  @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy accessApi.imageName("")
-
-  @Test
   def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy accessApi.nodeNames(null)
 
   @Test
@@ -161,7 +155,6 @@ class TestWorkerApi extends OharaTest {
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(5)
     val group = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     val brokerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
@@ -189,14 +182,12 @@ class TestWorkerApi extends OharaTest {
       .statusTopicName(statusTopicName)
       .statusTopicPartitions(statusTopicPartitions)
       .statusTopicReplications(statusTopicReplications)
-      .imageName(imageName)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .nodeName(nodeName)
       .creation
     creation.name shouldBe name
     creation.group shouldBe group
-    creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
     creation.jmxPort shouldBe jmxPort
     creation.brokerClusterKey shouldBe brokerClusterKey
@@ -267,7 +258,6 @@ class TestWorkerApi extends OharaTest {
   def testUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val nodeName = CommonUtils.randomString()
     val brokerClusterKey = ObjectKey.of("g", "n")
@@ -286,10 +276,8 @@ class TestWorkerApi extends OharaTest {
       // the group here is not as same as before
       // here we use update as creation
       .group(group)
-      .imageName(imageName)
       .clientPort(clientPort)
       .updating
-    updateAsCreation.imageName shouldBe Some(imageName)
     updateAsCreation.clientPort shouldBe Some(clientPort)
     updateAsCreation.nodeNames should not be Some(Set(nodeName))
   }
@@ -823,6 +811,9 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def checkNameDefinition(): Unit = WorkerApi.DEFINITIONS.find(_.key() == NAME_KEY) should not be None
+
+  @Test
+  def checkImageNameDefinition(): Unit = WorkerApi.DEFINITIONS.find(_.key() == IMAGE_NAME_KEY) should not be None
 
   @Test
   def checkGroupDefinition(): Unit = WorkerApi.DEFINITIONS.find(_.key() == GROUP_KEY) should not be None

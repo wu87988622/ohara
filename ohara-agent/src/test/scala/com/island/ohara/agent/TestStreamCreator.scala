@@ -65,7 +65,6 @@ class TestStreamCreator extends OharaTest {
     an[DeserializationException] should be thrownBy streamCreator()
       .name("!@#$-")
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString(10))
       .create()
   }
@@ -79,16 +78,6 @@ class TestStreamCreator extends OharaTest {
   def emptyNodeName(): Unit = {
     //TODO We should reject empty nodeNames after #2288
     streamCreator().nodeNames(Set.empty)
-  }
-
-  @Test
-  def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().imageName(null)
-  }
-
-  @Test
-  def emptyImage(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().imageName("")
   }
 
   @Test
@@ -120,7 +109,6 @@ class TestStreamCreator extends OharaTest {
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
       .fromTopicKey(topicKey())
       .toTopicKey(topicKey())
@@ -133,7 +121,6 @@ class TestStreamCreator extends OharaTest {
     an[DeserializationException] should be thrownBy streamCreator()
       .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
       .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())
@@ -148,7 +135,6 @@ class TestStreamCreator extends OharaTest {
     an[DeserializationException] should be thrownBy streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
-      .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()
 
@@ -181,7 +167,6 @@ class TestStreamCreator extends OharaTest {
       streamCreator()
         .name(CommonUtils.randomString(10))
         .group(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString())
         .brokerClusterKey(brokerKey())
         .jarKey(fileInfo.key)
         .fromTopicKey(topicKey())
@@ -197,7 +182,6 @@ class TestStreamCreator extends OharaTest {
     val res = streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
       .nodeName(CommonUtils.randomString())
       .fromTopicKey(topicKey())
@@ -214,7 +198,6 @@ class TestStreamCreator extends OharaTest {
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
       .jarKey(fileInfo.key)
       .toTopicKey(topicKey())
@@ -228,7 +211,6 @@ class TestStreamCreator extends OharaTest {
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
       .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())
@@ -245,7 +227,6 @@ class TestStreamCreator extends OharaTest {
     streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString())
       .brokerClusterKey(brokerKey())
       .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())

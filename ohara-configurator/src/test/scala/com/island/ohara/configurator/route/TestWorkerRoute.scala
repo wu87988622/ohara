@@ -142,27 +142,6 @@ class TestWorkerRoute extends OharaTest {
     )
 
   @Test
-  def testImageName(): Unit = {
-    result(
-      workerApi.request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .brokerClusterKey(brokerClusterKey)
-        .create()
-    ).imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
-
-    //  the available images in fake mode is only IMAGE_NAME_DEFAULT
-    an[IllegalArgumentException] should be thrownBy result(
-      workerApi.request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .imageName(CommonUtils.randomString(10))
-        .brokerClusterKey(brokerClusterKey)
-        .create()
-        .flatMap(wk => workerApi.start(wk.key))
-    )
-  }
-  @Test
   def testList(): Unit = {
     val count = 5
     (0 until count).foreach { _ =>

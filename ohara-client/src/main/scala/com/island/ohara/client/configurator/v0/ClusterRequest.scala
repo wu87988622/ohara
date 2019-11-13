@@ -42,9 +42,6 @@ trait ClusterRequest {
   @Optional("default is GROUP_DEFAULT")
   def group(group: String): ClusterRequest.this.type =
     setting(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
-  @Optional("the default image is IMAGE_NAME_DEFAULT")
-  def imageName(imageName: String): ClusterRequest.this.type =
-    setting(IMAGE_NAME_KEY, JsString(CommonUtils.requireNonEmpty(imageName)))
   def nodeName(nodeName: String): ClusterRequest.this.type = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
   def nodeNames(nodeNames: Set[String]): ClusterRequest.this.type =
     setting(NODE_NAMES_KEY, JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))

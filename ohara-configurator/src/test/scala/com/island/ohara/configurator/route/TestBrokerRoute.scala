@@ -145,26 +145,6 @@ class TestBrokerRoute extends OharaTest {
   }
 
   @Test
-  def testImageName(): Unit = {
-    result(
-      brokerApi.request
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .zookeeperClusterKey(zkKey)
-        .create()).imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
-
-    val bk = result(
-      brokerApi.request
-        .name(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .zookeeperClusterKey(zkKey)
-        .create())
-    // the available images of fake mode is only BrokerApi.IMAGE_NAME_DEFAULT
-    an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk.key))
-  }
-
-  @Test
   def testList(): Unit = {
     val init = result(brokerApi.list()).size
     val bk = result(

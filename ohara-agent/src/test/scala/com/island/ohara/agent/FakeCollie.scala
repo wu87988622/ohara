@@ -111,8 +111,6 @@ object FakeCollie {
   trait FakeClusterCreator extends Collie.ClusterCreator {
     override def group(group: String): FakeClusterCreator.this.type =
       throw new UnsupportedOperationException
-    override def imageName(imageName: String): FakeClusterCreator.this.type =
-      throw new UnsupportedOperationException
     override def nodeNames(nodeNames: Set[String]): FakeClusterCreator.this.type =
       throw new UnsupportedOperationException
   }

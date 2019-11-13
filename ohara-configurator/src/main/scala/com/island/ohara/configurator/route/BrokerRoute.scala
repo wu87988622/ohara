@@ -101,7 +101,6 @@ object BrokerRoute {
             .clientPort(brokerClusterInfo.clientPort)
             .jmxPort(brokerClusterInfo.jmxPort)
             .zookeeperClusterKey(brokerClusterInfo.zookeeperClusterKey)
-            .imageName(brokerClusterInfo.imageName)
             .nodeNames(brokerClusterInfo.nodeNames)
             .threadPool(executionContext)
             .create()

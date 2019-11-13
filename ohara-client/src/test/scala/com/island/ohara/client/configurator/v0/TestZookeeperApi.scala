@@ -69,12 +69,6 @@ class TestZookeeperApi extends OharaTest {
   def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy access.group("")
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy access.imageName(null)
-
-  @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy access.imageName("")
-
-  @Test
   def nullNodeNames(): Unit = {
     an[NullPointerException] should be thrownBy access.nodeNames(null)
     an[IllegalArgumentException] should be thrownBy access.nodeNames(Set.empty)
@@ -96,7 +90,6 @@ class TestZookeeperApi extends OharaTest {
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val jmxPort = CommonUtils.availablePort()
     val clientPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
@@ -105,7 +98,6 @@ class TestZookeeperApi extends OharaTest {
     val creation = access
       .name(name)
       .group(group)
-      .imageName(imageName)
       .jmxPort(jmxPort)
       .clientPort(clientPort)
       .peerPort(peerPort)
@@ -114,7 +106,6 @@ class TestZookeeperApi extends OharaTest {
       .creation
     creation.name shouldBe name
     creation.group shouldBe group
-    creation.imageName shouldBe imageName
     creation.jmxPort shouldBe jmxPort
     creation.clientPort shouldBe clientPort
     creation.peerPort shouldBe peerPort
@@ -174,7 +165,6 @@ class TestZookeeperApi extends OharaTest {
   def testUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val nodeName = CommonUtils.randomString()
 
@@ -191,10 +181,8 @@ class TestZookeeperApi extends OharaTest {
       // the group here is not as same as before
       // here we use update as creation
       .group(group)
-      .imageName(imageName)
       .clientPort(clientPort)
       .updating
-    updateAsCreation.imageName shouldBe Some(imageName)
     updateAsCreation.clientPort shouldBe Some(clientPort)
     updateAsCreation.nodeNames should not be Some(Set(nodeName))
   }
@@ -447,6 +435,9 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def checkNameDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == NAME_KEY) should not be None
+
+  @Test
+  def checkImageNameDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == IMAGE_NAME_KEY) should not be None
 
   @Test
   def checkGroupDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == GROUP_KEY) should not be None

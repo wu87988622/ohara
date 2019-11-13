@@ -42,16 +42,6 @@ class TestZookeeperCreator extends OharaTest {
     }
 
   @Test
-  def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator().imageName(null)
-  }
-
-  @Test
-  def emptyImage(): Unit = {
-    an[IllegalArgumentException] should be thrownBy zkCreator().imageName("")
-  }
-
-  @Test
   def nullClusterName(): Unit = {
     an[NullPointerException] should be thrownBy zkCreator().name(null)
   }
@@ -100,7 +90,6 @@ class TestZookeeperCreator extends OharaTest {
   def testNameLength(): Unit = zkCreator()
     .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
-    .imageName(CommonUtils.randomString(10))
     .peerPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
     .electionPort(CommonUtils.availablePort())
@@ -112,7 +101,6 @@ class TestZookeeperCreator extends OharaTest {
     an[DeserializationException] should be thrownBy zkCreator()
       .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()
 
@@ -121,7 +109,6 @@ class TestZookeeperCreator extends OharaTest {
     an[DeserializationException] should be thrownBy zkCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
-      .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()
 
@@ -129,12 +116,7 @@ class TestZookeeperCreator extends OharaTest {
   def testCopy(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
-      settings = ZookeeperApi.access.request
-        .name(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString)
-        .nodeNames(nodeNames)
-        .creation
-        .settings,
+      settings = ZookeeperApi.access.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).creation.settings,
       aliveNodes = nodeNames,
       state = None,
       error = None,
@@ -150,7 +132,6 @@ class TestZookeeperCreator extends OharaTest {
     zkCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
       .create(),
     5 seconds

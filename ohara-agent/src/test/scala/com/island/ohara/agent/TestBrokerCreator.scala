@@ -48,16 +48,6 @@ class TestBrokerCreator extends OharaTest {
     }
 
   @Test
-  def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator().imageName(null)
-  }
-
-  @Test
-  def emptyImage(): Unit = {
-    an[IllegalArgumentException] should be thrownBy bkCreator().imageName("")
-  }
-
-  @Test
   def nullClusterName(): Unit = {
     an[NullPointerException] should be thrownBy bkCreator().name(null)
   }
@@ -104,7 +94,6 @@ class TestBrokerCreator extends OharaTest {
 
   @Test
   def testNameLength(): Unit = bkCreator()
-    .imageName(CommonUtils.randomString(10))
     .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
     .zookeeperClusterKey(zkKey)
@@ -117,7 +106,6 @@ class TestBrokerCreator extends OharaTest {
     an[DeserializationException] should be thrownBy bkCreator()
       .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString)
       .create()
 
@@ -126,7 +114,6 @@ class TestBrokerCreator extends OharaTest {
     bkCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
       .zookeeperClusterKey(ObjectKey.of("default", "name"))
       .create(),
@@ -139,7 +126,6 @@ class TestBrokerCreator extends OharaTest {
     val brokerClusterInfo = BrokerClusterInfo(
       settings = BrokerApi.access.request
         .name(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString)
         .zookeeperClusterKey(zkKey)
         .nodeNames(nodeNames)
         .creation

@@ -140,7 +140,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         BrokerClusterInfo(
           settings = BrokerApi.access.request
             .key(embeddedBrokerKey)
-            .imageName("None")
             .zookeeperClusterKey(embeddedZkName)
             .clientPort(port)
             .nodeName(host)
@@ -234,11 +233,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkCreations = (0 until numberOfBrokerCluster).map { index =>
         val nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
-        val creation = ZookeeperApi.access.request
-          .name(s"$zkClusterNamePrefix$index")
-          .imageName(s"fakeImage$index")
-          .nodeNames(nodeNames)
-          .creation
+        val creation = ZookeeperApi.access.request.name(s"$zkClusterNamePrefix$index").nodeNames(nodeNames).creation
         collie.zookeeperCollie.addCluster(
           new ZookeeperClusterStatus(
             group = creation.group,
@@ -259,7 +254,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         case (zkCreation, index) =>
           val creation = BrokerApi.access.request
             .name(s"$bkClusterNamePrefix$index")
-            .imageName(s"fakeImage$index")
             .zookeeperClusterKey(zkCreation.key)
             .nodeNames(zkCreation.nodeNames)
             .creation

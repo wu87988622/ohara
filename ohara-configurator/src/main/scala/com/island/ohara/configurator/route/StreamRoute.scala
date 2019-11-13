@@ -158,7 +158,6 @@ private[configurator] object StreamRoute {
                   .settings(streamClusterInfo.settings)
                   .name(streamClusterInfo.name)
                   .group(streamClusterInfo.group)
-                  .imageName(streamClusterInfo.imageName)
                   .nodeNames(streamClusterInfo.nodeNames)
                   .jarKey(fileInfo.key)
                   .brokerClusterKey(brokerClusterInfo.key)

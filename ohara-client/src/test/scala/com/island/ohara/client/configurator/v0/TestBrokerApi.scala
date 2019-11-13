@@ -82,12 +82,6 @@ class TestBrokerApi extends OharaTest {
   def nullZookeeperClusterKey(): Unit = an[NullPointerException] should be thrownBy access.zookeeperClusterKey(null)
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy access.imageName(null)
-
-  @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy access.imageName("")
-
-  @Test
   def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy access.nodeNames(null)
 
   @Test
@@ -103,7 +97,6 @@ class TestBrokerApi extends OharaTest {
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
     val zkKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
@@ -112,14 +105,12 @@ class TestBrokerApi extends OharaTest {
       .name(name)
       .group(group)
       .zookeeperClusterKey(zkKey)
-      .imageName(imageName)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .nodeName(nodeName)
       .creation
     creation.name shouldBe name
     creation.group shouldBe group
-    creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
     creation.jmxPort shouldBe jmxPort
     creation.zookeeperClusterKey shouldBe zkKey
@@ -208,7 +199,6 @@ class TestBrokerApi extends OharaTest {
   def testUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val nodeName = CommonUtils.randomString()
 
@@ -225,10 +215,8 @@ class TestBrokerApi extends OharaTest {
       // the group here is not as same as before
       // here we use update as creation
       .group(group)
-      .imageName(imageName)
       .clientPort(clientPort)
       .updating
-    updateAsCreation.imageName shouldBe Some(imageName)
     updateAsCreation.clientPort shouldBe Some(clientPort)
     updateAsCreation.nodeNames should not be Some(Set(nodeName))
   }
@@ -680,6 +668,9 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def checkNameDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == NAME_KEY) should not be None
+
+  @Test
+  def checkImageNameDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == IMAGE_NAME_KEY) should not be None
 
   @Test
   def checkGroupDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY) should not be None

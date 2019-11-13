@@ -133,7 +133,6 @@ object WorkerRoute {
             .statusTopicName(workerClusterInfo.statusTopicName)
             .statusTopicPartitions(workerClusterInfo.statusTopicPartitions)
             .statusTopicReplications(workerClusterInfo.statusTopicReplications)
-            .imageName(workerClusterInfo.imageName)
             .fileKeys(workerClusterInfo.fileKeys)
             .nodeNames(workerClusterInfo.nodeNames)
             .threadPool(executionContext)

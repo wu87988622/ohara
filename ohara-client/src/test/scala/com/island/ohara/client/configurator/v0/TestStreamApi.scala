@@ -77,7 +77,6 @@ class TestStreamApi extends OharaTest {
     val info = StreamClusterInfo(
       settings = StreamApi.access.request
         .name(name)
-        .imageName("imageName")
         .group(group)
         .nodeNames(Set("node1"))
         .fromTopicKey(fromTopicKey)
@@ -98,7 +97,6 @@ class TestStreamApi extends OharaTest {
 
     info.name shouldBe name
     info.group shouldBe group
-    info.imageName shouldBe "imageName"
     info.nodeNames shouldBe Set("node1")
     info.jarKey shouldBe fakeJar
     info.fromTopicKeys shouldBe Set(fromTopicKey)
@@ -120,9 +118,6 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def imageNameFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy accessRequest.imageName(null)
-    an[IllegalArgumentException] should be thrownBy accessRequest.imageName("")
-
     // default value
     accessRequest
       .name(CommonUtils.randomString(5))
@@ -133,12 +128,6 @@ class TestStreamApi extends OharaTest {
       .brokerClusterKey(ObjectKey.of("group", "n"))
       .creation
       .imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
-  }
-
-  @Test
-  def jarFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy accessRequest.imageName(null)
-    an[IllegalArgumentException] should be thrownBy accessRequest.imageName("")
   }
 
   @Test
@@ -279,14 +268,12 @@ class TestStreamApi extends OharaTest {
   @Test
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
-    val imageName = CommonUtils.randomString()
     val from = topicKey()
     val to = topicKey()
     val jmxPort = CommonUtils.availablePort()
     val nodeNames = Set(CommonUtils.randomString())
     val creation = accessRequest
       .name(name)
-      .imageName(imageName)
       .jarKey(fakeJar)
       .fromTopicKey(from)
       .toTopicKey(to)
@@ -296,7 +283,6 @@ class TestStreamApi extends OharaTest {
       .creation
 
     creation.name shouldBe name
-    creation.imageName shouldBe imageName
     creation.jarKey shouldBe fakeJar
     creation.fromTopicKeys shouldBe Set(from)
     creation.toTopicKeys shouldBe Set(to)

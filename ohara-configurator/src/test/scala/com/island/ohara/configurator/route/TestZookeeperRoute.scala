@@ -91,28 +91,6 @@ class TestZookeeperRoute extends OharaTest {
   def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create())
-
-  @Test
-  def testImageName(): Unit = {
-    // pass by default image
-    val zk = result(
-      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
-    )
-    result(zookeeperApi.start(zk.key))
-    result(zookeeperApi.get(zk.key)).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
-
-    // in fake mode only IMAGE_NAME_DEFAULT is supported
-    val p = result(
-      zookeeperApi.request
-        .name(CommonUtils.randomString(10))
-        .imageName(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .create())
-    an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.start(p.key)
-    )
-  }
-
   @Test
   def testList(): Unit = {
     val init = result(zookeeperApi.list()).size

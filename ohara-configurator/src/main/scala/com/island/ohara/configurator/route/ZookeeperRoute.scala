@@ -83,7 +83,6 @@ object ZookeeperRoute {
             .clientPort(zookeeperClusterInfo.clientPort)
             .electionPort(zookeeperClusterInfo.electionPort)
             .peerPort(zookeeperClusterInfo.peerPort)
-            .imageName(zookeeperClusterInfo.imageName)
             .nodeNames(zookeeperClusterInfo.nodeNames)
             .threadPool(executionContext)
             .create()

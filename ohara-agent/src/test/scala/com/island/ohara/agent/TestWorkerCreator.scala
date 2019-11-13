@@ -43,16 +43,6 @@ class TestWorkerCreator extends OharaTest {
   }
 
   @Test
-  def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator().imageName(null)
-  }
-
-  @Test
-  def emptyImage(): Unit = {
-    an[IllegalArgumentException] should be thrownBy wkCreator().imageName("")
-  }
-
-  @Test
   def nullClusterName(): Unit = {
     an[NullPointerException] should be thrownBy wkCreator().name(null)
   }
@@ -160,7 +150,6 @@ class TestWorkerCreator extends OharaTest {
 
   @Test
   def testNameLength(): Unit = wkCreator()
-    .imageName(CommonUtils.randomString(10))
     .name(CommonUtils.randomString(10))
     .group(CommonUtils.randomString(10))
     .brokerClusterKey(ObjectKey.of("default", "bk"))
@@ -183,7 +172,6 @@ class TestWorkerCreator extends OharaTest {
     an[DeserializationException] should be thrownBy wkCreator()
       .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString())
       .create()
 
@@ -192,7 +180,6 @@ class TestWorkerCreator extends OharaTest {
     wkCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
-      .imageName(CommonUtils.randomString)
       .nodeName(CommonUtils.randomString)
       .brokerClusterKey(ObjectKey.of("g", "n"))
       .create(),

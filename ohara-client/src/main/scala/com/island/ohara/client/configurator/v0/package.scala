@@ -385,7 +385,7 @@ package object v0 {
     _.key(NAME_KEY).documentation("name of this worker cluster").stringWithRandomDefault().build()
 
   private[v0] def imageNameDefinition(defaultImage: String): SettingDef.Builder => SettingDef =
-    _.key(IMAGE_NAME_KEY).optional(defaultImage).documentation("the docker image of this service").build()
+    _.key(IMAGE_NAME_KEY).optional(defaultImage).documentation("the docker image of this service").readonly().build()
 
   private[v0] def clientPortDefinition: SettingDef.Builder => SettingDef =
     _.key(CLIENT_PORT_KEY).documentation("the port used to expose the service").bindingPortWithRandomDefault().build()

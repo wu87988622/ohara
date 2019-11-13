@@ -61,7 +61,6 @@ class TestListCluster extends IntegrationTest {
     val clusterKey = nameHolder.generateClusterKey()
     try result(
       serviceCollie.zookeeperCollie.creator
-        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .group(com.island.ohara.client.configurator.v0.GROUP_DEFAULT)
         .clientPort(CommonUtils.availablePort())
         .peerPort(CommonUtils.availablePort())
