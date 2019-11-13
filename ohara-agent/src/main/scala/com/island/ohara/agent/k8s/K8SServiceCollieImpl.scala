@@ -83,7 +83,14 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
         }))
       .map(_.toMap)
 
-  // TODO: complete this implementation (see https://github.com/oharastream/ohara/issues/3148)
-  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
-    Future.successful(Map.empty)
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] = {
+    k8sClient
+      .resources()
+      .flatMap(k8sNodeResource =>
+        dataCollie.values[Node]().map {
+          _.map(node =>
+            if (k8sNodeResource.contains(node.hostname)) Seq(node -> k8sNodeResource(node.hostname))
+            else Seq.empty).flatten.toMap
+      })
+  }
 }

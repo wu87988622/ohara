@@ -45,6 +45,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var store: DataStore = _
   private[this] var serviceCollie: ServiceCollie = _
   private[this] var k8sClient: K8SClient = _
+  private[this] var metricsServiceURL: String = _
   private[this] var k8sNamespace: String = K8SClient.NAMESPACE_DEFAULT_VALUE
 
   @Optional("default is random folder")
@@ -379,6 +380,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
     if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
     this.k8sClient = Objects.requireNonNull(k8sClient)
+    if (this.metricsServiceURL != null) this.k8sClient.k8sMetricsAPIServerURL(metricsServiceURL)
     this
   }
 
@@ -390,6 +392,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   @Optional("default value is default")
   private[configurator] def k8sNamespace(namespace: String): ConfiguratorBuilder = {
     this.k8sNamespace = namespace
+    this
+  }
+
+  private[configurator] def k8sMetricsServiceURL(metricsServiceURL: String): ConfiguratorBuilder = {
+    this.metricsServiceURL = metricsServiceURL
     this
   }
 
