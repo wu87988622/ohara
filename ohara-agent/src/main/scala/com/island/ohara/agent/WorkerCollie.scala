@@ -15,31 +15,23 @@
  */
 
 package com.island.ohara.agent
-import java.io.File
-import java.nio.file.Files
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0._
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.{ObjectKey, SettingDef}
-import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.WithDefinitions
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+
 trait WorkerCollie extends Collie[WorkerClusterStatus] {
 
   override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
@@ -254,44 +246,6 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
         // TODO how could we fetch the error?...by Sam
         error = None
       ))
-
-  /**
-    * load the definitions from input files. Noted, the default implemenation invokes an new jvm to load all jars
-    * and instantiates all connectors to get definitions. It is slow and expensive!
-    * @param fileInfos files to load
-    * @param executionContext thread pool
-    * @return classes information
-    */
-  def classInfos(fileInfos: Seq[FileInfo])(implicit executionContext: ExecutionContext): Future[Seq[ClassInfo]] =
-    if (fileInfos.isEmpty) Future.successful(Seq.empty)
-    else
-      Future {
-        import sys.process._
-        val tmpFolder = CommonUtils.createTempFolder("find_stream_definitions")
-        fileInfos.foreach { fileInfo =>
-          val outputFile = new File(tmpFolder, fileInfo.name)
-          FileUtils.copyURLToFile(fileInfo.url, outputFile, 30 * 1000, 30 * 1000)
-        }
-        val folder = CommonUtils.createTempFolder("loadDefinition_" + CommonUtils.current())
-        val classpath = s"${System.getProperty("java.class.path")}:${tmpFolder.getAbsolutePath}/*"
-        val command =
-          s"java -cp $classpath ${classOf[WithDefinitions].getName} ${WithDefinitions.OUTPUT_FOLDER_KEY}=${folder.getCanonicalPath}"
-        command.!!
-        Option(folder.listFiles())
-          .map(_.toSeq)
-          .getOrElse(Seq.empty)
-          .filter(_.getCanonicalPath.endsWith(WithDefinitions.POSTFIX))
-          .map { file =>
-            ClassInfo.connector(file.getName,
-                                new String(Files.readAllBytes(file.toPath)).parseJson.convertTo[Seq[SettingDef]])
-          }
-      }.recover {
-        case e: Throwable =>
-          // We cannot parse the provided jar, return nothing and log it
-          throw new IllegalArgumentException(
-            s"the provided jars: [${fileInfos.map(_.key).mkString(",")}] could not be parsed, return default settings only.",
-            e)
-      }
 }
 
 object WorkerCollie {

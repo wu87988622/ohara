@@ -38,8 +38,8 @@ public class TestStreamDefUtils extends OharaTest {
     Assert.assertEquals(StreamDefUtils.toJson(defaultConfig), StreamDefUtils.toJson(config));
     Assert.assertEquals(
         "default config size not equal",
-        config.getSettingDefList().size(),
-        defaultConfig.getSettingDefList().size());
+        config.settingDefinitions().size(),
+        defaultConfig.settingDefinitions().size());
 
     StreamDefinitions another =
         StreamDefinitions.with(
@@ -61,8 +61,8 @@ public class TestStreamDefUtils extends OharaTest {
         StreamDefinitions.with(SettingDef.builder().key(key).group(group).build());
 
     Assert.assertEquals(
-        newConfigs.getSettingDefList().size(),
-        StreamDefinitions.create().getSettingDefList().size() + 1);
+        newConfigs.settingDefinitions().size(),
+        StreamDefinitions.create().settingDefinitions().size() + 1);
     Assert.assertTrue(newConfigs.keys().contains(key));
 
     List<SettingDef> list = new ArrayList<>();
@@ -72,8 +72,8 @@ public class TestStreamDefUtils extends OharaTest {
         .forEach(i -> list.add(SettingDef.builder().key(String.valueOf(i)).group(group).build()));
     StreamDefinitions newConfigList = StreamDefinitions.withAll(list);
     Assert.assertEquals(
-        newConfigList.getSettingDefList().size(),
-        StreamDefinitions.create().getSettingDefList().size() + 10);
+        newConfigList.settingDefinitions().size(),
+        StreamDefinitions.create().settingDefinitions().size() + 10);
     Assert.assertTrue(
         newConfigList
             .keys()
@@ -111,7 +111,7 @@ public class TestStreamDefUtils extends OharaTest {
   public void testForbiddenModifyDefs() {
     // we don't allow change the internal definitions, use with() or withAll() instead
     StreamDefinitions.create()
-        .getSettingDefList()
+        .settingDefinitions()
         .add(SettingDef.builder().key(CommonUtils.randomString()).build());
   }
 

@@ -133,7 +133,7 @@ class TestPipelineRoute extends OharaTest {
     pipeline.flows.head.to shouldBe Set.empty
     pipeline.objects.size shouldBe 1
     // we cannot parse class name from empty jar
-    pipeline.objects.head.className should not be None
+    pipeline.objects.head.className shouldBe None
 
     // streamApp is not running so the objects have error
     result(pipelineApi.get(pipeline.key)).objects.head.error should not be None

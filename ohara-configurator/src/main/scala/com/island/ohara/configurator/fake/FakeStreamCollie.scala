@@ -16,17 +16,13 @@
 
 package com.island.ohara.configurator.fake
 
-import java.net.URL
-
 import com.island.ohara.agent.{DataCollie, ServiceState, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
 import com.island.ohara.metrics.basic.{Counter, CounterMBean}
-import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -78,21 +74,4 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
   override protected def dataCollie: DataCollie = node
 
   override protected def prefixKey: String = "fakestream"
-
-  /**
-    * in fake mode, we never return empty result or exception.
-    *
-    * @param jarUrl the custom streamApp jar url
-    * @param executionContext thread pool
-    * @return stream definition
-    */
-  override def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[ClassInfo] =
-    super.loadDefinition(jarUrl).recover {
-      case _: Throwable =>
-        ClassInfo(className = "fake_class",
-                  classType = "stream app",
-                  settingDefinitions = StreamDefUtils.DEFAULT.asScala.toList)
-      // a serializable collection
-    }
-
 }

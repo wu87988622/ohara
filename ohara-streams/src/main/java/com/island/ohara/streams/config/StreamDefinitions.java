@@ -105,7 +105,7 @@ public final class StreamDefinitions {
    *
    * @return config object list
    */
-  public List<SettingDef> getSettingDefList() {
+  public List<SettingDef> settingDefinitions() {
     return configDefs;
   }
 

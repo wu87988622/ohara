@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -32,8 +32,7 @@ import scala.util.Try
 
 // accessible to configurator
 private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataCollie, cacheThreadPool: ExecutorService)
-    extends ReleaseOnce
-    with ServiceCollie {
+    extends ServiceCollie {
 
   private[this] val dockerCache = DockerClientCache()
 
@@ -90,7 +89,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
       } yield zkMap ++ bkMap ++ wkMap ++ streamMap
     }
 
-  override protected def doClose(): Unit = {
+  override def close(): Unit = {
     Releasable.close(dockerCache)
     Releasable.close(clusterCache)
   }

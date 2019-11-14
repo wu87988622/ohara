@@ -19,15 +19,12 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
-import com.island.ohara.common.util.ReleaseOnce
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
 // accessible to configurator
-private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient)
-    extends ReleaseOnce
-    with ServiceCollie {
+private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient) extends ServiceCollie {
 
   override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(dataCollie, k8sClient)
 
@@ -36,10 +33,6 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
   override val workerCollie: WorkerCollie = new K8SWorkerCollieImpl(dataCollie, brokerCollie, k8sClient)
 
   override val streamCollie: StreamCollie = new K8SStreamCollieImpl(dataCollie, brokerCollie, k8sClient)
-
-  override protected def doClose(): Unit = {
-    //Nothing
-  }
 
   override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     dataCollie.values[Node]().flatMap { nodes =>
@@ -92,5 +85,9 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
             if (k8sNodeResource.contains(node.hostname)) Seq(node -> k8sNodeResource(node.hostname))
             else Seq.empty).flatten.toMap
       })
+  }
+
+  override def close(): Unit = {
+    // do nothing
   }
 }

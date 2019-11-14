@@ -37,7 +37,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkHdfsURL(): Unit = {
-    val definition = hdfsSink.definitions().asScala.find(_.key() == HDFS_URL_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == HDFS_URL_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -48,7 +48,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkTopicsDir(): Unit = {
-    val definition = hdfsSink.definitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -59,7 +59,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkFlushSize(): Unit = {
-    val definition = hdfsSink.definitions().asScala.find(_.key() == FLUSH_SIZE_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == FLUSH_SIZE_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt() shouldBe FLUSH_SIZE_DEFAULT
     definition.editable() shouldBe true
@@ -70,7 +70,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkRotateIntervalMS(): Unit = {
-    val definition = hdfsSink.definitions().asScala.find(_.key() == ROTATE_INTERVAL_MS_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == ROTATE_INTERVAL_MS_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultLong() shouldBe ROTATE_INTERVAL_MS_DEFAULT
     definition.editable() shouldBe true
@@ -81,7 +81,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkFileNeedHeader(): Unit = {
-    val definition = hdfsSink.definitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultBoolean() shouldBe FILE_NEED_HEADER_DEFAULT
     definition.editable() shouldBe true
@@ -92,7 +92,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkFileEncode(): Unit = {
-    val definition = hdfsSink.definitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe FILE_ENCODE_DEFAULT
     definition.editable() shouldBe true

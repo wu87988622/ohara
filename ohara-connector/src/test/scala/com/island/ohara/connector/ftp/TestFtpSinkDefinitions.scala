@@ -29,7 +29,7 @@ class TestFtpSinkDefinitions extends OharaTest {
   private[this] val ftpSink = new FtpSink
   @Test
   def checkOutputFolder(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -40,7 +40,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkNeedHeader(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultBoolean() shouldBe true
     definition.editable() shouldBe true
@@ -51,7 +51,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkEncode(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe "UTF-8"
     definition.editable() shouldBe true
@@ -62,7 +62,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkHostname(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_HOSTNAME_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_HOSTNAME_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -73,7 +73,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkPort(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_PORT_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_PORT_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -84,7 +84,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkUser(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_USER_NAME_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_USER_NAME_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -95,7 +95,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkPassword(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_PASSWORD_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_PASSWORD_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true

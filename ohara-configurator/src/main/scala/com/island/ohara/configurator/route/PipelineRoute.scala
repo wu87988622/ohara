@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
@@ -99,40 +99,8 @@ private[configurator] object PipelineRoute {
       ))
   }
 
-  private[this] def toAbstract(data: Data, error: Option[String])(
-    implicit dataStore: DataStore,
-    streamCollie: StreamCollie,
-    executionContext: ExecutionContext): Future[ObjectAbstract] =
-    (data match {
-      case description: ConnectorInfo => Future.successful(Some(description.className))
-      case description: StreamClusterInfo =>
-        dataStore
-          .value[FileInfo](description.jarKey)
-          .map(_.url)
-          .flatMap(streamCollie.loadDefinition)
-          .map(_.className)
-          .map(Some(_))
-      case _ => Future.successful(None)
-    }).recover {
-        case e: Throwable =>
-          LOG.error(s"fail to find the class name of data:${data.key}", e)
-          None
-      }
-      .map { className =>
-        ObjectAbstract(
-          group = data.group,
-          name = data.name,
-          kind = data.kind,
-          className = className,
-          state = None,
-          error = error,
-          metrics = Metrics.EMPTY,
-          lastModified = data.lastModified,
-          tags = data.tags
-        )
-      }
-
   private[this] def toAbstract(obj: Data)(implicit dataStore: DataStore,
+                                          serviceCollie: ServiceCollie,
                                           brokerCollie: BrokerCollie,
                                           workerCollie: WorkerCollie,
                                           streamCollie: StreamCollie,
@@ -154,12 +122,12 @@ private[configurator] object PipelineRoute {
         // update the cluster info with runtime status
         .map(data.update)
         .flatMap { clusterInfo =>
-          dataStore.value[FileInfo](data.jarKey).map(_.url).flatMap(streamCollie.loadDefinition).map { definition =>
+          dataStore.value[FileInfo](data.jarKey).flatMap(serviceCollie.fileContent).map { fileContent =>
             ObjectAbstract(
               group = data.group,
               name = data.name,
               kind = data.kind,
-              className = Some(definition.className),
+              className = fileContent.streamAppClasses.headOption.map(_.className),
               state = clusterInfo.state,
               error = None,
               metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
@@ -168,7 +136,19 @@ private[configurator] object PipelineRoute {
             )
           }
         }
-    case _ => toAbstract(obj, None)
+    case _ =>
+      Future.successful(
+        ObjectAbstract(
+          group = obj.group,
+          name = obj.name,
+          kind = obj.kind,
+          className = None,
+          state = None,
+          error = None,
+          metrics = Metrics.EMPTY,
+          lastModified = obj.lastModified,
+          tags = obj.tags
+        ))
   }
 
   /**
@@ -181,6 +161,7 @@ private[configurator] object PipelineRoute {
     * @return updated pipeline
     */
   private[this] def updateObjects(pipeline: Pipeline)(implicit brokerCollie: BrokerCollie,
+                                                      serviceCollie: ServiceCollie,
                                                       workerCollie: WorkerCollie,
                                                       streamCollie: StreamCollie,
                                                       adminCleaner: AdminCleaner,
@@ -191,13 +172,28 @@ private[configurator] object PipelineRoute {
       .traverse(pipeline.flows.flatMap(flow => flow.to ++ Set(flow.from)))(store.raws)
       .map(_.flatten.toSet)
       .flatMap(Future.traverse(_) { obj =>
-        toAbstract(obj).recoverWith {
-          case e: Throwable => toAbstract(obj, Some(e.getMessage))
+        toAbstract(obj).recover {
+          case e: Throwable =>
+            ObjectAbstract(
+              group = obj.group,
+              name = obj.name,
+              kind = obj.kind,
+              className = obj match {
+                case d: ConnectorInfo => Some(d.className)
+                case _                => None
+              },
+              state = None,
+              error = Some(e.getMessage),
+              metrics = Metrics.EMPTY,
+              lastModified = obj.lastModified,
+              tags = obj.tags
+            )
         }
       })
       .map(objects => pipeline.copy(objects = objects))
 
   private[this] def hookOfGet(implicit brokerCollie: BrokerCollie,
+                              serviceCollie: ServiceCollie,
                               workerCollie: WorkerCollie,
                               streamCollie: StreamCollie,
                               adminCleaner: AdminCleaner,
@@ -206,6 +202,7 @@ private[configurator] object PipelineRoute {
                               meterCache: MeterCache): HookOfGet[Pipeline] = updateObjects(_)
 
   private[this] def hookOfList(implicit brokerCollie: BrokerCollie,
+                               serviceCollie: ServiceCollie,
                                workerCollie: WorkerCollie,
                                streamCollie: StreamCollie,
                                adminCleaner: AdminCleaner,
@@ -214,6 +211,7 @@ private[configurator] object PipelineRoute {
                                meterCache: MeterCache): HookOfList[Pipeline] = Future.traverse(_)(updateObjects)
 
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
+                                   serviceCollie: ServiceCollie,
                                    workerCollie: WorkerCollie,
                                    streamCollie: StreamCollie,
                                    adminCleaner: AdminCleaner,
@@ -232,6 +230,7 @@ private[configurator] object PipelineRoute {
         ))
 
   private[this] def hookOfUpdating(implicit brokerCollie: BrokerCollie,
+                                   serviceCollie: ServiceCollie,
                                    workerCollie: WorkerCollie,
                                    streamCollie: StreamCollie,
                                    adminCleaner: AdminCleaner,
@@ -272,6 +271,7 @@ private[configurator] object PipelineRoute {
     }
 
   def apply(implicit brokerCollie: BrokerCollie,
+            serviceCollie: ServiceCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             adminCleaner: AdminCleaner,

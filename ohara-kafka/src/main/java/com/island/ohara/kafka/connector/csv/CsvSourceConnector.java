@@ -58,14 +58,14 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
   }
 
   @Override
-  public List<SettingDef> definitions() {
+  public List<SettingDef> settingDefinitions() {
     return Stream.of(
             Arrays.asList(
                 INPUT_FOLDER_DEFINITION,
                 COMPLETED_FOLDER_DEFINITION,
                 ERROR_FOLDER_DEFINITION,
                 FILE_ENCODE_DEFINITION),
-            super.definitions())
+            super.settingDefinitions())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

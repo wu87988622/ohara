@@ -91,6 +91,18 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
       throw new IllegalArgumentException("you can't create a counter before starting connector");
     return CounterBuilder.of().group(taskSetting.name());
   }
+
+  /**
+   * the "column" describes the serialization ruleS of input/output data. However, not all
+   * connectors count on it. Keeping a complicated but useless definition is weird to users. Hence,
+   * we offer a way to "remove" it from connectors.
+   *
+   * @return true if your connector counts on column. Otherwise, false.
+   */
+  protected boolean needColumnDefinition() {
+    return true;
+  }
+
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
   /** We take over this method to disable user to use java collection. */
   @Override
@@ -118,7 +130,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   /** @return custom definitions + core definitions */
   @Override
-  public List<SettingDef> definitions() {
+  public List<SettingDef> settingDefinitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SINK_KIND_DEFINITION),
@@ -132,7 +144,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   @Override
   public final ConfigDef config() {
-    return ConnectorUtils.toConfigDef(definitions());
+    return ConnectorUtils.toConfigDef(settingDefinitions());
   }
 
   @Override

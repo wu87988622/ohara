@@ -129,11 +129,6 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
     val to = TopicKey.of("default", CommonUtils.randomString(5))
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
-    // jar should be parse-able
-    log.info(s"[testRunSimpleStreamApp] get definition from $jar")
-    val definition = result(configurator.serviceCollie.streamCollie.loadDefinition(jar.toURI.toURL))
-    definition.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
-    log.info(s"[testRunSimpleStreamApp] get definition from $jar...done")
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()), () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))), bkKey)
     log.info(s"[testRunSimpleStreamApp] broker cluster [$bkKey] assert...done")

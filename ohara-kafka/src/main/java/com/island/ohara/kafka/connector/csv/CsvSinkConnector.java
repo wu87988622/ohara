@@ -43,7 +43,7 @@ import java.util.stream.Stream;
  */
 public abstract class CsvSinkConnector extends RowSinkConnector {
   @Override
-  public List<SettingDef> definitions() {
+  public List<SettingDef> settingDefinitions() {
     return Stream.of(
             Arrays.asList(
                 TOPICS_DIR_DEFINITION,
@@ -51,7 +51,7 @@ public abstract class CsvSinkConnector extends RowSinkConnector {
                 ROTATE_INTERVAL_MS_DEFINITION,
                 FILE_NEED_HEADER_DEFINITION,
                 FILE_ENCODE_DEFINITION),
-            super.definitions())
+            super.settingDefinitions())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

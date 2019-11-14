@@ -89,6 +89,18 @@ public abstract class RowSourceConnector extends SourceConnector implements With
       throw new IllegalArgumentException("you can't create a counter before starting connector");
     return CounterBuilder.of().group(taskSetting.name());
   }
+
+  /**
+   * the "column" describes the serialization ruleS of input/output data. However, not all
+   * connectors count on it. Keeping a complicated but useless definition is weird to users. Hence,
+   * we offer a way to "remove" it from connectors.
+   *
+   * @return true if your connector counts on column. Otherwise, false.
+   */
+  protected boolean needColumnDefinition() {
+    return true;
+  }
+
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
   @Override
@@ -116,7 +128,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
 
   /** @return custom definitions + core definitions */
   @Override
-  public List<SettingDef> definitions() {
+  public List<SettingDef> settingDefinitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SOURCE_KIND_DEFINITION),
@@ -130,7 +142,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
 
   @Override
   public final ConfigDef config() {
-    return ConnectorUtils.toConfigDef(definitions());
+    return ConnectorUtils.toConfigDef(settingDefinitions());
   }
 
   @Override

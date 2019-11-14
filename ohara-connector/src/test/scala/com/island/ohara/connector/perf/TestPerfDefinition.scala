@@ -36,7 +36,7 @@ class TestPerfDefinition extends WithBrokerWorker {
 
   @Test
   def checkBatch(): Unit = {
-    val definition = perfSource.definitions().asScala.find(_.key() == PERF_BATCH).get
+    val definition = perfSource.settingDefinitions().asScala.find(_.key() == PERF_BATCH).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt() shouldBe DEFAULT_BATCH
     definition.editable() shouldBe true
@@ -47,7 +47,7 @@ class TestPerfDefinition extends WithBrokerWorker {
 
   @Test
   def checkFrequence(): Unit = {
-    val definition = perfSource.definitions().asScala.find(_.key() == PERF_FREQUENCE).get
+    val definition = perfSource.settingDefinitions().asScala.find(_.key() == PERF_FREQUENCE).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultDuration() shouldBe java.time.Duration.ofMillis(DEFAULT_FREQUENCE.toMillis)
     definition.editable() shouldBe true

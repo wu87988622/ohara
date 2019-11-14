@@ -22,10 +22,8 @@ import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
-import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,16 +54,7 @@ public class LaunchImpl {
                   app.set(cons.newInstance());
 
                   final StreamApp theApp = app.get();
-                  Method method =
-                      clz.getSuperclass()
-                          .getDeclaredMethod(StreamsConfig.STREAMAPP_CONFIG_METHOD_NAME);
-                  StreamDefinitions streamDefinitions = (StreamDefinitions) method.invoke(theApp);
-
-                  if (props.containsKey(StreamsConfig.STREAMAPP_CONFIG_KEY)) {
-                    System.out.println(
-                        clz.getCanonicalName() + "=" + StreamDefUtils.toJson(streamDefinitions));
-                    return;
-                  }
+                  StreamDefinitions streamDefinitions = theApp.config();
 
                   OStream<Row> ostream =
                       OStream.builder()

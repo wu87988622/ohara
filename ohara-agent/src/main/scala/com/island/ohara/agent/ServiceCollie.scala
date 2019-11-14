@@ -15,19 +15,36 @@
  */
 
 package com.island.ohara.agent
+import java.io.{File, FileWriter}
+import java.lang.reflect.Modifier
+import java.nio.file.Files
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
+import com.island.ohara.agent.ServiceCollie.ClassNames
 import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import com.island.ohara.agent.ssh.ServiceCollieImpl
-import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.InspectApi.{ClassInfo, FileContent}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
+import com.island.ohara.client.configurator.v0.{ClusterStatus, _}
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.json.JsonUtils
 import com.island.ohara.common.pattern.Builder
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.connector.WithDefinitions
+import com.island.ohara.streams.StreamApp
 import com.typesafe.scalalogging.Logger
+import org.apache.commons.io.FileUtils
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.util.ConfigurationBuilder
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -37,7 +54,7 @@ import scala.util.Try
   * However, it is ok to keep global instance of collie if they have dump close().
   * Currently, default implementation is based on ssh and docker command. It is simple but slow.
   */
-trait ServiceCollie extends Releasable {
+abstract class ServiceCollie extends Releasable {
 
   /**
     * create a collie for zookeeper cluster
@@ -157,10 +174,144 @@ trait ServiceCollie extends Releasable {
     * @return hardware resources of all hosted nodes
     */
   def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]]
+
+  /**
+    * load the connectors class and streamApp classes from specific file
+    * @param fileInfos file info
+    * @return (sources, sinks, streamApps)
+    */
+  private[this] def classNames(fileInfos: Seq[FileInfo]): ClassNames = {
+
+    /**
+      * we don't define the class loader to this reflections since we don't care for the "class type"
+      */
+    val builder = new ConfigurationBuilder()
+    fileInfos.foreach(fileInfo => builder.addUrls(fileInfo.url))
+    val reflections = new Reflections(builder)
+
+    def fetch(className: String): Seq[String] =
+      // classOf[SubTypesScanner].getSimpleName is hard-code since Reflections does not expose it ...
+      reflections.getStore.getAll(classOf[SubTypesScanner].getSimpleName, className).asScala.toSeq
+
+    new ClassNames(
+      sources = fetch("com.island.ohara.kafka.connector.RowSourceConnector"),
+      sinks = fetch("com.island.ohara.kafka.connector.RowSinkConnector"),
+      streamApps = fetch("com.island.ohara.streams.StreamApp")
+    )
+  }
+
+  def fileContent(fileInfo: FileInfo)(implicit executionContext: ExecutionContext): Future[FileContent] = filesContent(
+    Seq(fileInfo))
+
+  /**
+    * load the definitions from input files. Noted, the default implementation invokes an new jvm to load all jars
+    * and instantiates all connectors to get definitions. It is slow and expensive!
+    * @param fileInfos files to load
+    * @param executionContext thread pool
+    * @return classes information
+    */
+  def filesContent(fileInfos: Seq[FileInfo])(implicit executionContext: ExecutionContext): Future[FileContent] =
+    if (fileInfos.isEmpty) Future.successful(FileContent.empty)
+    else
+      Future {
+        val names = classNames(fileInfos)
+        if (names.all.isEmpty) FileContent.empty
+        else {
+          import sys.process._
+          val tmpFolder = CommonUtils.createTempFolder("find_definitions_libs")
+          fileInfos.foreach { fileInfo =>
+            val outputFile = new File(tmpFolder, fileInfo.name)
+            FileUtils.copyURLToFile(fileInfo.url, outputFile, 30 * 1000, 30 * 1000)
+          }
+          val folder = CommonUtils.createTempFolder("loadDefinition_" + CommonUtils.current())
+          val classpath = s"${System.getProperty("java.class.path")}:${tmpFolder.getAbsolutePath}/*"
+          val command =
+            s"java -cp $classpath ${classOf[ServiceCollie].getName} ${ServiceCollie.OUTPUT_FOLDER_KEY}=${folder.getCanonicalPath}"
+          command.!!
+          FileContent(
+            Option(folder.listFiles())
+              .map(_.toSeq)
+              .getOrElse(Seq.empty)
+              .filter(_.getCanonicalPath.endsWith(ServiceCollie.POSTFIX))
+              .map { file =>
+                ClassInfo(
+                  // remove the extension
+                  className = file.getName.replace(s".${ServiceCollie.POSTFIX}", ""),
+                  settingDefinitions = new String(Files.readAllBytes(file.toPath)).parseJson.convertTo[Seq[SettingDef]]
+                )
+              }
+              .filter(classInfo => names.all.contains(classInfo.className)))
+        }
+      }.recover {
+        case e: Throwable =>
+          // We cannot parse the provided jar, return nothing and log it
+          throw new IllegalArgumentException(
+            s"the provided jars: [${fileInfos.map(_.key).mkString(",")}] could not be parsed, return default settings only.",
+            e)
+      }
 }
 
 object ServiceCollie {
   val LOG = Logger(classOf[ServiceCollie])
+
+  private[ServiceCollie] val OUTPUT_FOLDER_KEY: String = "output"
+  private[ServiceCollie] val POSTFIX: String = "definitions"
+
+  def main(lines: Array[String]): Unit = {
+    val args = CommonUtils.parse(lines.toSeq.asJava).asScala
+
+    def mustBeFolder(file: File): File = {
+      if (file.exists() && !file.isDirectory)
+        throw new RuntimeException(s"$file is not a folder")
+      if (!file.exists() && !file.mkdirs())
+        throw new RuntimeException(s"fail to create folder on $file")
+      file
+    }
+    val outputFolder = mustBeFolder(
+      new File(args.getOrElse(OUTPUT_FOLDER_KEY, throw new RuntimeException(s"$OUTPUT_FOLDER_KEY is required"))))
+
+    def write(classAndDefinitions: Map[String, java.util.List[SettingDef]]): Unit =
+      classAndDefinitions.foreach {
+        case (name, definitions) =>
+          val fileWriter = new FileWriter(new File(outputFolder, s"$name.$POSTFIX"))
+          try fileWriter.write(JsonUtils.toString(definitions))
+          finally Releasable.close(fileWriter)
+      }
+
+    // log connectors
+    write(
+      new Reflections()
+        .getSubTypesOf(classOf[WithDefinitions])
+        .asScala
+        .filterNot(c => Modifier.isAbstract(c.getModifiers))
+        .flatMap { clz =>
+          try Some(clz.getName -> clz.newInstance().settingDefinitions())
+          catch {
+            case _: Throwable =>
+              None
+          }
+        }
+        .toMap)
+
+    // log stream applications
+    write(
+      new Reflections()
+        .getSubTypesOf(classOf[StreamApp])
+        .asScala
+        .filterNot(c => Modifier.isAbstract(c.getModifiers))
+        .flatMap { clz =>
+          try Some(clz.getName -> clz.newInstance().config().settingDefinitions)
+          catch {
+            case _: Throwable =>
+              None
+          }
+        }
+        .toMap)
+  }
+
+  class ClassNames(val sources: Seq[String], val sinks: Seq[String], val streamApps: Seq[String]) {
+    def all: Seq[String] = sources ++ sinks ++ streamApps
+  }
 
   /**
     * the default implementation uses ssh and docker command to manage all clusters.

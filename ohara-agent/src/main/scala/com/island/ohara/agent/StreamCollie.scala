@@ -16,14 +16,12 @@
 
 package com.island.ohara.agent
 
-import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo, StreamClusterStatus}
@@ -31,6 +29,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
+import com.island.ohara.streams.StreamApp
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.JsString
 
@@ -120,7 +119,8 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )
                   val arguments =
-                    Seq(StreamCollie.MAIN_ENTRY, s"${StreamDefUtils.JAR_URL_KEY}=${fileInfo.url.toURI.toASCIIString}")
+                    Seq(classOf[StreamApp].getName,
+                        s"${StreamDefUtils.JAR_URL_KEY}=${fileInfo.url.toURI.toASCIIString}")
 
                   doCreator(executionContext, containerInfo, newNode, route, arguments)
                     .map(_ => Some(containerInfo))
@@ -155,37 +155,6 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
   def counters(cluster: StreamClusterInfo): Seq[CounterMBean] = cluster.aliveNodes.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }.toSeq
-
-  /**
-    *
-    * @return async future containing configs
-    */
-  /**
-    * Get all '''SettingDef''' of current streamApp.
-    * Note: This method intends to call a method that invokes the reflection method of streamApp.
-    *
-    * @param jarUrl the custom streamApp jar url
-    * @return stream definition
-    */
-  //TODO : this workaround should be removed and use a new API instead in #2191...by Sam
-  def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[ClassInfo] =
-    Future {
-      import sys.process._
-      val classpath = System.getProperty("java.class.path")
-      val command =
-        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_KEY}=${jarUrl.toURI.toASCIIString} ${StreamCollie.CONFIG_KEY}"""
-      val result = command.!!
-      val className = result.split("=")(0)
-      ClassInfo(className = className,
-                classType = "stream app",
-                settingDefinitions = StreamDefUtils.ofJson(result.split("=")(1)).getSettingDefList.asScala)
-    }.recover {
-      case e: Throwable =>
-        // We cannot parse the provided jar, return nothing and log it
-        throw new IllegalArgumentException(
-          s"the provided jar url: [$jarUrl] could not be parsed, return default settings only.",
-          e)
-    }
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[StreamClusterStatus] =
@@ -231,14 +200,4 @@ object StreamCollie {
 
     protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }
-
-  /**
-    * the only entry for ohara streamApp
-    */
-  val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
-
-  /**
-    * the flag to get/set streamApp configs for container
-    */
-  private[agent] val CONFIG_KEY = "CONFIG_KEY"
 }

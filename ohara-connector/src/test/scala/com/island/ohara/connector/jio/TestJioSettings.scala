@@ -56,9 +56,9 @@ class TestJioSettings extends OharaTest {
 
   @Test
   def jsonInHaveNoColumns(): Unit =
-    new JsonIn().definitions().asScala.find(_ == ConnectorDefUtils.COLUMNS_DEFINITION) shouldBe None
+    new JsonIn().settingDefinitions().asScala.find(_ == ConnectorDefUtils.COLUMNS_DEFINITION) shouldBe None
 
   @Test
   def jsonOutHaveNoColumns(): Unit =
-    new JsonOut().definitions().asScala.find(_ == ConnectorDefUtils.COLUMNS_DEFINITION) shouldBe None
+    new JsonOut().settingDefinitions().asScala.find(_ == ConnectorDefUtils.COLUMNS_DEFINITION) shouldBe None
 }

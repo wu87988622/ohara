@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
-import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.InspectApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -31,7 +31,6 @@ import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
-import com.island.ohara.configurator.ReflectionUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
@@ -82,7 +81,7 @@ private[configurator] object InspectRoute {
   def apply(mode: Mode)(implicit brokerCollie: BrokerCollie,
                         adminCleaner: AdminCleaner,
                         dataStore: DataStore,
-                        streamCollie: StreamCollie,
+                        serviceCollie: ServiceCollie,
                         workerCollie: WorkerCollie,
                         objectChecker: ObjectChecker,
                         executionContext: ExecutionContext): server.Route = pathPrefix(INSPECT_PREFIX_PATH) {
@@ -188,25 +187,10 @@ private[configurator] object InspectRoute {
       }
     } ~ path(FILE_PREFIX_PATH / Segment) { fileName =>
       parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
-        complete(dataStore.value[FileInfo](ObjectKey.of(group, fileName)).flatMap { fileInfo =>
-          val (sources, sinks, streamApps) = ReflectionUtils.loadConnectorAndStreamClasses(fileInfo)
-          for {
-            streamDefinitions <- if (streamApps.isEmpty) Future.successful(StreamDefUtils.DEFAULT.asScala)
-            else
-              streamCollie.loadDefinition(fileInfo.url).map(_.settingDefinitions).recover {
-                case _: Throwable =>
-                  StreamDefUtils.DEFAULT.asScala
-              }
-            connectorClassInfos <- if (sources.isEmpty && sinks.isEmpty) Future.successful(Seq.empty)
-            else
-              workerCollie.classInfos(Seq(fileInfo)).recover {
-                case _: Throwable =>
-                  Seq.empty
-              }
-          } yield
-            FileContent(connectorClassInfos ++ streamApps.map(n =>
-              ClassInfo.streamApp(className = n, settingDefinitions = streamDefinitions)))
-        })
+        complete(
+          dataStore
+            .value[FileInfo](ObjectKey.of(group, fileName))
+            .flatMap(fileInfo => serviceCollie.fileContent(fileInfo)))
       }
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
       complete(ConfiguratorInfo(
@@ -274,19 +258,16 @@ private[configurator] object InspectRoute {
               .value[StreamClusterInfo](ObjectKey.of(group, name))
               .map(_.jarKey)
               .flatMap(dataStore.value[FileInfo])
-              .map(_.url)
-              .flatMap(streamCollie.loadDefinition)
-              .map(Seq(_))
+              .flatMap(serviceCollie.fileContent)
               .recover {
-                case _: Throwable => Seq.empty
+                case _: Throwable => FileContent.empty
               }
-              .map { classInfos =>
+              .map(fileContent =>
                 ServiceDefinition(
                   imageName = StreamApi.IMAGE_NAME_DEFAULT,
                   settingDefinitions = StreamDefUtils.DEFAULT.asScala,
-                  classInfos = classInfos
-                )
-              })
+                  classInfos = fileContent.streamAppClasses
+              )))
         }
       } ~ pathEnd {
         complete(

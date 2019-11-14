@@ -149,6 +149,22 @@ public final class StreamDefUtils {
           .blacklist(new HashSet<>(Arrays.asList("stop", "start", "pause", "resume")))
           .build();
 
+  public static final String STREAM_APPLICATION = "streamApp";
+  /**
+   * annotate the kind of this streamapp. This value is immutable and it is useful in parsing
+   * definitions dynamically. The value of kind help us to understand the "master" of those
+   * definitions.
+   */
+  public static final SettingDef KIND_DEFINITION =
+      SettingDef.builder()
+          .displayName("kind")
+          // this key must be equal to ConnectorDefUtils.KIND_KEY
+          .key("kind")
+          .documentation("kind of stream application")
+          .optional(STREAM_APPLICATION)
+          .readonly()
+          .build();
+
   public static final SettingDef VERSION_DEFINITION =
       SettingDef.builder()
           .key("version")
@@ -217,7 +233,7 @@ public final class StreamDefUtils {
           .collect(Collectors.toList());
 
   public static String toJson(StreamDefinitions definitions) {
-    return JsonUtils.toString(definitions.getSettingDefList());
+    return JsonUtils.toString(definitions.settingDefinitions());
   }
 
   public static StreamDefinitions ofJson(String json) {
