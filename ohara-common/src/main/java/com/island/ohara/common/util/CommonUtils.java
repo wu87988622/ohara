@@ -22,20 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -647,16 +639,6 @@ public final class CommonUtils {
   }
 
   /**
-   * create a temp jar file with specified prefix name.
-   *
-   * @param prefix prefix name
-   * @return a temp file
-   */
-  public static File createTempJar(String prefix) {
-    return createTempFile(prefix, ".jar");
-  }
-
-  /**
    * create a temp folder with specified prefix name.
    *
    * @param prefix prefix name
@@ -757,36 +739,6 @@ public final class CommonUtils {
       FileUtils.moveFile(requireFile(file), requireNotExist(newFile));
     } catch (IOException e) {
       throw new IllegalStateException(e);
-    }
-  }
-
-  /**
-   * download file from url
-   *
-   * @param url where the file is download from
-   * @param connectionTimeout the connection timeout
-   * @param readTimeout the read timeout
-   * @return the downloaded file
-   */
-  public static File downloadUrl(URL url, Duration connectionTimeout, Duration readTimeout) {
-    File tmpFolder = CommonUtils.createTempFolder("tmp-");
-    File outputFile = new File(tmpFolder, url.getFile());
-    try {
-      FileUtils.copyURLToFile(
-          Objects.requireNonNull(url),
-          requireNotExist(outputFile),
-          Math.toIntExact(connectionTimeout.toMillis()),
-          Math.toIntExact(readTimeout.toMillis()));
-      return outputFile;
-    } catch (IOException e) {
-      throw new IllegalStateException(
-          "failed to access the "
-              + url
-              + ", connectionTimeout:"
-              + connectionTimeout
-              + ", readTimeout:"
-              + readTimeout,
-          e);
     }
   }
 

@@ -46,28 +46,29 @@ The following information of StreamApp are updated by ohara.
 streamApp stored data
 ~~~~~~~~~~~~~~~~~~~~~
 
-#. settings (**object**) — custom settings. Apart from the following fields, you can add any setting if needed. Each
-   setting should have it's own definition to be used in streamApp runtime.
+The following are common settings to a stream app.
 
-   - the official support fields are listed below
+#. name (**string**) — cluster name
+#. group (**string**) — cluster group
+#. jarKey (**object**) — the used jar key
+#. jmxPort (**int**) — expose port for jmx
+#. className (**string**) — the class to be executed. This field is optional and Configurator will pick up a class from
+                            the input jar. However, it throw exception if there are many available classes in the jar file.
+#. from (**array(TopicKey)**) — source topic
+#. to (**array(TopicKey)**) — target topic
+#. nodeNames (**array(string)**) — the nodes running the zookeeper process
+#. brokerClusterKey (**object**) — the broker cluster key used for streamApp running
 
-     - name (**string**) — cluster name
-     - group (**string**) — cluster group
-     - jarKey (**object**) — the used jar key
-     - jmxPort (**int**) — expose port for jmx
-     - from (**array(TopicKey)**) — source topic
-     - to (**array(TopicKey)**) — target topic
-     - nodeNames (**array(string)**) — the nodes running the zookeeper process
-     - brokerClusterKey (**object**) — the broker cluster key used for streamApp running
+  - brokerClusterKey.group (**option(string)**) — the group of broker cluster
+  - brokerClusterKey.name (**string**) — the name of broker cluster
 
-       - brokerClusterKey.group (**option(string)**) — the group of broker cluster
-       - brokerClusterKey.name (**string**) — the name of broker cluster
+  .. note::
+    the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
+    {"group": "default", "name": "n"}
 
-       .. note::
-          the following forms are legal as well. 1) {"name": "n"} and 2) "n". Both forms are converted to
-          {"group": "default", "name": "n"}
+#. tags (**object**) — the user defined parameters
 
-     - tags (**object**) — the user defined parameters
+
 
 #. nodeNames (**array(string)**) — node list of streamApp running container
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of streamapp cluster

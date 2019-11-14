@@ -108,8 +108,7 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testAddStreamAppToPipeline(): Unit = {
     // create worker
-    val file = CommonUtils.createTempJar("empty_")
-    val fileInfo = result(fileApi.request.file(file).upload())
+    val fileInfo = result(fileApi.request.file(RouteUtils.streamFile).upload())
     val bk = result(brokerApi.list()).head
     val from = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(from.key))
@@ -132,8 +131,7 @@ class TestPipelineRoute extends OharaTest {
     pipeline.flows.head.from shouldBe streamApp.key
     pipeline.flows.head.to shouldBe Set.empty
     pipeline.objects.size shouldBe 1
-    // we cannot parse class name from empty jar
-    pipeline.objects.head.className shouldBe None
+    pipeline.objects.head.className should not be None
 
     // streamApp is not running so the objects have error
     result(pipelineApi.get(pipeline.key)).objects.head.error should not be None

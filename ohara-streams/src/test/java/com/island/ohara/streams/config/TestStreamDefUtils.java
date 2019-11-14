@@ -31,28 +31,6 @@ import org.junit.Test;
 public class TestStreamDefUtils extends OharaTest {
 
   @Test
-  public void testConfigJson() {
-    StreamDefinitions defaultConfig = StreamDefinitions.create();
-    StreamDefinitions config = StreamDefUtils.ofJson(StreamDefUtils.toJson(defaultConfig));
-
-    Assert.assertEquals(StreamDefUtils.toJson(defaultConfig), StreamDefUtils.toJson(config));
-    Assert.assertEquals(
-        "default config size not equal",
-        config.settingDefinitions().size(),
-        defaultConfig.settingDefinitions().size());
-
-    StreamDefinitions another =
-        StreamDefinitions.with(
-            SettingDef.builder()
-                .key(CommonUtils.randomString())
-                .group(CommonUtils.randomString())
-                .build());
-    Assert.assertEquals(
-        StreamDefUtils.toJson(another),
-        StreamDefUtils.toJson(StreamDefUtils.ofJson(StreamDefUtils.toJson(another))));
-  }
-
-  @Test
   public void testAddConfig() {
     String key = CommonUtils.randomString();
     String group = "default";

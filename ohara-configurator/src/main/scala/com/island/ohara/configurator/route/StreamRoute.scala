@@ -19,6 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -39,6 +40,7 @@ private[configurator] object StreamRoute {
 
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext): Future[StreamClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
@@ -65,9 +67,26 @@ private[configurator] object StreamRoute {
         creation.toTopicKeys
       }
       .check()
-      .map { _ =>
+      .map(_.fileInfos)
+      .map { fileInfos =>
+        val available = serviceCollie.classNames(fileInfos).streamApps
+        val className = creation.className.getOrElse {
+          available.size match {
+            case 0 =>
+              throw DeserializationException(
+                s"no available stream classes from files:${fileInfos.map(_.key).mkString(",")}")
+            case 1 => available.head
+            case _ =>
+              throw DeserializationException(
+                s"too many alternatives:${available.mkString(",")} from files:${fileInfos.map(_.key).mkString(",")}")
+          }
+        }
+
+        if (!available.contains(className))
+          throw DeserializationException(s"the class:$className is not in files:${fileInfos.map(_.key).mkString(",")}")
+
         StreamClusterInfo(
-          settings = creation.settings,
+          settings = StreamApi.access.request.settings(creation.settings).className(className).creation.settings,
           aliveNodes = Set.empty,
           state = None,
           metrics = Metrics(Seq.empty),
@@ -77,10 +96,12 @@ private[configurator] object StreamRoute {
       }
 
   private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
+                                   serviceCollie: ServiceCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
+                                   serviceCollie: ServiceCollie,
                                    executionContext: ExecutionContext): HookOfUpdating[Updating, StreamClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[StreamClusterInfo]) =>
       previousOption match {

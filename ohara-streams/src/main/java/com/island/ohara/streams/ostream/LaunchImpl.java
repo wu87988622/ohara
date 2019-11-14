@@ -24,7 +24,6 @@ import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
 import com.island.ohara.streams.config.StreamDefinitions;
 import java.lang.reflect.Constructor;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,8 +34,7 @@ public class LaunchImpl {
   private static volatile boolean error = false;
   private static volatile RuntimeException exception = null;
 
-  public static void launchApplication(
-      final Class<? extends StreamApp> clz, final Properties props) {
+  public static void launchApplication(final Class<? extends StreamApp> clz) {
 
     if (appCalled.getAndSet(true)) {
       throw new IllegalStateException("StreamApp could only be called once in each thread");

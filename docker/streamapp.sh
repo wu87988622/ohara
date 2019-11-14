@@ -21,6 +21,14 @@ cd $OHARA_HOME/bin
 if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
   exec $OHARA_HOME/bin/ohara.sh -v
 else
+  if [[ ! -z "$STREAM_JAR_URLS" ]]; then
+    IFS=','
+    read -ra ADDR <<< "$STREAM_JAR_URLS"
+    for i in "${ADDR[@]}"; do
+      echo "start to download jar:$i"
+      wget $i -P $OHARA_HOME/lib
+    done
+  fi
   # Stream collie decides on the main class for starting stream app.
   exec $OHARA_HOME/bin/ohara.sh start "$@"
 fi

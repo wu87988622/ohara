@@ -72,7 +72,7 @@ class TestLogRoute extends OharaTest {
 
   @Test
   def fetchLogFromStream(): Unit = {
-    val file = result(fileApi.request.file(CommonUtils.createTempJar(CommonUtils.randomString(10))).upload())
+    val file = result(fileApi.request.file(RouteUtils.streamFile).upload())
     val fromTopic = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(fromTopic.key))
     result(topicApi.get(fromTopic.key)).state should not be None

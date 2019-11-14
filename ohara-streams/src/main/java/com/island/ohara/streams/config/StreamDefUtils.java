@@ -16,8 +16,6 @@
 
 package com.island.ohara.streams.config;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.util.VersionUtils;
@@ -33,7 +31,7 @@ import java.util.stream.Collectors;
  */
 public final class StreamDefUtils {
 
-  static final String CORE_GROUP = "core";
+  private static final String CORE_GROUP = "core";
 
   /** This is the default configurations we will load into {@code StreamDefUtils}. */
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
@@ -101,6 +99,17 @@ public final class StreamDefUtils {
           .documentation("The jar key of this streamApp using")
           .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.FILE)
+          .build();
+
+  public static final SettingDef CLASS_NAME_DEFINITION =
+      SettingDef.builder()
+          .key("className")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("the stream class you want to run")
+          .documentation(
+              "the stream class running in all stream nodes. If you don't define it, Configurator will seek all jar files to find the available one.")
+          .optional(Type.CLASS)
           .build();
 
   public static final SettingDef FROM_TOPIC_KEYS_DEFINITION =
@@ -208,9 +217,6 @@ public final class StreamDefUtils {
           .optional(Type.TAGS)
           .build();
 
-  // this is the jar url definition that used in container start argument
-  public static final String JAR_URL_KEY = "jarUrl";
-
   // this is the streamApp metric group definition
   public static final String STREAM_METRICS_GROUP_DEFAULT = "streamapp";
 
@@ -231,15 +237,6 @@ public final class StreamDefUtils {
                 }
               })
           .collect(Collectors.toList());
-
-  public static String toJson(StreamDefinitions definitions) {
-    return JsonUtils.toString(definitions.settingDefinitions());
-  }
-
-  public static StreamDefinitions ofJson(String json) {
-    return new StreamDefinitions(
-        JsonUtils.toObject(json, new TypeReference<List<SettingDef>>() {}));
-  }
 
   // disable constructor
   private StreamDefUtils() {}

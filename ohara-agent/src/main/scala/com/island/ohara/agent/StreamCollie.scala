@@ -114,13 +114,15 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     } ++ Map(
                       "JMX_PORT" -> creation.jmxPort.toString,
                       "JMX_HOSTNAME" -> newNode.hostname
-                    ),
+                    )
+                    // define the urls as string list so as to simplify the script for stream
+                      + ("STREAM_JAR_URLS" -> fileInfo.url.toURI.toASCIIString),
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )
                   val arguments =
                     Seq(classOf[StreamApp].getName,
-                        s"${StreamDefUtils.JAR_URL_KEY}=${fileInfo.url.toURI.toASCIIString}")
+                        s"${StreamDefUtils.CLASS_NAME_DEFINITION.key()}=${creation.className.get}")
 
                   doCreator(executionContext, containerInfo, newNode, route, arguments)
                     .map(_ => Some(containerInfo))

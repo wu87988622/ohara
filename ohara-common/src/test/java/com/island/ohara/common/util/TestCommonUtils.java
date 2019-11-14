@@ -18,11 +18,6 @@ package com.island.ohara.common.util;
 
 import com.island.ohara.common.rule.OharaTest;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -389,70 +384,10 @@ public class TestCommonUtils extends OharaTest {
   }
 
   @Test
-  public void testTemporaryFile() {
-    File f = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    Assert.assertTrue(f.exists());
-  }
-
-  @Test
   public void testTemporaryFolder() {
     File f = CommonUtils.createTempFolder(CommonUtils.randomString(10));
     Assert.assertTrue(f.exists());
     CommonUtils.requireFolder(f);
-  }
-
-  @Test
-  public void testExist() {
-    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    Assert.assertTrue(file.delete());
-    assertException(IllegalArgumentException.class, () -> CommonUtils.requireExist(file));
-  }
-
-  @Test
-  public void testNotExist() throws IOException {
-    int data = 10;
-    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    try (FileOutputStream output = new FileOutputStream(file)) {
-      output.write(data);
-    }
-    assertException(IllegalArgumentException.class, () -> CommonUtils.requireNotExist(file));
-  }
-
-  @Test
-  public void testCopyFile() throws IOException {
-    int data = 10;
-    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    try (FileOutputStream output = new FileOutputStream(file)) {
-      output.write(data);
-    }
-    File newFile = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    Assert.assertTrue(newFile.delete());
-    assertException(NullPointerException.class, () -> CommonUtils.copyFile(null, newFile));
-    assertException(NullPointerException.class, () -> CommonUtils.copyFile(file, null));
-    assertException(IllegalArgumentException.class, () -> CommonUtils.copyFile(file, file));
-    CommonUtils.copyFile(file, newFile);
-    try (FileInputStream input = new FileInputStream(newFile)) {
-      Assert.assertEquals(input.read(), data);
-    }
-  }
-
-  @Test
-  public void testMoveFile() throws IOException {
-    int data = 10;
-    File file = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    try (FileOutputStream output = new FileOutputStream(file)) {
-      output.write(data);
-    }
-    File newFile = CommonUtils.createTempJar(CommonUtils.randomString(10));
-    Assert.assertTrue(newFile.delete());
-    assertException(NullPointerException.class, () -> CommonUtils.moveFile(null, newFile));
-    assertException(NullPointerException.class, () -> CommonUtils.moveFile(file, null));
-    assertException(IllegalArgumentException.class, () -> CommonUtils.moveFile(file, file));
-    CommonUtils.moveFile(file, newFile);
-    try (FileInputStream input = new FileInputStream(newFile)) {
-      Assert.assertEquals(input.read(), data);
-    }
-    Assert.assertFalse(file.exists());
   }
 
   @Test
@@ -548,16 +483,6 @@ public class TestCommonUtils extends OharaTest {
   public void availablePortShouldBeBiggerThan1024() {
     for (int i = 0; i != 10; ++i) {
       Assert.assertTrue(CommonUtils.availablePort() > 1024);
-    }
-  }
-
-  @Test
-  public void testCopyURLToFile() throws MalformedURLException {
-    URL url = new URL("http://node99/abc.jar");
-    try {
-      CommonUtils.downloadUrl(url, Duration.ofSeconds(10), Duration.ofSeconds(10));
-    } catch (IllegalStateException e) {
-      Assert.assertTrue(e.getMessage().contains(url.toString()));
     }
   }
 

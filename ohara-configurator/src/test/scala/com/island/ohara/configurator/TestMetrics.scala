@@ -28,6 +28,7 @@ import com.island.ohara.client.configurator.v0.{
 }
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.route.RouteUtils
 import com.island.ohara.kafka.Producer
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
@@ -234,7 +235,7 @@ class TestMetrics extends WithBrokerWorker {
   @Test
   def testStreamMeterInPipeline(): Unit = {
     val wkInfo = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys)).head
-    val jar = CommonUtils.createTempJar("stream")
+    val jar = RouteUtils.streamFile
     val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
     jarInfo.name shouldBe jar.getName
 
@@ -284,8 +285,6 @@ class TestMetrics extends WithBrokerWorker {
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
-
-    jar.deleteOnExit()
   }
 
   @After

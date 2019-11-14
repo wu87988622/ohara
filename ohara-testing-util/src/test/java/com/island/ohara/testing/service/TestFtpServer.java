@@ -86,12 +86,6 @@ public class TestFtpServer extends OharaTest {
     FtpServer.builder().homeFolder(null).build();
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void setFileToHomeFolder() {
-    File f = CommonUtils.createTempJar(CommonUtils.randomString(5));
-    FtpServer.builder().homeFolder(f).build();
-  }
-
   @Test
   public void testSpecificDataPort() {
     int port = CommonUtils.availablePort();

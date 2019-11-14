@@ -39,8 +39,9 @@ class TestFileInfoRoute extends OharaTest {
   private[this] val fileApi: FileInfoApi.Access =
     FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val file = RouteUtils.streamFile
   private[this] def tmpFile(bytes: Array[Byte]): File = {
-    val f = CommonUtils.createTempJar(CommonUtils.randomString(10))
+    val f = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
     val output = new FileOutputStream(f)
     try output.write(bytes)
     finally output.close()
@@ -118,11 +119,9 @@ class TestFileInfoRoute extends OharaTest {
 
   @Test
   def testDeleteJarUsedByStreamApp(): Unit = {
-    val data = CommonUtils.randomString(10).getBytes
     val name = CommonUtils.randomString(10)
-    val f = tmpFile(data)
     // upload jar
-    val jar = result(fileApi.request.file(f).upload())
+    val jar = result(fileApi.request.file(file).upload())
     val brokerClusterInfo = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
     val fromTopic = result(
       TopicApi.access
@@ -149,8 +148,9 @@ class TestFileInfoRoute extends OharaTest {
         .nodeNames(brokerClusterInfo.nodeNames)
         .create())
     // cannot delete a used jar
-    val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.key))
-    thrown.getMessage should include("stream cluster")
+    intercept[IllegalArgumentException] {
+      result(fileApi.delete(jar.key))
+    }.getMessage should include("stream cluster")
 
     result(streamApi.delete(streamInfo.key))
     // delete is ok after remove property
@@ -161,7 +161,7 @@ class TestFileInfoRoute extends OharaTest {
   }
 
   @Test
-  def duplicateDeleteStreamProperty(): Unit =
+  def duplicateDeleteFile(): Unit =
     (0 to 10).foreach(_ =>
       result(fileApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
@@ -211,7 +211,7 @@ class TestFileInfoRoute extends OharaTest {
     val f = tmpFile(data)
     val jar = result(fileApi.request.file(f).upload())
     val input = jar.url.openStream()
-    val tempFile = CommonUtils.createTempJar(CommonUtils.randomString(10))
+    val tempFile = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
     if (tempFile.exists()) tempFile.delete() shouldBe true
     try Files.copy(input, tempFile.toPath)
     finally input.close()

@@ -18,17 +18,12 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URLClassLoader;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,40 +51,6 @@ public class TestStreamApp extends OharaTest {
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
     StreamApp.runStreamApp(app.getClass());
-  }
-
-  @Test
-  public void testCanDownloadJar() {
-    File file = CommonUtils.createTempJar("streamApp");
-
-    try {
-      File downloadedFile = StreamApp.downloadJarByUrl(file.toURI().toURL().toString());
-      Assert.assertTrue(downloadedFile.isFile());
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
-    }
-
-    file.deleteOnExit();
-  }
-
-  @Test(expected = OharaException.class)
-  public void testWrongURLJar() {
-    File file = CommonUtils.createTempJar("streamApp");
-    // redundant quotes
-    StreamApp.downloadJarByUrl("\"" + file.toURI().toString() + "\"");
-  }
-
-  @Test
-  public void testCanFindJarEntry() {
-    String projectPath = System.getProperty("user.dir");
-    File file = new File(CommonUtils.path(projectPath, "build", "libs", "test-streamApp.jar"));
-
-    try {
-      Map.Entry<String, URLClassLoader> entry = StreamApp.findStreamAppEntry(file);
-      Assert.assertEquals("com.island.ohara.streams.SimpleApplicationForOharaEnv", entry.getKey());
-    } catch (OharaException e) {
-      Assert.fail(e.getMessage());
-    }
   }
 
   public static class CustomStreamApp extends StreamApp {

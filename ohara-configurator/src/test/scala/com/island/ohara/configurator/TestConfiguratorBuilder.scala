@@ -46,10 +46,6 @@ class TestConfiguratorBuilder extends OharaTest {
   def emptyHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder.homeFolder("")
 
   @Test
-  def fileToHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder.homeFolder(
-    CommonUtils.createTempJar(CommonUtils.randomString(10)).getCanonicalPath)
-
-  @Test
   def autoMkdirForHomeFolder(): Unit = {
     val folder = CommonUtils.createTempFolder(CommonUtils.randomString(10))
     folder.delete() shouldBe true

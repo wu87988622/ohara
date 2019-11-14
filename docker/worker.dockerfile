@@ -45,7 +45,7 @@ RUN cp $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/lib/* $(find "/
 
 FROM centos:7.6.1810
 
-# install openjdk-1.8
+# install tools
 RUN yum install -y \
   java-1.8.0-openjdk \
   wget # we use wget to download custom plugin from configurator

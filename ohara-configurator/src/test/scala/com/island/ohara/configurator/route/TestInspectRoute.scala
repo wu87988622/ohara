@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import java.io.{File, FileOutputStream}
+import java.io.FileOutputStream
 
 import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
 import com.island.ohara.client.configurator.v0.{
@@ -32,8 +32,8 @@ import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
-import com.island.ohara.configurator.{Configurator, ReflectionUtils}
 import com.island.ohara.configurator.Configurator.Mode
+import com.island.ohara.configurator.{Configurator, ReflectionUtils}
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
@@ -106,8 +106,7 @@ class TestInspectRoute extends OharaTest {
 
   @Test
   def testQueryStreamFile(): Unit = {
-    val currentPath = new File(".").getCanonicalPath
-    val streamFile = new File(currentPath, "../ohara-streams/build/libs/test-streamApp.jar")
+    val streamFile = RouteUtils.streamFile
     streamFile.exists() shouldBe true
     def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val fileInfo = result(fileApi.request.file(streamFile).upload())
@@ -121,13 +120,7 @@ class TestInspectRoute extends OharaTest {
 
   @Test
   def testQueryConnectorFile(): Unit = {
-    val connectorFile = {
-      val folder = new File(new File(".").getCanonicalPath, "../ohara-connector/build/libs/")
-      val files = folder.listFiles()
-      files should not be null
-      files.size should not be 0
-      files.filter(_.getName.endsWith("jar")).head
-    }
+    val connectorFile = RouteUtils.connectorFile
     connectorFile.exists() shouldBe true
     def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val fileInfo = result(fileApi.request.file(connectorFile).upload())
@@ -141,17 +134,15 @@ class TestInspectRoute extends OharaTest {
     fileContent.streamAppClasses.size shouldBe 0
   }
 
-  private[this] def tmpFile(bytes: Array[Byte]): File = {
-    val f = CommonUtils.createTempJar(CommonUtils.randomString(10))
-    val output = new FileOutputStream(f)
-    try output.write(bytes)
-    finally output.close()
-    f
-  }
-
   @Test
   def testQueryIllegalFile(): Unit = {
-    val file = tmpFile(CommonUtils.randomString(10).getBytes)
+    val file = {
+      val f = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
+      val output = new FileOutputStream(f)
+      try output.write("asdasdsad".getBytes())
+      finally output.close()
+      f
+    }
     def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val fileInfo = result(fileApi.request.file(file).upload())
 

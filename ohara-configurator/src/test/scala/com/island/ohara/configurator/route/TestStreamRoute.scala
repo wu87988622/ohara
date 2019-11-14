@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.route
 
+import java.nio.file.Files
+
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0._
@@ -49,20 +51,20 @@ class TestStreamRoute extends OharaTest {
   private[this] val nodeNames: Set[String] = result(zkApi.list()).head.nodeNames
   private[this] val toTopicKey = TopicKey.of("g", CommonUtils.randomString())
   private[this] val fromTopicKey = TopicKey.of("g", CommonUtils.randomString())
+  private[this] val file = RouteUtils.streamFile
   private[this] var fileInfo: FileInfo = _
 
   @Before
   def setup(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
+    file.exists() shouldBe true
     fileInfo = result(fileApi.request.file(file).upload())
 
     result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(toTopicKey).create())
     result(topicApi.start(toTopicKey))
     result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(fromTopicKey).create())
     result(topicApi.start(fromTopicKey))
-
-    file.deleteOnExit()
   }
+
   @Test
   def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
@@ -76,8 +78,10 @@ class TestStreamRoute extends OharaTest {
 
   @Test
   def testUpdateJarKey(): Unit = {
-    val file = CommonUtils.createTempJar("empty_")
-    val fileInfo2 = result(fileApi.request.file(file).upload())
+    val anotherFile = CommonUtils.createTempFile("testUpdateJarKey", ".jar")
+    anotherFile.delete() shouldBe true
+    Files.copy(file.toPath, anotherFile.toPath)
+    val fileInfo2 = result(fileApi.request.file(anotherFile).upload())
     val streamApp = result(
       streamApi.request
         .jarKey(fileInfo.key)
@@ -782,6 +786,49 @@ class TestStreamRoute extends OharaTest {
           streamApi.request.nodeName(nodeName).jarKey(fileInfo.key).brokerClusterKey(brokerClusterInfo.key).create())
       }.getMessage should include(nodeName)
     }
+
+  @Test
+  def incorrectClassName(): Unit = {
+    val unknown = CommonUtils.randomString()
+    intercept[IllegalArgumentException] {
+      result(
+        streamApi.request
+          .name(CommonUtils.randomString(10))
+          .jarKey(fileInfo.key)
+          .className(unknown)
+          .brokerClusterKey(brokerClusterInfo.key)
+          .toTopicKey(toTopicKey)
+          .nodeNames(nodeNames)
+          .create())
+    }.getMessage should include(unknown)
+  }
+
+  @Test
+  def ignoreClassName(): Unit =
+    result(
+      streamApi.request
+        .name(CommonUtils.randomString(10))
+        .jarKey(fileInfo.key)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .toTopicKey(toTopicKey)
+        .nodeNames(nodeNames)
+        .create()).className should include("SimpleApplicationForOharaEnv")
+
+  @Test
+  def useFileContainingNothing(): Unit = {
+    val file = CommonUtils.createTempFile("useFileContainingNothing", ".jar")
+    val fileInfo = result(fileApi.request.file(file).upload())
+    intercept[IllegalArgumentException] {
+      result(
+        streamApi.request
+          .name(CommonUtils.randomString(10))
+          .jarKey(fileInfo.key)
+          .brokerClusterKey(brokerClusterInfo.key)
+          .toTopicKey(toTopicKey)
+          .nodeNames(nodeNames)
+          .create())
+    }.getMessage should include("no available")
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

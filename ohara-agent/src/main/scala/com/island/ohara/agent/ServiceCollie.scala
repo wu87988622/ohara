@@ -180,7 +180,7 @@ abstract class ServiceCollie extends Releasable {
     * @param fileInfos file info
     * @return (sources, sinks, streamApps)
     */
-  private[this] def classNames(fileInfos: Seq[FileInfo]): ClassNames = {
+  def classNames(fileInfos: Seq[FileInfo]): ClassNames = {
 
     /**
       * we don't define the class loader to this reflections since we don't care for the "class type"

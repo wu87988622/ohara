@@ -16,11 +16,10 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ServiceCollie, StreamCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -100,7 +99,6 @@ private[configurator] object PipelineRoute {
   }
 
   private[this] def toAbstract(obj: Data)(implicit dataStore: DataStore,
-                                          serviceCollie: ServiceCollie,
                                           brokerCollie: BrokerCollie,
                                           workerCollie: WorkerCollie,
                                           streamCollie: StreamCollie,
@@ -121,20 +119,18 @@ private[configurator] object PipelineRoute {
         .map(_._1)
         // update the cluster info with runtime status
         .map(data.update)
-        .flatMap { clusterInfo =>
-          dataStore.value[FileInfo](data.jarKey).flatMap(serviceCollie.fileContent).map { fileContent =>
-            ObjectAbstract(
-              group = data.group,
-              name = data.name,
-              kind = data.kind,
-              className = fileContent.streamAppClasses.headOption.map(_.className),
-              state = clusterInfo.state,
-              error = None,
-              metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
-              lastModified = data.lastModified,
-              tags = data.tags
-            )
-          }
+        .map { clusterInfo =>
+          ObjectAbstract(
+            group = data.group,
+            name = data.name,
+            kind = data.kind,
+            className = Some(data.className),
+            state = clusterInfo.state,
+            error = None,
+            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
+            lastModified = data.lastModified,
+            tags = data.tags
+          )
         }
     case _ =>
       Future.successful(
@@ -161,7 +157,6 @@ private[configurator] object PipelineRoute {
     * @return updated pipeline
     */
   private[this] def updateObjects(pipeline: Pipeline)(implicit brokerCollie: BrokerCollie,
-                                                      serviceCollie: ServiceCollie,
                                                       workerCollie: WorkerCollie,
                                                       streamCollie: StreamCollie,
                                                       adminCleaner: AdminCleaner,
@@ -179,8 +174,9 @@ private[configurator] object PipelineRoute {
               name = obj.name,
               kind = obj.kind,
               className = obj match {
-                case d: ConnectorInfo => Some(d.className)
-                case _                => None
+                case d: ConnectorInfo     => Some(d.className)
+                case d: StreamClusterInfo => Some(d.className)
+                case _                    => None
               },
               state = None,
               error = Some(e.getMessage),
@@ -193,7 +189,6 @@ private[configurator] object PipelineRoute {
       .map(objects => pipeline.copy(objects = objects))
 
   private[this] def hookOfGet(implicit brokerCollie: BrokerCollie,
-                              serviceCollie: ServiceCollie,
                               workerCollie: WorkerCollie,
                               streamCollie: StreamCollie,
                               adminCleaner: AdminCleaner,
@@ -202,7 +197,6 @@ private[configurator] object PipelineRoute {
                               meterCache: MeterCache): HookOfGet[Pipeline] = updateObjects(_)
 
   private[this] def hookOfList(implicit brokerCollie: BrokerCollie,
-                               serviceCollie: ServiceCollie,
                                workerCollie: WorkerCollie,
                                streamCollie: StreamCollie,
                                adminCleaner: AdminCleaner,
@@ -211,7 +205,6 @@ private[configurator] object PipelineRoute {
                                meterCache: MeterCache): HookOfList[Pipeline] = Future.traverse(_)(updateObjects)
 
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
-                                   serviceCollie: ServiceCollie,
                                    workerCollie: WorkerCollie,
                                    streamCollie: StreamCollie,
                                    adminCleaner: AdminCleaner,
@@ -230,7 +223,6 @@ private[configurator] object PipelineRoute {
         ))
 
   private[this] def hookOfUpdating(implicit brokerCollie: BrokerCollie,
-                                   serviceCollie: ServiceCollie,
                                    workerCollie: WorkerCollie,
                                    streamCollie: StreamCollie,
                                    adminCleaner: AdminCleaner,
@@ -271,7 +263,6 @@ private[configurator] object PipelineRoute {
     }
 
   def apply(implicit brokerCollie: BrokerCollie,
-            serviceCollie: ServiceCollie,
             workerCollie: WorkerCollie,
             streamCollie: StreamCollie,
             adminCleaner: AdminCleaner,

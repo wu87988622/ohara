@@ -70,6 +70,8 @@ object StreamApi {
 
     override def imageName: String = settings.imageName.get
 
+    def className: Option[String] = settings.className
+
     override def nodeNames: Set[String] = settings.nodeNames.get
 
     override def tags: Map[String, JsValue] = settings.tags.get
@@ -105,6 +107,9 @@ object StreamApi {
 
     override def imageName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
+
+    def className: Option[String] =
+      noJsNull(settings).get(StreamDefUtils.CLASS_NAME_DEFINITION.key()).map(_.convertTo[String])
 
     def jarKey: Option[ObjectKey] =
       noJsNull(settings).get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
@@ -189,6 +194,7 @@ object StreamApi {
     override def tags: Map[String, JsValue] = settings.tags
 
     def imageName: String = settings.imageName
+    def className: String = settings.className.get
 
     /**
       * Return the key of explicit value. Otherwise, return the key of jar info.
@@ -222,6 +228,9 @@ object StreamApi {
     * this request is extended by collie also so it is public than sealed.
     */
   trait Request extends ClusterRequest {
+    @Optional("if you don't define the class, configurator will seek all files to find available one")
+    def className(className: String): Request.this.type =
+      setting(StreamDefUtils.CLASS_NAME_DEFINITION.key(), JsString(className))
     def jarKey(jarKey: ObjectKey): Request.this.type =
       setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarKey).parseJson)
     def fromTopicKey(fromTopicKey: TopicKey): Request.this.type = fromTopicKeys(Set(fromTopicKey))
