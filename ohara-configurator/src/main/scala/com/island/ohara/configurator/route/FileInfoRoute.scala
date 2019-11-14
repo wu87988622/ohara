@@ -51,7 +51,7 @@ private[configurator] object FileInfoRoute {
       .map {
         case (workerClusterInfos, streamClusterInfos) =>
           workerClusterInfos.foreach { workerClusterInfo =>
-            if (workerClusterInfo.fileKeys.contains(key))
+            if (workerClusterInfo.pluginKeys.contains(key))
               throw new IllegalArgumentException(s"file:$key is used by worker cluster:${workerClusterInfo.key}")
           }
           streamClusterInfos.foreach { streamClusterInfo =>

@@ -77,11 +77,26 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   exit 2
 fi
 
-if [[ ! -z "$WORKER_JAR_URLS" ]]; then
+# plugins to plugins folder
+if [[ ! -z "$WORKER_PLUGIN_URLS" ]]; then
+  mkdir $KAFKA_HOME/plugins
+
   IFS=','
-  read -ra ADDR <<< "$WORKER_JAR_URLS"
+  read -ra ADDR <<< "$WORKER_PLUGIN_URLS"
   for i in "${ADDR[@]}"; do
-    echo "start to download jar:$i"
+    echo "start to download plugin:$i"
+    wget $i -P $KAFKA_HOME/plugins
+  done
+
+  echo "plugin.path=$KAFKA_HOME/plugins" >> $CONFIG_FILE
+fi
+
+# jars to shared folder - root classpath
+if [[ ! -z "$WORKER_SHARED_JAR_URLS" ]]; then
+  IFS=','
+  read -ra ADDR <<< "$WORKER_SHARED_JAR_URLS"
+  for i in "${ADDR[@]}"; do
+    echo "start to download shared jar:$i"
     wget $i -P $KAFKA_HOME/libs
   done
 fi

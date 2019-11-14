@@ -224,7 +224,7 @@ class TestWorkerApi extends OharaTest {
     creation.statusTopicPartitions shouldBe 1
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
-    creation.fileKeys.size shouldBe 0
+    creation.pluginKeys.size shouldBe 0
 
     val name = CommonUtils.randomString(10)
     val group = CommonUtils.randomString(10)
@@ -251,7 +251,8 @@ class TestWorkerApi extends OharaTest {
     creation2.statusTopicPartitions shouldBe 1
     creation2.nodeNames.size shouldBe 1
     creation2.nodeNames.head shouldBe nodeName
-    creation2.fileKeys.size shouldBe 0
+    creation2.pluginKeys.size shouldBe 0
+    creation2.sharedJarKeys.size shouldBe 0
   }
 
   @Test
@@ -734,14 +735,25 @@ class TestWorkerApi extends OharaTest {
   }
 
   @Test
-  def stringArrayToJarKeys(): Unit = {
+  def stringArrayToPluginKeys(): Unit = {
     val key = CommonUtils.randomString()
     val updating = WorkerApi.WORKER_UPDATING_JSON_FORMAT.read(s"""
                                                   |  {
-                                                  |    "fileKeys": ["$key"]
+                                                  |    "pluginKeys": ["$key"]
                                                   |  }
                                                   |  """.stripMargin.parseJson)
-    updating.fileKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
+    updating.pluginKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
+  }
+
+  @Test
+  def stringArrayToSharedJarKeys(): Unit = {
+    val key = CommonUtils.randomString()
+    val updating = WorkerApi.WORKER_UPDATING_JSON_FORMAT.read(s"""
+                                                                 |  {
+                                                                 |    "sharedJarKeys": ["$key"]
+                                                                 |  }
+                                                                 |  """.stripMargin.parseJson)
+    updating.sharedJarKeys.get.head shouldBe ObjectKey.of(GROUP_DEFAULT, key)
   }
 
   @Test

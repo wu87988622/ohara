@@ -116,7 +116,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
       wkApi.request
         .key(nameHolder.generateClusterKey())
         .brokerClusterKey(bkCluster.key)
-        .fileKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
+        .pluginKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
         .nodeName(nodes.head.name)
         .create())
     result(wkApi.start(wkCluster.key))

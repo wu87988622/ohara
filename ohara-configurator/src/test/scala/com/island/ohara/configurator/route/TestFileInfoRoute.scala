@@ -192,7 +192,7 @@ class TestFileInfoRoute extends OharaTest {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .fileKeys(Set(jar.key))
+        .pluginKeys(Set(jar.key))
         .nodeNames(
           result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.nodeNames)
         .brokerClusterKey(

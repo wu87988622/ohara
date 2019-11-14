@@ -66,7 +66,7 @@ describe('Worker API', () => {
       // offsetTopicName,
       // offsetTopicPartitions,
       // offsetTopicReplications,
-      fileKeys,
+      pluginKeys,
       freePorts,
       imageName,
       brokerClusterKey,
@@ -107,7 +107,7 @@ describe('Worker API', () => {
     // expect(offsetTopicPartitions).to.be.a('number');
     // expect(offsetTopicReplications).to.be.a('number');
 
-    expect(fileKeys).to.be.an('array');
+    expect(pluginKeys).to.be.an('array');
 
     expect(freePorts).to.be.an('array');
 
@@ -141,7 +141,7 @@ describe('Worker API', () => {
       // offsetTopicName,
       // offsetTopicPartitions,
       // offsetTopicReplications,
-      fileKeys,
+      pluginKeys,
       freePorts,
       imageName,
       brokerClusterKey,
@@ -182,7 +182,7 @@ describe('Worker API', () => {
     // expect(offsetTopicPartitions).to.be.a('number');
     // expect(offsetTopicReplications).to.be.a('number');
 
-    expect(fileKeys).to.be.an('array');
+    expect(pluginKeys).to.be.an('array');
 
     expect(freePorts).to.be.an('array');
 

@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, _}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,10 +63,17 @@ object WorkerApi {
       .required(Type.OBJECT_KEY)
       .reference(Reference.BROKER_CLUSTER)
       .build())
-  private[this] val FILE_KEYS_KEY = "fileKeys"
-  val FILE_KEYS_DEFINITION: SettingDef = createDef(
-    _.key(FILE_KEYS_KEY)
-      .documentation("the files you want to deploy on worker cluster")
+  private[this] val PLUGIN_KEYS_KEY = "pluginKeys"
+  val PLUGIN_KEYS_DEFINITION: SettingDef = createDef(
+    _.key(PLUGIN_KEYS_KEY)
+      .documentation("the files containing your connectors")
+      .optional(Type.OBJECT_KEYS)
+      .reference(Reference.FILE)
+      .build())
+  private[this] val SHARED_JAR_KEYS_KEY = "sharedJarKeys"
+  val SHARED_JAR_KEYS_DEFINITION: SettingDef = createDef(
+    _.key(SHARED_JAR_KEYS_KEY)
+      .documentation("the shared jars")
       .optional(Type.OBJECT_KEYS)
       .reference(Reference.FILE)
       .build())
@@ -185,7 +192,8 @@ object WorkerApi {
     def offsetTopicName: String = settings.offsetTopicName.get
     def offsetTopicPartitions: Int = settings.offsetTopicPartitions.get
     def offsetTopicReplications: Short = settings.offsetTopicReplications.get
-    def fileKeys: Set[ObjectKey] = settings.fileKeys.getOrElse(Set.empty)
+    def pluginKeys: Set[ObjectKey] = settings.pluginKeys.getOrElse(Set.empty)
+    def sharedJarKeys: Set[ObjectKey] = settings.sharedJarKeys.getOrElse(Set.empty)
     def freePorts: Set[Int] = settings.freePorts.get
 
     override def tags: Map[String, JsValue] = settings.tags.get
@@ -225,7 +233,9 @@ object WorkerApi {
     def offsetTopicPartitions: Option[Int] = noJsNull(settings).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def offsetTopicReplications: Option[Short] =
       noJsNull(settings).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def fileKeys: Option[Set[ObjectKey]] = noJsNull(settings).get(FILE_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
+    def pluginKeys: Option[Set[ObjectKey]] = noJsNull(settings).get(PLUGIN_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
+    def sharedJarKeys: Option[Set[ObjectKey]] =
+      noJsNull(settings).get(SHARED_JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def freePorts: Option[Set[Int]] =
       noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
 
@@ -291,7 +301,8 @@ object WorkerApi {
     def offsetTopicName: String = settings.offsetTopicName
     def offsetTopicPartitions: Int = settings.offsetTopicPartitions
     def offsetTopicReplications: Short = settings.offsetTopicReplications
-    def fileKeys: Set[ObjectKey] = settings.fileKeys
+    def pluginKeys: Set[ObjectKey] = settings.pluginKeys
+    def sharedJarKeys: Set[ObjectKey] = settings.sharedJarKeys
     def nodeNames: Set[String] = settings.nodeNames
     def freePorts: Set[Int] = settings.freePorts
     override def tags: Map[String, JsValue] = settings.tags
@@ -368,11 +379,12 @@ object WorkerApi {
       setting(OFFSET_TOPIC_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(offsetTopicReplications)))
 
     @Optional("the default value is empty")
-    def fileKey(fileKey: ObjectKey): Request.this.type = fileKeys(Set(fileKey))
+    def pluginKeys(pluginKeys: Set[ObjectKey]): Request.this.type =
+      setting(PLUGIN_KEYS_KEY, JsArray(pluginKeys.map(OBJECT_KEY_FORMAT.write).toVector))
 
     @Optional("the default value is empty")
-    def fileKeys(fileKeys: Set[ObjectKey]): Request.this.type =
-      setting(FILE_KEYS_KEY, JsArray(fileKeys.map(ObjectKey.toJsonString).map(_.parseJson).toVector))
+    def sharedJarKeys(sharedJarKeys: Set[ObjectKey]): Request.this.type =
+      setting(SHARED_JAR_KEYS_KEY, JsArray(sharedJarKeys.map(OBJECT_KEY_FORMAT.write).toVector))
 
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))

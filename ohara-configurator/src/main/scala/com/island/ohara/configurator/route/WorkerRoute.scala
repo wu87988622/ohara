@@ -37,13 +37,17 @@ object WorkerRoute {
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
-      .files(creation.fileKeys)
+      .files(creation.pluginKeys)
+      .files(creation.sharedJarKeys)
       .check()
       .map(_.fileInfos)
       .map { fileInfos =>
         WorkerClusterInfo(
-          settings =
-            WorkerApi.access.request.settings(creation.settings).fileKeys(fileInfos.map(_.key).toSet).creation.settings,
+          settings = WorkerApi.access.request
+            .settings(creation.settings)
+            .pluginKeys(fileInfos.map(_.key).toSet)
+            .creation
+            .settings,
           aliveNodes = Set.empty,
           state = None,
           error = None,
@@ -133,7 +137,8 @@ object WorkerRoute {
             .statusTopicName(workerClusterInfo.statusTopicName)
             .statusTopicPartitions(workerClusterInfo.statusTopicPartitions)
             .statusTopicReplications(workerClusterInfo.statusTopicReplications)
-            .fileKeys(workerClusterInfo.fileKeys)
+            .pluginKeys(workerClusterInfo.pluginKeys)
+            .sharedJarKeys(workerClusterInfo.sharedJarKeys)
             .nodeNames(workerClusterInfo.nodeNames)
             .threadPool(executionContext)
             .create()

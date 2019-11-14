@@ -64,10 +64,11 @@ The properties which can be set by user are shown below.
 #. status.storage.topic (**string**) — a internal topic used to store connector status
 #. status.storage.partitions (**int**) — number of partitions for status topic
 #. status.storage.replication.factor (**int**) — number of replications for status topic
-#. fileKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
+#. pluginKeys (**array(object)**) — the “primary key” of jars which contain your connectors
                                  You can require worker cluster to load the jars stored in ohara if you want to run custom connectors
-                                 on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. Noted: the response
-                                 will replace this by :ref:`JarInfo <rest-files>`.
+                                 on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. The files which
+                                 are deployed to worker must be uber jars - it must include all dependencies exclude for ohara stuff.
+#. sharedJarKeys (**array(object)**) — those jars is deployed on the root classpath so all connectors are able to load them.
 #. nodeNames (**array(string)**) — the nodes running the worker process
 
 The following information are updated by Ohara.
@@ -140,7 +141,8 @@ Example Response
         "jmxPort": 12346,
         "clientPort": 12345,
         "freePorts": [],
-        "fileKeys": [],
+        "pluginKeys": [],
+        "sharedJarKeys": [],
         "nodeNames": [
           "node00"
         ]
@@ -190,7 +192,8 @@ Example Response
         "jmxPort": 37116,
         "clientPort": 37634,
         "freePorts": [],
-        "fileKeys": [],
+        "pluginKeys": [],
+        "sharedJarKeys": [],
         "nodeNames": [
           "node10"
         ]
@@ -240,7 +243,8 @@ Example Response
           "jmxPort": 12346,
           "clientPort": 12345,
           "freePorts": [],
-          "fileKeys": [],
+          "pluginKeys": [],
+          "sharedJarKeys": [],
           "nodeNames": [
             "node00"
           ],
@@ -308,7 +312,8 @@ Example Response
         "jmxPort": 12346,
         "clientPort": 12345,
         "freePorts": [],
-        "fileKeys": [],
+        "pluginKeys": [],
+        "sharedJarKeys": [],
         "nodeNames": [
           "node00"
         ]
@@ -371,9 +376,8 @@ Example Response
             "jmxPort":33983,
             "freePorts": [],
             "clientPort":34601,
-            "fileKeys":[
-
-            ],
+            "pluginKeys":[],
+            "sharedJarKeys": [],
             "nodeNames":[
                "node10"
             ]
