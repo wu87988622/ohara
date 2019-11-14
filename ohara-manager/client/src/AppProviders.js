@@ -28,6 +28,7 @@ import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
 import { AddTopicProvider } from './context/AddTopicContext';
+import { ViewTopicProvider } from './context/ViewTopicContext';
 import { EditWorkspaceProvider } from './context/EditWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
 import { TopicProvider } from './context/TopicContext';
@@ -44,7 +45,9 @@ const AppProviders = ({ children }) => {
                   <PipelineProvider>
                     <TopicProvider>
                       <AddTopicProvider>
-                        <NodeDialogProvider>{children}</NodeDialogProvider>
+                        <ViewTopicProvider>
+                          <NodeDialogProvider>{children}</NodeDialogProvider>
+                        </ViewTopicProvider>
                       </AddTopicProvider>
                     </TopicProvider>
                   </PipelineProvider>

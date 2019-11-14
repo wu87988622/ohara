@@ -88,6 +88,81 @@ const MuiTheme = createMuiTheme({
       contrastText: '#000000',
     },
   },
+  typography: {
+    h1: {
+      fontWeight: 500,
+      fontSize: '35px',
+      lineHeight: '40px',
+      letterSpacing: '-0.24px',
+    },
+    h2: {
+      fontWeight: 500,
+      fontSize: '29px',
+      lineHeight: '32px',
+      letterSpacing: '-0.24px',
+    },
+    h3: {
+      fontWeight: 500,
+      fontSize: '24px',
+      lineHeight: '28px',
+      letterSpacing: '-0.06px',
+    },
+    h4: {
+      fontWeight: 500,
+      fontSize: '20px',
+      lineHeight: '24px',
+      letterSpacing: '-0.06px',
+    },
+    h5: {
+      fontWeight: 500,
+      fontSize: '16px',
+      lineHeight: '20px',
+      letterSpacing: '-0.05px',
+    },
+    h6: {
+      fontWeight: 500,
+      fontSize: '14px',
+      lineHeight: '20px',
+      letterSpacing: '-0.05px',
+    },
+    subtitle1: {
+      fontWeight: 400,
+      fontSize: '16px',
+      lineHeight: '25px',
+      letterSpacing: '-0.05px',
+    },
+    subtitle2: {
+      fontWeight: 400,
+      fontSize: '14px',
+      lineHeight: '21px',
+      letterSpacing: '-0.05px',
+    },
+    body1: {
+      fontWeight: 400,
+      fontSize: '14px',
+      lineHeight: '21px',
+      letterSpacing: '-0.05px',
+    },
+    body2: {
+      fontWeight: 400,
+      fontSize: '12px',
+      lineHeight: '18px',
+      letterSpacing: '-0.05px',
+    },
+    caption: {
+      fontWeight: 400,
+      fontSize: '11px',
+      lineHeight: '13px',
+      letterSpacing: '-0.05px',
+    },
+    overline: {
+      fontWeight: 500,
+      fontSize: '11px',
+      lineHeight: '13px',
+      letterSpacing: '0.33px',
+      textTransform: 'uppercase',
+    },
+  },
 });
 
 export default MuiTheme;

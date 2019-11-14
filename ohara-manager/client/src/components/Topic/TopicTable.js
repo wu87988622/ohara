@@ -20,12 +20,15 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 
 import { useWorkspace } from 'context/WorkspaceContext';
+import { useViewTopic } from 'context/ViewTopicContext';
 import { Table } from 'components/common/Table';
 import { useTopic } from 'context/TopicContext';
 import { Button } from 'components/common/Form';
+import ViewTopicDialog from './ViewTopicDialog';
 
 function TopicTable() {
   const { findByWorkspaceName } = useWorkspace();
+  const { setTopic, setIsOpen: setIsViewTopicOpen } = useViewTopic();
   const { workspaceName } = useParams();
   const { topics, doFetch: fetchTopics } = useTopic();
   const currentWorkspace = findByWorkspaceName(workspaceName);
@@ -54,13 +57,21 @@ function TopicTable() {
             <TableCell></TableCell>
             <TableCell></TableCell>
             <TableCell align="right">
-              <Button variant="outlined" color="primary">
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  setTopic(topic);
+                  setIsViewTopicOpen(true);
+                }}
+              >
                 View
               </Button>
             </TableCell>
           </TableRow>
         ))}
       </Table>
+      <ViewTopicDialog />
     </>
   );
 }
