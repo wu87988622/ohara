@@ -209,16 +209,17 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseImageNameField(): Unit =
-    intercept[DeserializationException] {
-      ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
-           |  {
-           |    "nodeNames": [
-           |      "node"
-           |    ],
-           |    "imageName": ""
-           |  }
-           |  """.stripMargin.parseJson)
-    }.getMessage should include("the value of \"imageName\" can't be empty string")
+    ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT
+      .read(s"""
+                                                        |  {
+                                                        |    "nodeNames": [
+                                                        |      "node"
+                                                        |    ],
+                                                        |    "imageName": ""
+                                                        |  }
+                                                        |  """.stripMargin.parseJson)
+      .settings(IMAGE_NAME_KEY)
+      .convertTo[String] shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
   @Test
   def parseImageNameOnUpdate(): Unit =

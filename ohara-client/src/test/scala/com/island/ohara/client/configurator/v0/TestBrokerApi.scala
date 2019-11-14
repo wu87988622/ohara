@@ -249,18 +249,19 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseImageNameField(): Unit =
-    intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
-           |  {
-           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
-           |      "group": "g",
-           |      "name": "n"
-           |    },
-           |    "nodeNames": ["n"],
-           |    "imageName": ""
-           |  }
-           |  """.stripMargin.parseJson)
-    }.getMessage should include("the value of \"imageName\" can't be empty string")
+    BrokerApi.BROKER_CREATION_JSON_FORMAT
+      .read(s"""
+                                                  |  {
+                                                  |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
+                                                  |      "group": "g",
+                                                  |      "name": "n"
+                                                  |    },
+                                                  |    "nodeNames": ["n"],
+                                                  |    "imageName": ""
+                                                  |  }
+                                                  |  """.stripMargin.parseJson)
+      .settings(IMAGE_NAME_KEY)
+      .convertTo[String] shouldBe BrokerApi.IMAGE_NAME_DEFAULT
 
   @Test
   def parseImageNameOnUpdate(): Unit =

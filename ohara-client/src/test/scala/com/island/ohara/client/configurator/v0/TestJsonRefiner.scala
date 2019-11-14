@@ -1695,4 +1695,29 @@ class TestJsonRefiner extends OharaTest {
     values.head.asJsObject.fields(NAME_KEY) shouldBe JsString(name)
     values.last.asJsObject.fields(NAME_KEY) shouldBe JsString(name2)
   }
+
+  @Test
+  def testDefineReadonlyField(): Unit = {
+    val key = CommonUtils.randomString()
+    val value = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).optional(value).readonly().build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": "a"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsString(value)
+
+    format.read(s"""
+               |  {
+               |  }
+               |  """.stripMargin.parseJson).fields(key) shouldBe JsString(value)
+  }
 }

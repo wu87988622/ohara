@@ -465,34 +465,25 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def parseImageNameField(): Unit =
-    intercept[DeserializationException] {
-      StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-           |  {
-           |    "jarKey": {
-           |      "group": "g",
-           |      "name": "n"
-           |    },
-           |    "imageName": "",
-           |    "nodeNames": ["n"],
-           |    "brokerClusterKey": {
-           |      "group": "g",
-           |      "name": "n"
-           |    },
-           |    "from": [
-           |      {
-           |        "group": "g",
-           |        "name": "n"
-           |      }
-           |    ],
-           |    "to": [
-           |      {
-           |        "group": "g",
-           |        "name": "n"
-           |      }
-           |    ]
-           |  }
-           |  """.stripMargin.parseJson)
-    }.getMessage should include("the value of \"imageName\" can't be empty string")
+    StreamApi.STREAM_CREATION_JSON_FORMAT
+      .read(s"""
+                                                  |  {
+                                                  |    "jarKey": {
+                                                  |      "group": "g",
+                                                  |      "name": "n"
+                                                  |    },
+                                                  |    "imageName": "",
+                                                  |    "nodeNames": ["n"],
+                                                  |    "brokerClusterKey": {
+                                                  |      "group": "g",
+                                                  |      "name": "n"
+                                                  |    },
+                                                  |    "from": [],
+                                                  |    "to": []
+                                                  |  }
+                                                  |  """.stripMargin.parseJson)
+      .settings(IMAGE_NAME_KEY)
+      .convertTo[String] shouldBe StreamApi.IMAGE_NAME_DEFAULT
 
   @Test
   def parseJarKeyField(): Unit = {

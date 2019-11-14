@@ -71,6 +71,9 @@ trait JsonRefiner[T] {
   def definition(definition: SettingDef): JsonRefiner[T] = {
     // the internal is not exposed to user so we skip it.
     if (!definition.internal()) {
+      // remove the value if the field is readonly
+      if (!definition.editable()) valueConverter(definition.key(), _ => JsNull)
+
       if (definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
       definition.valueType() match {
         case Type.BOOLEAN =>
@@ -153,7 +156,7 @@ trait JsonRefiner[T] {
           // see SettingDef
           if (definition.hasDefault)
             throw new IllegalArgumentException(
-              "the default value to array type is not allowed. default:" + definition.defaultValue())
+              "the default value to object key is not allowed. default:" + definition.defaultValue())
           // convert the value to complete Object key
           valueConverter(definition.key(), v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v)))
           requireType[ObjectKey](definition.key())
@@ -167,7 +170,7 @@ trait JsonRefiner[T] {
           // convert the value to complete Object key
           valueConverter(
             definition.key(), {
-              case JsArray(es) => JsArray(es.map(v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v))).toVector)
+              case JsArray(es) => JsArray(es.map(v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v))))
               case v: JsValue  => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v))
             }
           )
@@ -698,14 +701,23 @@ object JsonRefiner {
             checkers(fields)
         })
         .getOrElse(checkers)
-      this.valuesCheckers = this.valuesCheckers ++ Map(keys -> Objects.requireNonNull(composedChecker))
+      this.valuesCheckers = this.valuesCheckers + (keys -> Objects.requireNonNull(composedChecker))
       this
     }
 
     override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T] = {
-      if (valueConverters.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"""the \"$key\" already has converter""")
-      this.valueConverters = this.valueConverters ++ Map(key -> Objects.requireNonNull(converter))
+
+      /**
+        * compose the new checker with older one.
+        */
+      val composedChecker = valueConverters
+        .get(key)
+        .map(origin =>
+          (value: JsValue) => {
+            converter(origin(value))
+        })
+        .getOrElse(converter)
+      this.valueConverters = this.valueConverters + (key -> Objects.requireNonNull(composedChecker))
       this
     }
 
@@ -722,7 +734,7 @@ object JsonRefiner {
     override def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefiner[T] = {
       if (nullToAnotherValueOfKey.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" has been associated to another key:\"$anotherKey\"""")
-      this.nullToAnotherValueOfKey = this.nullToAnotherValueOfKey ++ Map(key -> CommonUtils.requireNonEmpty(anotherKey))
+      this.nullToAnotherValueOfKey = this.nullToAnotherValueOfKey + (key -> CommonUtils.requireNonEmpty(anotherKey))
       this
     }
 
@@ -730,7 +742,7 @@ object JsonRefiner {
       if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(
           s"""the \"$key\" have been associated to default value:${nullToJsValue(key)}""")
-      this.nullToJsValue = this.nullToJsValue ++ Map(key -> Objects.requireNonNull(defaultValue))
+      this.nullToJsValue = this.nullToJsValue + (key -> Objects.requireNonNull(defaultValue))
       this
     }
 
@@ -782,20 +794,19 @@ object JsonRefiner {
             }
 
             // 1) convert the value to another type
-            fields = fields ++ valueConverters
+            fields = (fields ++ valueConverters
               .filter {
                 case (key, _) => fields.contains(key)
               }
               .map {
                 case (key, converter) => key -> converter(fields(key))
-              }
-              .filter {
-                case (_, jsValue) =>
-                  jsValue match {
-                    case JsNull => false
-                    case _      => true
-                  }
-              }
+              }).filter {
+              case (_, jsValue) =>
+                jsValue match {
+                  case JsNull => false
+                  case _      => true
+                }
+            }
 
             // 2) convert the null to the value of another key
             fields = fields ++ nullToAnotherValueOfKey

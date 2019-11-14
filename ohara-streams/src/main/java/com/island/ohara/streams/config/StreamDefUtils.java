@@ -99,7 +99,6 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Jar primary key")
           .documentation("The jar key of this streamApp using")
-          .readonly()
           .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.FILE)
           .build();
