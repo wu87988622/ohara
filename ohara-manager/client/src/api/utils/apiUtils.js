@@ -146,7 +146,6 @@ export const requestUtil = (params, api, definitionsBody) => {
   requestBody = generateUtil(converterParams, api.request(definitionsBody));
   optionUtil(params, api.request(definitionsBody), requestBody);
   requestBody = typeUtil(params, api.request(definitionsBody), requestBody);
-
   return requestBody;
 };
 

@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import { isEmpty } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import * as validateApi from 'api/validateApi';
 import * as nodeApi from 'api/nodeApi';
 import { useSnackbar } from 'context/SnackbarContext';
-import { InputField, Button } from 'components/common/Form';
+import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {
   required,
-  minValue,
+  minNumber,
   maxLength,
-  maxValue,
+  maxNumber,
   composeValidators,
 } from 'utils/validate';
 
-const TestConnection = styled(Button)`
-  margin-top: 20px;
-`;
-
 const AddNodeDialog = props => {
-  const { isOpen, handleClose, fetchNodes } = props;
-  const [isValidConnection, setIsValidConnection] = useState(false);
+  const { isOpen, handleClose, fetchNodes, mode } = props;
   const showMessage = useSnackbar();
 
   const onSubmit = async (values, form) => {
@@ -51,6 +45,13 @@ const AddNodeDialog = props => {
       ...rest,
     };
 
+    const nodes = await validateApi.validateNode(params);
+    const isPassed = nodes.every(node => node.pass);
+    if (!isPassed) {
+      showMessage('Test passed!');
+      return;
+    }
+
     const response = await nodeApi.create(params);
     const isSuccess = !isEmpty(response);
     if (isSuccess) {
@@ -61,35 +62,11 @@ const AddNodeDialog = props => {
     }
   };
 
-  const testConnection = async values => {
-    const { hostname, port, ...rest } = values;
-
-    const params = {
-      port: Number(port),
-      hostname,
-      ...rest,
-    };
-
-    const nodes = await validateApi.validateNode(params);
-    const isPassed = nodes.every(node => node.pass);
-
-    if (isPassed) {
-      setIsValidConnection(isPassed);
-      showMessage('Test passed!');
-    }
-  };
   return (
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
-      render={({
-        handleSubmit,
-        form,
-        submitting,
-        pristine,
-        invalid,
-        values,
-      }) => {
+      render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
             open={isOpen}
@@ -100,9 +77,7 @@ const AddNodeDialog = props => {
             handleConfirm={handleSubmit}
             title="Add node"
             confirmText="ADD"
-            confirmDisabled={
-              submitting || pristine || invalid || !isValidConnection
-            }
+            confirmDisabled={submitting || pristine || invalid}
           >
             <form onSubmit={handleSubmit}>
               <Field
@@ -118,58 +93,51 @@ const AddNodeDialog = props => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              <Field
-                type="number"
-                name="port"
-                label="Port"
-                placeholder="22"
-                margin="normal"
-                helperText="SSH port of the node"
-                component={InputField}
-                required
-                validate={composeValidators(
-                  required,
-                  minValue(1),
-                  maxValue(65535),
-                )}
-                inputProps={{
-                  min: 1,
-                  max: 65535,
-                }}
-              />
+              {mode !== 'k8s' && (
+                <>
+                  <Field
+                    name="port"
+                    label="Port"
+                    placeholder="22"
+                    type="number"
+                    margin="normal"
+                    helperText="SSH port of the node"
+                    component={InputField}
+                    validate={composeValidators(
+                      required,
+                      minNumber(1),
+                      maxNumber(65535),
+                    )}
+                    inputProps={{
+                      min: 1,
+                      max: 65535,
+                    }}
+                  />
 
-              <Field
-                type="text"
-                name="user"
-                label="User"
-                placeholder="admin"
-                margin="normal"
-                helperText="SSH username"
-                component={InputField}
-                fullWidth
-                required
-                validate={required}
-              />
+                  <Field
+                    name="user"
+                    label="User"
+                    placeholder="admin"
+                    margin="normal"
+                    helperText="SSH username"
+                    validate={required}
+                    component={InputField}
+                    fullWidth
+                  />
 
-              <Field
-                type="password"
-                name="password"
-                label="Password"
-                margin="normal"
-                placeholder="password"
-                helperText="SSH password"
-                required
-                validate={required}
-                component={InputField}
-                fullWidth
-              />
-              <TestConnection
-                disabled={invalid}
-                color="primary"
-                onClick={() => testConnection(values)}
-              >
-                TEST CONNECTION
-              </TestConnection>
+                  <Field
+                    name="password"
+                    label="Password"
+                    type="password"
+                    margin="normal"
+                    placeholder="password"
+                    helperText="SSH password"
+                    validate={required}
+                    component={InputField}
+                    fullWidth
+                  />
+                </>
+              )}
             </form>
           </Dialog>
         );
@@ -182,5 +150,6 @@ AddNodeDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   fetchNodes: PropTypes.func.isRequired,
+  mode: PropTypes.string.isRequired,
 };
 export default AddNodeDialog;

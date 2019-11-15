@@ -36,11 +36,11 @@ export const maxLength = max => value => {
     : `The value must be less than ${max} characters long`;
 };
 
-export const minValue = min => value => {
+export const minNumber = min => value => {
   return value >= min ? undefined : `The value must be greater than ${min}`;
 };
 
-export const maxValue = max => value => {
+export const maxNumber = max => value => {
   return value <= max ? undefined : `The value must be less than ${max}`;
 };
 

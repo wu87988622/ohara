@@ -101,13 +101,18 @@ export const createBody = params => {
       body = [];
       body.push(type);
     }
-    if (params[key].necessary === necessaryType.optional && isArray(body)) {
+
+    if (
+      (params[key].necessary === necessaryType.optional ||
+        params[key].necessary === necessaryType.randomValue) &&
+      isArray(body)
+    ) {
       body.push(option);
     }
 
     if (
       params[key].necessary === necessaryType.defaultValue &&
-      params[key].editable &&
+      params[key].defaultValue !== null &&
       isArray(body)
     ) {
       body.push(generateValueWithDefaultValue(params[key].defaultValue, type));

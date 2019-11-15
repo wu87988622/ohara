@@ -18,12 +18,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import styled from 'styled-components';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
+import { round } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import AddNodeDialog from './AddNodeDialog';
-import { Table } from 'components/common/Table';
+import { SelectTable } from 'components/common/Table';
 import { FullScreenDialog } from 'components/common/Dialog';
 import { useNodeDialog } from 'context/NodeDialogContext';
 import { Button } from 'components/common/Form';
@@ -42,20 +41,72 @@ const NodeDialog = () => {
   const {
     isOpen: isNodeDialogOpen,
     setIsOpen: setIsNodeDialogOpen,
+    type,
+    hasSelect,
+    hasSave,
+    selected,
+    setSelected,
+    setHasSelect,
   } = useNodeDialog();
 
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
   const [nodes, setNodes] = useState([]);
 
-  const tableHeaders = [
-    'Name',
-    'Cores',
-    'CPU',
-    'Memory',
-    'Disks',
-    'Services',
-    'Actions',
-  ];
+  const getRsources = node => {
+    return node.resources.reduce(
+      (obj, item) =>
+        Object.assign(obj, {
+          [item.name]: `${round(item.value, 1)} ${item.unit}|${round(
+            item.used * 100,
+            1,
+          )}`,
+        }),
+      {},
+    );
+  };
+
+  const getHeader = () => {
+    return nodes.length > 0
+      ? nodes[0].resources.map(res => {
+          return {
+            id: res.name,
+            label: res.name,
+          };
+        })
+      : [];
+  };
+
+  const tableHeaders = () => {
+    let headers = [
+      {
+        id: 'name',
+        label: 'Name',
+      },
+      ...getHeader(),
+      {
+        id: 'services',
+        label: 'Services',
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+      },
+    ];
+    return headers;
+  };
+
+  const viewButton = () => {
+    return <Button variant="outlined">{'VIEW'}</Button>;
+  };
+
+  const rows = nodes.map(node => {
+    return {
+      name: node.hostname,
+      ...getRsources(node),
+      services: node.services.length,
+      actions: viewButton(),
+    };
+  });
 
   const fetchNodes = useCallback(async () => {
     const data = await nodeApi.getAll();
@@ -70,7 +121,15 @@ const NodeDialog = () => {
     <FullScreenDialog
       title="Nodes"
       open={isNodeDialogOpen}
-      handleClose={() => setIsNodeDialogOpen(false)}
+      handleClose={() => {
+        setSelected([]);
+        setHasSelect(false);
+        setIsNodeDialogOpen(false);
+      }}
+      handleSave={() => {
+        setIsNodeDialogOpen(false);
+      }}
+      hasSave={hasSave}
     >
       <>
         <Actions>
@@ -83,28 +142,20 @@ const NodeDialog = () => {
           </Button>
         </Actions>
 
-        <Table headers={tableHeaders} title="All Nodes">
-          {nodes.map(node => (
-            <TableRow key={node.hostname}>
-              <TableCell>{node.hostname}</TableCell>
-              <TableCell></TableCell>
-              <TableCell></TableCell>
-              <TableCell></TableCell>
-              <TableCell></TableCell>
-              <TableCell>{node.services.length}</TableCell>
-              <TableCell align="right">
-                <Button variant="outlined" color="primary">
-                  View
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </Table>
+        <SelectTable
+          headCells={tableHeaders()}
+          rows={rows}
+          title="All Nodes"
+          hasSelect={hasSelect}
+          selected={selected}
+          setSelected={setSelected}
+        />
 
         <AddNodeDialog
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
           fetchNodes={fetchNodes}
+          mode={type}
         />
       </>
     </FullScreenDialog>
