@@ -21,12 +21,29 @@ const NodeDialogContext = createContext();
 
 const NodeDialogProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [type, setType] = useState('k8s');
+  const [hasSelect, setHasSelect] = useState(false);
+  const [hasSave, setHasSave] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const reset = () => {
+    setHasSelect(false);
+    setHasSave(false);
+  };
 
   return (
     <NodeDialogContext.Provider
       value={{
         isOpen,
         setIsOpen,
+        type,
+        setType,
+        hasSelect,
+        setHasSelect,
+        hasSave,
+        setHasSave,
+        selected,
+        setSelected,
+        reset,
       }}
     >
       {children}

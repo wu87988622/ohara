@@ -29,7 +29,7 @@ import { useWorkspace } from 'context/WorkspaceContext';
 
 import {
   required,
-  minValue,
+  minNumber,
   validServiceName,
   composeValidators,
 } from 'utils/validate';
@@ -142,7 +142,7 @@ const AddTopicDialog = () => {
                   min: '1',
                   step: '1',
                 }}
-                validate={minValue(1)}
+                validate={minNumber(1)}
               />
               <Field
                 type="number"
@@ -155,7 +155,7 @@ const AddTopicDialog = () => {
                   min: '1',
                   step: '1',
                 }}
-                validate={minValue(1)}
+                validate={minNumber(1)}
               />
             </form>
           </Dialog>

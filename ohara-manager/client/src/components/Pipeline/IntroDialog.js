@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 import Typography from '@material-ui/core/Typography';
@@ -32,6 +32,7 @@ import { ReactComponent as Logo } from 'images/logo.svg';
 
 import DrabblePaper from 'components/common/Dialog/DrabblePaper';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
+import WorkspaceQuick from '../Workspace/WorkspaceQuick';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -79,54 +80,60 @@ const StyledDialogActions = styled(DialogActions)(
 
 const MuiDialog = () => {
   const { isOpen, setIsOpen } = useNewWorkspace();
+  const [quickModeIsOpen, setQuickModeIsOpen] = useState(false);
 
   const onClose = () => setIsOpen(false);
 
   // This should be implemented later in #3157
   const onClick = () => {};
 
+  const handleQuickOpen = opon => setQuickModeIsOpen(opon);
+
   return (
-    <Dialog
-      open={isOpen}
-      onClose={onClose}
-      maxWidth="sm"
-      PaperComponent={DrabblePaper}
-      TransitionComponent={Transition}
-      fullWidth
-      data-testid="dialog-container"
-    >
-      <StyledDialogTitle>
-        <div className="brand">
-          <Logo width="38" height="38" />
-          <span className="name">Ohara Stream</span>
-        </div>
-        <IconButton className="close-button" onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
-      </StyledDialogTitle>
-      <StyledDialogContent>
-        <Typography variant="body2">
-          Ohara is a scalable streaming platform that allows users to easily
-          organized their input, output, and streaming applictions with a clean
-          and comperhensive GUI
-        </Typography>
-      </StyledDialogContent>
-      <StyledDialogActions>
-        <Button
-          className="quick-start-button"
-          onClick={onClick}
-          color="primary"
-          variant="contained"
-          autoFocus
-        >
-          QUICK START
-        </Button>
-        or
-        <Button onClick={onClick} color="primary">
-          CREATE A WORKSPACE IN EXPERT MODE
-        </Button>
-      </StyledDialogActions>
-    </Dialog>
+    <>
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        maxWidth="sm"
+        PaperComponent={DrabblePaper}
+        TransitionComponent={Transition}
+        fullWidth
+        data-testid="dialog-container"
+      >
+        <StyledDialogTitle>
+          <div className="brand">
+            <Logo width="38" height="38" />
+            <span className="name">Ohara Stream</span>
+          </div>
+          <IconButton className="close-button" onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </StyledDialogTitle>
+        <StyledDialogContent>
+          <Typography variant="body2">
+            Ohara is a scalable streaming platform that allows users to easily
+            organized their input, output, and streaming applictions with a
+            clean and comperhensive GUI
+          </Typography>
+        </StyledDialogContent>
+        <StyledDialogActions>
+          <Button
+            className="quick-start-button"
+            onClick={() => handleQuickOpen(true)}
+            color="primary"
+            variant="contained"
+            autoFocus
+          >
+            QUICK START
+          </Button>
+          or
+          <Button onClick={onClick} color="primary">
+            CREATE A WORKSPACE IN EXPERT MODE
+          </Button>
+        </StyledDialogActions>
+      </Dialog>
+      <WorkspaceQuick open={quickModeIsOpen} handelOpen={handleQuickOpen} />
+    </>
   );
 };
 

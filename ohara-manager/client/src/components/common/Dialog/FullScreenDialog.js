@@ -18,12 +18,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import DialogContent from '@material-ui/core/DialogContent';
-import Dialog from '@material-ui/core/Dialog';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import IconButton from '@material-ui/core/IconButton';
+import {
+  Dialog,
+  Button,
+  AppBar,
+  IconButton,
+  Typography,
+  Toolbar,
+} from '@material-ui/core';
 import KeyboardBackspaceIcon from '@material-ui/icons/KeyboardBackspace';
-import Typography from '@material-ui/core/Typography';
 
 const StyledIconButton = styled(IconButton)`
   margin-right: ${props => props.theme.spacing(2)}px;
@@ -39,11 +42,31 @@ const StyledDialogContent = styled(DialogContent)`
   overflow-y: visible;
 `;
 
+const StyledTypography = styled(Typography)`
+  flex: 1;
+`;
+
 const FullScreenDialog = props => {
-  const { title, children, open, handleClose } = props;
+  const {
+    title,
+    children,
+    open,
+    handleClose,
+    hasSave = false,
+    handleSave,
+  } = props;
   return (
     <>
-      <Dialog fullScreen open={open} onClose={handleClose}>
+      <Dialog
+        fullScreen
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            backgroundColor: '#f5f6fa',
+          },
+        }}
+      >
         <AppBar>
           <Toolbar>
             <StyledIconButton
@@ -53,7 +76,12 @@ const FullScreenDialog = props => {
             >
               <KeyboardBackspaceIcon />
             </StyledIconButton>
-            <Typography variant="h6">{title}</Typography>
+            <StyledTypography variant="h6">{title}</StyledTypography>
+            {hasSave && (
+              <Button autoFocus color="inherit" onClick={handleSave}>
+                save
+              </Button>
+            )}
           </Toolbar>
         </AppBar>
         <StyledDialogContent>{children}</StyledDialogContent>
@@ -67,6 +95,8 @@ FullScreenDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
+  hasSave: PropTypes.bool,
+  handleSave: PropTypes.func,
 };
 
 export default FullScreenDialog;

@@ -21,8 +21,8 @@ import {
   lessThanTweenty,
   minLength,
   maxLength,
-  minValue,
-  maxValue,
+  minNumber,
+  maxNumber,
 } from '../validate';
 
 describe('required()', () => {
@@ -79,7 +79,7 @@ describe('maxLength()', () => {
 });
 
 describe('minValue()', () => {
-  const min = minValue(50);
+  const min = minNumber(50);
   it('returns `undefined` if the given value is greater than 50', () => {
     expect(min(100)).toBeUndefined();
   });
@@ -93,7 +93,7 @@ describe('minValue()', () => {
 });
 
 describe('maxValue()', () => {
-  const max = maxValue(50);
+  const max = maxNumber(50);
   it('returns `undefined` if the given value is less than 50', () => {
     expect(max(35)).toBeUndefined();
   });

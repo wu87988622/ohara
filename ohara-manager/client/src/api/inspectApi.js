@@ -55,7 +55,7 @@ export const getBrokerInfo = async () => {
   return responseUtil(res, inspectServiceBody);
 };
 
-export const getWorkerInfo = async (params = {}) => {
+export const getWorkerInfo = async params => {
   const workerUrl = params
     ? `${url}/${kind.worker}/${params.name}?group=${params.group}`
     : `${url}/${kind.worker}`;
