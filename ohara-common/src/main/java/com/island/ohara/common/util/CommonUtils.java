@@ -27,7 +27,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -511,93 +518,7 @@ public final class CommonUtils {
     return value;
   }
 
-  /**
-   * We should all love simple string, shouldn't we?
-   *
-   * @param s string
-   * @return true if the string consist of number and char. Otherwise, false
-   */
-  public static boolean onlyNumberAndChar(String s) {
-    return s.matches("^[a-zA-Z0-9]*$");
-  }
-
-  /**
-   * a helper method to "filter" the legal string.
-   *
-   * @param s string
-   * @return origin string
-   */
-  public static String requireNumberAndCharset(String s) {
-    if (onlyNumberAndChar(s)) return s;
-    else throw new IllegalArgumentException("Only number and char are accepted!!! actual:" + s);
-  }
-
-  /**
-   * Check word has uppercase
-   *
-   * @param str to check string
-   * @return checked string
-   */
-  public static boolean hasUpperCase(String str) {
-    return !str.equals(str.toLowerCase());
-  }
-
-  /**
-   * Require lowercase function
-   *
-   * @param str to check string
-   * @param msg exception message
-   * @return checked string
-   */
-  public static String requireLowerCase(String str, Supplier<String> msg) {
-    if (hasUpperCase(str)) throw new IllegalArgumentException(msg.get());
-    return str;
-  }
-
   // ------------------------------------[File Helper]------------------------------------ //
-
-  /**
-   * @param file file
-   * @return the extension of file name. Or throw exception if the input file does not have
-   *     extension
-   */
-  public static String extension(File file) {
-    return extension(file.getName());
-  }
-
-  /**
-   * @param filename file name
-   * @return the extension of file name. Or throw exception if the input file does not have
-   *     extension
-   */
-  public static String extension(String filename) {
-    CommonUtils.requireNonEmpty(filename);
-    int index = filename.lastIndexOf(".");
-    if (index == -1 || index + 1 == filename.length())
-      throw new IllegalArgumentException(filename + " does not have extension");
-    return filename.substring(index + 1);
-  }
-
-  /**
-   * @param filename file name
-   * @return true if the input name ends with ".xxx"
-   */
-  public static boolean hasExtension(String filename) {
-    CommonUtils.requireNonEmpty(filename);
-    int index = filename.lastIndexOf(".");
-    return index != -1 && index + 1 != filename.length();
-  }
-
-  /**
-   * replace the path's parent path by new parent
-   *
-   * @param parent new parent
-   * @param path original path
-   * @return new path
-   */
-  public static String replaceParent(String parent, String path) {
-    return path(parent, name(path));
-  }
 
   /**
    * compose a full path based on parent (folder) and other paths string (file or more paths).
@@ -688,18 +609,6 @@ public final class CommonUtils {
   }
 
   /**
-   * Check the null and non-existence of input file
-   *
-   * @param file file
-   * @return an non-null and existent file
-   */
-  public static File requireNotExist(File file) {
-    if (Objects.requireNonNull(file).exists())
-      throw new IllegalArgumentException(file.getAbsolutePath() + " exists");
-    return file;
-  }
-
-  /**
    * Delete the file or folder
    *
    * @param path path to file or folder
@@ -707,36 +616,6 @@ public final class CommonUtils {
   public static void deleteFiles(File path) {
     try {
       FileUtils.forceDelete(path);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  /**
-   * copy total content of a file to an new file. The input file must be a existent file. And target
-   * file must be not existent.
-   *
-   * @param file src file
-   * @param newFile target file
-   */
-  public static void copyFile(File file, File newFile) {
-    try {
-      FileUtils.copyFile(requireFile(file), requireNotExist(newFile));
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  /**
-   * move a file to another location. The input file must be a existent file. And target file must
-   * be not existent.
-   *
-   * @param file src file
-   * @param newFile target file
-   */
-  public static void moveFile(File file, File newFile) {
-    try {
-      FileUtils.moveFile(requireFile(file), requireNotExist(newFile));
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }

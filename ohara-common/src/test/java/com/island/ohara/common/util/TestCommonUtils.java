@@ -62,18 +62,6 @@ public class TestCommonUtils extends OharaTest {
   }
 
   @Test
-  public void testReplaceParentFolder() {
-    Assert.assertEquals(
-        String.join(File.separator, "ccc", "ddd"), CommonUtils.replaceParent("ccc", "/abc/ddd"));
-    Assert.assertEquals(
-        String.join(File.separator, "a", "ddd"), CommonUtils.replaceParent("a", "/abc/ddd"));
-    Assert.assertEquals(
-        String.join(File.separator, "a", "ddd"), CommonUtils.replaceParent("a", "/abc/ttt/ddd"));
-    Assert.assertEquals(
-        String.join(File.separator, "a", "ddd"), CommonUtils.replaceParent("a", "/abc/tt/t/ddd"));
-  }
-
-  @Test
   public void testGetAddress() {
     Assert.assertEquals(CommonUtils.address("localhost"), "127.0.0.1");
     Assert.assertEquals(CommonUtils.address("127.0.0.1"), "127.0.0.1");
@@ -336,23 +324,6 @@ public class TestCommonUtils extends OharaTest {
     }
   }
 
-  @Test
-  public void testOnlyNumberAndChar() {
-    Assert.assertTrue(CommonUtils.onlyNumberAndChar("1"));
-    Assert.assertTrue(CommonUtils.onlyNumberAndChar("1a"));
-    Assert.assertTrue(CommonUtils.onlyNumberAndChar("1cD"));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1-"));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1a."));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD!"));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD~"));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD "));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD+ "));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD-"));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD("));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("@"));
-    Assert.assertFalse(CommonUtils.onlyNumberAndChar("12313_"));
-  }
-
   @Test(expected = NullPointerException.class)
   public void testNullString() {
     CommonUtils.requireNonEmpty((String) null);
@@ -442,20 +413,6 @@ public class TestCommonUtils extends OharaTest {
   public void testRequireNonNegativeLong() {
     CommonUtils.requireNonNegativeLong(0);
     assertException(IllegalArgumentException.class, () -> CommonUtils.requireNonNegativeLong(-1));
-  }
-
-  @Test
-  public void testExtension() {
-    File f = CommonUtils.createTempFile("aa", ".jpg");
-    Assert.assertEquals("jpg", CommonUtils.extension(f));
-    assertException(
-        IllegalArgumentException.class,
-        () -> CommonUtils.extension(CommonUtils.createTempFile("aa", "bb")));
-    assertException(IllegalArgumentException.class, () -> CommonUtils.extension("AAA"));
-    assertException(IllegalArgumentException.class, () -> CommonUtils.extension("AAA."));
-    Assert.assertTrue(CommonUtils.hasExtension(".a"));
-    Assert.assertFalse(CommonUtils.hasExtension("bbaa"));
-    Assert.assertFalse(CommonUtils.hasExtension("bbaa."));
   }
 
   @Test
