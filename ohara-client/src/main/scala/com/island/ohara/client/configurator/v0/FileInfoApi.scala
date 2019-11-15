@@ -23,9 +23,11 @@ import java.util.Objects
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.v0.InspectApi.FileContent
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat, _}
 
@@ -49,6 +51,27 @@ object FileInfoApi {
   case class Updating(tags: Option[Map[String, JsValue]])
   final implicit val FILE_UPDATING_FORMAT: RootJsonFormat[Updating] = jsonFormat1(Updating)
 
+  case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
+  object ClassInfo {
+
+    /**
+      * create connector class information. The type is from setting definitions.
+      * @param className class name
+      * @param settingDefinitions setting definitions
+      * @return class information
+      */
+    def apply(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo =
+      ClassInfo(
+        classType = settingDefinitions.find(_.key() == ConnectorDefUtils.KIND_KEY).map(_.defaultString()) match {
+          case Some(kind) => kind
+          case None       => "unknown"
+        },
+        className = className,
+        settingDefinitions = settingDefinitions
+      )
+  }
+  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat3(ClassInfo.apply)
+
   /**
     * file information
     * @param name file name
@@ -62,6 +85,7 @@ object FileInfoApi {
                        val lastModified: Long,
                        val bytes: Array[Byte],
                        val size: Int,
+                       val classInfos: Seq[ClassInfo],
                        val tags: Map[String, JsValue])
       extends Data
       with Serializable {
@@ -70,6 +94,7 @@ object FileInfoApi {
              url: URL,
              lastModified: Long,
              bytes: Array[Byte],
+             classInfos: Seq[ClassInfo],
              tags: Map[String, JsValue]) {
       this(group = group,
            name = name,
@@ -77,13 +102,21 @@ object FileInfoApi {
            lastModified = lastModified,
            bytes = bytes,
            size = bytes.length,
+           classInfos = classInfos,
            tags = tags)
+
     }
+    private[this] implicit def _classInfos(classInfos: Seq[ClassInfo]): FileContent = FileContent(classInfos)
+
+    def sourceClassInfos: Seq[ClassInfo] = classInfos.sourceClassInfos
+    def sinkClassInfos: Seq[ClassInfo] = classInfos.sinkClassInfos
+    def streamClassInfos: Seq[ClassInfo] = classInfos.streamClassInfos
 
     override def kind: String = "file"
   }
 
   private[this] val URL_KEY = "url"
+  private[this] val CLASS_INFOS_KEY = "classInfos"
   private[this] val SIZE_KEY = "size"
 
   implicit val FILE_INFO_JSON_FORMAT: RootJsonFormat[FileInfo] = new RootJsonFormat[FileInfo] {
@@ -112,6 +145,12 @@ object FileInfoApi {
         bytes = Array.empty,
         // casting is ok here since the size of file is always smaller than GB.
         size = number(SIZE_KEY).toInt,
+        classInfos = value(CLASS_INFOS_KEY) match {
+          case JsArray(es) => es.map(CLASS_INFO_FORMAT.read).toList
+          case j: JsValue =>
+            throw DeserializationException(
+              s"$CLASS_INFOS_KEY must be mapped to array but actual is ${j.getClass.getName}")
+        },
         tags = value(TAGS_KEY) match {
           case JsObject(fs) => fs
           case j: JsValue =>
@@ -131,6 +170,7 @@ object FileInfoApi {
       URL_KEY -> JsString(obj.url.toString),
       SIZE_KEY -> JsNumber(obj.size),
       LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
+      CLASS_INFOS_KEY -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
       TAGS_KEY -> JsObject(obj.tags),
     )
   }

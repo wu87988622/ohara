@@ -73,6 +73,7 @@ class TestFileInfoApi extends OharaTest {
       lastModified = CommonUtils.current(),
       bytes = bytes,
       url = new URL("http://localhost:1345/v0"),
+      classInfos = Seq.empty,
       tags = Map("a" -> JsString("b"))
     )
 

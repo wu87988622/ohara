@@ -112,10 +112,10 @@ class TestInspectRoute extends OharaTest {
     val fileInfo = result(fileApi.request.file(streamFile).upload())
 
     val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
-    fileContent.classes should not be Seq.empty
-    fileContent.sourceConnectorClasses.size shouldBe 0
-    fileContent.sinkConnectorClasses.size shouldBe 0
-    fileContent.streamAppClasses.size shouldBe 1
+    fileContent.classInfos should not be Seq.empty
+    fileContent.sourceClassInfos.size shouldBe 0
+    fileContent.sinkClassInfos.size shouldBe 0
+    fileContent.streamClassInfos.size shouldBe 1
   }
 
   @Test
@@ -126,12 +126,12 @@ class TestInspectRoute extends OharaTest {
     val fileInfo = result(fileApi.request.file(connectorFile).upload())
 
     val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
-    fileContent.classes should not be Seq.empty
-    fileContent.sourceConnectorClasses.size should not be 0
-    fileContent.sourceConnectorClasses.foreach(d => d.settingDefinitions should not be Seq.empty)
-    fileContent.sinkConnectorClasses.size should not be 0
-    fileContent.sinkConnectorClasses.foreach(d => d.settingDefinitions should not be Seq.empty)
-    fileContent.streamAppClasses.size shouldBe 0
+    fileContent.classInfos should not be Seq.empty
+    fileContent.sourceClassInfos.size should not be 0
+    fileContent.sourceClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
+    fileContent.sinkClassInfos.size should not be 0
+    fileContent.sinkClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
+    fileContent.streamClassInfos.size shouldBe 0
   }
 
   @Test
@@ -147,7 +147,7 @@ class TestInspectRoute extends OharaTest {
     val fileInfo = result(fileApi.request.file(file).upload())
 
     val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
-    fileContent.classes shouldBe Seq.empty
+    fileContent.classInfos shouldBe Seq.empty
   }
 
   @Test

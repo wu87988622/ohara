@@ -20,7 +20,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.{Creator, Validator}
 import com.island.ohara.client.kafka.WorkerJson.{

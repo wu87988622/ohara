@@ -271,18 +271,18 @@ Query File
 
 This API enables you to "see" what in the file. The items in response are shown below.
 
-#. classes (**Array(Object)**) — the classes which extend the either connector or streamApp
+#. classInfos (**Array(Object)**) — the classes which extend the either connector or streamApp
 
-  - classes[i].classType (**String**) — "source connector", "sink connector" or "streamApp"
-  - classes[i].className (**String**) — the full name of class
-  - classes[i].settingDefinitions (**String**) — the settings definitions of this class. It may be empty if Configurator fails to read the definitions.
+  - classInfos[i].classType (**String**) — "source connector", "sink connector" or "streamApp"
+  - classInfos[i].className (**String**) — the full name of class
+  - classInfos[i].settingDefinitions (**String**) — the settings definitions of this class. It may be empty if Configurator fails to read the definitions.
 
 Example Response
 
 .. code-block:: json
 
   {
-    "classes": [
+    "classInfos": [
       {
         "classType": "connector",
         "className": "a.b.c.Source",

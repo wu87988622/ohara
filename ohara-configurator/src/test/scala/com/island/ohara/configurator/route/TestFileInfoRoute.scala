@@ -218,6 +218,20 @@ class TestFileInfoRoute extends OharaTest {
     tempFile.length() shouldBe jar.size
   }
 
+  @Test
+  def testConnectorJar(): Unit = {
+    val fileInfo = result(fileApi.request.file(RouteUtils.connectorFile).upload())
+    fileInfo.streamClassInfos shouldBe Seq.empty
+    (fileInfo.sourceClassInfos ++ fileInfo.sinkClassInfos) should not be Seq.empty
+  }
+
+  @Test
+  def testStreamJar(): Unit = {
+    val fileInfo = result(fileApi.request.file(RouteUtils.streamFile).upload())
+    fileInfo.streamClassInfos.size shouldBe 1
+    (fileInfo.sourceClassInfos ++ fileInfo.sinkClassInfos) shouldBe Seq.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

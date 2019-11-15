@@ -34,6 +34,12 @@ The properties stored by ohara are shown below.
 #. group (**string**) — the group name (we use this field to separate different workspaces)
 #. size (**long**) — file size
 #. url (**option(string)**) — url to download this jar from Ohara Configurator. Noted not all jars are downloadable to user.
+#. classInfos (**array(object)**) — the information of available classes in this file
+
+  - classInfos[i].className — the name of this class
+  - classInfos[i].classType — the type of this class. for example, topic, source connector, sink connector or stream app
+  - classInfos[i].settingDefinitions — the definitions of this class
+
 #. lastModified (**long**) — the time of uploading this file
 
 
@@ -62,13 +68,14 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "name": "aa.jar",
-       "group": "wk01",
-       "size": 1779,
-       "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-       "lastModified": 1561012496975
-     }
+    {
+      "name": "aa.jar",
+      "group": "wk01",
+      "size": 1779,
+      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+      "classInfos": [],
+      "lastModified": 1561012496975
+    }
 
 
 list all jars
@@ -82,15 +89,16 @@ parameter, wll return all jars.
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "name": "aa.jar",
-         "group": "wk01",
-         "size": 1779,
-         "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-         "lastModified": 1561012496975
-       }
-     ]
+    [
+      {
+        "name": "aa.jar",
+        "group": "wk01",
+        "size": 1779,
+        "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+        "classInfos": [],
+        "lastModified": 1561012496975
+      }
+    ]
 
 
 delete a file
@@ -124,13 +132,14 @@ exists.
 Example Response
   .. code-block:: json
 
-     {
-         "name": "aa.jar",
-         "group": "wk01",
-         "size": 1779,
-         "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-         "lastModified": 1561012496975
-     }
+    {
+      "name": "aa.jar",
+      "group": "wk01",
+      "size": 1779,
+      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+      "classInfos": [],
+      "lastModified": 1561012496975
+    }
 
 
 update tags of file
@@ -154,14 +163,15 @@ Example Response
 Example Response
   .. code-block:: json
 
-     {
-         "name": "aa.jar",
-         "group": "wk01",
-         "size": 1779,
-         "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-         "lastModified": 1561012496975,
-         "tags": {
-             "a": "b"
-           }
-     }
+    {
+      "name": "aa.jar",
+      "group": "wk01",
+      "size": 1779,
+      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+      "classInfos": [],
+      "lastModified": 1561012496975,
+      "tags": {
+        "a": "b"
+      }
+    }
 

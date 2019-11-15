@@ -20,7 +20,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
 import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
-import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
 import com.island.ohara.client.configurator.v0.InspectApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
@@ -37,12 +37,14 @@ import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.{Consumer, Header}
 import com.island.ohara.streams.config.StreamDefUtils
+import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsObject}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object InspectRoute {
+  private[this] lazy val LOG = Logger(InspectRoute.getClass)
 
   /**
     * we reuse the great conversion of JIO connectors
@@ -190,7 +192,7 @@ private[configurator] object InspectRoute {
         complete(
           dataStore
             .value[FileInfo](ObjectKey.of(group, fileName))
-            .flatMap(fileInfo => serviceCollie.fileContent(fileInfo)))
+            .flatMap(fileInfo => serviceCollie.fileContent(Seq(fileInfo.url))))
       }
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
       complete(ConfiguratorInfo(
@@ -258,15 +260,18 @@ private[configurator] object InspectRoute {
               .value[StreamClusterInfo](ObjectKey.of(group, name))
               .map(_.jarKey)
               .flatMap(dataStore.value[FileInfo])
+              .map(file => Seq(file.url))
               .flatMap(serviceCollie.fileContent)
               .recover {
-                case _: Throwable => FileContent.empty
+                case e: Throwable =>
+                  LOG.warn(s"failed to find definitions for stream:${ObjectKey.of(group, name)}", e)
+                  FileContent.empty
               }
               .map(fileContent =>
                 ServiceDefinition(
                   imageName = StreamApi.IMAGE_NAME_DEFAULT,
                   settingDefinitions = StreamDefUtils.DEFAULT.asScala,
-                  classInfos = fileContent.streamAppClasses
+                  classInfos = fileContent.streamClassInfos
               )))
         }
       } ~ pathEnd {

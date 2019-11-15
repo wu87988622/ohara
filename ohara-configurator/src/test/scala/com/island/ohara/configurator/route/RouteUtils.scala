@@ -18,8 +18,6 @@ package com.island.ohara.configurator.route
 
 import java.io.File
 
-import com.island.ohara.common.util.VersionUtils
-
 object RouteUtils {
 
   /**
@@ -28,7 +26,13 @@ object RouteUtils {
     * @return file
     */
   def streamFile: File = new File(new File(".").getCanonicalPath, "../ohara-streams/build/libs/test-streamApp.jar")
-  def connectorFile: File =
-    new File(new File(".").getCanonicalPath,
-             s"../ohara-connector/build/libs/ohara-connector-${VersionUtils.VERSION}.jar")
+
+  /**
+    * the jar of connector has "version" but it is changed in running QA. Hence, we use seek directory to find the jar.
+    * @return connector jar
+    */
+  def connectorFile: File = {
+    val folder = new File(new File(".").getCanonicalPath, s"../ohara-kafka/build/libs/")
+    folder.listFiles().filter(_.getName.endsWith("tests.jar")).head
+  }
 }

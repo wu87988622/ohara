@@ -69,7 +69,7 @@ private[configurator] object StreamRoute {
       .check()
       .map(_.fileInfos)
       .map { fileInfos =>
-        val available = serviceCollie.classNames(fileInfos).streamApps
+        val available = serviceCollie.classNames(fileInfos.map(_.url)).streams
         val className = creation.className.getOrElse {
           available.size match {
             case 0 =>

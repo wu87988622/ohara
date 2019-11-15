@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import java.io.File
 import java.net.URL
 import java.nio.file.Files
 
@@ -29,17 +28,21 @@ import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.util.ByteString
+import com.island.ohara.agent.ServiceCollie
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, OharaJsonFormat}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
+import com.typesafe.scalalogging.Logger
 import spray.json._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FileInfoRoute {
+
+  private[this] val LOG = Logger(FileInfoRoute.getClass)
 
   private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
@@ -86,6 +89,7 @@ private[configurator] object FileInfoRoute {
 
   private[this] def customPost(hostname: String, port: Int, version: String)(
     implicit store: DataStore,
+    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext): () => Route = () =>
     withSizeLimit(DEFAULT_FILE_SIZE_BYTES) {
       // We need to convert the request entity to strict entity in order to fetch the "form fields",
@@ -95,22 +99,35 @@ private[configurator] object FileInfoRoute {
       toStrictEntity(40.seconds) {
         formFields((GROUP_KEY ? GROUP_DEFAULT, TAGS_KEY.as(tagsUnmarshaller) ? JsObject.empty)) {
           case (group, tags) =>
-            storeUploadedFile(FIELD_NAME, fileInfo => File.createTempFile(fileInfo.fileName, ".tmp")) {
+            storeUploadedFile(FIELD_NAME, fileInfo => CommonUtils.createTempFile(fileInfo.getFileName, ".jar")) {
               case (metadata, file) =>
                 val name = metadata.fileName
                 val key = ObjectKey.of(group, name)
                 complete(store.exist[FileInfo](key).flatMap {
                   if (_) throw new IllegalArgumentException(s"file:$key exists!!!")
-                  else
-                    store.add[FileInfo](new FileInfo(
-                      group = group,
-                      name = name,
-                      url = new URL(s"http://$hostname:$port/$version/$DOWNLOAD_FILE_PREFIX_PATH/$group/$name"),
-                      lastModified = CommonUtils.current(),
-                      bytes = try Files.readAllBytes(file.toPath)
-                      finally file.delete(),
-                      tags = tags.fields
-                    ))
+                  else {
+                    serviceCollie
+                      .fileContent(Seq(file.toURI.toURL))
+                      .map(_.classInfos)
+                      .recover {
+                        case e: Throwable if !name.endsWith(".jar") =>
+                          LOG.debug(s"the file:$name seems not a jar file", e)
+                          Seq.empty
+                      }
+                      .map { classInfos =>
+                        new FileInfo(
+                          group = group,
+                          name = name,
+                          url = new URL(s"http://$hostname:$port/$version/$DOWNLOAD_FILE_PREFIX_PATH/$group/$name"),
+                          lastModified = CommonUtils.current(),
+                          bytes = try Files.readAllBytes(file.toPath)
+                          finally file.delete(),
+                          classInfos = classInfos,
+                          tags = tags.fields
+                        )
+                      }
+                      .flatMap(store.add)
+                  }
                 })
             }
         }
@@ -129,6 +146,7 @@ private[configurator] object FileInfoRoute {
               url = previous.url,
               lastModified = CommonUtils.current(),
               bytes = previous.bytes,
+              classInfos = previous.classInfos,
               tags = updating.tags.getOrElse(previous.tags)
             ))
     }
@@ -155,6 +173,7 @@ private[configurator] object FileInfoRoute {
     * @param version the version is a part of generated URL. This is important stuff since we may reject the deprecated URL in the future.
     */
   def apply(hostname: String, port: Int, version: String)(implicit store: DataStore,
+                                                          serviceCollie: ServiceCollie,
                                                           objectChecker: ObjectChecker,
                                                           executionContext: ExecutionContext): server.Route =
     RouteBuilder[FakeCreation, Updating, FileInfo]()

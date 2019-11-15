@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional

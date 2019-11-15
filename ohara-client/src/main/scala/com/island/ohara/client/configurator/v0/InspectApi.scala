@@ -18,13 +18,14 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsObject, JsValue, RootJsonFormat}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,42 +57,30 @@ object InspectApi {
 
   implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat2(ConfiguratorInfo)
 
-  case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
-  object ClassInfo {
-
-    /**
-      * create connector class information. The type is from setting definitions.
-      * @param className class name
-      * @param settingDefinitions setting definitions
-      * @return class information
-      */
-    def apply(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo =
-      ClassInfo(
-        classType = settingDefinitions.find(_.key() == ConnectorDefUtils.KIND_KEY).map(_.defaultString()) match {
-          case Some(kind) => kind
-          case None       => "unknown"
-        },
-        className = className,
-        settingDefinitions = settingDefinitions
-      )
-  }
-  implicit val CLASS_INFO_FORMAT: RootJsonFormat[ClassInfo] = jsonFormat3(ClassInfo.apply)
-
   case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef], classInfos: Seq[ClassInfo])
 
   implicit val SERVICE_DEFINITION_FORMAT: RootJsonFormat[ServiceDefinition] = jsonFormat3(ServiceDefinition)
 
-  case class FileContent(classes: Seq[ClassInfo]) {
-    def sourceConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == ConnectorDefUtils.SOURCE_CONNECTOR)
-    def sinkConnectorClasses: Seq[ClassInfo] = classes.filter(_.classType == ConnectorDefUtils.SINK_CONNECTOR)
-    def streamAppClasses: Seq[ClassInfo] = classes.filter(_.classType == StreamDefUtils.STREAM_APPLICATION)
+  case class FileContent(classInfos: Seq[ClassInfo]) {
+    def sourceClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SOURCE_CONNECTOR)
+    def sinkClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SINK_CONNECTOR)
+    def streamClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == StreamDefUtils.STREAM_APPLICATION)
   }
 
   object FileContent {
     val empty: FileContent = FileContent(Seq.empty)
   }
 
-  implicit val FILE_CONTENT_FORMAT: RootJsonFormat[FileContent] = jsonFormat1(FileContent.apply)
+  implicit val FILE_CONTENT_FORMAT: RootJsonFormat[FileContent] = new RootJsonFormat[FileContent] {
+    private[this] val format = jsonFormat1(FileContent.apply)
+    override def write(obj: FileContent): JsValue = JsObject {
+      val fields = format.write(obj).asJsObject.fields
+      // yep, the APIs compatibility
+      fields + ("classes" -> fields("classInfos"))
+    }
+
+    override def read(json: JsValue): FileContent = format.read(json)
+  }
 
   final case class RdbColumn(name: String, dataType: String, pk: Boolean)
   implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)

@@ -101,6 +101,7 @@ class TestStreamCreator extends OharaTest {
     bytes = Array.empty,
     url = url,
     lastModified = CommonUtils.current(),
+    classInfos = Seq.empty,
     tags = Map.empty
   )
 

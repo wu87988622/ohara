@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import java.lang.reflect.Modifier
 
-import com.island.ohara.client.configurator.v0.InspectApi.ClassInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.kafka.connector.WithDefinitions
 import com.typesafe.scalalogging.Logger
 import org.reflections.Reflections
