@@ -53,6 +53,36 @@ import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
 
+const StyledPaper = styled(Paper)(
+  ({ theme }) => css`
+    min-height: ${theme.spacing(21)}px;
+    margin-bottom: 16px;
+  `,
+);
+
+const StyleStepper = styled(Stepper)`
+  background-color: #f5f6fa;
+`;
+
+const StyleButton = styled(Button)`
+  margin-right: 16px;
+`;
+
+const StyledTextField = styled(InputField)(
+  ({ theme }) => css`
+    margin: ${theme.spacing(3)}px 0 0 ${theme.spacing(2)}px;
+    width: 95%;
+  `,
+);
+
+const StyledTableRow = styled(TableRow)(
+  ({ theme }) => css`
+    &.MuiTableRow-root:nth-of-type(even) {
+      background-color: ${theme.palette.grey[100]};
+    }
+  `,
+);
+
 const WorkspaceQuick = props => {
   const [activeStep, setActiveStep] = useState(0);
   const [files, setFiles] = useState([]);
@@ -87,36 +117,6 @@ const WorkspaceQuick = props => {
   const handleBack = activeStep => {
     setActiveStep(activeStep - 1);
   };
-
-  const StyledPaper = styled(Paper)(
-    ({ theme }) => css`
-      min-height: ${theme.spacing(21)}px;
-      margin-bottom: 16px;
-    `,
-  );
-
-  const StyleStepper = styled(Stepper)`
-    background-color: #f5f6fa;
-  `;
-
-  const StyleButton = styled(Button)`
-    margin-right: 16px;
-  `;
-
-  const StyledTextField = styled(InputField)(
-    ({ theme }) => css`
-      margin: ${theme.spacing(3)}px 0 0 ${theme.spacing(2)}px;
-      width: 95%;
-    `,
-  );
-
-  const StyledTableRow = styled(TableRow)(
-    ({ theme }) => css`
-      &.MuiTableRow-root:nth-of-type(even) {
-        background-color: ${theme.palette.grey[100]};
-      }
-    `,
-  );
 
   const removeNodeCard = node => {
     const newNodes = selected.filter(
@@ -194,7 +194,7 @@ const WorkspaceQuick = props => {
     let taken = new Array(len);
 
     while (n--) {
-      var x = Math.floor(Math.random() * len);
+      let x = Math.floor(Math.random() * len);
       result[n] = nodes[x in taken ? taken[x] : x];
       taken[x] = --len in taken ? taken[len] : len;
     }

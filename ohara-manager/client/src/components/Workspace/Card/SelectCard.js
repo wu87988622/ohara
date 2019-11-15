@@ -31,15 +31,13 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 
 import Prcentage from 'components/common/Progress/Prcentage';
 
-const StyledDiv = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-
-  p {
-    font-size: 14px;
-  }
-`;
+const StyledDiv = styled.div(
+  ({ theme }) => css`
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: ${theme.spacing(1)}px;
+  `,
+);
 
 const StyledToolbar = styled(Toolbar)(
   ({ theme }) => css`
@@ -76,7 +74,6 @@ const StyledExpansionPanel = styled(ExpansionPanel)`
 const StyledExpansionPanelSummary = styled(ExpansionPanelSummary)(
   ({ theme }) => css`
     padding: 0 ${theme.spacing(1)}px 0 ${theme.spacing(2)}px;
-    font-size: 14px;
 
     &.MuiExpansionPanelSummary-root.Mui-expanded {
       min-height: 0;
@@ -98,14 +95,12 @@ const StyledExpansionPanelDetails = styled(ExpansionPanelDetails)(
 const StyledTypography = styled(Typography)`
   text-overflow: ellipsis;
   overflow: hidden;
-  font-size: 14px;
   flex: 1;
 `;
 
 const StyledTypographyVersion = styled(Typography)`
   text-overflow: ellipsis;
   overflow: hidden;
-  font-size: 14px;
 `;
 
 const groupBy = (source, key) => {
@@ -122,7 +117,7 @@ const SelectCard = props => {
       <CardContent>
         {
           <StyledToolbar>
-            <StyledNodeCardTitle>{rows.name}</StyledNodeCardTitle>
+            <StyledNodeCardTitle variant="h5">{rows.name}</StyledNodeCardTitle>
             <IconButton size="small" onClick={() => handleClose(rows)}>
               <CloseIcon />
             </IconButton>
@@ -134,7 +129,7 @@ const SelectCard = props => {
           .map(key => {
             return (
               <StyledDiv key={key + rows[key]}>
-                <Typography>
+                <Typography variant="subtitle2">
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </Typography>
                 <div>{Prcentage(rows[key], '|')}</div>
@@ -148,17 +143,20 @@ const SelectCard = props => {
             const array = groupBy(rows.tags.classes, 'classType')[key];
             return (
               <StyledExpansionPanel key={key}>
-                <StyledExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-                  <StyledTypography>{key}</StyledTypography>
+                <StyledExpansionPanelSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  variant="subtitle2"
+                >
+                  <StyledTypography variant="subtitle2">{key}</StyledTypography>
                   <div>{array.length}</div>
                 </StyledExpansionPanelSummary>
                 {array.map(classes => {
                   return (
                     <StyledExpansionPanelDetails key={classes.className}>
-                      <StyledTypography>
+                      <StyledTypography variant="subtitle2">
                         {classes.className.split('.').pop()}
                       </StyledTypography>
-                      <StyledTypographyVersion>
+                      <StyledTypographyVersion variant="subtitle2">
                         {get(
                           classes.settingDefinitions.filter(
                             def => def.key === 'version',

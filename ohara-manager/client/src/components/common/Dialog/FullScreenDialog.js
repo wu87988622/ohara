@@ -18,14 +18,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import DialogContent from '@material-ui/core/DialogContent';
-import {
-  Dialog,
-  Button,
-  AppBar,
-  IconButton,
-  Typography,
-  Toolbar,
-} from '@material-ui/core';
+import Dialog from '@material-ui/core/Dialog';
+import Button from '@material-ui/core/Button';
+import AppBar from '@material-ui/core/AppBar';
+import IconButton from '@material-ui/core/IconButton';
+import Typography from '@material-ui/core/Typography';
+import Toolbar from '@material-ui/core/Toolbar';
 import KeyboardBackspaceIcon from '@material-ui/icons/KeyboardBackspace';
 
 const StyledIconButton = styled(IconButton)`
