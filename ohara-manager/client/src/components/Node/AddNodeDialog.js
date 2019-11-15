@@ -33,7 +33,7 @@ import {
 } from 'utils/validate';
 
 const AddNodeDialog = props => {
-  const { isOpen, handleClose, fetchNodes, type } = props;
+  const { isOpen, handleClose, fetchNodes, mode } = props;
   const showMessage = useSnackbar();
 
   const onSubmit = async (values, form) => {
@@ -93,7 +93,7 @@ const AddNodeDialog = props => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              {type !== 'k8s' && (
+              {mode !== 'k8s' && (
                 <>
                   <Field
                     name="port"
@@ -150,6 +150,6 @@ AddNodeDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   fetchNodes: PropTypes.func.isRequired,
-  type: PropTypes.string.isRequired,
+  mode: PropTypes.string.isRequired,
 };
 export default AddNodeDialog;

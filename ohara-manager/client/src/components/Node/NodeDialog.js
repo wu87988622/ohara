@@ -155,7 +155,7 @@ const NodeDialog = () => {
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
           fetchNodes={fetchNodes}
-          type={type}
+          mode={type}
         />
       </>
     </FullScreenDialog>
