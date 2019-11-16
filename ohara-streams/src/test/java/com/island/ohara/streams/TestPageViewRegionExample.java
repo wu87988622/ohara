@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +50,7 @@ public class TestPageViewRegionExample extends WithBroker {
 
   // prepare data
   private final List<Row> views =
-      Stream.of(
+      java.util.stream.Stream.of(
               Row.of(Cell.of("user", "francesca"), Cell.of("page", "http://example.com/#bell")),
               Row.of(Cell.of("user", "eden"), Cell.of("page", "https://baseball.example.com/")),
               Row.of(Cell.of("user", "abbie"), Cell.of("page", "https://www.example.com/")),
@@ -96,7 +95,7 @@ public class TestPageViewRegionExample extends WithBroker {
           .collect(Collectors.toList());
 
   private final List<Row> profiles =
-      Stream.of(
+      java.util.stream.Stream.of(
               Row.of(Cell.of("user", "abbie"), Cell.of("region", "Russian")),
               Row.of(Cell.of("user", "tommy"), Cell.of("region", "Jordan")),
               Row.of(Cell.of("user", "francesca"), Cell.of("region", "Belize")),
@@ -134,7 +133,7 @@ public class TestPageViewRegionExample extends WithBroker {
   public void testCase() throws InterruptedException {
     // run example
     PageViewRegionExample app = new PageViewRegionExample();
-    StreamApp.runStreamApp(app.getClass());
+    Stream.execute(app.getClass());
 
     StreamTestUtils.produceData(producer, profiles, joinTableTopic);
     // the default commit.interval.ms=30 seconds, which should make sure join table ready
@@ -143,7 +142,7 @@ public class TestPageViewRegionExample extends WithBroker {
 
     // Assert the result
     List<Row> expected =
-        Stream.of(
+        java.util.stream.Stream.of(
                 Row.of(Cell.of("region", "Belize"), Cell.of("count", 2L)),
                 Row.of(Cell.of("region", "Russian"), Cell.of("count", 10L)),
                 Row.of(Cell.of("region", "Jordan"), Cell.of("count", 5L)),

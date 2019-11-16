@@ -22,7 +22,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
- * The {@code Stele} represents a operation in the streamApp. This object contains the basic
+ * The {@code Stele} represents a operation in the stream. This object contains the basic
  * information from {@code processor} of a {@code topology}.
  *
  * <p>The description of each fields are listed below:

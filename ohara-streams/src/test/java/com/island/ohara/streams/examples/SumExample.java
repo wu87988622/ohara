@@ -19,7 +19,7 @@ package com.island.ohara.streams.examples;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OStream;
-import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.config.StreamDefinitions;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,17 +55,17 @@ import java.util.List;
  *
  * <p>1. Package this example with your favorite build tool (maven, gradle...)
  *
- * <p>2. Upload the packaged jar to Ohara Stream Manager, Add a streamApp into pipeline
+ * <p>2. Upload the packaged jar to Ohara Stream Manager, Add a Stream into pipeline
  *
  * <p>3. Crete two topic : <b>number-input</b> and <b>sum-output</b> topic from Ohara Stream Manager
  *
  * <p>4. Use connector to write data into "number-input" with the column header: (number)
  *
- * <p>5. Start the streamApp. The result data will be wrote to the output topic "sum-output" with
- * the column header: (sum)
+ * <p>5. Start the stream. The result data will be wrote to the output topic "sum-output" with the
+ * column header: (sum)
  */
 @SuppressWarnings("rawtypes")
-public class SumExample extends StreamApp {
+public class SumExample extends Stream {
   @Override
   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
     ostream

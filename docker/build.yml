@@ -43,7 +43,7 @@ services:
     image: oharastream/streamapp:${TAG:-0.9.0-SNAPSHOT}
     build:
       context: .
-      dockerfile: streamapp.dockerfile
+      dockerfile: stream.dockerfile
       args:
         KAFKA_VERSION: 2.2.1
         LOG_VERSION: 1.7.25

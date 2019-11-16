@@ -14,40 +14,40 @@
 .. limitations under the License.
 ..
 
-.. _streamapp:
+.. _stream:
 
-Custom StreamApp Guideline
+Custom Stream Guideline
 ==========================
 
-Ohara streamApp is an unparalleled wrap of `kafka
+Ohara stream is an unparalleled wrap of `kafka
 streams <https://kafka.apache.org/documentation/streams>`__ which gives
 you a straightforward thought to design your streaming flow. It offers a
 simple way to implement and define actions to process data between
-topics. You only have to write your logic in :ref:`start() <streamapp-start-method>`
+topics. You only have to write your logic in :ref:`start() <stream-start-method>`
 method and compile your code to a jar file. After jar file is compiled
 successfully, you can **deploy** your jar file to Ohara, run it,
-and monitor your streamApp by :ref:`logs <streamapp-logs>` and
-:ref:`metrics <streamapp-metrics>`.
+and monitor your stream by :ref:`logs <stream-logs>` and
+:ref:`metrics <stream-metrics>`.
 
-The following sections will describe how to write a streamApp
+The following sections will describe how to write a stream
 application in Ohara.
 
 ---------------------------
 
-Ohara StreamApp Overview
+Ohara Stream Overview
 ------------------------
 
-Ohara streamApp is a wrap of `kafka
+Ohara stream is a wrap of `kafka
 streams <https://kafka.apache.org/documentation/streams>`__ and provided
-an entry of interface class :ref:`StreamApp <streamapp-entry>` to define
-user custom streaming code. A normal streamApp application will use
+an entry of interface class :ref:`Stream <stream-entry>` to define
+user custom streaming code. A normal stream application will use
 :ref:`Row <connector-datamodel>` as data type to interactive
 topics in Ohara.
 
 
-Before writing your streamApp, you should download the ohara
+Before writing your stream, you should download the ohara
 dependencies first. Ohara includes many powerful tools for
-developer but not all tools are requisite in designing streamApp. The
+developer but not all tools are requisite in designing stream. The
 required dependencies are shown below.
 
 .. code-block:: groovy
@@ -67,13 +67,13 @@ required dependencies are shown below.
 
 ---------------------------
 
-.. _streamapp-entry:
+.. _stream-entry:
 
-StreamApp Entry
+Stream Entry
 ---------------
 
 We will automatically find your custom class which should be extended by
-**om.island.ohara.streams.StreamApp**.
+**om.island.ohara.streams.Stream**.
 
 In Ohara environment, the required parameters are defined in
 Ohara UI. You only need to initial the ``OStream`` as following:
@@ -82,17 +82,17 @@ Ohara UI. You only need to initial the ``OStream`` as following:
 
   OStream<Row> ostream = OStream.builder().toOharaEnvStream();
 
-A base implementation for a custom streamApp only need to include
-:ref:`start() <streamapp-start-method>` method, but you could include other methods
+A base implementation for a custom stream only need to include
+:ref:`start() <stream-start-method>` method, but you could include other methods
 which are described below for your convenience.
 
-The following example is a simple streamApp application which can run in
-Ohara. Note that this example simply starts the streamApp application without doing any transformation but writing data,
+The following example is a simple stream application which can run in
+Ohara. Note that this example simply starts the stream application without doing any transformation but writing data,
 i.e., the target topic will have same data as the source topic.
 
 .. code-block:: java
 
-   public class SimpleApplicationForOharaEnv extends StreamApp {
+   public class SimpleApplicationForOharaEnv extends Stream {
 
      @Override
      public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
@@ -101,27 +101,27 @@ i.e., the target topic will have same data as the source topic.
    }
 
 .. note::
-   The following methods we provided belongs to Ohara StreamApp, which has
+   The following methods we provided belongs to Ohara Stream, which has
    many powerful and friendly features. Native Kafka Streams API does
    not have these methods.
 
-.. _streamapp-init-method:
+.. _stream-init-method:
 
 init() method
 ~~~~~~~~~~~~~
 
 After we find the user custom class, the first method will be called by
-StreamApp is **init()**. This is an optional method that can be used for
+Stream is **init()**. This is an optional method that can be used for
 user to initialize some external data source connections or input
 parameters.
 
-.. _streamapp-config-method:
+.. _stream-config-method:
 
 config() method
 ~~~~~~~~~~~~~~~
 
-In a streamApp application, you may want to configure your own parameters. We support a method here to help you define
-a custom streamDefinitions list in streamApp. The details of streamDefinitions are list :ref:`here <streamapp-setting-definitions>`.
+In a stream application, you may want to configure your own parameters. We support a method here to help you define
+a custom streamDefinitions list in stream. The details of streamDefinitions are list :ref:`here <stream-setting-definitions>`.
 
 In the following example, we want to add a custom definition which is used to define "join topic":
 
@@ -134,33 +134,33 @@ In the following example, we want to add a custom definition which is used to de
       .with(SettingDef.builder().key("filterName").group("default").build());
    }
 
-After define the definition, you can use it in :ref:`start() method <streamapp-start-method>`
+After define the definition, you can use it in :ref:`start() method <stream-start-method>`
 
 .. note::
-   This method is optional. We will append all the definitions you provide in this method to the streamApp default
+   This method is optional. We will append all the definitions you provide in this method to the stream default
    definitions. That is, the absent config() method means you only need the default definitions.
 
-.. _streamapp-start-method:
+.. _stream-start-method:
 
 start(OStream<Row>, StreamDefinitions) method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method will be called after :ref:`init() <streamapp-init-method>`. Normally,
+This method will be called after :ref:`init() <stream-init-method>`. Normally,
 you could only define start() method for most cases in Ohara. We encourage
 user to use **source connector** (see :ref:`connector-sourceconnector` section) for importing
 external data source to Ohara and use topic data as custom
-streamApp data source in start() method.
+stream data source in start() method.
 
 We provide two arguments in this method:
 
-#. OStream - the entry class of ohara streamApp
+#. OStream - the entry class of ohara stream
 
-   OStream (a.k.a. ohara streamApp) helps you to construct your application
-   and use all the powerful APIs in StreamApp.
+   OStream (a.k.a. ohara stream) helps you to construct your application
+   and use all the powerful APIs in Stream.
 
-#. StreamDefinitions - the definitions of ohara streamApp
+#. StreamDefinitions - the definitions of ohara stream
 
-   from the definition you can use `StreamDefinitions.string()` to get the value from the :ref:`config method <streamapp-config-method>` .
+   from the definition you can use `StreamDefinitions.string()` to get the value from the :ref:`config method <stream-config-method>` .
 
    .. note::
       The return value is wrap in a Java object **Optional**, you need to decide whether the value is present
@@ -198,14 +198,14 @@ The above code does the following transformations:
 
 #. convert the cell of ``name`` to upperCase
 
-From now on, you can use the :ref:`StreamApp Java API <streamapp-java-api>` to design your own application, happy coding!
+From now on, you can use the :ref:`Stream Java API <stream-java-api>` to design your own application, happy coding!
 
-.. _streamapp-java-api:
+.. _stream-java-api:
 
-StreamApp Java API
+Stream Java API
 ------------------
 
-In StreamApp, we provide three different classes for developers:
+In Stream, we provide three different classes for developers:
 
 - OStream: define the functions for operating streaming data (each row record one-by-one)
 - OGroupedStream: define the functions for operating grouped streaming data
@@ -251,15 +251,15 @@ OStream
 
 -  start()
 
-    Run this streamApp application.
+    Run this stream application.
 
 -  stop()
 
-    Stop this streamApp application.
+    Stop this stream application.
 
 -  describe()
 
-    Describe the topology of this streamApp.
+    Describe the topology of this stream.
 
 -  getPoneglyph()
 
@@ -287,11 +287,11 @@ OTable
 ---------------------------
 
 
-StreamApp Examples
+Stream Examples
 ------------------
 
 Below we provide some examples that demonstrate how to develop your own
-streamApp applications. More description of each example could be found
+stream applications. More description of each example could be found
 in javadoc.
 
 - :ohara-source:`WordCount <ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java>`: count the words in “word” column
@@ -300,26 +300,26 @@ in javadoc.
 
 ---------------------------
 
-.. _streamapp-setting-definitions:
+.. _stream-setting-definitions:
 
-StreamApp Definitions
+Stream Definitions
 ---------------------
 
-StreamApp stores a list of :ref:`SettingDef <setting-definition>`, which is StreamDefinitions, in the data store.
+Stream stores a list of :ref:`SettingDef <setting-definition>`, which is StreamDefinitions, in the data store.
 By default, we will keep the following definitions in the "core" group and generate the definition in stream API :
 
 #. DefaultConfigs.BROKER_DEFINITION : The broker list
 #. DefaultConfigs.IMAGE_NAME_DEFINITION : The image name
-#. DefaultConfigs.NAME_DEFINITION : The streamApp application name
-#. DefaultConfigs.GROUP_DEFINITION : The streamApp group name
+#. DefaultConfigs.NAME_DEFINITION : The stream application name
+#. DefaultConfigs.GROUP_DEFINITION : The stream group name
 #. DefaultConfigs.FROM_TOPICS_DEFINITION : The from topic
 #. DefaultConfigs.TO_TOPICS_DEFINITION : The to topic
 #. DefaultConfigs.JMX_PORT_DEFINITION : The exposed jmx port
 #. DefaultConfigs.NODE_NAMES_DEFINITION : The node name list
-#. DefaultConfigs.VERSION_DEFINITION : The version of streamApp
-#. DefaultConfigs.REVISION_DEFINITION : The revision of streamApp
-#. DefaultConfigs.AUTHOR_DEFINITION : The author of streamApp
-#. DefaultConfigs.TAGS_DEFINITION : The tags of streamApp
+#. DefaultConfigs.VERSION_DEFINITION : The version of stream
+#. DefaultConfigs.REVISION_DEFINITION : The revision of stream
+#. DefaultConfigs.AUTHOR_DEFINITION : The author of stream
+#. DefaultConfigs.TAGS_DEFINITION : The tags of stream
 
 Any other definition except above list will be treated as a custom definition. You can define
 
@@ -339,44 +339,44 @@ as a definition that is listed in the "common" group.
 
    Any group category will generate a new "tab" in Ohara manager.
 
-The value of each definition will be kept in environment of streamApp running container, and you should set the value by
+The value of each definition will be kept in environment of stream running container, and you should set the value by
 :ref:`stream api <rest-streams-update-information>`.
 
 ---------------------------
 
-.. _streamapp-metrics:
+.. _stream-metrics:
 
 Metrics
 -------
 
-When a streamApp application is running, Ohara automatically
-collects some metrics data from the streamApp in the background. The
-metrics data here means :ref:`official metrics <streamapp-official-metrics>` which
+When a stream application is running, Ohara automatically
+collects some metrics data from the stream in the background. The
+metrics data here means :ref:`official metrics <stream-official-metrics>` which
 contains :ref:`Counters <connector-counter>` for now (other
 type of metrics will be introduced in the future). The metrics data
-could be fetched by :ref:`StreamApp APIs<rest-streams>`.
+could be fetched by :ref:`Stream APIs<rest-streams>`.
 Developers will be able to implement their own custom metrics in the
 foreseeable future.
 
-Ohara leverages JMX to offer the metrics data to streamApp. It
+Ohara leverages JMX to offer the metrics data to stream. It
 means that all metrics you have created are stored as Java beans and
-accessible through JMX service. The streamApp will expose a port via
-:ref:`StreamApp APIs<rest-streams>` for other JMX client
-tool used, such as JMC, but we still encourage you to use :ref:`StreamApp APIs<rest-streams>`
+accessible through JMX service. The stream will expose a port via
+:ref:`Stream APIs<rest-streams>` for other JMX client
+tool used, such as JMC, but we still encourage you to use :ref:`Stream APIs<rest-streams>`
 as it offers a more readable format of metrics.
 
-.. _streamapp-official-metrics:
+.. _stream-official-metrics:
 
 Official Metrics
 ~~~~~~~~~~~~~~~~
 
-There are two type of official metrics for streamApp: - consumed topic
+There are two type of official metrics for stream: - consumed topic
 records (counter) - produced topic records (counter)
 
-A normal streamApp will connect to two topics, one is the source topic
-that streamApp will consume from, and the other is the target topic that
-streamApp will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**)
-in the response data (:ref:`StreamApp APIs<rest-streams>`)
+A normal stream will connect to two topics, one is the source topic
+that stream will consume from, and the other is the target topic that
+stream will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**)
+in the response data (:ref:`Stream APIs<rest-streams>`)
 in order to improve readabilities of those types. You don’t need to worry about the
 implementation of these official metrics, but you can still read the
 :ohara-source:`source code <ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java>`
@@ -384,7 +384,7 @@ to see how Ohara creates official metrics.
 
 ---------------------------
 
-.. _streamapp-logs:
+.. _stream-logs:
 
 Logs
 ----

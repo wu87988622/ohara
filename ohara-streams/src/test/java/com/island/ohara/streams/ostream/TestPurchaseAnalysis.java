@@ -26,7 +26,7 @@ import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.OStream;
-import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -38,7 +38,6 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -98,7 +97,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
   }
 
   @Test
-  public void testStreamApp() throws InterruptedException {
+  public void testStream() throws InterruptedException {
     // write items.csv to kafka broker
     produceData("items.csv", itemTopic.topicNameOnKafka());
 
@@ -115,7 +114,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
 
     // initial environment
     StreamTestUtils.setOharaEnv(
-        Stream.of(
+        java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appid),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
                 Pair.of(
@@ -126,8 +125,8 @@ public class TestPurchaseAnalysis extends With3Brokers {
                     TopicKey.toJsonString(Collections.singletonList(resultTopic))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
 
-    RunStreamApp app = new RunStreamApp();
-    StreamApp.runStreamApp(app.getClass());
+    RunStream app = new RunStream();
+    Stream.execute(app.getClass());
   }
 
   @After
@@ -136,8 +135,8 @@ public class TestPurchaseAnalysis extends With3Brokers {
     client.close();
   }
 
-  /** StreamApp Main Entry */
-  public static class RunStreamApp extends StreamApp {
+  /** Stream Main Entry */
+  public static class RunStream extends Stream {
 
     @Override
     public void start(OStream<Row> stream, StreamDefinitions streamDefinitions) {

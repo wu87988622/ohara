@@ -34,7 +34,7 @@ private[configurator] object StreamRoute {
 
   /**
     * The group for a stream application metrics
-    * Since each streamApp has it's own metrics, it is OK to use same value
+    * Since each stream has it's own metrics, it is OK to use same value
     */
   private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT
 
@@ -114,8 +114,8 @@ private[configurator] object StreamRoute {
               .creation)
         case Some(previous) =>
           objectChecker.checkList
-          // we don't support to update a running streamApp
-            .streamApp(previous.key, STOPPED)
+          // we don't support to update a running stream
+            .stream(previous.key, STOPPED)
             .check()
             .flatMap { _ =>
               // 1) fill the previous settings (if exists)
@@ -137,7 +137,7 @@ private[configurator] object StreamRoute {
     (streamClusterInfo: StreamClusterInfo, _, _) => {
       objectChecker.checkList
       // node names check is covered in super route
-        .streamApp(streamClusterInfo.key)
+        .stream(streamClusterInfo.key)
         .file(streamClusterInfo.jarKey)
         .brokerCluster(streamClusterInfo.brokerClusterKey, RUNNING)
         .topics(

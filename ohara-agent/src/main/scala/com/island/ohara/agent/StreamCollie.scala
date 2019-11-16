@@ -29,7 +29,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import com.island.ohara.streams.StreamApp
+import com.island.ohara.streams.Stream
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.JsString
 
@@ -77,7 +77,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                 val route = resolveHostNames(
                   (newNodes.map(_.hostname)
                     ++ brokerClusterInfo.nodeNames
-                  // make sure the streamApp can connect to configurator
+                  // make sure the stream can connect to configurator
                     ++ Seq(fileInfo.url.get.getHost)).toSet
                 )
                 // ssh connection is slow so we submit request by multi-thread
@@ -121,7 +121,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )
                   val arguments =
-                    Seq(classOf[StreamApp].getName,
+                    Seq(classOf[Stream].getName,
                         s"${StreamDefUtils.CLASS_NAME_DEFINITION.key()}=${creation.className.get}")
 
                   doCreator(executionContext, containerInfo, newNode, route, arguments)

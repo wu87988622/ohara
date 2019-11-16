@@ -26,21 +26,20 @@ import com.island.ohara.streams.config.StreamDefinitions;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamApp extends OharaTest {
+public class TestStream extends OharaTest {
 
   @Test
   public void testCanFindCustomClassEntryFromInnerClass() {
-    CustomStreamApp app = new CustomStreamApp();
+    CustomStream app = new CustomStream();
     TopicKey fromKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
     TopicKey toKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
 
     // initial all required environment
     StreamTestUtils.setOharaEnv(
-        Stream.of(
+        java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(5)),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), CommonUtils.randomString()),
                 Pair.of(
@@ -50,10 +49,10 @@ public class TestStreamApp extends OharaTest {
                     StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
-    StreamApp.runStreamApp(app.getClass());
+    Stream.execute(app.getClass());
   }
 
-  public static class CustomStreamApp extends StreamApp {
+  public static class CustomStream extends Stream {
     final AtomicInteger counter = new AtomicInteger();
 
     @Override
@@ -64,14 +63,14 @@ public class TestStreamApp extends OharaTest {
     @Override
     public void init() {
       int res = counter.incrementAndGet();
-      // StreamApp should call init() first
+      // Stream should call init() first
       Assert.assertEquals(1, res);
     }
 
     @Override
     public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
       int res = counter.incrementAndGet();
-      // StreamApp should call start() after init()
+      // Stream should call start() after init()
       Assert.assertEquals(2, res);
     }
   }

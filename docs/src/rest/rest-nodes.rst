@@ -55,7 +55,7 @@ The properties used in describing a node are shown below.
 #. tags (**object**) — the extra description to this object
 #. services (**array(object)**) — the services hosted by this node
 
-   - services[i].name (**string**) — service name (configurator, zookeeper, broker, connect-worker and streamapp)
+   - services[i].name (**string**) — service name (configurator, zookeeper, broker, connect-worker and _stream)
    - services[i].clusterKeys (**array(object)**) — the keys of this service
 
 #. validationReport (**object**) — last validation result.

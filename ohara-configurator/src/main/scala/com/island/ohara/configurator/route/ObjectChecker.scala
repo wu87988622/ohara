@@ -61,7 +61,7 @@ object ObjectChecker {
     def runningZookeepers: Seq[ZookeeperClusterInfo] = zookeeperClusterInfos.filter(_._2 == RUNNING).keys.toSeq
     def runningBrokers: Seq[BrokerClusterInfo] = brokerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
     def runningWorkers: Seq[WorkerClusterInfo] = workerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
-    def runningStreamApps: Seq[StreamClusterInfo] = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningStreams: Seq[StreamClusterInfo] = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
   }
 
   final class ObjectCheckException(val objectType: String,
@@ -272,26 +272,26 @@ object ObjectChecker {
     //---------------[stream app]---------------//
 
     /**
-      * check all streamApps. It invokes a loop to all streamApps and then fetch their state - a expensive operation!!!
+      * check all streams. It invokes a loop to all streams and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allStreamApps(): ChickList
+    def allStreams(): ChickList
 
     /**
-      * check the properties of streamApp cluster.
-      * @param key streamApp cluster key
+      * check the properties of stream cluster.
+      * @param key stream cluster key
       * @return this check list
       */
-    def streamApp(key: ObjectKey): ChickList = streamApps(Set(key), None)
+    def stream(key: ObjectKey): ChickList = streams(Set(key), None)
 
     /**
-      * check both properties and status of streamApp cluster.
-      * @param key streamApp cluster key
+      * check both properties and status of stream cluster.
+      * @param key stream cluster key
       * @return this check list
       */
-    def streamApp(key: ObjectKey, condition: Condition): ChickList = streamApps(Set(key), Some(condition))
+    def stream(key: ObjectKey, condition: Condition): ChickList = streams(Set(key), Some(condition))
 
-    protected def streamApps(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
+    protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
     //---------------[final check]---------------//
     /**
       * throw exception if the input assurances don't pass. Otherwise, return the resources.
@@ -327,8 +327,8 @@ object ObjectChecker {
         private[this] val requiredBrokers = mutable.Map[ObjectKey, Option[Condition]]()
         private[this] var requireAllWorkers = false
         private[this] val requiredWorkers = mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] var requireAllStreamApps = false
-        private[this] val requiredStreamApps = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllStreams = false
+        private[this] val requiredStreams = mutable.Map[ObjectKey, Option[Condition]]()
 
         private[this] def checkCluster[S <: ClusterStatus, C <: ClusterInfo: ClassTag](
           collie: Collie[S],
@@ -384,9 +384,9 @@ object ObjectChecker {
             checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie,
                                                                   requiredWorkers.keys.toSet)
 
-        private[this] def checkStreamApps()(
+        private[this] def checkStreams()(
           implicit executionContext: ExecutionContext): Future[Map[StreamClusterInfo, Condition]] =
-          if (requireAllStreamApps)
+          if (requireAllStreams)
             store
               .values[StreamClusterInfo]()
               .map(_.map(_.key))
@@ -394,7 +394,7 @@ object ObjectChecker {
                 checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, keys.toSet))
           else
             checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie,
-                                                                  requiredStreamApps.keys.toSet)
+                                                                  requiredStreams.keys.toSet)
 
         private[this] def checkTopic(key: TopicKey)(
           implicit executionContext: ExecutionContext): Future[Option[(TopicInfo, Condition)]] =
@@ -518,10 +518,10 @@ object ObjectChecker {
                 report.copy(brokerClusterInfos = passed)
               }
             }
-            // check streamApps
+            // check streams
             .flatMap { report =>
-              checkStreamApps().map { passed =>
-                compare("streamApp", passed.map(e => e._1.key -> e._2), requiredStreamApps.toMap)
+              checkStreams().map { passed =>
+                compare("stream", passed.map(e => e._1.key -> e._2), requiredStreams.toMap)
                 report.copy(streamClusterInfos = passed)
               }
             }
@@ -582,8 +582,8 @@ object ObjectChecker {
           this
         }
 
-        override protected def streamApps(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
-          keys.foreach(key => requiredStreamApps += (key -> condition))
+        override protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
+          keys.foreach(key => requiredStreams += (key -> condition))
           this
         }
 
@@ -622,8 +622,8 @@ object ObjectChecker {
           this
         }
 
-        override def allStreamApps(): ChickList = {
-          this.requireAllStreamApps = true
+        override def allStreams(): ChickList = {
+          this.requireAllStreams = true
           this
         }
       }

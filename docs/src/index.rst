@@ -39,7 +39,7 @@ For Developer
 If you want to know how to build ohara, please read: :ref:`How to build <Build>`
 
 Apart from contributing code to ohara, you can also leverage ohara to design your
-:ref:`custom connector<connector>`, :ref:`custom streamapp<streamapp>`
+:ref:`custom connector<connector>`, :ref:`custom stream<stream>`
 or build your UI interface via :ref:`Ohara REST interface <Rest>`.
 
 
@@ -50,7 +50,7 @@ or build your UI interface via :ref:`Ohara REST interface <Rest>`.
    user_guide
    rest/index
    custom_connector
-   custom_streamapp
+   custom_stream
    setting_definition
    how_to_build
    manager_dev_guide

@@ -21,7 +21,7 @@ import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.streams.OStream;
-import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.ostream.Conditions;
 import java.util.Collections;
@@ -86,17 +86,17 @@ import java.util.Collections;
  *
  * <p>1. Package this example with your favorite build tool (maven, gradle...)
  *
- * <p>2. Upload the packaged jar to Ohara Stream Manager, Add a streamApp into pipeline
+ * <p>2. Upload the packaged jar to Ohara Stream Manager, Add a stream into pipeline
  *
  * <p>3. Crete two topic : <b>page-views</b> and <b>user-profiles</b> topic from Ohara Stream
  * Manager
  *
  * <p>4. Use connector to write data into "page-views" and "user-profiles" with the above format
  *
- * <p>5. Start the streamApp. The result data will be wrote to the output topic "view-by-region"
- * with the above format
+ * <p>5. Start the stream. The result data will be wrote to the output topic "view-by-region" with
+ * the above format
  */
-public class PageViewRegionExample extends StreamApp {
+public class PageViewRegionExample extends Stream {
   public static final String joinTopicKey = "joinTopicKey";
 
   @Override

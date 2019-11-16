@@ -41,7 +41,7 @@ object StreamApi {
   def DEFINITIONS: Seq[SettingDef] = StreamDefUtils.DEFAULT.asScala
 
   /**
-    * StreamApp Docker Image name
+    * Stream Docker Image name
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
@@ -153,9 +153,9 @@ object StreamApi {
   /**
     * The Stream Cluster Information stored in configurator
     *
-    * @param settings streamApp key-value pair settings
+    * @param settings stream key-value pair settings
     * @param aliveNodes alive node list of the running containers from this cluster
-    * @param state the state of streamApp (stopped streamApp does not have this field)
+    * @param state the state of stream (stopped stream does not have this field)
     * @param error the error message if the state was failed to fetch
     * @param metrics the metrics bean
     * @param lastModified this data change time

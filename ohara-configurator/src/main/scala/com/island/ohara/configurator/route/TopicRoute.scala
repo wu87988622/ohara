@@ -184,11 +184,11 @@ private[configurator] object TopicRoute {
     if (conflictConnectors.nonEmpty)
       throw new IllegalArgumentException(
         s"topic:${topicInfo.key} is used by running connectors:${conflictConnectors.map(_.key).mkString(",")}")
-    val conflictStreamApps =
+    val conflictStreams =
       streamClusterInfos.filter(s => s.fromTopicKeys.contains(topicInfo.key) || s.toTopicKeys.contains(topicInfo.key))
-    if (conflictStreamApps.nonEmpty)
+    if (conflictStreams.nonEmpty)
       throw new IllegalArgumentException(
-        s"topic:${topicInfo.key} is used by running streamApps:${conflictStreamApps.map(_.key).mkString(",")}")
+        s"topic:${topicInfo.key} is used by running streams:${conflictStreams.map(_.key).mkString(",")}")
   }
 
   private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
@@ -196,7 +196,7 @@ private[configurator] object TopicRoute {
     objectChecker.checkList
       .topic(TopicKey.of(key.group(), key.name()), STOPPED)
       .allConnectors()
-      .allStreamApps()
+      .allStreams()
       .check()
       .map { report =>
         checkConflict(report.topicInfos.head._1, report.connectorInfos.keys.toSeq, report.streamClusterInfos.keys.toSeq)
@@ -251,16 +251,16 @@ private[configurator] object TopicRoute {
     (topicInfo: TopicInfo, _, _) =>
       objectChecker.checkList
         .allConnectors()
-        .allStreamApps()
+        .allStreams()
         .topic(topicInfo.key)
         .check()
-        .map(report => (report.topicInfos.head._2, report.runningConnectors, report.runningStreamApps))
+        .map(report => (report.topicInfos.head._2, report.runningConnectors, report.runningStreams))
         .flatMap {
-          case (condition, runningConnectors, runningStreamApps) =>
+          case (condition, runningConnectors, runningStreams) =>
             condition match {
               case STOPPED => Future.unit
               case RUNNING =>
-                checkConflict(topicInfo, runningConnectors, runningStreamApps)
+                checkConflict(topicInfo, runningConnectors, runningStreams)
                 objectChecker.checkList
                 // topic is running so the related broker MUST be running
                   .brokerCluster(topicInfo.brokerClusterKey, RUNNING)

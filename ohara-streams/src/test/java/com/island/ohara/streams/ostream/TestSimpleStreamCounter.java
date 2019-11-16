@@ -27,7 +27,7 @@ import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.metrics.BeanChannel;
 import com.island.ohara.streams.OStream;
-import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -36,15 +36,14 @@ import com.island.ohara.testing.WithBroker;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-// TODO: the streamapp requires many arguments from env variables.
-// This tests do not care the rules required by streamapp.
-// Fortunately (or unfortunately), streamapp lacks of enough checks to variables so the
-// non-completed settings to streamapp works well in this test ... by chia
+// TODO: the stream requires many arguments from env variables.
+// This tests do not care the rules required by stream.
+// Fortunately (or unfortunately), stream lacks of enough checks to variables so the
+// non-completed settings to stream works well in this test ... by chia
 public class TestSimpleStreamCounter extends WithBroker {
 
   private static Duration timeout = Duration.ofSeconds(10);
@@ -101,7 +100,7 @@ public class TestSimpleStreamCounter extends WithBroker {
   public void testMetrics() {
     // initial environment
     StreamTestUtils.setOharaEnv(
-        Stream.of(
+        java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "metric-test"),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
                 Pair.of(
@@ -112,8 +111,8 @@ public class TestSimpleStreamCounter extends WithBroker {
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
 
-    DirectWriteStreamApp app = new DirectWriteStreamApp();
-    StreamApp.runStreamApp(app.getClass());
+    DirectWriteStream app = new DirectWriteStream();
+    Stream.execute(app.getClass());
 
     // wait until topic has data
     CommonUtils.await(() -> consumer.poll(timeout).size() > 0, Duration.ofSeconds(30));
@@ -134,7 +133,7 @@ public class TestSimpleStreamCounter extends WithBroker {
             });
   }
 
-  public static class DirectWriteStreamApp extends StreamApp {
+  public static class DirectWriteStream extends Stream {
 
     @Override
     public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {

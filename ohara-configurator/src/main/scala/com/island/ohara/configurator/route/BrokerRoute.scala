@@ -115,14 +115,14 @@ object BrokerRoute {
     if (conflictWorkers.nonEmpty)
       throw new IllegalArgumentException(
         s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers.map(_.key).mkString(",")}")
-    val conflictStreamApps = streamClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
-    if (conflictStreamApps.nonEmpty)
+    val conflictStreams = streamClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
+    if (conflictStreams.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreamApps.map(_.key).mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreams.map(_.key).mkString(",")}")
     val conflictTopics = topicInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictTopics.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreamApps.map(_.key).mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreams.map(_.key).mkString(",")}")
   }
 
   private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
@@ -130,10 +130,10 @@ object BrokerRoute {
     (brokerClusterInfo: BrokerClusterInfo, _: String, _: Map[String, String]) =>
       objectChecker.checkList
         .allWorkers()
-        .allStreamApps()
+        .allStreams()
         .allTopics()
         .check()
-        .map(report => (report.runningWorkers, report.runningStreamApps, report.runningTopics))
+        .map(report => (report.runningWorkers, report.runningStreams, report.runningTopics))
         .map {
           case (workerClusterInfos, streamClusterInfos, topicInfos) =>
             checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
@@ -143,12 +143,12 @@ object BrokerRoute {
                                      executionContext: ExecutionContext): HookBeforeDelete = key =>
     objectChecker.checkList
       .allWorkers()
-      .allStreamApps()
+      .allStreams()
       .allTopics()
       .brokerCluster(key, STOPPED)
       .check()
       .map(report =>
-        (report.brokerClusterInfos.head._1, report.runningWorkers, report.runningStreamApps, report.runningTopics))
+        (report.brokerClusterInfos.head._1, report.runningWorkers, report.runningStreams, report.runningTopics))
       .map {
         case (brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos) =>
           checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)

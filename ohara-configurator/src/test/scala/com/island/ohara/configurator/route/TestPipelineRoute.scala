@@ -106,7 +106,7 @@ class TestPipelineRoute extends OharaTest {
   }
 
   @Test
-  def testAddStreamAppToPipeline(): Unit = {
+  def testAddStreamToPipeline(): Unit = {
     // create worker
     val fileInfo = result(fileApi.request.file(RouteUtils.streamFile).upload())
     val bk = result(brokerApi.list()).head
@@ -115,8 +115,8 @@ class TestPipelineRoute extends OharaTest {
     val to = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(to.key))
 
-    // create an empty streamApp
-    val streamApp = result(
+    // create an empty stream
+    val stream = result(
       streamApi.request
         .fromTopicKey(from.key)
         .toTopicKey(to.key)
@@ -126,17 +126,17 @@ class TestPipelineRoute extends OharaTest {
         .create())
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(streamApp.key, Set.empty)).create())
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(stream.key, Set.empty)).create())
     pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe streamApp.key
+    pipeline.flows.head.from shouldBe stream.key
     pipeline.flows.head.to shouldBe Set.empty
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.className should not be None
 
-    // streamApp is not running so the objects have error
+    // stream is not running so the objects have error
     result(pipelineApi.get(pipeline.key)).objects.head.error should not be None
 
-    result(streamApi.start(streamApp.key))
+    result(streamApi.start(stream.key))
     result(pipelineApi.get(pipeline.key)).objects.head.error shouldBe None
   }
 

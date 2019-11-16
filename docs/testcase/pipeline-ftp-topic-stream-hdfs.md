@@ -1,9 +1,9 @@
-# Test case: FTP to Topic to Streamapp to HDFS
+# Test case: FTP to Topic to Stream to HDFS
 
 - [Create a new workspace with three nodes](#create-a-new-workspace-with-three-nodes)
 - [Create two topic and upload a stream app jar into the workspace](#create-two-topic-and-upload-a-stream-app-jar-into-the-workspace)
 - [Create a new pipeline, add some connectors, topics and a stream app](#create-a-new-pipeline--add-some-connectors--topics-and-a-stream-app)
-- [連接 FTP source -> Topic -> StreamApp -> Topic -> HDFS sink](#連接-ftp-source---topic---streamapp---topic---hdfs-sink)
+- [FTP source -> Topic -> Stream -> Topic -> HDFS sink](#ftp-source---topic---stream---topic---hdfs-sink)
 - [Prepare the required folders and test data on the FTP server](#prepare-the-required-folders-and-test-data-on-the-ftp-server)
 - [Start all connectors and stream app](#start-all-connectors-and-stream-app)
 - [Verify which test data was successfully dumped to HDFS](#verify-which-test-data-was-successfully-dumped-to-hdfs)
@@ -39,8 +39,8 @@
 **Add a stream jar:**
 
 1. On the **Workspaces** > **wk00** > **STREAM JARS** tab, click the <kbd>NEW JAR</kbd> button.
-2. Browse to the location of your jar file `ohara-streamapp.jar`, click the file, and click <kbd>Open</kbd>.
-   > if You don't know how to build a stream app jar, see this [link](#how-to-get-ohara-streamappjar) for how
+2. Browse to the location of your jar file `ohara-it-stream.jar`, click the file, and click <kbd>Open</kbd>.
+   > if You don't know how to build a stream app jar, see this [link](#how-to-get-ohara-it-streamjar) for how
 
 ## Create a new pipeline, add some connectors, topics and a stream app
 
@@ -49,13 +49,13 @@
 3. Click the **Add a source connector** icon and select **com.island.ohara.connector.ftp.FTPSource** from the list, then click <kbd>ADD</kbd>.
 4. Enter “ftpsource” in the **myconnector** field and click <kbd>ADD</kbd>.
 5. Click the **Add a topic** icon and select **t1** from the dropdown and click <kbd>ADD</kbd>.
-6. Click the **Add a stream app** icon and select **ohara-streamapp.jar** from the dropdown, then click <kbd>ADD</kbd>.
-7. Enter “dumb” in the **mystreamapp** field and click <kbd>ADD</kbd>.
+6. Click the **Add a stream app** icon and select **ohara-it-stream.jar** from the dropdown, then click <kbd>ADD</kbd>.
+7. Enter “dumb” in the **mystream** field and click <kbd>ADD</kbd>.
 8. Click the **Add a topic** icon and select **t2** from the dropdown, then click <kbd>ADD</kbd>.
 9. Click the **Add a sink connector** icon and select **com.island.ohara.connector.hdfs.sink.HDFSSink** from the list, then click <kbd>ADD</kbd>.
 10. Enter “hdfssink” in the **myconnector** field and click <kbd>ADD</kbd>.
 
-## 連接 FTP source -> Topic -> StreamApp -> Topic -> HDFS sink
+## FTP source -> Topic -> Stream -> Topic -> HDFS sink
 
 **Set up ftpsource connector:**
 
@@ -151,7 +151,7 @@ ID,NAME,CREATE_AT
 5,ohara5,2019-03-01 00:00:05
 ```
 
-## How to get ohara-streamapp.jar?
+## How to get ohara-it-stream.jar?
 
 Open a new terminal from your machine and go to Ohara's source folder.
 
@@ -159,16 +159,16 @@ Open a new terminal from your machine and go to Ohara's source folder.
 cd ohara/
 ```
 
-Then `cd` to StreamApp DumbStreamApp source folder.
+Then `cd` to Stream DumbStream source folder.
 
 ```sh
-cd ohara-it/src/main/scala/com/island/ohara/it/streamapp/
+cd ohara-it/src/main/scala/com/island/ohara/it/stream/
 ```
 
-Use Vi to edit **DumbStreamApp.scala**
+Use Vi to edit **DumbStream.scala**
 
 ```sh
-vi DumbStreamApp.scala
+vi DumbStream.scala
 ```
 
 Enter "I" key from your keyboard to activate the "INSERT" mode
@@ -177,14 +177,14 @@ Enter "I" key from your keyboard to activate the "INSERT" mode
 -- INSERT --
 ```
 
-Overwrite DumbStreamApp class from
+Overwrite DumbStream class from
 
 ```java
-class DumbStreamApp extends StreamApp {
+class DumbStream extends Stream {
 
   override def start(ostream: OStream[Row], configs: StreamDefinitions): Unit = {
 
-    // do nothing but only start streamApp and write exactly data to output topic
+    // do nothing but only start stream and write exactly data to output topic
     ostream.start()
   }
 }
@@ -209,13 +209,13 @@ To
  * limitations under the License.
  */
 
-package com.island.ohara.it.streamapp
+package com.island.ohara.it.stream
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.streams.config.StreamDefinitions
-import com.island.ohara.streams.{OStream, StreamApp}
+import com.island.ohara.streams.{OStream, Stream}
 
-class DumbStreamApp extends StreamApp {
+class DumbStream extends Stream {
 
   override def config(): StreamDefinitions = StreamDefinitions
     .`with`(
@@ -250,18 +250,18 @@ Press "Esc" key to leave the insert mode and enter `:wq` to save and exit from t
 :wq
 ```
 
-Build streamapp jar
+Build stream jar
 
 ```sh
 # Make sure you're at the project root `/ohara`, then build the jar with:
 gradle clean :ohara-it:jar -PskipManager
 ```
 
-Go to streamapp jar folder and list the jars that you have
+Go to stream jar folder and list the jars that you have
 
 ```sh
 cd ohara-it/build/libs/ && ls
 
 # You should see something like this in your terminal:
-ohara-it-sink.jar ohara-it-source.jar ohara-streamapp.jar
+ohara-it-sink.jar ohara-it-source.jar ohara-it-stream.jar
 ```

@@ -118,7 +118,7 @@ describe('Inspect API', () => {
   it('fetchStreamFileDefinition', async () => {
     const file = {
       fixturePath: 'streamApp',
-      name: 'ohara-streamapp.jar',
+      name: 'ohara-it-stream.jar',
       group: generate.serviceName({ prefix: 'group' }),
     };
 
@@ -127,7 +127,7 @@ describe('Inspect API', () => {
       .then(result => {
         const { classes } = result;
         expect(classes).to.be.an('array');
-        // the ohara-streamapp.jar only includes stream class, so the length must be 1
+        // the ohara-it-stream.jar only includes stream class, so the length must be 1
         expect(classes).have.lengthOf(1);
 
         const { className, classType, settingDefinitions } = classes[0];

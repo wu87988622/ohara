@@ -42,8 +42,8 @@ const copyJars = () => {
       fs.mkdirSync('./client/cypress/fixtures/streamApp');
     }
     fs.copyFile(
-      '../ohara-it/build/libs/ohara-streamapp.jar',
-      'client/cypress/fixtures/streamApp/ohara-streamapp.jar',
+      '../ohara-it/build/libs/ohara-it-stream.jar',
+      'client/cypress/fixtures/streamApp/ohara-it-stream.jar',
       err => {
         if (err) throw err;
       },

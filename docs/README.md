@@ -10,5 +10,5 @@
 ## Test case
 
 * [Ohara installation](testcase/ohara-installation.md)
-* [FTP to Topic to Streamapp to HDFS](testcase/pipeline-ftp-topic-streamapp-hdfs.md)
+* [FTP to Topic to Stream to HDFS](testcase/pipeline-ftp-topic-stream-hdfs.md)
 * [JDBC to Topic to FTP](testcase/pipeline-jdbc-topic-ftp.md)

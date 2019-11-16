@@ -47,7 +47,7 @@ private[configurator] object FileInfoRoute {
   private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     objectChecker.checkList
-      .allStreamApps()
+      .allStreams()
       .allWorkers()
       .check()
       .map(report => (report.workerClusterInfos.keys, report.streamClusterInfos.keys))

@@ -35,9 +35,9 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class BasicTests4StreamApp extends IntegrationTest {
+abstract class BasicTests4Stream extends IntegrationTest {
 
-  private[this] val log = Logger(classOf[BasicTests4StreamApp])
+  private[this] val log = Logger(classOf[BasicTests4Stream])
 
   private[this] val invalidHostname = "unknown"
   private[this] val invalidPort = 0
@@ -74,7 +74,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
   @Before
   def setup(): Unit = {
     if (nodes.isEmpty || port == invalidPort || hostname == invalidHostname) {
-      skipTest("public hostname and public port must exist so all tests in BasicTests4StreamApp are ignored")
+      skipTest("public hostname and public port must exist so all tests in BasicTests4Stream are ignored")
     } else {
       configurator = createConfigurator(hostname, port)
       zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -124,28 +124,28 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
   }
 
   @Test
-  def testRunSimpleStreamApp(): Unit = {
+  def testRunSimpleStream(): Unit = {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
     val to = TopicKey.of("default", CommonUtils.randomString(5))
-    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
+    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-it-stream.jar"))
 
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()), () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))), bkKey)
-    log.info(s"[testRunSimpleStreamApp] broker cluster [$bkKey] assert...done")
+    log.info(s"[testRunSimpleStream] broker cluster [$bkKey] assert...done")
     // create topic
     val topic1 = result(topicApi.request.key(from).brokerClusterKey(bkKey).create())
     result(topicApi.start(topic1.key))
     val topic2 = result(topicApi.request.key(to).brokerClusterKey(bkKey).create())
     result(topicApi.start(topic2.key))
-    log.info(s"[testRunSimpleStreamApp] topic creation [$topic1,$topic2]...done")
+    log.info(s"[testRunSimpleStream] topic creation [$topic1,$topic2]...done")
 
-    // upload streamApp jar
+    // upload stream jar
     val jarInfo = result(jarApi.request.file(jar).upload())
-    jarInfo.name shouldBe "ohara-streamapp.jar"
-    log.info(s"[testRunSimpleStreamApp] upload jar [$jarInfo]...done")
+    jarInfo.name shouldBe "ohara-it-stream.jar"
+    log.info(s"[testRunSimpleStream] upload jar [$jarInfo]...done")
 
-    // create streamApp properties
-    val streamApp = result(
+    // create stream properties
+    val stream = result(
       access.request
         .key(nameHolder.generateClusterKey())
         .jarKey(jarInfo.key)
@@ -154,37 +154,37 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
         .fromTopicKey(topic1.key)
         .toTopicKey(topic2.key)
         .create())
-    log.info(s"[testRunSimpleStreamApp] stream properties creation [$streamApp]...done")
+    log.info(s"[testRunSimpleStream] stream properties creation [$stream]...done")
 
-    streamApp.fromTopicKeys shouldBe Set(topic1.key)
-    streamApp.toTopicKeys shouldBe Set(topic2.key)
-    streamApp.state shouldBe None
-    streamApp.error shouldBe None
-    log.info(s"[testRunSimpleStreamApp] stream properties update [$streamApp]...done")
+    stream.fromTopicKeys shouldBe Set(topic1.key)
+    stream.toTopicKeys shouldBe Set(topic2.key)
+    stream.state shouldBe None
+    stream.error shouldBe None
+    log.info(s"[testRunSimpleStream] stream properties update [$stream]...done")
 
-    // get streamApp property (cluster not create yet, hence no state)
-    val getProperties = result(access.get(streamApp.key))
+    // get stream property (cluster not create yet, hence no state)
+    val getProperties = result(access.get(stream.key))
     getProperties.fromTopicKeys shouldBe Set(topic1.key)
     getProperties.toTopicKeys shouldBe Set(topic2.key)
     getProperties.state shouldBe None
     getProperties.error shouldBe None
 
-    // start streamApp
-    log.info(s"[testRunSimpleStreamApp] stream start [${streamApp.key}]")
-    result(access.start(streamApp.key))
+    // start stream
+    log.info(s"[testRunSimpleStream] stream start [${stream.key}]")
+    result(access.start(stream.key))
     await(() => {
-      val res = result(access.get(streamApp.key))
+      val res = result(access.get(stream.key))
       res.state.isDefined && res.state.get == ServiceState.RUNNING.name
     })
-    log.info(s"[testRunSimpleStreamApp] stream start [${streamApp.key}]...done")
+    log.info(s"[testRunSimpleStream] stream start [${stream.key}]...done")
 
-    val res1 = result(access.get(streamApp.key))
-    res1.key shouldBe streamApp.key
+    val res1 = result(access.get(stream.key))
+    res1.key shouldBe stream.key
     res1.error shouldBe None
 
     // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
-    await(() => result(access.get(streamApp.key)).metrics.meters.nonEmpty)
-    result(access.get(streamApp.key)).metrics.meters.size shouldBe 2
+    await(() => result(access.get(stream.key)).metrics.meters.nonEmpty)
+    result(access.get(stream.key)).metrics.meters.size shouldBe 2
 
     // write some data into topic
     val producer = Producer
@@ -216,10 +216,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
     } finally producer.close()
 
     // wait until the metrics cache data update
-    await(() => result(access.get(streamApp.key)).metrics.meters.forall(_.value > 0))
+    await(() => result(access.get(stream.key)).metrics.meters.forall(_.value > 0))
 
     // check the metrics data again
-    val metrics = result(access.get(streamApp.key)).metrics.meters
+    val metrics = result(access.get(stream.key)).metrics.meters
     metrics.foreach { metric =>
       metric.document should include("the number of rows")
       metric.value shouldBe 1D
@@ -228,13 +228,13 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
     await(() => result(topicApi.get(from)).metrics.meters.nonEmpty)
     await(() => result(topicApi.get(to)).metrics.meters.nonEmpty)
 
-    //stop streamApp
-    result(access.stop(streamApp.key))
-    waitStopFinish(streamApp.key)
-    result(access.get(streamApp.key)).state.isEmpty shouldBe true
+    //stop stream
+    result(access.stop(stream.key))
+    waitStopFinish(stream.key)
+    result(access.get(stream.key)).state.isEmpty shouldBe true
 
-    // after stop streamApp, property should still exist
-    result(access.get(streamApp.key)).name shouldBe streamApp.name
+    // after stop stream, property should still exist
+    result(access.get(stream.key)).name shouldBe stream.name
   }
 
   @Test
@@ -242,18 +242,18 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
   else {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
     val to = TopicKey.of("default", CommonUtils.randomString(5))
-    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
+    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-it-stream.jar"))
     // create topic
     val topic1 = result(topicApi.request.key(from).brokerClusterKey(bkKey).create())
     result(topicApi.start(topic1.key))
     val topic2 = result(topicApi.request.key(to).brokerClusterKey(bkKey).create())
     result(topicApi.start(topic2.key))
 
-    // upload streamApp jar
+    // upload stream jar
     val jarInfo = result(jarApi.request.file(jar).upload())
-    jarInfo.name shouldBe "ohara-streamapp.jar"
+    jarInfo.name shouldBe "ohara-it-stream.jar"
 
-    // create streamApp properties
+    // create stream properties
     val stream = result(
       access.request
         .key(nameHolder.generateClusterKey())
@@ -264,7 +264,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest {
         .toTopicKey(topic2.key)
         .create())
 
-    // start streamApp
+    // start stream
     result(access.start(stream.key))
     await(() => {
       val res = result(access.get(stream.key))

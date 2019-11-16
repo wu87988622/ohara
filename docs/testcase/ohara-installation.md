@@ -44,7 +44,7 @@
 
 - Please refer to the [document](https://ohara.readthedocs.io/en/latest/user_guide.html#kubernetes)
 
-- 需要在每台 Kubernetes 的 Slave Node Pull zookeeper, broker, connector-worker 和 streamapp 的 docker image，指令如下：
+- 需要在每台 Kubernetes 的 Slave Node Pull zookeeper, broker, connector-worker 和 stream 的 docker image，指令如下：
 
 ```sh
 $ docker pull oharastream/zookeeper:${ohara version name}

@@ -22,7 +22,7 @@ import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
-import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -32,11 +32,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamAppTopology extends OharaTest {
+public class TestStreamTopology extends OharaTest {
 
   private static String appId = CommonUtils.randomString(5);
   private static TopicKey fromKey =
@@ -49,7 +48,7 @@ public class TestStreamAppTopology extends OharaTest {
   public void testGetTopology() {
     // initial environment
     StreamTestUtils.setOharaEnv(
-        Stream.of(
+        java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appId),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), "fake"),
                 Pair.of(
@@ -60,11 +59,11 @@ public class TestStreamAppTopology extends OharaTest {
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
 
-    DescribeStreamApp app = new DescribeStreamApp();
-    StreamApp.runStreamApp(app.getClass());
+    DescribeStream app = new DescribeStream();
+    Stream.execute(app.getClass());
   }
 
-  public static class DescribeStreamApp extends StreamApp {
+  public static class DescribeStream extends Stream {
 
     @Override
     public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {

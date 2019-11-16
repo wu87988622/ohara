@@ -25,10 +25,10 @@ import org.apache.kafka.streams.kstream.KTable;
 
 /**
  * {@code OStream} is a <i>Row</i> streaming data in Ohara Stream. In Ohara Stream environment, all
- * data is stored in topic ; Since we need to join streamApp in the data flow with other components
+ * data is stored in topic ; Since we need to join stream in the data flow with other components
  * (for example: connector), the data type consistency is important. Use the same data type in
- * streamApp as same as connector which is {@code <Row, byte[]>} and we only use the <b>key</b>
- * part, leading us to restrict {@code OStream} should only do ETL work in {@code Row} data.
+ * stream as same as connector which is {@code <Row, byte[]>} and we only use the <b>key</b> part,
+ * leading us to restrict {@code OStream} should only do ETL work in {@code Row} data.
  *
  * @param <T> Type of value
  */
@@ -115,17 +115,17 @@ public interface OStream<T extends Row> {
   void foreach(ForeachAction action);
 
   /**
-   * Run this streamApp application. This operation do not use state store. Note that this is a
+   * Run this stream application. This operation do not use state store. Note that this is a
    * terminal operation as {@link #foreach(ForeachAction)}, {@link #describe()} and {@link
    * #getPoneglyph()}.
    */
   void start();
 
-  /** Stop this streamApp application. */
+  /** Stop this stream application. */
   void stop();
 
   /**
-   * Describe the topology of this streamApp. Note that this is a terminal operation as {@link
+   * Describe the topology of this stream. Note that this is a terminal operation as {@link
    * #foreach(ForeachAction)}, {@link #start()} and {@link #getPoneglyph()}.
    *
    * @return string of the {@code topology}

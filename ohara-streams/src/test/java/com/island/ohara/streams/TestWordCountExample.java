@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.Test;
 
 public class TestWordCountExample extends WithBroker {
@@ -63,18 +62,18 @@ public class TestWordCountExample extends WithBroker {
     StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
     // prepare data
     List<Row> rows =
-        Stream.of("hello", "ohara", "stream", "world", "of", "stream")
+        java.util.stream.Stream.of("hello", "ohara", "stream", "world", "of", "stream")
             .map(str -> Row.of(Cell.of("word", str)))
             .collect(Collectors.toList());
     StreamTestUtils.produceData(producer, rows, fromTopic.topicNameOnKafka());
 
     // run example
     WordCountExample app = new WordCountExample();
-    StreamApp.runStreamApp(app.getClass());
+    Stream.execute(app.getClass());
 
     // Assert the result
     List<Row> expected =
-        Stream.of(
+        java.util.stream.Stream.of(
                 Row.of(Cell.of("word", "stream"), Cell.of("count", 2L)),
                 Row.of(Cell.of("word", "world"), Cell.of("count", 1L)))
             .collect(Collectors.toList());

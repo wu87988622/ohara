@@ -593,7 +593,7 @@ Java block
 
     .. code-block:: java
 
-       public class SimpleApplicationForOharaEnv extends StreamApp {
+       public class SimpleApplicationForOharaEnv extends Stream {
 
          @Override
          public void start() {
@@ -604,7 +604,7 @@ Java block
 
   .. code-block:: java
 
-     public class SimpleApplicationForOharaEnv extends StreamApp {
+     public class SimpleApplicationForOharaEnv extends Stream {
 
        @Override
        public void start() {

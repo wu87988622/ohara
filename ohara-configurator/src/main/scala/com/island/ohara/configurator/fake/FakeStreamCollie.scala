@@ -32,7 +32,7 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
     with StreamCollie {
 
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
-    // we fake counters since streamApp is not really running in fake collie mode
+    // we fake counters since stream is not really running in fake collie mode
     Seq(
       Counter
         .builder()
@@ -44,7 +44,7 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
   override def creator: StreamCollie.ClusterCreator =
     (_, creation) =>
       if (clusterCache.asScala.exists(_._1.key == creation.key))
-        Future.failed(new IllegalArgumentException(s"streamapp can't increase nodes at runtime"))
+        Future.failed(new IllegalArgumentException(s"stream can't increase nodes at runtime"))
       else
         Future.successful(
           addCluster(

@@ -220,10 +220,10 @@ package object route {
       .allZookeepers()
       .allBrokers()
       .allWorkers()
-      .allStreamApps()
+      .allStreams()
       .check()
       .map(report =>
-        report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreamApps)
+        report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreams)
       // check the docker images
       .flatMap { clusters =>
         serviceCollie.images().map { nodesImages =>

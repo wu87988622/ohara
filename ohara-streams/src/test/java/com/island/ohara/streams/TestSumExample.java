@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.Test;
 
 public class TestSumExample extends WithBroker {
@@ -63,18 +62,18 @@ public class TestSumExample extends WithBroker {
     StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
     // prepare data
     List<Row> rows =
-        Stream.of(1, 2, 14, 17, 36, 99)
+        java.util.stream.Stream.of(1, 2, 14, 17, 36, 99)
             .map(v -> Row.of(Cell.of("number", v)))
             .collect(Collectors.toList());
     StreamTestUtils.produceData(producer, rows, fromTopic.topicNameOnKafka());
 
     // run example
     SumExample app = new SumExample();
-    StreamApp.runStreamApp(app.getClass());
+    Stream.execute(app.getClass());
 
     // Assert the result
     List<Row> expected =
-        Stream.of(
+        java.util.stream.Stream.of(
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 1)),
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 18)),
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 117)))

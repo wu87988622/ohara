@@ -29,7 +29,7 @@ easily and quickly. For normal users, you can manipulate Ohara through
 UI interface even if you have no idea about the magic infra of Ohara.
 For advanced users trying to build custom streaming, they are encouraged
 to design and write application based on Ohara's various and powerful
-APIs (see :ref:`Custom Connector <connector>` and :ref:`Custom StreamApp <streamapp>`).
+APIs (see :ref:`Custom Connector <connector>` and :ref:`Custom Stream <stream>`).
 
 Ohara consists of many services, such as
 

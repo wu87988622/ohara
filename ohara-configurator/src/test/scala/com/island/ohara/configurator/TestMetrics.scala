@@ -275,7 +275,7 @@ class TestMetrics extends WithBrokerWorker {
     pipeline.objects.filter(_.key == stream.key).head.metrics.meters.size shouldBe 0
 
     result(streamApi.start(stream.key))
-    // the streamApp is running so we should "see" the beans.
+    // the stream is running so we should "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))

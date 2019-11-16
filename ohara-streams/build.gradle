@@ -72,11 +72,11 @@ task runImportData(type: JavaExec, dependsOn: 'classes') {
 }
 
 /**
- * package a simple test streamApp jar.
+ * package a simple test stream jar.
  */
-task streamAppJar(type: Jar, dependsOn: compileJava) {
+task streamJar(type: Jar, dependsOn: compileJava) {
   from sourceSets.test.output
   include '**/SimpleApplicationForOharaEnv**.class'
-  archiveName "test-streamApp.jar"
+  archiveName "ohara-ut-stream.jar"
 }
-test.dependsOn streamAppJar
+test.dependsOn streamJar

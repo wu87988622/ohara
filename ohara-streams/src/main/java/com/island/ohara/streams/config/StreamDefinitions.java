@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The entry class for define streamApp definitions
+ * The entry class for define stream definitions
  *
  * <p>The data we keep in this class is use the format : List&lt;SettingDef&gt;
  */
@@ -119,7 +119,7 @@ public final class StreamDefinitions {
     return Optional.ofNullable(System.getenv(key)).map(CommonUtils::fromEnvString);
   }
 
-  /** @return the name of this streamApp */
+  /** @return the name of this stream */
   public String name() {
     return string(StreamDefUtils.NAME_DEFINITION.key())
         .orElseThrow(() -> new RuntimeException("NAME_DEFINITION not found in env."));

@@ -31,7 +31,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
-import com.island.ohara.streams.StreamApp
+import com.island.ohara.streams.Stream
 import com.typesafe.scalalogging.Logger
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -171,7 +171,7 @@ abstract class ServiceCollie extends Releasable {
   /**
     * load the connectors class and stream classes from specific urls
     * @param urls urls
-    * @return (sources, sinks, streamApps)
+    * @return (sources, sinks, streams)
     */
   def classNames(urls: Seq[URL]): ClassNames =
     classNames(new Reflections(new ConfigurationBuilder().addUrls(urls.asJava)))
@@ -183,7 +183,7 @@ abstract class ServiceCollie extends Releasable {
     new ClassNames(
       sources = fetch(classOf[RowSourceConnector]),
       sinks = fetch(classOf[RowSinkConnector]),
-      streams = fetch(classOf[StreamApp])
+      streams = fetch(classOf[Stream])
     )
   }
 
@@ -221,7 +221,7 @@ abstract class ServiceCollie extends Releasable {
             ServiceCollie.LOG.warn(s"failed to load sink class", e)
             None
         }
-      } ++ seek(classOf[StreamApp]).flatMap { clz =>
+      } ++ seek(classOf[Stream]).flatMap { clz =>
         try Some(clz.getName -> clz.newInstance().config().settingDefinitions.asScala)
         catch {
           case e: Throwable =>

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 /**
  * This is an helper class for getting / setting {@link com.island.ohara.common.setting.SettingDef}
- * for StreamApp.
+ * for Stream.
  */
 public final class StreamDefUtils {
 
@@ -42,7 +42,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Broker cluster key")
-          .documentation("the key of broker cluster used to transfer data for this streamApp")
+          .documentation("the key of broker cluster used to transfer data for this stream")
           .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.BROKER_CLUSTER)
           .build();
@@ -64,7 +64,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Image name")
-          .documentation("The image name of this streamApp running with")
+          .documentation("The image name of this stream running with")
           .optional("oharastream/streamapp:" + VersionUtils.VERSION)
           // In manager, user cannot change the image name
           .readonly()
@@ -75,8 +75,8 @@ public final class StreamDefUtils {
           .key("name")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("StreamApp name")
-          .documentation("The unique name of this streamApp")
+          .displayName("Stream name")
+          .documentation("The unique name of this stream")
           .stringWithRandomDefault()
           .build();
 
@@ -85,8 +85,8 @@ public final class StreamDefUtils {
           .key("group")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("StreamApp group")
-          .documentation("The unique group of this streamApp")
+          .displayName("Stream group")
+          .documentation("The unique group of this stream")
           .optional("default")
           .build();
 
@@ -96,7 +96,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Jar primary key")
-          .documentation("The jar key of this streamApp using")
+          .documentation("The jar key of this stream using")
           .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.FILE)
           .build();
@@ -119,7 +119,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .reference(SettingDef.Reference.TOPIC)
           .displayName("From topic of data consuming from")
-          .documentation("The topic name of this streamApp should consume from")
+          .documentation("The topic name of this stream should consume from")
           // we have to make this field optional since our UI needs to create stream without
           // topics...
           .optional(Type.OBJECT_KEYS)
@@ -132,7 +132,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .reference(SettingDef.Reference.TOPIC)
           .displayName("To topic of data produce to")
-          .documentation("The topic name of this streamApp should produce to")
+          .documentation("The topic name of this stream should produce to")
           // we have to make this field optional since our UI needs to create stream without
           // topics...
           .optional(Type.OBJECT_KEYS)
@@ -144,7 +144,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("JMX export port")
-          .documentation("The port of this streamApp using to export jmx metrics")
+          .documentation("The port of this stream using to export jmx metrics")
           .bindingPortWithRandomDefault()
           .build();
 
@@ -154,13 +154,13 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Node name list")
-          .documentation("The used node name list of this streamApp")
+          .documentation("The used node name list of this stream")
           .blacklist(new HashSet<>(Arrays.asList("stop", "start", "pause", "resume")))
           .build();
 
   public static final String STREAM_APPLICATION = "streamApp";
   /**
-   * annotate the kind of this streamapp. This value is immutable and it is useful in parsing
+   * annotate the kind of this stream. This value is immutable and it is useful in parsing
    * definitions dynamically. The value of kind help us to understand the "master" of those
    * definitions.
    */
@@ -180,7 +180,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Version")
-          .documentation("Version of streamApp")
+          .documentation("Version of stream")
           .readonly()
           .optional(VersionUtils.VERSION)
           .build();
@@ -192,7 +192,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Revision")
           .readonly()
-          .documentation("Revision of streamApp")
+          .documentation("Revision of stream")
           .optional(VersionUtils.REVISION)
           .build();
 
@@ -203,7 +203,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Author")
           .readonly()
-          .documentation("Author of streamApp")
+          .documentation("Author of stream")
           .optional(VersionUtils.USER)
           .build();
 
@@ -213,12 +213,12 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Tags")
-          .documentation("Tags of streamApp")
+          .documentation("Tags of stream")
           .optional(Type.TAGS)
           .build();
 
-  // this is the streamApp metric group definition
-  public static final String STREAM_METRICS_GROUP_DEFAULT = "streamapp";
+  // this is the stream metric group definition
+  public static final String STREAM_METRICS_GROUP_DEFAULT = "stream";
 
   /**
    * Load configDefs from default definitions.

@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.streamapp
+package com.island.ohara.it.stream
 import com.island.ohara.common.data.Row
 import com.island.ohara.streams.config.StreamDefinitions
-import com.island.ohara.streams.{OStream, StreamApp}
+import com.island.ohara.streams.{OStream, Stream}
 
 /**
-  * This is a sample streamApp that will do nothing but write data to output topic
+  * This is a sample stream that will do nothing but write data to output topic
   * It is not placed at test scope since we need jar when tests manually.
   */
-class DumbStreamApp extends StreamApp {
+class DumbStream extends Stream {
 
   override def start(ostream: OStream[Row], configs: StreamDefinitions): Unit = {
 
-    // do nothing but only start streamApp and write exactly data to output topic
+    // do nothing but only start stream and write exactly data to output topic
     ostream.start()
   }
 }

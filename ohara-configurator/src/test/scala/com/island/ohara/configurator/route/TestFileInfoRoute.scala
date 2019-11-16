@@ -118,7 +118,7 @@ class TestFileInfoRoute extends OharaTest {
   }
 
   @Test
-  def testDeleteJarUsedByStreamApp(): Unit = {
+  def testDeleteJarUsedByStream(): Unit = {
     val name = CommonUtils.randomString(10)
     // upload jar
     val jar = result(fileApi.request.file(file).upload())
@@ -137,7 +137,7 @@ class TestFileInfoRoute extends OharaTest {
         .request
         .brokerClusterKey(brokerClusterInfo.key)
         .create())
-    // create streamApp property
+    // create stream property
     val streamInfo = result(
       streamApi.request
         .name(name)

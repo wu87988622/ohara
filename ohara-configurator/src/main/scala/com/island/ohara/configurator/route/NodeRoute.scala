@@ -165,10 +165,10 @@ object NodeRoute {
             .allZookeepers()
             .allBrokers()
             .allWorkers()
-            .allStreamApps()
+            .allStreams()
             .check()
             .map(report =>
-              (report.runningZookeepers, report.runningBrokers, report.runningWorkers, report.runningStreamApps))
+              (report.runningZookeepers, report.runningBrokers, report.runningWorkers, report.runningStreams))
             .flatMap {
               case (zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
                 checkConflict(key.name, "zookeeper cluster", zookeeperClusterInfos)
@@ -193,7 +193,7 @@ object NodeRoute {
       .allZookeepers()
       .allBrokers()
       .allWorkers()
-      .allStreamApps()
+      .allStreams()
       .node(key)
       .check()
       .map(

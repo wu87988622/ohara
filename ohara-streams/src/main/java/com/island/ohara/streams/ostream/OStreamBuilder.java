@@ -58,7 +58,7 @@ public final class OStreamBuilder implements Builder<OStream<Row>> {
   }
 
   /**
-   * @param appId the application.id you want to group streamApp for
+   * @param appId the application.id you want to group stream for
    * @return this builder
    */
   public OStreamBuilder appId(String appId) {

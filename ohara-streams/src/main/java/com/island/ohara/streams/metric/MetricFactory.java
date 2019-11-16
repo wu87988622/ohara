@@ -31,7 +31,7 @@ public final class MetricFactory {
    */
   public static Counter getCounter(IOType type) {
     return Counter.builder()
-        // the group is individual for each streamApp
+        // the group is individual for each stream
         // so it is OK to use same group value
         .group(StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT)
         .name(type.name())

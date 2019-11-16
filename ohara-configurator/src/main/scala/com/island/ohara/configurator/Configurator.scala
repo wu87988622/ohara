@@ -157,7 +157,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
             )
           }.toList // convert to serializable collection
       }
-    def streamAppToMeters(streamClusterInfo: StreamClusterInfo): Map[String, Seq[Meter]] =
+    def streamToMeters(streamClusterInfo: StreamClusterInfo): Map[String, Seq[Meter]] =
       streamCollie.counters(streamClusterInfo).groupBy(_.group()).map {
         case (group, counters) =>
           group -> counters.map { counter =>
@@ -200,7 +200,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
                 .result(store.get[StreamClusterInfo](status.key), cacheTimeout * 5)
                 // we have to load the runtime information to fetch the metrics
                 .map(_.update(status))
-                .map(cluster => cluster -> swallow(() => streamAppToMeters(cluster), s"streamapp:${cluster.name}"))
+                .map(cluster => cluster -> swallow(() => streamToMeters(cluster), s"stream:${cluster.name}"))
             case _: ClusterStatus => None
           }
           .toSeq

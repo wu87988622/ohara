@@ -296,7 +296,7 @@ wrong configs (have a great time with your family)
 _stop()
 ^^^^^^^
 
-  This method is invoked by calling :ref:`STOP API <rest-stop-streamapp>`.
+  This method is invoked by calling :ref:`STOP API <rest-stop-stream>`.
   You can release the resources allocated by connector, or send a email to shout at someone.
   It is ok to throw an exception when you fails to **stop** the connector.
   Worker cluster will mark **failure** on the connector, and the world

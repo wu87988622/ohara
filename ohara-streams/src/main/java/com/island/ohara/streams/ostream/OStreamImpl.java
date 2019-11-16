@@ -209,7 +209,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
   @Override
   public void stop() {
     if (topology == null) {
-      throw new RuntimeException("The StreamApp : " + builder.getAppId() + " is not running");
+      throw new RuntimeException("The Stream : " + builder.getAppId() + " is not running");
     }
     topology.close();
   }

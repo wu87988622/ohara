@@ -183,7 +183,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def nodeNamesFieldCheck(): Unit = {
     an[NullPointerException] should be thrownBy accessRequest.nodeNames(null)
-    // empty node names is legal to streamApp
+    // empty node names is legal to stream
     accessRequest.nodeNames(Set.empty)
 
     // default value
