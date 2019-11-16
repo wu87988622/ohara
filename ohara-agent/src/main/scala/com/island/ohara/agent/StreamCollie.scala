@@ -78,7 +78,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                   (newNodes.map(_.hostname)
                     ++ brokerClusterInfo.nodeNames
                   // make sure the streamApp can connect to configurator
-                    ++ Seq(fileInfo.url.getHost)).toSet
+                    ++ Seq(fileInfo.url.get.getHost)).toSet
                 )
                 // ssh connection is slow so we submit request by multi-thread
                 Future.sequence(newNodes.map { newNode =>
@@ -116,7 +116,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                       "JMX_HOSTNAME" -> newNode.hostname
                     )
                     // define the urls as string list so as to simplify the script for stream
-                      + ("STREAM_JAR_URLS" -> fileInfo.url.toURI.toASCIIString),
+                      + ("STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString),
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )

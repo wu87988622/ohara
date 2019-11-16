@@ -210,7 +210,7 @@ class TestFileInfoRoute extends OharaTest {
     val data = CommonUtils.randomString(10).getBytes
     val f = tmpFile(data)
     val jar = result(fileApi.request.file(f).upload())
-    val input = jar.url.openStream()
+    val input = jar.url.get.openStream()
     val tempFile = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
     if (tempFile.exists()) tempFile.delete() shouldBe true
     try Files.copy(input, tempFile.toPath)

@@ -16,9 +16,10 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.io.File
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -48,7 +49,7 @@ object InspectApi {
   val STREAM_PREFIX_PATH: String = "stream"
 
   //-------------[FILE]-------------//
-  val FILE_PREFIX_PATH: String = "file"
+  val FILE_PREFIX_PATH: String = FileInfoApi.FILE_PREFIX_PATH
 
   final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
   implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
@@ -155,8 +156,8 @@ object InspectApi {
   }
 
   trait FileRequest {
-    def key(key: ObjectKey): FileRequest
-    def query()(implicit executionContext: ExecutionContext): Future[FileContent]
+    def file(file: File): FileRequest
+    def query()(implicit executionContext: ExecutionContext): Future[FileInfo]
   }
 
   final class Access extends BasicAccess(INSPECT_PREFIX_PATH) {
@@ -271,15 +272,16 @@ object InspectApi {
     }
 
     def fileRequest: FileRequest = new FileRequest {
-      private[this] var key: ObjectKey = _
+      private[this] var file: File = _
 
-      override def key(key: ObjectKey): FileRequest = {
-        this.key = Objects.requireNonNull(key)
+      override def file(file: File): FileRequest = {
+        this.file = Objects.requireNonNull(file)
         this
       }
 
-      override def query()(implicit executionContext: ExecutionContext): Future[FileContent] =
-        exec.get[FileContent, ErrorApi.Error](s"$url/$FILE_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
+      override def query()(implicit executionContext: ExecutionContext): Future[FileInfo] = {
+        FileInfoApi.access.hostname(hostname).port(port).request.file(file).upload()
+      }
     }
   }
 

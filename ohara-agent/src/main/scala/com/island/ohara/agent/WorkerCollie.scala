@@ -87,7 +87,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
               // Normally, the jar host name should be resolvable by worker since
               // we should add the "hostname" to configurator for most cases...
               // This is for those configurators that have no hostname (for example, temp configurator)
-                ++ pluginInfos.map(_.url.getHost).toSet)
+                ++ pluginInfos.map(_.url.get.getHost).toSet)
             existentNodes.foreach {
               case (node, container) => hookOfNewRoute(node, container, route)
             }
@@ -121,8 +121,8 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                     s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
                     s" -Djava.rmi.server.hostname=${newNode.hostname}"),
                   // define the urls as string list so as to simplify the script for worker
-                  "WORKER_PLUGIN_URLS" -> pluginInfos.map(_.url.toURI.toASCIIString).mkString(","),
-                  "WORKER_SHARED_JAR_URLS" -> sharedJarInfos.map(_.url.toURI.toASCIIString).mkString(",")
+                  "WORKER_PLUGIN_URLS" -> pluginInfos.map(_.url.get.toURI.toASCIIString).mkString(","),
+                  "WORKER_SHARED_JAR_URLS" -> sharedJarInfos.map(_.url.get.toURI.toASCIIString).mkString(",")
                 ),
                 hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
               )

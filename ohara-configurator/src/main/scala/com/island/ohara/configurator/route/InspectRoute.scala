@@ -144,10 +144,9 @@ private[configurator] object InspectRoute {
       }
     } ~ path(TOPIC_PREFIX_PATH / Segment) { topicName =>
       post {
-        parameters(
-          (GROUP_KEY ? GROUP_DEFAULT,
-           TOPIC_TIMEOUT_KEY.as[Long] ? TOPIC_TIMEOUT_DEFAULT.toMillis,
-           TOPIC_LIMIT_KEY.as[Int] ? TOPIC_LIMIT_DEFAULT)) { (group, timeoutMs, limit) =>
+        parameters((GROUP_KEY ? GROUP_DEFAULT,
+                    TOPIC_TIMEOUT_KEY.as[Long] ? TOPIC_TIMEOUT_DEFAULT.toMillis,
+                    TOPIC_LIMIT_KEY.as[Int] ? TOPIC_LIMIT_DEFAULT)) { (group, timeoutMs, limit) =>
           val topicKey = TopicKey.of(group, topicName)
           if (limit <= 0)
             throw DeserializationException(s"the limit must be bigger than zero. actual:$limit",
@@ -187,13 +186,16 @@ private[configurator] object InspectRoute {
               })
         }
       }
-    } ~ path(FILE_PREFIX_PATH / Segment) { fileName =>
+    } ~ path("file" / Segment) { fileName =>
+      // TODO: remove this deprecated API (see https://github.com/oharastream/ohara/issues/3293)
       parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
         complete(
           dataStore
             .value[FileInfo](ObjectKey.of(group, fileName))
-            .flatMap(fileInfo => serviceCollie.fileContent(Seq(fileInfo.url))))
+            .flatMap(fileInfo => serviceCollie.fileContent(Seq(fileInfo.url.get))))
       }
+    } ~ path(FILE_PREFIX_PATH) {
+      FileInfoRoute.routeOfUploadingFile(urlMaker = _ => None, storeOption = None)
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
       complete(ConfiguratorInfo(
         versionInfo = ConfiguratorVersion(
@@ -260,7 +262,7 @@ private[configurator] object InspectRoute {
               .value[StreamClusterInfo](ObjectKey.of(group, name))
               .map(_.jarKey)
               .flatMap(dataStore.value[FileInfo])
-              .map(file => Seq(file.url))
+              .map(file => Seq(file.url.get))
               .flatMap(serviceCollie.fileContent)
               .recover {
                 case e: Throwable =>

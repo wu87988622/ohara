@@ -19,15 +19,7 @@ package com.island.ohara.configurator.route
 import java.io.FileOutputStream
 
 import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
-import com.island.ohara.client.configurator.v0.{
-  BrokerApi,
-  FileInfoApi,
-  InspectApi,
-  StreamApi,
-  TopicApi,
-  WorkerApi,
-  ZookeeperApi
-}
+import com.island.ohara.client.configurator.v0.{BrokerApi, InspectApi, StreamApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
@@ -108,30 +100,26 @@ class TestInspectRoute extends OharaTest {
   def testQueryStreamFile(): Unit = {
     val streamFile = RouteUtils.streamFile
     streamFile.exists() shouldBe true
-    def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
-    val fileInfo = result(fileApi.request.file(streamFile).upload())
+    val fileInfo = result(inspectApi.fileRequest.file(streamFile).query())
 
-    val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
-    fileContent.classInfos should not be Seq.empty
-    fileContent.sourceClassInfos.size shouldBe 0
-    fileContent.sinkClassInfos.size shouldBe 0
-    fileContent.streamClassInfos.size shouldBe 1
+    fileInfo.classInfos should not be Seq.empty
+    fileInfo.sourceClassInfos.size shouldBe 0
+    fileInfo.sinkClassInfos.size shouldBe 0
+    fileInfo.streamClassInfos.size shouldBe 1
   }
 
   @Test
   def testQueryConnectorFile(): Unit = {
     val connectorFile = RouteUtils.connectorFile
     connectorFile.exists() shouldBe true
-    def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
-    val fileInfo = result(fileApi.request.file(connectorFile).upload())
+    val fileInfo = result(inspectApi.fileRequest.file(connectorFile).query())
 
-    val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
-    fileContent.classInfos should not be Seq.empty
-    fileContent.sourceClassInfos.size should not be 0
-    fileContent.sourceClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
-    fileContent.sinkClassInfos.size should not be 0
-    fileContent.sinkClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
-    fileContent.streamClassInfos.size shouldBe 0
+    fileInfo.classInfos should not be Seq.empty
+    fileInfo.sourceClassInfos.size should not be 0
+    fileInfo.sourceClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
+    fileInfo.sinkClassInfos.size should not be 0
+    fileInfo.sinkClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
+    fileInfo.streamClassInfos.size shouldBe 0
   }
 
   @Test
@@ -143,11 +131,9 @@ class TestInspectRoute extends OharaTest {
       finally output.close()
       f
     }
-    def fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
-    val fileInfo = result(fileApi.request.file(file).upload())
+    val fileInfo = result(inspectApi.fileRequest.file(file).query())
 
-    val fileContent = result(inspectApi.fileRequest.key(fileInfo.key).query())
-    fileContent.classInfos shouldBe Seq.empty
+    fileInfo.classInfos shouldBe Seq.empty
   }
 
   @Test

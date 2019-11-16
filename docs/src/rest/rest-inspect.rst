@@ -269,29 +269,47 @@ Example Response
 Query File
 -----------
 
-This API enables you to "see" what in the file. The items in response are shown below.
+#. name (**string**) — the file name without extension
+#. group (**string**) — the group name (we use this field to separate different workspaces)
+#. size (**long**) — file size
+#. classInfos (**array(object)**) — the information of available classes in this file
 
-#. classInfos (**Array(Object)**) — the classes which extend the either connector or streamApp
+  - classInfos[i].className — the name of this class
+  - classInfos[i].classType — the type of this class. for example, topic, source connector, sink connector or stream app
+  - classInfos[i].settingDefinitions — the definitions of this class
 
-  - classInfos[i].classType (**String**) — "source connector", "sink connector" or "streamApp"
-  - classInfos[i].className (**String**) — the full name of class
-  - classInfos[i].settingDefinitions (**String**) — the settings definitions of this class. It may be empty if Configurator fails to read the definitions.
+#. lastModified (**long**) — the time of uploading this file
+
+*POST /v0/inspect/files*
+
+Example Request
+  .. code-block:: text
+
+     Content-Type: multipart/form-data
+     file="aa.jar"
+     group="wk01"
+
 
 Example Response
 
-.. code-block:: json
+  .. code-block:: json
 
-  {
-    "classInfos": [
-      {
-        "classType": "connector",
-        "className": "a.b.c.Source",
-        "settingDefinitions": []
-      },
-      {
-        "classType": "streamApp",
-        "className": "a.b.c.bbb",
-        "settingDefinitions": []
-      }
-    ]
-  }
+    {
+      "name": "aa.jar",
+      "group": "wk01",
+      "size": 1779,
+      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+      "classInfos": [
+        {
+          "classType": "connector",
+          "className": "a.b.c.Source",
+          "settingDefinitions": []
+        },
+        {
+          "classType": "streamApp",
+          "className": "a.b.c.bbb",
+          "settingDefinitions": []
+        }
+      ],
+      "lastModified": 1561012496975
+    }

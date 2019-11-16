@@ -16,8 +16,6 @@
 
 package com.island.ohara.agent
 
-import java.net.URL
-
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi
@@ -93,13 +91,11 @@ class TestStreamCreator extends OharaTest {
   @Test
   def nullSettings(): Unit = an[NullPointerException] should be thrownBy streamCreator().settings(null)
 
-  private[this] def fileInfo: FileInfo = fileInfo(new URL("http://abc/aaa.jar"))
-
-  private[this] def fileInfo(url: URL): FileInfo = new FileInfo(
+  private[this] def fileInfo: FileInfo = new FileInfo(
     group = CommonUtils.randomString(),
     name = CommonUtils.randomString(),
     bytes = Array.empty,
-    url = url,
+    url = None,
     lastModified = CommonUtils.current(),
     classInfos = Seq.empty,
     tags = Map.empty
@@ -179,7 +175,7 @@ class TestStreamCreator extends OharaTest {
   @Test
   def testParseJarKey(): Unit = {
     //a normal url
-    val jarInfo = fileInfo(new URL("http://localhost:12345/group/abc.jar"))
+    val jarInfo = fileInfo
     val res = streamCreator()
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))

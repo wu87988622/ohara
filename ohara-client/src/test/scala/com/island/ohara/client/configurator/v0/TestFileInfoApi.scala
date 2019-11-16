@@ -17,7 +17,6 @@
 package com.island.ohara.client.configurator.v0
 
 import java.io.File
-import java.net.URL
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.rule.OharaTest
@@ -72,7 +71,7 @@ class TestFileInfoApi extends OharaTest {
       name = CommonUtils.randomString(),
       lastModified = CommonUtils.current(),
       bytes = bytes,
-      url = new URL("http://localhost:1345/v0"),
+      url = None,
       classInfos = Seq.empty,
       tags = Map("a" -> JsString("b"))
     )
