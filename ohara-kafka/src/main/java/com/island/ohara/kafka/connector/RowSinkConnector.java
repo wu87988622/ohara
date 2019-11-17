@@ -135,7 +135,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SINK_KIND_DEFINITION),
                 _definitions(),
-                ConnectorDefUtils.DEFINITIONS_DEFAULT)
+                ConnectorDefUtils.DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
         _version(),

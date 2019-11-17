@@ -133,7 +133,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SOURCE_KIND_DEFINITION),
                 _definitions(),
-                ConnectorDefUtils.DEFINITIONS_DEFAULT)
+                ConnectorDefUtils.DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
         _version(),

@@ -22,9 +22,10 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.streams.ostream.Conditions;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple example to illustrate how to do a join between an {@code OStream} and {@code OTable}. We
@@ -100,15 +101,16 @@ public class PageViewRegionExample extends Stream {
   public static final String joinTopicKey = "joinTopicKey";
 
   @Override
-  public StreamDefinitions config() {
-    return StreamDefinitions.with(SettingDef.builder().key(joinTopicKey).group("default").build());
+  protected List<SettingDef> _definitions() {
+    return Collections.singletonList(
+        SettingDef.builder().key(joinTopicKey).group("default").build());
   }
 
   @Override
-  public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+  public void start(OStream<Row> ostream, StreamSetting streamSetting) {
     ostream
         .leftJoin(
-            streamDefinitions
+            streamSetting
                 .string(joinTopicKey)
                 .orElseThrow(() -> new RuntimeException("joinTopicKey not found")),
             Conditions.create().add(Collections.singletonList(Pair.of("user", "user"))),

@@ -47,15 +47,15 @@ public final class ConnectorDefUtils {
   // -------------------------------[groups]-------------------------------//
   public static final String CORE_GROUP = "core";
   // -------------------------------[default setting]-------------------------------//
-  private static final Map<String, SettingDef> _DEFINITIONS = new HashMap<>();
+  private static final Map<String, SettingDef> _DEFAULT = new HashMap<>();
 
   private static SettingDef createDef(Function<SettingDef.Builder, SettingDef> f) {
     SettingDef settingDef =
-        f.apply(SettingDef.builder().orderInGroup(_DEFINITIONS.size()).group(CORE_GROUP));
+        f.apply(SettingDef.builder().orderInGroup(_DEFAULT.size()).group(CORE_GROUP));
     // source kind and sink kind have identical key :)
-    assert !(_DEFINITIONS.containsKey(settingDef.key()) && !settingDef.key().equals(KIND_KEY))
+    assert !(_DEFAULT.containsKey(settingDef.key()) && !settingDef.key().equals(KIND_KEY))
         : "duplicate key:" + settingDef.key() + " is illegal";
-    _DEFINITIONS.put(settingDef.key(), settingDef);
+    _DEFAULT.put(settingDef.key(), settingDef);
     return settingDef;
   }
 
@@ -261,7 +261,7 @@ public final class ConnectorDefUtils {
                   .documentation("tags to this connector")
                   .build());
 
-  static final int VERSION_ORDER = _DEFINITIONS.size();
+  static final int VERSION_ORDER = _DEFAULT.size();
   public static final String VERSION_KEY = "version";
 
   public static SettingDef createVersionDefinition(String version) {
@@ -400,9 +400,13 @@ public final class ConnectorDefUtils {
   }
 
   // --------------------------[helper method]------------------------------//
-  /** the default definitions for all ohara connector. */
-  public static final List<SettingDef> DEFINITIONS_DEFAULT =
-      _DEFINITIONS.values().stream()
+
+  /**
+   * The default setting definitions for all connectors. Noted that the "kind" definition is removed
+   * from returned value since it is different between source and sink.
+   */
+  public static final List<SettingDef> DEFAULT =
+      _DEFAULT.values().stream()
           // the kind is different between source and sink so we include it from default definitions
           .filter(d -> !d.key().equals(KIND_KEY))
           .collect(Collectors.toList());

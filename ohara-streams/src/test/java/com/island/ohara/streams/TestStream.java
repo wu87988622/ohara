@@ -22,7 +22,7 @@ import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -56,11 +56,6 @@ public class TestStream extends OharaTest {
     final AtomicInteger counter = new AtomicInteger();
 
     @Override
-    public StreamDefinitions config() {
-      return StreamDefinitions.create();
-    }
-
-    @Override
     public void init() {
       int res = counter.incrementAndGet();
       // Stream should call init() first
@@ -68,7 +63,7 @@ public class TestStream extends OharaTest {
     }
 
     @Override
-    public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+    public void start(OStream<Row> ostream, StreamSetting streamSetting) {
       int res = counter.incrementAndGet();
       // Stream should call start() after init()
       Assert.assertEquals(2, res);

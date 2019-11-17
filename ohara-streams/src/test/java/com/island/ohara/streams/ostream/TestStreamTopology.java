@@ -25,7 +25,7 @@ import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class TestStreamTopology extends OharaTest {
   public static class DescribeStream extends Stream {
 
     @Override
-    public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+    public void start(OStream<Row> ostream, StreamSetting streamSetting) {
       List<Poneglyph> poneglyph =
           ostream
               .filter(row -> !row.cell(0).value().toString().isEmpty())

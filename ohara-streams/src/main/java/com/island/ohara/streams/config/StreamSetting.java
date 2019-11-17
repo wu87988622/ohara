@@ -30,40 +30,16 @@ import java.util.stream.Stream;
  *
  * <p>The data we keep in this class is use the format : List&lt;SettingDef&gt;
  */
-public final class StreamDefinitions {
+public final class StreamSetting {
 
-  private final List<SettingDef> configDefs;
-
-  StreamDefinitions(List<SettingDef> configDefs) {
-    this.configDefs = Collections.unmodifiableList(configDefs);
+  public static StreamSetting of(List<SettingDef> settingDefinitions) {
+    return new StreamSetting(settingDefinitions);
   }
 
-  /**
-   * create default configurations
-   *
-   * @return StreamDefinitions object
-   */
-  public static StreamDefinitions create() {
-    return new StreamDefinitions(StreamDefUtils.DEFAULT);
-  }
+  private final List<SettingDef> settingDefinitions;
 
-  /**
-   * Add a extra {@code SettingDef} into this stream definitions.
-   *
-   * @param settingDef config object
-   * @return StreamDefinitions
-   */
-  public static StreamDefinitions with(SettingDef settingDef) {
-    // check the duplicate definitions
-    if (StreamDefUtils.DEFAULT.stream().anyMatch(c -> c.key().equals(settingDef.key()))) {
-      throw new IllegalArgumentException(
-          String.format("StreamDefinitions: %s is defined twice", settingDef.key()));
-    }
-
-    return new StreamDefinitions(
-        Stream.of(StreamDefUtils.DEFAULT, Collections.singletonList(settingDef))
-            .flatMap(List::stream)
-            .collect(Collectors.toList()));
+  private StreamSetting(List<SettingDef> settingDefinitions) {
+    this.settingDefinitions = Collections.unmodifiableList(settingDefinitions);
   }
 
   /**
@@ -72,7 +48,7 @@ public final class StreamDefinitions {
    * @param settingDefList config list
    * @return StreamDefinitions
    */
-  public static StreamDefinitions withAll(List<SettingDef> settingDefList) {
+  public static StreamSetting withAll(List<SettingDef> settingDefList) {
     // check the duplicate definitions
     List<String> newKeys =
         settingDefList.stream().map(SettingDef::key).collect(Collectors.toList());
@@ -85,7 +61,7 @@ public final class StreamDefinitions {
               String.join(",", newKeys), String.join(",", oriKeys)));
     }
 
-    return new StreamDefinitions(
+    return new StreamSetting(
         Stream.of(StreamDefUtils.DEFAULT, settingDefList)
             .flatMap(List::stream)
             .collect(Collectors.toList()));
@@ -97,7 +73,7 @@ public final class StreamDefinitions {
    * @return config name list
    */
   public List<String> keys() {
-    return configDefs.stream().map(SettingDef::key).collect(Collectors.toList());
+    return settingDefinitions.stream().map(SettingDef::key).collect(Collectors.toList());
   }
 
   /**
@@ -106,7 +82,7 @@ public final class StreamDefinitions {
    * @return config object list
    */
   public List<SettingDef> settingDefinitions() {
-    return configDefs;
+    return settingDefinitions;
   }
 
   /**

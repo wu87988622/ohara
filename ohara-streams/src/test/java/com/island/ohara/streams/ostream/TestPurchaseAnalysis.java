@@ -29,7 +29,7 @@ import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.testing.With3Brokers;
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -139,19 +139,19 @@ public class TestPurchaseAnalysis extends With3Brokers {
   public static class RunStream extends Stream {
 
     @Override
-    public void start(OStream<Row> stream, StreamDefinitions streamDefinitions) {
+    public void start(OStream<Row> stream, StreamSetting streamSetting) {
       // We initial a new OStream object to test functionality
       OStream<Row> ostream =
           OStream.builder()
-              .appId(streamDefinitions.name())
-              .bootstrapServers(streamDefinitions.brokerConnectionProps())
+              .appId(streamSetting.name())
+              .bootstrapServers(streamSetting.brokerConnectionProps())
               .fromTopic(
-                  streamDefinitions.fromTopicKeys().stream()
+                  streamSetting.fromTopicKeys().stream()
                       .map(TopicKey::topicNameOnKafka)
                       .findFirst()
                       .orElse(null))
               .toTopic(
-                  streamDefinitions.toTopicKeys().stream()
+                  streamSetting.toTopicKeys().stream()
                       .map(TopicKey::topicNameOnKafka)
                       .findFirst()
                       .orElse(null))
@@ -208,7 +208,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
       Consumer<Row, byte[]> consumer =
           Consumer.<Row, byte[]>builder()
               .topicName(resultTopic.topicNameOnKafka())
-              .connectionProps(streamDefinitions.brokerConnectionProps())
+              .connectionProps(streamSetting.brokerConnectionProps())
               .groupId("group-" + resultTopic.topicNameOnKafka())
               .offsetFromBegin()
               .keySerializer(Serializer.ROW)

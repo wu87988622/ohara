@@ -212,7 +212,7 @@ To
 package com.island.ohara.it.stream
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamSetting
 import com.island.ohara.streams.{OStream, Stream}
 
 class DumbStream extends Stream {

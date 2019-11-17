@@ -30,7 +30,7 @@ import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.streams.metric.MetricFactory;
 import com.island.ohara.testing.WithBroker;
 import java.time.Duration;
@@ -136,7 +136,7 @@ public class TestSimpleStreamCounter extends WithBroker {
   public static class DirectWriteStream extends Stream {
 
     @Override
-    public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+    public void start(OStream<Row> ostream, StreamSetting streamSetting) {
 
       ostream.filter(row -> row.names().contains("bar")).map(row -> row).start();
     }

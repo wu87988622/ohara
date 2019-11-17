@@ -19,15 +19,19 @@ package com.island.ohara.streams;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.exception.OharaException;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class Stream {
@@ -58,29 +62,29 @@ public abstract class Stream {
         () -> {
           Constructor<? extends Stream> cons = clz.getConstructor();
           final Stream theApp = cons.newInstance();
-          StreamDefinitions streamDefinitions = theApp.config();
+          StreamSetting streamSetting = StreamSetting.of(theApp.definitions());
 
           OStream<Row> ostream =
               OStream.builder()
-                  .appId(streamDefinitions.name())
-                  .bootstrapServers(streamDefinitions.brokerConnectionProps())
+                  .appId(streamSetting.name())
+                  .bootstrapServers(streamSetting.brokerConnectionProps())
                   // TODO: Currently, the number of from topics must be 1
                   // https://github.com/oharastream/ohara/issues/688
                   .fromTopic(
-                      streamDefinitions.fromTopicKeys().stream()
+                      streamSetting.fromTopicKeys().stream()
                           .map(TopicKey::topicNameOnKafka)
                           .findFirst()
                           .orElse(null))
                   // TODO: Currently, the number of to topics must be 1
                   // https://github.com/oharastream/ohara/issues/688
                   .toTopic(
-                      streamDefinitions.toTopicKeys().stream()
+                      streamSetting.toTopicKeys().stream()
                           .map(TopicKey::topicNameOnKafka)
                           .findFirst()
                           .orElse(null))
                   .build();
           theApp.init();
-          theApp.start(ostream, streamDefinitions);
+          theApp.start(ostream, streamSetting);
           return null;
         });
   }
@@ -112,19 +116,16 @@ public abstract class Stream {
   /**
    * Use to define settings for stream usage. Default will load the required configurations only.
    *
-   * <p>Usage:
-   *
-   * <pre>
-   *   public StreamDefinitions config() {
-   *       // define your own configs
-   *       return StreamDefinitions.create().add(SettingDef.builder().key(key).group(group).build());
-   *   }
-   * </pre>
-   *
    * @return the defined settings
    */
-  public StreamDefinitions config() {
-    return StreamDefinitions.create();
+  protected List<SettingDef> _definitions() {
+    return Collections.emptyList();
+  }
+
+  public final List<SettingDef> definitions() {
+    return java.util.stream.Stream.of(StreamDefUtils.DEFAULT, _definitions())
+        .flatMap(List::stream)
+        .collect(Collectors.toList());
   }
 
   /** User defined initialization before running stream */
@@ -141,7 +142,7 @@ public abstract class Stream {
    * </pre>
    *
    * @param ostream the entry object to define logic
-   * @param streamDefinitions configuration object
+   * @param streamSetting configuration object
    */
-  public abstract void start(OStream<Row> ostream, StreamDefinitions streamDefinitions);
+  public abstract void start(OStream<Row> ostream, StreamSetting streamSetting);
 }

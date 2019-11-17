@@ -19,7 +19,7 @@ package com.island.ohara.streams.examples;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import java.util.Collections;
 
 /**
@@ -64,7 +64,7 @@ import java.util.Collections;
  */
 public class WordCountExample extends Stream {
   @Override
-  public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+  public void start(OStream<Row> ostream, StreamSetting streamSetting) {
     ostream
         // group the row with header: word
         .groupByKey(Collections.singletonList("word"))

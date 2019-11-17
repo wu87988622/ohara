@@ -20,7 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamSetting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,7 +67,7 @@ import java.util.List;
 @SuppressWarnings("rawtypes")
 public class SumExample extends Stream {
   @Override
-  public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+  public void start(OStream<Row> ostream, StreamSetting streamSetting) {
     ostream
         // filter out even number
         .filter(row -> Integer.valueOf(row.cell("number").value().toString()) % 2 != 0)

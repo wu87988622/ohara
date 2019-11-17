@@ -103,7 +103,7 @@ object ConnectorApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
-      .definitions(ConnectorDefUtils.DEFINITIONS_DEFAULT.asScala)
+      .definitions(ConnectorDefUtils.DEFAULT.asScala)
       .rejectEmptyString()
       .valueChecker(
         COLUMNS_KEY, {

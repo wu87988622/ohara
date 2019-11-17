@@ -222,7 +222,7 @@ abstract class ServiceCollie extends Releasable {
             None
         }
       } ++ seek(classOf[Stream]).flatMap { clz =>
-        try Some(clz.getName -> clz.newInstance().config().settingDefinitions.asScala)
+        try Some(clz.getName -> clz.newInstance().definitions().asScala)
         catch {
           case e: Throwable =>
             ServiceCollie.LOG.warn(s"failed to load stream class", e)

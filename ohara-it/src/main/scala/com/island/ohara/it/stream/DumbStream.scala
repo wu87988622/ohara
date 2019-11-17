@@ -16,7 +16,7 @@
 
 package com.island.ohara.it.stream
 import com.island.ohara.common.data.Row
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamSetting
 import com.island.ohara.streams.{OStream, Stream}
 
 /**
@@ -25,7 +25,7 @@ import com.island.ohara.streams.{OStream, Stream}
   */
 class DumbStream extends Stream {
 
-  override def start(ostream: OStream[Row], configs: StreamDefinitions): Unit = {
+  override def start(ostream: OStream[Row], configs: StreamSetting): Unit = {
 
     // do nothing but only start stream and write exactly data to output topic
     ostream.start()

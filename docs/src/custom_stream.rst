@@ -95,7 +95,7 @@ i.e., the target topic will have same data as the source topic.
    public class SimpleApplicationForOharaEnv extends Stream {
 
      @Override
-     public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+     public void start(OStream<Row> ostream, StreamDefinitions streamSetting) {
        ostream.start();
      }
    }
@@ -121,7 +121,7 @@ config() method
 ~~~~~~~~~~~~~~~
 
 In a stream application, you may want to configure your own parameters. We support a method here to help you define
-a custom streamDefinitions list in stream. The details of streamDefinitions are list :ref:`here <stream-setting-definitions>`.
+a custom streamSetting list in stream. The details of streamSetting are list :ref:`here <stream-setting-definitions>`.
 
 In the following example, we want to add a custom definition which is used to define "join topic":
 
@@ -171,11 +171,11 @@ For example:
 .. code-block:: java
 
    @Override
-   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+   public void start(OStream<Row> ostream, StreamDefinitions streamSetting) {
     ostream
       .map(row -> Row.of(row.cell("name"), row.cell("age")))
       // use the previous defined definition in config()
-      .filter(row -> row.cell(streamDefinitions.string("filterName").get()).value() != null)
+      .filter(row -> row.cell(streamSetting.string("filterName").get()).value() != null)
       .map(row -> Row.of(Cell.of("name", row.cell("name").value().toString().toUpperCase())))
       .start();
    }
