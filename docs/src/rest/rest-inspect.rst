@@ -123,7 +123,7 @@ Example Response
   .. code-block:: json
 
     {
-      "imageName": "oharastream/streamapp:$|version|",
+      "imageName": "oharastream/stream:$|version|",
       "settingDefinitions": [
         {
           "reference": "NONE",

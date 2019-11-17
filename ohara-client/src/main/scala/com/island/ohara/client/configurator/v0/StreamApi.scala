@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
-import com.island.ohara.common.util.{CommonUtils, VersionUtils}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -43,7 +43,7 @@ object StreamApi {
   /**
     * Stream Docker Image name
     */
-  final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
+  final val IMAGE_NAME_DEFAULT: String = StreamDefUtils.IMAGE_NAME_DEFINITION.defaultString()
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
 

@@ -39,8 +39,8 @@ services:
         BRANCH: master
         REPO: https://github.com/oharastream/ohara.git
 
-  streamapp:
-    image: oharastream/streamapp:${TAG:-0.9.0-SNAPSHOT}
+  stream:
+    image: oharastream/stream:${TAG:-0.9.0-SNAPSHOT}
     build:
       context: .
       dockerfile: stream.dockerfile

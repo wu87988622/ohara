@@ -50,7 +50,7 @@
 $ docker pull oharastream/zookeeper:${ohara version name}
 $ docker pull oharastream/broker:${ohara version name}
 $ docker pull oharastream/connect-worker:${ohara version name}
-$ docker pull oharastream/streamapp:${ohara version name}
+$ docker pull oharastream/stream:${ohara version name}
 ```
 
 Example
@@ -59,7 +59,7 @@ Example
 $ docker pull oharastream/zookeeper:0.7.0-SNAPSHOT
 $ docker pull oharastream/broker:0.7.0-SNAPSHOT
 $ docker pull oharastream/connect-worker:0.7.0-SNAPSHOT
-$ docker pull oharastream/streamapp:0.7.0-SNAPSHOT
+$ docker pull oharastream/stream:0.7.0-SNAPSHOT
 ```
 
 ## Running Ohara Configuration service

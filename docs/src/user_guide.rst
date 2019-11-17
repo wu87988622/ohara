@@ -156,7 +156,7 @@ via ``docker pull`` command. All images are list below.
 #. oharastream/connect-worker:|version|
 #. oharastream/configurator:|version|
 #. oharastream/manager:|version|
-#. oharastream/streamapp:|version|
+#. oharastream/stream:|version|
 
 .. _userguide-execute-configurator:
 

@@ -65,7 +65,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Image name")
           .documentation("The image name of this stream running with")
-          .optional("oharastream/streamapp:" + VersionUtils.VERSION)
+          .optional("oharastream/stream:" + VersionUtils.VERSION)
           // In manager, user cannot change the image name
           .readonly()
           .build();

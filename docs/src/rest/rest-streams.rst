@@ -146,7 +146,7 @@ Example Response
         },
         "group": "default",
         "tags": {},
-        "imageName": "oharastream/streamapp:$|VERSION|",
+        "imageName": "oharastream/stream:$|VERSION|",
         "from": [],
         "to": [],
         "jarKey": {
@@ -191,7 +191,7 @@ Example Response
            "name": "4ef3d4a266"
          },
          "tags": {},
-         "imageName": "oharastream/streamapp:$|version|",
+         "imageName": "oharastream/stream:$|version|",
          "from": [],
          "to": [],
          "jarKey": {
@@ -237,7 +237,7 @@ Example Response
              "name": "4ef3d4a266"
            },
            "tags": {},
-           "imageName": "oharastream/streamapp:$|version|",
+           "imageName": "oharastream/stream:$|version|",
            "from": [],
            "to": [],
            "jarKey": {
@@ -474,4 +474,4 @@ Example Response
      }
 
 .. _Kafka Streams: kafka streams <https://kafka.apache.org/documentation/streams
-.. _Stream image: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp
+.. _Stream image: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/stream

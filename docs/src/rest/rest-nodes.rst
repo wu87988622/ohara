@@ -34,7 +34,7 @@ following services.
    - `oharastream/zookeeper`_
    - `oharastream/broker`_
    - `oharastream/connect-worker`_
-   - `oharastream/streamapp`_
+   - `oharastream/stream`_
 
 The version (tag) depends on which ohara you used. It would be better to
 use the same version to Ohara. For example, the version of Ohara
@@ -353,4 +353,4 @@ Example Response
 .. _oharastream/zookeeper: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/zookeeper
 .. _oharastream/broker: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/broker
 .. _oharastream/connect-worker: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/connect-worker
-.. _oharastream/streamapp: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp
+.. _oharastream/stream: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/stream

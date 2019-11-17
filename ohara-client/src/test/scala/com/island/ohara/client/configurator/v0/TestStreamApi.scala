@@ -44,7 +44,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def checkVersion(): Unit = {
-    StreamApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/streamapp:${VersionUtils.VERSION}"
+    StreamApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/stream:${VersionUtils.VERSION}"
   }
 
   @Test
