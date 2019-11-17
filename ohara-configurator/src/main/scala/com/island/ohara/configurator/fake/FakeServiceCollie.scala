@@ -20,6 +20,7 @@ import com.island.ohara.agent.{DataCollie, ServiceCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerName
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -71,5 +72,18 @@ private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
     Future.successful(Map.empty)
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
-    Future.successful(Map.empty)
+    dataCollie
+      .values[Node]()
+      .map(
+        nodes =>
+          nodes
+            .map(node => {
+              val cpuResource = Resource.cpu(32, Option(positiveValue(CommonUtils.randomDouble())))
+              val memoryResource = Resource.memory(137438953472L, Option(positiveValue(CommonUtils.randomDouble())))
+              (node, Seq(cpuResource, memoryResource))
+            })
+            .toMap
+      )
+
+  private[this] def positiveValue(value: Double): Double = Math.abs(value)
 }
