@@ -89,7 +89,7 @@ const useSnackbar = () => {
   }
 
   // Since the consumers of this context will always want to
-  // `show` the message, so we hide the implementaion details here,
+  // `show` the message, so we hide the implementation details here,
   // also, wrapping the `dispatch` in a `useMemo` prevents it from
   // going into an infinite loop
   const showMessage = useMemo(
@@ -101,7 +101,7 @@ const useSnackbar = () => {
 };
 
 SnackbarProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { SnackbarProvider, useSnackbar };

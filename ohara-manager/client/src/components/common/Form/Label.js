@@ -27,7 +27,7 @@ const Label = ({ children, htmlFor, ...rest }) => {
 };
 
 Label.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
   htmlFor: PropTypes.string,
 };
 

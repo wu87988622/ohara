@@ -26,9 +26,9 @@ const TopicProvider = ({ children }) => {
 
   const fetchTopics = useCallback(async workspaceName => {
     const topics = await topicApi.getAll({ group: workspaceName });
-    const sortedTopics = topics.sort((a, b) =>
-      a.settings.name.localeCompare(b.settings.name),
-    );
+    const sortedTopics = topics.sort((a, b) => {
+      return a.settings.name.localeCompare(b.settings.name);
+    });
 
     setTopics(sortedTopics);
   }, []);
@@ -56,7 +56,7 @@ const useTopic = () => {
 };
 
 TopicProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { TopicProvider, useTopic };

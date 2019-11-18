@@ -21,7 +21,6 @@ import { useHistory, useParams } from 'react-router-dom';
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
 import Toolbar from './Toolbar';
-import Toolbox from './Toolbox/Toolbox';
 import Graph from './Graph';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { usePipeline } from 'context/PipelineContext';
@@ -39,7 +38,7 @@ const Pipeline = () => {
   const { workspaces, isFetching: isFetchingWorkspace } = useWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
   const { workspaceName, pipelineName } = useParams();
-  const { setIsOpen: setIsNewWorksapceDialogOpen } = useNewWorkspace();
+  const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
 
   const initialState = {
@@ -105,11 +104,11 @@ const Pipeline = () => {
 
   useEffect(() => {
     if (hasWorkspace) {
-      setIsNewWorksapceDialogOpen(false);
+      setIsNewWorkspaceDialogOpen(false);
     } else {
-      setIsNewWorksapceDialogOpen(true);
+      setIsNewWorkspaceDialogOpen(true);
     }
-  }, [hasWorkspace, setIsNewWorksapceDialogOpen]);
+  }, [hasWorkspace, setIsNewWorkspaceDialogOpen]);
 
   return (
     <>
@@ -127,12 +126,11 @@ const Pipeline = () => {
                 }}
               />
               <GraphWrapper>
-                <Graph />
-                <Toolbox
-                  isOpen={isToolboxOpen}
-                  expanded={toolboxExpanded}
-                  handleClick={handleToolboxClick}
-                  handleClose={() => {
+                <Graph
+                  isToolboxOpen={isToolboxOpen}
+                  toolboxExpanded={toolboxExpanded}
+                  handleToolboxClick={handleToolboxClick}
+                  handleToolboxClose={() => {
                     setIsToolboxOpen(false);
                     setToolboxExpanded(initialState);
                   }}

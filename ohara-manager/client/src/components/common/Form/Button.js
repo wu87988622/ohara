@@ -50,7 +50,7 @@ const Button = props => {
 };
 
 Button.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
   size: PropTypes.string,
   className: PropTypes.string,
   color: PropTypes.string,

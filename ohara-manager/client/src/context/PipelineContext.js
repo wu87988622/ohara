@@ -53,7 +53,7 @@ const usePipeline = () => {
 };
 
 PipelineProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { PipelineProvider, usePipeline };

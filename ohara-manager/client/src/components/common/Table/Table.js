@@ -86,7 +86,7 @@ const MuiTable = props => {
 
 MuiTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
   title: PropTypes.string,
   isLoading: PropTypes.bool,
   footer: PropTypes.any,

@@ -44,8 +44,5 @@ export const maxNumber = max => value => {
   return value <= max ? undefined : `The value must be less than ${max}`;
 };
 
-export const lessThanTweenty = value =>
-  value.length <= 20 ? undefined : 'Must be between 1 and 20 characters long';
-
 export const composeValidators = (...validators) => value =>
   validators.reduce((error, validator) => error || validator(value), undefined);

@@ -89,7 +89,7 @@ const FullScreenDialog = props => {
 };
 
 FullScreenDialog.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,

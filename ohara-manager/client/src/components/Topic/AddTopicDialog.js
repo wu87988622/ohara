@@ -91,7 +91,7 @@ const AddTopicDialog = () => {
       return;
     }
 
-    // Topic successsfully created, display success message,
+    // Topic successfully created, display success message,
     // update topic list and close the dialog
     showMessage(`Successfully added topic ${topicName}`);
     await fetchTopics(currentWorkspace.settings.name);

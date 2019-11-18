@@ -18,7 +18,6 @@ import * as generate from '../generate';
 import {
   required,
   validServiceName,
-  lessThanTweenty,
   minLength,
   maxLength,
   minNumber,
@@ -30,7 +29,7 @@ describe('required()', () => {
     expect(required(generate.userName())).toBeUndefined();
   });
 
-  it('reutuns the error message if the given value is falsy', () => {
+  it('returns the error message if the given value is falsy', () => {
     expect(required('')).toBe('This is a required field');
     expect(required(undefined)).toBe('This is a required field');
   });
@@ -43,7 +42,7 @@ describe('validServiceName()', () => {
     expect(validServiceName(generate.serviceName())).toBeUndefined();
   });
 
-  it('returns the error message if the given value is not vaild', () => {
+  it('returns the error message if the given value is not valid', () => {
     const error = 'You only can use lower case letters and numbers';
     expect(validServiceName('ABC')).toBe(error);
     expect(validServiceName('!#@$%^&')).toBe(error);
@@ -102,19 +101,5 @@ describe('maxValue()', () => {
     const error = 'The value must be less than 50';
     expect(max(51)).toBe(error);
     expect(max(100)).toBe(error);
-  });
-});
-
-describe('lessThanTweenty()', () => {
-  it('returns `undefined` if the given value length is less than 20', () => {
-    expect(
-      lessThanTweenty(generate.serviceName({ length: 20 })),
-    ).toBeUndefined();
-  });
-
-  it('returns the error message if the given value is greater than 20', () => {
-    const error = 'Must be between 1 and 20 characters long';
-    expect(lessThanTweenty(generate.serviceName({ length: 21 }))).toBe(error);
-    expect(lessThanTweenty(generate.serviceName({ length: 100 }))).toBe(error);
   });
 });

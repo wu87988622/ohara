@@ -25,7 +25,7 @@ export const StyledToolbox = styled.div(
     background-color: ${theme.palette.common.white};
     box-shadow: ${theme.shadows[24]};
     display: none;
-
+    z-index: ${theme.zIndex.modal};
     &.is-open {
       display: block;
     }
@@ -45,13 +45,26 @@ export const StyledToolbox = styled.div(
       }
     }
 
+    .toolbox-body {
+      overflow-y: auto;
+    }
+
     .add-button {
       display: flex;
       align-items: center;
-      padding: 0 ${theme.spacing(1)}px ${theme.spacing(1)}px;
+      padding: ${theme.spacing(1)}px;
 
       button {
         margin-right: ${theme.spacing(1)}px;
+      }
+
+      input {
+        display: none;
+      }
+
+      label {
+        cursor: pointer;
+        height: 24px;
       }
     }
 
@@ -90,6 +103,20 @@ export const StyledToolbox = styled.div(
 
     .MuiExpansionPanel-root.Mui-expanded:before {
       opacity: 1;
+    }
+
+    /* Toolbox list */
+    .toolbar-list {
+      .item {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: ${theme.spacing(1, 2)};
+      }
+
+      .MuiSvgIcon-root {
+        margin-right: ${theme.spacing(1)}px;
+      }
     }
   `,
 );

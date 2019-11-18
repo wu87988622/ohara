@@ -34,40 +34,41 @@ import { NodeDialogProvider } from './context/NodeDialogContext';
 import { TopicProvider } from './context/TopicContext';
 import { DevToolDialogProvider } from './context/DevToolDialogContext';
 
+const ContextProviderComposer = ({ contextProviders, children }) => {
+  return contextProviders.reduceRight(
+    (children, parent) => React.cloneElement(parent, { children }),
+    children,
+  );
+};
+
+// Combine multiple providers together, the solution is coming from here:
+// https://github.com/facebook/react/issues/14520#issuecomment-451077601
 const AppProviders = ({ children }) => {
   return (
-    <StylesProvider injectFirst>
-      <MuiThemeProvider theme={MuiTheme}>
-        <ThemeProvider theme={MuiTheme}>
-          <SnackbarProvider>
-            <NewWorkspaceProvider>
-              <WorkspaceProvider>
-                <EditWorkspaceProvider>
-                  <PipelineProvider>
-                    <TopicProvider>
-                      <AddTopicProvider>
-                        <ViewTopicProvider>
-                          <NodeDialogProvider>
-                            <DevToolDialogProvider>
-                              {children}
-                            </DevToolDialogProvider>
-                          </NodeDialogProvider>
-                        </ViewTopicProvider>
-                      </AddTopicProvider>
-                    </TopicProvider>
-                  </PipelineProvider>
-                </EditWorkspaceProvider>
-              </WorkspaceProvider>
-            </NewWorkspaceProvider>
-          </SnackbarProvider>
-        </ThemeProvider>
-      </MuiThemeProvider>
-    </StylesProvider>
+    <ContextProviderComposer
+      contextProviders={[
+        <StylesProvider injectFirst children={children} />,
+        <MuiThemeProvider theme={MuiTheme} children={children} />,
+        <ThemeProvider theme={MuiTheme} children={children} />,
+        <SnackbarProvider children={children} />,
+        <NewWorkspaceProvider children={children} />,
+        <WorkspaceProvider children={children} />,
+        <EditWorkspaceProvider children={children} />,
+        <PipelineProvider children={children} />,
+        <TopicProvider children={children} />,
+        <AddTopicProvider children={children} />,
+        <ViewTopicProvider children={children} />,
+        <NodeDialogProvider children={children} />,
+        <DevToolDialogProvider children={children} />,
+      ]}
+    >
+      {children}
+    </ContextProviderComposer>
   );
 };
 
 AppProviders.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export default AppProviders;

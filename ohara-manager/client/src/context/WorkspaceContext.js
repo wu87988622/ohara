@@ -69,7 +69,7 @@ const useWorkspace = () => {
 };
 
 WorkspaceProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { WorkspaceProvider, useWorkspace };

@@ -47,7 +47,7 @@ const useNewWorkspace = () => {
 };
 
 NewWorkspaceProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { NewWorkspaceProvider, useNewWorkspace };

@@ -87,7 +87,7 @@ const MuiDialog = () => {
   // This should be implemented later in #3157
   const onClick = () => {};
 
-  const handleQuickOpen = opon => setQuickModeIsOpen(opon);
+  const handleQuickOpen = open => setQuickModeIsOpen(open);
 
   return (
     <>
@@ -112,8 +112,8 @@ const MuiDialog = () => {
         <StyledDialogContent>
           <Typography variant="body2">
             Ohara is a scalable streaming platform that allows users to easily
-            organized their input, output, and streaming applictions with a
-            clean and comperhensive GUI
+            organized their input, output, and streaming applications with a
+            clean and comprehensive GUI
           </Typography>
         </StyledDialogContent>
         <StyledDialogActions>

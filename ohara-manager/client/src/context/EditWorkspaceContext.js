@@ -50,7 +50,7 @@ const useEditWorkspace = () => {
 };
 
 EditWorkspaceProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { EditWorkspaceProvider, useEditWorkspace };

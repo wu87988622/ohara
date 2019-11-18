@@ -31,7 +31,7 @@ const StyledToolbar = styled.div(
     height: 72px;
     padding: 0 ${theme.spacing(3)}px;
     background-color: #f5f6fa;
-    border-bottom: 1px solid ${theme.palette.grey[100]};
+    border-bottom: 1px solid ${theme.palette.divider};
     display: flex;
     align-items: center;
 
@@ -48,7 +48,7 @@ const Toolbar = props => {
 
   const handleClick = panel => {
     // If the Toolbox is not "open", we should open it before opening
-    // the expension panel
+    // the expansion panel
     if (!isToolboxOpen) handleToolboxOpen();
     handleToolboxClick(panel);
   };

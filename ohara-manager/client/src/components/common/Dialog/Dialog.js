@@ -88,12 +88,9 @@ const MuiDialog = props => {
               disabled={confirmDisabled}
               color="primary"
               variant="contained"
-              autoFocus
             >
               {!loading && confirmText}
-              {loading && (
-                <CircularProgress data-testid="dialog-loader" size={24} />
-              )}
+              {loading && <CircularProgress size={24} />}
             </Button>
           </StyledDialogActions>
         )}
@@ -105,7 +102,7 @@ const MuiDialog = props => {
 MuiDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   title: PropTypes.string.isRequired,
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
   handleClose: PropTypes.func.isRequired,
   confirmText: PropTypes.string,
   confirmDisabled: PropTypes.bool,

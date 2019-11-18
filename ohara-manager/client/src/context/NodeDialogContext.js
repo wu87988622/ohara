@@ -62,7 +62,7 @@ const useNodeDialog = () => {
 };
 
 NodeDialogProvider.propTypes = {
-  children: PropTypes.any.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export { NodeDialogProvider, useNodeDialog };
