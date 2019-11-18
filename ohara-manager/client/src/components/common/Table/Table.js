@@ -22,6 +22,7 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import TableFooter from '@material-ui/core/TableFooter';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
@@ -44,8 +45,12 @@ const StyledTableHead = styled(TableHead)`
   background-color: ${props => props.theme.palette.grey[100]};
 `;
 
+const StyledFooter = styled(TableFooter)`
+  background-color: ${props => props.theme.palette.grey[50]};
+`;
+
 const MuiTable = props => {
-  const { headers, title = '', isLoading = false, children } = props;
+  const { headers, title = '', isLoading = false, children, footer } = props;
   const lastIdx = headers.length - 1; // Make sure we have the same length as idx
 
   const hasTitle = title.length > 0 ? true : false;
@@ -72,6 +77,7 @@ const MuiTable = props => {
             </TableRow>
           </StyledTableHead>
           <TableBody>{children}</TableBody>
+          {footer ? <StyledFooter>{footer}</StyledFooter> : <StyledFooter />}
         </Table>
       </Paper>
     </Wrapper>
@@ -83,6 +89,7 @@ MuiTable.propTypes = {
   children: PropTypes.any.isRequired,
   title: PropTypes.string,
   isLoading: PropTypes.bool,
+  footer: PropTypes.any,
 };
 
 export default MuiTable;

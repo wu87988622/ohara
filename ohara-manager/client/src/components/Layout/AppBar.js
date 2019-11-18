@@ -26,6 +26,7 @@ import { Link } from 'react-router-dom';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useNodeDialog } from 'context/NodeDialogContext';
+import { useDevToolDialog } from 'context/DevToolDialogContext';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
@@ -38,6 +39,7 @@ const AppBar = () => {
   const { workspaces } = useWorkspace();
   const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
   const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
+  const { setIsOpen: setIsDevToolDialogOpen } = useDevToolDialog();
 
   return (
     <>
@@ -87,7 +89,10 @@ const AppBar = () => {
         <Tools>
           <AppsIcon className="workspace item" />
           <AssignmentIcon className="item" />
-          <DeveloperModeIcon className="item" />
+          <DeveloperModeIcon
+            className="item"
+            onClick={() => setIsDevToolDialogOpen(true)}
+          />
           <StorageIcon
             className="nodes item"
             onClick={() => setIsNodeDialogOpen(true)}

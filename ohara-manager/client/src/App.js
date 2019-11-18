@@ -20,6 +20,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
 import AppBar from 'components/Layout/AppBar';
+import { DevToolDialog, TopicDataWindow } from 'components/Developer';
 import NotFoundPage from 'components/NotFoundPage';
 import { Pipeline, Navigator } from 'components/Pipeline';
 
@@ -30,7 +31,7 @@ const Container = styled.div`
   display: flex;
 
   /* 
-    Make AppBar can stretch to the bottom of the brower view even if the content
+    Make AppBar can stretch to the bottom of the browser view even if the content
     height is not enough to do so
   */
   min-height: 100vh;
@@ -46,25 +47,33 @@ const Main = styled.main`
 const App = () => {
   return (
     <Router>
-      <Container className="container">
-        <GlobalStyle />
-        <AppBar />
-        <Route
-          exact
-          path="/:workspaceName/:pipelineName?"
-          component={Navigator}
-        />
-        <Main>
-          <Switch>
-            <Route
-              exact
-              path="/:workspaceName?/:pipelineName?"
-              component={Pipeline}
-            />
-            <Route path="*" component={NotFoundPage} />
-          </Switch>
-        </Main>
-      </Container>
+      <Switch>
+        <Route exact path="/:workspaceName/view" component={TopicDataWindow} />
+        <Container className="container">
+          <GlobalStyle />
+          <AppBar />
+          <Route
+            exact
+            path="/:workspaceName?/:pipelineName?"
+            component={DevToolDialog}
+          />
+          <Route
+            exact
+            path="/:workspaceName/:pipelineName?"
+            component={Navigator}
+          />
+          <Main>
+            <Switch>
+              <Route
+                exact
+                path="/:workspaceName?/:pipelineName?"
+                component={Pipeline}
+              />
+              <Route path="*" component={NotFoundPage} />
+            </Switch>
+          </Main>
+        </Container>
+      </Switch>
     </Router>
   );
 };

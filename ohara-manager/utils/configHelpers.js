@@ -18,6 +18,7 @@ const yargs = require('yargs');
 const chalk = require('chalk');
 const { isNumber } = require('lodash');
 const net = require('net');
+const URL = require('url').URL;
 
 const utils = require('./commonUtils');
 

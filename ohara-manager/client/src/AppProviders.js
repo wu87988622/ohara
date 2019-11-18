@@ -32,6 +32,7 @@ import { ViewTopicProvider } from './context/ViewTopicContext';
 import { EditWorkspaceProvider } from './context/EditWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
 import { TopicProvider } from './context/TopicContext';
+import { DevToolDialogProvider } from './context/DevToolDialogContext';
 
 const AppProviders = ({ children }) => {
   return (
@@ -46,7 +47,11 @@ const AppProviders = ({ children }) => {
                     <TopicProvider>
                       <AddTopicProvider>
                         <ViewTopicProvider>
-                          <NodeDialogProvider>{children}</NodeDialogProvider>
+                          <NodeDialogProvider>
+                            <DevToolDialogProvider>
+                              {children}
+                            </DevToolDialogProvider>
+                          </NodeDialogProvider>
                         </ViewTopicProvider>
                       </AddTopicProvider>
                     </TopicProvider>
