@@ -15,43 +15,11 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import styled, { css } from 'styled-components';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
 
-import Toolbox from './Toolbox';
-
-const Paper = styled.div(
-  ({ theme }) => css`
-    border: ${theme.spacing(1)}px solid #fff;
-
-    .flying-paper {
-      border: 1px dashed ${theme.palette.grey[400]};
-      box-shadow: ${theme.shadows[8]};
-      display: flex;
-      align-items: center;
-      opacity: 0.85;
-      z-index: ${theme.zIndex.tooltip};
-      padding: ${theme.spacing(0, 2)};
-
-      .item {
-        height: auto !important;
-        display: flex;
-        align-items: center;
-        width: 100%;
-
-        .icon {
-          margin-right: ${theme.spacing(1)}px;
-        }
-
-        label {
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      }
-    }
-  `,
-);
+import Toolbox from '../Toolbox';
+import { Paper } from './GraphStyles';
 
 const Graph = props => {
   const {
@@ -59,6 +27,7 @@ const Graph = props => {
     toolboxExpanded,
     handleToolboxClick,
     handleToolboxClose,
+    toolboxKey,
   } = props;
 
   let graph = useRef(null);
@@ -88,7 +57,7 @@ const Graph = props => {
     };
 
     renderGraph();
-  }, []);
+  }, [toolboxKey]);
 
   return (
     <>
@@ -99,6 +68,7 @@ const Graph = props => {
         handleClose={handleToolboxClose}
         paper={paper.current}
         graph={graph.current}
+        toolboxKey={toolboxKey}
       />
       <Paper id="paper"></Paper>
     </>
@@ -115,6 +85,7 @@ Graph.propTypes = {
   }).isRequired,
   handleToolboxClick: PropTypes.func.isRequired,
   handleToolboxClose: PropTypes.func.isRequired,
+  toolboxKey: PropTypes.number.isRequired,
 };
 
 export default Graph;

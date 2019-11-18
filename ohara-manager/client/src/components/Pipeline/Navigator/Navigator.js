@@ -46,7 +46,7 @@ import {
   StyledExpansionPanel,
   StyledSubtitle1,
   PipelineList,
-} from './Styles';
+} from './NavigatorStyles';
 
 const Navigator = () => {
   const showMessage = useSnackbar();

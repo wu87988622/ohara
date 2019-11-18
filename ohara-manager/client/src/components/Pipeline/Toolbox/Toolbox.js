@@ -41,14 +41,15 @@ import * as _ from 'lodash';
 import * as $ from 'jquery';
 
 import * as fileApi from 'api/fileApi';
-import * as inspectApi from 'api/inspectApi';
-import { StyledToolbox } from './Styles';
+import AddGraphDialog from './AddGraphDialog';
+import { StyledToolbox } from './ToolboxStyles';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useSnackbar } from 'context/SnackbarContext';
 import { useAddTopic } from 'context/AddTopicContext';
 import { useTopic } from 'context/TopicContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
+import { useConnectors, useFiles } from './ToolboxHooks';
 
 const Toolbox = props => {
   const {
@@ -58,58 +59,26 @@ const Toolbox = props => {
     handleClick,
     paper,
     graph,
+    toolboxKey,
   } = props;
 
-  const [streamJars, setStreamJars] = useState([]);
-  const [streamJarsStatus, setStreamJarsStatus] = useState('loading');
   const { findByWorkspaceName } = useWorkspace();
   const { workspaceName } = useParams();
   const { topics, doFetch: fetchTopics } = useTopic();
   const { setIsOpen: setIsAddTopicOpen } = useAddTopic();
-  const [sources, setSources] = useState([]);
-  const [sinks, setSinks] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const showMessage = useSnackbar();
 
   const currentWorkspace = findByWorkspaceName(workspaceName);
+  const [sources, sinks] = useConnectors(currentWorkspace);
+  const [streamJars, setStatus] = useFiles(currentWorkspace);
 
   useEffect(() => {
     if (!currentWorkspace) return;
     fetchTopics(currentWorkspace.settings.name);
   }, [fetchTopics, currentWorkspace.settings.name, currentWorkspace]);
-
-  useEffect(() => {
-    if (!currentWorkspace || streamJarsStatus !== 'loading') return;
-
-    const fetchStreamJars = async workspaceName => {
-      const files = await fileApi.getAll({ group: workspaceName });
-      const sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
-
-      setStreamJars(sortedFiles);
-      setStreamJarsStatus('loaded');
-    };
-
-    fetchStreamJars(currentWorkspace.settings.name);
-  }, [currentWorkspace, streamJarsStatus]);
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-
-    const fetchWorkerInfo = async () => {
-      const { name, group } = currentWorkspace.settings;
-      const data = await inspectApi.getWorkerInfo({ name, group });
-      data.classInfos.forEach(info => {
-        const className = info.className.split('.').pop();
-        if (info.classType === 'source') {
-          setSources(prevState => [...prevState, className]);
-          return;
-        }
-
-        setSinks(prevState => [...prevState, className]);
-      });
-    };
-
-    fetchWorkerInfo();
-  }, [currentWorkspace]);
 
   const uploadJar = async file => {
     const response = await fileApi.create({
@@ -121,7 +90,7 @@ const Toolbox = props => {
     if (isSuccess) {
       showMessage('Successfully uploaded the jar');
     }
-    setStreamJarsStatus('loading');
+    setStatus('loading');
   };
 
   const handleFileSelect = event => {
@@ -143,11 +112,11 @@ const Toolbox = props => {
   let topicGraph = useRef(null);
 
   useEffect(() => {
-    if (!sources) return;
+    if (!sources || !sinks) return;
 
     const sourceIcon = renderToString(<FlightTakeoffIcon />);
     const sinkIcon = renderToString(<FlightLandIcon />);
-    const topicIcon = renderToString(<StorageIcon />);
+    const AddPrivateTopic = renderToString(<StorageIcon />);
 
     const sharedProps = {
       width: 'auto',
@@ -228,8 +197,8 @@ const Toolbox = props => {
       sources.forEach((source, index) => {
         sourceGraph.current.addCell(
           new joint.shapes.html.Element({
-            position: { x: 10, y: index * 40 },
-            size: { width: 272 - 8 * 2, height: 40 },
+            position: { x: 10, y: index * 44 },
+            size: { width: 272 - 8 * 2, height: 44 },
             label: source,
             icon: sourceIcon,
           }),
@@ -239,21 +208,33 @@ const Toolbox = props => {
       sinks.forEach((sink, index) => {
         sinkGraph.current.addCell(
           new joint.shapes.html.Element({
-            position: { x: 10, y: index * 40 },
-            size: { width: 272 - 8 * 2, height: 40 },
+            position: { x: 10, y: index * 44 },
+            size: { width: 272 - 8 * 2, height: 44 },
             label: sink,
             icon: sinkIcon,
           }),
         );
       });
 
-      topics.forEach((topic, index) => {
+      // Add private pipeline `Pipeline Only` so
+      // users can add private pipeline with this
+      // button
+      const updatedTopics = [
+        {
+          settings: {
+            name: 'Pipeline Only',
+          },
+        },
+        ...topics,
+      ];
+
+      updatedTopics.forEach((topic, index) => {
         topicGraph.current.addCell(
           new joint.shapes.html.Element({
-            position: { x: 10, y: index * 40 },
-            size: { width: 272 - 8 * 2, height: 40 },
+            position: { x: 10, y: index * 44 },
+            size: { width: 272 - 8 * 2, height: 44 },
             label: topic.settings.name,
-            icon: topicIcon,
+            icon: AddPrivateTopic,
           }),
         );
       });
@@ -327,16 +308,11 @@ const Toolbox = props => {
 
             // Dropped over paper ?
             if (isInsidePaper()) {
-              const connector = new joint.shapes.basic.Rect({
-                position: {
-                  x: x - target.left - offset.x,
-                  y: y - target.top - offset.y,
-                },
-                size: { width: 100, height: 40 },
-                attrs: { text: { text: 'Connector' }, rect: { magnet: true } },
+              setOpen(true);
+              setPosition({
+                x: x - target.left - offset.x,
+                y: y - target.top - offset.y,
               });
-
-              graph.addCell(connector);
             }
 
             $('#paper')
@@ -351,10 +327,10 @@ const Toolbox = props => {
     };
 
     renderToolbox();
-  }, [graph, paper, sinks, sources, topics]);
+  }, [paper, sinks, sources, topics]);
 
   return (
-    <Draggable bounds="parent" handle=".box-title">
+    <Draggable bounds="parent" handle=".box-title" key={toolboxKey}>
       <StyledToolbox className={`toolbox ${isToolboxOpen ? 'is-open' : ''}`}>
         <div className="title box-title">
           <Typography variant="subtitle1">Toolbox</Typography>
@@ -366,7 +342,6 @@ const Toolbox = props => {
           <SearchIcon />
         </IconButton>
         <InputBase placeholder="Search topic & connector..." />
-
         <div className="toolbox-body">
           <ExpansionPanel
             square
@@ -484,6 +459,30 @@ const Toolbox = props => {
             </ExpansionPanelDetails>
           </ExpansionPanel>
         </div>
+
+        <AddGraphDialog
+          open={open}
+          value={value}
+          handleChange={event => setValue(event.target.value)}
+          handleConfirm={() => {
+            if (value) {
+              graph.addCell(
+                new joint.shapes.basic.Rect({
+                  position,
+                  size: { width: 100, height: 40 },
+                  attrs: { text: { text: value }, rect: { magnet: true } },
+                }),
+              );
+            }
+
+            setOpen(false);
+            setValue('');
+          }}
+          handleClose={() => {
+            setOpen(false);
+            setValue('');
+          }}
+        />
       </StyledToolbox>
     </Draggable>
   );
@@ -499,6 +498,7 @@ Toolbox.propTypes = {
     sink: PropTypes.bool.isRequired,
     streamApp: PropTypes.bool.isRequired,
   }).isRequired,
+  toolboxKey: PropTypes.number.isRequired,
   paper: PropTypes.any,
   graph: PropTypes.any,
 };

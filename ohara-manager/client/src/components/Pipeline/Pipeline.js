@@ -25,6 +25,7 @@ import Graph from './Graph';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
+import { usePrevious } from 'utils/hooks';
 
 const GraphWrapper = styled.div`
   position: relative;
@@ -40,6 +41,7 @@ const Pipeline = () => {
   const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
+  const [toolboxKey, setToolboxKey] = useState(0);
 
   const initialState = {
     topic: false,
@@ -80,6 +82,19 @@ const Pipeline = () => {
   } else if (hasPipeline) {
     history.push(`/${workspaceName}/${pipelines[0].name}`);
   }
+
+  const prevPipeline = usePrevious(currentPipeline);
+  // Reset toolbox states
+  useEffect(() => {
+    if (currentPipeline !== prevPipeline) {
+      setToolboxExpanded(initialState);
+      // updating the key "re-renders" the whole toolbox
+      // which effectively resets the toolbox position
+      // as well. Note we also use this key to update
+      // the Graph related components
+      setToolboxKey(prevKey => prevKey + 1);
+    }
+  }, [currentPipeline, initialState, prevPipeline]);
 
   const hasWorkspace = workspaces.length > 0;
 
@@ -134,6 +149,7 @@ const Pipeline = () => {
                     setIsToolboxOpen(false);
                     setToolboxExpanded(initialState);
                   }}
+                  toolboxKey={toolboxKey}
                 />
               </GraphWrapper>
             </>
