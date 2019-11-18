@@ -25,7 +25,7 @@ const url = URL.STREAM_URL;
 
 export const create = async (params, body) => {
   if (!body) {
-    // get the streamApp definition by the required jar file
+    // get the stream definition by the required jar file
     const result = await inspect.getFileInfo({
       group: params.jarKey.group,
       name: params.jarKey.name,

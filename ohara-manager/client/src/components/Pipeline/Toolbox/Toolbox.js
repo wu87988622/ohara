@@ -395,13 +395,13 @@ const Toolbox = props => {
 
           <AddTopicDialog />
 
-          <ExpansionPanel square expanded={expanded.streamApp}>
+          <ExpansionPanel square expanded={expanded.stream}>
             <ExpansionPanelSummary
               className="panel-title"
               expandIcon={<ExpandMoreIcon />}
-              onClick={() => handleClick('streamApp')}
+              onClick={() => handleClick('stream')}
             >
-              <Typography variant="subtitle1">StreamApp</Typography>
+              <Typography variant="subtitle1">Stream</Typography>
             </ExpansionPanelSummary>
             <ExpansionPanelDetails className="detail">
               <List disablePadding>
@@ -496,7 +496,7 @@ Toolbox.propTypes = {
     topic: PropTypes.bool.isRequired,
     source: PropTypes.bool.isRequired,
     sink: PropTypes.bool.isRequired,
-    streamApp: PropTypes.bool.isRequired,
+    stream: PropTypes.bool.isRequired,
   }).isRequired,
   toolboxKey: PropTypes.number.isRequired,
   paper: PropTypes.any,

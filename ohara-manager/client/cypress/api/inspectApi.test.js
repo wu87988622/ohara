@@ -117,7 +117,7 @@ describe('Inspect API', () => {
 
   it('fetchStreamFileDefinition', async () => {
     const file = {
-      fixturePath: 'streamApp',
+      fixturePath: 'stream',
       name: 'ohara-it-stream.jar',
       group: generate.serviceName({ prefix: 'group' }),
     };

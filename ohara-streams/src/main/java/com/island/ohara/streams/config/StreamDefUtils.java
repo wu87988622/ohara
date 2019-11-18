@@ -158,7 +158,7 @@ public final class StreamDefUtils {
           .blacklist(new HashSet<>(Arrays.asList("stop", "start", "pause", "resume")))
           .build();
 
-  public static final String STREAM_APPLICATION = "streamApp";
+  public static final String STREAM = "stream";
   /**
    * annotate the kind of this stream. This value is immutable and it is useful in parsing
    * definitions dynamically. The value of kind help us to understand the "master" of those
@@ -170,7 +170,7 @@ public final class StreamDefUtils {
           // this key must be equal to ConnectorDefUtils.KIND_KEY
           .key("kind")
           .documentation("kind of stream application")
-          .optional(STREAM_APPLICATION)
+          .optional(STREAM)
           .readonly()
           .build();
 

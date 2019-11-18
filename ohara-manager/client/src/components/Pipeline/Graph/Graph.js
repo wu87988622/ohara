@@ -81,7 +81,7 @@ Graph.propTypes = {
     topic: PropTypes.bool.isRequired,
     source: PropTypes.bool.isRequired,
     sink: PropTypes.bool.isRequired,
-    streamApp: PropTypes.bool.isRequired,
+    stream: PropTypes.bool.isRequired,
   }).isRequired,
   handleToolboxClick: PropTypes.func.isRequired,
   handleToolboxClose: PropTypes.func.isRequired,

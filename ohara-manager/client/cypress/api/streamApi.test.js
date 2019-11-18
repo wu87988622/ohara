@@ -23,7 +23,7 @@ import * as streamApi from '../../src/api/streamApi';
 import { createServices, deleteAllServices } from '../utils';
 
 const file = {
-  fixturePath: 'streamApp',
+  fixturePath: 'stream',
   // we use an existing file to simulate upload jar
   name: 'ohara-it-stream.jar',
   group: generate.serviceName({ prefix: 'group' }),

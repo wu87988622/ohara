@@ -35,7 +35,7 @@ export const kind = {
 };
 
 export const classType = {
-  stream: 'streamApp',
+  stream: 'stream',
   sink: 'sink connector',
   source: 'source connector',
 };

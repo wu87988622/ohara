@@ -128,7 +128,7 @@ Example Response
           "clusterKeys": []
         },
         {
-          "name": "streamapp",
+          "name": "stream",
           "clusterKeys": []
         }
       ],
@@ -202,7 +202,7 @@ Example Response
           "clusterKeys": []
         },
         {
-          "name": "streamapp",
+          "name": "stream",
           "clusterKeys": []
         }
       ],
@@ -256,7 +256,7 @@ Example Response
             "clusterKeys": []
           },
           {
-            "name": "streamapp",
+            "name": "stream",
             "clusterKeys": []
           }
         ],
@@ -326,7 +326,7 @@ Example Response
           "clusterKeys": []
         },
         {
-          "name": "streamapp",
+          "name": "stream",
           "clusterKeys": []
         }
       ],

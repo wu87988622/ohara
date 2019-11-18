@@ -306,7 +306,7 @@ Example Response
           "settingDefinitions": []
         },
         {
-          "classType": "streamApp",
+          "classType": "stream",
           "className": "a.b.c.bbb",
           "settingDefinitions": []
         }

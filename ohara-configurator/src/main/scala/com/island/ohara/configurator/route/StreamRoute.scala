@@ -36,7 +36,7 @@ private[configurator] object StreamRoute {
     * The group for a stream application metrics
     * Since each stream has it's own metrics, it is OK to use same value
     */
-  private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT
+  private[configurator] val STREAM_GROUP = StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT
 
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
@@ -201,7 +201,7 @@ private[configurator] object StreamRoute {
             executionContext: ExecutionContext): server.Route =
     clusterRoute[StreamClusterInfo, StreamClusterStatus, Creation, Updating](
       root = STREAM_PREFIX_PATH,
-      metricsKey = Some(STREAM_APP_GROUP),
+      metricsKey = Some(STREAM_GROUP),
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

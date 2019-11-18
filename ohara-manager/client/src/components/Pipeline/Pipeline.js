@@ -47,7 +47,7 @@ const Pipeline = () => {
     topic: false,
     source: false,
     sink: false,
-    streamApp: false,
+    stream: false,
   };
 
   const [toolboxExpanded, setToolboxExpanded] = useState(initialState);

@@ -127,7 +127,7 @@ private[configurator] object PipelineRoute {
             className = Some(data.className),
             state = clusterInfo.state,
             error = None,
-            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
+            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_GROUP, Seq.empty)),
             lastModified = data.lastModified,
             tags = data.tags
           )

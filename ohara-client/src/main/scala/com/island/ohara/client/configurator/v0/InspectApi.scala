@@ -65,7 +65,7 @@ object InspectApi {
   case class FileContent(classInfos: Seq[ClassInfo]) {
     def sourceClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SOURCE_CONNECTOR)
     def sinkClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SINK_CONNECTOR)
-    def streamClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == StreamDefUtils.STREAM_APPLICATION)
+    def streamClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == StreamDefUtils.STREAM)
   }
 
   object FileContent {

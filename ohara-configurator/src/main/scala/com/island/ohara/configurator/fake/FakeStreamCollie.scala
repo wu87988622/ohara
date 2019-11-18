@@ -36,7 +36,7 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
     Seq(
       Counter
         .builder()
-        .group(StreamRoute.STREAM_APP_GROUP)
+        .group(StreamRoute.STREAM_GROUP)
         .name("fakeCounter")
         .value(CommonUtils.randomInteger().toLong)
         .build())

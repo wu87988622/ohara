@@ -37,13 +37,13 @@ const copyJars = () => {
     );
   });
 
-  fs.access('./client/cypress/fixtures/streamApp', err => {
+  fs.access('./client/cypress/fixtures/stream', err => {
     if (err) {
-      fs.mkdirSync('./client/cypress/fixtures/streamApp');
+      fs.mkdirSync('./client/cypress/fixtures/stream');
     }
     fs.copyFile(
       '../ohara-it/build/libs/ohara-it-stream.jar',
-      'client/cypress/fixtures/streamApp/ohara-it-stream.jar',
+      'client/cypress/fixtures/stream/ohara-it-stream.jar',
       err => {
         if (err) throw err;
       },

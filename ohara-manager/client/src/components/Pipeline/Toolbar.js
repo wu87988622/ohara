@@ -63,7 +63,7 @@ const Toolbar = props => {
           <Button onClick={() => handleClick('topic')}>
             <StorageIcon />
           </Button>
-          <Button onClick={() => handleClick('streamApp')}>
+          <Button onClick={() => handleClick('stream')}>
             <WavesIcon />
           </Button>
           <Button onClick={() => handleClick('sink')}>
