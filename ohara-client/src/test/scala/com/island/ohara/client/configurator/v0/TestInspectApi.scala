@@ -18,12 +18,23 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
+import spray.json.DefaultJsonProtocol._
 import org.scalatest.Matchers._
 import spray.json._
 
 class TestInspectApi extends OharaTest {
+
+  @Test
+  def testJsonStringFromVersionUtils(): Unit = {
+    val fields = VersionUtils.jsonString().parseJson.asJsObject.fields
+    fields("version").convertTo[String] shouldBe VersionUtils.VERSION
+    fields("branch").convertTo[String] shouldBe VersionUtils.BRANCH
+    fields("revision").convertTo[String] shouldBe VersionUtils.REVISION
+    fields("user").convertTo[String] shouldBe VersionUtils.USER
+    fields("date").convertTo[String] shouldBe VersionUtils.DATE
+  }
 
   @Test
   def testBasicQueryObject(): Unit = {

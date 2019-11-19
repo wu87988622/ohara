@@ -92,10 +92,18 @@ public final class VersionUtils {
   public static final String REVISION = \"${revision()}\";
   public static final String DATE = \"${date()}\";
 
+  public static String jsonString() {
+    return \"{\"
+      + \"\\"version\\":\" + \"\\"\" + VERSION + \"\\",\"
+      + \"\\"revision\\":\" + \"\\"\" + REVISION + \"\\",\"
+      + \"\\"branch\\":\" + \"\\"\" + BRANCH + \"\\",\"
+      + \"\\"user\\":\" + \"\\"\" + USER + \"\\",\"
+      + \"\\"date\\":\" + \"\\"\" + DATE + \"\\"\"
+      + \"}\";
+  }
+
   public static void main(String[] args) {
-    System.out.println(\"ohara \" + VERSION);
-    System.out.println(\"revision=\" + REVISION);
-    System.out.println(\"Compiled by \" + USER + \" on \" + DATE);
+    System.out.println(jsonString());
   }
 
   private VersionUtils() {}
