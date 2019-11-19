@@ -24,12 +24,7 @@ import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -595,5 +590,35 @@ public class TestSettingDef extends OharaTest {
             .optional(CommonUtils.randomString(), recommendedValues)
             .build();
     Assert.assertEquals(settingDef.recommendedValues(), recommendedValues);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSpaceInKey() {
+    SettingDef.builder().key(" ");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEqualInKey() {
+    SettingDef.builder().key("=");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testQuoteInKey() {
+    SettingDef.builder().key("\"");
+  }
+
+  @Test
+  public void testDotInKey() {
+    SettingDef.builder().key(".");
+  }
+
+  @Test
+  public void testSlashInKey() {
+    SettingDef.builder().key("-");
+  }
+
+  @Test
+  public void testUnderLineInKey() {
+    SettingDef.builder().key("_");
   }
 }

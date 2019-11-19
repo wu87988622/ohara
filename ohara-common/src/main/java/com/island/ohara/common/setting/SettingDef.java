@@ -632,8 +632,16 @@ public class SettingDef implements JsonObject, Serializable {
       return this;
     }
 
+    /**
+     * noted that the legal chars are digits (0-9), letters (a-z|A-Z), -, and .
+     *
+     * @param key key
+     * @return this builder
+     */
     public Builder key(String key) {
       this.key = CommonUtils.requireNonEmpty(key);
+      if (!key.matches("[a-zA-Z0-9\\._\\-]+"))
+        throw new IllegalArgumentException("the legal char is [a-zA-Z0-9\\._\\-]+");
       return this;
     }
 

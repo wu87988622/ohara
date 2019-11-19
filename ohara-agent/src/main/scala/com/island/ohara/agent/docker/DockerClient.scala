@@ -556,7 +556,7 @@ object DockerClient {
       * @return this builder
       */
     @Optional("default is empty")
-    def arguments(arguments: Seq[String]): Creator = command(arguments.mkString(" "))
+    def arguments(arguments: Seq[String]): Creator = command(arguments.map(arg => s"""\"$arg\"""").mkString(" "))
 
     /**
       * the command passed to docker container

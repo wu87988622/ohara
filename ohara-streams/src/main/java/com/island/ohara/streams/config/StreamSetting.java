@@ -16,14 +16,14 @@
 
 package com.island.ohara.streams.config;
 
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.TopicKey;
-import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The entry class for define stream definitions
@@ -32,39 +32,16 @@ import java.util.stream.Stream;
  */
 public final class StreamSetting {
 
-  public static StreamSetting of(List<SettingDef> settingDefinitions) {
-    return new StreamSetting(settingDefinitions);
+  public static StreamSetting of(List<SettingDef> settingDefinitions, Map<String, String> raw) {
+    return new StreamSetting(settingDefinitions, raw);
   }
 
   private final List<SettingDef> settingDefinitions;
+  private final Map<String, String> raw;
 
-  private StreamSetting(List<SettingDef> settingDefinitions) {
+  private StreamSetting(List<SettingDef> settingDefinitions, Map<String, String> raw) {
     this.settingDefinitions = Collections.unmodifiableList(settingDefinitions);
-  }
-
-  /**
-   * Add a extra {@code SettingDef} list into this stream definitions.
-   *
-   * @param settingDefList config list
-   * @return StreamDefinitions
-   */
-  public static StreamSetting withAll(List<SettingDef> settingDefList) {
-    // check the duplicate definitions
-    List<String> newKeys =
-        settingDefList.stream().map(SettingDef::key).collect(Collectors.toList());
-    List<String> oriKeys =
-        StreamDefUtils.DEFAULT.stream().map(SettingDef::key).collect(Collectors.toList());
-    if (StreamDefUtils.DEFAULT.stream().map(SettingDef::key).anyMatch(newKeys::contains)) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Some config of list: [%s] are defined twice. Original: [%s]",
-              String.join(",", newKeys), String.join(",", oriKeys)));
-    }
-
-    return new StreamSetting(
-        Stream.of(StreamDefUtils.DEFAULT, settingDefList)
-            .flatMap(List::stream)
-            .collect(Collectors.toList()));
+    this.raw = Collections.unmodifiableMap(raw);
   }
 
   /**
@@ -92,7 +69,7 @@ public final class StreamSetting {
    * @return value from container environment, {@code Optional.empty()} if absent
    */
   public Optional<String> string(String key) {
-    return Optional.ofNullable(System.getenv(key)).map(CommonUtils::fromEnvString);
+    return Optional.ofNullable(raw.get(key)).map(StreamSetting::fromEnvString);
   }
 
   /** @return the name of this stream */
@@ -120,5 +97,36 @@ public final class StreamSetting {
     return TopicKey.toTopicKeys(
         string(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
             .orElseThrow(() -> new RuntimeException("TO_TOPIC_KEYS_DEFINITION not found in env.")));
+  }
+
+  // ---------------------[command-line tools]---------------------//
+
+  /** this is a specific string used to replace the quota in the env. */
+  @VisibleForTesting static String INTERNAL_STRING_FOR_ENV = "_____";
+
+  /**
+   * remove the unsupported charset - quote - and replace it by slash
+   *
+   * @param string string
+   * @return a string is accepted by env
+   */
+  public static String toEnvString(String string) {
+    if (string.contains(INTERNAL_STRING_FOR_ENV))
+      throw new IllegalArgumentException(
+          string
+              + " has internal string:"
+              + INTERNAL_STRING_FOR_ENV
+              + " so we can't convert it to env string");
+    return string.replaceAll("\"", INTERNAL_STRING_FOR_ENV);
+  }
+
+  /**
+   * replace the cryptic and internal charset from the env string.
+   *
+   * @param string string from env
+   * @return a absolutely normal string
+   */
+  public static String fromEnvString(String string) {
+    return string.replaceAll(INTERNAL_STRING_FOR_ENV, "\"");
   }
 }

@@ -23,7 +23,6 @@ import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
-import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.streams.data.Poneglyph;
@@ -46,8 +45,9 @@ public class TestStreamTopology extends OharaTest {
 
   @Test
   public void testGetTopology() {
-    // initial environment
-    StreamTestUtils.setOharaEnv(
+    DescribeStream app = new DescribeStream();
+    Stream.execute(
+        app.getClass(),
         java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appId),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), "fake"),
@@ -58,9 +58,6 @@ public class TestStreamTopology extends OharaTest {
                     StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
-
-    DescribeStream app = new DescribeStream();
-    Stream.execute(app.getClass());
   }
 
   public static class DescribeStream extends Stream {

@@ -27,7 +27,6 @@ import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
-import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.testing.With3Brokers;
@@ -112,8 +111,9 @@ public class TestPurchaseAnalysis extends With3Brokers {
     produceData("orders.csv", orderTopic.topicNameOnKafka());
     assertResult(client, orderTopic.topicNameOnKafka(), 16);
 
-    // initial environment
-    StreamTestUtils.setOharaEnv(
+    RunStream app = new RunStream();
+    Stream.execute(
+        app.getClass(),
         java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appid),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
@@ -124,9 +124,6 @@ public class TestPurchaseAnalysis extends With3Brokers {
                     StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                     TopicKey.toJsonString(Collections.singletonList(resultTopic))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
-
-    RunStream app = new RunStream();
-    Stream.execute(app.getClass());
   }
 
   @After

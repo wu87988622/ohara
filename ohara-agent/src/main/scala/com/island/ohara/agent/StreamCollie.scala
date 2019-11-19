@@ -26,11 +26,10 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo, StreamClusterStatus}
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.Stream
-import com.island.ohara.streams.config.StreamDefUtils
+import com.island.ohara.streams.config.StreamSetting
 import spray.json.JsString
 
 import scala.collection.JavaConverters._
@@ -101,28 +100,32 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                             containerPort = port
                         ))
                       .toSeq,
-                    environments = creation.settings.map {
-                      case (k, v) =>
-                        k -> (v match {
-                          // the string in json representation has quote in the beginning and end.
-                          // we don't like the quotes since it obstruct us to cast value to pure string.
-                          case JsString(s) => s
-                          // save the json string for all settings
-                          // StreamDefUtils offers the helper method to turn them back.
-                          case _ => CommonUtils.toEnvString(v.toString)
-                        })
-                    } ++ Map(
+                    environments = Map(
                       "JMX_PORT" -> creation.jmxPort.toString,
-                      "JMX_HOSTNAME" -> newNode.hostname
-                    )
-                    // define the urls as string list so as to simplify the script for stream
-                      + ("STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString),
+                      "JMX_HOSTNAME" -> newNode.hostname,
+                      // define the urls as string list so as to simplify the script for stream
+                      "STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString
+                    ),
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
                     hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
                   )
+
                   val arguments =
-                    Seq(classOf[Stream].getName,
-                        s"${StreamDefUtils.CLASS_NAME_DEFINITION.key()}=${creation.className.get}")
+                    Seq(classOf[Stream].getName) ++ creation.settings
+                      .map {
+                        case (k, v) =>
+                          k -> (v match {
+                            // the string in json representation has quote in the beginning and end.
+                            // we don't like the quotes since it obstruct us to cast value to pure string.
+                            case JsString(s) => s
+                            // save the json string for all settings
+                            // StreamDefUtils offers the helper method to turn them back.
+                            case _ => StreamSetting.toEnvString(v.toString)
+                          })
+                      }
+                      .map {
+                        case (k, v) => s"$k=$v"
+                      }
 
                   doCreator(executionContext, containerInfo, newNode, route, arguments)
                     .map(_ => Some(containerInfo))

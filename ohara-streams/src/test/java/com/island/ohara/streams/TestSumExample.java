@@ -57,7 +57,6 @@ public class TestSumExample extends WithBroker {
         "[" + TopicKey.toJsonString(fromTopic) + "]");
     settings.putIfAbsent(
         StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
-    StreamTestUtils.setOharaEnv(settings);
     StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
     StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
     // prepare data
@@ -69,7 +68,7 @@ public class TestSumExample extends WithBroker {
 
     // run example
     SumExample app = new SumExample();
-    Stream.execute(app.getClass());
+    Stream.execute(app.getClass(), settings);
 
     // Assert the result
     List<Row> expected =

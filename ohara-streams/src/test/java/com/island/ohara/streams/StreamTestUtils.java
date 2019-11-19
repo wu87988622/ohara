@@ -47,14 +47,6 @@ public class StreamTestUtils {
         .create();
   }
 
-  public static void setOharaEnv(Map<String, String> settings) {
-    try {
-      setEnv(settings);
-    } catch (Exception e) {
-      Assert.fail(e.getMessage());
-    }
-  }
-
   public static void produceData(Producer<Row, byte[]> producer, List<Row> rows, String topic) {
     rows.forEach(
         row -> {

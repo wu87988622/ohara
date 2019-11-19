@@ -38,7 +38,7 @@ public class TestWordCountExample extends WithBroker {
   public void testCase() {
     final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
     final Producer<Row, byte[]> producer =
-        Producer.<Row, byte[]>builder()
+        Producer.builder()
             .connectionProps(client.connectionProps())
             .keySerializer(Serializer.ROW)
             .valueSerializer(Serializer.BYTES)
@@ -57,7 +57,6 @@ public class TestWordCountExample extends WithBroker {
         "[" + TopicKey.toJsonString(fromTopic) + "]");
     settings.putIfAbsent(
         StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
-    StreamTestUtils.setOharaEnv(settings);
     StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
     StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
     // prepare data
@@ -69,7 +68,7 @@ public class TestWordCountExample extends WithBroker {
 
     // run example
     WordCountExample app = new WordCountExample();
-    Stream.execute(app.getClass());
+    Stream.execute(app.getClass(), settings);
 
     // Assert the result
     List<Row> expected =

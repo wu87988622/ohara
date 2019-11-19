@@ -17,15 +17,19 @@
 package com.island.ohara.streams.config;
 
 import com.island.ohara.common.rule.OharaTest;
-import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamDefUtils extends OharaTest {
-
+public class TestStreamSetting extends OharaTest {
   @Test
-  public void testJarDefinition() {
-    Assert.assertEquals(StreamDefUtils.JAR_KEY_DEFINITION.valueType(), SettingDef.Type.OBJECT_KEY);
-    Assert.assertEquals(StreamDefUtils.JAR_KEY_DEFINITION.reference(), SettingDef.Reference.FILE);
+  public void testToEnvString() {
+    String string = CommonUtils.randomString();
+    Assert.assertEquals(string, StreamSetting.fromEnvString(StreamSetting.toEnvString(string)));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failToUseEnvString() {
+    StreamSetting.toEnvString(CommonUtils.randomString() + StreamSetting.INTERNAL_STRING_FOR_ENV);
   }
 }

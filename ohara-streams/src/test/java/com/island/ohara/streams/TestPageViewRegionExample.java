@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
@@ -26,7 +27,6 @@ import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.examples.PageViewRegionExample;
 import com.island.ohara.testing.WithBroker;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +39,7 @@ public class TestPageViewRegionExample extends WithBroker {
 
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
-      Producer.<Row, byte[]>builder()
+      Producer.builder()
           .connectionProps(client.connectionProps())
           .keySerializer(Serializer.ROW)
           .valueSerializer(Serializer.BYTES)
@@ -105,25 +105,23 @@ public class TestPageViewRegionExample extends WithBroker {
               Row.of(Cell.of("user", "elsa"), Cell.of("region", "Cuba")))
           .collect(Collectors.toList());
 
+  private final Map<String, String> configs =
+      ImmutableMap.of(
+          StreamDefUtils.BROKER_DEFINITION.key(),
+          client.connectionProps(),
+          StreamDefUtils.NAME_DEFINITION.key(),
+          CommonUtils.randomString(),
+          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+          "[" + TopicKey.toJsonString(fromTopic) + "]",
+          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+          "[" + TopicKey.toJsonString(toTopic) + "]",
+          PageViewRegionExample.joinTopicKey,
+          joinTableTopic);
+
   @Before
   public void setup() {
     final int partitions = 1;
     final short replications = 1;
-    String appId = CommonUtils.randomString();
-
-    // prepare ohara environment
-    Map<String, String> settings = new HashMap<>();
-    settings.putIfAbsent(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), appId);
-    settings.putIfAbsent(
-        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-        "[" + TopicKey.toJsonString(fromTopic) + "]");
-    settings.putIfAbsent(
-        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
-    settings.putIfAbsent("joinTopic", joinTableTopic);
-    settings.putIfAbsent(PageViewRegionExample.joinTopicKey, joinTableTopic);
-    StreamTestUtils.setOharaEnv(settings);
-
     StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
     StreamTestUtils.createTopic(client, joinTableTopic, partitions, replications);
     StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
@@ -133,7 +131,7 @@ public class TestPageViewRegionExample extends WithBroker {
   public void testCase() throws InterruptedException {
     // run example
     PageViewRegionExample app = new PageViewRegionExample();
-    Stream.execute(app.getClass());
+    Stream.execute(app.getClass(), configs);
 
     StreamTestUtils.produceData(producer, profiles, joinTableTopic);
     // the default commit.interval.ms=30 seconds, which should make sure join table ready

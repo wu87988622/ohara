@@ -38,7 +38,8 @@ public class TestStream extends OharaTest {
     TopicKey toKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
 
     // initial all required environment
-    StreamTestUtils.setOharaEnv(
+    Stream.execute(
+        app.getClass(),
         java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(5)),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), CommonUtils.randomString()),
@@ -49,7 +50,6 @@ public class TestStream extends OharaTest {
                     StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
-    Stream.execute(app.getClass());
   }
 
   public static class CustomStream extends Stream {

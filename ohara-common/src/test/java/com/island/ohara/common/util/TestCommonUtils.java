@@ -426,17 +426,6 @@ public class TestCommonUtils extends OharaTest {
   }
 
   @Test
-  public void testToEnvString() {
-    String string = CommonUtils.randomString();
-    Assert.assertEquals(string, CommonUtils.fromEnvString(CommonUtils.toEnvString(string)));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void failToUseEnvString() {
-    CommonUtils.toEnvString(CommonUtils.randomString() + CommonUtils.INTERNAL_STRING_FOR_ENV);
-  }
-
-  @Test
   public void availablePortShouldBeBiggerThan1024() {
     for (int i = 0; i != 10; ++i) {
       Assert.assertTrue(CommonUtils.availablePort() > 1024);

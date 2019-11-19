@@ -52,4 +52,6 @@ done
 
 # load envs
 . "$BIN_DIR/ohara-env.sh"
+echo "script: $SCRIPT"
+echo "command-line arguments: $ARGS"
 exec $SCRIPT $ARGS

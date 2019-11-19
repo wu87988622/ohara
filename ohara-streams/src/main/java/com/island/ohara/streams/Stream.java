@@ -47,22 +47,15 @@ public abstract class Stream {
    * Running a standalone stream. This method is usually called from the main method. It must not be
    * called more than once otherwise exception will be thrown.
    *
-   * <p>Usage :
-   *
-   * <pre>
-   *   public static void main(String[] args){
-   *     Stream.execute(MyStream.class);
-   *   }
-   * </pre>
-   *
    * @param clz the stream class that is constructed and extends from {@link Stream}
+   * @param configs the raw configs passed from command-line arguments
    */
-  public static void execute(Class<? extends Stream> clz) {
+  public static void execute(Class<? extends Stream> clz, Map<String, String> configs) {
     ExceptionHandler.DEFAULT.handle(
         () -> {
           Constructor<? extends Stream> cons = clz.getConstructor();
           final Stream theApp = cons.newInstance();
-          StreamSetting streamSetting = StreamSetting.of(theApp.definitions());
+          StreamSetting streamSetting = StreamSetting.of(theApp.definitions(), configs);
 
           OStream<Row> ostream =
               OStream.builder()
@@ -102,7 +95,7 @@ public abstract class Stream {
       throw new RuntimeException(
           "Where is the value of " + StreamDefUtils.CLASS_NAME_DEFINITION.key());
     Class clz = handler.handle(() -> Class.forName(className));
-    if (Stream.class.isAssignableFrom(clz)) execute(clz);
+    if (Stream.class.isAssignableFrom(clz)) execute(clz, args);
     else
       throw new RuntimeException(
           "Error: " + clz + " is not a subclass of " + Stream.class.getName());

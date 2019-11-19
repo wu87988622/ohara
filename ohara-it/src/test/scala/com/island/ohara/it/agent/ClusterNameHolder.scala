@@ -126,19 +126,20 @@ object ClusterNameHolder {
                 containerName.name.contains(key.group()) && containerName.name.contains(key.name())))
             .foreach { containerName =>
               try {
-                println(s"[-----------------------------------$containerName-----------------------------------]")
+                println(
+                  s"[-----------------------------------[image:${containerName.imageName}][name:${containerName.name}-----------------------------------]")
                 val containerLogs = try client.log(containerName.name)
                 catch {
                   case e: Throwable =>
-                    s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
+                    s"failed to fetch the logs for container:${containerName.name}. caused by:${e.getMessage}"
                 }
                 println(containerLogs)
                 println("[------------------------------------------------------------------------------------]")
                 client.forceRemove(containerName.name)
-                LOG.info(s"succeed to remove container $containerName")
+                LOG.info(s"succeed to remove container ${containerName.name}")
               } catch {
                 case e: Throwable =>
-                  LOG.error(s"failed to remove container $containerName", e)
+                  LOG.error(s"failed to remove container ${containerName.name}", e)
               }
             } finally client.close()
       }

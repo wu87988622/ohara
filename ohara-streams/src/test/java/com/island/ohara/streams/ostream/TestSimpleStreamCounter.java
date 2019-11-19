@@ -28,7 +28,6 @@ import com.island.ohara.kafka.Producer;
 import com.island.ohara.metrics.BeanChannel;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
-import com.island.ohara.streams.StreamTestUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.streams.metric.MetricFactory;
@@ -98,8 +97,9 @@ public class TestSimpleStreamCounter extends WithBroker {
 
   @Test
   public void testMetrics() {
-    // initial environment
-    StreamTestUtils.setOharaEnv(
+    DirectWriteStream app = new DirectWriteStream();
+    Stream.execute(
+        app.getClass(),
         java.util.stream.Stream.of(
                 Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "metric-test"),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
@@ -110,9 +110,6 @@ public class TestSimpleStreamCounter extends WithBroker {
                     StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
-
-    DirectWriteStream app = new DirectWriteStream();
-    Stream.execute(app.getClass());
 
     // wait until topic has data
     CommonUtils.await(() -> consumer.poll(timeout).size() > 0, Duration.ofSeconds(30));
