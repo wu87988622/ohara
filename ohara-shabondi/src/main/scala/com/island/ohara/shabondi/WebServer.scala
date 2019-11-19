@@ -29,5 +29,4 @@ private class WebServer(private val serverType: ServerType) extends AbstractWebS
     case HttpSource => sourceRoute
     case HttpSink   => sinkRoute
   }
-
 }

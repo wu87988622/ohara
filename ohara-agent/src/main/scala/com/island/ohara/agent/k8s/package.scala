@@ -17,7 +17,6 @@
 package com.island.ohara.agent
 
 package object k8s {
-
   /**
     * used to distinguish the cluster name and service name
     */
@@ -33,5 +32,4 @@ package object k8s {
   private[k8s] val K8S_DOMAIN_NAME: String = "default"
 
   private[k8s] val OHARA_LABEL: String = "ohara"
-
 }

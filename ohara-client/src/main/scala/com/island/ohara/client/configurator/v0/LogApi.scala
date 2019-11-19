@@ -23,7 +23,7 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 
 object LogApi {
-  val LOG_PREFIX_PATH: String = "logs"
+  val LOG_PREFIX_PATH: String          = "logs"
   val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
   case class NodeLog(hostname: String, value: String)
@@ -33,7 +33,6 @@ object LogApi {
   implicit val CLUSTER_LOG_FORMAT: RootJsonFormat[ClusterLog] = jsonFormat2(ClusterLog)
 
   class Access extends BasicAccess(LOG_PREFIX_PATH) {
-
     private[this] def _url(service: String, clusterKey: ObjectKey): String =
       s"$url/$service/${clusterKey.name()}?$GROUP_KEY=${clusterKey.group()}"
 

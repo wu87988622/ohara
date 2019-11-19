@@ -27,7 +27,6 @@ import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestFileInfoApi extends OharaTest {
-
   private[this] def access: FileInfoApi.Access = FileInfoApi.access.hostname(CommonUtils.hostname()).port(22)
 
   @Test

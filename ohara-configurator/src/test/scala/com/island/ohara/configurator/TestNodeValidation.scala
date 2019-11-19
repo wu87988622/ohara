@@ -26,9 +26,8 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 class TestNodeValidation extends OharaTest {
-
   private[this] val configurator = Configurator.builder.fake().build()
-  private[this] val sshd = SshdServer.local()
+  private[this] val sshd         = SshdServer.local()
 
   @Test
   def test(): Unit = {

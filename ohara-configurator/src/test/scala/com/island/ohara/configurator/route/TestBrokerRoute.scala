@@ -33,9 +33,9 @@ import scala.concurrent.{Await, Future}
 class TestBrokerRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val brokerApi    = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+  private[this] val zkKey                                      = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
   private[this] var zookeeperClusterInfo: ZookeeperClusterInfo = _
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
@@ -90,7 +90,8 @@ class TestBrokerRoute extends OharaTest {
         .zookeeperClusterKey(zkKey)
         .nodeNames(nodeNames)
         .zookeeperClusterKey(zkKey)
-        .create())
+        .create()
+    )
     result(brokerApi.start(bk.key))
 
     val wk = result(
@@ -101,8 +102,10 @@ class TestBrokerRoute extends OharaTest {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     // start worker
     result(
       WorkerApi.access.hostname(configurator.hostname).port(configurator.port).start(wk.key)
@@ -137,7 +140,8 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testDefaultZk(): Unit = {
     val bk = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     // absent zookeeper name will be auto-filled in creation
     bk.zookeeperClusterKey shouldBe zkKey
     result(brokerApi.start(bk.key))
@@ -148,7 +152,8 @@ class TestBrokerRoute extends OharaTest {
   def testList(): Unit = {
     val init = result(brokerApi.list()).size
     val bk = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(bk.key))
 
     val zk2 = result(
@@ -163,7 +168,8 @@ class TestBrokerRoute extends OharaTest {
     result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.key))
 
     val bk2 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create()
+    )
     result(brokerApi.start(bk2.key))
 
     val clusters = result(brokerApi.list())
@@ -176,7 +182,8 @@ class TestBrokerRoute extends OharaTest {
   def testStop(): Unit = {
     val init = result(brokerApi.list()).size
     val cluster = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(cluster.key))
     result(brokerApi.list()).size shouldBe init + 1
     result(brokerApi.stop(cluster.key))
@@ -188,7 +195,8 @@ class TestBrokerRoute extends OharaTest {
   def testRemove(): Unit = {
     val init = result(brokerApi.list()).size
     val cluster = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.list()).size shouldBe init + 1
     result(brokerApi.delete(cluster.key))
     result(brokerApi.list()).size shouldBe init
@@ -197,7 +205,8 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testKeywordInAddNode(): Unit = {
     val cluster = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(cluster.key))
 
     // it's ok use keyword, but the "actual" behavior is not expected (expected addNode, but start/stop cluster)
@@ -209,7 +218,8 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testAddNode(): Unit = {
     val cluster = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(cluster.key))
 
     result(brokerApi.addNode(cluster.key, nodeNames.last).flatMap(_ => brokerApi.get(cluster.key))).nodeNames shouldBe cluster.nodeNames + nodeNames.last
@@ -218,7 +228,8 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testRemoveNode(): Unit = {
     val cluster = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(cluster.key))
 
     result(brokerApi.removeNode(cluster.key, nodeNames.last))
@@ -237,18 +248,21 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testInvalidClusterName(): Unit =
     an[DeserializationException] should be thrownBy result(
-      brokerApi.request.name("--]").nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name("--]").nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
 
   @Test
   def runMultiBkClustersOnSameZkCluster(): Unit = {
     // pass
     val bk = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(bk.key))
 
     // we can't create multi broker clusters on same zk cluster
     val bk2 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk2.key))
   }
 
@@ -270,7 +284,8 @@ class TestBrokerRoute extends OharaTest {
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.request.name(name).zookeeperClusterKey(zk2.key).nodeNames(nodeNames).create())
+      brokerApi.request.name(name).zookeeperClusterKey(zk2.key).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
@@ -282,7 +297,8 @@ class TestBrokerRoute extends OharaTest {
         .nodeNames(nodeNames)
         .clientPort(clientPort)
         .zookeeperClusterKey(zkKey)
-        .create())
+        .create()
+    )
     result(brokerApi.start(bk.key))
 
     val zk2 = result(
@@ -302,12 +318,14 @@ class TestBrokerRoute extends OharaTest {
         .nodeNames(nodeNames)
         .clientPort(clientPort)
         .zookeeperClusterKey(zk2.key)
-        .create())
+        .create()
+    )
     an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk2.key))
 
     // pass
     val bk3 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create()
+    )
     result(brokerApi.start(bk3.key))
   }
 
@@ -320,7 +338,8 @@ class TestBrokerRoute extends OharaTest {
         .nodeNames(nodeNames)
         .jmxPort(jmxPort)
         .zookeeperClusterKey(zkKey)
-        .create())
+        .create()
+    )
     result(brokerApi.start(bk.key))
 
     val zk2 = result(
@@ -340,12 +359,14 @@ class TestBrokerRoute extends OharaTest {
         .nodeNames(nodeNames)
         .jmxPort(jmxPort)
         .zookeeperClusterKey(zk2.key)
-        .create())
+        .create()
+    )
     an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk2.key))
 
     // pass
     val bk3 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zk2.key).create()
+    )
     result(brokerApi.start(bk3.key))
   }
 
@@ -355,7 +376,8 @@ class TestBrokerRoute extends OharaTest {
 
     // graceful delete
     val bk0 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(bk0.key))
     result(brokerApi.stop(bk0.key))
     result(brokerApi.delete(bk0.key))
@@ -363,7 +385,8 @@ class TestBrokerRoute extends OharaTest {
 
     // force delete
     val bk1 = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.start(bk1.key))
     result(brokerApi.forceStop(bk1.key))
     result(brokerApi.delete(bk1.key))
@@ -373,7 +396,8 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testTopicSettingDefinitions(): Unit = {
     result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     result(brokerApi.list()).size should not be 0
     result(brokerApi.list()).foreach(_.topicDefinition.settingDefinitions.size should not be 0)
   }
@@ -381,7 +405,8 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testIdempotentStart(): Unit = {
     val bk = result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
+    )
     (0 until 10).foreach(_ => result(brokerApi.start(bk.key)))
   }
 
@@ -390,7 +415,8 @@ class TestBrokerRoute extends OharaTest {
     val bk = result(brokerApi.request.nodeName(nodeNames.head).zookeeperClusterKey(zkKey).create())
     result(brokerApi.start(bk.key))
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.request.name(bk.name).nodeNames(nodeNames).update())
+      brokerApi.request.name(bk.name).nodeNames(nodeNames).update()
+    )
     result(brokerApi.stop(bk.key))
     result(brokerApi.request.name(bk.name).nodeNames(nodeNames).update())
     result(brokerApi.start(bk.key))
@@ -429,7 +455,7 @@ class TestBrokerRoute extends OharaTest {
 
     // same name but different group
     val name = CommonUtils.randomString(10)
-    val bk1 = result(brokerApi.request.name(name).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
+    val bk1  = result(brokerApi.request.name(name).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
     bk1.name shouldBe name
     bk1.group should not be group
     val bk2 = result(brokerApi.request.name(name).group(group).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create())
@@ -441,7 +467,7 @@ class TestBrokerRoute extends OharaTest {
 
   @Test
   def testNameFilter(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
     val zookeeper = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
     result(zookeeperApi.start(zookeeper.key))
     val broker = result(brokerApi.request.name(name).nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
@@ -458,7 +484,7 @@ class TestBrokerRoute extends OharaTest {
 
   @Test
   def testGroupFilter(): Unit = {
-    val group = CommonUtils.randomString(10)
+    val group     = CommonUtils.randomString(10)
     val zookeeper = result(zookeeperApi.request.group(group).nodeNames(nodeNames).create())
     result(zookeeperApi.start(zookeeper.key))
     val broker = result(brokerApi.request.group(group).nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
@@ -537,7 +563,7 @@ class TestBrokerRoute extends OharaTest {
       result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(newZkKey).create())
     }.getMessage should include("does not exist")
     val zookeeper = result(zookeeperApi.request.key(newZkKey).nodeNames(nodeNames).create())
-    val broker = result(brokerApi.request.nodeName(nodeNames.head).zookeeperClusterKey(zookeeper.key).create())
+    val broker    = result(brokerApi.request.nodeName(nodeNames.head).zookeeperClusterKey(zookeeper.key).create())
 
     an[IllegalArgumentException] should be thrownBy result(brokerApi.start(broker.key))
 

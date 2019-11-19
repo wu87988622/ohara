@@ -25,7 +25,6 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 
 abstract class FileSystemTestBase extends OharaTest {
-
   protected val fileSystem: FileSystem
 
   protected val rootDir: String
@@ -78,8 +77,8 @@ abstract class FileSystemTestBase extends OharaTest {
 
   @Test
   def testCreate(): Unit = {
-    val file = randomFile()
-    val text = randomText()
+    val file         = randomFile()
+    val text         = randomText()
     val outputStream = fileSystem.create(file)
     outputStream.write(text.getBytes)
     outputStream.close()
@@ -130,7 +129,7 @@ abstract class FileSystemTestBase extends OharaTest {
 
   @Test
   def testDeleteWithRecursive(): Unit = {
-    val dir = randomDir()
+    val dir   = randomDir()
     val file1 = randomFile(dir)
     val file2 = randomFile(dir)
 
@@ -150,7 +149,7 @@ abstract class FileSystemTestBase extends OharaTest {
 
   @Test
   def testDeleteFolderWithContainingFiles(): Unit = {
-    val dir = randomDir()
+    val dir  = randomDir()
     val file = randomFile(dir)
     fileSystem.mkdirs(dir)
     fileSystem.create(file).close()

@@ -18,22 +18,25 @@ package com.island.ohara.connector.ftp
 
 import com.island.ohara.kafka.connector.TaskSetting
 
-case class FtpSinkProps(topicsDir: String,
-                        needHeader: Boolean,
-                        encode: String,
-                        hostname: String,
-                        port: Int,
-                        user: String,
-                        password: String) {
-  def toMap: Map[String, String] = Map(
-    TOPICS_DIR_KEY -> topicsDir,
-    FILE_NEED_HEADER_KEY -> needHeader.toString,
-    FILE_ENCODE_KEY -> encode,
-    FTP_HOSTNAME_KEY -> hostname,
-    FTP_PORT_KEY -> port.toString,
-    FTP_USER_NAME_KEY -> user,
-    FTP_PASSWORD_KEY -> password
-  ).filter(_._2.nonEmpty)
+case class FtpSinkProps(
+  topicsDir: String,
+  needHeader: Boolean,
+  encode: String,
+  hostname: String,
+  port: Int,
+  user: String,
+  password: String
+) {
+  def toMap: Map[String, String] =
+    Map(
+      TOPICS_DIR_KEY       -> topicsDir,
+      FILE_NEED_HEADER_KEY -> needHeader.toString,
+      FILE_ENCODE_KEY      -> encode,
+      FTP_HOSTNAME_KEY     -> hostname,
+      FTP_PORT_KEY         -> port.toString,
+      FTP_USER_NAME_KEY    -> user,
+      FTP_PASSWORD_KEY     -> password
+    ).filter(_._2.nonEmpty)
 }
 
 object FtpSinkProps {

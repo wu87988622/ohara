@@ -25,7 +25,6 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 
 class TestFtpSinkDefinitions extends OharaTest {
-
   private[this] val ftpSink = new FtpSink
   @Test
   def checkOutputFolder(): Unit = {

@@ -27,7 +27,6 @@ import com.island.ohara.kafka.connector.storage
   * a file having 100 lines has 100 message in connector topic. If the file is processed correctly, the TestFtpSource
   */
 class FtpSourceTask extends CsvSourceTask {
-
   override def _fileSystem(config: TaskSetting): storage.FileSystem = {
     val props: FtpSourceProps = FtpSourceProps(config)
     FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()

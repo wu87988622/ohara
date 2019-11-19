@@ -21,7 +21,6 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 object ErrorApi {
-
   /**
     * Although we have different version of APIs, the error response should be identical so as to simplify the parser...
     * @param code description of code
@@ -32,10 +31,12 @@ object ErrorApi {
       extends HttpExecutor.Error
 
   def of(e: Throwable): Error =
-    Error(code = e.getClass.getName,
-          message = if (e.getMessage == null) "unknown" else e.getMessage,
-          stack = ExceptionUtils.getStackTrace(e),
-          apiUrl = None)
+    Error(
+      code = e.getClass.getName,
+      message = if (e.getMessage == null) "unknown" else e.getMessage,
+      stack = ExceptionUtils.getStackTrace(e),
+      apiUrl = None
+    )
 
   implicit val ERROR_FORMAT: RootJsonFormat[Error] = jsonFormat4(Error)
 }

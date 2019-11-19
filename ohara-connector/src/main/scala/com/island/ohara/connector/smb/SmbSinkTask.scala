@@ -22,7 +22,6 @@ import com.island.ohara.kafka.connector.csv.CsvSinkTask
 import com.island.ohara.kafka.connector.storage.FileSystem
 
 class SmbSinkTask extends CsvSinkTask {
-
   /**
     * Returns the FileSystem implementation for this Task.
     *

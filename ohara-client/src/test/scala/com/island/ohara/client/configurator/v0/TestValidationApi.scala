@@ -24,13 +24,12 @@ import ValidationApi.FTP_VALIDATION_JSON_FORMAT
 import com.island.ohara.common.setting.ObjectKey
 import spray.json._
 class TestValidationApi extends OharaTest {
-
   @Test
   def testIntPortOfFtpRequest(): Unit = {
     val hostname = CommonUtils.randomString()
-    val user = CommonUtils.randomString()
+    val user     = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
+    val port     = CommonUtils.availablePort()
     val json =
       s"""
          | {
@@ -54,10 +53,10 @@ class TestValidationApi extends OharaTest {
 
   @Test
   def testStringPortOfFtpRequest(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
+    val hostname          = CommonUtils.randomString()
+    val user              = CommonUtils.randomString()
+    val password          = CommonUtils.randomString()
+    val port              = CommonUtils.availablePort()
     val workerClusterName = CommonUtils.randomString()
     val json =
       s"""
@@ -122,10 +121,10 @@ class TestValidationApi extends OharaTest {
 
   @Test
   def testFtpValidation(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val hostname         = CommonUtils.randomString()
+    val port             = CommonUtils.availablePort()
+    val user             = CommonUtils.randomString()
+    val password         = CommonUtils.randomString()
     val workerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
 
     val validation = ValidationApi.access.ftpRequest
@@ -155,7 +154,7 @@ class TestValidationApi extends OharaTest {
 
   @Test
   def testHdfsValidation(): Unit = {
-    val uri = CommonUtils.randomString()
+    val uri              = CommonUtils.randomString()
     val workerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
 
     val validation = ValidationApi.access.hdfsRequest.uri(uri).workerClusterKey(workerClusterKey).validation
@@ -191,9 +190,9 @@ class TestValidationApi extends OharaTest {
 
   @Test
   def testRdbValidation(): Unit = {
-    val url = CommonUtils.randomString()
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val url              = CommonUtils.randomString()
+    val user             = CommonUtils.randomString()
+    val password         = CommonUtils.randomString()
     val workerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
 
     val validation = ValidationApi.access.rdbRequest
@@ -242,8 +241,8 @@ class TestValidationApi extends OharaTest {
   @Test
   def testNodeValidation(): Unit = {
     val hostname = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
-    val user = CommonUtils.randomString()
+    val port     = CommonUtils.availablePort()
+    val user     = CommonUtils.randomString()
     val password = CommonUtils.randomString()
 
     val validation =
@@ -287,13 +286,14 @@ class TestValidationApi extends OharaTest {
         |    "uri": "asdad",
         |    "workerClusterKey": ""
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
   }
 
   @Test
   def testParseRdbValidation(): Unit = {
-    val url = CommonUtils.randomString()
-    val user = CommonUtils.randomString()
+    val url      = CommonUtils.randomString()
+    val user     = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(s"""
          |  {
@@ -323,7 +323,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(
       """
@@ -332,7 +333,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read("""
         |  {
@@ -350,14 +352,15 @@ class TestValidationApi extends OharaTest {
         |    "password": "password",
         |    "workerClusterKey": ""
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
   }
 
   @Test
   def testParseFtpValidation(): Unit = {
     val hostname = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
-    val user = CommonUtils.randomString()
+    val port     = CommonUtils.availablePort()
+    val user     = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
          |  {
@@ -382,12 +385,12 @@ class TestValidationApi extends OharaTest {
 
   @Test
   def testParseStringToNumberForFtpValidation(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val hostname          = CommonUtils.randomString()
+    val port              = CommonUtils.availablePort()
+    val user              = CommonUtils.randomString()
+    val password          = CommonUtils.randomString()
     val workerClusterName = CommonUtils.randomString()
-    val ftpValidation = ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
+    val ftpValidation     = ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "hostname": "$hostname",
          |    "port": "$port",
@@ -413,7 +416,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
   @Test
   def testZeroConnectionPortForFtpValidation(): Unit =
@@ -425,7 +429,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
   @Test
   def testEmptyStringForFtpValidation(): Unit = {
@@ -437,7 +442,8 @@ class TestValidationApi extends OharaTest {
          |    "user": "user",
          |    "password": "password"
          |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
       """
@@ -447,7 +453,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
       """
@@ -457,7 +464,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
       """
@@ -467,15 +475,16 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": ""
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
   }
 
   @Test
   def testParseNodeValidation(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val port = CommonUtils.availablePort()
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val hostname       = CommonUtils.randomString()
+    val port           = CommonUtils.availablePort()
+    val user           = CommonUtils.randomString()
+    val password       = CommonUtils.randomString()
     val nodeValidation = ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(s"""
          |  {
          |    "hostname": "$hostname",
@@ -501,7 +510,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
   @Test
   def testZeroConnectionPortForNodeValidation(): Unit =
@@ -513,7 +523,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
   @Test
   def testEmptyStringForNodeValidation(): Unit = {
@@ -525,7 +536,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
       """
@@ -535,7 +547,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
       """
@@ -545,7 +558,8 @@ class TestValidationApi extends OharaTest {
         |    "user": "",
         |    "password": "password"
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
 
     an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
       """
@@ -555,6 +569,7 @@ class TestValidationApi extends OharaTest {
         |    "user": "user",
         |    "password": ""
         |  }
-      """.stripMargin.parseJson)
+      """.stripMargin.parseJson
+    )
   }
 }

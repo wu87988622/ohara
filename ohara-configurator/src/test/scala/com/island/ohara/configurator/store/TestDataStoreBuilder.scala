@@ -21,7 +21,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestDataStoreBuilder extends OharaTest {
-
   @Test
   def testNullValueSerializer(): Unit =
     an[NullPointerException] should be thrownBy DataStore.builder.dataSerializer(null)

@@ -18,9 +18,11 @@ package com.island.ohara.client.configurator.v0
 
 import spray.json.JsValue
 
-final case class SimpleData(stringValue: String,
-                            group: String,
-                            bindPort: Int,
-                            connectionPort: Int,
-                            stringArray: Seq[String],
-                            objects: Map[String, JsValue])
+final case class SimpleData(
+  stringValue: String,
+  group: String,
+  bindPort: Int,
+  connectionPort: Int,
+  stringArray: Seq[String],
+  objects: Map[String, JsValue]
+)

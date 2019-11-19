@@ -26,7 +26,6 @@ import org.junit.Test
 
 import scala.collection.JavaConverters._
 package object assembly {
-
   /**
     * return the super class and interfaces of input class.
     * @param rootClass input class
@@ -40,14 +39,15 @@ package object assembly {
     * @param clz class
     * @return methods having annotation "Test"
     */
-  def testCases(clz: Class[_]): Set[String] = clz.getMethods
-    .filter { m =>
-      val annotations = m.getAnnotations
-      if (annotations == null || annotations.isEmpty) false
-      else annotations.exists(_.annotationType() == classOf[Test])
-    }
-    .map(_.getName)
-    .toSet
+  def testCases(clz: Class[_]): Set[String] =
+    clz.getMethods
+      .filter { m =>
+        val annotations = m.getAnnotations
+        if (annotations == null || annotations.isEmpty) false
+        else annotations.exists(_.annotationType() == classOf[Test])
+      }
+      .map(_.getName)
+      .toSet
 
   /**
     * Java generate $number class for the class which has private constructor and we don't care for them in some tests.
@@ -67,11 +67,12 @@ package object assembly {
     * 3) non anonymous class (It is impossible to use anonymous class to write ohara test)
     * @return test classes
     */
-  def testClasses(): Seq[Class[_]] = allClasses(_.contains("tests.jar"))
-  // the test class should not be anonymous class
-    .filterNot(isAnonymous)
-    // the previous filter had chosen the normal class so it is safe to produce the simple name for classes
-    .filter(_.getSimpleName.startsWith("Test"))
+  def testClasses(): Seq[Class[_]] =
+    allClasses(_.contains("tests.jar"))
+    // the test class should not be anonymous class
+      .filterNot(isAnonymous)
+      // the previous filter had chosen the normal class so it is safe to produce the simple name for classes
+      .filter(_.getSimpleName.startsWith("Test"))
 
   /**
     * @return all classes in testing scope
@@ -85,9 +86,9 @@ package object assembly {
 
   def allClasses(fileNameFilter: String => Boolean): Seq[Class[_]] = {
     val classLoader = ClassLoader.getSystemClassLoader
-    val path = "com/island/ohara"
-    val pattern = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
-    val urls = classLoader.getResources(path)
+    val path        = "com/island/ohara"
+    val pattern     = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
+    val urls        = classLoader.getResources(path)
     Iterator
       .continually(urls.nextElement())
       .takeWhile(_ => urls.hasMoreElements)

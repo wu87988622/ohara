@@ -20,16 +20,16 @@ import com.island.ohara.client.Enum
 
 sealed abstract class DataTypeEnum
 object DataTypeEnum extends Enum[DataTypeEnum] {
-  case object INTEGER extends DataTypeEnum
-  case object LONG extends DataTypeEnum
-  case object BOOLEAN extends DataTypeEnum
-  case object FLOAT extends DataTypeEnum
-  case object DOUBLE extends DataTypeEnum
+  case object INTEGER    extends DataTypeEnum
+  case object LONG       extends DataTypeEnum
+  case object BOOLEAN    extends DataTypeEnum
+  case object FLOAT      extends DataTypeEnum
+  case object DOUBLE     extends DataTypeEnum
   case object BIGDECIMAL extends DataTypeEnum
-  case object STRING extends DataTypeEnum
-  case object DATE extends DataTypeEnum
-  case object TIME extends DataTypeEnum
-  case object TIMESTAMP extends DataTypeEnum
-  case object BYTES extends DataTypeEnum
-  case object NONETYPE extends DataTypeEnum
+  case object STRING     extends DataTypeEnum
+  case object DATE       extends DataTypeEnum
+  case object TIME       extends DataTypeEnum
+  case object TIMESTAMP  extends DataTypeEnum
+  case object BYTES      extends DataTypeEnum
+  case object NONETYPE   extends DataTypeEnum
 }

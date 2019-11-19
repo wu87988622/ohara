@@ -27,16 +27,19 @@ import scala.concurrent.{ExecutionContext, Future}
 private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[WorkerClusterStatus](dataCollie, dockerCache, clusterCache)
     with WorkerCollie {
-
-  override protected def postCreate(workerClusterStatus: WorkerClusterStatus,
-                                    successfulContainers: Seq[ContainerInfo]): Unit =
+  override protected def postCreate(
+    workerClusterStatus: WorkerClusterStatus,
+    successfulContainers: Seq[ContainerInfo]
+  ): Unit =
     clusterCache.put(workerClusterStatus, clusterCache.get(workerClusterStatus) ++ successfulContainers)
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] =
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: NodeApi.Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
@@ -57,11 +60,11 @@ private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           // [AFTER] Given that we have no use case about using port in custom connectors and there is no
           // similar case in other type (stream and k8s impl). Hence we change the network type from host to bridge
           .portMappings(
-            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
+            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+          )
           .arguments(arguments)
           .create()
       )
-
     } catch {
       case e: Throwable =>
         try dockerCache.exec(node, _.forceRemove(containerInfo.name))

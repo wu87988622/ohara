@@ -40,13 +40,12 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
-
   // the required files for zookeeper
   // TODO: remove this hard code (see #2957)
   private[this] val homeFolder: String = ZookeeperApi.ZOOKEEPER_HOME_FOLDER
   private[this] val configPath: String = s"$homeFolder/conf/zoo.cfg"
   private[this] val dataFolder: String = s"$homeFolder/data"
-  private[this] val myIdPath: String = s"$dataFolder/myid"
+  private[this] val myIdPath: String   = s"$dataFolder/myid"
 
   override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
 
@@ -78,7 +77,8 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
         case (existentNodes, newNodes) =>
           if (existentNodes.nonEmpty)
             throw new UnsupportedOperationException(
-              s"zookeeper collie doesn't support to add node to a running cluster")
+              s"zookeeper collie doesn't support to add node to a running cluster"
+            )
           else newNodes
       }
       .flatMap { newNodes =>
@@ -128,7 +128,8 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
                           hostIp = Collie.UNKNOWN,
                           hostPort = port,
                           containerPort = port
-                      ))
+                        )
+                    )
                     .toSeq,
                   environments = Map(
                     // zookeeper does not support java.rmi.server.hostname so we have to disable the default settings of jmx from zookeeper
@@ -197,18 +198,21 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
     */
   protected def prefixKey: String
 
-  protected def doCreator(executionContext: ExecutionContext,
-                          containerInfo: ContainerInfo,
-                          node: Node,
-                          route: Map[String, String],
-                          arguments: Seq[String]): Future[Unit]
+  protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit]
 
   protected def postCreate(clusterStatus: ZookeeperClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing
   }
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterStatus] =
+    implicit executionContext: ExecutionContext
+  ): Future[ZookeeperClusterStatus] =
     Future.successful(
       new ZookeeperClusterStatus(
         group = key.group(),
@@ -219,7 +223,8 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterStatus] {
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None
-      ))
+      )
+    )
 }
 
 object ZookeeperCollie {

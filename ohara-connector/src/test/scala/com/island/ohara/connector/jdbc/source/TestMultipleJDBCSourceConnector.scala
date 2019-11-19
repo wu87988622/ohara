@@ -37,13 +37,13 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-  private[this] val tableName = "table1"
+  private[this] val db                  = Database.local()
+  private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
-  private[this] val connectorKey1 = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-  private[this] val connectorKey2 = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
+  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorKey1       = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
+  private[this] val connectorKey2       = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
 
   @Before
   def setup(): Unit = {
@@ -56,21 +56,28 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
     val statement: Statement = db.connection.createStatement()
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:03.123456', 'a61', 'a62', 6)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:03.123456', 'a61', 'a62', 6)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)"
+    )
     statement.executeUpdate(s"INSERT INTO $tableName(column1) VALUES('2018-09-01 00:00:05')")
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)"
+    )
   }
 
   @Test
@@ -85,7 +92,8 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props.toMap)
-        .create())
+        .create()
+    )
 
     val consumer =
       Consumer
@@ -108,7 +116,8 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
           .topicKey(topicKey)
           .numberOfTasks(1)
           .settings(props.toMap)
-          .create())
+          .create()
+      )
 
       consumer.seekToBeginning()
       val record2 = consumer.poll(java.time.Duration.ofSeconds(30), 12).asScala
@@ -116,7 +125,8 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
 
       val statement: Statement = db.connection.createStatement()
       statement.executeUpdate(
-        s"INSERT INTO $tableName(column1, column2, column3, column4) VALUES('2018-09-02 00:00:05', 'a81', 'a82', 8)")
+        s"INSERT INTO $tableName(column1, column2, column3, column4) VALUES('2018-09-02 00:00:05', 'a81', 'a82', 8)"
+      )
 
       consumer.seekToBeginning()
       val record3 = consumer.poll(java.time.Duration.ofSeconds(30), 14).asScala
@@ -156,10 +166,13 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
 
   private[this] val props = JDBCSourceConnectorConfig(
     TaskSetting.of(
-      Map(DB_URL -> db.url,
-          DB_USERNAME -> db.user,
-          DB_PASSWORD -> db.password,
-          DB_TABLENAME -> tableName,
-          TIMESTAMP_COLUMN_NAME -> timestampColumnName).asJava))
-
+      Map(
+        DB_URL                -> db.url,
+        DB_USERNAME           -> db.user,
+        DB_PASSWORD           -> db.password,
+        DB_TABLENAME          -> tableName,
+        TIMESTAMP_COLUMN_NAME -> timestampColumnName
+      ).asJava
+    )
+  )
 }

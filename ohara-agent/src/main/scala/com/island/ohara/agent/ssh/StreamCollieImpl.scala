@@ -25,12 +25,13 @@ import scala.concurrent.{ExecutionContext, Future}
 private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[StreamClusterStatus](dataCollie, dockerCache, clusterCache)
     with StreamCollie {
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] =
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
@@ -40,7 +41,8 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
           .envs(containerInfo.environments)
           .name(containerInfo.name)
           .portMappings(
-            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
+            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+          )
           .route(route)
           .arguments(arguments)
           .create()
@@ -56,14 +58,16 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
         None
     })
 
-  override protected def postCreate(clusterStatus: StreamClusterStatus,
-                                    successfulContainers: Seq[ContainerInfo]): Unit =
+  override protected def postCreate(
+    clusterStatus: StreamClusterStatus,
+    successfulContainers: Seq[ContainerInfo]
+  ): Unit =
     clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
 
   override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support remove node from a running cluster"))
 
   override protected def prefixKey: String = PREFIX_KEY
-
 }

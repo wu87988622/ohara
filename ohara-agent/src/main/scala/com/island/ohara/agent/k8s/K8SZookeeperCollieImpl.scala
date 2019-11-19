@@ -29,17 +29,20 @@ private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SC
     with ZookeeperCollie {
   private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] = {
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
       .imageName(containerInfo.imageName)
       .portMappings(
-        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
+        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+      )
       .nodeName(containerInfo.nodeName)
       /**
         * the hostname of k8s/docker container has strict limit. Fortunately, we are aware of this issue and the hostname
@@ -62,9 +65,11 @@ private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SC
   }
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster")
+    )
 
   override protected def prefixKey: String = PREFIX_KEY
 }

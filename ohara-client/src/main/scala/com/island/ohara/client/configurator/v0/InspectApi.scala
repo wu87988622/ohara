@@ -32,21 +32,21 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 object InspectApi {
-  val INSPECT_PREFIX_PATH: String = "inspect"
-  val RDB_PREFIX_PATH: String = "rdb"
-  val TOPIC_PREFIX_PATH: String = "topic"
-  val TOPIC_TIMEOUT_KEY: String = "timeout"
+  val INSPECT_PREFIX_PATH: String     = "inspect"
+  val RDB_PREFIX_PATH: String         = "rdb"
+  val TOPIC_PREFIX_PATH: String       = "topic"
+  val TOPIC_TIMEOUT_KEY: String       = "timeout"
   val TOPIC_TIMEOUT_DEFAULT: Duration = 3 seconds
-  val TOPIC_LIMIT_KEY: String = "limit"
-  val TOPIC_LIMIT_DEFAULT: Int = 5
+  val TOPIC_LIMIT_KEY: String         = "limit"
+  val TOPIC_LIMIT_DEFAULT: Int        = 5
 
   val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
   //-------------[image]-------------//
   val ZOOKEEPER_PREFIX_PATH: String = "zookeeper"
-  val BROKER_PREFIX_PATH: String = "broker"
-  val WORKER_PREFIX_PATH: String = "worker"
-  val STREAM_PREFIX_PATH: String = "stream"
+  val BROKER_PREFIX_PATH: String    = "broker"
+  val WORKER_PREFIX_PATH: String    = "worker"
+  val STREAM_PREFIX_PATH: String    = "stream"
 
   //-------------[FILE]-------------//
   val FILE_PREFIX_PATH: String = FileInfoApi.FILE_PREFIX_PATH
@@ -64,7 +64,7 @@ object InspectApi {
 
   case class FileContent(classInfos: Seq[ClassInfo]) {
     def sourceClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SOURCE_CONNECTOR)
-    def sinkClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SINK_CONNECTOR)
+    def sinkClassInfos: Seq[ClassInfo]   = classInfos.filter(_.classType == ConnectorDefUtils.SINK_CONNECTOR)
     def streamClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == StreamDefUtils.STREAM)
   }
 
@@ -85,31 +85,37 @@ object InspectApi {
 
   final case class RdbColumn(name: String, dataType: String, pk: Boolean)
   implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
-  final case class RdbTable(catalogPattern: Option[String],
-                            schemaPattern: Option[String],
-                            name: String,
-                            columns: Seq[RdbColumn])
+  final case class RdbTable(
+    catalogPattern: Option[String],
+    schemaPattern: Option[String],
+    name: String,
+    columns: Seq[RdbColumn]
+  )
   implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat4(RdbTable)
 
-  final case class RdbQuery(url: String,
-                            user: String,
-                            workerClusterKey: ObjectKey,
-                            password: String,
-                            catalogPattern: Option[String],
-                            schemaPattern: Option[String],
-                            tableName: Option[String])
+  final case class RdbQuery(
+    url: String,
+    user: String,
+    workerClusterKey: ObjectKey,
+    password: String,
+    catalogPattern: Option[String],
+    schemaPattern: Option[String],
+    tableName: Option[String]
+  )
   implicit val RDB_QUERY_JSON_FORMAT: OharaJsonFormat[RdbQuery] =
     JsonRefiner[RdbQuery].format(jsonFormat7(RdbQuery)).rejectEmptyString().refine
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
 
-  final case class Message(partition: Int,
-                           offset: Long,
-                           sourceClass: Option[String],
-                           sourceKey: Option[ObjectKey],
-                           value: Option[JsValue],
-                           error: Option[String])
+  final case class Message(
+    partition: Int,
+    offset: Long,
+    sourceClass: Option[String],
+    sourceKey: Option[ObjectKey],
+    value: Option[JsValue],
+    error: Option[String]
+  )
   implicit val MESSAGE_JSON_FORMAT: RootJsonFormat[Message] = jsonFormat6(Message)
 
   final case class TopicData(messages: Seq[Message])
@@ -161,7 +167,6 @@ object InspectApi {
   }
 
   final class Access extends BasicAccess(INSPECT_PREFIX_PATH) {
-
     def configuratorInfo()(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =
       exec.get[ConfiguratorInfo, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
 
@@ -184,13 +189,13 @@ object InspectApi {
       exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(STREAM_PREFIX_PATH).key(key).build())
 
     def rdbRequest: RdbRequest = new RdbRequest {
-      private[this] var jdbcUrl: String = _
-      private[this] var user: String = _
-      private[this] var password: String = _
+      private[this] var jdbcUrl: String             = _
+      private[this] var user: String                = _
+      private[this] var password: String            = _
       private[this] var workerClusterKey: ObjectKey = _
-      private[this] var catalogPattern: String = _
-      private[this] var schemaPattern: String = _
-      private[this] var tableName: String = _
+      private[this] var catalogPattern: String      = _
+      private[this] var schemaPattern: String       = _
+      private[this] var tableName: String           = _
 
       override def jdbcUrl(jdbcUrl: String): RdbRequest = {
         this.jdbcUrl = CommonUtils.requireNonEmpty(jdbcUrl)
@@ -243,8 +248,8 @@ object InspectApi {
 
     def topicRequest: TopicRequest = new TopicRequest {
       private[this] var key: TopicKey = _
-      private[this] var limit = TOPIC_LIMIT_DEFAULT
-      private[this] var timeout = TOPIC_TIMEOUT_DEFAULT
+      private[this] var limit         = TOPIC_LIMIT_DEFAULT
+      private[this] var timeout       = TOPIC_TIMEOUT_DEFAULT
 
       override def key(key: TopicKey): TopicRequest = {
         this.key = Objects.requireNonNull(key)
@@ -268,7 +273,8 @@ object InspectApi {
             .prefix(TOPIC_PREFIX_PATH)
             .param(TOPIC_LIMIT_KEY, limit.toString)
             .param(TOPIC_TIMEOUT_KEY, timeout.toMillis.toString)
-            .build())
+            .build()
+        )
     }
 
     def fileRequest: FileRequest = new FileRequest {

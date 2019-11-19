@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class AdminCleaner(timeout: Duration) extends Releasable {
   private[this] val closed = new AtomicBoolean(false)
-  private[this] val queue = new LinkedBlockingQueue[(Long, TopicAdmin)]
+  private[this] val queue  = new LinkedBlockingQueue[(Long, TopicAdmin)]
   private[route] val executor = {
     val exec = Executors.newSingleThreadExecutor()
     // close and remove timeout admin objects
@@ -54,12 +54,13 @@ class AdminCleaner(timeout: Duration) extends Releasable {
     exec
   }
 
-  def add(topicAdmin: TopicAdmin): TopicAdmin = if (closed.get())
-    throw new IllegalArgumentException("cleaner is closed")
-  else {
-    queue.put((CommonUtils.current(), topicAdmin))
-    topicAdmin
-  }
+  def add(topicAdmin: TopicAdmin): TopicAdmin =
+    if (closed.get())
+      throw new IllegalArgumentException("cleaner is closed")
+    else {
+      queue.put((CommonUtils.current(), topicAdmin))
+      topicAdmin
+    }
 
   override def close(): Unit = {
     closed.set(true)

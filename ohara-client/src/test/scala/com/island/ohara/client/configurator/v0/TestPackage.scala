@@ -26,7 +26,6 @@ import spray.json.{JsObject, _}
 import scala.collection.JavaConverters._
 
 class TestPackage extends OharaTest {
-
   @Test
   def testConversion(): Unit = {
     val s =
@@ -57,8 +56,8 @@ class TestPackage extends OharaTest {
         |  }
         |""".stripMargin
 
-    val json = s.parseJson.asJsObject
-    val row = toRow(json)
+    val json  = s.parseJson.asJsObject
+    val row   = toRow(json)
     val json2 = toJson(row)
     JsObject(noJsNull(json.fields)) shouldBe json2
   }
@@ -66,7 +65,7 @@ class TestPackage extends OharaTest {
   @Test
   def testTags(): Unit = {
     val tags = Seq(CommonUtils.randomString(), CommonUtils.randomString())
-    val row = Row.of(tags.asJava, Cell.of("a", "b"))
+    val row  = Row.of(tags.asJava, Cell.of("a", "b"))
     val json = toJson(row)
     json.fields(TAGS_KEY).asInstanceOf[JsArray].elements.map(_.asInstanceOf[JsString].value) shouldBe tags
 

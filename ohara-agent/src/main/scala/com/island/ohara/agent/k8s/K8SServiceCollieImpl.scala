@@ -25,7 +25,6 @@ import scala.util.{Failure, Try}
 
 // accessible to configurator
 private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient) extends ServiceCollie {
-
   override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(dataCollie, k8sClient)
 
   override val brokerCollie: BrokerCollie = new K8SBrokerCollieImpl(dataCollie, zookeeperCollie, k8sClient)
@@ -52,7 +51,8 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
           Try(s"${node.name} node is running.")
         else
           Failure(
-            new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}"))
+            new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}")
+          )
       })
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
@@ -66,25 +66,33 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
               name = container.name,
               imageName = container.imageName,
               nodeName = container.nodeName
-          )))
+            )
+        )
+      )
 
   override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
     containerNames()
-      .flatMap(containerNames =>
-        Future.sequence(containerNames.map { containerName =>
-          k8sClient.log(containerName.name).map(containerName -> _)
-        }))
+      .flatMap(
+        containerNames =>
+          Future.sequence(containerNames.map { containerName =>
+            k8sClient.log(containerName.name).map(containerName -> _)
+          })
+      )
       .map(_.toMap)
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] = {
     k8sClient
       .resources()
-      .flatMap(k8sNodeResource =>
-        dataCollie.values[Node]().map {
-          _.map(node =>
-            if (k8sNodeResource.contains(node.hostname)) Seq(node -> k8sNodeResource(node.hostname))
-            else Seq.empty).flatten.toMap
-      })
+      .flatMap(
+        k8sNodeResource =>
+          dataCollie.values[Node]().map {
+            _.map(
+              node =>
+                if (k8sNodeResource.contains(node.hostname)) Seq(node -> k8sNodeResource(node.hostname))
+                else Seq.empty
+            ).flatten.toMap
+          }
+      )
   }
 
   override def close(): Unit = {

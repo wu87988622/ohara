@@ -38,7 +38,7 @@ class TestK8SBasicCollieImpl extends OharaTest {
 
   @Test
   def testClusterName(): Unit = {
-    val group = CommonUtils.randomString(10)
+    val group                 = CommonUtils.randomString(10)
     val cluster1ContainerName = Collie.containerName(PREFIX_KEY, group, "cluster1", tmpServiceName)
     zookeeperClusterName(cluster1ContainerName) shouldBe "cluster1"
 
@@ -66,19 +66,19 @@ class TestK8SBasicCollieImpl extends OharaTest {
       tags = Map.empty
     )
     val nodes: Seq[Node] = Seq(node1)
-    val dataCollie = DataCollie(nodes)
-    val k8sClient = new FakeK8SClient(true, None, containerName)
+    val dataCollie       = DataCollie(nodes)
+    val k8sClient        = new FakeK8SClient(true, None, containerName)
 
     val k8sBasicCollieImpl: K8SBasicCollieImpl[ZookeeperClusterStatus] =
       new K8SBasicCollieImpl[ZookeeperClusterStatus](dataCollie, k8sClient) {
-
         override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")
 
         override def serviceName: String = tmpServiceName
 
         override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-          implicit executionContext: ExecutionContext): Future[ZookeeperClusterStatus] =
+          implicit executionContext: ExecutionContext
+        ): Future[ZookeeperClusterStatus] =
           Future.successful(
             new ZookeeperClusterStatus(
               group = key.group(),
@@ -86,7 +86,8 @@ class TestK8SBasicCollieImpl extends OharaTest {
               aliveNodes = nodes.map(_.name).toSet,
               state = None,
               error = None
-            ))
+            )
+          )
       }
 
     val containers = k8sBasicCollieImpl.clusterWithAllContainers()(Implicits.global)

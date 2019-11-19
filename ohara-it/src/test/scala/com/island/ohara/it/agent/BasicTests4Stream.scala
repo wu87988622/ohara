@@ -36,13 +36,12 @@ import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BasicTests4Stream extends IntegrationTest {
-
   private[this] val log = Logger(classOf[BasicTests4Stream])
 
-  private[this] val invalidHostname = "unknown"
-  private[this] val invalidPort = 0
+  private[this] val invalidHostname  = "unknown"
+  private[this] val invalidPort      = 0
   private[this] val hostname: String = publicHostname.getOrElse(invalidHostname)
-  private[this] val port = publicPort.getOrElse(invalidPort)
+  private[this] val port             = publicPort.getOrElse(invalidPort)
 
   protected val nodes: Seq[Node]
   protected val nameHolder: ClusterNameHolder
@@ -51,15 +50,15 @@ abstract class BasicTests4Stream extends IntegrationTest {
 
   private[this] var configurator: Configurator = _
 
-  private[this] var zkApi: ZookeeperApi.Access = _
-  private[this] var bkApi: BrokerApi.Access = _
+  private[this] var zkApi: ZookeeperApi.Access        = _
+  private[this] var bkApi: BrokerApi.Access           = _
   private[this] var containerApi: ContainerApi.Access = _
-  private[this] var topicApi: TopicApi.Access = _
-  private[this] var jarApi: FileInfoApi.Access = _
+  private[this] var topicApi: TopicApi.Access         = _
+  private[this] var jarApi: FileInfoApi.Access        = _
 
   private[this] var access: StreamApi.Access = _
-  private[this] var bkKey: ObjectKey = _
-  private[this] var brokerConnProps: String = _
+  private[this] var bkKey: ObjectKey         = _
+  private[this] var brokerConnProps: String  = _
 
   private[this] def waitStopFinish(objectKey: ObjectKey): Unit = {
     await(() => {
@@ -99,9 +98,11 @@ abstract class BasicTests4Stream extends IntegrationTest {
         zkApi.request.key(nameHolder.generateClusterKey()).nodeNames(nodes.take(1).map(_.name).toSet).create()
       )
       result(zkApi.start(zkCluster.key))
-      assertCluster(() => result(zkApi.list()),
-                    () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
-                    zkCluster.key)
+      assertCluster(
+        () => result(zkApi.list()),
+        () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
+        zkCluster.key
+      )
       log.info("create zkCluster...done")
 
       // create broker cluster
@@ -111,23 +112,25 @@ abstract class BasicTests4Stream extends IntegrationTest {
           .key(nameHolder.generateClusterKey())
           .zookeeperClusterKey(zkCluster.key)
           .nodeNames(nodes.take(1).map(_.name).toSet)
-          .create())
+          .create()
+      )
       bkKey = bkCluster.key
       result(bkApi.start(bkCluster.key))
-      assertCluster(() => result(bkApi.list()),
-                    () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
-                    bkCluster.key)
+      assertCluster(
+        () => result(bkApi.list()),
+        () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
+        bkCluster.key
+      )
       log.info("create bkCluster...done")
       brokerConnProps = bkCluster.connectionProps
-
     }
   }
 
   @Test
   def testRunSimpleStream(): Unit = {
     val from = TopicKey.of("default", CommonUtils.randomString(5))
-    val to = TopicKey.of("default", CommonUtils.randomString(5))
-    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-it-stream.jar"))
+    val to   = TopicKey.of("default", CommonUtils.randomString(5))
+    val jar  = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-it-stream.jar"))
 
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()), () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))), bkKey)
@@ -153,7 +156,8 @@ abstract class BasicTests4Stream extends IntegrationTest {
         .nodeName(nodes.head.name)
         .fromTopicKey(topic1.key)
         .toTopicKey(topic2.key)
-        .create())
+        .create()
+    )
     log.info(s"[testRunSimpleStream] stream properties creation [$stream]...done")
 
     stream.fromTopicKeys shouldBe Set(topic1.key)
@@ -222,7 +226,7 @@ abstract class BasicTests4Stream extends IntegrationTest {
     val metrics = result(access.get(stream.key)).metrics.meters
     metrics.foreach { metric =>
       metric.document should include("the number of rows")
-      metric.value shouldBe 1D
+      metric.value shouldBe 1d
     }
 
     await(() => result(topicApi.get(from)).metrics.meters.nonEmpty)
@@ -238,59 +242,61 @@ abstract class BasicTests4Stream extends IntegrationTest {
   }
 
   @Test
-  def testDeadNodes(): Unit = if (nodes.size < 2) skipTest(s"requires two nodes at least")
-  else {
-    val from = TopicKey.of("default", CommonUtils.randomString(5))
-    val to = TopicKey.of("default", CommonUtils.randomString(5))
-    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-it-stream.jar"))
-    // create topic
-    val topic1 = result(topicApi.request.key(from).brokerClusterKey(bkKey).create())
-    result(topicApi.start(topic1.key))
-    val topic2 = result(topicApi.request.key(to).brokerClusterKey(bkKey).create())
-    result(topicApi.start(topic2.key))
+  def testDeadNodes(): Unit =
+    if (nodes.size < 2) skipTest(s"requires two nodes at least")
+    else {
+      val from = TopicKey.of("default", CommonUtils.randomString(5))
+      val to   = TopicKey.of("default", CommonUtils.randomString(5))
+      val jar  = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-it-stream.jar"))
+      // create topic
+      val topic1 = result(topicApi.request.key(from).brokerClusterKey(bkKey).create())
+      result(topicApi.start(topic1.key))
+      val topic2 = result(topicApi.request.key(to).brokerClusterKey(bkKey).create())
+      result(topicApi.start(topic2.key))
 
-    // upload stream jar
-    val jarInfo = result(jarApi.request.file(jar).upload())
-    jarInfo.name shouldBe "ohara-it-stream.jar"
+      // upload stream jar
+      val jarInfo = result(jarApi.request.file(jar).upload())
+      jarInfo.name shouldBe "ohara-it-stream.jar"
 
-    // create stream properties
-    val stream = result(
-      access.request
-        .key(nameHolder.generateClusterKey())
-        .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
-        .brokerClusterKey(bkKey)
-        .nodeNames(nodes.map(_.hostname).toSet)
-        .fromTopicKey(topic1.key)
-        .toTopicKey(topic2.key)
-        .create())
+      // create stream properties
+      val stream = result(
+        access.request
+          .key(nameHolder.generateClusterKey())
+          .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
+          .brokerClusterKey(bkKey)
+          .nodeNames(nodes.map(_.hostname).toSet)
+          .fromTopicKey(topic1.key)
+          .toTopicKey(topic2.key)
+          .create()
+      )
 
-    // start stream
-    result(access.start(stream.key))
-    await(() => {
-      val res = result(access.get(stream.key))
-      res.state.isDefined && res.state.get == ServiceState.RUNNING.name
-    })
+      // start stream
+      result(access.start(stream.key))
+      await(() => {
+        val res = result(access.get(stream.key))
+        res.state.isDefined && res.state.get == ServiceState.RUNNING.name
+      })
 
-    result(access.get(stream.key)).nodeNames shouldBe nodes.map(_.hostname).toSet
-    result(access.get(stream.key)).deadNodes shouldBe Set.empty
+      result(access.get(stream.key)).nodeNames shouldBe nodes.map(_.hostname).toSet
+      result(access.get(stream.key)).deadNodes shouldBe Set.empty
 
-    // remove a container directly
-    val aliveNodes: Set[Node] = nodes.slice(1, nodes.size).toSet
-    val deadNodes = nodes.toSet -- aliveNodes
-    nameHolder.release(
-      clusterKeys = Set(stream.key),
-      // remove the container from first node
-      excludedNodes = aliveNodes.map(_.hostname)
-    )
+      // remove a container directly
+      val aliveNodes: Set[Node] = nodes.slice(1, nodes.size).toSet
+      val deadNodes             = nodes.toSet -- aliveNodes
+      nameHolder.release(
+        clusterKeys = Set(stream.key),
+        // remove the container from first node
+        excludedNodes = aliveNodes.map(_.hostname)
+      )
 
-    result(access.get(stream.key)).state should not be None
+      result(access.get(stream.key)).state should not be None
 
-    await { () =>
-      val cluster = result(access.get(stream.key))
-      cluster.nodeNames == nodes.map(_.hostname).toSet &&
-      cluster.deadNodes == deadNodes.map(_.hostname)
+      await { () =>
+        val cluster = result(access.get(stream.key))
+        cluster.nodeNames == nodes.map(_.hostname).toSet &&
+        cluster.deadNodes == deadNodes.map(_.hostname)
+      }
     }
-  }
 
   @After
   def cleanUp(): Unit = {

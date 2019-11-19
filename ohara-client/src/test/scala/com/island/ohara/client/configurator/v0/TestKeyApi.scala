@@ -23,10 +23,9 @@ import org.scalatest.Matchers._
 import spray.json._
 
 class TestKeyApi extends OharaTest {
-
   @Test
   def testObjectKey(): Unit = {
-    val name = CommonUtils.randomString()
+    val name      = CommonUtils.randomString()
     val objectKey = OBJECT_KEY_FORMAT.read(s"""
                                               |
                                               | {
@@ -38,8 +37,9 @@ class TestKeyApi extends OharaTest {
   }
 
   @Test
-  def testEmptyNameInObjectKey(): Unit = an[DeserializationException] should be thrownBy
-    OBJECT_KEY_FORMAT.read(s"""
+  def testEmptyNameInObjectKey(): Unit =
+    an[DeserializationException] should be thrownBy
+      OBJECT_KEY_FORMAT.read(s"""
                               |
                               | {
                               |   "name": ""
@@ -47,8 +47,9 @@ class TestKeyApi extends OharaTest {
                               |""".stripMargin.parseJson)
 
   @Test
-  def testEmptyGroupInObjectKey(): Unit = an[DeserializationException] should be thrownBy
-    OBJECT_KEY_FORMAT.read(s"""
+  def testEmptyGroupInObjectKey(): Unit =
+    an[DeserializationException] should be thrownBy
+      OBJECT_KEY_FORMAT.read(s"""
                               |
                               | {
                               |   "group": "g0",
@@ -58,7 +59,7 @@ class TestKeyApi extends OharaTest {
 
   @Test
   def testTopicKey(): Unit = {
-    val name = CommonUtils.randomString()
+    val name     = CommonUtils.randomString()
     val topicKey = TOPIC_KEY_FORMAT.read(s"""
                                               |
                                               | {
@@ -70,8 +71,9 @@ class TestKeyApi extends OharaTest {
   }
 
   @Test
-  def testEmptyNameInTopicKey(): Unit = an[DeserializationException] should be thrownBy
-    TOPIC_KEY_FORMAT.read(s"""
+  def testEmptyNameInTopicKey(): Unit =
+    an[DeserializationException] should be thrownBy
+      TOPIC_KEY_FORMAT.read(s"""
                               |
                               | {
                               |   "name": ""
@@ -79,8 +81,9 @@ class TestKeyApi extends OharaTest {
                               |""".stripMargin.parseJson)
 
   @Test
-  def testEmptyGroupInTopicKey(): Unit = an[DeserializationException] should be thrownBy
-    TOPIC_KEY_FORMAT.read(s"""
+  def testEmptyGroupInTopicKey(): Unit =
+    an[DeserializationException] should be thrownBy
+      TOPIC_KEY_FORMAT.read(s"""
                               |
                               | {
                               |   "group": "g0",
@@ -91,7 +94,7 @@ class TestKeyApi extends OharaTest {
   @Test
   def testPureStringInObjectKey(): Unit = {
     val name = CommonUtils.randomString()
-    val key = OBJECT_KEY_FORMAT.read(JsString(name))
+    val key  = OBJECT_KEY_FORMAT.read(JsString(name))
     key.group() shouldBe GROUP_DEFAULT
     key.name() shouldBe name
   }
@@ -99,7 +102,7 @@ class TestKeyApi extends OharaTest {
   @Test
   def testPureStringInTopicKey(): Unit = {
     val name = CommonUtils.randomString()
-    val key = TOPIC_KEY_FORMAT.read(JsString(name))
+    val key  = TOPIC_KEY_FORMAT.read(JsString(name))
     key.group() shouldBe GROUP_DEFAULT
     key.name() shouldBe name
   }
@@ -107,7 +110,7 @@ class TestKeyApi extends OharaTest {
   @Test
   def testPureStringInConnectorKey(): Unit = {
     val name = CommonUtils.randomString()
-    val key = CONNECTOR_KEY_FORMAT.read(JsString(name))
+    val key  = CONNECTOR_KEY_FORMAT.read(JsString(name))
     key.group() shouldBe GROUP_DEFAULT
     key.name() shouldBe name
   }
@@ -115,8 +118,8 @@ class TestKeyApi extends OharaTest {
   @Test
   def testGroupAndNameInObjectKey(): Unit = {
     val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
-    val key = OBJECT_KEY_FORMAT.read(s"""
+    val name  = CommonUtils.randomString()
+    val key   = OBJECT_KEY_FORMAT.read(s"""
                                         |
                                         | {
                                         |   "group": "$group",
@@ -130,8 +133,8 @@ class TestKeyApi extends OharaTest {
   @Test
   def testGroupAndNameInTopicKey(): Unit = {
     val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
-    val key = TOPIC_KEY_FORMAT.read(s"""
+    val name  = CommonUtils.randomString()
+    val key   = TOPIC_KEY_FORMAT.read(s"""
                                         |
                                         | {
                                         |   "group": "$group",
@@ -145,8 +148,8 @@ class TestKeyApi extends OharaTest {
   @Test
   def testGroupAndNameInConnectorKey(): Unit = {
     val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
-    val key = CONNECTOR_KEY_FORMAT.read(s"""
+    val name  = CommonUtils.randomString()
+    val key   = CONNECTOR_KEY_FORMAT.read(s"""
                                        |
                                        | {
                                        |   "group": "$group",

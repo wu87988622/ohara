@@ -28,7 +28,6 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 class TestMeterCache extends OharaTest {
-
   @Test
   def testRequestKey(): Unit = {
     val key = RequestKey(
@@ -63,7 +62,7 @@ class TestMeterCache extends OharaTest {
       )
     )
     val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
-    val cache = MeterCache.builder.refresher(() => Map(clusterInfo -> data)).frequency(2 seconds).build
+    val cache       = MeterCache.builder.refresher(() => Map(clusterInfo -> data)).frequency(2 seconds).build
     try {
       cache.meters(clusterInfo) shouldBe Map.empty
       TimeUnit.SECONDS.sleep(3)

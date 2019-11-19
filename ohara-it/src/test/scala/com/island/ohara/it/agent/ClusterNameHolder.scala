@@ -96,12 +96,11 @@ trait ClusterNameHolder extends Releasable {
 }
 
 object ClusterNameHolder {
-
   /**
     * used to debug :)
     */
   private[this] val KEEP_CONTAINERS = sys.env.get("ohara.it.keep.containers").exists(_.toLowerCase == "true")
-  private[this] val LOG = Logger(classOf[ClusterNameHolder])
+  private[this] val LOG             = Logger(classOf[ClusterNameHolder])
 
   /**
     * create a name holder based on ssh.
@@ -118,16 +117,20 @@ object ClusterNameHolder {
         nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
           val client =
             DockerClient(
-              Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
+              Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+            )
           try client
             .containerNames()
-            .filter(containerName =>
-              clusterKey.exists(key =>
-                containerName.name.contains(key.group()) && containerName.name.contains(key.name())))
+            .filter(
+              containerName =>
+                clusterKey
+                  .exists(key => containerName.name.contains(key.group()) && containerName.name.contains(key.name()))
+            )
             .foreach { containerName =>
               try {
                 println(
-                  s"[-----------------------------------[image:${containerName.imageName}][name:${containerName.name}-----------------------------------]")
+                  s"[-----------------------------------[image:${containerName.imageName}][name:${containerName.name}-----------------------------------]"
+                )
                 val containerLogs = try client.log(containerName.name)
                 catch {
                   case e: Throwable =>
@@ -142,7 +145,7 @@ object ClusterNameHolder {
                   LOG.error(s"failed to remove container ${containerName.name}", e)
               }
             } finally client.close()
-      }
+        }
 
   /**
     * create a name holder based on k8s.
@@ -159,8 +162,10 @@ object ClusterNameHolder {
       if (!finalClose || !KEEP_CONTAINERS)
         Await
           .result(client.containers(), 30 seconds)
-          .filter(container =>
-            clusterKey.exists(key => container.name.contains(key.group()) && container.name.contains(key.name())))
+          .filter(
+            container =>
+              clusterKey.exists(key => container.name.contains(key.group()) && container.name.contains(key.name()))
+          )
           .filterNot(container => excludedNodes.contains(container.nodeName))
           .foreach { container =>
             try {
@@ -177,5 +182,5 @@ object ClusterNameHolder {
               case e: Throwable =>
                 LOG.error(s"failed to remove container ${container.name}", e)
             }
-        }
+          }
 }

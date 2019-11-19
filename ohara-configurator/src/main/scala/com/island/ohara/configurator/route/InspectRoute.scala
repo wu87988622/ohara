@@ -54,39 +54,47 @@ private[configurator] object InspectRoute {
   def toJson(row: Row): JsObject = com.island.ohara.client.configurator.v0.toJson(row)
 
   private[this] def topicData(records: Seq[Record[Array[Byte], Array[Byte]]]): TopicData =
-    TopicData(records
-      .filter(_.key().isPresent)
-      .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
-      .map {
-        case (partition, offset, bytes, headers) =>
-          try Message(
-            partition = partition,
-            offset = offset,
-            // only Ohara source connectors have this header
-            sourceClass = headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value())),
-            sourceKey =
-              headers.find(_.key() == Header.SOURCE_KEY_KEY).map(h => new String(h.value())).map(ObjectKey.toObjectKey),
-            value = Some(toJson(Serializer.ROW.from(bytes))),
-            error = None
-          )
-          catch {
-            case e: Throwable =>
-              Message(partition = partition,
-                      offset = offset,
-                      sourceClass = None,
-                      sourceKey = None,
-                      value = None,
-                      error = Some(e.getMessage))
-          }
-      })
+    TopicData(
+      records
+        .filter(_.key().isPresent)
+        .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
+        .map {
+          case (partition, offset, bytes, headers) =>
+            try Message(
+              partition = partition,
+              offset = offset,
+              // only Ohara source connectors have this header
+              sourceClass = headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value())),
+              sourceKey = headers
+                .find(_.key() == Header.SOURCE_KEY_KEY)
+                .map(h => new String(h.value()))
+                .map(ObjectKey.toObjectKey),
+              value = Some(toJson(Serializer.ROW.from(bytes))),
+              error = None
+            )
+            catch {
+              case e: Throwable =>
+                Message(
+                  partition = partition,
+                  offset = offset,
+                  sourceClass = None,
+                  sourceKey = None,
+                  value = None,
+                  error = Some(e.getMessage)
+                )
+            }
+        }
+    )
 
-  def apply(mode: Mode)(implicit brokerCollie: BrokerCollie,
-                        adminCleaner: AdminCleaner,
-                        dataStore: DataStore,
-                        serviceCollie: ServiceCollie,
-                        workerCollie: WorkerCollie,
-                        objectChecker: ObjectChecker,
-                        executionContext: ExecutionContext): server.Route = pathPrefix(INSPECT_PREFIX_PATH) {
+  def apply(mode: Mode)(
+    implicit brokerCollie: BrokerCollie,
+    adminCleaner: AdminCleaner,
+    dataStore: DataStore,
+    serviceCollie: ServiceCollie,
+    workerCollie: WorkerCollie,
+    objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): server.Route = pathPrefix(INSPECT_PREFIX_PATH) {
     path(RDB_PREFIX_PATH) {
       post {
         entity(as[RdbQuery]) { query =>
@@ -95,28 +103,30 @@ private[configurator] object InspectRoute {
               workerClient match {
                 case _: FakeWorkerClient =>
                   val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
-                  try Future.successful(RdbInfo(
-                    client.databaseType,
-                    client.tableQuery
-                      .catalog(query.catalogPattern.orNull)
-                      .schema(query.schemaPattern.orNull)
-                      .tableName(query.tableName.orNull)
-                      .execute()
-                      .map { table =>
-                        RdbTable(
-                          catalogPattern = table.catalogPattern,
-                          schemaPattern = table.schemaPattern,
-                          name = table.name,
-                          columns = table.columns.map { column =>
-                            RdbColumn(
-                              name = column.name,
-                              dataType = column.dataType,
-                              pk = column.pk
-                            )
-                          }
-                        )
-                      }
-                  ))
+                  try Future.successful(
+                    RdbInfo(
+                      client.databaseType,
+                      client.tableQuery
+                        .catalog(query.catalogPattern.orNull)
+                        .schema(query.schemaPattern.orNull)
+                        .tableName(query.tableName.orNull)
+                        .execute()
+                        .map { table =>
+                          RdbTable(
+                            catalogPattern = table.catalogPattern,
+                            schemaPattern = table.schemaPattern,
+                            name = table.name,
+                            columns = table.columns.map { column =>
+                              RdbColumn(
+                                name = column.name,
+                                dataType = column.dataType,
+                                pk = column.pk
+                              )
+                            }
+                          )
+                        }
+                    )
+                  )
                   finally client.close()
                 case _ =>
                   ValidationUtils
@@ -144,23 +154,31 @@ private[configurator] object InspectRoute {
       }
     } ~ path(TOPIC_PREFIX_PATH / Segment) { topicName =>
       post {
-        parameters((GROUP_KEY ? GROUP_DEFAULT,
-                    TOPIC_TIMEOUT_KEY.as[Long] ? TOPIC_TIMEOUT_DEFAULT.toMillis,
-                    TOPIC_LIMIT_KEY.as[Int] ? TOPIC_LIMIT_DEFAULT)) { (group, timeoutMs, limit) =>
+        parameters(
+          (
+            GROUP_KEY ? GROUP_DEFAULT,
+            TOPIC_TIMEOUT_KEY.as[Long] ? TOPIC_TIMEOUT_DEFAULT.toMillis,
+            TOPIC_LIMIT_KEY.as[Int] ? TOPIC_LIMIT_DEFAULT
+          )
+        ) { (group, timeoutMs, limit) =>
           val topicKey = TopicKey.of(group, topicName)
           if (limit <= 0)
-            throw DeserializationException(s"the limit must be bigger than zero. actual:$limit",
-                                           fieldNames = List(TOPIC_LIMIT_KEY))
+            throw DeserializationException(
+              s"the limit must be bigger than zero. actual:$limit",
+              fieldNames = List(TOPIC_LIMIT_KEY)
+            )
           complete(
             objectChecker.checkList
               .topic(topicKey, RUNNING)
               .check()
               .map(_.topicInfos.head._1.brokerClusterKey)
-              .flatMap(brokerClusterKey =>
-                objectChecker.checkList
-                  .brokerCluster(brokerClusterKey, RUNNING)
-                  .check()
-                  .map(_.runningBrokers.head.connectionProps))
+              .flatMap(
+                brokerClusterKey =>
+                  objectChecker.checkList
+                    .brokerCluster(brokerClusterKey, RUNNING)
+                    .check()
+                    .map(_.runningBrokers.head.connectionProps)
+              )
               .map { connectionProps =>
                 val consumer = Consumer
                   .builder()
@@ -181,9 +199,11 @@ private[configurator] object InspectRoute {
                     // even if the timeout reach the limit, we still give a last try :)
                       .poll(java.time.Duration.ofMillis(Math.max(1000L, endTime - CommonUtils.current())), limit)
                       .asScala
-                      .slice(0, limit))
+                      .slice(0, limit)
+                  )
                 } finally Releasable.close(consumer)
-              })
+              }
+          )
         }
       }
     } ~ path("file" / Segment) { fileName =>
@@ -192,21 +212,24 @@ private[configurator] object InspectRoute {
         complete(
           dataStore
             .value[FileInfo](ObjectKey.of(group, fileName))
-            .flatMap(fileInfo => serviceCollie.fileContent(Seq(fileInfo.url.get))))
+            .flatMap(fileInfo => serviceCollie.fileContent(Seq(fileInfo.url.get)))
+        )
       }
     } ~ path(FILE_PREFIX_PATH) {
       FileInfoRoute.routeOfUploadingFile(urlMaker = _ => None, storeOption = None)
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
-      complete(ConfiguratorInfo(
-        versionInfo = ConfiguratorVersion(
-          version = VersionUtils.VERSION,
-          branch = VersionUtils.BRANCH,
-          user = VersionUtils.USER,
-          revision = VersionUtils.REVISION,
-          date = VersionUtils.DATE
-        ),
-        mode = mode.toString
-      ))
+      complete(
+        ConfiguratorInfo(
+          versionInfo = ConfiguratorVersion(
+            version = VersionUtils.VERSION,
+            branch = VersionUtils.BRANCH,
+            user = VersionUtils.USER,
+            revision = VersionUtils.REVISION,
+            date = VersionUtils.DATE
+          ),
+          mode = mode.toString
+        )
+      )
     } ~ pathPrefix(WORKER_PREFIX_PATH) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
@@ -224,7 +247,8 @@ private[configurator] object InspectRoute {
                   settingDefinitions = WorkerApi.DEFINITIONS,
                   classInfos = classInfos
                 )
-              })
+              }
+          )
         }
       } ~ pathEnd {
         complete(
@@ -232,7 +256,8 @@ private[configurator] object InspectRoute {
             imageName = WorkerApi.IMAGE_NAME_DEFAULT,
             settingDefinitions = WorkerApi.DEFINITIONS,
             classInfos = Seq.empty
-          ))
+          )
+        )
       }
     } ~ path(BROKER_PREFIX_PATH) {
       complete(
@@ -246,14 +271,16 @@ private[configurator] object InspectRoute {
               settingDefinitions = TopicApi.DEFINITIONS
             )
           )
-        ))
+        )
+      )
     } ~ path(ZOOKEEPER_PREFIX_PATH) {
       complete(
         ServiceDefinition(
           imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
           settingDefinitions = ZookeeperApi.DEFINITIONS,
           classInfos = Seq.empty
-        ))
+        )
+      )
     } ~ pathPrefix(STREAM_PREFIX_PATH) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
@@ -269,12 +296,15 @@ private[configurator] object InspectRoute {
                   LOG.warn(s"failed to find definitions for stream:${ObjectKey.of(group, name)}", e)
                   FileContent.empty
               }
-              .map(fileContent =>
-                ServiceDefinition(
-                  imageName = StreamApi.IMAGE_NAME_DEFAULT,
-                  settingDefinitions = StreamDefUtils.DEFAULT.asScala,
-                  classInfos = fileContent.streamClassInfos
-              )))
+              .map(
+                fileContent =>
+                  ServiceDefinition(
+                    imageName = StreamApi.IMAGE_NAME_DEFAULT,
+                    settingDefinitions = StreamDefUtils.DEFAULT.asScala,
+                    classInfos = fileContent.streamClassInfos
+                  )
+              )
+          )
         }
       } ~ pathEnd {
         complete(
@@ -282,7 +312,8 @@ private[configurator] object InspectRoute {
             imageName = StreamApi.IMAGE_NAME_DEFAULT,
             settingDefinitions = StreamDefUtils.DEFAULT.asScala,
             classInfos = Seq.empty
-          ))
+          )
+        )
       }
     }
   }

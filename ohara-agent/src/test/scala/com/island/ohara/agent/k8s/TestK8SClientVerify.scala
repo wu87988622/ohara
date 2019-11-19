@@ -31,7 +31,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class TestK8SClientVerify extends OharaTest {
-  private[this] val nodeCache = new ArrayBuffer[Node]()
+  private[this] val nodeCache              = new ArrayBuffer[Node]()
   private[this] val dataCollie: DataCollie = DataCollie(nodeCache)
 
   private[this] def node: Node = Node(
@@ -112,7 +112,8 @@ class TestK8SClientVerify extends OharaTest {
             validationReport = None,
             resources = Seq.empty,
             tags = Map.empty
-          )),
+          )
+        ),
         30 seconds
       )
     runningNode match {

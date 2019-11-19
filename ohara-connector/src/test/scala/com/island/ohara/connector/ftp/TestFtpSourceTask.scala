@@ -33,7 +33,6 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 
 class TestFtpSourceTask extends OharaTest {
-
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
 
   private[this] val props = FtpSourceProps(
@@ -49,7 +48,7 @@ class TestFtpSourceTask extends OharaTest {
 
   private[this] val settings = props.toMap ++ Map(
     CsvConnectorDefinitions.TASK_TOTAL_KEY -> "1",
-    CsvConnectorDefinitions.TASK_HASH_KEY -> "0"
+    CsvConnectorDefinitions.TASK_HASH_KEY  -> "0"
   )
 
   @Before
@@ -64,7 +63,7 @@ class TestFtpSourceTask extends OharaTest {
   }
 
   private[this] def createFileSystem(): FileSystem = {
-    val task = createTask()
+    val task   = createTask()
     val config = TaskSetting.of(settings.asJava)
     task._fileSystem(config).asInstanceOf[FileSystem]
   }
@@ -77,7 +76,8 @@ class TestFtpSourceTask extends OharaTest {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .settings(settings.asJava)
-        .raw())
+        .raw()
+    )
     task
   }
 
@@ -89,7 +89,8 @@ class TestFtpSourceTask extends OharaTest {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .settings(settings.asJava)
-        .raw())
+        .raw()
+    )
     task
   }
 
@@ -110,7 +111,7 @@ class TestFtpSourceTask extends OharaTest {
 
   @Test
   def testFileSystem(): Unit = {
-    val task = createTask()
+    val task   = createTask()
     val config = TaskSetting.of(settings.asJava)
     task._fileSystem(config) should not be (null)
   }
@@ -139,11 +140,12 @@ class TestFtpSourceTask extends OharaTest {
   @Test
   def testListInput(): Unit = {
     val numberOfInputs = 3
-    val fileSystem = createFileSystem()
+    val fileSystem     = createFileSystem()
     try {
       val data = (0 to 100).map(_.toString)
-      (0 until numberOfInputs).foreach(index =>
-        fileSystem.attach(CommonUtils.path(props.inputFolder, index.toString), data))
+      (0 until numberOfInputs).foreach(
+        index => fileSystem.attach(CommonUtils.path(props.inputFolder, index.toString), data)
+      )
     } finally fileSystem.close()
 
     val fs = createFileSystem()

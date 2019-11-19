@@ -28,7 +28,6 @@ import scala.collection.JavaConverters._
   * This class extends RowSinkConnector abstract.
   */
 class HDFSSink extends CsvSinkConnector {
-
   private[this] var settings: TaskSetting = _
 
   override protected[hdfs] def _start(settings: TaskSetting): Unit = {

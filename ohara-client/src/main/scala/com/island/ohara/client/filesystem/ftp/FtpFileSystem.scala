@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 
 private[filesystem] object FtpFileSystem {
   private[this] lazy val LOG = Logger(getClass.getName)
-  def builder: Builder = new Builder
+  def builder: Builder       = new Builder
 
   class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FileSystem] {
     // private[this] val LOG = Logger(classOf[Ftp])
@@ -40,9 +40,9 @@ private[filesystem] object FtpFileSystem {
     /**
       * port 21 is used by ftp as default
       */
-    private[this] var port: Int = 21
-    private[this] var user: String = _
-    private[this] var password: String = _
+    private[this] var port: Int              = 21
+    private[this] var user: String           = _
+    private[this] var password: String       = _
     private[this] var retryTimeout: Duration = 0 second
     private[this] var retryBackoff: Duration = 1 second
 
@@ -112,10 +112,10 @@ private[filesystem] object FtpFileSystem {
     }
 
     override def build: FileSystem = {
-      val hostname = CommonUtils.requireNonEmpty(Builder.this.hostname, () => "hostname can't be null or empty")
-      val port = CommonUtils.requireConnectionPort(Builder.this.port)
-      val user = CommonUtils.requireNonEmpty(Builder.this.user, () => "user can't be null or empty")
-      val password = CommonUtils.requireNonEmpty(Builder.this.password, () => "password can't be null or empty")
+      val hostname     = CommonUtils.requireNonEmpty(Builder.this.hostname, () => "hostname can't be null or empty")
+      val port         = CommonUtils.requireConnectionPort(Builder.this.port)
+      val user         = CommonUtils.requireNonEmpty(Builder.this.user, () => "user can't be null or empty")
+      val password     = CommonUtils.requireNonEmpty(Builder.this.password, () => "password can't be null or empty")
       val retryTimeout = Objects.requireNonNull(Builder.this.retryTimeout)
       val retryBackoff = Objects.requireNonNull(Builder.this.retryBackoff)
 
@@ -128,11 +128,11 @@ private[filesystem] object FtpFileSystem {
           .password(password)
           .retryTimeout(retryTimeout)
           .retryBackoff(retryBackoff)
-          .build)
+          .build
+      )
     }
 
     private[this] class FtpFileSystemImpl(client: FtpClient) extends FileSystem {
-
       /**
         * Returns whether a file or folder exists
         *

@@ -33,10 +33,11 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
     Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi     = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -46,8 +47,10 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(topic.key))
     val connector = result(
       connectorApi.request
@@ -57,7 +60,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
         .numberOfTasks(1)
         .setting("you_should_fail", JsBoolean(true))
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     result(connectorApi.start(connector.key))
 
@@ -78,8 +82,11 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
             Flow(
               from = topic.key,
               to = Set(connector.key)
-            )))
-        .create())
+            )
+          )
+        )
+        .create()
+    )
 
     result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
       .filter(_.key == connector.key)
@@ -100,8 +107,10 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(topic.key))
 
     val connector = result(
@@ -111,7 +120,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     result(connectorApi.start(connector.key))
 
@@ -132,8 +142,11 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
             Flow(
               from = topic.key,
               to = Set(connector.key)
-            )))
-        .create())
+            )
+          )
+        )
+        .create()
+    )
 
     result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
       .filter(_.key == connector.key)

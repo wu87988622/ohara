@@ -23,7 +23,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "com.diffplug.spotless:spotless-plugin-gradle:3.20.0"
+    classpath "com.diffplug.spotless:spotless-plugin-gradle:3.26.0"
     classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.15.0"
     classpath 'com.novoda:bintray-release:0.9.1'
   }
@@ -230,7 +230,7 @@ subprojects {
       }
       scala {
         // DON'T change the scalafmt version since the rules may be changed in newer version.
-        scalafmt("1.5.1").configFile("$rootDir/checkstyle/.scalafmt.conf")
+        scalafmt("2.2.2").configFile("$rootDir/checkstyle/.scalafmt.conf")
       }
     }
   }

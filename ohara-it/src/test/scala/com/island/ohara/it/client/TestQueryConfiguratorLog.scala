@@ -22,7 +22,6 @@ import org.junit.Test
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.Matchers._
 class TestQueryConfiguratorLog extends WithRemoteConfigurator {
-
   @Test
   def test(): Unit = {
     val log = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator())

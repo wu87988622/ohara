@@ -40,22 +40,24 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   */
 private[client] trait HttpExecutor {
   //-------------------------------------------------[GET]-------------------------------------------------//
-  def get[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                     rm1: RootJsonFormat[E],
-                                                     executionContext: ExecutionContext): Future[Res]
+  def get[Res, E <: HttpExecutor.Error](
+    url: String
+  )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res]
   def getOnlyMessage(url: String)(implicit executionContext: ExecutionContext): Future[String]
   //-------------------------------------------------[DELETE]-------------------------------------------------//
-  def delete[E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[E],
-                                                   executionContext: ExecutionContext): Future[Unit]
-  def delete[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                        rm1: RootJsonFormat[E],
-                                                        executionContext: ExecutionContext): Future[Res]
+  def delete[E <: HttpExecutor.Error](
+    url: String
+  )(implicit rm0: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit]
+  def delete[Res, E <: HttpExecutor.Error](
+    url: String
+  )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res]
   //-------------------------------------------------[POST]-------------------------------------------------//
   def post[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(
     implicit rm0: RootJsonFormat[Res],
     rm1: RootJsonFormat[Req],
     rm2: RootJsonFormat[E],
-    executionContext: ExecutionContext): Future[Res]
+    executionContext: ExecutionContext
+  ): Future[Res]
 
   /**
     * cluster apis use POST to add/remove node to/from a running cluster.
@@ -64,21 +66,24 @@ private[client] trait HttpExecutor {
     * @tparam Res response type
     * @return response
     */
-  def post[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                      rm1: RootJsonFormat[E],
-                                                      executionContext: ExecutionContext): Future[Res]
+  def post[Res, E <: HttpExecutor.Error](
+    url: String
+  )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res]
 
   //-------------------------------------------------[PUT]-------------------------------------------------//
-  def put[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
-                                                                        rm1: RootJsonFormat[Req],
-                                                                        rm2: RootJsonFormat[E],
-                                                                        executionContext: ExecutionContext): Future[Res]
+  def put[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(
+    implicit rm0: RootJsonFormat[Res],
+    rm1: RootJsonFormat[Req],
+    rm2: RootJsonFormat[E],
+    executionContext: ExecutionContext
+  ): Future[Res]
 
-  def put[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                     rm1: RootJsonFormat[E],
-                                                     executionContext: ExecutionContext): Future[Res]
-  def put[E <: HttpExecutor.Error](url: String)(implicit rm: RootJsonFormat[E],
-                                                executionContext: ExecutionContext): Future[Unit]
+  def put[Res, E <: HttpExecutor.Error](
+    url: String
+  )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res]
+  def put[E <: HttpExecutor.Error](
+    url: String
+  )(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit]
   //-------------------------------------------------[CUSTOM]-------------------------------------------------//
   /**
     * If all default implementation of get, put, post and delete can't satisfy you, please build the request by by yourself.
@@ -89,16 +94,15 @@ private[client] trait HttpExecutor {
     * @tparam E error type
     * @return response of exception
     */
-  def request[Res, E <: HttpExecutor.Error](request: HttpRequest)(implicit rm0: RootJsonFormat[Res],
-                                                                  rm1: RootJsonFormat[E],
-                                                                  executionContext: ExecutionContext): Future[Res]
+  def request[Res, E <: HttpExecutor.Error](
+    request: HttpRequest
+  )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res]
 }
 
 /**
   * ohara configurator needs to access this class so we open the package-private to c.i.o.
   */
 private[ohara] object HttpExecutor {
-
   /**
     * Close the singleton http executor.
     * NOTED: After calling this method, the singleton object won't be used anymore. Normally, only configurator needs this method...
@@ -110,7 +114,6 @@ private[ohara] object HttpExecutor {
     * we should always choose the "valid" restful server if we are valid programmer.
     */
   trait Error {
-
     /**
       * description of error
       * @return error message
@@ -128,26 +131,27 @@ private[ohara] object HttpExecutor {
     * a http executor with releasable interface. Actor system has to be closed in order to terminate process graceful.
     */
   private[this] class HttpExecutorImpl extends HttpExecutor with Releasable {
-    private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-SINGLETON")
+    private[this] implicit val actorSystem: ActorSystem             = ActorSystem("Executor-SINGLETON")
     private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
     //-------------------------------------------------[PRIVATE]-------------------------------------------------//
-    private[this] def unmarshal[T, E <: HttpExecutor.Error](res: HttpResponse)(
-      implicit rm0: RootJsonFormat[T],
-      rm1: RootJsonFormat[E],
-      executionContext: ExecutionContext): Future[T] =
+    private[this] def unmarshal[T, E <: HttpExecutor.Error](
+      res: HttpResponse
+    )(implicit rm0: RootJsonFormat[T], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else asError(res)
 
     private[this] def unmarshal[E <: HttpExecutor.Error](
-      res: HttpResponse)(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
+      res: HttpResponse
+    )(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
       if (res.status.isSuccess()) res.discardEntityBytes().future().map(_ => Unit)
       else asError(res)
 
     private[this] def unmarshal[T](res: HttpResponse)(implicit executionContext: ExecutionContext): Future[String] =
       Unmarshal(res.entity).to[String]
 
-    private[this] def asError[E <: HttpExecutor.Error](res: HttpResponse)(implicit rm: RootJsonFormat[E],
-                                                                          executionContext: ExecutionContext) =
+    private[this] def asError[E <: HttpExecutor.Error](
+      res: HttpResponse
+    )(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext) =
       Unmarshal(res.entity)
         .to[E]
         .flatMap { error =>
@@ -166,56 +170,59 @@ private[ohara] object HttpExecutor {
         }
 
     //-------------------------------------------------[GET]-------------------------------------------------//
-    override def get[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                                rm1: RootJsonFormat[E],
-                                                                executionContext: ExecutionContext): Future[Res] =
+    override def get[Res, E <: HttpExecutor.Error](
+      url: String
+    )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[Res, E])
 
     override def getOnlyMessage(url: String)(implicit executionContext: ExecutionContext): Future[String] =
       Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[String])
 
     //-------------------------------------------------[DELETE]-------------------------------------------------//
-    override def delete[E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[E],
-                                                              executionContext: ExecutionContext): Future[Unit] =
+    override def delete[E <: HttpExecutor.Error](
+      url: String
+    )(implicit rm0: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
       Http().singleRequest(HttpRequest(HttpMethods.DELETE, url)).flatMap(unmarshal[E])
-    override def delete[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                                   rm1: RootJsonFormat[E],
-                                                                   executionContext: ExecutionContext): Future[Res] =
+    override def delete[Res, E <: HttpExecutor.Error](
+      url: String
+    )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.DELETE, url)).flatMap(unmarshal[Res, E])
     //-------------------------------------------------[POST]-------------------------------------------------//
     override def post[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(
       implicit rm0: RootJsonFormat[Res],
       rm1: RootJsonFormat[Req],
       rm2: RootJsonFormat[E],
-      executionContext: ExecutionContext): Future[Res] =
+      executionContext: ExecutionContext
+    ): Future[Res] =
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(HttpRequest(HttpMethods.POST, url, entity = entity)).flatMap(unmarshal[Res, E])
       }
-    override def post[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                                 rm1: RootJsonFormat[E],
-                                                                 executionContext: ExecutionContext): Future[Res] =
+    override def post[Res, E <: HttpExecutor.Error](
+      url: String
+    )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.POST, url)).flatMap(unmarshal[Res, E])
     //-------------------------------------------------[PUT]-------------------------------------------------//
     override def put[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(
       implicit rm0: RootJsonFormat[Res],
       rm1: RootJsonFormat[Req],
       rm2: RootJsonFormat[E],
-      executionContext: ExecutionContext): Future[Res] =
+      executionContext: ExecutionContext
+    ): Future[Res] =
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(HttpRequest(HttpMethods.PUT, url, entity = entity)).flatMap(unmarshal[Res, E])
       }
-    override def put[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
-                                                                rm1: RootJsonFormat[E],
-                                                                executionContext: ExecutionContext): Future[Res] =
+    override def put[Res, E <: HttpExecutor.Error](
+      url: String
+    )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.PUT, url)).flatMap(unmarshal[Res, E])
-    override def put[E <: HttpExecutor.Error](url: String)(implicit rm: RootJsonFormat[E],
-                                                           executionContext: ExecutionContext): Future[Unit] =
+    override def put[E <: HttpExecutor.Error](
+      url: String
+    )(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
       Http().singleRequest(HttpRequest(HttpMethods.PUT, url)).flatMap(unmarshal[E])
     //-------------------------------------------------[CUSTOM]-------------------------------------------------//
-    override def request[Res, E <: HttpExecutor.Error](request: HttpRequest)(
-      implicit rm0: RootJsonFormat[Res],
-      rm1: RootJsonFormat[E],
-      executionContext: ExecutionContext): Future[Res] =
+    override def request[Res, E <: HttpExecutor.Error](
+      request: HttpRequest
+    )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(request).flatMap(unmarshal[Res, E])
 
     import scala.concurrent.duration._

@@ -59,7 +59,8 @@ class TestValidationRoute extends OharaTest {
         .hdfsRequest
         .uri("file:///tmp")
         .workerClusterKey(wkCluster.key)
-        .verify())
+        .verify()
+    )
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
   }
@@ -73,7 +74,8 @@ class TestValidationRoute extends OharaTest {
         .hdfsRequest
         .uri("file:///tmp")
         .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-        .verify())
+        .verify()
+    )
 
   @Test
   def validateRdb(): Unit = {
@@ -86,7 +88,8 @@ class TestValidationRoute extends OharaTest {
         .user("fake_user")
         .password("fake_password")
         .workerClusterKey(wkCluster.key)
-        .verify())
+        .verify()
+    )
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
     report.foreach(_.rdbInfo.get.tables.isEmpty shouldBe false)
@@ -103,7 +106,8 @@ class TestValidationRoute extends OharaTest {
         .user("fake_user")
         .password("fake_password")
         .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-        .verify())
+        .verify()
+    )
 
   @Test
   def validateFtp(): Unit = {
@@ -117,7 +121,8 @@ class TestValidationRoute extends OharaTest {
         .user("fake_user")
         .password("fake_password")
         .workerClusterKey(wkCluster.key)
-        .verify())
+        .verify()
+    )
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
   }
@@ -134,13 +139,14 @@ class TestValidationRoute extends OharaTest {
         .user("fake_user")
         .password("fake_password")
         .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-        .verify())
+        .verify()
+    )
 
   @Test
   def validateNode(): Unit = {
     val hostname = CommonUtils.randomString(5)
-    val port = 22
-    val user = CommonUtils.randomString(5)
+    val port     = 22
+    val user     = CommonUtils.randomString(5)
     val password = CommonUtils.randomString(5)
     result(
       NodeApi.access
@@ -151,7 +157,8 @@ class TestValidationRoute extends OharaTest {
         .port(port)
         .user(user)
         .password(password)
-        .create())
+        .create()
+    )
     val reports = result(
       ValidationApi.access
         .hostname(configurator.hostname)
@@ -161,7 +168,8 @@ class TestValidationRoute extends OharaTest {
         .port(port)
         .user(user)
         .password(password)
-        .verify())
+        .verify()
+    )
     reports.isEmpty shouldBe false
     reports.foreach(_.pass shouldBe true)
     // the validated node is equal to existent node so report is attached to the existent node
@@ -177,7 +185,8 @@ class TestValidationRoute extends OharaTest {
         .port(port + 1)
         .user(user)
         .password(password)
-        .verify()).head
+        .verify()
+    ).head
     // the validated node is not equal to existent node so report2 is attached to the existent node
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport.get should not be report2
 
@@ -191,7 +200,8 @@ class TestValidationRoute extends OharaTest {
         .port(port)
         .user(user)
         .password(password)
-        .update())
+        .update()
+    )
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport shouldBe None
   }
 

@@ -19,7 +19,7 @@ package com.island.ohara.shabondi
 private[shabondi] object Model {
   sealed trait ServerType
   final case object HttpSource extends ServerType
-  final case object HttpSink extends ServerType
+  final case object HttpSink   extends ServerType
 
   final case class CmdArgs(serverType: ServerType, interface: String = "0.0.0.0", port: Int = 8080)
 }

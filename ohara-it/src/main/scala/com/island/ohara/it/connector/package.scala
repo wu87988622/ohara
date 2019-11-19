@@ -19,7 +19,6 @@ import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.Type
 
 package object connector {
-
   /**
     * add some definitions for testing.
     */
@@ -57,7 +56,7 @@ package object connector {
       .displayName("dumb double")
       .key("dumb.double")
       .documentation("double for testing")
-      .optional(10D)
+      .optional(10d)
       .build(),
     SettingDef
       .builder()
@@ -94,6 +93,6 @@ package object connector {
       .documentation("port for testing")
       .optional("9999")
       .build(),
-    SettingDef.builder().displayName("dumb tags").key("dumb.tags").optional(Type.TAGS).documentation("Tags").build(),
+    SettingDef.builder().displayName("dumb tags").key("dumb.tags").optional(Type.TAGS).documentation("Tags").build()
   )
 }

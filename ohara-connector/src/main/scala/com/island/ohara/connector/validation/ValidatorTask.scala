@@ -38,42 +38,52 @@ import spray.json.{JsObject, _}
 
 import scala.collection.JavaConverters._
 class ValidatorTask extends SourceTask {
-  private[this] var done = false
+  private[this] var done                       = false
   private[this] var props: Map[String, String] = _
-  private[this] val topic: String = ValidationApi.INTERNAL_TOPIC_KEY.topicNameOnKafka
-  private[this] var requestId: String = _
+  private[this] val topic: String              = ValidationApi.INTERNAL_TOPIC_KEY.topicNameOnKafka
+  private[this] var requestId: String          = _
   override def start(props: util.Map[String, String]): Unit = {
     this.props = props.asScala.toMap
     requestId = require(ValidationApi.REQUEST_ID)
   }
 
-  override def poll(): util.List[SourceRecord] = if (done) {
-    // just wait the configurator to close this connector
-    TimeUnit.SECONDS.sleep(2)
-    null
-  } else
-    try information match {
-      case info: HdfsValidation =>
-        toSourceRecord(
-          ValidationReport(hostname = hostname,
-                           message = validate(info),
-                           pass = true,
-                           lastModified = CommonUtils.current()))
-      case info: RdbValidation => toSourceRecord(validate(info))
-      case info: FtpValidation =>
-        toSourceRecord(
-          ValidationReport(hostname = hostname,
-                           message = validate(info),
-                           pass = true,
-                           lastModified = CommonUtils.current()))
-    } catch {
-      case e: Throwable =>
-        toSourceRecord(
-          ValidationReport(hostname = hostname,
-                           message = e.getMessage,
-                           pass = false,
-                           lastModified = CommonUtils.current()))
-    } finally done = true
+  override def poll(): util.List[SourceRecord] =
+    if (done) {
+      // just wait the configurator to close this connector
+      TimeUnit.SECONDS.sleep(2)
+      null
+    } else
+      try information match {
+        case info: HdfsValidation =>
+          toSourceRecord(
+            ValidationReport(
+              hostname = hostname,
+              message = validate(info),
+              pass = true,
+              lastModified = CommonUtils.current()
+            )
+          )
+        case info: RdbValidation => toSourceRecord(validate(info))
+        case info: FtpValidation =>
+          toSourceRecord(
+            ValidationReport(
+              hostname = hostname,
+              message = validate(info),
+              pass = true,
+              lastModified = CommonUtils.current()
+            )
+          )
+      } catch {
+        case e: Throwable =>
+          toSourceRecord(
+            ValidationReport(
+              hostname = hostname,
+              message = e.getMessage,
+              pass = false,
+              lastModified = CommonUtils.current()
+            )
+          )
+      } finally done = true
 
   override def stop(): Unit = {
     // do nothing
@@ -82,7 +92,7 @@ class ValidatorTask extends SourceTask {
   override def version(): String = VersionUtils.VERSION
 
   private[this] def validate(info: HdfsValidation): String = {
-    val fs = FileSystem.hdfsBuilder.url(info.uri).build()
+    val fs   = FileSystem.hdfsBuilder.url(info.uri).build()
     val home = fs.workingFolder
     s"check the hdfs:${info.uri} by getting the home:$home"
   }
@@ -110,7 +120,8 @@ class ValidatorTask extends SourceTask {
               }
             )
           }
-        ))
+        )
+      )
     )
     finally client.close()
   }
@@ -135,25 +146,31 @@ class ValidatorTask extends SourceTask {
     case ValidationApi.VALIDATION_RDB_PREFIX_PATH  => ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(toJsObject)
     case ValidationApi.VALIDATION_FTP_PREFIX_PATH  => ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(toJsObject)
     case other: String =>
-      throw new IllegalArgumentException(s"valid targets are ${ValidationApi.VALIDATION_HDFS_PREFIX_PATH}," +
-        s"${ValidationApi.VALIDATION_FTP_PREFIX_PATH} and ${ValidationApi.VALIDATION_HDFS_PREFIX_PATH}. current is $other")
+      throw new IllegalArgumentException(
+        s"valid targets are ${ValidationApi.VALIDATION_HDFS_PREFIX_PATH}," +
+          s"${ValidationApi.VALIDATION_FTP_PREFIX_PATH} and ${ValidationApi.VALIDATION_HDFS_PREFIX_PATH}. current is $other"
+      )
   }
 
   private[this] def toSourceRecord(data: Object): util.List[SourceRecord] =
     util.Arrays.asList(
-      new SourceRecord(null,
-                       null,
-                       topic,
-                       Schema.BYTES_SCHEMA,
-                       Serializer.STRING.to(requestId),
-                       Schema.BYTES_SCHEMA,
-                       Serializer.OBJECT.to(data)))
+      new SourceRecord(
+        null,
+        null,
+        topic,
+        Schema.BYTES_SCHEMA,
+        Serializer.STRING.to(requestId),
+        Schema.BYTES_SCHEMA,
+        Serializer.OBJECT.to(data)
+      )
+    )
 
   private[this] def require(key: String): String =
     props.getOrElse(key, throw new IllegalArgumentException(s"the $key is required"))
 
-  private[this] def hostname: String = try CommonUtils.hostname
-  catch {
-    case _: Throwable => "unknown"
-  }
+  private[this] def hostname: String =
+    try CommonUtils.hostname
+    catch {
+      case _: Throwable => "unknown"
+    }
 }

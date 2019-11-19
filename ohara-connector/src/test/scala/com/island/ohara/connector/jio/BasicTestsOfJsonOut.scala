@@ -65,20 +65,22 @@ trait BasicTestsOfJsonOut {
   }
 
   private[this] def pollData(connectorHostname: String, topicKey: TopicKey): Seq[JioData] = {
-    implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestJsonIn")
+    implicit val actorSystem: ActorSystem             = ActorSystem("Executor-TestJsonIn")
     implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
     try result(
       Http()
         .singleRequest(
-          HttpRequest(HttpMethods.GET, s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}"))
-        .flatMap(res => Unmarshal(res.entity).to[Seq[JioData]]))
+          HttpRequest(HttpMethods.GET, s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}")
+        )
+        .flatMap(res => Unmarshal(res.entity).to[Seq[JioData]])
+    )
     finally Releasable.close(() => Await.result(actorSystem.terminate(), props.closeTimeout))
   }
 
   private[this] def setupConnector(): (String, TopicKey) = setupConnector(props)
 
   private[this] def setupConnector(props: JioProps): (String, TopicKey) = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -88,7 +90,8 @@ trait BasicTestsOfJsonOut {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .settings(props.plain)
-        .create())
+        .create()
+    )
     ConnectorTestUtils.checkConnector(workerClient.connectionProps, connectorKey)
     (result(workerClient.status(connectorKey)).tasks.head.workerHostname, topicKey)
   }
@@ -99,15 +102,17 @@ trait BasicTestsOfJsonOut {
     val data = Seq(
       JioData(
         Map(
-          "a" -> JsString(CommonUtils.randomString()),
+          "a"    -> JsString(CommonUtils.randomString()),
           "tags" -> JsArray(JsString(CommonUtils.randomString()))
-        )),
+        )
+      ),
       JioData(
         Map(
-          "c" -> JsString(CommonUtils.randomString()),
-          "d" -> JsNumber(100),
+          "c"    -> JsString(CommonUtils.randomString()),
+          "d"    -> JsNumber(100),
           "tags" -> JsArray(JsString(CommonUtils.randomString()))
-        ))
+        )
+      )
     )
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
@@ -123,7 +128,7 @@ trait BasicTestsOfJsonOut {
   @Test
   def testNestedRowData(): Unit = {
     val (connectorHostname, topicKey) = setupConnector()
-    val data = Row.of(Cell.of("abc", Row.of(Cell.of("a", "b"))))
+    val data                          = Row.of(Cell.of("abc", Row.of(Cell.of("a", "b"))))
     pushRawData(Seq(data), topicKey)
     CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
     pollData(connectorHostname, topicKey).head.fields("abc").asJsObject.fields("a") shouldBe JsString("b")
@@ -131,15 +136,17 @@ trait BasicTestsOfJsonOut {
 
   @Test
   def testBufferSize(): Unit = {
-    val bufferSize = 3
-    val dataSize = bufferSize * 5
+    val bufferSize                    = 3
+    val dataSize                      = bufferSize * 5
     val (connectorHostname, topicKey) = setupConnector(props.copy(bufferSize = bufferSize))
     val data = (0 until dataSize).map(
       _ =>
         JioData(
           Map(
             CommonUtils.randomString() -> JsString(CommonUtils.randomString())
-          )))
+          )
+        )
+    )
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))

@@ -24,7 +24,6 @@ import org.junit.Test
   * the definitions of official connectors should define the "orderInGroup"
   */
 class TestOfficialConnectorsDefinition extends OharaTest {
-
   @Test
   def testOrderInGroup(): Unit = {
     val illegalConnectors =
@@ -32,11 +31,14 @@ class TestOfficialConnectorsDefinition extends OharaTest {
     if (illegalConnectors.nonEmpty)
       throw new AssertionError(
         illegalConnectors
-          .map(d =>
-            s"the following definitions in ${d.className} have illegal orderInGroup. ${d.settingDefinitions
-              .map(d => s"${d.key()} has orderInGroup:${d.orderInGroup()}")
-              .mkString(",")}")
-          .mkString(","))
+          .map(
+            d =>
+              s"the following definitions in ${d.className} have illegal orderInGroup. ${d.settingDefinitions
+                .map(d => s"${d.key()} has orderInGroup:${d.orderInGroup()}")
+                .mkString(",")}"
+          )
+          .mkString(",")
+      )
   }
 
   private[this] def localConnectorDefinitions =
@@ -54,7 +56,8 @@ class TestOfficialConnectorsDefinition extends OharaTest {
           .map {
             case (className, version) => s"$className has illegal version:$version"
           }
-          .mkString(","))
+          .mkString(",")
+      )
   }
 
   @Test
@@ -69,7 +72,8 @@ class TestOfficialConnectorsDefinition extends OharaTest {
           .map {
             case (className, version) => s"$className has illegal revision:$version"
           }
-          .mkString(","))
+          .mkString(",")
+      )
   }
 
   @Test
@@ -84,6 +88,7 @@ class TestOfficialConnectorsDefinition extends OharaTest {
           .map {
             case (className, version) => s"$className has illegal author:$version"
           }
-          .mkString(","))
+          .mkString(",")
+      )
   }
 }

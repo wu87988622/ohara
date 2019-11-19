@@ -44,18 +44,17 @@ import spray.json.{DeserializationException, JsArray, JsString, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 package object route {
-
   /** default we restrict the jar size to 50MB */
   private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
-  private[route] val NAME_KEY: String = com.island.ohara.client.configurator.v0.NAME_KEY
-  private[route] val GROUP_KEY: String = com.island.ohara.client.configurator.v0.GROUP_KEY
-  private[route] val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-  private[route] val TAGS_KEY: String = com.island.ohara.client.configurator.v0.TAGS_KEY
-  private[this] val FORCE_KEY: String = com.island.ohara.client.configurator.v0.FORCE_KEY
-  private[route] val START_COMMAND: String = com.island.ohara.client.configurator.v0.START_COMMAND
-  private[route] val STOP_COMMAND: String = com.island.ohara.client.configurator.v0.STOP_COMMAND
-  private[route] val PAUSE_COMMAND: String = com.island.ohara.client.configurator.v0.PAUSE_COMMAND
-  private[route] val RESUME_COMMAND: String = com.island.ohara.client.configurator.v0.RESUME_COMMAND
+  private[route] val NAME_KEY: String        = com.island.ohara.client.configurator.v0.NAME_KEY
+  private[route] val GROUP_KEY: String       = com.island.ohara.client.configurator.v0.GROUP_KEY
+  private[route] val GROUP_DEFAULT: String   = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
+  private[route] val TAGS_KEY: String        = com.island.ohara.client.configurator.v0.TAGS_KEY
+  private[this] val FORCE_KEY: String        = com.island.ohara.client.configurator.v0.FORCE_KEY
+  private[route] val START_COMMAND: String   = com.island.ohara.client.configurator.v0.START_COMMAND
+  private[route] val STOP_COMMAND: String    = com.island.ohara.client.configurator.v0.STOP_COMMAND
+  private[route] val PAUSE_COMMAND: String   = com.island.ohara.client.configurator.v0.PAUSE_COMMAND
+  private[route] val RESUME_COMMAND: String  = com.island.ohara.client.configurator.v0.RESUME_COMMAND
 
   /**
     * this is a variety to basic route of all APIs to access ohara's "cluster" data.
@@ -86,16 +85,20 @@ package object route {
     * @tparam Cluster cluster info
     * @return route
     */
-  def clusterRoute[Cluster <: ClusterInfo: ClassTag,
-                   Status <: ClusterStatus,
-                   Creation <: ClusterCreation,
-                   Updating <: ClusterUpdating](root: String,
-                                                metricsKey: Option[String],
-                                                hookOfCreation: HookOfCreation[Creation, Cluster],
-                                                hookOfUpdating: HookOfUpdating[Updating, Cluster],
-                                                hookOfStart: HookOfAction[Cluster],
-                                                hookBeforeStop: HookOfAction[Cluster],
-                                                hookBeforeDelete: HookBeforeDelete)(
+  def clusterRoute[
+    Cluster <: ClusterInfo: ClassTag,
+    Status <: ClusterStatus,
+    Creation <: ClusterCreation,
+    Updating <: ClusterUpdating
+  ](
+    root: String,
+    metricsKey: Option[String],
+    hookOfCreation: HookOfCreation[Creation, Cluster],
+    hookOfUpdating: HookOfUpdating[Updating, Cluster],
+    hookOfStart: HookOfAction[Cluster],
+    hookBeforeStop: HookOfAction[Cluster],
+    hookBeforeDelete: HookBeforeDelete
+  )(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
     meterCache: MeterCache,
@@ -104,27 +107,31 @@ package object route {
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Updating],
     rm2: RootJsonFormat[Cluster],
-    executionContext: ExecutionContext): server.Route =
+    executionContext: ExecutionContext
+  ): server.Route =
     RouteBuilder[Creation, Updating, Cluster]()
       .root(root)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
       .hookOfGet(updateState[Cluster, Status](_, metricsKey))
       .hookOfList((clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState[Cluster, Status](_, metricsKey)))
-      .hookBeforeDelete((key: ObjectKey) =>
-        store.get[Cluster](key).flatMap {
-          _.fold(Future.unit) { info =>
-            updateState[Cluster, Status](info, metricsKey)
-              .flatMap(cluster => hookBeforeDelete(cluster.key).map(_ => cluster))
-              .map(_.state)
-              .map {
-                case None => Unit
-                case Some(_) =>
-                  throw new IllegalArgumentException(
-                    s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key")
-              }
+      .hookBeforeDelete(
+        (key: ObjectKey) =>
+          store.get[Cluster](key).flatMap {
+            _.fold(Future.unit) { info =>
+              updateState[Cluster, Status](info, metricsKey)
+                .flatMap(cluster => hookBeforeDelete(cluster.key).map(_ => cluster))
+                .map(_.state)
+                .map {
+                  case None => Unit
+                  case Some(_) =>
+                    throw new IllegalArgumentException(
+                      s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key"
+                    )
+                }
+            }
           }
-      })
+      )
       .hookOfPutAction(
         START_COMMAND,
         (clusterInfo: Cluster, subName: String, params: Map[String, String]) =>
@@ -134,7 +141,7 @@ package object route {
               Future.unit
             } else
               checkResourcesConflict(clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
-        }
+          }
       )
       .hookOfPutAction(
         STOP_COMMAND,
@@ -149,7 +156,7 @@ package object route {
                   else collie.remove(clusterInfo.key)
                 }
                 .flatMap(_ => Future.unit)
-        )
+          )
       )
       .hookOfFinalPutAction((clusterInfo: Cluster, nodeName: String, _: Map[String, String]) => {
         // A BIT hard-code here to reuse the checker :(
@@ -163,19 +170,22 @@ package object route {
           .flatMap(_ => store.add(clusterInfo.newNodeNames(clusterInfo.nodeNames + nodeName)))
           .flatMap(_ => Future.unit)
       })
-      .hookOfFinalDeleteAction((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
-        store.get[Cluster](key).flatMap { clusterOption =>
-          clusterOption
-            .filter(_.nodeNames.contains(nodeName))
-            .map { cluster =>
-              collie
-                .removeNode(key, nodeName)
-                .flatMap(_ =>
-                  store.addIfPresent(cluster.newNodeNames(cluster.nodeNames - nodeName).asInstanceOf[Cluster]))
-                .flatMap(_ => Future.unit)
-            }
-            .getOrElse(Future.unit)
-      })
+      .hookOfFinalDeleteAction(
+        (key: ObjectKey, nodeName: String, _: Map[String, String]) =>
+          store.get[Cluster](key).flatMap { clusterOption =>
+            clusterOption
+              .filter(_.nodeNames.contains(nodeName))
+              .map { cluster =>
+                collie
+                  .removeNode(key, nodeName)
+                  .flatMap(
+                    _ => store.addIfPresent(cluster.newNodeNames(cluster.nodeNames - nodeName).asInstanceOf[Cluster])
+                  )
+                  .flatMap(_ => Future.unit)
+              }
+              .getOrElse(Future.unit)
+          }
+      )
       .build()
 
   /**
@@ -194,8 +204,8 @@ package object route {
     apiUrl = Some(apiUrl)
   )
 
-  def routeToOfficialUrl(inputPath: String): server.Route = complete(
-    StatusCodes.NotFound -> errorWithOfficialApis(inputPath))
+  def routeToOfficialUrl(inputPath: String): server.Route =
+    complete(StatusCodes.NotFound -> errorWithOfficialApis(inputPath))
 
   /**
     * Test whether this cluster satisfied the following rules:
@@ -213,17 +223,21 @@ package object route {
   private[this] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](req: Cluster)(
     implicit executionContext: ExecutionContext,
     objectChecker: ObjectChecker,
-    serviceCollie: ServiceCollie): Future[Unit] =
+    serviceCollie: ServiceCollie
+  ): Future[Unit] =
     objectChecker.checkList
       .nodeNames(
-        if (req.nodeNames.isEmpty) throw DeserializationException("node names can't be empty") else req.nodeNames)
+        if (req.nodeNames.isEmpty) throw DeserializationException("node names can't be empty")
+        else req.nodeNames
+      )
       .allZookeepers()
       .allBrokers()
       .allWorkers()
       .allStreams()
       .check()
-      .map(report =>
-        report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreams)
+      .map(
+        report => report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreams
+      )
       // check the docker images
       .flatMap { clusters =>
         serviceCollie.images().map { nodesImages =>
@@ -231,7 +245,8 @@ package object route {
             val images = nodesImages.find(_._1.hostname == nodeName).map(_._2).getOrElse(Seq.empty)
             if (!images.contains(req.imageName))
               throw new IllegalArgumentException(
-                s"$nodeName does not have image:${req.imageName}. It has images:${images.mkString(",")}")
+                s"$nodeName does not have image:${req.imageName}. It has images:${images.mkString(",")}"
+              )
           }
           clusters
         }
@@ -253,25 +268,26 @@ package object route {
           .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
 
         // check port conflict
-        Some(clusters
-          .flatMap { cluster =>
-            val conflictPorts = cluster.ports.intersect(req.ports)
-            if (conflictPorts.isEmpty) None
-            else Some(cluster -> conflictPorts)
-          }
-          .map {
-            case (cluster, conflictPorts) =>
-              s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
-          }
-          .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
+        Some(
+          clusters
+            .flatMap { cluster =>
+              val conflictPorts = cluster.ports.intersect(req.ports)
+              if (conflictPorts.isEmpty) None
+              else Some(cluster -> conflictPorts)
+            }
+            .map {
+              case (cluster, conflictPorts) =>
+                s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
+            }
+            .mkString(";")
+        ).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
         Unit
       }
 
-  private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus](cluster: Cluster,
-                                                                                           metricsKey: Option[String])(
-    implicit meterCache: MeterCache,
-    collie: Collie[Status],
-    executionContext: ExecutionContext): Future[Cluster] =
+  private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus](
+    cluster: Cluster,
+    metricsKey: Option[String]
+  )(implicit meterCache: MeterCache, collie: Collie[Status], executionContext: ExecutionContext): Future[Cluster] =
     collie
       .clusters()
       .map(
@@ -289,8 +305,9 @@ package object route {
               cluster
                 .asInstanceOf[StreamClusterInfo]
                 .update(status)
-                .copy(metrics =
-                  Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty)))
+                .copy(
+                  metrics = Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
+                )
           }
           .getOrElse {
             // no running cluster. It means no state and no dead nodes.
@@ -302,19 +319,19 @@ package object route {
                 c.copy(
                   aliveNodes = Set.empty,
                   state = None,
-                  error = None,
+                  error = None
                 )
               case c: BrokerClusterInfo =>
                 c.copy(
                   aliveNodes = Set.empty,
                   state = None,
-                  error = None,
+                  error = None
                 )
               case c: WorkerClusterInfo =>
                 c.copy(
                   aliveNodes = Set.empty,
                   state = None,
-                  error = None,
+                  error = None
                 )
               case c: StreamClusterInfo =>
                 c.copy(
@@ -337,10 +354,12 @@ package object route {
     * @param clusterKey target cluster
     * @return cluster info and topic admin
     */
-  def topicAdmin(clusterKey: ObjectKey)(implicit brokerCollie: BrokerCollie,
-                                        store: DataStore,
-                                        cleaner: AdminCleaner,
-                                        executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
+  def topicAdmin(clusterKey: ObjectKey)(
+    implicit brokerCollie: BrokerCollie,
+    store: DataStore,
+    cleaner: AdminCleaner,
+    executionContext: ExecutionContext
+  ): Future[(BrokerClusterInfo, TopicAdmin)] =
     store.value[BrokerClusterInfo](clusterKey).flatMap(cluster => topicAdmin(cluster).map(cluster -> _))
 
   /**
@@ -352,7 +371,8 @@ package object route {
   def workerClient(clusterKey: ObjectKey)(
     implicit workerCollie: WorkerCollie,
     store: DataStore,
-    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] =
+    executionContext: ExecutionContext
+  ): Future[(WorkerClusterInfo, WorkerClient)] =
     store.value[WorkerClusterInfo](clusterKey).flatMap(cluster => workerCollie.workerClient(cluster).map(cluster -> _))
 
   /**
@@ -363,7 +383,8 @@ package object route {
     store: DataStore,
     cleaner: AdminCleaner,
     workerCollie: WorkerCollie,
-    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
+    executionContext: ExecutionContext
+  ): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
     workerClient(workerClusterKey).flatMap {
       case (wkInfo, wkClient) =>
         topicAdmin(wkInfo.brokerClusterKey).map {
@@ -374,8 +395,10 @@ package object route {
   /**
     * create a topic admin and then add it to cleanup process in order to avoid resource leak.
     */
-  def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(implicit brokerCollie: BrokerCollie,
-                                                       adminCleaner: AdminCleaner,
-                                                       executionContext: ExecutionContext): Future[TopicAdmin] =
+  def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(
+    implicit brokerCollie: BrokerCollie,
+    adminCleaner: AdminCleaner,
+    executionContext: ExecutionContext
+  ): Future[TopicAdmin] =
     brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
 }

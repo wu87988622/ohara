@@ -29,18 +29,20 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] = {
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: NodeApi.Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
       .imageName(containerInfo.imageName)
       .portMappings(
-        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
-
+        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+      )
       /**
         * the hostname of k8s/docker container has strict limit. Fortunately, we are aware of this issue and the hostname
         * passed to this method is legal to k8s/docker. Hence, assigning the hostname is very safe to you :)

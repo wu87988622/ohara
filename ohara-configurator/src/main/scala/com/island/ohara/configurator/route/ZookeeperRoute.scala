@@ -30,10 +30,9 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperRoute {
-
-  private[this] def creationToClusterInfo(creation: Creation)(
-    implicit objectChecker: ObjectChecker,
-    executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+  private[this] def creationToClusterInfo(
+    creation: Creation
+  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     objectChecker.checkList.nodeNames(creation.nodeNames).check().map { _ =>
       ZookeeperClusterInfo(
         settings = creation.settings,
@@ -44,12 +43,16 @@ object ZookeeperRoute {
       )
     }
 
-  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, ZookeeperClusterInfo] =
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfCreation[Creation, ZookeeperClusterInfo] =
     creationToClusterInfo(_)
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, ZookeeperClusterInfo] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, ZookeeperClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
       previousOption match {
         case None => creationToClusterInfo(access.request.settings(updating.settings).key(key).creation)
@@ -64,13 +67,16 @@ object ZookeeperRoute {
                 .settings(updating.settings)
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
-                .creation)
+                .creation
+            )
           }
-    }
+      }
 
-  private[this] def hookOfStart(implicit serviceCollie: ServiceCollie,
-                                objectChecker: ObjectChecker,
-                                executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
+  private[this] def hookOfStart(
+    implicit serviceCollie: ServiceCollie,
+    objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _, _) =>
       objectChecker.checkList
       // node names check is covered in super route
@@ -86,47 +92,57 @@ object ZookeeperRoute {
             .nodeNames(zookeeperClusterInfo.nodeNames)
             .threadPool(executionContext)
             .create()
-      }
+        }
 
-  private[this] def checkConflict(zookeeperClusterInfo: ZookeeperClusterInfo,
-                                  brokerClusterInfos: Seq[BrokerClusterInfo]): Unit = {
+  private[this] def checkConflict(
+    zookeeperClusterInfo: ZookeeperClusterInfo,
+    brokerClusterInfos: Seq[BrokerClusterInfo]
+  ): Unit = {
     val conflictedBrokers = brokerClusterInfos.filter(_.zookeeperClusterKey == zookeeperClusterInfo.key)
     if (conflictedBrokers.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove zookeeper cluster:${zookeeperClusterInfo.key} since it is used by broker cluster:${conflictedBrokers.map(_.key).mkString(",")}")
+        s"you can't remove zookeeper cluster:${zookeeperClusterInfo.key} since it is used by broker cluster:${conflictedBrokers.map(_.key).mkString(",")}"
+      )
   }
 
-  private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfAction[ZookeeperClusterInfo] =
+  private[this] def hookBeforeStop(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _: String, _: Map[String, String]) =>
       objectChecker.checkList.allBrokers().check().map(_.runningBrokers).map { runningBrokerClusters =>
         checkConflict(zookeeperClusterInfo, runningBrokerClusters)
-    }
-
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete = key =>
-    objectChecker.checkList
-      .zookeeperCluster(key, STOPPED)
-      .allBrokers()
-      .check()
-      .map(report => (report.zookeeperClusterInfos.head._1, report.brokerClusterInfos.keys.toSeq))
-      .map {
-        case (zookeeperClusterInfo, brokerClusterInfos) =>
-          checkConflict(zookeeperClusterInfo, brokerClusterInfos)
       }
-      .recover {
-        // the duplicate deletes are legal to ohara
-        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
-        case e: Throwable                                           => throw e
-      }
-      .map(_ => Unit)
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            meterCache: MeterCache,
-            zookeeperCollie: ZookeeperCollie,
-            serviceCollie: ServiceCollie,
-            executionContext: ExecutionContext): server.Route =
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
+    key =>
+      objectChecker.checkList
+        .zookeeperCluster(key, STOPPED)
+        .allBrokers()
+        .check()
+        .map(report => (report.zookeeperClusterInfos.head._1, report.brokerClusterInfos.keys.toSeq))
+        .map {
+          case (zookeeperClusterInfo, brokerClusterInfos) =>
+            checkConflict(zookeeperClusterInfo, brokerClusterInfos)
+        }
+        .recover {
+          // the duplicate deletes are legal to ohara
+          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: Throwable                                           => throw e
+        }
+        .map(_ => Unit)
+
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    meterCache: MeterCache,
+    zookeeperCollie: ZookeeperCollie,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): server.Route =
     clusterRoute[ZookeeperClusterInfo, ZookeeperClusterStatus, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,
       metricsKey = None,

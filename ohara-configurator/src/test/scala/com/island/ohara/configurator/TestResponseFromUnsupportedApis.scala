@@ -35,7 +35,7 @@ import scala.concurrent.{Await, Future}
 class TestResponseFromUnsupportedApis extends OharaTest {
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestResponseFromUnsupportedApis")
+  private[this] implicit val actorSystem: ActorSystem             = ActorSystem("Executor-TestResponseFromUnsupportedApis")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
   private[this] val expectedMessage = com.island.ohara.configurator.route.apiUrl
@@ -62,7 +62,8 @@ class TestResponseFromUnsupportedApis extends OharaTest {
         .flatMap { response =>
           if (response.status.isSuccess()) Future.failed(new AssertionError())
           else Unmarshal(response.entity).to[ErrorApi.Error]
-        })
+        }
+    )
 
   @After
   def tearDown(): Unit = {

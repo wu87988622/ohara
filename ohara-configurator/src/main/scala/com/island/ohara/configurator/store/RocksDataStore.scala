@@ -38,7 +38,6 @@ import scala.reflect.{ClassTag, classTag}
   * @param dataSerializer value serializer
   */
 private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[Data]) extends DataStore {
-
   /**
     * ObjectKey is an interface without Serializable mark. Hence, we do the serialization manually.
     * TODO: Should we have a specific case class for ObjectKey to complete the serialization ??? by chia
@@ -64,7 +63,7 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
       } finally bytesBuf.close()
     }
   }
-  private[this] val closed = new AtomicBoolean(false)
+  private[this] val closed            = new AtomicBoolean(false)
   private[this] val classesAndHandles = new ConcurrentHashMap[String, ColumnFamilyHandle]()
 
   private[this] val db = {
@@ -74,7 +73,7 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
       try RocksDB.listColumnFamilies(options, folder)
       finally options.close()
     }.asScala
-    val lists = new util.ArrayList[ColumnFamilyHandle]()
+    val lists   = new util.ArrayList[ColumnFamilyHandle]()
     val options = new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true)
     try RocksDB.open(
       options,
@@ -90,21 +89,24 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
     }
   }
 
-  private[this] def doIfNotClosed[T](action: => T): T = if (closed.get())
-    throw new RuntimeException("RocksDataStore is closed!!!")
-  else action
+  private[this] def doIfNotClosed[T](action: => T): T =
+    if (closed.get())
+      throw new RuntimeException("RocksDataStore is closed!!!")
+    else action
 
-  private[this] def getOrCreateHandler[T <: Data: ClassTag]: ColumnFamilyHandle = getOrCreateHandler(
-    classTag[T].runtimeClass)
+  private[this] def getOrCreateHandler[T <: Data: ClassTag]: ColumnFamilyHandle =
+    getOrCreateHandler(classTag[T].runtimeClass)
 
   /**
     * get a existent handles or create an new one if the input class is not associated to a existtent handles.
     * Noted: it throws exception if this RocksDB is closed!!!
     * @return handles
     */
-  private[this] def getOrCreateHandler(clz: Class[_]): ColumnFamilyHandle = doIfNotClosed(
-    classesAndHandles.computeIfAbsent(clz.getName,
-                                      name => db.createColumnFamily(new ColumnFamilyDescriptor(name.getBytes))))
+  private[this] def getOrCreateHandler(clz: Class[_]): ColumnFamilyHandle =
+    doIfNotClosed(
+      classesAndHandles
+        .computeIfAbsent(clz.getName, name => db.createColumnFamily(new ColumnFamilyDescriptor(name.getBytes)))
+    )
 
   /**
     * collect all handles if RocksDB is not closed.
@@ -120,7 +122,8 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
           if (iter.isValid)
             try Some((toKey(iter.key()), toData(iter.value())))
             finally iter.next()
-          else None)
+          else None
+        )
         .takeWhile(_.exists {
           case (k, _) => endKey == null || k == endKey
         })
@@ -130,9 +133,9 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
     } finally iter.close()
 
   private[this] def toBytes(key: ObjectKey): Array[Byte] = keySerializer.to(Objects.requireNonNull(key))
-  private[this] def toKey(key: Array[Byte]): ObjectKey = keySerializer.from(Objects.requireNonNull(key))
-  private[this] def toBytes(value: Data): Array[Byte] = dataSerializer.to(Objects.requireNonNull(value))
-  private[this] def toData(value: Array[Byte]): Data = dataSerializer.from(Objects.requireNonNull(value))
+  private[this] def toKey(key: Array[Byte]): ObjectKey   = keySerializer.from(Objects.requireNonNull(key))
+  private[this] def toBytes(value: Data): Array[Byte]    = dataSerializer.to(Objects.requireNonNull(value))
+  private[this] def toData(value: Array[Byte]): Data     = dataSerializer.from(Objects.requireNonNull(value))
 
   private[this] def _get(handler: ColumnFamilyHandle, key: ObjectKey): Option[Data] =
     Option(db.get(handler, toBytes(key))).map(toData)
@@ -151,7 +154,8 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
           case (k, v) => k -> v.asInstanceOf[T]
         }
         .values
-        .toList)
+        .toList
+    )
 
   override def remove[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean] =
     get[T](key).map { obj =>
@@ -160,16 +164,19 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
     }
 
   override def addIfPresent[T <: Data: ClassTag](key: ObjectKey, updater: T => T)(
-    implicit executor: ExecutionContext): Future[T] =
+    implicit executor: ExecutionContext
+  ): Future[T] =
     value[T](key)
       .map(updater)
       .map(newValue => {
         if (newValue.group != key.group)
           throw new IllegalArgumentException(
-            s"""the new group:\"${newValue.group}\" is not equal to group:\"${key.group}\"""")
+            s"""the new group:\"${newValue.group}\" is not equal to group:\"${key.group}\""""
+          )
         if (newValue.name != key.name)
           throw new IllegalArgumentException(
-            s"""the new name:\"${newValue.name}\" is not equal to name:\"${key.name}\"""")
+            s"""the new name:\"${newValue.name}\" is not equal to name:\"${key.name}\""""
+          )
         db.put(getOrCreateHandler(newValue.getClass), toBytes(key), toBytes(newValue))
         newValue
       })
@@ -177,7 +184,8 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
   override def addIfAbsent[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
     if (_get(getOrCreateHandler(data.getClass), ObjectKey.of(data.group, data.name)).isDefined)
       Future.failed(
-        new IllegalStateException(s"(${data.group}, ${data.name}} already exists on ${data.getClass.getName}"))
+        new IllegalStateException(s"(${data.group}, ${data.name}} already exists on ${data.getClass.getName}")
+      )
     else add(data)
 
   override def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
@@ -205,7 +213,6 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
         }
         count
       } finally iter.close()
-
     }.sum
 
   override def close(): Unit = if (closed.compareAndSet(false, true)) {

@@ -44,12 +44,14 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerClient extends WorkerClient {
-  private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
+  private[this] val cachedConnectors      = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
 
   override def connectorCreator(): Creator = new Creator(ConnectorFormatter.of()) {
-    override protected def doCreate(executionContext: ExecutionContext,
-                                    creation: Creation): Future[KafkaConnectorCreationResponse] =
+    override protected def doCreate(
+      executionContext: ExecutionContext,
+      creation: Creation
+    ): Future[KafkaConnectorCreationResponse] =
       if (cachedConnectors.contains(creation.name()))
         Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
       else {
@@ -71,8 +73,9 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] =
     Future.successful(cachedConnectors.keys.asScala.toSeq)
   override def connectionProps: String = "Unknown"
-  override def status(connectorKey: ConnectorKey)(
-    implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] =
+  override def status(
+    connectorKey: ConnectorKey
+  )(implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] =
     if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
       Future.failed(new IllegalArgumentException(s"Connector:${connectorKey.connectorNameOnKafka()} doesn't exist"))
     else
@@ -81,10 +84,12 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
           connectorKey.connectorNameOnKafka(),
           KafkaConnectorStatus(cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "fake id", None),
           Seq.empty
-        ))
+        )
+      )
 
-  override def config(connectorKey: ConnectorKey)(
-    implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig] = {
+  override def config(
+    connectorKey: ConnectorKey
+  )(implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig] = {
     val map = cachedConnectors.get(connectorKey.connectorNameOnKafka())
     if (map == null)
       Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
@@ -92,12 +97,14 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   }
 
   override def taskStatus(connectorKey: ConnectorKey, id: Int)(
-    implicit executionContext: ExecutionContext): Future[KafkaTaskStatus] =
+    implicit executionContext: ExecutionContext
+  ): Future[KafkaTaskStatus] =
     if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
       Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
     else
       Future.successful(
-        KafkaTaskStatus(0, cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "worker_id", None))
+        KafkaTaskStatus(0, cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "worker_id", None)
+      )
 
   override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
     if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
@@ -110,8 +117,10 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     else Future.successful(cachedConnectorsState.put(connectorKey.connectorNameOnKafka(), State.RUNNING))
 
   override def connectorValidator(): Validator = new Validator(ConnectorFormatter.of()) {
-    override protected def doValidate(executionContext: ExecutionContext,
-                                      validation: Validation): Future[SettingInfo] = {
+    override protected def doValidate(
+      executionContext: ExecutionContext,
+      validation: Validation
+    ): Future[SettingInfo] = {
       // TODO: this implementation use kafka private APIs ... by chia
       Future {
         val instance = Class.forName(validation.className).newInstance()
@@ -121,7 +130,8 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
           case _                  => throw new IllegalArgumentException(s"who are you ${validation.className} ???")
         }
         SettingInfo.of(
-          AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList()))
+          AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList())
+        )
       }(executionContext)
     }
   }
@@ -132,5 +142,4 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
 
 object FakeWorkerClient {
   def apply(): FakeWorkerClient = new FakeWorkerClient
-
 }

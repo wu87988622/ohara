@@ -25,7 +25,6 @@ import org.reflections.Reflections
 
 import scala.collection.JavaConverters._
 object ReflectionUtils {
-
   private[this] val LOG = Logger(ReflectionUtils.getClass)
 
   /**

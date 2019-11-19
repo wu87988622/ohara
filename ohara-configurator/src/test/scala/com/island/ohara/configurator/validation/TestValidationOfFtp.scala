@@ -38,7 +38,8 @@ class TestValidationOfFtp extends WithConfigurator {
           .user(ftpServer.user)
           .password(ftpServer.password())
           .workerClusterKey(workerClusterKey)
-          .verify())
+          .verify()
+      )
     )
 
   @Test
@@ -51,6 +52,7 @@ class TestValidationOfFtp extends WithConfigurator {
           .user(ftpServer.user)
           .password(CommonUtils.randomString())
           .workerClusterKey(workerClusterKey)
-          .verify())
+          .verify()
+      )
     )
 }

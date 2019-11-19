@@ -22,7 +22,7 @@ import org.scalatest.Matchers._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 package object validation {
-  val NUMBER_OF_TASKS = 3
+  val NUMBER_OF_TASKS            = 3
   def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   def assertFailure(reports: Seq[ValidationReport]): Unit = {

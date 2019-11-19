@@ -25,7 +25,6 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
 class TestDatabaseClient extends OharaTest {
-
   private[this] val db = Database.local()
 
   private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
@@ -37,11 +36,11 @@ class TestDatabaseClient extends OharaTest {
   }
   @Test
   def testList(): Unit = {
-    val before = client.tables().size
+    val before    = client.tables().size
     val tableName = CommonUtils.randomString(10)
-    val cf0 = RdbColumn("cf0", "INTEGER", true)
-    val cf1 = RdbColumn("cf1", "INTEGER", false)
-    val cf2 = RdbColumn("cf2", "INTEGER", false)
+    val cf0       = RdbColumn("cf0", "INTEGER", true)
+    val cf1       = RdbColumn("cf1", "INTEGER", false)
+    val cf2       = RdbColumn("cf2", "INTEGER", false)
     client.createTable(tableName, Seq(cf2, cf0, cf1))
     try {
       val after = client.tables().size
@@ -53,10 +52,10 @@ class TestDatabaseClient extends OharaTest {
   def testCreate(): Unit = {
     // postgresql use lower case...
     val tableName = CommonUtils.randomString(10)
-    val cf0 = RdbColumn("cf0", "INTEGER", true)
-    val cf1 = RdbColumn("cf1", "INTEGER", true)
-    val cf2 = RdbColumn("cf2", "INTEGER", false)
-    val before = client.tables().size
+    val cf0       = RdbColumn("cf0", "INTEGER", true)
+    val cf1       = RdbColumn("cf1", "INTEGER", true)
+    val cf2       = RdbColumn("cf2", "INTEGER", false)
+    val before    = client.tables().size
     client.createTable(tableName, Seq(cf2, cf0, cf1))
     try {
       client.tables().size - before shouldBe increasedNumber
@@ -71,8 +70,8 @@ class TestDatabaseClient extends OharaTest {
   @Test
   def testDrop(): Unit = {
     val tableName = CommonUtils.randomString(10)
-    val cf0 = RdbColumn("cf0", "INTEGER", true)
-    val cf1 = RdbColumn("cf1", "INTEGER", false)
+    val cf0       = RdbColumn("cf0", "INTEGER", true)
+    val cf1       = RdbColumn("cf1", "INTEGER", false)
     client.createTable(tableName, Seq(cf0, cf1))
     val before = client.tables().size
     client.dropTable(tableName)

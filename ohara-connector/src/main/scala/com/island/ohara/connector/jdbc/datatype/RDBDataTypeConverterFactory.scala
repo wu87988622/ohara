@@ -17,7 +17,6 @@
 package com.island.ohara.connector.jdbc.datatype
 
 object RDBDataTypeConverterFactory {
-
   def dataTypeConverter(productName: String): RDBDataTypeConverter = {
     productName.toLowerCase match {
       case "postgresql" =>

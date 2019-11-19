@@ -33,12 +33,11 @@ import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
-
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def creationToConnectorInfo(creation: Creation)(
-    implicit objectChecker: ObjectChecker,
-    executionContext: ExecutionContext): Future[ConnectorInfo] =
+  private[this] def creationToConnectorInfo(
+    creation: Creation
+  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[ConnectorInfo] =
     objectChecker.checkList.workerCluster(creation.workerClusterKey).topics(creation.topicKeys).check().map { _ =>
       ConnectorInfo(
         settings = creation.settings,
@@ -50,10 +49,12 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       )
     }
 
-  private[this] def updateState(connectorInfo: ConnectorInfo)(implicit executionContext: ExecutionContext,
-                                                              workerCollie: WorkerCollie,
-                                                              objectChecker: ObjectChecker,
-                                                              meterCache: MeterCache): Future[ConnectorInfo] =
+  private[this] def updateState(connectorInfo: ConnectorInfo)(
+    implicit executionContext: ExecutionContext,
+    workerCollie: WorkerCollie,
+    objectChecker: ObjectChecker,
+    meterCache: MeterCache
+  ): Future[ConnectorInfo] =
     objectChecker.checkList
       .workerCluster(connectorInfo.workerClusterKey)
       .check()
@@ -67,16 +68,19 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                   status = None,
                   tasksStatus = Seq.empty,
                   metrics = Metrics.EMPTY
-                ))
+                )
+              )
             case RUNNING =>
               workerCollie.workerClient(workerClusterInfo).flatMap { workerClient =>
                 workerClient.status(connectorInfo.key).map { connectorInfoFromKafka =>
                   connectorInfo.copy(
-                    status = Some(Status(
-                      state = State.forName(connectorInfoFromKafka.connector.state),
-                      error = connectorInfoFromKafka.connector.trace,
-                      nodeName = connectorInfoFromKafka.connector.workerHostname
-                    )),
+                    status = Some(
+                      Status(
+                        state = State.forName(connectorInfoFromKafka.connector.state),
+                        error = connectorInfoFromKafka.connector.trace,
+                        nodeName = connectorInfoFromKafka.connector.workerHostname
+                      )
+                    ),
                     tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
                       Status(
                         state = State.forName(taskStatus.state),
@@ -85,7 +89,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                       )
                     },
                     metrics = Metrics(
-                      meterCache.meters(workerClusterInfo).getOrElse(connectorInfo.key.connectorNameOnKafka, Seq.empty))
+                      meterCache.meters(workerClusterInfo).getOrElse(connectorInfo.key.connectorNameOnKafka, Seq.empty)
+                    )
                   )
                 }
               }
@@ -101,23 +106,31 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           )
       }
 
-  private[this] def hookOfGet(implicit workerCollie: WorkerCollie,
-                              objectChecker: ObjectChecker,
-                              executionContext: ExecutionContext,
-                              meterCache: MeterCache): HookOfGet[ConnectorInfo] = updateState
+  private[this] def hookOfGet(
+    implicit workerCollie: WorkerCollie,
+    objectChecker: ObjectChecker,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): HookOfGet[ConnectorInfo] = updateState
 
-  private[this] def hookOfList(implicit workerCollie: WorkerCollie,
-                               objectChecker: ObjectChecker,
-                               executionContext: ExecutionContext,
-                               meterCache: MeterCache): HookOfList[ConnectorInfo] =
+  private[this] def hookOfList(
+    implicit workerCollie: WorkerCollie,
+    objectChecker: ObjectChecker,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): HookOfList[ConnectorInfo] =
     (connectorDescriptions: Seq[ConnectorInfo]) => Future.sequence(connectorDescriptions.map(updateState))
 
-  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorInfo] =
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfCreation[Creation, ConnectorInfo] =
     creationToConnectorInfo(_)
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, ConnectorInfo] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, ConnectorInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ConnectorInfo]) =>
       previousOption match {
         case None =>
@@ -127,7 +140,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
               // the key is not in update's settings so we have to add it to settings
               .name(key.name)
               .group(key.group)
-              .creation)
+              .creation
+          )
         case Some(previous) =>
           objectChecker.checkList.connector(previous.key, STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
@@ -140,32 +154,40 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                 // the key is not in update's settings so we have to add it to settings
                 .name(key.name)
                 .group(key.group)
-                .creation)
+                .creation
+            )
           }
-    }
-
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    objectChecker.checkList
-      .connector(ConnectorKey.of(key.group(), key.name()), STOPPED)
-      .check()
-      .recover {
-        // the duplicate deletes are legal to ohara
-        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
       }
-      .map(_ => Unit)
 
-  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
-                                workerCollie: WorkerCollie,
-                                executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
+    (key: ObjectKey) =>
+      objectChecker.checkList
+        .connector(ConnectorKey.of(key.group(), key.name()), STOPPED)
+        .check()
+        .recover {
+          // the duplicate deletes are legal to ohara
+          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+        }
+        .map(_ => Unit)
+
+  private[this] def hookOfStart(
+    implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList
         .connector(connectorInfo.key)
         .topics(
           // our UI needs to create a connector without topics so the connector info may has no topics...
           if (connectorInfo.topicKeys.isEmpty)
-            throw DeserializationException(s"${ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()} can't be empty",
-                                           fieldNames = List(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
+            throw DeserializationException(
+              s"${ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()} can't be empty",
+              fieldNames = List(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key())
+            )
           else connectorInfo.topicKeys,
           RUNNING
         )
@@ -180,7 +202,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                 topicInfos.filter(_.brokerClusterKey != workerClusterInfo.brokerClusterKey).foreach { topicInfo =>
                   throw new IllegalArgumentException(
                     s"Connector app counts on broker cluster:${workerClusterInfo.brokerClusterKey} " +
-                      s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
+                      s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}"
+                  )
                 }
                 workerCollie.workerClient(workerClusterInfo).flatMap {
                   _.connectorCreator()
@@ -193,11 +216,13 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                     .map(_ => Unit)
                 }
             }
-      }
+        }
 
-  private[this] def hookOfStop(implicit objectChecker: ObjectChecker,
-                               workerCollie: WorkerCollie,
-                               executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
+  private[this] def hookOfStop(
+    implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList.connector(connectorInfo.key).check().map(_.connectorInfos.head._2).flatMap {
         case STOPPED => Future.unit
@@ -208,11 +233,13 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             .map(_.runningWorkers.head)
             .flatMap(workerCollie.workerClient)
             .flatMap(workerClient => workerClient.delete(connectorInfo.key))
-    }
+      }
 
-  private[this] def hookOfPause(implicit objectChecker: ObjectChecker,
-                                workerCollie: WorkerCollie,
-                                executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
+  private[this] def hookOfPause(
+    implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList
         .workerCluster(connectorInfo.workerClusterKey, RUNNING)
@@ -225,11 +252,13 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             case State.PAUSED.name => Future.unit
             case _                 => wkClient.pause(connectorInfo.key).map(_ => Unit)
           }
-      }
+        }
 
-  private[this] def hookOfResume(implicit objectChecker: ObjectChecker,
-                                 workerCollie: WorkerCollie,
-                                 executionContext: ExecutionContext): HookOfAction[ConnectorInfo] =
+  private[this] def hookOfResume(
+    implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[ConnectorInfo] =
     (connectorInfo: ConnectorInfo, _, _) =>
       objectChecker.checkList
         .workerCluster(connectorInfo.workerClusterKey, RUNNING)
@@ -242,13 +271,15 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             case State.RUNNING.name => Future.unit
             case _                  => wkClient.resume(connectorInfo.key).map(_ => Unit)
           }
-      }
+        }
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            workerCollie: WorkerCollie,
-            executionContext: ExecutionContext,
-            meterCache: MeterCache): server.Route =
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): server.Route =
     RouteBuilder[Creation, Updating, ConnectorInfo]()
       .root(CONNECTORS_PREFIX_PATH)
       .hookOfCreation(hookOfCreation)

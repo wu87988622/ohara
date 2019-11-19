@@ -113,7 +113,8 @@ trait JsonRefiner[T] {
           // see SettingDef
           if (definition.hasDefault)
             throw new IllegalArgumentException(
-              "the default value to array type is not allowed. default:" + definition.defaultValue)
+              "the default value to array type is not allowed. default:" + definition.defaultValue
+            )
           nullToJsValue(definition.key(), () => JsArray.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
@@ -156,7 +157,8 @@ trait JsonRefiner[T] {
           // see SettingDef
           if (definition.hasDefault)
             throw new IllegalArgumentException(
-              "the default value to object key is not allowed. default:" + definition.defaultValue())
+              "the default value to object key is not allowed. default:" + definition.defaultValue()
+            )
           // convert the value to complete Object key
           valueConverter(definition.key(), v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v)))
           requireType[ObjectKey](definition.key())
@@ -165,7 +167,8 @@ trait JsonRefiner[T] {
           // see SettingDef
           if (definition.hasDefault)
             throw new IllegalArgumentException(
-              "the default value to array type is not allowed. default:" + definition.defaultValue())
+              "the default value to array type is not allowed. default:" + definition.defaultValue()
+            )
           nullToJsValue(definition.key(), () => JsArray.empty)
           // convert the value to complete Object key
           valueConverter(
@@ -180,7 +183,8 @@ trait JsonRefiner[T] {
                 definition.key(),
                 (keys: Seq[ObjectKey]) =>
                   if (keys.isEmpty)
-                    throw DeserializationException(s"empty keys is illegal", fieldNames = List(definition.key())))
+                    throw DeserializationException(s"empty keys is illegal", fieldNames = List(definition.key()))
+              )
             case _ =>
               requireType[Seq[ObjectKey]](definition.key())
           }
@@ -189,7 +193,8 @@ trait JsonRefiner[T] {
           // see SettingDef
           if (definition.hasDefault)
             throw new IllegalArgumentException(
-              "the default value to array type is not allowed. default:" + definition.defaultValue())
+              "the default value to array type is not allowed. default:" + definition.defaultValue()
+            )
           nullToJsValue(definition.key(), () => JsObject.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
@@ -197,7 +202,8 @@ trait JsonRefiner[T] {
                 definition.key(),
                 (tags: JsObject) =>
                   if (tags.fields.isEmpty)
-                    throw DeserializationException(s"empty tags is illegal", fieldNames = List(definition.key())))
+                    throw DeserializationException(s"empty tags is illegal", fieldNames = List(definition.key()))
+              )
             case _ =>
               requireJsonType[JsObject](definition.key())
           }
@@ -206,7 +212,8 @@ trait JsonRefiner[T] {
           // see SettingDef
           if (definition.hasDefault)
             throw new IllegalArgumentException(
-              "the default value to array type is not allowed. default:" + definition.defaultValue())
+              "the default value to array type is not allowed. default:" + definition.defaultValue()
+            )
           nullToJsValue(definition.key(), () => JsArray.empty)
           definition.necessary() match {
             case SettingDef.Necessary.REQUIRED =>
@@ -408,7 +415,8 @@ trait JsonRefiner[T] {
     * @return this refiner
     */
   private[this] def requireType[C](key: String, checker: C => Unit)(
-    implicit format: RootJsonFormat[C]): JsonRefiner[T] =
+    implicit format: RootJsonFormat[C]
+  ): JsonRefiner[T] =
     valueChecker(
       key,
       json => checker(format.read(json))
@@ -456,8 +464,9 @@ trait JsonRefiner[T] {
     * @param key key
     * @return this refiner
     */
-  def arrayRestriction(key: String): ArrayRestriction[T] = (checkers: Seq[(String, JsArray) => Unit]) =>
-    requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
+  def arrayRestriction(key: String): ArrayRestriction[T] =
+    (checkers: Seq[(String, JsArray) => Unit]) =>
+      requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
 
   def stringRestriction(key: String): StringRestriction[T] = stringRestriction(Set(key))
 
@@ -481,7 +490,8 @@ trait JsonRefiner[T] {
                   })
                 throw DeserializationException(
                   s"""the \"$string\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
-                  fieldNames = List(key))
+                  fieldNames = List(key)
+                )
             }
             if (string.length > lengthLimit)
               throw DeserializationException(s"the length of $string exceeds $lengthLimit", fieldNames = List(key))
@@ -516,9 +526,11 @@ trait JsonRefiner[T] {
         try JsNumber(s.value)
         catch {
           case e: NumberFormatException =>
-            throw DeserializationException(s"""the \"${s.value}\" can't be converted to number""",
-                                           e,
-                                           fieldNames = List(key))
+            throw DeserializationException(
+              s"""the \"${s.value}\" can't be converted to number""",
+              e,
+              fieldNames = List(key)
+            )
         }
       case s: JsValue => s
     }
@@ -553,10 +565,9 @@ trait JsonRefiner[T] {
 }
 
 object JsonRefiner {
-
   trait StringRestriction[T] {
     private[this] var legalPair: Seq[(Char, Char)] = Seq.empty
-    private[this] var lengthLimit: Int = Int.MaxValue
+    private[this] var lengthLimit: Int             = Int.MaxValue
 
     /**
       * accept [a-zA-Z]
@@ -611,9 +622,10 @@ object JsonRefiner {
     /**
       * Complete this restriction and add it to string refiner.
       */
-    def toRefiner: JsonRefiner[T] = if (legalPair.isEmpty && lengthLimit == Int.MaxValue)
-      throw new IllegalArgumentException("Don't use String Restriction if you hate to add any restriction")
-    else addToJsonRefiner(legalPair, lengthLimit)
+    def toRefiner: JsonRefiner[T] =
+      if (legalPair.isEmpty && lengthLimit == Int.MaxValue)
+        throw new IllegalArgumentException("Don't use String Restriction if you hate to add any restriction")
+      else addToJsonRefiner(legalPair, lengthLimit)
 
     /**
       * add custom regex to this restriction instance.
@@ -640,26 +652,31 @@ object JsonRefiner {
       * @param keyword the checked keyword
       * @return this refiner
       */
-    def rejectKeyword(keyword: String): ArrayRestriction[T] = addChecker(
-      (key, arr) =>
-        if (arr.elements.exists(_.asInstanceOf[JsString].value == keyword))
-          throw DeserializationException(s"""the \"$keyword\" is a illegal word to $key!!!"""))
+    def rejectKeyword(keyword: String): ArrayRestriction[T] =
+      addChecker(
+        (key, arr) =>
+          if (arr.elements.exists(_.asInstanceOf[JsString].value == keyword))
+            throw DeserializationException(s"""the \"$keyword\" is a illegal word to $key!!!""")
+      )
 
     /**
       * throw exception if this key is empty array.
       * @return this refiner
       */
-    def rejectEmpty(): ArrayRestriction[T] = addChecker(
-      (key, arr) =>
-        if (arr.elements.isEmpty)
-          throw DeserializationException(s"""$key cannot be an empty array!!!"""))
+    def rejectEmpty(): ArrayRestriction[T] =
+      addChecker(
+        (key, arr) =>
+          if (arr.elements.isEmpty)
+            throw DeserializationException(s"""$key cannot be an empty array!!!""")
+      )
 
     /**
       * Complete this restriction and add it to refiner.
       */
-    def toRefiner: JsonRefiner[T] = if (checkers.isEmpty)
-      throw new IllegalArgumentException("Don't use Array Restriction if you hate to add any restriction")
-    else addToJsonRefiner(checkers)
+    def toRefiner: JsonRefiner[T] =
+      if (checkers.isEmpty)
+        throw new IllegalArgumentException("Don't use Array Restriction if you hate to add any restriction")
+      else addToJsonRefiner(checkers)
 
     private[this] def addChecker(checker: (String, JsArray) => Unit): ArrayRestriction[T] = {
       this.checkers :+= checker
@@ -670,14 +687,14 @@ object JsonRefiner {
   }
 
   def apply[T]: JsonRefiner[T] = new JsonRefiner[T] {
-    private[this] var format: RootJsonFormat[T] = _
-    private[this] var valueConverters: Map[String, JsValue => JsValue] = Map.empty
-    private[this] var keyCheckers: Seq[Set[String] => Unit] = Seq.empty
+    private[this] var format: RootJsonFormat[T]                                      = _
+    private[this] var valueConverters: Map[String, JsValue => JsValue]               = Map.empty
+    private[this] var keyCheckers: Seq[Set[String] => Unit]                          = Seq.empty
     private[this] var valuesCheckers: Map[Set[String], Map[String, JsValue] => Unit] = Map.empty
-    private[this] var nullToJsValue: Map[String, () => JsValue] = Map.empty
-    private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
-    private[this] var _rejectEmptyString: Boolean = false
-    private[this] var _rejectEmptyArray: Boolean = false
+    private[this] var nullToJsValue: Map[String, () => JsValue]                      = Map.empty
+    private[this] var nullToAnotherValueOfKey: Map[String, String]                   = Map.empty
+    private[this] var _rejectEmptyString: Boolean                                    = false
+    private[this] var _rejectEmptyArray: Boolean                                     = false
 
     override def format(format: RootJsonFormat[T]): JsonRefiner[T] = {
       this.format = Objects.requireNonNull(format)
@@ -689,33 +706,35 @@ object JsonRefiner {
     }
 
     override protected def valuesChecker(keys: Set[String], checkers: Map[String, JsValue] => Unit): JsonRefiner[T] = {
-
       /**
         * compose the new checker with older one.
         */
       val composedChecker = valuesCheckers
         .get(keys)
-        .map(origin =>
-          (fields: Map[String, JsValue]) => {
-            origin(fields)
-            checkers(fields)
-        })
+        .map(
+          origin =>
+            (fields: Map[String, JsValue]) => {
+              origin(fields)
+              checkers(fields)
+            }
+        )
         .getOrElse(checkers)
       this.valuesCheckers = this.valuesCheckers + (keys -> Objects.requireNonNull(composedChecker))
       this
     }
 
     override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T] = {
-
       /**
         * compose the new checker with older one.
         */
       val composedChecker = valueConverters
         .get(key)
-        .map(origin =>
-          (value: JsValue) => {
-            converter(origin(value))
-        })
+        .map(
+          origin =>
+            (value: JsValue) => {
+              converter(origin(value))
+            }
+        )
         .getOrElse(converter)
       this.valueConverters = this.valueConverters + (key -> Objects.requireNonNull(composedChecker))
       this
@@ -741,7 +760,8 @@ object JsonRefiner {
     override protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T] = {
       if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(
-          s"""the \"$key\" have been associated to default value:${nullToJsValue(key)}""")
+          s"""the \"$key\" have been associated to default value:${nullToJsValue(key)}"""
+        )
       this.nullToJsValue = this.nullToJsValue + (key -> Objects.requireNonNull(defaultValue))
       this
     }
@@ -753,7 +773,6 @@ object JsonRefiner {
       nullToAnotherValueOfKey.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
       new OharaJsonFormat[T] {
-
         private[this] def checkGlobalCondition(key: String, value: JsValue): Unit = {
           def checkEmptyString(k: String, s: JsString): Unit =
             if (s.value.isEmpty)
@@ -768,8 +787,12 @@ object JsonRefiner {
           // 1) check empty string
           if (_rejectEmptyString) checkJsValueForEmptyString(key, value)
 
-          def checkEmptyArray(k: String, s: JsArray): Unit = if (s.elements.isEmpty)
-            throw DeserializationException(s"""the value of \"$k\" MUST be NOT empty array!!!""", fieldNames = List(k))
+          def checkEmptyArray(k: String, s: JsArray): Unit =
+            if (s.elements.isEmpty)
+              throw DeserializationException(
+                s"""the value of \"$k\" MUST be NOT empty array!!!""",
+                fieldNames = List(k)
+              )
 
           def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
             case s: JsArray => checkEmptyArray(k, s)
@@ -835,7 +858,6 @@ object JsonRefiner {
         override def write(obj: T): JsValue = format.write(obj)
 
         override def check(fields: Map[String, JsValue]): Map[String, JsValue] = {
-
           // 1) check global condition
           fields.foreach {
             case (k, v) => checkGlobalCondition(k, v)

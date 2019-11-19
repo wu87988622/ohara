@@ -39,7 +39,8 @@ private[configurator] object PipelineRoute {
 
   private[this] def toAbstract(data: ConnectorInfo, clusterInfo: WorkerClusterInfo, workerClient: WorkerClient)(
     implicit executionContext: ExecutionContext,
-    meterCache: MeterCache): Future[ObjectAbstract] =
+    meterCache: MeterCache
+  ): Future[ObjectAbstract] =
     workerClient
       .connectorDefinition(data.className)
       .map(
@@ -56,7 +57,7 @@ private[configurator] object PipelineRoute {
             metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.key.connectorNameOnKafka, Seq.empty)),
             lastModified = data.lastModified,
             tags = data.tags
-        )
+          )
       )
       .flatMap { obj =>
         workerClient
@@ -77,34 +78,41 @@ private[configurator] object PipelineRoute {
 
   private[this] def toAbstract(data: TopicInfo, clusterInfo: BrokerClusterInfo, topicAdmin: TopicAdmin)(
     implicit meterCache: MeterCache,
-    executionContext: ExecutionContext): Future[ObjectAbstract] = {
+    executionContext: ExecutionContext
+  ): Future[ObjectAbstract] = {
     topicAdmin
       .exist(data.key)
-      .map(try if (_) Some(TopicApi.TopicState.RUNNING) else None
-      finally topicAdmin.close())
+      .map(
+        try if (_) Some(TopicApi.TopicState.RUNNING) else None
+        finally topicAdmin.close()
+      )
       .map(_.map(_.name))
-      .map(state =>
-        ObjectAbstract(
-          group = data.group,
-          name = data.name,
-          kind = data.kind,
-          className = None,
-          state = state,
-          error = None,
-          // noted we create a topic with name rather than name
-          metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
-          lastModified = data.lastModified,
-          tags = data.tags
-      ))
+      .map(
+        state =>
+          ObjectAbstract(
+            group = data.group,
+            name = data.name,
+            kind = data.kind,
+            className = None,
+            state = state,
+            error = None,
+            // noted we create a topic with name rather than name
+            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
+            lastModified = data.lastModified,
+            tags = data.tags
+          )
+      )
   }
 
-  private[this] def toAbstract(obj: Data)(implicit dataStore: DataStore,
-                                          brokerCollie: BrokerCollie,
-                                          workerCollie: WorkerCollie,
-                                          streamCollie: StreamCollie,
-                                          adminCleaner: AdminCleaner,
-                                          executionContext: ExecutionContext,
-                                          meterCache: MeterCache): Future[ObjectAbstract] = obj match {
+  private[this] def toAbstract(obj: Data)(
+    implicit dataStore: DataStore,
+    brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): Future[ObjectAbstract] = obj match {
     case data: ConnectorInfo =>
       workerClient(data.workerClusterKey).flatMap {
         case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
@@ -144,7 +152,8 @@ private[configurator] object PipelineRoute {
           metrics = Metrics.EMPTY,
           lastModified = obj.lastModified,
           tags = obj.tags
-        ))
+        )
+      )
   }
 
   /**
@@ -156,13 +165,15 @@ private[configurator] object PipelineRoute {
     * @param meterCache meter cache
     * @return updated pipeline
     */
-  private[this] def updateObjectsAndJarKeys(pipeline: Pipeline)(implicit brokerCollie: BrokerCollie,
-                                                                workerCollie: WorkerCollie,
-                                                                streamCollie: StreamCollie,
-                                                                adminCleaner: AdminCleaner,
-                                                                store: DataStore,
-                                                                executionContext: ExecutionContext,
-                                                                meterCache: MeterCache): Future[Pipeline] =
+  private[this] def updateObjectsAndJarKeys(pipeline: Pipeline)(
+    implicit brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    store: DataStore,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): Future[Pipeline] =
     Future
       .traverse(pipeline.flows.flatMap(flow => flow.to ++ Set(flow.from)))(store.raws)
       .map(_.flatten.toSet)
@@ -205,30 +216,36 @@ private[configurator] object PipelineRoute {
           .map(jarKeys => pipeline.copy(jarKeys = jarKeys))
       }
 
-  private[this] def hookOfGet(implicit brokerCollie: BrokerCollie,
-                              workerCollie: WorkerCollie,
-                              streamCollie: StreamCollie,
-                              adminCleaner: AdminCleaner,
-                              store: DataStore,
-                              executionContext: ExecutionContext,
-                              meterCache: MeterCache): HookOfGet[Pipeline] = updateObjectsAndJarKeys(_)
+  private[this] def hookOfGet(
+    implicit brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    store: DataStore,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): HookOfGet[Pipeline] = updateObjectsAndJarKeys(_)
 
-  private[this] def hookOfList(implicit brokerCollie: BrokerCollie,
-                               workerCollie: WorkerCollie,
-                               streamCollie: StreamCollie,
-                               adminCleaner: AdminCleaner,
-                               store: DataStore,
-                               executionContext: ExecutionContext,
-                               meterCache: MeterCache): HookOfList[Pipeline] =
+  private[this] def hookOfList(
+    implicit brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    store: DataStore,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): HookOfList[Pipeline] =
     Future.traverse(_)(updateObjectsAndJarKeys)
 
-  private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
-                                   workerCollie: WorkerCollie,
-                                   streamCollie: StreamCollie,
-                                   adminCleaner: AdminCleaner,
-                                   store: DataStore,
-                                   executionContext: ExecutionContext,
-                                   meterCache: MeterCache): HookOfCreation[Creation, Pipeline] =
+  private[this] def hookOfCreation(
+    implicit brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    store: DataStore,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): HookOfCreation[Creation, Pipeline] =
     (creation: Creation) =>
       updateObjectsAndJarKeys(
         Pipeline(
@@ -239,15 +256,18 @@ private[configurator] object PipelineRoute {
           jarKeys = Set.empty,
           lastModified = CommonUtils.current(),
           tags = creation.tags
-        ))
+        )
+      )
 
-  private[this] def hookOfUpdating(implicit brokerCollie: BrokerCollie,
-                                   workerCollie: WorkerCollie,
-                                   streamCollie: StreamCollie,
-                                   adminCleaner: AdminCleaner,
-                                   store: DataStore,
-                                   executionContext: ExecutionContext,
-                                   meterCache: MeterCache): HookOfUpdating[Updating, Pipeline] =
+  private[this] def hookOfUpdating(
+    implicit brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    store: DataStore,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): HookOfUpdating[Updating, Pipeline] =
     (key: ObjectKey, update: Updating, previous: Option[Pipeline]) =>
       updateObjectsAndJarKeys(
         Pipeline(
@@ -258,12 +278,15 @@ private[configurator] object PipelineRoute {
           jarKeys = previous.map(_.jarKeys).getOrElse(Set.empty),
           lastModified = CommonUtils.current(),
           tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
-        ))
+        )
+      )
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
-  private[this] def hookOfRefresh(implicit store: DataStore,
-                                  executionContext: ExecutionContext): HookOfAction[Pipeline] =
+  private[this] def hookOfRefresh(
+    implicit store: DataStore,
+    executionContext: ExecutionContext
+  ): HookOfAction[Pipeline] =
     (pipeline: Pipeline, _, _) => {
       val objKeys = pipeline.flows.flatMap(flow => flow.to + flow.from)
       Future
@@ -277,18 +300,22 @@ private[configurator] object PipelineRoute {
               // remove the flow if the obj in "from" is nonexistent
                 .filter(flow => existedObjKeys.contains(flow.from))
                 // remove nonexistent obj from "to"
-                .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))))
+                .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))
+            )
+        )
         .flatMap(pipeline => store.add[Pipeline](pipeline))
         .map(_ => Unit)
     }
 
-  def apply(implicit brokerCollie: BrokerCollie,
-            workerCollie: WorkerCollie,
-            streamCollie: StreamCollie,
-            adminCleaner: AdminCleaner,
-            store: DataStore,
-            executionContext: ExecutionContext,
-            meterCache: MeterCache): server.Route =
+  def apply(
+    implicit brokerCollie: BrokerCollie,
+    workerCollie: WorkerCollie,
+    streamCollie: StreamCollie,
+    adminCleaner: AdminCleaner,
+    store: DataStore,
+    executionContext: ExecutionContext,
+    meterCache: MeterCache
+  ): server.Route =
     RouteBuilder[Creation, Updating, Pipeline]()
       .root(PIPELINES_PREFIX_PATH)
       .hookOfCreation(hookOfCreation)

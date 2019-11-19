@@ -32,14 +32,13 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestStreamApi extends OharaTest {
-
   private[this] final val accessRequest =
     StreamApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
   private[this] final val fakeJar = ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))
 
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
+  private[this] def topicKey(): TopicKey             = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of(GROUP_DEFAULT, name)
 
   @Test
@@ -71,9 +70,9 @@ class TestStreamApi extends OharaTest {
   @Test
   def testStreamClusterInfoEquals(): Unit = {
     val fromTopicKey = topicKey()
-    val toTopicKey = topicKey()
-    val name = CommonUtils.randomString(20)
-    val group = CommonUtils.randomString(20)
+    val toTopicKey   = topicKey()
+    val name         = CommonUtils.randomString(20)
+    val group        = CommonUtils.randomString(20)
     val info = StreamClusterInfo(
       settings = StreamApi.access.request
         .name(name)
@@ -177,7 +176,8 @@ class TestStreamApi extends OharaTest {
         .toTopicKey(topicKey(CommonUtils.randomString()))
         .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
-        .jmxPort)
+        .jmxPort
+    )
   }
 
   @Test
@@ -267,10 +267,10 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val from = topicKey()
-    val to = topicKey()
-    val jmxPort = CommonUtils.availablePort()
+    val name      = CommonUtils.randomString(10)
+    val from      = topicKey()
+    val to        = topicKey()
+    val jmxPort   = CommonUtils.availablePort()
     val nodeNames = Set(CommonUtils.randomString())
     val creation = accessRequest
       .name(name)
@@ -292,7 +292,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def testExtraSettingInCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name  = CommonUtils.randomString(10)
     val name2 = JsString(CommonUtils.randomString(10))
     val creation = accessRequest
       .name(name)
@@ -310,8 +310,8 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def parseCreation(): Unit = {
-    val from = topicKey()
-    val to = topicKey()
+    val from     = topicKey()
+    val to       = topicKey()
     val nodeName = "n0"
     val creation = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
@@ -344,7 +344,7 @@ class TestStreamApi extends OharaTest {
     creation.jmxPort should not be 0
     creation.nodeNames shouldBe Set(nodeName)
 
-    val name = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
     val creation2 = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
        |  {
        |    "name": "$name",
@@ -852,7 +852,8 @@ class TestStreamApi extends OharaTest {
         error = None,
         metrics = Metrics.EMPTY,
         lastModified = CommonUtils.current()
-      ))
+      )
+    )
     // serialize to json should see the object key (group, name) in "settings"
     res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
     res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
@@ -869,7 +870,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def testOverwriteSettings(): Unit = {
     val fromTopicKey = topicKey(CommonUtils.randomString())
-    val toTopicKey = topicKey(CommonUtils.randomString())
+    val toTopicKey   = topicKey(CommonUtils.randomString())
     val r1 =
       accessRequest
         .fromTopicKey(fromTopicKey)
@@ -894,7 +895,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def testBrokerClusterKey(): Unit = {
-    val bkName = CommonUtils.randomString()
+    val bkName  = CommonUtils.randomString()
     val bkGroup = CommonUtils.randomString()
     val r1 = accessRequest
       .brokerClusterKey(ObjectKey.of(bkGroup, bkName))

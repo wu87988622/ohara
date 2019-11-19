@@ -34,25 +34,25 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestStreamRoute extends OharaTest {
-
   // create all fake cluster
   private[this] val configurator = Configurator.builder.fake().build()
-  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi     = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val zkApi        = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val bkApi        = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerClusterInfo = result(
-    BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
-  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val fileApi   = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
   private[this] val nodeNames: Set[String] = result(zkApi.list()).head.nodeNames
-  private[this] val toTopicKey = TopicKey.of("g", CommonUtils.randomString())
-  private[this] val fromTopicKey = TopicKey.of("g", CommonUtils.randomString())
-  private[this] val file = RouteUtils.streamFile
-  private[this] var fileInfo: FileInfo = _
+  private[this] val toTopicKey             = TopicKey.of("g", CommonUtils.randomString())
+  private[this] val fromTopicKey           = TopicKey.of("g", CommonUtils.randomString())
+  private[this] val file                   = RouteUtils.streamFile
+  private[this] var fileInfo: FileInfo     = _
 
   @Before
   def setup(): Unit = {
@@ -74,7 +74,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeName(CommonUtils.randomString())
-        .create())
+        .create()
+    )
 
   @Test
   def testUpdateJarKey(): Unit = {
@@ -89,7 +90,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     stream.jarKey shouldBe fileInfo.key
     result(streamApi.request.key(stream.key).jarKey(fileInfo2.key).update()).jarKey shouldBe fileInfo2.key
   }
@@ -142,7 +144,7 @@ class TestStreamRoute extends OharaTest {
 
     // create property with some user defined properties
     val userAppId = CommonUtils.randomString(5)
-    val to2 = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to2       = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     result(topicApi.request.key(to2).brokerClusterKey(brokerClusterInfo.key).create())
     val userProps = result(
       streamApi.request
@@ -152,7 +154,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(to2)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames - nodeNames.last)
-        .create())
+        .create()
+    )
     userProps.name shouldBe userAppId
     userProps.toTopicKeys shouldBe Set(to2)
     userProps.nodeNames.size shouldBe nodeNames.size - 1
@@ -162,7 +165,7 @@ class TestStreamRoute extends OharaTest {
 
     // update properties
     val from3 = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to3 = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to3   = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     result(topicApi.request.key(from3).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.request.key(to3).brokerClusterKey(brokerClusterInfo.key).create())
     val res3 = result(streamApi.request.name(userAppId).fromTopicKey(from3).toTopicKey(to3).update())
@@ -194,10 +197,11 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
 
     val from = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to   = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
 
     // run topics
     result(
@@ -205,13 +209,15 @@ class TestStreamRoute extends OharaTest {
         .key(from)
         .brokerClusterKey(brokerClusterInfo.key)
         .create()
-        .flatMap(info => topicApi.start(info.key)))
+        .flatMap(info => topicApi.start(info.key))
+    )
     result(
       topicApi.request
         .key(to)
         .brokerClusterKey(brokerClusterInfo.key)
         .create()
-        .flatMap(info => topicApi.start(info.key)))
+        .flatMap(info => topicApi.start(info.key))
+    )
     // update properties
     result(streamApi.request.name(streamName).fromTopicKey(from).toTopicKey(to).nodeNames(nodeNames).update())
 
@@ -277,7 +283,8 @@ class TestStreamRoute extends OharaTest {
     //operations on non-exists property should be fail
     an[NullPointerException] should be thrownBy result(streamApi.request.name("appId").jarKey(null).update())
     an[IllegalArgumentException] should be thrownBy result(
-      streamApi.get(ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))))
+      streamApi.get(ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1)))
+    )
 
     // we can update the topics to empty (the topic checking is moving to start phase)
     result(
@@ -288,7 +295,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .update())
+        .update()
+    )
 
     result(streamApi.request.name(streamName).jarKey(fileInfo.key).toTopicKeys(Set.empty).update())
 
@@ -299,8 +307,8 @@ class TestStreamRoute extends OharaTest {
   @Test
   def testStreamActionPageFailCases(): Unit = {
     val streamName = CommonUtils.randomString(5)
-    val from = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val to = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val from       = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val to         = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(topicApi.request.key(from).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.request.key(to).brokerClusterKey(brokerClusterInfo.key).create())
@@ -314,7 +322,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(to)
         .fromTopicKey(from)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
 
     // non-exist topics in broker will cause running fail
     an[IllegalArgumentException] should be thrownBy result(streamApi.start(stream.key))
@@ -336,7 +345,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     (0 to 10).foreach(_ => result(streamApi.stop(stream.key)))
   }
 
@@ -359,7 +369,8 @@ class TestStreamRoute extends OharaTest {
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
         .tags(tags)
-        .create())
+        .create()
+    )
     streamDesc.tags shouldBe tags
     streamDesc.jarKey shouldBe fileInfo.key
 
@@ -387,7 +398,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     streamDesc.fromTopicKeys should not be Set.empty
     streamDesc.toTopicKeys should not be Set.empty
     val from = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
@@ -399,7 +411,7 @@ class TestStreamRoute extends OharaTest {
 
   @Test
   def testSettingDefault(): Unit = {
-    val key = CommonUtils.randomString()
+    val key   = CommonUtils.randomString()
     val value = JsString(CommonUtils.randomString())
     val streamDesc = result(
       streamApi.request
@@ -409,7 +421,8 @@ class TestStreamRoute extends OharaTest {
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
         .setting(key, value)
-        .create())
+        .create()
+    )
     // the url is not illegal
     streamDesc.settings(key) shouldBe value
   }
@@ -423,33 +436,37 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     streamDesc.fromTopicKeys shouldBe Set(fromTopicKey)
     streamDesc.toTopicKeys shouldBe Set(toTopicKey)
 
     // multiple topics are not allow by now
     val from = TopicKey.of("g", "from")
-    val to = TopicKey.of("g", "to")
+    val to   = TopicKey.of("g", "to")
     // run topics
     result(
       topicApi.request
         .key(from)
         .brokerClusterKey(brokerClusterInfo.key)
         .create()
-        .flatMap(info => topicApi.start(info.key)))
+        .flatMap(info => topicApi.start(info.key))
+    )
     result(
       topicApi.request
         .key(to)
         .brokerClusterKey(brokerClusterInfo.key)
         .create()
-        .flatMap(info => topicApi.start(info.key)))
+        .flatMap(info => topicApi.start(info.key))
+    )
     val thrown1 = the[IllegalArgumentException] thrownBy result(
       streamApi.request
         .name(streamDesc.name)
         .fromTopicKey(from)
         .toTopicKeys(Set(from, to))
         .update()
-        .flatMap(info => streamApi.start(info.key)))
+        .flatMap(info => streamApi.start(info.key))
+    )
     // "to" field is used multiple topics which is not allow for current version
     thrown1.getMessage should include("MUST be equal to 1")
   }
@@ -463,7 +480,8 @@ class TestStreamRoute extends OharaTest {
           .fromTopicKey(fromTopicKey)
           .toTopicKey(toTopicKey)
           .nodeNames(nodeNames)
-          .create()).brokerClusterKey
+          .create()
+      ).brokerClusterKey
     }.getMessage should include("brokerClusterKey")
 
     val streamDesc = result(
@@ -473,7 +491,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     streamDesc.brokerClusterKey shouldBe brokerClusterInfo.key
     result(streamApi.start(streamDesc.key))
 
@@ -485,10 +504,11 @@ class TestStreamRoute extends OharaTest {
   @Test
   def testCustomTagsShouldExistAfterRunning(): Unit = {
     val nodeNames = result(bkApi.list()).head.nodeNames
-    val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
+    val zk        = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
     result(zkApi.start(zk.key))
     val bk = result(
-      bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
+      bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterKey(zk.key).create()
+    )
     result(bkApi.start(bk.key))
     val from0 = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(from0.key))
@@ -509,7 +529,8 @@ class TestStreamRoute extends OharaTest {
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
         .tags(tags)
-        .create())
+        .create()
+    )
     streamDesc.tags shouldBe tags
 
     // after create, tags should exist
@@ -533,7 +554,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
 
     // use same name and group will cause a update request
     result(streamApi.request.name(info.name).group(info.group).nodeNames(nodeNames).update()).nodeNames shouldBe nodeNames
@@ -548,7 +570,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .update()).jmxPort should not be info.jmxPort
+        .update()
+    ).jmxPort should not be info.jmxPort
   }
 
   @Test
@@ -560,11 +583,13 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
 
     // could not use non-exist nodes
     an[IllegalArgumentException] should be thrownBy result(
-      streamApi.request.group(info.group).name(info.name).nodeName("fake").update())
+      streamApi.request.group(info.group).name(info.name).nodeName("fake").update()
+    )
   }
 
   @Test
@@ -578,7 +603,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     (0 until 3).foreach(
       _ =>
         result(
@@ -588,7 +614,9 @@ class TestStreamRoute extends OharaTest {
             .toTopicKey(toTopicKey)
             .fromTopicKey(fromTopicKey)
             .nodeNames(nodeNames)
-            .create()))
+            .create()
+        )
+    )
     result(streamApi.list()).size shouldBe 4
     val streams = result(streamApi.query.name(name).execute())
     streams.size shouldBe 1
@@ -598,7 +626,7 @@ class TestStreamRoute extends OharaTest {
   @Test
   def testGroupFilter(): Unit = {
     val from = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val to = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    val to   = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val group = CommonUtils.randomString(10)
@@ -610,7 +638,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(to.key)
         .jarKey(fileInfo.key)
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
     (0 until 3).foreach(
       _ =>
         result(
@@ -620,7 +649,9 @@ class TestStreamRoute extends OharaTest {
             .toTopicKey(to.key)
             .jarKey(fileInfo.key)
             .brokerClusterKey(brokerClusterInfo.key)
-            .create()))
+            .create()
+        )
+    )
     result(streamApi.list()).size shouldBe 4
     val streams = result(streamApi.query.group(group).execute())
     streams.size shouldBe 1
@@ -630,7 +661,7 @@ class TestStreamRoute extends OharaTest {
   @Test
   def testTagsFilter(): Unit = {
     val from = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val to = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    val to   = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val tags = Map(
@@ -648,7 +679,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(to.key)
         .jarKey(fileInfo.key)
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
     (0 until 3).foreach(
       _ =>
         result(
@@ -658,7 +690,9 @@ class TestStreamRoute extends OharaTest {
             .toTopicKey(to.key)
             .jarKey(fileInfo.key)
             .brokerClusterKey(brokerClusterInfo.key)
-            .create()))
+            .create()
+        )
+    )
     result(streamApi.list()).size shouldBe 4
     val streams = result(streamApi.query.tags(tags).execute())
     streams.size shouldBe 1
@@ -668,7 +702,7 @@ class TestStreamRoute extends OharaTest {
   @Test
   def testStateFilter(): Unit = {
     val from = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val to = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    val to   = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val stream = result(
@@ -678,7 +712,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(to.key)
         .jarKey(fileInfo.key)
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
     (0 until 3).foreach(
       _ =>
         result(
@@ -688,7 +723,9 @@ class TestStreamRoute extends OharaTest {
             .toTopicKey(to.key)
             .jarKey(fileInfo.key)
             .brokerClusterKey(brokerClusterInfo.key)
-            .create()))
+            .create()
+        )
+    )
     result(streamApi.list()).size shouldBe 4
     result(streamApi.start(stream.key))
     val streams = result(streamApi.query.state("running").execute())
@@ -702,7 +739,7 @@ class TestStreamRoute extends OharaTest {
   @Test
   def testAliveNodesFilter(): Unit = {
     val from = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
-    val to = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    val to   = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(from.key))
     result(topicApi.start(to.key))
     val stream = result(
@@ -712,7 +749,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(to.key)
         .jarKey(fileInfo.key)
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
     (0 until 3).foreach(
       _ =>
         result(
@@ -723,7 +761,9 @@ class TestStreamRoute extends OharaTest {
             .jarKey(fileInfo.key)
             .brokerClusterKey(brokerClusterInfo.key)
             .create()
-            .flatMap(z => streamApi.start(z.key))))
+            .flatMap(z => streamApi.start(z.key))
+        )
+    )
     result(streamApi.list()).size shouldBe 4
     result(streamApi.start(stream.key))
     val streams = result(streamApi.query.aliveNodes(Set(nodeNames.head)).execute())
@@ -752,7 +792,8 @@ class TestStreamRoute extends OharaTest {
         .toTopicKey(toTopic.key)
         .jarKey(fileInfo.key)
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     intercept[IllegalArgumentException] {
       result(streamApi.start(stream.key))
@@ -760,30 +801,35 @@ class TestStreamRoute extends OharaTest {
   }
 
   @Test
-  def testEmptyToTopics(): Unit = result(
-    streamApi.request
-      .name(CommonUtils.randomString(10))
-      .jarKey(fileInfo.key)
-      .brokerClusterKey(brokerClusterInfo.key)
-      .fromTopicKey(fromTopicKey)
-      .nodeNames(nodeNames)
-      .create()).toTopicKeys shouldBe Set.empty
+  def testEmptyToTopics(): Unit =
+    result(
+      streamApi.request
+        .name(CommonUtils.randomString(10))
+        .jarKey(fileInfo.key)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .fromTopicKey(fromTopicKey)
+        .nodeNames(nodeNames)
+        .create()
+    ).toTopicKeys shouldBe Set.empty
   @Test
-  def testEmptyFromTopics(): Unit = result(
-    streamApi.request
-      .name(CommonUtils.randomString(10))
-      .jarKey(fileInfo.key)
-      .brokerClusterKey(brokerClusterInfo.key)
-      .toTopicKey(toTopicKey)
-      .nodeNames(nodeNames)
-      .create()).fromTopicKeys shouldBe Set.empty
+  def testEmptyFromTopics(): Unit =
+    result(
+      streamApi.request
+        .name(CommonUtils.randomString(10))
+        .jarKey(fileInfo.key)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .toTopicKey(toTopicKey)
+        .nodeNames(nodeNames)
+        .create()
+    ).fromTopicKeys shouldBe Set.empty
 
   @Test
   def testInvalidNodeName(): Unit =
     Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).foreach { nodeName =>
       intercept[DeserializationException] {
         result(
-          streamApi.request.nodeName(nodeName).jarKey(fileInfo.key).brokerClusterKey(brokerClusterInfo.key).create())
+          streamApi.request.nodeName(nodeName).jarKey(fileInfo.key).brokerClusterKey(brokerClusterInfo.key).create()
+        )
       }.getMessage should include(nodeName)
     }
 
@@ -799,7 +845,8 @@ class TestStreamRoute extends OharaTest {
           .brokerClusterKey(brokerClusterInfo.key)
           .toTopicKey(toTopicKey)
           .nodeNames(nodeNames)
-          .create())
+          .create()
+      )
     }.getMessage should include(unknown)
   }
 
@@ -812,11 +859,12 @@ class TestStreamRoute extends OharaTest {
         .brokerClusterKey(brokerClusterInfo.key)
         .toTopicKey(toTopicKey)
         .nodeNames(nodeNames)
-        .create()).className should include("SimpleApplicationForOharaEnv")
+        .create()
+    ).className should include("SimpleApplicationForOharaEnv")
 
   @Test
   def useFileContainingNothing(): Unit = {
-    val file = CommonUtils.createTempFile("useFileContainingNothing", ".jar")
+    val file     = CommonUtils.createTempFile("useFileContainingNothing", ".jar")
     val fileInfo = result(fileApi.request.file(file).upload())
     intercept[IllegalArgumentException] {
       result(
@@ -826,7 +874,8 @@ class TestStreamRoute extends OharaTest {
           .brokerClusterKey(brokerClusterInfo.key)
           .toTopicKey(toTopicKey)
           .nodeNames(nodeNames)
-          .create())
+          .create()
+      )
     }.getMessage should include("no available")
   }
 

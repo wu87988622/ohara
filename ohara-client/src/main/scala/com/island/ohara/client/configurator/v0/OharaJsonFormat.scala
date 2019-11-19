@@ -28,7 +28,6 @@ import spray.json.{JsValue, RootJsonFormat}
   * @tparam T object
   */
 trait OharaJsonFormat[T] extends RootJsonFormat[T] {
-
   /**
     * verify the input key and value. It always pass if the input key is not associated to any check rule.
     * @param key input key

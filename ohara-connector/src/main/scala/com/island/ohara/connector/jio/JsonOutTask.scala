@@ -33,11 +33,11 @@ import spray.json.DefaultJsonProtocol._
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 class JsonOutTask extends RowSinkTask {
-  private[this] implicit var actorSystem: ActorSystem = _
+  private[this] implicit var actorSystem: ActorSystem             = _
   private[this] implicit var actorMaterializer: ActorMaterializer = _
-  private[this] var httpServer: Http.ServerBinding = _
-  private[this] var blockingQueue: BlockingQueue[JioData] = _
-  private[this] var props: JioProps = _
+  private[this] var httpServer: Http.ServerBinding                = _
+  private[this] var blockingQueue: BlockingQueue[JioData]         = _
+  private[this] var props: JioProps                               = _
 
   /**
     * TODO: should we handle the BindException?
@@ -73,21 +73,25 @@ class JsonOutTask extends RowSinkTask {
     Releasable.close(() => Await.result(actorSystem.terminate(), props.closeTimeout))
   }
 
-  override protected def _put(records: util.List[RowSinkRecord]): Unit = records.asScala
-    .map(_.row())
-    .flatMap(row =>
-      try Some(JioData(row))
-      catch {
-        case _: Throwable =>
-          // unsupported data type is rejected :)
-          None
-    })
-    .foreach(d =>
-      if (!blockingQueue.offer(d)) {
-        // the _put is called by single thread so there is no race condition in write.
-        // Hence, we can assume the poll operation must "remove" something from queue, and the following add must be successful.
-        blockingQueue.poll(0, TimeUnit.SECONDS)
-        blockingQueue.offer(d)
-    })
-
+  override protected def _put(records: util.List[RowSinkRecord]): Unit =
+    records.asScala
+      .map(_.row())
+      .flatMap(
+        row =>
+          try Some(JioData(row))
+          catch {
+            case _: Throwable =>
+              // unsupported data type is rejected :)
+              None
+          }
+      )
+      .foreach(
+        d =>
+          if (!blockingQueue.offer(d)) {
+            // the _put is called by single thread so there is no race condition in write.
+            // Hence, we can assume the poll operation must "remove" something from queue, and the following add must be successful.
+            blockingQueue.poll(0, TimeUnit.SECONDS)
+            blockingQueue.offer(d)
+          }
+      )
 }

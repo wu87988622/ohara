@@ -29,11 +29,13 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
     with StreamCollie {
   private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] = {
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
@@ -48,7 +50,8 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
       .portMappings(
-        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
+        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+      )
       .routes(route)
       .envs(containerInfo.environments)
       .args(arguments)
@@ -63,10 +66,11 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
   }
 
   override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.failed(
-      new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))
+      new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster")
+    )
 
   override protected def prefixKey: String = PREFIX_KEY
-
 }

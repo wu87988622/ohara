@@ -21,10 +21,10 @@ import com.island.ohara.common.data.{Column, DataType}
 import scala.concurrent.duration.Duration
 
 package object perf {
-  val PERF_BATCH: String = "perf.batch"
+  val PERF_BATCH: String     = "perf.batch"
   val PERF_FREQUENCE: String = "perf.frequence"
 
-  val DEFAULT_BATCH: Int = 10
+  val DEFAULT_BATCH: Int          = 10
   val DEFAULT_FREQUENCE: Duration = Duration("1 second")
 
   /**

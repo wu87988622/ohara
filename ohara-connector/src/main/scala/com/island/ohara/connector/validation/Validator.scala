@@ -35,7 +35,7 @@ import scala.collection.JavaConverters._
   */
 class Validator extends SourceConnector {
   private[this] var props: util.Map[String, String] = _
-  override def version(): String = VersionUtils.VERSION
+  override def version(): String                    = VersionUtils.VERSION
   override def start(props: util.Map[String, String]): Unit = {
     this.props = new util.HashMap[String, String](props)
     // we don't want to make any exception here

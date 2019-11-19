@@ -44,15 +44,17 @@ object DockerClientCache {
       f(client)
     }
 
-    def getClient(node: Node): DockerClient = if (isClosed) throw new IllegalStateException()
-    else {
-      lock.synchronized {
-        cache.getOrElseUpdate(
-          node,
-          DockerClient(
-            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
-        )
+    def getClient(node: Node): DockerClient =
+      if (isClosed) throw new IllegalStateException()
+      else {
+        lock.synchronized {
+          cache.getOrElseUpdate(
+            node,
+            DockerClient(
+              Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+            )
+          )
+        }
       }
-    }
   }
 }

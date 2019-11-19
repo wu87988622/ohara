@@ -17,9 +17,9 @@
 package com.island.ohara.it.connector
 
 package object smb {
-  protected[smb] val IT_SMB_HOSTNAME_KEY: String = "ohara.it.smb.hostname"
-  protected[smb] val IT_SMB_PORT_KEY: String = "ohara.it.smb.port"
-  protected[smb] val IT_SMB_USERNAME_KEY: String = "ohara.it.smb.username"
-  protected[smb] val IT_SMB_PASSWORD_KEY: String = "ohara.it.smb.password"
+  protected[smb] val IT_SMB_HOSTNAME_KEY: String   = "ohara.it.smb.hostname"
+  protected[smb] val IT_SMB_PORT_KEY: String       = "ohara.it.smb.port"
+  protected[smb] val IT_SMB_USERNAME_KEY: String   = "ohara.it.smb.username"
+  protected[smb] val IT_SMB_PASSWORD_KEY: String   = "ohara.it.smb.password"
   protected[smb] val IT_SMB_SHARE_NAME_KEY: String = "ohara.it.smb.shareName"
 }

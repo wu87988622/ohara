@@ -42,10 +42,10 @@ private[filesystem] object SmbFileSystem {
   def builder: Builder = new Builder
 
   class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FileSystem] {
-    private[this] var hostname: String = _
-    private[this] var port: Int = 445
-    private[this] var user: String = _
-    private[this] var password: String = _
+    private[this] var hostname: String  = _
+    private[this] var port: Int         = 445
+    private[this] var user: String      = _
+    private[this] var password: String  = _
     private[this] var shareName: String = _
 
     /**
@@ -99,29 +99,31 @@ private[filesystem] object SmbFileSystem {
       new SmbFileSystemImpl(hostname, port, user, password, shareName)
     }
 
-    private[this] class SmbFileSystemImpl(hostname: String,
-                                          port: Int,
-                                          user: String,
-                                          password: String,
-                                          shareName: String)
-        extends FileSystem {
+    private[this] class SmbFileSystemImpl(
+      hostname: String,
+      port: Int,
+      user: String,
+      password: String,
+      shareName: String
+    ) extends FileSystem {
       private[this] val config: SmbConfig = SmbConfig
         .builder()
-        .withTimeout(120, TimeUnit.SECONDS) // Timeout sets Read, Write, and Transact timeouts (default is 60 seconds)
+        .withTimeout(120, TimeUnit.SECONDS)   // Timeout sets Read, Write, and Transact timeouts (default is 60 seconds)
         .withSoTimeout(180, TimeUnit.SECONDS) // Socket Timeout (default is 0 seconds, blocks forever)
         .build()
-      private[this] val client: SMBClient = new SMBClient(config)
+      private[this] val client: SMBClient         = new SMBClient(config)
       private[this] val ac: AuthenticationContext = new AuthenticationContext(user, password.toCharArray, null)
-      private[this] var connection: Connection = _
-      private[this] var session: Session = _
+      private[this] var connection: Connection    = _
+      private[this] var session: Session          = _
 
-      override def wrap[T](f: () => T): T = try {
-        f()
-      } catch {
-        case e: IOException           => throw new OharaFileSystemException(e.getMessage, e)
-        case e: IllegalStateException => throw new OharaFileSystemException(e.getMessage, e)
-        case e: SMBRuntimeException   => throw new OharaFileSystemException(e.getMessage, e)
-      }
+      override def wrap[T](f: () => T): T =
+        try {
+          f()
+        } catch {
+          case e: IOException           => throw new OharaFileSystemException(e.getMessage, e)
+          case e: IllegalStateException => throw new OharaFileSystemException(e.getMessage, e)
+          case e: SMBRuntimeException   => throw new OharaFileSystemException(e.getMessage, e)
+        }
 
       private[this] def connectShare[T](f: (DiskShare) => T): T = wrap { () =>
         if (connection == null || !connection.isConnected) {
@@ -184,10 +186,10 @@ private[filesystem] object SmbFileSystem {
         val parent = Paths.get(path).getParent
         if (parent != null && nonExists(parent.toString)) mkdirs(parent.toString)
 
-        val accessMask = util.EnumSet.of(AccessMask.GENERIC_WRITE)
+        val accessMask        = util.EnumSet.of(AccessMask.GENERIC_WRITE)
         val createDisposition = SMB2CreateDisposition.FILE_CREATE
-        val smbFile = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
-        val os = smbFile.getOutputStream()
+        val smbFile           = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
+        val os                = smbFile.getOutputStream()
 
         // wrap OutputStream. upon a close, also close the File object and Share object.
         new OutputStream {
@@ -222,10 +224,10 @@ private[filesystem] object SmbFileSystem {
         */
       override def append(path: String): OutputStream = connectShare { shareRoot =>
         if (nonExists(path)) throw new IllegalArgumentException(s"$path doesn't exist")
-        val accessMask: util.Set[AccessMask] = util.EnumSet.of(AccessMask.GENERIC_WRITE)
+        val accessMask: util.Set[AccessMask]         = util.EnumSet.of(AccessMask.GENERIC_WRITE)
         val createDisposition: SMB2CreateDisposition = SMB2CreateDisposition.FILE_OPEN
-        val smbFile = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
-        val os = smbFile.getOutputStream(true)
+        val smbFile                                  = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
+        val os                                       = smbFile.getOutputStream(true)
 
         // wrap OutputStream. upon a close, also close the File object and Share object.
         new OutputStream {
@@ -260,10 +262,10 @@ private[filesystem] object SmbFileSystem {
         */
       override def open(path: String): InputStream = connectShare { shareRoot =>
         if (nonExists(path)) throw new IllegalArgumentException(s"$path doesn't exist")
-        val accessMask: util.Set[AccessMask] = util.EnumSet.of(AccessMask.GENERIC_READ)
+        val accessMask: util.Set[AccessMask]         = util.EnumSet.of(AccessMask.GENERIC_READ)
         val createDisposition: SMB2CreateDisposition = SMB2CreateDisposition.FILE_OPEN
-        val smbFile = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
-        val is = smbFile.getInputStream()
+        val smbFile                                  = shareRoot.openFile(path, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
+        val is                                       = smbFile.getInputStream()
 
         // wrap InputStream. upon a close, also close the File object and Share object.
         new InputStream {
@@ -343,9 +345,9 @@ private[filesystem] object SmbFileSystem {
         */
       override def moveFile(sourcePath: String, targetPath: String): Boolean = connectShare { shareRoot =>
         try {
-          val accessMask = util.EnumSet.of(AccessMask.DELETE, AccessMask.GENERIC_WRITE)
+          val accessMask        = util.EnumSet.of(AccessMask.DELETE, AccessMask.GENERIC_WRITE)
           val createDisposition = SMB2CreateDisposition.FILE_OPEN
-          val smbFile = shareRoot.openFile(sourcePath, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
+          val smbFile           = shareRoot.openFile(sourcePath, accessMask, null, SMB2ShareAccess.ALL, createDisposition, null)
           smbFile.rename(targetPath)
           exists(targetPath)
         } finally Releasable.close(shareRoot)

@@ -49,8 +49,8 @@ trait BasicQuery[T] {
     * @param executionContext thread pool
     * @return results
     */
-  final def execute()(implicit executionContext: ExecutionContext): Future[Seq[T]] = doExecute(
-    QueryRequest(paras.toMap))
+  final def execute()(implicit executionContext: ExecutionContext): Future[Seq[T]] =
+    doExecute(QueryRequest(paras.toMap))
 
   protected def doExecute(request: QueryRequest)(implicit executionContext: ExecutionContext): Future[Seq[T]]
 }

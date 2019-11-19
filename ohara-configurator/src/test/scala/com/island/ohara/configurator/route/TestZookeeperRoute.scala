@@ -31,13 +31,13 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestZookeeperRoute extends OharaTest {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
+  private[this] val configurator    = Configurator.builder.fake(numberOfCluster, 0).build()
 
   /**
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
-  private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val zookeeperApi         = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
@@ -78,9 +78,13 @@ class TestZookeeperRoute extends OharaTest {
     // remove all broker clusters
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .map(_.key)
-      .foreach(key =>
-        result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(key)
-          flatMap (_ => BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(key))))
+      .foreach(
+        key =>
+          result(
+            BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(key)
+              flatMap (_ => BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(key))
+          )
+      )
 
     // pass
     result(zookeeperApi.stop(zk.key))
@@ -90,10 +94,11 @@ class TestZookeeperRoute extends OharaTest {
   @Test
   def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create())
+      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
+    )
   @Test
   def testList(): Unit = {
-    val init = result(zookeeperApi.list()).size
+    val init  = result(zookeeperApi.list()).size
     val count = 3
     (0 until count).foreach { _ =>
       result(
@@ -105,7 +110,7 @@ class TestZookeeperRoute extends OharaTest {
 
   @Test
   def testDelete(): Unit = {
-    val init = result(zookeeperApi.list()).size
+    val init    = result(zookeeperApi.list()).size
     val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(zookeeperApi.list()).size shouldBe init + 1
     result(zookeeperApi.delete(cluster.key))
@@ -114,7 +119,7 @@ class TestZookeeperRoute extends OharaTest {
 
   @Test
   def testStop(): Unit = {
-    val init = result(zookeeperApi.list()).size
+    val init    = result(zookeeperApi.list()).size
     val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(zookeeperApi.start(cluster.key))
     result(zookeeperApi.list()).size shouldBe init + 1
@@ -262,7 +267,7 @@ class TestZookeeperRoute extends OharaTest {
   @Test
   def testForceStop(): Unit = {
     val initialCount = configurator.serviceCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount
-    val name = CommonUtils.randomString(10)
+    val name         = CommonUtils.randomString(10)
     // graceful stop
     val zk = result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
@@ -289,7 +294,8 @@ class TestZookeeperRoute extends OharaTest {
     val zk = result(zookeeperApi.request.nodeName(nodeNames.head).create())
     result(zookeeperApi.start(zk.key))
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
+      zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update()
+    )
     result(zookeeperApi.stop(zk.key))
     result(zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
     result(zookeeperApi.start(zk.key))
@@ -329,7 +335,7 @@ class TestZookeeperRoute extends OharaTest {
 
     // same name but different group
     val name = CommonUtils.randomString(10)
-    val zk1 = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
+    val zk1  = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
     zk1.name shouldBe name
     zk1.group should not be group
     val zk2 = result(zookeeperApi.request.name(name).group(group).nodeNames(nodeNames).create())
@@ -354,12 +360,13 @@ class TestZookeeperRoute extends OharaTest {
         .group(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .peerPort(1234)
-        .update()).peerPort should not be info.peerPort
+        .update()
+    ).peerPort should not be info.peerPort
   }
 
   @Test
   def testNameFilter(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
     val zookeeper = result(zookeeperApi.request.name(name).nodeNames(nodeNames).create())
     (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
     result(zookeeperApi.list()).size shouldBe 5
@@ -370,7 +377,7 @@ class TestZookeeperRoute extends OharaTest {
 
   @Test
   def testGroupFilter(): Unit = {
-    val group = CommonUtils.randomString(10)
+    val group     = CommonUtils.randomString(10)
     val zookeeper = result(zookeeperApi.request.group(group).nodeNames(nodeNames).create())
     (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
     result(zookeeperApi.list()).size shouldBe 5
@@ -413,8 +420,9 @@ class TestZookeeperRoute extends OharaTest {
   @Test
   def testAliveNodesFilter(): Unit = {
     val zookeeper = result(zookeeperApi.request.nodeName(nodeNames.head).create())
-    (0 until 3).foreach(_ =>
-      result(zookeeperApi.request.nodeNames(nodeNames).create().flatMap(z => zookeeperApi.start(z.key))))
+    (0 until 3).foreach(
+      _ => result(zookeeperApi.request.nodeNames(nodeNames).create().flatMap(z => zookeeperApi.start(z.key)))
+    )
     result(zookeeperApi.list()).size shouldBe 5
     result(zookeeperApi.start(zookeeper.key))
     val zookeepers = result(zookeeperApi.query.aliveNodes(Set(nodeNames.head)).execute())
@@ -428,7 +436,7 @@ class TestZookeeperRoute extends OharaTest {
     val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
     result(zookeeperApi.start(zookeeper.key))
     def brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-    val broker = result(brokerApi.request.zookeeperClusterKey(zookeeper.key).nodeNames(nodeNames).create())
+    val broker    = result(brokerApi.request.zookeeperClusterKey(zookeeper.key).nodeNames(nodeNames).create())
     result(brokerApi.start(broker.key))
 
     intercept[IllegalArgumentException] {

@@ -32,7 +32,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie[BrokerClusterStatus] {
-
   override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
 
   // TODO: remove this hard code (see #2957)
@@ -62,10 +61,11 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
         case None => Future.successful(Map.empty[Node, ContainerInfo])
       }
       zookeeperClusterInfo <- dataCollie.value[ZookeeperClusterInfo](creation.zookeeperClusterKey)
-    } yield
-      (existentNodes,
-       allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
-       zookeeperClusterInfo)
+    } yield (
+      existentNodes,
+      allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
+      zookeeperClusterInfo
+    )
 
     resolveRequiredInfos.flatMap {
       case (existentNodes, newNodes, zookeeperClusterInfo) =>
@@ -77,7 +77,8 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
               .mkString(",")
 
             val route = resolveHostNames(
-              (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet)
+              (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet
+            )
             existentNodes.foreach {
               case (node, container) => hookOfNewRoute(node, container, route)
             }
@@ -101,7 +102,8 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                         hostIp = Collie.UNKNOWN,
                         hostPort = port,
                         containerPort = port
-                    ))
+                      )
+                  )
                   .toSeq,
                 environments = Map(
                   "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
@@ -125,8 +127,10 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
                 .append("zookeeper.connect", zookeepers)
                 .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.logDirs)
                 .append(BrokerApi.NUMBER_OF_PARTITIONS_DEFINITION.key(), creation.numberOfPartitions)
-                .append(BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
-                        creation.numberOfReplications4OffsetsTopic)
+                .append(
+                  BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
+                  creation.numberOfReplications4OffsetsTopic
+                )
                 .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_DEFINITION.key(), creation.numberOfNetworkThreads)
                 .append(BrokerApi.NUMBER_OF_IO_THREADS_DEFINITION.key(), creation.numberOfIoThreads)
                 .append(s"listeners=PLAINTEXT://:${creation.clientPort}")
@@ -143,7 +147,7 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
           }
         successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
-          val state = toClusterState(aliveContainers).map(_.name)
+          val state           = toClusterState(aliveContainers).map(_.name)
           val status = new BrokerClusterStatus(
             group = creation.group,
             name = creation.name,
@@ -183,11 +187,13 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
     * @param node node object
     * @param route ip-host mapping
     */
-  protected def doCreator(executionContext: ExecutionContext,
-                          containerInfo: ContainerInfo,
-                          node: Node,
-                          route: Map[String, String],
-                          arguments: Seq[String]): Future[Unit]
+  protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit]
 
   /**
     * After creating the broker, need to processor other things
@@ -204,8 +210,9 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
     * @param brokerClusterInfo target cluster
     * @return topic admin
     */
-  def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(
-    implicit executionContext: ExecutionContext): Future[TopicAdmin] =
+  def topicAdmin(
+    brokerClusterInfo: BrokerClusterInfo
+  )(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
     cluster(brokerClusterInfo.key).map(_ => TopicAdmin(brokerClusterInfo.connectionProps))
 
   /**
@@ -213,12 +220,14 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
     * @param cluster cluster
     * @return meter beans
     */
-  def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] = cluster.nodeNames.flatMap { node =>
-    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
-  }.toSeq
+  def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
+    cluster.nodeNames.flatMap { node =>
+      BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
+    }.toSeq
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[BrokerClusterStatus] =
+    implicit executionContext: ExecutionContext
+  ): Future[BrokerClusterStatus] =
     Future.successful(
       new BrokerClusterStatus(
         group = key.group(),
@@ -231,7 +240,8 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None
-      ))
+      )
+    )
 
   /**
     * there is new route to the node. the sub class can update the running container to apply new route.
@@ -242,7 +252,6 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
 }
 
 object BrokerCollie {
-
   trait ClusterCreator extends Collie.ClusterCreator with BrokerApi.Request {
     override def create(): Future[Unit] =
       doCreate(

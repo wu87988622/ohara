@@ -19,24 +19,27 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.TaskSetting
 
-case class FtpSourceProps(inputFolder: String,
-                          completedFolder: Option[String],
-                          errorFolder: String,
-                          encode: String,
-                          hostname: String,
-                          port: Int,
-                          user: String,
-                          password: String) {
-  def toMap: Map[String, String] = Map(
-    INPUT_FOLDER_KEY -> inputFolder,
-    COMPLETED_FOLDER_KEY -> completedFolder.getOrElse(""),
-    ERROR_FOLDER_KEY -> errorFolder,
-    FILE_ENCODE_KEY -> encode,
-    FTP_HOSTNAME_KEY -> hostname,
-    FTP_PORT_KEY -> port.toString,
-    FTP_USER_NAME_KEY -> user,
-    FTP_PASSWORD_KEY -> password,
-  ).filter(_._2.nonEmpty)
+case class FtpSourceProps(
+  inputFolder: String,
+  completedFolder: Option[String],
+  errorFolder: String,
+  encode: String,
+  hostname: String,
+  port: Int,
+  user: String,
+  password: String
+) {
+  def toMap: Map[String, String] =
+    Map(
+      INPUT_FOLDER_KEY     -> inputFolder,
+      COMPLETED_FOLDER_KEY -> completedFolder.getOrElse(""),
+      ERROR_FOLDER_KEY     -> errorFolder,
+      FILE_ENCODE_KEY      -> encode,
+      FTP_HOSTNAME_KEY     -> hostname,
+      FTP_PORT_KEY         -> port.toString,
+      FTP_USER_NAME_KEY    -> user,
+      FTP_PASSWORD_KEY     -> password
+    ).filter(_._2.nonEmpty)
 }
 
 object FtpSourceProps {

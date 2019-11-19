@@ -26,12 +26,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestListManyPipelines extends WithBrokerWorker {
-
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
@@ -45,7 +45,8 @@ class TestListManyPipelines extends WithBrokerWorker {
         .request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
         .create()
     )
 
@@ -59,7 +60,8 @@ class TestListManyPipelines extends WithBrokerWorker {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     val pipelines = (0 until numberOfPipelines).map { _ =>
       result(

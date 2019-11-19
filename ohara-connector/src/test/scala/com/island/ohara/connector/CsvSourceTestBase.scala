@@ -39,11 +39,11 @@ import scala.concurrent.{Await, Future}
 
 abstract class CsvSourceTestBase extends With3Brokers3Workers {
   private[this] val defaultProps: Map[String, String] = Map(
-    INPUT_FOLDER_KEY -> "/input",
+    INPUT_FOLDER_KEY     -> "/input",
     COMPLETED_FOLDER_KEY -> "/completed",
-    ERROR_FOLDER_KEY -> "/error",
+    ERROR_FOLDER_KEY     -> "/error",
     FILE_NEED_HEADER_KEY -> "false",
-    FILE_ENCODE_KEY -> "UTF-8"
+    FILE_ENCODE_KEY      -> "UTF-8"
   )
   private[this] val schema: Seq[Column] = Seq(
     Column.builder().name("name").dataType(DataType.STRING).order(1).build(),
@@ -91,7 +91,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     createConnector(props, Some(schema))
 
   protected def createConnector(props: Map[String, String], schema: Option[Seq[Column]]): (TopicKey, ConnectorKey) = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
       val creator = workerClient
@@ -119,9 +119,11 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     } finally writer.close()
   }
 
-  protected def pollData(topicKey: TopicKey,
-                         timeout: scala.concurrent.duration.Duration = 100 seconds,
-                         size: Int = data.length): Seq[Record[Row, Array[Byte]]] = {
+  protected def pollData(
+    topicKey: TopicKey,
+    timeout: scala.concurrent.duration.Duration = 100 seconds,
+    size: Int = data.length
+  ): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder()
       .topicName(topicKey.topicNameOnKafka)
@@ -138,8 +140,8 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     CommonUtils.await(
       () => {
         fileSystem.listFileNames(inputDir).asScala.size == inputCount &&
-        fileSystem.listFileNames(completedDir).asScala.size == outputCount &&
-        fileSystem.listFileNames(errorDir).asScala.size == errorCount
+          fileSystem.listFileNames(completedDir).asScala.size == outputCount &&
+          fileSystem.listFileNames(errorDir).asScala.size == errorCount
       },
       Duration.ofSeconds(20)
     )
@@ -205,7 +207,6 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       checkFileCount(0, 2, 0)
       records = pollData(topicKey, 10 second)
       records.size shouldBe data.length
-
     } finally result(workerClient.delete(connectorKey))
   }
 
@@ -266,7 +267,6 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-
     } finally result(workerClient.delete(connectorKey))
   }
 
@@ -290,14 +290,13 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe Cell.of(rows(1).cell(0).name, rows(1).cell(0).value.toString)
       row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
       row1.cell(2) shouldBe Cell.of(rows(1).cell(2).name, rows(1).cell(2).value.toString)
-
     } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCaseWithoutEncode(): Unit = {
     // will use default UTF-8
-    val newProps = props - FILE_ENCODE_KEY
+    val newProps                 = props - FILE_ENCODE_KEY
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
@@ -315,14 +314,13 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-
     } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testPartialColumns(): Unit = {
     // skip last column
-    val newSchema = schema.slice(0, schema.length - 1)
+    val newSchema                = schema.slice(0, schema.length - 1)
     val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
@@ -344,7 +342,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
   @Test
   def testUnmatchedSchema(): Unit = {
     // the name can't be casted to int
-    val newSchema = Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build())
+    val newSchema                = Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build())
     val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
@@ -361,7 +359,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
 
   @Test
   def testInvalidInput(): Unit = {
-    val newProps = props ++ Map(INPUT_FOLDER_KEY -> "/abc")
+    val newProps          = props ++ Map(INPUT_FOLDER_KEY -> "/abc")
     val (_, connectorKey) = createConnector(newProps, schema)
 
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
@@ -382,7 +380,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
 
   @Test
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
-    val newProps = props - COMPLETED_FOLDER_KEY
+    val newProps                 = props - COMPLETED_FOLDER_KEY
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
@@ -404,7 +402,6 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-
     } finally result(workerClient.delete(connectorKey))
   }
 

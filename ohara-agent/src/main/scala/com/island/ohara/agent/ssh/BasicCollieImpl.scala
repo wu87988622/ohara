@@ -25,14 +25,14 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](dataCollie: DataCollie,
-                                                                     dockerCache: DockerClientCache,
-                                                                     clusterCache: ServiceCache)
-    extends Collie[T] {
-
+private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
+  dataCollie: DataCollie,
+  dockerCache: DockerClientCache,
+  clusterCache: ServiceCache
+) extends Collie[T] {
   final override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = {
-
+    implicit executionContext: ExecutionContext
+  ): Future[Map[T, Seq[ContainerInfo]]] = {
     Future.successful(
       clusterCache.snapshot.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
         case (cluster, containers) => cluster.asInstanceOf[T] -> containers
@@ -41,39 +41,46 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](dataCollie:
   }
 
   protected def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
-    dockerCache.exec(node,
-                     _.containerInspector(containerName)
-                       .asRoot()
-                       .append("/etc/hosts", route.map {
-                         case (hostname, ip) => s"$ip $hostname"
-                       }.toSeq))
+    dockerCache.exec(
+      node,
+      _.containerInspector(containerName)
+        .asRoot()
+        .append("/etc/hosts", route.map {
+          case (hostname, ip) => s"$ip $hostname"
+        }.toSeq)
+    )
 
   override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     remove(clusterInfo, containerInfos, true)
 
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     remove(clusterInfo, containerInfos, false)
 
   private[this] def remove(clusterInfo: T, containerInfos: Seq[ContainerInfo], force: Boolean)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future
       .traverse(containerInfos) { containerInfo =>
         dataCollie
           .value[Node](containerInfo.nodeName)
-          .map(node =>
-            dockerCache.exec(
-              node,
-              client =>
-                if (force) client.forceRemove(containerInfo.name)
-                else {
-                  // by default, docker will try to stop container for 10 seconds
-                  // after that, docker will issue a kill signal to the container
-                  client.stop(containerInfo.name)
-                  client.remove(containerInfo.name)
-              }
-          ))
+          .map(
+            node =>
+              dockerCache.exec(
+                node,
+                client =>
+                  if (force) client.forceRemove(containerInfo.name)
+                  else {
+                    // by default, docker will try to stop container for 10 seconds
+                    // after that, docker will issue a kill signal to the container
+                    client.stop(containerInfo.name)
+                    client.remove(containerInfo.name)
+                  }
+              )
+          )
       }
       .map { _ =>
         clusterCache.remove(clusterInfo)
@@ -94,26 +101,32 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](dataCollie:
                 // follow our format.
                 name.startsWith(PREFIX_KEY)
                   && Collie.objectKeyOfContainerName(name) == key
-                  && name.contains(serviceName))
-          )))
+                  && name.contains(serviceName)
+            )
+          )
+        )
+      )
       .map(_.flatten)
       .flatMap { containers =>
         Future
           .sequence(containers.map { container =>
             dataCollie.value[Node](container.nodeName).map { node =>
-              container -> dockerCache.exec(node,
-                                            client =>
-                                              try client.log(container.name)
-                                              catch {
-                                                case _: Throwable => s"failed to get log from ${container.name}"
-                                            })
+              container -> dockerCache.exec(
+                node,
+                client =>
+                  try client.log(container.name)
+                  catch {
+                    case _: Throwable => s"failed to get log from ${container.name}"
+                  }
+              )
             }
           })
           .map(_.toMap)
       }
 
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] = {
     dataCollie.value[Node](beRemovedContainer.nodeName).map { node =>
       dockerCache.exec(node, _.stop(beRemovedContainer.name))
       clusterCache.put(previousCluster, clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name))

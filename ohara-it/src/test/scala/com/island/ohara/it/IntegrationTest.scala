@@ -50,21 +50,25 @@ abstract class IntegrationTest {
     * @param containers containers
     * @param clusterKey cluster key
     */
-  protected def assertCluster(clusters: () => Seq[ClusterInfo],
-                              containers: () => Seq[ContainerInfo],
-                              clusterKey: ObjectKey): Unit =
-    await(() =>
-      try {
-        clusters().exists(_.key == clusterKey) &&
-        // since we only get "active" containers, all containers belong to the cluster should be running.
-        // Currently, both k8s and pure docker have the same context of "RUNNING".
-        // It is ok to filter container via RUNNING state.
-        containers().nonEmpty &&
-        containers().map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-      } catch {
-        // the collie impl throw exception if the cluster "does not" exist when calling "containers"
-        case _: NoSuchClusterException => false
-    })
+  protected def assertCluster(
+    clusters: () => Seq[ClusterInfo],
+    containers: () => Seq[ContainerInfo],
+    clusterKey: ObjectKey
+  ): Unit =
+    await(
+      () =>
+        try {
+          clusters().exists(_.key == clusterKey) &&
+          // since we only get "active" containers, all containers belong to the cluster should be running.
+          // Currently, both k8s and pure docker have the same context of "RUNNING".
+          // It is ok to filter container via RUNNING state.
+          containers().nonEmpty &&
+          containers().map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+        } catch {
+          // the collie impl throw exception if the cluster "does not" exist when calling "containers"
+          case _: NoSuchClusterException => false
+        }
+    )
 
   /**
     * Some ITs require the public hostname to expose service. If this method return none, it means the QA does not prepare

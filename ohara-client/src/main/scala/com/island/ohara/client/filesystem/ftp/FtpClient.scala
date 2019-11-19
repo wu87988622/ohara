@@ -93,7 +93,8 @@ private[ftp] trait FtpClient extends Releasable {
   def attach(path: String, messages: Seq[String]): Unit = {
     val writer = new BufferedWriter(
       new OutputStreamWriter(if (exist(path)) append(path) else create(path), StandardCharsets.UTF_8),
-      messages.map(_.length).sum * 2)
+      messages.map(_.length).sum * 2
+    )
     try messages.foreach(line => {
       writer.append(line)
       writer.newLine()
@@ -169,7 +170,7 @@ private[ftp] trait FtpClient extends Releasable {
 }
 
 private[ftp] object FtpClient {
-  private[this] val LOG = Logger(classOf[FtpClient])
+  private[this] val LOG  = Logger(classOf[FtpClient])
   def builder(): Builder = new Builder
 
   class Builder private[FtpClient] extends com.island.ohara.common.pattern.Builder[FtpClient] {
@@ -178,9 +179,9 @@ private[ftp] object FtpClient {
     /**
       * port 21 is used by ftp as default
       */
-    private[this] var port: Int = 21
-    private[this] var user: String = _
-    private[this] var password: String = _
+    private[this] var port: Int              = 21
+    private[this] var user: String           = _
+    private[this] var password: String       = _
     private[this] var retryTimeout: Duration = 0 second
     private[this] var retryBackoff: Duration = 1 second
 
@@ -250,7 +251,6 @@ private[ftp] object FtpClient {
     }
 
     override def build: FtpClient = {
-
       new FtpClient {
         private[this] val hostname =
           CommonUtils.requireNonEmpty(Builder.this.hostname, () => "hostname can't be null or empty")
@@ -259,8 +259,8 @@ private[ftp] object FtpClient {
           CommonUtils.requireNonEmpty(Builder.this.user, () => "user can't be null or empty")
         private[this] val password =
           CommonUtils.requireNonEmpty(Builder.this.password, () => "password can't be null or empty")
-        private[this] val retryTimeout = Objects.requireNonNull(Builder.this.retryTimeout)
-        private[this] val retryBackoff = Objects.requireNonNull(Builder.this.retryBackoff)
+        private[this] val retryTimeout       = Objects.requireNonNull(Builder.this.retryTimeout)
+        private[this] val retryBackoff       = Objects.requireNonNull(Builder.this.retryBackoff)
         private[this] var _client: FtpClient = _
         private[this] def client(): FtpClient = {
           if (_client == null)
@@ -274,7 +274,7 @@ private[ftp] object FtpClient {
         }
         private[this] def retry[T](function: () => T): T = {
           var lastException: Throwable = null
-          val endTime = CommonUtils.current() + retryTimeout.toMillis
+          val endTime                  = CommonUtils.current() + retryTimeout.toMillis
           do {
             try return function()
             catch {
@@ -289,34 +289,35 @@ private[ftp] object FtpClient {
           if (lastException != null) throw lastException
           else throw new IllegalArgumentException("still fail...but there is no root cause ...")
         }
-        override def listFileNames(dir: String): Seq[String] = retry(() => client().listFileNames(dir))
-        override def open(path: String): InputStream = retry(() => client().open(path))
-        override def create(path: String): OutputStream = retry(() => client().create(path))
-        override def append(path: String): OutputStream = retry(() => client().append(path))
+        override def listFileNames(dir: String): Seq[String]  = retry(() => client().listFileNames(dir))
+        override def open(path: String): InputStream          = retry(() => client().open(path))
+        override def create(path: String): OutputStream       = retry(() => client().create(path))
+        override def append(path: String): OutputStream       = retry(() => client().append(path))
         override def moveFile(from: String, to: String): Unit = retry(() => client().moveFile(from, to))
-        override def mkdir(path: String): Unit = retry(() => client().mkdir(path))
-        override def delete(path: String): Unit = retry(() => client().delete(path))
-        override def tmpFolder(): String = client().tmpFolder()
-        override def exist(path: String): Boolean = retry(() => client().exist(path))
-        override def fileType(path: String): FileType = retry(() => client().fileType(path))
-        override def status(): String = retry(() => client().status())
-        override def workingFolder(): String = retry(() => client().workingFolder())
-        override def close(): Unit = client().close()
+        override def mkdir(path: String): Unit                = retry(() => client().mkdir(path))
+        override def delete(path: String): Unit               = retry(() => client().delete(path))
+        override def tmpFolder(): String                      = client().tmpFolder()
+        override def exist(path: String): Boolean             = retry(() => client().exist(path))
+        override def fileType(path: String): FileType         = retry(() => client().fileType(path))
+        override def status(): String                         = retry(() => client().status())
+        override def workingFolder(): String                  = retry(() => client().workingFolder())
+        override def close(): Unit                            = client().close()
       }
     }
 
     private[this] class FtpClientImpl(hostname: String, port: Int, user: String, password: String) extends FtpClient {
       private[this] var _client: FTPClient = _
 
-      private[this] def connectIfNeeded(): FTPClient = if (connected) _client
-      else {
-        if (_client == null) _client = new FTPClient
-        _client.connect(hostname, port)
-        _client.enterLocalPassiveMode()
-        if (!_client.login(user, password))
-          throw new IllegalArgumentException(s"fail to login ftp server:$hostname by account:$user")
-        _client
-      }
+      private[this] def connectIfNeeded(): FTPClient =
+        if (connected) _client
+        else {
+          if (_client == null) _client = new FTPClient
+          _client.connect(hostname, port)
+          _client.enterLocalPassiveMode()
+          if (!_client.login(user, password))
+            throw new IllegalArgumentException(s"fail to login ftp server:$hostname by account:$user")
+          _client
+        }
 
       private[this] def connected: Boolean = _client != null && _client.isConnected
 
@@ -360,8 +361,9 @@ private[ftp] object FtpClient {
         }
       }
 
-      override def moveFile(from: String, to: String): Unit = if (!connectIfNeeded().rename(from, to))
-        throw new IllegalStateException(s"Failed to move file from $from to $to")
+      override def moveFile(from: String, to: String): Unit =
+        if (!connectIfNeeded().rename(from, to))
+          throw new IllegalStateException(s"Failed to move file from $from to $to")
 
       override def mkdir(path: String): Unit = {
         val client = connectIfNeeded()
@@ -443,7 +445,6 @@ private[ftp] object FtpClient {
           if (!client.removeDirectory(path))
             throw new IllegalStateException(s"failed to delete $path because from ${client.getReplyCode}")
         case FileType.NONEXISTENT => throw new IllegalStateException(s"$path doesn't exist")
-
       }
 
       override def tmpFolder(): String = {
@@ -460,25 +461,26 @@ private[ftp] object FtpClient {
           if (result.startsWith("212-")) true
           else
             result.contains(CommonUtils.name(path)) || // if path references to file, result will show the meta from files
-            result.contains(CommonUtils.name("..")) // if path references to folder, result will show meta from all files with "." and "..
+            result.contains(CommonUtils.name(".."))    // if path references to folder, result will show meta from all files with "." and "..
         }
       }
 
-      override def fileType(path: String): FileType = if (exist(path)) {
-        val client = connectIfNeeded()
-        // cache current working folder
-        val current = client.printWorkingDirectory()
-        try client.cwd(path) match {
-          case 250 => FileType.FOLDER
-          case _   => FileType.FILE
-        } finally client.cwd(current)
-      } else FileType.NONEXISTENT
+      override def fileType(path: String): FileType =
+        if (exist(path)) {
+          val client = connectIfNeeded()
+          // cache current working folder
+          val current = client.printWorkingDirectory()
+          try client.cwd(path) match {
+            case 250 => FileType.FOLDER
+            case _   => FileType.FILE
+          } finally client.cwd(current)
+        } else FileType.NONEXISTENT
 
       override def status(): String = connectIfNeeded().getStatus
 
-      override def workingFolder(): String = Option(connectIfNeeded().printWorkingDirectory())
-        .getOrElse(throw new IllegalStateException(s"failed to get working folder for account:$user"))
-
+      override def workingFolder(): String =
+        Option(connectIfNeeded().printWorkingDirectory())
+          .getOrElse(throw new IllegalStateException(s"failed to get working folder for account:$user"))
     }
   }
 }

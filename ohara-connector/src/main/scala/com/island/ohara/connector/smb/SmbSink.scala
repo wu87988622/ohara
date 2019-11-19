@@ -35,7 +35,7 @@ class SmbSink extends CsvSinkConnector {
 
   override protected[smb] def _start(settings: TaskSetting): Unit = {
     this.settings = settings
-    val props = SmbProps(settings)
+    val props  = SmbProps(settings)
     val schema = settings.columns.asScala
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
@@ -50,7 +50,7 @@ class SmbSink extends CsvSinkConnector {
 
     try {
       val csvSinkConfig = CsvSinkConfig.of(settings, settings.columns)
-      val topicsDir = csvSinkConfig.topicsDir()
+      val topicsDir     = csvSinkConfig.topicsDir()
       if (topicsDir.startsWith("/")) {
         throw new IllegalArgumentException(s"The $topicsDir is invalid, we don't allow paths beginning with a slash.")
       }

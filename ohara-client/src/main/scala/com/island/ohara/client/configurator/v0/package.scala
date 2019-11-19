@@ -26,7 +26,6 @@ import spray.json.{JsNull, JsValue, RootJsonFormat, _}
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 package object v0 {
-
   /**
     * Our first version of APIs!!!
     */
@@ -38,7 +37,7 @@ package object v0 {
     * input group is ignored.
     */
   val GROUP_DEFAULT: String = "default"
-  val GROUP_KEY: String = "group"
+  val GROUP_KEY: String     = "group"
 
   /**
     * All services are able to bind a port to provide access.
@@ -72,10 +71,10 @@ package object v0 {
     */
   val NODE_NAMES_KEY: String = "nodeNames"
   val IMAGE_NAME_KEY: String = "imageName"
-  val FORCE_KEY: String = "force"
-  val START_COMMAND: String = "start"
-  val STOP_COMMAND: String = "stop"
-  val PAUSE_COMMAND: String = "pause"
+  val FORCE_KEY: String      = "force"
+  val START_COMMAND: String  = "start"
+  val STOP_COMMAND: String   = "stop"
+  val PAUSE_COMMAND: String  = "pause"
   val RESUME_COMMAND: String = "resume"
 
   /**
@@ -117,7 +116,8 @@ package object v0 {
         ObjectKey.of(
           string(GROUP_KEY).getOrElse(GROUP_DEFAULT),
           string(NAME_KEY).getOrElse(
-            throw DeserializationException(s"$NAME_KEY is required field", fieldNames = List(NAME_KEY)))
+            throw DeserializationException(s"$NAME_KEY is required field", fieldNames = List(NAME_KEY))
+          )
         )
       }
 
@@ -126,7 +126,8 @@ package object v0 {
         case JsObject(fields) => read(fields)
         case _ =>
           throw DeserializationException(
-            "the form of key must be {\"group\": \"g\", \"name\": \"n\"}, {\"name\": \"n\"} or pure string")
+            "the form of key must be {\"group\": \"g\", \"name\": \"n\"}, {\"name\": \"n\"} or pure string"
+          )
       }
     })
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
@@ -152,20 +153,23 @@ package object v0 {
   }
 
   private[v0] implicit val PROP_GROUP_FORMAT: RootJsonFormat[PropGroup] = new RootJsonFormat[PropGroup] {
-    override def write(obj: PropGroup): JsValue = JsArray(
-      obj
-        .raw()
-        .asScala
-        .map(_.asScala.map {
-          case (key, value) => key -> JsString(value)
-        }.toMap)
-        .map(JsObject(_))
-        .toVector)
-    override def read(json: JsValue): PropGroup = try PropGroup.ofJson(json.toString())
-    catch {
-      case e: Throwable =>
-        throw DeserializationException(s"failed to convert $json to PropGroup", e)
-    }
+    override def write(obj: PropGroup): JsValue =
+      JsArray(
+        obj
+          .raw()
+          .asScala
+          .map(_.asScala.map {
+            case (key, value) => key -> JsString(value)
+          }.toMap)
+          .map(JsObject(_))
+          .toVector
+      )
+    override def read(json: JsValue): PropGroup =
+      try PropGroup.ofJson(json.toString())
+      catch {
+        case e: Throwable =>
+          throw DeserializationException(s"failed to convert $json to PropGroup", e)
+      }
   }
 
   /**
@@ -232,8 +236,10 @@ package object v0 {
     * @tparam T type of creation
     * @return json refiner object
     */
-  private[v0] def rulesOfCreation[T <: ClusterCreation](format: RootJsonFormat[T],
-                                                        definitions: Seq[SettingDef]): OharaJsonFormat[T] =
+  private[v0] def rulesOfCreation[T <: ClusterCreation](
+    format: RootJsonFormat[T],
+    definitions: Seq[SettingDef]
+  ): OharaJsonFormat[T] =
     limitsOfKey[T]
       .format(format)
       .definitions(definitions)
@@ -337,7 +343,8 @@ package object v0 {
     */
   def toJson(row: Row): JsObject = JsObject(
     row.cells().asScala.map(cell => cell.name() -> toJson(cell.value())).toMap + (TAGS_KEY -> JsArray(
-      row.tags().asScala.map(JsString(_)).toVector))
+      row.tags().asScala.map(JsString(_)).toVector
+    ))
   )
 
   private[this] def toValue(value: JsValue): Any = value match {

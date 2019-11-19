@@ -28,7 +28,6 @@ import scala.collection.JavaConverters._
   * This class for JDBC Source connector plugin
   */
 class JDBCSourceConnector extends RowSourceConnector {
-
   private[this] var settings: TaskSetting = _
 
   /**
@@ -41,8 +40,8 @@ class JDBCSourceConnector extends RowSourceConnector {
     this.settings = settings
 
     val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
-    val tableName = jdbcSourceConnectorConfig.dbTableName
-    val timestampColumnName = jdbcSourceConnectorConfig.timestampColumnName
+    val tableName                                            = jdbcSourceConnectorConfig.dbTableName
+    val timestampColumnName                                  = jdbcSourceConnectorConfig.timestampColumnName
 
     val dbTableDataProvider: DBTableDataProvider = new DBTableDataProvider(jdbcSourceConnectorConfig)
     try {
@@ -50,7 +49,6 @@ class JDBCSourceConnector extends RowSourceConnector {
 
       if (!dbTableDataProvider.isTableExists(tableName))
         throw new NoSuchElementException(s"$tableName table is not found.")
-
     } finally dbTableDataProvider.close()
   }
 
@@ -95,96 +93,97 @@ class JDBCSourceConnector extends RowSourceConnector {
     * used to set the order of definitions.
     */
   private[this] val counter = new AtomicInteger(0)
-  override protected def _definitions(): java.util.List[SettingDef] = Seq(
-    SettingDef
-      .builder()
-      .displayName("jdbc url")
-      .documentation("Connection database url")
-      .required(SettingDef.Type.STRING)
-      .key(DB_URL)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("user name")
-      .documentation("Connection database user name")
-      .required(SettingDef.Type.STRING)
-      .key(DB_USERNAME)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("password")
-      .documentation("Connection database user password")
-      .required(SettingDef.Type.PASSWORD)
-      .key(DB_PASSWORD)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("table name")
-      .documentation("write to topic from database table name")
-      .required(SettingDef.Type.JDBC_TABLE)
-      .key(DB_TABLENAME)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("catalog pattern")
-      .documentation("database metadata catalog")
-      .optional(SettingDef.Type.STRING)
-      .key(DB_CATALOG_PATTERN)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("schema pattern")
-      .documentation("database metadata schema pattern")
-      .optional(SettingDef.Type.STRING)
-      .key(DB_SCHEMA_PATTERN)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("mode")
-      .documentation("Only support timestamp column")
-      .key(MODE)
-      .optional(MODE_DEFAULT)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("timestamp column name")
-      .documentation("Use a timestamp column to detect new and modified rows")
-      .required(SettingDef.Type.STRING)
-      .key(TIMESTAMP_COLUMN_NAME)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("JDBC fetch size")
-      .documentation("Setting JDBC fetch data size for ResultSet")
-      .key(JDBC_FETCHDATA_SIZE)
-      .optional(JDBC_FETCHDATA_SIZE_DEFAULT)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("JDBC flush size")
-      .documentation("Setting Data flush to topic size")
-      .key(JDBC_FLUSHDATA_SIZE)
-      .optional(JDBC_FLUSHDATA_SIZE_DEFAULT)
-      .orderInGroup(counter.getAndIncrement())
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Fetch data frequence")
-      .documentation("Setting fetch data frequency from database")
-      .key(JDBC_FREQUENCE_TIME)
-      .optional(java.time.Duration.ofMillis(JDBC_FREQUENCE_TIME_DEFAULT.toMillis))
-      .orderInGroup(counter.getAndIncrement())
-      .build()
-  ).asJava
+  override protected def _definitions(): java.util.List[SettingDef] =
+    Seq(
+      SettingDef
+        .builder()
+        .displayName("jdbc url")
+        .documentation("Connection database url")
+        .required(SettingDef.Type.STRING)
+        .key(DB_URL)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("user name")
+        .documentation("Connection database user name")
+        .required(SettingDef.Type.STRING)
+        .key(DB_USERNAME)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("password")
+        .documentation("Connection database user password")
+        .required(SettingDef.Type.PASSWORD)
+        .key(DB_PASSWORD)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("table name")
+        .documentation("write to topic from database table name")
+        .required(SettingDef.Type.JDBC_TABLE)
+        .key(DB_TABLENAME)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("catalog pattern")
+        .documentation("database metadata catalog")
+        .optional(SettingDef.Type.STRING)
+        .key(DB_CATALOG_PATTERN)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("schema pattern")
+        .documentation("database metadata schema pattern")
+        .optional(SettingDef.Type.STRING)
+        .key(DB_SCHEMA_PATTERN)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("mode")
+        .documentation("Only support timestamp column")
+        .key(MODE)
+        .optional(MODE_DEFAULT)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("timestamp column name")
+        .documentation("Use a timestamp column to detect new and modified rows")
+        .required(SettingDef.Type.STRING)
+        .key(TIMESTAMP_COLUMN_NAME)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("JDBC fetch size")
+        .documentation("Setting JDBC fetch data size for ResultSet")
+        .key(JDBC_FETCHDATA_SIZE)
+        .optional(JDBC_FETCHDATA_SIZE_DEFAULT)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("JDBC flush size")
+        .documentation("Setting Data flush to topic size")
+        .key(JDBC_FLUSHDATA_SIZE)
+        .optional(JDBC_FLUSHDATA_SIZE_DEFAULT)
+        .orderInGroup(counter.getAndIncrement())
+        .build(),
+      SettingDef
+        .builder()
+        .displayName("Fetch data frequence")
+        .documentation("Setting fetch data frequency from database")
+        .key(JDBC_FREQUENCE_TIME)
+        .optional(java.time.Duration.ofMillis(JDBC_FREQUENCE_TIME_DEFAULT.toMillis))
+        .orderInGroup(counter.getAndIncrement())
+        .build()
+    ).asJava
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }

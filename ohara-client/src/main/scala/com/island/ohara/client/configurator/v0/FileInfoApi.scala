@@ -38,7 +38,7 @@ object FileInfoApi {
   /**
     * the key used in formData to point out the data.
     */
-  val FIELD_NAME: String = "file"
+  val FIELD_NAME: String                           = "file"
   def toString(tags: Map[String, JsValue]): String = JsObject(tags).toString
 
   /**
@@ -53,7 +53,6 @@ object FileInfoApi {
 
   case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
   object ClassInfo {
-
     /**
       * create connector class information. The type is from setting definitions.
       * @param className class name
@@ -79,45 +78,49 @@ object FileInfoApi {
     * @param url download url
     * @param lastModified last modified time
     */
-  final class FileInfo(val group: String,
-                       val name: String,
-                       val url: Option[URL],
-                       val lastModified: Long,
-                       val bytes: Array[Byte],
-                       val size: Int,
-                       val classInfos: Seq[ClassInfo],
-                       val tags: Map[String, JsValue])
-      extends Data
+  final class FileInfo(
+    val group: String,
+    val name: String,
+    val url: Option[URL],
+    val lastModified: Long,
+    val bytes: Array[Byte],
+    val size: Int,
+    val classInfos: Seq[ClassInfo],
+    val tags: Map[String, JsValue]
+  ) extends Data
       with Serializable {
-    def this(group: String,
-             name: String,
-             url: Option[URL],
-             lastModified: Long,
-             bytes: Array[Byte],
-             classInfos: Seq[ClassInfo],
-             tags: Map[String, JsValue]) {
-      this(group = group,
-           name = name,
-           url = url,
-           lastModified = lastModified,
-           bytes = bytes,
-           size = bytes.length,
-           classInfos = classInfos,
-           tags = tags)
-
+    def this(
+      group: String,
+      name: String,
+      url: Option[URL],
+      lastModified: Long,
+      bytes: Array[Byte],
+      classInfos: Seq[ClassInfo],
+      tags: Map[String, JsValue]
+    ) {
+      this(
+        group = group,
+        name = name,
+        url = url,
+        lastModified = lastModified,
+        bytes = bytes,
+        size = bytes.length,
+        classInfos = classInfos,
+        tags = tags
+      )
     }
     private[this] implicit def _classInfos(classInfos: Seq[ClassInfo]): FileContent = FileContent(classInfos)
 
     def sourceClassInfos: Seq[ClassInfo] = classInfos.sourceClassInfos
-    def sinkClassInfos: Seq[ClassInfo] = classInfos.sinkClassInfos
+    def sinkClassInfos: Seq[ClassInfo]   = classInfos.sinkClassInfos
     def streamClassInfos: Seq[ClassInfo] = classInfos.streamClassInfos
 
     override def kind: String = "file"
   }
 
-  private[this] val URL_KEY = "url"
+  private[this] val URL_KEY         = "url"
   private[this] val CLASS_INFOS_KEY = "classInfos"
-  private[this] val SIZE_KEY = "size"
+  private[this] val SIZE_KEY        = "size"
 
   implicit val FILE_INFO_JSON_FORMAT: RootJsonFormat[FileInfo] = new RootJsonFormat[FileInfo] {
     override def read(json: JsValue): FileInfo = {
@@ -149,7 +152,8 @@ object FileInfoApi {
           case JsArray(es) => es.map(CLASS_INFO_FORMAT.read).toList
           case j: JsValue =>
             throw DeserializationException(
-              s"$CLASS_INFOS_KEY must be mapped to array but actual is ${j.getClass.getName}")
+              s"$CLASS_INFOS_KEY must be mapped to array but actual is ${j.getClass.getName}"
+            )
         },
         tags = value(TAGS_KEY) match {
           case JsObject(fs) => fs
@@ -165,20 +169,20 @@ object FileInfoApi {
       * @return js object
       */
     override def write(obj: FileInfo): JsValue = JsObject(
-      GROUP_KEY -> JsString(obj.group),
-      NAME_KEY -> JsString(obj.name),
-      URL_KEY -> obj.url.map(_.toString).map(JsString(_)).getOrElse(JsNull),
-      SIZE_KEY -> JsNumber(obj.size),
+      GROUP_KEY         -> JsString(obj.group),
+      NAME_KEY          -> JsString(obj.name),
+      URL_KEY           -> obj.url.map(_.toString).map(JsString(_)).getOrElse(JsNull),
+      SIZE_KEY          -> JsNumber(obj.size),
       LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
-      CLASS_INFOS_KEY -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
-      TAGS_KEY -> JsObject(obj.tags),
+      CLASS_INFOS_KEY   -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
+      TAGS_KEY          -> JsObject(obj.tags)
     )
   }
 
   sealed trait Request {
-    private[this] var group: String = GROUP_DEFAULT
-    private[this] var name: String = _
-    private[this] var file: File = _
+    private[this] var group: String              = GROUP_DEFAULT
+    private[this] var name: String               = _
+    private[this] var file: File                 = _
     private[this] var tags: Map[String, JsValue] = _
 
     @Optional("default group is GROUP_DEFAULT")
@@ -219,14 +223,15 @@ object FileInfoApi {
     )
 
     protected def doUpload(group: String, name: String, file: File, tags: Map[String, JsValue])(
-      implicit executionContext: ExecutionContext): Future[FileInfo]
+      implicit executionContext: ExecutionContext
+    ): Future[FileInfo]
 
     protected def doUpdate(group: String, name: String, update: Updating)(
-      implicit executionContext: ExecutionContext): Future[FileInfo]
+      implicit executionContext: ExecutionContext
+    ): Future[FileInfo]
   }
 
   final class Access private[v0] extends BasicAccess(FILE_PREFIX_PATH) {
-
     def list()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
       exec.get[Seq[FileInfo], ErrorApi.Error](url)
 
@@ -254,24 +259,28 @@ object FileInfoApi {
       */
     def request: Request = new Request {
       override protected def doUpload(group: String, name: String, file: File, tags: Map[String, JsValue])(
-        implicit executionContext: ExecutionContext): Future[FileInfo] =
+        implicit executionContext: ExecutionContext
+      ): Future[FileInfo] =
         Marshal(
           Multipart.FormData(
             // add file
-            Multipart.FormData.BodyPart(FIELD_NAME,
-                                        HttpEntity.fromFile(MediaTypes.`application/octet-stream`, file),
-                                        Map("filename" -> name)),
+            Multipart.FormData.BodyPart(
+              FIELD_NAME,
+              HttpEntity.fromFile(MediaTypes.`application/octet-stream`, file),
+              Map("filename" -> name)
+            ),
             // add group
             Multipart.FormData.BodyPart(GROUP_KEY, group),
             // add tags
             Multipart.FormData.BodyPart(TAGS_KEY, FileInfoApi.toString(tags))
-          ))
-          .to[RequestEntity]
+          )
+        ).to[RequestEntity]
           .map(e => HttpRequest(HttpMethods.POST, uri = url, entity = e))
           .flatMap(exec.request[FileInfo, ErrorApi.Error])
 
       override protected def doUpdate(group: String, name: String, update: Updating)(
-        implicit executionContext: ExecutionContext): Future[FileInfo] =
+        implicit executionContext: ExecutionContext
+      ): Future[FileInfo] =
         exec.put[Updating, FileInfo, ErrorApi.Error](urlBuilder.key(ObjectKey.of(group, name)).build(), update)
     }
   }

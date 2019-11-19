@@ -24,27 +24,29 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestContainerCreator extends OharaTest {
-
-  private[this] def fake(): DockerClient.Creator = (hostname: String,
-                                                    imageName: String,
-                                                    name: String,
-                                                    command: String,
-                                                    removeContainerOnExit: Boolean,
-                                                    ports: Map[Int, Int],
-                                                    envs: Map[String, String],
-                                                    route: Map[String, String],
-                                                    volumeMapping: Map[String, String],
-                                                    networkDriver: NetworkDriver) => {
-    // we check only the required arguments
-    CommonUtils.requireNonEmpty(hostname)
-    CommonUtils.requireNonEmpty(imageName)
-    CommonUtils.requireNonEmpty(name)
-    Objects.requireNonNull(ports)
-    Objects.requireNonNull(envs)
-    Objects.requireNonNull(route)
-    Objects.requireNonNull(volumeMapping)
-    Objects.requireNonNull(networkDriver)
-  }
+  private[this] def fake(): DockerClient.Creator =
+    (
+      hostname: String,
+      imageName: String,
+      name: String,
+      command: String,
+      removeContainerOnExit: Boolean,
+      ports: Map[Int, Int],
+      envs: Map[String, String],
+      route: Map[String, String],
+      volumeMapping: Map[String, String],
+      networkDriver: NetworkDriver
+    ) => {
+      // we check only the required arguments
+      CommonUtils.requireNonEmpty(hostname)
+      CommonUtils.requireNonEmpty(imageName)
+      CommonUtils.requireNonEmpty(name)
+      Objects.requireNonNull(ports)
+      Objects.requireNonNull(envs)
+      Objects.requireNonNull(route)
+      Objects.requireNonNull(volumeMapping)
+      Objects.requireNonNull(networkDriver)
+    }
 
   @Test
   def nullHostname(): Unit = an[NullPointerException] should be thrownBy fake().hostname(null)
@@ -99,7 +101,6 @@ class TestContainerCreator extends OharaTest {
 
   @Test
   def testExecuteNormalCases(): Unit = {
-
     fake().imageName(CommonUtils.randomString(5)).create()
     fake().name(CommonUtils.randomString()).imageName(CommonUtils.randomString(5)).create()
     fake()
@@ -111,7 +112,6 @@ class TestContainerCreator extends OharaTest {
 
   @Test
   def testExecuteWithoutRequireArguments(): Unit = {
-
     // At least assign imageName
     an[NullPointerException] should be thrownBy fake().create()
   }

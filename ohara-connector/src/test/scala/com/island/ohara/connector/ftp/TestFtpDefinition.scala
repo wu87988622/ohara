@@ -30,14 +30,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestFtpDefinition extends WithBrokerWorker {
-
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def testSource(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
@@ -46,7 +45,8 @@ class TestFtpDefinition extends WithBrokerWorker {
         .numberOfTasks(1)
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
-        .run())
+        .run()
+    )
 
     response.settings().size should not be 0
     response
@@ -90,7 +90,7 @@ class TestFtpDefinition extends WithBrokerWorker {
 
   @Test
   def testSink(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
@@ -99,7 +99,8 @@ class TestFtpDefinition extends WithBrokerWorker {
         .numberOfTasks(1)
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
-        .run())
+        .run()
+    )
 
     response.settings().size should not be 0
     response

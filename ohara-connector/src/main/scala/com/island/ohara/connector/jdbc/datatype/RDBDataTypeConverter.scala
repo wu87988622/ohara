@@ -23,7 +23,6 @@ import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 
 trait RDBDataTypeConverter {
-
   /**
     * Converter result data type to Java object
     * @param resultSet
@@ -31,8 +30,8 @@ trait RDBDataTypeConverter {
     * @return data type object
     */
   def converterValue(resultSet: ResultSet, column: DatabaseClient.Column): Any = {
-    val columnName = column.name
-    val typeName = column.dataType.toUpperCase
+    val columnName             = column.name
+    val typeName               = column.dataType.toUpperCase
     val dataType: DataTypeEnum = converterDataType(column)
     dataType match {
       case DataTypeEnum.INTEGER =>
@@ -61,7 +60,8 @@ trait RDBDataTypeConverter {
         Optional.ofNullable(resultSet.getBytes(columnName)).orElseGet(() => Array())
       case _ =>
         throw new UnsupportedOperationException(
-          s"JDBC Source Connector not support ${typeName} data type in ${columnName} column for ${dataBaseProductName} implement.")
+          s"JDBC Source Connector not support ${typeName} data type in ${columnName} column for ${dataBaseProductName} implement."
+        )
     }
   }
   protected[datatype] def dataBaseProductName: String

@@ -31,7 +31,6 @@ import spray.json.JsValue
 
 import scala.concurrent.duration._
 class TestServiceCache extends OharaTest {
-
   @Test
   def testRequestKey(): Unit = {
     val key = RequestKey(
@@ -47,12 +46,12 @@ class TestServiceCache extends OharaTest {
 
   @Test
   def testAutoRefresh(): Unit = {
-    val clusterInfo0 = FakeClusterInfo(CommonUtils.randomString())
+    val clusterInfo0   = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo0 = fakeContainerInfo()
-    val clusterInfo1 = FakeClusterInfo(CommonUtils.randomString())
+    val clusterInfo1   = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo1 = fakeContainerInfo()
-    val fetchCount = new AtomicInteger(0)
-    val refreshCount = new AtomicInteger(0)
+    val fetchCount     = new AtomicInteger(0)
+    val refreshCount   = new AtomicInteger(0)
     val cache = ServiceCache.builder
       .supplier(() => {
         refreshCount.incrementAndGet()
@@ -73,12 +72,12 @@ class TestServiceCache extends OharaTest {
 
   @Test
   def testRequestUpdate(): Unit = {
-    val clusterInfo0 = FakeClusterInfo(CommonUtils.randomString())
+    val clusterInfo0   = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo0 = fakeContainerInfo()
-    val clusterInfo1 = FakeClusterInfo(CommonUtils.randomString())
+    val clusterInfo1   = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo1 = fakeContainerInfo()
-    val fetchCount = new AtomicInteger(0)
-    val refreshCount = new AtomicInteger(0)
+    val fetchCount     = new AtomicInteger(0)
+    val refreshCount   = new AtomicInteger(0)
     val cache = ServiceCache.builder
       .supplier(() => {
         refreshCount.incrementAndGet()
@@ -109,7 +108,7 @@ class TestServiceCache extends OharaTest {
 
   @Test
   def testGet(): Unit = {
-    val clusterInfo0 = FakeClusterInfo(CommonUtils.randomString())
+    val clusterInfo0   = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo0 = fakeContainerInfo()
     val cache = ServiceCache.builder
       .supplier(() => {
@@ -138,7 +137,7 @@ class TestServiceCache extends OharaTest {
       .lazyRemove(5 seconds)
       .build
     try {
-      val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
+      val clusterInfo   = FakeClusterInfo(CommonUtils.randomString())
       val containerInfo = fakeContainerInfo()
       cache.put(clusterInfo, Seq(containerInfo))
       TimeUnit.SECONDS.sleep(2)
@@ -153,13 +152,13 @@ class TestServiceCache extends OharaTest {
 
   @Test
   def testUpdateClusterInfo(): Unit = {
-    val count = new AtomicInteger(0)
+    val count            = new AtomicInteger(0)
     val firstClusterInfo = FakeClusterInfo(CommonUtils.randomString())
     val cachedClusterInfo = new ClusterInfo {
-      override def name: String = firstClusterInfo.name
-      override def imageName: String = "123"
-      override def ports: Set[Int] = Set.empty
-      override def nodeNames: Set[String] = Set.empty
+      override def name: String            = firstClusterInfo.name
+      override def imageName: String       = "123"
+      override def ports: Set[Int]         = Set.empty
+      override def nodeNames: Set[String]  = Set.empty
       override def aliveNodes: Set[String] = Set.empty
 
       override def group: String = "fake_group"

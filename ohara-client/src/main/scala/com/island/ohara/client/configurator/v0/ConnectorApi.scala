@@ -32,19 +32,18 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ConnectorApi {
-
-  val CONNECTORS_PREFIX_PATH: String = "connectors"
+  val CONNECTORS_PREFIX_PATH: String             = "connectors"
   private[v0] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
-  private[this] val NUMBER_OF_TASKS_KEY: String = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
-  private[this] val TOPIC_KEYS_KEY: String = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
+  private[this] val NUMBER_OF_TASKS_KEY: String  = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
+  private[this] val TOPIC_KEYS_KEY: String       = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
   @VisibleForTesting
   private[ohara] val CONNECTOR_CLASS_KEY: String = ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()
   @VisibleForTesting
   private[v0] val COLUMNS_KEY: String = ConnectorDefUtils.COLUMNS_DEFINITION.key()
   @VisibleForTesting
   private[v0] val CONNECTOR_KEY_KEY: String = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
-  private[this] val GROUP_KEY: String = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
-  private[this] val NAME_KEY: String = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
+  private[this] val GROUP_KEY: String       = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
+  private[this] val NAME_KEY: String        = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
 
   /**
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
@@ -53,10 +52,10 @@ object ConnectorApi {
   abstract sealed class State(val name: String) extends Serializable
   object State extends Enum[State] {
     case object UNASSIGNED extends State("UNASSIGNED")
-    case object RUNNING extends State("RUNNING")
-    case object PAUSED extends State("PAUSED")
-    case object FAILED extends State("FAILED")
-    case object DESTROYED extends State("DESTROYED")
+    case object RUNNING    extends State("RUNNING")
+    case object PAUSED     extends State("PAUSED")
+    case object FAILED     extends State("FAILED")
+    case object DESTROYED  extends State("DESTROYED")
   }
 
   implicit val CONNECTOR_STATE_FORMAT: RootJsonFormat[State] =
@@ -68,7 +67,6 @@ object ConnectorApi {
 
   final class Creation(val settings: Map[String, JsValue])
       extends com.island.ohara.client.configurator.v0.BasicCreation {
-
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     /**
@@ -81,11 +79,11 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    def className: String = settings.className.get
-    def columns: Seq[Column] = settings.columns.get
-    def numberOfTasks: Int = settings.numberOfTasks.get
+    def className: String           = settings.className.get
+    def columns: Seq[Column]        = settings.columns.get
+    def numberOfTasks: Int          = settings.numberOfTasks.get
     def workerClusterKey: ObjectKey = settings.workerClusterKey.get
-    def topicKeys: Set[TopicKey] = settings.topicKeys.get
+    def topicKeys: Set[TopicKey]    = settings.topicKeys.get
 
     override def group: String = settings.group.get
 
@@ -121,8 +119,10 @@ object ConnectorApi {
                 throw DeserializationException(msg = s"order can't be negative number", fieldNames = List("order"))
               // order can't be duplicate
               if (columns.map(_.order).toSet.size != columns.size)
-                throw DeserializationException(msg = s"duplicate order:${columns.map(_.order)}",
-                                               fieldNames = List("order"))
+                throw DeserializationException(
+                  msg = s"duplicate order:${columns.map(_.order)}",
+                  fieldNames = List("order")
+                )
             } catch {
               case e: DeserializationException => throw e
               case other: Throwable =>
@@ -139,8 +139,8 @@ object ConnectorApi {
 
   final class Updating(val settings: Map[String, JsValue]) {
     private[ConnectorApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    private[ConnectorApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-    def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
+    private[ConnectorApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    def className: Option[String]                   = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
 
     def columns: Option[Seq[Column]] =
       noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala)
@@ -176,13 +176,13 @@ object ConnectorApi {
   /**
     * this is what we store in configurator
     */
-  final case class ConnectorInfo(settings: Map[String, JsValue],
-                                 status: Option[Status],
-                                 tasksStatus: Seq[Status],
-                                 metrics: Metrics,
-                                 lastModified: Long)
-      extends Data {
-
+  final case class ConnectorInfo(
+    settings: Map[String, JsValue],
+    status: Option[Status],
+    tasksStatus: Seq[Status],
+    metrics: Metrics,
+    lastModified: Long
+  ) extends Data {
     override protected def matched(key: String, value: String): Boolean = key match {
       case _ => matchSetting(settings, key, value)
     }
@@ -200,18 +200,18 @@ object ConnectorApi {
 
     override def name: String = settings.name
     override def kind: String = "connector"
-    def className: String = settings.className
+    def className: String     = settings.className
 
-    def columns: Seq[Column] = settings.columns
-    def numberOfTasks: Int = settings.numberOfTasks
-    def workerClusterKey: ObjectKey = settings.workerClusterKey
-    def topicKeys: Set[TopicKey] = settings.topicKeys
+    def columns: Seq[Column]                = settings.columns
+    def numberOfTasks: Int                  = settings.numberOfTasks
+    def workerClusterKey: ObjectKey         = settings.workerClusterKey
+    def topicKeys: Set[TopicKey]            = settings.topicKeys
     override def tags: Map[String, JsValue] = settings.tags
   }
 
   implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorInfo] =
     new RootJsonFormat[ConnectorInfo] {
-      private[this] val format = jsonFormat5(ConnectorInfo)
+      private[this] val format                        = jsonFormat5(ConnectorInfo)
       override def read(json: JsValue): ConnectorInfo = format.read(json)
 
       override def write(obj: ConnectorInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
@@ -242,11 +242,13 @@ object ConnectorApi {
       setting(COLUMNS_KEY, PropGroup.ofColumns(columns.asJava).toJsonString.parseJson)
 
     @Optional(
-      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+      "You don't need to fill this field when update/create connector. But this filed is required in starting connector"
+    )
     def topicKey(topicKey: TopicKey): BasicRequest.this.type = topicKeys(Set(Objects.requireNonNull(topicKey)))
 
     @Optional(
-      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+      "You don't need to fill this field when update/create connector. But this filed is required in starting connector"
+    )
     def topicKeys(topicKeys: Set[TopicKey]): BasicRequest.this.type =
       setting(TOPIC_KEYS_KEY, TopicKey.toJsonString(topicKeys.asJava).parseJson)
 
@@ -259,8 +261,8 @@ object ConnectorApi {
       setting(WORKER_CLUSTER_KEY_KEY, OBJECT_KEY_FORMAT.write(Objects.requireNonNull(workerClusterKey)))
 
     @Optional("extra settings for this connectors")
-    def setting(key: String, value: JsValue): BasicRequest.this.type = settings(
-      Map(CommonUtils.requireNonEmpty(key) -> Objects.requireNonNull(value)))
+    def setting(key: String, value: JsValue): BasicRequest.this.type =
+      settings(Map(CommonUtils.requireNonEmpty(key) -> Objects.requireNonNull(value)))
 
     @Optional("extra settings for this connectors")
     def settings(settings: Map[String, JsValue]): BasicRequest.this.type = {
@@ -290,7 +292,6 @@ object ConnectorApi {
     * The do-action methods are moved from BasicRequest to this one. Hence, ValidationApi ConnectorRequest does not have those weired methods
     */
   sealed abstract class Request extends BasicRequest {
-
     /**
       * generate the POST request
       * @param executionContext thread pool
@@ -307,17 +308,17 @@ object ConnectorApi {
   }
 
   sealed trait Query extends BasicQuery[ConnectorInfo] {
-    def setting(key: String, value: JsValue): Query = set(key, value match {
-      case JsString(s) => s
-      case _           => value.toString
-    })
+    def setting(key: String, value: JsValue): Query =
+      set(key, value match {
+        case JsString(s) => s
+        case _           => value.toString
+      })
 
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
 
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, ConnectorInfo](CONNECTORS_PREFIX_PATH) {
-
     /**
       * start to run a connector on worker cluster.
       *
@@ -352,7 +353,8 @@ object ConnectorApi {
 
     def query: Query = new Query {
       override protected def doExecute(request: QueryRequest)(
-        implicit executionContext: ExecutionContext): Future[Seq[ConnectorInfo]] = list(request)
+        implicit executionContext: ExecutionContext
+      ): Future[Seq[ConnectorInfo]] = list(request)
     }
 
     def request: Request = new Request {

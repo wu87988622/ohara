@@ -25,7 +25,6 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 final object ShabondiApi {
-
   /**
     * shabondi does not support group. However, we are in group world and there are many cases of inputting key (group, name)
     * to access resource. This method used to generate key for hostname of node.
@@ -35,19 +34,19 @@ final object ShabondiApi {
   def key(name: String): ObjectKey = ObjectKey.of(GROUP_DEFAULT, name)
 
   val IMAGE_NAME_DEFAULT: String = s"oharastream/shabondi:${VersionUtils.VERSION}"
-  val PATH_PREFIX = "shabondi"
+  val PATH_PREFIX                = "shabondi"
 
-  final case class ShabondiDescription(name: String,
-                                       lastModified: Long,
-                                       state: Option[String] = None,
-                                       to: Seq[String] = Seq.empty,
-                                       port: Int,
-                                       instances: Int)
-      extends Data {
-
+  final case class ShabondiDescription(
+    name: String,
+    lastModified: Long,
+    state: Option[String] = None,
+    to: Seq[String] = Seq.empty,
+    port: Int,
+    instances: Int
+  ) extends Data {
     // Shabondi does not support to define group
     override def group: String = GROUP_DEFAULT
-    override def kind: String = "shabondi"
+    override def kind: String  = "shabondi"
 
     // TODO: Does shabondi need the tags? by chia
     override def tags: Map[String, JsValue] = Map.empty
@@ -56,12 +55,11 @@ final object ShabondiApi {
   final case class ShabondiProperty(to: Option[Seq[String]], port: Option[Int])
 
   implicit val SHABONDI_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ShabondiDescription] = jsonFormat6(ShabondiDescription)
-  implicit val SHABONDI_PROPERTY_JSON_FORMAT: RootJsonFormat[ShabondiProperty] = jsonFormat2(ShabondiProperty)
+  implicit val SHABONDI_PROPERTY_JSON_FORMAT: RootJsonFormat[ShabondiProperty]       = jsonFormat2(ShabondiProperty)
 
   def access: ShabondiAccess = new ShabondiAccess()
 
   class ShabondiAccess extends BasicAccess(PATH_PREFIX) {
-
     private def basicUrl(name: String = "") = if (name.isEmpty) url else url + "/" + name
 
     def add()(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
@@ -75,7 +73,8 @@ final object ShabondiApi {
     }
 
     def updateProperty(name: String, property: ShabondiProperty)(
-      implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
+      implicit executionContext: ExecutionContext
+    ): Future[ShabondiDescription] = {
       val url = basicUrl(name)
       exec.put[ShabondiProperty, ShabondiDescription, ErrorApi.Error](url, property)
     }
@@ -93,5 +92,4 @@ final object ShabondiApi {
       exec.put[ShabondiDescription, ErrorApi.Error](url)
     }
   }
-
 }

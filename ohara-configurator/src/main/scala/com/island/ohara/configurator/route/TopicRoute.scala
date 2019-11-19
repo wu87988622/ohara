@@ -42,19 +42,21 @@ private[configurator] object TopicRoute {
     * @return meters belong to the input topic
     */
   private[this] def metrics(brokerCluster: BrokerClusterInfo, topicName: String)(
-    implicit meterCache: MeterCache): Metrics = Metrics(
-    meterCache.meters(brokerCluster).getOrElse(topicName, Seq.empty))
+    implicit meterCache: MeterCache
+  ): Metrics = Metrics(meterCache.meters(brokerCluster).getOrElse(topicName, Seq.empty))
 
   /**
     * update the metrics for input topic
     * @param topicInfo topic info
     * @return updated topic info
     */
-  private[this] def updateState(topicInfo: TopicInfo)(implicit meterCache: MeterCache,
-                                                      adminCleaner: AdminCleaner,
-                                                      objectChecker: ObjectChecker,
-                                                      brokerCollie: BrokerCollie,
-                                                      executionContext: ExecutionContext): Future[TopicInfo] =
+  private[this] def updateState(topicInfo: TopicInfo)(
+    implicit meterCache: MeterCache,
+    adminCleaner: AdminCleaner,
+    objectChecker: ObjectChecker,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext
+  ): Future[TopicInfo] =
     objectChecker.checkList
       .topic(topicInfo.key)
       .check()
@@ -66,7 +68,8 @@ private[configurator] object TopicRoute {
               partitionInfos = Seq.empty,
               metrics = Metrics.EMPTY,
               state = None
-            ))
+            )
+          )
         case RUNNING =>
           objectChecker.checkList
             .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
@@ -81,23 +84,28 @@ private[configurator] object TopicRoute {
                       topicAdmin
                         .topics()
                         .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
-                        .map(_.partitionInfos -> Some(TopicState.RUNNING))
-                    else Future.successful(Seq.empty -> None))
+                        .map(_.partitionInfos        -> Some(TopicState.RUNNING))
+                    else Future.successful(Seq.empty -> None)
+                  )
                   // pre-close topic admin
-                  .map(try _
-                  finally Releasable.close(topicAdmin))
+                  .map(
+                    try _
+                    finally Releasable.close(topicAdmin)
+                  )
                   .map {
                     case (partitions, state) =>
                       topicInfo.copy(
-                        partitionInfos = partitions.map(partition =>
-                          PartitionInfo(
-                            index = partition.index,
-                            leaderNode = partition.leaderNode,
-                            replicaNodes = partition.replicaNodes,
-                            inSyncReplicaNodes = partition.inSyncReplicaNodes,
-                            beginningOffset = partition.beginningOffset,
-                            endOffset = partition.endOffset
-                        )),
+                        partitionInfos = partitions.map(
+                          partition =>
+                            PartitionInfo(
+                              index = partition.index,
+                              leaderNode = partition.leaderNode,
+                              replicaNodes = partition.replicaNodes,
+                              inSyncReplicaNodes = partition.inSyncReplicaNodes,
+                              beginningOffset = partition.beginningOffset,
+                              endOffset = partition.endOffset
+                            )
+                        ),
                         state = state,
                         metrics = metrics(brokerClusterInfo, topicInfo.key.topicNameOnKafka)
                       )
@@ -115,22 +123,26 @@ private[configurator] object TopicRoute {
           )
       }
 
-  private[this] def hookOfGet(implicit meterCache: MeterCache,
-                              adminCleaner: AdminCleaner,
-                              objectChecker: ObjectChecker,
-                              brokerCollie: BrokerCollie,
-                              executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
-    updateState(topicInfo)
+  private[this] def hookOfGet(
+    implicit meterCache: MeterCache,
+    adminCleaner: AdminCleaner,
+    objectChecker: ObjectChecker,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext
+  ): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) => updateState(topicInfo)
 
-  private[this] def hookOfList(implicit meterCache: MeterCache,
-                               adminCleaner: AdminCleaner,
-                               objectChecker: ObjectChecker,
-                               brokerCollie: BrokerCollie,
-                               executionContext: ExecutionContext): HookOfList[TopicInfo] =
+  private[this] def hookOfList(
+    implicit meterCache: MeterCache,
+    adminCleaner: AdminCleaner,
+    objectChecker: ObjectChecker,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext
+  ): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) => Future.traverse(topicInfos)(updateState)
 
-  private[this] def creationToTopicInfo(creation: Creation)(implicit objectChecker: ObjectChecker,
-                                                            executionContext: ExecutionContext): Future[TopicInfo] =
+  private[this] def creationToTopicInfo(
+    creation: Creation
+  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[TopicInfo] =
     objectChecker.checkList.brokerCluster(creation.brokerClusterKey).check().map { _ =>
       TopicInfo(
         settings = creation.settings,
@@ -141,12 +153,16 @@ private[configurator] object TopicRoute {
       )
     }
 
-  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfCreation[Creation, TopicInfo] =
     creationToTopicInfo(_)
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, TopicInfo] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, TopicInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[TopicInfo]) =>
       previousOption match {
         case None =>
@@ -156,7 +172,8 @@ private[configurator] object TopicRoute {
               // the key is not in update's settings so we have to add it to settings
               .name(key.name)
               .group(key.group)
-              .creation)
+              .creation
+          )
         case Some(previous) =>
           objectChecker.checkList
           // we don't support to update a running topic
@@ -173,46 +190,60 @@ private[configurator] object TopicRoute {
                   // the key is not in update's settings so we have to add it to settings
                   .name(key.name)
                   .group(key.group)
-                  .creation)
+                  .creation
+              )
             }
-    }
+      }
 
-  private[this] def checkConflict(topicInfo: TopicInfo,
-                                  connectorInfos: Seq[ConnectorInfo],
-                                  streamClusterInfos: Seq[StreamClusterInfo]): Unit = {
+  private[this] def checkConflict(
+    topicInfo: TopicInfo,
+    connectorInfos: Seq[ConnectorInfo],
+    streamClusterInfos: Seq[StreamClusterInfo]
+  ): Unit = {
     val conflictConnectors = connectorInfos.filter(_.topicKeys.contains(topicInfo.key))
     if (conflictConnectors.nonEmpty)
       throw new IllegalArgumentException(
-        s"topic:${topicInfo.key} is used by running connectors:${conflictConnectors.map(_.key).mkString(",")}")
+        s"topic:${topicInfo.key} is used by running connectors:${conflictConnectors.map(_.key).mkString(",")}"
+      )
     val conflictStreams =
       streamClusterInfos.filter(s => s.fromTopicKeys.contains(topicInfo.key) || s.toTopicKeys.contains(topicInfo.key))
     if (conflictStreams.nonEmpty)
       throw new IllegalArgumentException(
-        s"topic:${topicInfo.key} is used by running streams:${conflictStreams.map(_.key).mkString(",")}")
+        s"topic:${topicInfo.key} is used by running streams:${conflictStreams.map(_.key).mkString(",")}"
+      )
   }
 
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    objectChecker.checkList
-      .topic(TopicKey.of(key.group(), key.name()), STOPPED)
-      .allConnectors()
-      .allStreams()
-      .check()
-      .map { report =>
-        checkConflict(report.topicInfos.head._1, report.connectorInfos.keys.toSeq, report.streamClusterInfos.keys.toSeq)
-        Unit
-      }
-      .recover {
-        // the duplicate deletes are legal to ohara
-        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
-        case e: Throwable                                           => throw e
-      }
-      .map(_ => Unit)
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
+    (key: ObjectKey) =>
+      objectChecker.checkList
+        .topic(TopicKey.of(key.group(), key.name()), STOPPED)
+        .allConnectors()
+        .allStreams()
+        .check()
+        .map { report =>
+          checkConflict(
+            report.topicInfos.head._1,
+            report.connectorInfos.keys.toSeq,
+            report.streamClusterInfos.keys.toSeq
+          )
+          Unit
+        }
+        .recover {
+          // the duplicate deletes are legal to ohara
+          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: Throwable                                           => throw e
+        }
+        .map(_ => Unit)
 
-  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
-                                adminCleaner: AdminCleaner,
-                                brokerCollie: BrokerCollie,
-                                executionContext: ExecutionContext): HookOfAction[TopicInfo] =
+  private[this] def hookOfStart(
+    implicit objectChecker: ObjectChecker,
+    adminCleaner: AdminCleaner,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[TopicInfo] =
     (topicInfo: TopicInfo, _, _) =>
       objectChecker.checkList
         .topic(topicInfo.key)
@@ -237,17 +268,21 @@ private[configurator] object TopicRoute {
                         })
                     })
                     .create()
-                    .flatMap(_ =>
-                      try Future.unit
-                      finally Releasable.close(topicAdmin))
+                    .flatMap(
+                      _ =>
+                        try Future.unit
+                        finally Releasable.close(topicAdmin)
+                    )
                 }
             }
-      }
+        }
 
-  private[this] def hookOfStop(implicit objectChecker: ObjectChecker,
-                               adminCleaner: AdminCleaner,
-                               brokerCollie: BrokerCollie,
-                               executionContext: ExecutionContext): HookOfAction[TopicInfo] =
+  private[this] def hookOfStop(
+    implicit objectChecker: ObjectChecker,
+    adminCleaner: AdminCleaner,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[TopicInfo] =
     (topicInfo: TopicInfo, _, _) =>
       objectChecker.checkList
         .allConnectors()
@@ -270,19 +305,23 @@ private[configurator] object TopicRoute {
                   .flatMap { topicAdmin =>
                     topicAdmin
                       .delete(topicInfo.key)
-                      .flatMap(_ =>
-                        try Future.unit
-                        finally Releasable.close(topicAdmin))
+                      .flatMap(
+                        _ =>
+                          try Future.unit
+                          finally Releasable.close(topicAdmin)
+                      )
                   }
             }
-      }
+        }
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            adminCleaner: AdminCleaner,
-            meterCache: MeterCache,
-            brokerCollie: BrokerCollie,
-            executionContext: ExecutionContext): server.Route =
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    adminCleaner: AdminCleaner,
+    meterCache: MeterCache,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext
+  ): server.Route =
     RouteBuilder[Creation, Updating, TopicInfo]()
       .root(TOPICS_PREFIX_PATH)
       .hookOfCreation(hookOfCreation)

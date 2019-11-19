@@ -32,7 +32,6 @@ import scala.reflect.ClassTag
   * NOTED: All implementation from Store should be thread-safe.
   */
 trait DataStore extends Releasable {
-
   /**
     * Noted, the type of stored data must be equal to input type.
     * @param key data key
@@ -147,7 +146,6 @@ trait DataStore extends Releasable {
 }
 
 object DataStore {
-
   def builder: Builder = new Builder
 
   def apply(): DataStore = builder.build()

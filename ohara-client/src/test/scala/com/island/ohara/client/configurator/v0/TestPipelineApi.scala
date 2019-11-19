@@ -26,7 +26,6 @@ import spray.json.{DeserializationException, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestPipelineApi extends OharaTest {
-
   @Test
   def nullKeyInGet(): Unit =
     an[NullPointerException] should be thrownBy PipelineApi.access.get(null)
@@ -36,20 +35,22 @@ class TestPipelineApi extends OharaTest {
     an[NullPointerException] should be thrownBy PipelineApi.access.delete(null)
 
   @Test
-  def ignoreNameOnCreation(): Unit = PipelineApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .creation
-    .name
-    .length should not be 0
+  def ignoreNameOnCreation(): Unit =
+    PipelineApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .creation
+      .name
+      .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .update()
+  def ignoreNameOnUpdate(): Unit =
+    an[NullPointerException] should be thrownBy PipelineApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .update()
 
   @Test
   def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy PipelineApi.access.request.group("")
@@ -75,7 +76,7 @@ class TestPipelineApi extends OharaTest {
   @Test
   def parseFlow(): Unit = {
     val from = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to   = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     val flow = FLOW_JSON_FORMAT.read(s"""
         |  {
         |    "from": {
@@ -125,8 +126,8 @@ class TestPipelineApi extends OharaTest {
     creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
     creation.flows shouldBe Seq.empty
 
-    val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
+    val group     = CommonUtils.randomString()
+    val name      = CommonUtils.randomString()
     val creation2 = PIPELINE_CREATION_JSON_FORMAT.read(s"""
         |  {
         |    "group": "$group",
@@ -156,12 +157,13 @@ class TestPipelineApi extends OharaTest {
   def emptyTags(): Unit = PipelineApi.access.request.tags(Map.empty)
 
   @Test
-  def testNameLimit(): Unit = an[DeserializationException] should be thrownBy
-    PipelineApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
-      .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
-      .creation
+  def testNameLimit(): Unit =
+    an[DeserializationException] should be thrownBy
+      PipelineApi.access
+        .hostname(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .request
+        .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
+        .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
+        .creation
 }

@@ -42,8 +42,8 @@ object TopicApi {
     * Furthermore, kafka forbids us to put required configs to custom configs. Hence, we have to mark the custom config
     * in order to filter the custom from settings (see Creation).
     */
-  private[this] val EXTRA_GROUP = "extra"
-  private[this] val CORE_DEFINITIONS = mutable.Map[String, SettingDef]()
+  private[this] val EXTRA_GROUP       = "extra"
+  private[this] val CORE_DEFINITIONS  = mutable.Map[String, SettingDef]()
   private[this] val EXTRA_DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createExtraDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(EXTRA_DEFINITIONS.size).group(EXTRA_GROUP))
@@ -71,32 +71,36 @@ object TopicApi {
       .documentation("broker cluster used to store data for this worker cluster")
       .required(Type.OBJECT_KEY)
       .reference(Reference.BROKER_CLUSTER)
-      .build())
-  private[this] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
+      .build()
+  )
+  private[this] val NUMBER_OF_PARTITIONS_KEY          = "numberOfPartitions"
   private[this] val NUMBER_OF_PARTITIONS_DEFAULT: Int = 1
   val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createCoreDef(
     _.key(NUMBER_OF_PARTITIONS_KEY)
       .documentation("the number of partitions")
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_PARTITIONS_DEFAULT)
-      .build())
-  private[this] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+      .build()
+  )
+  private[this] val NUMBER_OF_REPLICATIONS_KEY            = "numberOfReplications"
   private[this] val NUMBER_OF_REPLICATIONS_DEFAULT: Short = 1
   val NUMBER_OF_REPLICATIONS_DEFINITION: SettingDef = createCoreDef(
     _.key(NUMBER_OF_REPLICATIONS_KEY)
       .documentation("the number of replications")
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_REPLICATIONS_DEFAULT)
-      .build())
+      .build()
+  )
 
-  private[this] val SEGMENT_BYTES_KEY = TopicConfig.SEGMENT_BYTES_CONFIG
+  private[this] val SEGMENT_BYTES_KEY           = TopicConfig.SEGMENT_BYTES_CONFIG
   private[this] val SEGMENT_BYTES_DEFAULT: Long = 1 * 1024 * 1024 * 1024L
   val SEGMENT_BYTES_DEFINITION: SettingDef = createExtraDef(
     _.key(SEGMENT_BYTES_KEY)
       .documentation(TopicConfig.SEGMENT_BYTES_DOC)
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(SEGMENT_BYTES_DEFAULT)
-      .build())
+      .build()
+  )
 
   private[this] val SEGMENT_MS_KEY = TopicConfig.SEGMENT_MS_CONFIG
   // ONE WEEK
@@ -106,7 +110,8 @@ object TopicApi {
       .documentation(TopicConfig.SEGMENT_MS_DOC)
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(SEGMENT_MS_DEFAULT)
-      .build())
+      .build()
+  )
 
   /**
     * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
@@ -138,14 +143,13 @@ object TopicApi {
 
   final class Creation private[TopicApi] (val settings: Map[String, JsValue])
       extends com.island.ohara.client.configurator.v0.BasicCreation {
-
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     def key: TopicKey = TopicKey.of(group, name)
 
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
 
-    def numberOfPartitions: Int = settings.numberOfPartitions.get
+    def numberOfPartitions: Int     = settings.numberOfPartitions.get
     def numberOfReplications: Short = settings.numberOfReplications.get
 
     override def group: String = settings.group.get
@@ -170,7 +174,7 @@ object TopicApi {
 
   abstract sealed class TopicState(val name: String) extends Serializable
   object TopicState extends Enum[TopicState] {
-    case object NONE extends TopicState("NONE")
+    case object NONE    extends TopicState("NONE")
     case object RUNNING extends TopicState("RUNNING")
   }
 
@@ -179,22 +183,24 @@ object TopicApi {
     override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
 
-  final case class PartitionInfo(index: Int,
-                                 leaderNode: String,
-                                 replicaNodes: Set[String],
-                                 inSyncReplicaNodes: Set[String],
-                                 beginningOffset: Long,
-                                 endOffset: Long)
+  final case class PartitionInfo(
+    index: Int,
+    leaderNode: String,
+    replicaNodes: Set[String],
+    inSyncReplicaNodes: Set[String],
+    beginningOffset: Long,
+    endOffset: Long
+  )
 
   implicit val TOPIC_PARTITION_FORMAT: RootJsonFormat[PartitionInfo] = jsonFormat6(PartitionInfo)
 
-  case class TopicInfo(settings: Map[String, JsValue],
-                       partitionInfos: Seq[PartitionInfo],
-                       metrics: Metrics,
-                       state: Option[TopicState],
-                       lastModified: Long)
-      extends Data {
-
+  case class TopicInfo(
+    settings: Map[String, JsValue],
+    partitionInfos: Seq[PartitionInfo],
+    metrics: Metrics,
+    state: Option[TopicState],
+    lastModified: Long
+  ) extends Data {
     override protected def matched(key: String, value: String): Boolean = key match {
       case "state" => matchOptionString(state.map(_.name), value)
       case _       => matchSetting(settings, key, value)
@@ -203,7 +209,7 @@ object TopicApi {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: TopicKey = TopicKey.of(group, name)
-    override def kind: String = "topic"
+    override def kind: String  = "topic"
 
     /**
       * kafka topic does not support to group topic so we salt the group with name.
@@ -218,7 +224,7 @@ object TopicApi {
     override def tags: Map[String, JsValue] = settings.tags
 
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey
-    def numberOfPartitions: Int = settings.numberOfPartitions
+    def numberOfPartitions: Int     = settings.numberOfPartitions
 
     def numberOfReplications: Short = settings.numberOfReplications
 
@@ -315,10 +321,11 @@ object TopicApi {
 
     def brokerClusterKey(key: ObjectKey): Query = setting(BROKER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(key).parseJson)
 
-    def setting(key: String, value: JsValue): Query = set(key, value match {
-      case JsString(s) => s
-      case _           => value.toString
-    })
+    def setting(key: String, value: JsValue): Query =
+      set(key, value match {
+        case JsString(s) => s
+        case _           => value.toString
+      })
 
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
@@ -326,20 +333,19 @@ object TopicApi {
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, TopicInfo](TOPICS_PREFIX_PATH) {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
-    def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
+    def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit]  = put(key, STOP_COMMAND)
 
     def query: Query = new Query {
       override protected def doExecute(request: QueryRequest)(
-        implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] = list(request)
+        implicit executionContext: ExecutionContext
+      ): Future[Seq[TopicInfo]] = list(request)
     }
 
     def request: Request = new Request {
-
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         put(TopicKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
     }
-
   }
 
   def access: Access = new Access

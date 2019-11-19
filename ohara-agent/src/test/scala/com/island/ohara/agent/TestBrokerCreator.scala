@@ -29,7 +29,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestBrokerCreator extends OharaTest {
-
   private[this] val zkKey: ObjectKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
 
   private[this] def bkCreator(): BrokerCollie.ClusterCreator =
@@ -44,7 +43,8 @@ class TestBrokerCreator extends OharaTest {
           error = None,
           lastModified = 0,
           topicDefinition = BrokerApi.TOPIC_DEFINITION
-        ))
+        )
+      )
     }
 
   @Test
@@ -93,13 +93,14 @@ class TestBrokerCreator extends OharaTest {
   }
 
   @Test
-  def testNameLength(): Unit = bkCreator()
-    .name(CommonUtils.randomString(10))
-    .group(CommonUtils.randomString(10))
-    .zookeeperClusterKey(zkKey)
-    .clientPort(CommonUtils.availablePort())
-    .nodeName(CommonUtils.randomString)
-    .create()
+  def testNameLength(): Unit =
+    bkCreator()
+      .name(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .zookeeperClusterKey(zkKey)
+      .clientPort(CommonUtils.availablePort())
+      .nodeName(CommonUtils.randomString)
+      .create()
 
   @Test
   def testInvalidName(): Unit =

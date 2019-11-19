@@ -23,12 +23,11 @@ import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions
 
 package object ftp {
-
   /**
     * used to set the order of definitions.
     */
   private[this] val COUNTER = new AtomicInteger(0)
-  val FTP_HOSTNAME_KEY = "ftp.hostname"
+  val FTP_HOSTNAME_KEY      = "ftp.hostname"
   val FTP_HOSTNAME_DEFINITION = SettingDef
     .builder()
     .displayName("Hostname of FTP Server")
@@ -78,12 +77,12 @@ package object ftp {
     FTP_PASSWORD_DEFINITION
   )
 
-  @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String = CsvConnectorDefinitions.INPUT_FOLDER_KEY
+  @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String     = CsvConnectorDefinitions.INPUT_FOLDER_KEY
   @VisibleForTesting private[connector] val COMPLETED_FOLDER_KEY: String = CsvConnectorDefinitions.COMPLETED_FOLDER_KEY
-  @VisibleForTesting private[connector] val ERROR_FOLDER_KEY: String = CsvConnectorDefinitions.ERROR_FOLDER_KEY
-  @VisibleForTesting private[connector] val TOPICS_DIR_KEY: String = CsvConnectorDefinitions.TOPICS_DIR_KEY
-  @VisibleForTesting private[connector] val FLUSH_SIZE_KEY: String = CsvConnectorDefinitions.FLUSH_SIZE_KEY
-  @VisibleForTesting private[connector] val FLUSH_SIZE_DEFAULT: Int = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
+  @VisibleForTesting private[connector] val ERROR_FOLDER_KEY: String     = CsvConnectorDefinitions.ERROR_FOLDER_KEY
+  @VisibleForTesting private[connector] val TOPICS_DIR_KEY: String       = CsvConnectorDefinitions.TOPICS_DIR_KEY
+  @VisibleForTesting private[connector] val FLUSH_SIZE_KEY: String       = CsvConnectorDefinitions.FLUSH_SIZE_KEY
+  @VisibleForTesting private[connector] val FLUSH_SIZE_DEFAULT: Int      = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
   @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_KEY: String =
     CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY
   @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_DEFAULT: Long =
@@ -91,6 +90,6 @@ package object ftp {
   @VisibleForTesting private[connector] val FILE_NEED_HEADER_KEY: String = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
   @VisibleForTesting private[connector] val FILE_NEED_HEADER_DEFAULT: Boolean =
     CsvConnectorDefinitions.FILE_NEED_HEADER_DEFAULT
-  @VisibleForTesting private[connector] val FILE_ENCODE_KEY: String = CsvConnectorDefinitions.FILE_ENCODE_KEY
+  @VisibleForTesting private[connector] val FILE_ENCODE_KEY: String     = CsvConnectorDefinitions.FILE_ENCODE_KEY
   @VisibleForTesting private[connector] val FILE_ENCODE_DEFAULT: String = CsvConnectorDefinitions.FILE_ENCODE_DEFAULT
 }

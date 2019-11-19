@@ -21,7 +21,7 @@ import java.util
 import com.island.ohara.kafka.connector._
 
 class DumbSinkTask extends RowSinkTask {
-  override protected def _start(settings: TaskSetting): Unit = {}
-  override protected def _stop(): Unit = {}
+  override protected def _start(settings: TaskSetting): Unit           = {}
+  override protected def _stop(): Unit                                 = {}
   override protected def _put(records: util.List[RowSinkRecord]): Unit = {}
 }

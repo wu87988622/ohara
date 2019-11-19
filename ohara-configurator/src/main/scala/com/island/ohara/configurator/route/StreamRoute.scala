@@ -31,7 +31,6 @@ import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object StreamRoute {
-
   /**
     * The group for a stream application metrics
     * Since each stream has it's own metrics, it is OK to use same value
@@ -41,7 +40,8 @@ private[configurator] object StreamRoute {
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
     serviceCollie: ServiceCollie,
-    executionContext: ExecutionContext): Future[StreamClusterInfo] =
+    executionContext: ExecutionContext
+  ): Future[StreamClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .file(creation.jarKey)
@@ -53,7 +53,8 @@ private[configurator] object StreamRoute {
       .topics {
         if (creation.fromTopicKeys.size > 1)
           throw new IllegalArgumentException(
-            s"the size of from topics MUST be equal to 1 (multiple topics is a unsupported feature)")
+            s"the size of from topics MUST be equal to 1 (multiple topics is a unsupported feature)"
+          )
         creation.fromTopicKeys
       }
       /**
@@ -63,7 +64,8 @@ private[configurator] object StreamRoute {
       .topics {
         if (creation.toTopicKeys.size > 1)
           throw new IllegalArgumentException(
-            s"the size of from topics MUST be equal to 1 (multiple topics is a unsupported feature)")
+            s"the size of from topics MUST be equal to 1 (multiple topics is a unsupported feature)"
+          )
         creation.toTopicKeys
       }
       .check()
@@ -74,11 +76,13 @@ private[configurator] object StreamRoute {
           available.size match {
             case 0 =>
               throw DeserializationException(
-                s"no available stream classes from files:${fileInfos.map(_.key).mkString(",")}")
+                s"no available stream classes from files:${fileInfos.map(_.key).mkString(",")}"
+              )
             case 1 => available.head
             case _ =>
               throw DeserializationException(
-                s"too many alternatives:${available.mkString(",")} from files:${fileInfos.map(_.key).mkString(",")}")
+                s"too many alternatives:${available.mkString(",")} from files:${fileInfos.map(_.key).mkString(",")}"
+              )
           }
         }
 
@@ -95,14 +99,18 @@ private[configurator] object StreamRoute {
         )
       }
 
-  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   serviceCollie: ServiceCollie,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): HookOfCreation[Creation, StreamClusterInfo] =
     creationToClusterInfo(_)
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   serviceCollie: ServiceCollie,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, StreamClusterInfo] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, StreamClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[StreamClusterInfo]) =>
       previousOption match {
         case None =>
@@ -111,7 +119,8 @@ private[configurator] object StreamRoute {
               .settings(updating.settings)
               // the key is not in update's settings so we have to add it to settings
               .key(key)
-              .creation)
+              .creation
+          )
         case Some(previous) =>
           objectChecker.checkList
           // we don't support to update a running stream
@@ -127,13 +136,16 @@ private[configurator] object StreamRoute {
                   .settings(updating.settings)
                   // the key is not in update's settings so we have to add it to settings
                   .key(key)
-                  .creation)
+                  .creation
+              )
             }
-    }
+      }
 
-  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
-                                streamCollie: StreamCollie,
-                                executionContext: ExecutionContext): HookOfAction[StreamClusterInfo] =
+  private[this] def hookOfStart(
+    implicit objectChecker: ObjectChecker,
+    streamCollie: StreamCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[StreamClusterInfo] =
     (streamClusterInfo: StreamClusterInfo, _, _) => {
       objectChecker.checkList
       // node names check is covered in super route
@@ -143,26 +155,33 @@ private[configurator] object StreamRoute {
         .topics(
           // our UI needs to create a stream without topics so the stream info may has no topics...
           if (streamClusterInfo.toTopicKeys.isEmpty)
-            throw DeserializationException(s"${StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()} can't be empty",
-                                           fieldNames = List(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()))
+            throw DeserializationException(
+              s"${StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()} can't be empty",
+              fieldNames = List(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
+            )
           else streamClusterInfo.toTopicKeys,
           RUNNING
         )
         .topics(
           // our UI needs to create a stream without topics so the stream info may has no topics...
           if (streamClusterInfo.fromTopicKeys.isEmpty)
-            throw DeserializationException(s"${StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()} topics can't be empty",
-                                           fieldNames = List(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()))
+            throw DeserializationException(
+              s"${StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()} topics can't be empty",
+              fieldNames = List(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
+            )
           else streamClusterInfo.fromTopicKeys,
           RUNNING
         )
         .check()
         .map(
           report =>
-            (report.streamClusterInfos.head._2,
-             report.fileInfos.head,
-             report.brokerClusterInfos.head._1,
-             report.runningTopics))
+            (
+              report.streamClusterInfos.head._2,
+              report.fileInfos.head,
+              report.brokerClusterInfos.head._1,
+              report.runningTopics
+            )
+        )
         .flatMap {
           case (condition, fileInfo, brokerClusterInfo, topicInfos) =>
             condition match {
@@ -171,7 +190,8 @@ private[configurator] object StreamRoute {
                 topicInfos.filter(_.brokerClusterKey != brokerClusterInfo.key).foreach { topicInfo =>
                   throw new IllegalArgumentException(
                     s"stream app counts on broker cluster:${streamClusterInfo.brokerClusterKey} " +
-                      s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}")
+                      s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}"
+                  )
                 }
                 streamCollie.creator
                 // these settings will send to container environment
@@ -193,12 +213,14 @@ private[configurator] object StreamRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            streamCollie: StreamCollie,
-            serviceCollie: ServiceCollie,
-            meterCache: MeterCache,
-            executionContext: ExecutionContext): server.Route =
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    streamCollie: StreamCollie,
+    serviceCollie: ServiceCollie,
+    meterCache: MeterCache,
+    executionContext: ExecutionContext
+  ): server.Route =
     clusterRoute[StreamClusterInfo, StreamClusterStatus, Creation, Updating](
       root = STREAM_PREFIX_PATH,
       metricsKey = Some(STREAM_GROUP),

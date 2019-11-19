@@ -30,14 +30,14 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 class TestPerfSourceProps extends OharaTest {
-  private[this] val props = PerfSourceProps(10, 10 seconds)
+  private[this] val props     = PerfSourceProps(10, 10 seconds)
   private[this] val topicKeys = Set(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
-  private[this] val schema = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())
+  private[this] val schema    = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())
 
   @Test
   def testPlainMap(): Unit = {
     val props = PerfSourceProps(123, 10 seconds)
-    val copy = PerfSourceProps(TaskSetting.of(props.toMap.asJava))
+    val copy  = PerfSourceProps(TaskSetting.of(props.toMap.asJava))
     props shouldBe copy
   }
 
@@ -51,7 +51,8 @@ class TestPerfSourceProps extends OharaTest {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .columns(schema.asJava)
         .settings(props.toMap.asJava)
-        .raw())
+        .raw()
+    )
   }
 
   @Test
@@ -64,7 +65,8 @@ class TestPerfSourceProps extends OharaTest {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKeys(topicKeys.asJava)
         .settings(props.toMap.asJava)
-        .raw())
+        .raw()
+    )
   }
 
   @Test
@@ -77,7 +79,8 @@ class TestPerfSourceProps extends OharaTest {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKeys(topicKeys.asJava)
         .settings(props.toMap.asJava)
-        .raw())
+        .raw()
+    )
 
     task.schema shouldBe DEFAULT_SCHEMA
   }
@@ -95,7 +98,8 @@ class TestPerfSourceProps extends OharaTest {
   @Test
   def testInvalidFrequence(): Unit = {
     an[NumberFormatException] should be thrownBy PerfSourceProps(
-      TaskSetting.of(Map(PERF_BATCH -> "1", PERF_FREQUENCE -> "abc").asJava))
+      TaskSetting.of(Map(PERF_BATCH -> "1", PERF_FREQUENCE -> "abc").asJava)
+    )
   }
 
   @Test
@@ -108,6 +112,7 @@ class TestPerfSourceProps extends OharaTest {
         .topicKeys(topicKeys.asJava)
         .columns(schema.asJava)
         .settings(props.copy(batch = -1).toMap.asJava)
-        .raw())
+        .raw()
+    )
   }
 }

@@ -24,7 +24,6 @@ import org.scalatest.Matchers._
 import scala.util.{Failure, Success}
 
 class TestServerStarter extends OharaTest {
-
   @Test
   def testParseArgs(): Unit = {
     ServerStarter.parseArgs(Array("--source", "9090")) shouldBe
@@ -37,5 +36,4 @@ class TestServerStarter extends OharaTest {
     ServerStarter.parseArgs(Array("--sink")) shouldBe a[Failure[_]]
     ServerStarter.parseArgs(Array("9090")) shouldBe a[Failure[_]]
   }
-
 }

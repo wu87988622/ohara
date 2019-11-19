@@ -29,10 +29,9 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 class SimpleRowSourceTask extends RowSourceTask {
-
-  private[this] var settings: TaskSetting = _
-  private[this] val queue = new LinkedBlockingQueue[RowSourceRecord]
-  private[this] val closed = new AtomicBoolean(false)
+  private[this] var settings: TaskSetting                = _
+  private[this] val queue                                = new LinkedBlockingQueue[RowSourceRecord]
+  private[this] val closed                               = new AtomicBoolean(false)
   private[this] var consumer: Consumer[Row, Array[Byte]] = _
   override protected def _start(settings: TaskSetting): Unit = {
     this.settings = settings
@@ -52,8 +51,10 @@ class SimpleRowSourceTask extends RowSourceTask {
           .asScala
           .filter(_.key.isPresent)
           .map(_.key.get)
-          .flatMap(row =>
-            settings.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topicName(topic).build()))
+          .flatMap(
+            row =>
+              settings.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topicName(topic).build())
+          )
           .foreach(r => queue.put(r))
       } finally Releasable.close(consumer)
     }

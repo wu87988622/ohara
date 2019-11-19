@@ -24,11 +24,11 @@ import org.scalatest.Matchers._
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestConfiguratorMain extends OharaTest {
-
   @Test
-  def illegalK8sUrl(): Unit = intercept[IllegalArgumentException] {
-    Configurator.main(Array[String](Configurator.K8S_KEY, s"http://localhost:${CommonUtils.availablePort()}"))
-  }.getMessage should include("unable to access")
+  def illegalK8sUrl(): Unit =
+    intercept[IllegalArgumentException] {
+      Configurator.main(Array[String](Configurator.K8S_KEY, s"http://localhost:${CommonUtils.availablePort()}"))
+    }.getMessage should include("unable to access")
 
   @Test
   def emptyK8sArgument(): Unit =
@@ -39,12 +39,16 @@ class TestConfiguratorMain extends OharaTest {
     an[IllegalArgumentException] should be thrownBy Configurator.main(Array[String](Configurator.K8S_KEY))
 
   @Test
-  def fakeWithK8s(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.main(
-    Array[String](Configurator.K8S_KEY, "http://localhost", Configurator.FAKE_KEY, "true"))
+  def fakeWithK8s(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.main(
+      Array[String](Configurator.K8S_KEY, "http://localhost", Configurator.FAKE_KEY, "true")
+    )
 
   @Test
-  def k8sWithFake(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.main(
-    Array[String](Configurator.FAKE_KEY, "true", Configurator.K8S_KEY, "http://localhost"))
+  def k8sWithFake(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.main(
+      Array[String](Configurator.FAKE_KEY, "true", Configurator.K8S_KEY, "http://localhost")
+    )
 
   @Test
   def testFakeMode(): Unit =
@@ -55,8 +59,10 @@ class TestConfiguratorMain extends OharaTest {
 
   @Test
   def testSshMode(): Unit =
-    runMain(Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0"),
-            configurator => configurator.mode shouldBe Mode.SSH)
+    runMain(
+      Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0"),
+      configurator => configurator.mode shouldBe Mode.SSH
+    )
 
   private[this] def runMain(args: Array[String], action: Configurator => Unit): Unit = {
     Configurator.GLOBAL_CONFIGURATOR_SHOULD_CLOSE = false

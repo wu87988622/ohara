@@ -48,7 +48,7 @@ class TestLogRoute extends OharaTest {
 
   @Test
   def fetchLogFromZookeeper(): Unit = {
-    val cluster = result(zkApi.list()).head
+    val cluster     = result(zkApi.list()).head
     val clusterLogs = result(logApi.log4ZookeeperCluster(cluster.key))
     clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
@@ -56,7 +56,7 @@ class TestLogRoute extends OharaTest {
 
   @Test
   def fetchLogFromBroker(): Unit = {
-    val cluster = result(bkApi.list()).head
+    val cluster     = result(bkApi.list()).head
     val clusterLogs = result(logApi.log4BrokerCluster(cluster.key))
     clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
@@ -64,7 +64,7 @@ class TestLogRoute extends OharaTest {
 
   @Test
   def fetchLogFromWorker(): Unit = {
-    val cluster = result(wkApi.list()).head
+    val cluster     = result(wkApi.list()).head
     val clusterLogs = result(logApi.log4WorkerCluster(cluster.key))
     clusterLogs.clusterKey shouldBe cluster.key
     clusterLogs.logs.isEmpty shouldBe false
@@ -72,7 +72,7 @@ class TestLogRoute extends OharaTest {
 
   @Test
   def fetchLogFromStream(): Unit = {
-    val file = result(fileApi.request.file(RouteUtils.streamFile).upload())
+    val file      = result(fileApi.request.file(RouteUtils.streamFile).upload())
     val fromTopic = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
     result(topicApi.start(fromTopic.key))
     result(topicApi.get(fromTopic.key)).state should not be None
@@ -87,8 +87,10 @@ class TestLogRoute extends OharaTest {
         .toTopicKey(toTopic.key)
         .jarKey(file.key)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(streamApi.start(cluster.key))
     val clusterLogs = result(logApi.log4StreamCluster(cluster.key))
     clusterLogs.clusterKey shouldBe cluster.key

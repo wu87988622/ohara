@@ -25,7 +25,6 @@ import org.scalatest.Matchers._
 import spray.json._
 
 class TestInspectApi extends OharaTest {
-
   @Test
   def testJsonStringFromVersionUtils(): Unit = {
     val fields = VersionUtils.jsonString().parseJson.asJsObject.fields
@@ -38,9 +37,9 @@ class TestInspectApi extends OharaTest {
 
   @Test
   def testBasicQueryObject(): Unit = {
-    val url = CommonUtils.randomString(10)
-    val user = CommonUtils.randomString(10)
-    val password = CommonUtils.randomString(10)
+    val url              = CommonUtils.randomString(10)
+    val user             = CommonUtils.randomString(10)
+    val password         = CommonUtils.randomString(10)
     val workerClusterKey = ObjectKey.of("default", "wk")
     val query = InspectApi.access
       .hostname(CommonUtils.randomString())
@@ -63,13 +62,13 @@ class TestInspectApi extends OharaTest {
 
   @Test
   def testQueryObjectWithAllFields(): Unit = {
-    val url = CommonUtils.randomString(10)
-    val user = CommonUtils.randomString(10)
-    val password = CommonUtils.randomString(10)
+    val url              = CommonUtils.randomString(10)
+    val user             = CommonUtils.randomString(10)
+    val password         = CommonUtils.randomString(10)
     val workerClusterKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    val catalogPattern = CommonUtils.randomString(10)
-    val schemaPattern = CommonUtils.randomString(10)
-    val tableName = CommonUtils.randomString(10)
+    val catalogPattern   = CommonUtils.randomString(10)
+    val schemaPattern    = CommonUtils.randomString(10)
+    val tableName        = CommonUtils.randomString(10)
     val query = InspectApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
@@ -93,31 +92,34 @@ class TestInspectApi extends OharaTest {
   }
 
   @Test
-  def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy InspectApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .rdbRequest
-    .user(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .query
+  def ignoreUrlOnCreation(): Unit =
+    an[NullPointerException] should be thrownBy InspectApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .rdbRequest
+      .user(CommonUtils.randomString())
+      .password(CommonUtils.randomString())
+      .query
 
   @Test
-  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy InspectApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .rdbRequest
-    .jdbcUrl(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .query
+  def ignoreUserOnCreation(): Unit =
+    an[NullPointerException] should be thrownBy InspectApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .rdbRequest
+      .jdbcUrl(CommonUtils.randomString())
+      .password(CommonUtils.randomString())
+      .query
 
   @Test
-  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy InspectApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .rdbRequest
-    .jdbcUrl(CommonUtils.randomString())
-    .user(CommonUtils.randomString())
-    .query
+  def ignorePasswordOnCreation(): Unit =
+    an[NullPointerException] should be thrownBy InspectApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .rdbRequest
+      .jdbcUrl(CommonUtils.randomString())
+      .user(CommonUtils.randomString())
+      .query
 
   @Test
   def nullUrl(): Unit = an[NullPointerException] should be thrownBy InspectApi.access.rdbRequest.jdbcUrl(null)
@@ -166,13 +168,13 @@ class TestInspectApi extends OharaTest {
 
   @Test
   def testParseJson(): Unit = {
-    val url = CommonUtils.randomString()
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val url               = CommonUtils.randomString()
+    val user              = CommonUtils.randomString()
+    val password          = CommonUtils.randomString()
     val workerClusterName = CommonUtils.randomString()
-    val catalogPattern = CommonUtils.randomString()
-    val schemaPattern = CommonUtils.randomString()
-    val tableName = CommonUtils.randomString()
+    val catalogPattern    = CommonUtils.randomString()
+    val schemaPattern     = CommonUtils.randomString()
+    val tableName         = CommonUtils.randomString()
 
     val query = InspectApi.RDB_QUERY_JSON_FORMAT.read(s"""
          |{

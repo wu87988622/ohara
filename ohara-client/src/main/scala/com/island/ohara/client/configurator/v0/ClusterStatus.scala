@@ -22,7 +22,6 @@ import com.island.ohara.common.setting.ObjectKey
   * the information of running cluster. Those information may be changed over time.
   */
 trait ClusterStatus {
-
   def group: String
 
   def name: String

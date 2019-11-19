@@ -42,49 +42,54 @@ import scala.util.{Failure, Success}
   * this test injects command handler for above actions that return correct response or throw exception.
   */
 class TestVerifyNode extends OharaTest {
-  private[this] var messageWhenFailToRun: String = _
+  private[this] var messageWhenFailToRun: String        = _
   private[this] var messageWhenFailToListImages: String = _
-  private[this] var messageWhenFailToPs: String = _
-  private[this] var messageWhenFailToRemove: String = _
-  private[this] val containerId = CommonUtils.randomString()
-  private[this] var containerName: String = _
+  private[this] var messageWhenFailToPs: String         = _
+  private[this] var messageWhenFailToRemove: String     = _
+  private[this] val containerId                         = CommonUtils.randomString()
+  private[this] var containerName: String               = _
   private[this] val sshServer = SshdServer.local(
     0,
     Seq(
       new CommandHandler {
         override def belong(cmd: String): Boolean = cmd.contains("docker run -d") && cmd.contains("hello-world")
-        override def execute(cmd: String): util.List[String] = if (messageWhenFailToRun != null)
-          throw new IllegalArgumentException(messageWhenFailToRun)
-        else {
-          val splits = cmd.split(" ")
-          val nameIndex = splits.zipWithIndex
-            .filter {
-              case (item, index) => item == "--name"
-            }
-            .head
-            ._2
-          containerName = splits(nameIndex + 1)
-          util.Collections.singletonList(containerId)
-        }
+        override def execute(cmd: String): util.List[String] =
+          if (messageWhenFailToRun != null)
+            throw new IllegalArgumentException(messageWhenFailToRun)
+          else {
+            val splits = cmd.split(" ")
+            val nameIndex = splits.zipWithIndex
+              .filter {
+                case (item, index) => item == "--name"
+              }
+              .head
+              ._2
+            containerName = splits(nameIndex + 1)
+            util.Collections.singletonList(containerId)
+          }
       },
       new CommandHandler {
         override def belong(cmd: String): Boolean = cmd.contains("docker images")
-        override def execute(cmd: String): util.List[String] = if (messageWhenFailToListImages != null)
-          throw new IllegalArgumentException(messageWhenFailToListImages)
-        else util.Collections.singletonList("hello-world:latest")
+        override def execute(cmd: String): util.List[String] =
+          if (messageWhenFailToListImages != null)
+            throw new IllegalArgumentException(messageWhenFailToListImages)
+          else util.Collections.singletonList("hello-world:latest")
       },
       new CommandHandler {
         override def belong(cmd: String): Boolean = cmd.contains("docker ps -a")
-        override def execute(cmd: String): util.List[String] = if (messageWhenFailToPs != null)
-          throw new IllegalArgumentException(messageWhenFailToPs)
-        // the format used by DockerClientImpl is {{.ID}}\t{{.Names}}\t{{.Image}}
-        else util.Collections.singletonList(s"${CommonUtils.randomString(10)}\t$containerName\tunknown/unknown:unknown")
+        override def execute(cmd: String): util.List[String] =
+          if (messageWhenFailToPs != null)
+            throw new IllegalArgumentException(messageWhenFailToPs)
+          // the format used by DockerClientImpl is {{.ID}}\t{{.Names}}\t{{.Image}}
+          else
+            util.Collections.singletonList(s"${CommonUtils.randomString(10)}\t$containerName\tunknown/unknown:unknown")
       },
       new CommandHandler {
         override def belong(cmd: String): Boolean = cmd.contains("docker rm -f")
-        override def execute(cmd: String): util.List[String] = if (messageWhenFailToRemove != null)
-          throw new IllegalArgumentException(messageWhenFailToRemove)
-        else util.Collections.singletonList(containerId)
+        override def execute(cmd: String): util.List[String] =
+          if (messageWhenFailToRemove != null)
+            throw new IllegalArgumentException(messageWhenFailToRemove)
+          else util.Collections.singletonList(containerId)
       }
     ).asJava
   )

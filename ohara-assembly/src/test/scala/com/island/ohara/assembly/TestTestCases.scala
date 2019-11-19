@@ -25,7 +25,6 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
 class TestTestCases extends OharaTest {
-
   /**
     * those classes don't have to extend correct super class.
     */
@@ -67,7 +66,8 @@ class TestTestCases extends OharaTest {
     if (invalidClasses.nonEmpty)
       throw new IllegalArgumentException(
         s"${invalidClasses.mkString(",")}" +
-          s"don't inherit test interfaces:${validTestGroups.mkString(",")}")
+          s"don't inherit test interfaces:${validTestGroups.mkString(",")}"
+      )
   }
 
   /**
@@ -92,7 +92,8 @@ class TestTestCases extends OharaTest {
     if (invalidClasses.nonEmpty)
       throw new IllegalArgumentException(
         s"those classes:${invalidClasses.map(_.getName).mkString(",")} extend one of ${validTestGroups.mkString(",")} but they are not abstract class, " +
-          "and their name don't start with \"Test\"")
+          "and their name don't start with \"Test\""
+      )
   }
 
   @Test
@@ -127,7 +128,8 @@ class TestTestCases extends OharaTest {
             .filter(_.getParameterCount == 0)
             // it must have either @after or @Test
             .filterNot(m => annotation(m).map(_.annotationType()).exists(requiredAnnotations.contains))
-            .toSet)
+            .toSet
+      )
       .filter(_._2.nonEmpty)
       .toMap
     if (illegalCases.nonEmpty) {
@@ -138,7 +140,8 @@ class TestTestCases extends OharaTest {
         }
         .mkString("|")
       throw new AssertionError(
-        s"Those test cases $sum MUST have @Test annotation. Or please remove the Public declaration from it")
+        s"Those test cases $sum MUST have @Test annotation. Or please remove the Public declaration from it"
+      )
     }
   }
 }

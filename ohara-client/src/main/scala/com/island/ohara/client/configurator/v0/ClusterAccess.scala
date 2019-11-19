@@ -26,15 +26,16 @@ import scala.concurrent.{ExecutionContext, Future}
   * @param prefixPath path to remote resource
   */
 private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <: ClusterUpdating, Res <: ClusterInfo](
-  prefixPath: String)(implicit rm1: RootJsonFormat[Creation], rm2: RootJsonFormat[Updating], rm3: RootJsonFormat[Res])
+  prefixPath: String
+)(implicit rm1: RootJsonFormat[Creation], rm2: RootJsonFormat[Updating], rm3: RootJsonFormat[Res])
     extends Access[Creation, Updating, Res](prefixPath) {
-
   def query: Query[Res]
 
   final def addNode(objectKey: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](urlBuilder.key(objectKey).postfix(nodeName).build())
   final def removeNode(objectKey: ObjectKey, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[Unit] =
+    implicit executionContext: ExecutionContext
+  ): Future[Unit] =
     exec.delete[ErrorApi.Error](urlBuilder.key(objectKey).postfix(nodeName).build())
 
   /**
@@ -70,7 +71,6 @@ private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <
 }
 
 object ClusterAccess {
-
   /**
     * the basic query for cluster APIs.
     * @tparam Res cluster type
@@ -83,9 +83,10 @@ object ClusterAccess {
     def aliveNodes(value: Set[String]): Query.this.type =
       set("aliveNodes", JsArray(value.map(JsString(_)).toVector).toString())
 
-    def setting(key: String, value: JsValue): Query.this.type = set(key, value match {
-      case JsString(s) => s
-      case _           => value.toString
-    })
+    def setting(key: String, value: JsValue): Query.this.type =
+      set(key, value match {
+        case JsString(s) => s
+        case _           => value.toString
+      })
   }
 }

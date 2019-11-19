@@ -32,7 +32,7 @@ class TestClusterNameUpperCaseRoute extends OharaTest {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
     Configurator.builder.fake(numberOfCluster, numberOfCluster, "zk").build()
-  private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val nodeApi      = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
@@ -41,7 +41,8 @@ class TestClusterNameUpperCaseRoute extends OharaTest {
     result(nodeApi.request.hostname("host1").port(22).user("b").password("c").create())
 
     an[DeserializationException] should be thrownBy result(
-      zookeeperApi.request.name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create())
+      zookeeperApi.request.name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create()
+    )
   }
 
   @After

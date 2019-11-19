@@ -31,8 +31,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestHDFSSinkDefinition extends WithBrokerWorker {
-  private[this] val hdfsSink = new HDFSSink
-  private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
+  private[this] val hdfsSink                   = new HDFSSink
+  private[this] val workerClient               = WorkerClient(testUtil().workersConnProps())
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
@@ -104,21 +104,24 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
   @Test
   def testNormal(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
         .connectorValidator()
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .topicKey(topicKey)
-        .settings(Map(
-          HDFS_URL_KEY -> s"file://${testUtil.hdfs.tmpDirectory}",
-          TOPICS_DIR_KEY -> s"file://${testUtil.hdfs.tmpDirectory}",
-          FLUSH_SIZE_KEY -> "10",
-          ROTATE_INTERVAL_MS_KEY -> "4000"
-        ))
+        .settings(
+          Map(
+            HDFS_URL_KEY           -> s"file://${testUtil.hdfs.tmpDirectory}",
+            TOPICS_DIR_KEY         -> s"file://${testUtil.hdfs.tmpDirectory}",
+            FLUSH_SIZE_KEY         -> "10",
+            ROTATE_INTERVAL_MS_KEY -> "4000"
+          )
+        )
         .connectorClass(classOf[HDFSSink])
-        .run())
+        .run()
+    )
 
     response.settings().size should not be 0
     response
@@ -158,5 +161,4 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
       .necessary() shouldBe Necessary.REQUIRED
     response.errorCount() shouldBe 0
   }
-
 }

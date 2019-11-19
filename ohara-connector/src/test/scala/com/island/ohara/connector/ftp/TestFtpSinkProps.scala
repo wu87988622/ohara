@@ -21,16 +21,15 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestFtpSinkProps extends OharaTest {
-
   @Test
   def testGetter(): Unit = {
-    val topicsDir = CommonUtils.randomString()
+    val topicsDir  = CommonUtils.randomString()
     val needHeader = true
-    val encode = CommonUtils.randomString()
-    val hostname = CommonUtils.randomString()
-    val port = 12345
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val encode     = CommonUtils.randomString()
+    val hostname   = CommonUtils.randomString()
+    val port       = 12345
+    val user       = CommonUtils.randomString()
+    val password   = CommonUtils.randomString()
     val props = FtpSinkProps(
       topicsDir = topicsDir,
       needHeader = needHeader,

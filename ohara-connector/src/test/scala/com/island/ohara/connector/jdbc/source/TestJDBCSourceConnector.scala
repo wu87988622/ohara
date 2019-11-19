@@ -41,11 +41,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Test the JDBC Source Connector
   */
 class TestJDBCSourceConnector extends With3Brokers3Workers {
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-  private[this] val tableName = "table1"
+  private[this] val db                  = Database.local()
+  private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
@@ -58,27 +58,34 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
     val statement: Statement = db.connection.createStatement()
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:03.123456', 'a61', 'a62', 6)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:03.123456', 'a61', 'a62', 6)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)"
+    )
     statement.executeUpdate(s"INSERT INTO $tableName(column1) VALUES('2018-09-01 00:00:05')")
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)"
+    )
   }
 
   @Test
   def testJDBCSourceConnector(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
       workerClient
@@ -88,9 +95,9 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props.toMap)
-        .create())
+        .create()
+    )
     try {
-
       val record = pollData(topicKey, 30 seconds, 6)
 
       val row0: Row = record.head.key.get
@@ -174,9 +181,11 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
     }
   }
 
-  private[this] def pollData(topicKey: TopicKey,
-                             timeout: scala.concurrent.duration.Duration,
-                             size: Int): Seq[Record[Row, Array[Byte]]] = {
+  private[this] def pollData(
+    topicKey: TopicKey,
+    timeout: scala.concurrent.duration.Duration,
+    size: Int
+  ): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder()
       .topicName(topicKey.topicNameOnKafka)
@@ -200,9 +209,13 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
   import scala.collection.JavaConverters._
   private[this] val props = JDBCSourceConnectorConfig(
     TaskSetting.of(
-      Map(DB_URL -> db.url,
-          DB_USERNAME -> db.user,
-          DB_PASSWORD -> db.password,
-          DB_TABLENAME -> tableName,
-          TIMESTAMP_COLUMN_NAME -> timestampColumnName).asJava))
+      Map(
+        DB_URL                -> db.url,
+        DB_USERNAME           -> db.user,
+        DB_PASSWORD           -> db.password,
+        DB_TABLENAME          -> tableName,
+        TIMESTAMP_COLUMN_NAME -> timestampColumnName
+      ).asJava
+    )
+  )
 }

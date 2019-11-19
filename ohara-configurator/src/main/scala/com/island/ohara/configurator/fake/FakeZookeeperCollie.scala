@@ -27,34 +27,40 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class FakeZookeeperCollie(node: DataCollie)
     extends FakeCollie[ZookeeperClusterStatus](node)
     with ZookeeperCollie {
-  override def creator: ZookeeperCollie.ClusterCreator = (_, creation) =>
-    if (clusterCache.asScala.exists(_._1.key == creation.key))
-      Future.failed(new IllegalArgumentException(s"zookeeper can't increase nodes at runtime"))
-    else
-      Future.successful(
-        addCluster(
-          new ZookeeperClusterStatus(
-            group = creation.group,
-            name = creation.name,
-            aliveNodes = creation.nodeNames,
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ServiceState.RUNNING.name),
-            error = None
-          ),
-          creation.imageName,
-          creation.ports
-        ))
+  override def creator: ZookeeperCollie.ClusterCreator =
+    (_, creation) =>
+      if (clusterCache.asScala.exists(_._1.key == creation.key))
+        Future.failed(new IllegalArgumentException(s"zookeeper can't increase nodes at runtime"))
+      else
+        Future.successful(
+          addCluster(
+            new ZookeeperClusterStatus(
+              group = creation.group,
+              name = creation.name,
+              aliveNodes = creation.nodeNames,
+              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+              state = Some(ServiceState.RUNNING.name),
+              error = None
+            ),
+            creation.imageName,
+            creation.ports
+          )
+        )
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster")
+    )
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] =
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: NodeApi.Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
     throw new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 
   override protected def dataCollie: DataCollie = node

@@ -31,11 +31,11 @@ import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSet
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 class JsonInTask extends RowSourceTask {
-  private[this] implicit var actorSystem: ActorSystem = _
+  private[this] implicit var actorSystem: ActorSystem             = _
   private[this] implicit var actorMaterializer: ActorMaterializer = _
-  private[this] var httpServer: Http.ServerBinding = _
-  private[this] var blockingQueue: BlockingQueue[JioData] = _
-  private[this] var props: JioProps = _
+  private[this] var httpServer: Http.ServerBinding                = _
+  private[this] var blockingQueue: BlockingQueue[JioData]         = _
+  private[this] var props: JioProps                               = _
 
   private[this] var topics: Seq[String] = Seq.empty
 
@@ -88,5 +88,4 @@ class JsonInTask extends RowSourceTask {
       }
       .toSeq
       .asJava
-
 }

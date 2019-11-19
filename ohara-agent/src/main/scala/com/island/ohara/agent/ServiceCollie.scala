@@ -48,7 +48,6 @@ import scala.util.Try
   * Currently, default implementation is based on ssh and docker command. It is simple but slow.
   */
 abstract class ServiceCollie extends Releasable {
-
   /**
     * create a collie for zookeeper cluster
     * @return zookeeper collie
@@ -79,9 +78,9 @@ abstract class ServiceCollie extends Releasable {
     */
   def clusters()(implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
     for {
-      zkMap <- zookeeperCollie.clusters()
-      bkMap <- brokerCollie.clusters()
-      wkMap <- workerCollie.clusters()
+      zkMap     <- zookeeperCollie.clusters()
+      bkMap     <- brokerCollie.clusters()
+      wkMap     <- workerCollie.clusters()
       streamMap <- streamCollie.clusters()
     } yield zkMap ++ bkMap ++ wkMap ++ streamMap
 
@@ -114,7 +113,6 @@ abstract class ServiceCollie extends Releasable {
     * @return container name or exception
     */
   def configuratorContainerName()(implicit executionContext: ExecutionContext): Future[ContainerName] = {
-
     /**
       * docker id appear in following files.
       * 1) /proc/1/cpuset
@@ -124,20 +122,25 @@ abstract class ServiceCollie extends Releasable {
     val containerId = try {
       import scala.sys.process._
       val output = "cat /proc/1/cpuset".!!
-      val index = output.lastIndexOf("/")
+      val index  = output.lastIndexOf("/")
       if (index >= 0) output.substring(index + 1) else output
     } catch {
       case _: Throwable => CommonUtils.hostname()
     }
-    containerNames().map(names =>
-      names
-      // docker accept a part of id in querying so we "may" get a part of id
-      // Either way, we don't want to miss the container so the "startWith" is our solution to compare the "sub" id
-        .find(cn => cn.id.startsWith(containerId) || containerId.startsWith(cn.id))
-        .getOrElse(throw new NoSuchElementException(
-          s"failed to find out the Configurator:$containerId from hosted nodes:${names.map(_.nodeName).mkString(".")}." +
-            s" Noted: Your Configurator MUST run on docker container and the host node must be added." +
-            s" existent containers:${names.map(n => s"${n.id}/${n.imageName}}").mkString(",")}")))
+    containerNames().map(
+      names =>
+        names
+        // docker accept a part of id in querying so we "may" get a part of id
+        // Either way, we don't want to miss the container so the "startWith" is our solution to compare the "sub" id
+          .find(cn => cn.id.startsWith(containerId) || containerId.startsWith(cn.id))
+          .getOrElse(
+            throw new NoSuchElementException(
+              s"failed to find out the Configurator:$containerId from hosted nodes:${names.map(_.nodeName).mkString(".")}." +
+                s" Noted: Your Configurator MUST run on docker container and the host node must be added." +
+                s" existent containers:${names.map(n => s"${n.id}/${n.imageName}}").mkString(",")}"
+            )
+          )
+    )
   }
 
   /**
@@ -146,10 +149,12 @@ abstract class ServiceCollie extends Releasable {
     * @param executionContext thread pool
     * @return log or NoSuchElementException
     */
-  def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] = logs().map(
-    _.find(_._1.name == name)
-      .map(e => e._1 -> e._2)
-      .getOrElse(throw new NoSuchElementException(s"container:$name is not existed!!!")))
+  def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] =
+    logs().map(
+      _.find(_._1.name == name)
+        .map(e => e._1 -> e._2)
+        .getOrElse(throw new NoSuchElementException(s"container:$name is not existed!!!"))
+    )
 
   /**
     * list all container and log from hosted nodes
@@ -201,11 +206,12 @@ abstract class ServiceCollie extends Releasable {
     val expectedNames = classNames(reflections)
     if (expectedNames.all.isEmpty) FileContent.empty
     else {
-      def seek[T](clz: Class[T]) = reflections
-        .getSubTypesOf(clz)
-        .asScala
-        .filter(clz => expectedNames.all.contains(clz.getName))
-        .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
+      def seek[T](clz: Class[T]) =
+        reflections
+          .getSubTypesOf(clz)
+          .asScala
+          .filter(clz => expectedNames.all.contains(clz.getName))
+          .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
 
       val result = seek(classOf[RowSourceConnector]).flatMap { clz =>
         try Some(clz.getName -> clz.newInstance().settingDefinitions().asScala)
@@ -252,8 +258,8 @@ object ServiceCollie {
   import scala.concurrent.duration._
 
   class SshBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
-    private[this] var dataCollie: DataCollie = _
-    private[this] var cacheTimeout: Duration = 3 seconds
+    private[this] var dataCollie: DataCollie           = _
+    private[this] var cacheTimeout: Duration           = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
 
     def dataCollie(dataCollie: DataCollie): SshBuilder = {
@@ -295,7 +301,7 @@ object ServiceCollie {
 
   class K8shBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
     private[this] var dataCollie: DataCollie = _
-    private[this] var k8sClient: K8SClient = _
+    private[this] var k8sClient: K8SClient   = _
 
     def dataCollie(dataCollie: DataCollie): K8shBuilder = {
       this.dataCollie = Objects.requireNonNull(dataCollie)
@@ -315,6 +321,5 @@ object ServiceCollie {
       dataCollie = Objects.requireNonNull(dataCollie),
       k8sClient = Objects.requireNonNull(k8sClient)
     )
-
   }
 }

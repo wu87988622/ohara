@@ -37,5 +37,5 @@ package object kafka {
 
   val OUTPUT = "simple.row.connector.output"
   val BROKER = "simple.row.connector.broker"
-  val INPUT = "simple.row.connector.input"
+  val INPUT  = "simple.row.connector.input"
 }

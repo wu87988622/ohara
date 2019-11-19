@@ -27,7 +27,6 @@ import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
-
   // We use the hostname field as "spec.hostname" label in k8s, which has a limit length <= 63
   // also see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
   val LIMIT_OF_HOSTNAME_LENGTH: Int = 63
@@ -42,27 +41,30 @@ object NodeApi {
 
   val NODES_PREFIX_PATH: String = "nodes"
 
-  val ZOOKEEPER_SERVICE_NAME: String = "zookeeper"
-  val BROKER_SERVICE_NAME: String = "broker"
-  val WORKER_SERVICE_NAME: String = "connect-worker"
-  val STREAM_SERVICE_NAME: String = "stream"
+  val ZOOKEEPER_SERVICE_NAME: String    = "zookeeper"
+  val BROKER_SERVICE_NAME: String       = "broker"
+  val WORKER_SERVICE_NAME: String       = "connect-worker"
+  val STREAM_SERVICE_NAME: String       = "stream"
   val CONFIGURATOR_SERVICE_NAME: String = "configurator"
 
-  case class Updating(port: Option[Int],
-                      user: Option[String],
-                      password: Option[String],
-                      tags: Option[Map[String, JsValue]])
+  case class Updating(
+    port: Option[Int],
+    user: Option[String],
+    password: Option[String],
+    tags: Option[Map[String, JsValue]]
+  )
   implicit val NODE_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
     JsonRefiner[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().refine
 
-  case class Creation(hostname: String,
-                      port: Option[Int],
-                      user: Option[String],
-                      password: Option[String],
-                      tags: Map[String, JsValue])
-      extends com.island.ohara.client.configurator.v0.BasicCreation {
+  case class Creation(
+    hostname: String,
+    port: Option[Int],
+    user: Option[String],
+    password: Option[String],
+    tags: Map[String, JsValue]
+  ) extends com.island.ohara.client.configurator.v0.BasicCreation {
     override def group: String = GROUP_DEFAULT
-    override def name: String = hostname
+    override def name: String  = hostname
   }
   implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
@@ -86,7 +88,6 @@ object NodeApi {
 
   case class Resource(name: String, value: Double, unit: String, used: Option[Double])
   object Resource {
-
     /**
       * generate a resource based on cores if the number of core is large than 1. Otherwise, the size is in core.
       * @param cores cores
@@ -106,44 +107,46 @@ object NodeApi {
       * @param used used
       * @return memory resource
       */
-    def memory(bytes: Long, used: Option[Double]): Resource = if (bytes < 1024 * 1024)
-      Resource(
-        name = "Memory",
-        value = bytes,
-        unit = "bytes",
-        used = used
-      )
-    else
-      Resource(
-        name = "Memory",
-        value = (bytes / 1024).toDouble / 1024F,
-        unit = "MB",
-        used = used
-      )
+    def memory(bytes: Long, used: Option[Double]): Resource =
+      if (bytes < 1024 * 1024)
+        Resource(
+          name = "Memory",
+          value = bytes,
+          unit = "bytes",
+          used = used
+        )
+      else
+        Resource(
+          name = "Memory",
+          value = (bytes / 1024).toDouble / 1024f,
+          unit = "MB",
+          used = used
+        )
   }
   implicit val RESOURCE_JSON_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource.apply)
 
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
     */
-  case class Node(hostname: String,
-                  port: Option[Int],
-                  user: Option[String],
-                  password: Option[String],
-                  services: Seq[NodeService],
-                  lastModified: Long,
-                  validationReport: Option[ValidationReport],
-                  resources: Seq[Resource],
-                  tags: Map[String, JsValue])
-      extends Data {
+  case class Node(
+    hostname: String,
+    port: Option[Int],
+    user: Option[String],
+    password: Option[String],
+    services: Seq[NodeService],
+    lastModified: Long,
+    validationReport: Option[ValidationReport],
+    resources: Seq[Resource],
+    tags: Map[String, JsValue]
+  ) extends Data {
     // Node does not support to define group
-    override def group: String = GROUP_DEFAULT
+    override def group: String                 = GROUP_DEFAULT
     private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in ssh mode"
-    def _port: Int = port.getOrElse(throw new NoSuchElementException(msg("port")))
-    def _user: String = user.getOrElse(throw new NoSuchElementException(msg("user")))
-    def _password: String = password.getOrElse(throw new NoSuchElementException(msg("password")))
-    override def name: String = hostname
-    override def kind: String = "node"
+    def _port: Int                             = port.getOrElse(throw new NoSuchElementException(msg("port")))
+    def _user: String                          = user.getOrElse(throw new NoSuchElementException(msg("user")))
+    def _password: String                      = password.getOrElse(throw new NoSuchElementException(msg("password")))
+    override def name: String                  = hostname
+    override def kind: String                  = "node"
   }
 
   implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat9(Node)
@@ -198,10 +201,10 @@ object NodeApi {
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, Node](NODES_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] var hostname: String = _
-      private[this] var port: Option[Int] = None
-      private[this] var user: Option[String] = None
-      private[this] var password: Option[String] = None
+      private[this] var hostname: String           = _
+      private[this] var port: Option[Int]          = None
+      private[this] var user: Option[String]       = None
+      private[this] var password: Option[String]   = None
       private[this] var tags: Map[String, JsValue] = _
       override def hostname(hostname: String): Request = {
         this.hostname = CommonUtils.requireNonEmpty(hostname)
@@ -228,23 +231,29 @@ object NodeApi {
       override private[v0] def creation: Creation =
         // auto-complete the creation via our refiner
         NODE_CREATION_JSON_FORMAT.read(
-          NODE_CREATION_JSON_FORMAT.write(Creation(
-            hostname = CommonUtils.requireNonEmpty(hostname),
-            user = user.map(CommonUtils.requireNonEmpty),
-            password = password.map(CommonUtils.requireNonEmpty),
-            port = port.map(CommonUtils.requireConnectionPort),
-            tags = if (tags == null) Map.empty else tags
-          )))
+          NODE_CREATION_JSON_FORMAT.write(
+            Creation(
+              hostname = CommonUtils.requireNonEmpty(hostname),
+              user = user.map(CommonUtils.requireNonEmpty),
+              password = password.map(CommonUtils.requireNonEmpty),
+              port = port.map(CommonUtils.requireConnectionPort),
+              tags = if (tags == null) Map.empty else tags
+            )
+          )
+        )
 
       override private[v0] def updating: Updating =
         // auto-complete the updating via our refiner
         NODE_UPDATING_JSON_FORMAT.read(
-          NODE_UPDATING_JSON_FORMAT.write(Updating(
-            port = port.map(CommonUtils.requireConnectionPort),
-            user = user.map(CommonUtils.requireNonEmpty),
-            password = password.map(CommonUtils.requireNonEmpty),
-            tags = Option(tags)
-          )))
+          NODE_UPDATING_JSON_FORMAT.write(
+            Updating(
+              port = port.map(CommonUtils.requireConnectionPort),
+              user = user.map(CommonUtils.requireNonEmpty),
+              password = password.map(CommonUtils.requireNonEmpty),
+              tags = Option(tags)
+            )
+          )
+        )
 
       override def create()(implicit executionContext: ExecutionContext): Future[Node] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =

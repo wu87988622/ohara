@@ -26,7 +26,6 @@ import org.junit.Test
   * Normally, this class should not fail.
   */
 class ListTestCases extends OharaTest {
-
   /**
     * DON'T change the output message since our QA will parse the output log to find the count of test cases.
     */

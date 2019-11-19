@@ -34,9 +34,9 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class BasicAccess private[v0] (prefixPath: String) {
   protected[v0] val exec: HttpExecutor = HttpExecutor.SINGLETON
   // this access is under "v0" package so this field "version" is a constant string.
-  private[this] val version = V0
+  private[this] val version      = V0
   protected var hostname: String = _
-  protected var port: Int = -1
+  protected var port: Int        = -1
 
   def hostname(hostname: String): BasicAccess.this.type = {
     this.hostname = CommonUtils.requireNonEmpty(hostname)
@@ -56,8 +56,9 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     * Compose the url with hostname, port, version and prefix
     * @return url string
     */
-  protected final def url: String = s"http://${CommonUtils.requireNonEmpty(hostname)}:${CommonUtils
-    .requireConnectionPort(port)}/${CommonUtils.requireNonEmpty(version)}/${CommonUtils.requireNonEmpty(prefixPath)}"
+  protected final def url: String =
+    s"http://${CommonUtils.requireNonEmpty(hostname)}:${CommonUtils
+      .requireConnectionPort(port)}/${CommonUtils.requireNonEmpty(version)}/${CommonUtils.requireNonEmpty(prefixPath)}"
 
   protected def urlBuilder: UrlBuilder = (prefix, key, postfix, params) => {
     var url = BasicAccess.this.url
@@ -82,9 +83,9 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
 
 object BasicAccess {
   trait UrlBuilder extends com.island.ohara.common.pattern.Builder[String] {
-    private[this] var prefix: Option[String] = None
-    private[this] var key: Option[ObjectKey] = None
-    private[this] var postfix: Option[String] = None
+    private[this] var prefix: Option[String]      = None
+    private[this] var key: Option[ObjectKey]      = None
+    private[this] var postfix: Option[String]     = None
     private[this] var params: Map[String, String] = Map.empty
 
     def prefix(prefix: String): UrlBuilder = {
@@ -119,9 +120,11 @@ object BasicAccess {
       params = params
     )
 
-    protected def doBuild(prefix: Option[String],
-                          key: Option[ObjectKey],
-                          postfix: Option[String],
-                          params: Map[String, String]): String
+    protected def doBuild(
+      prefix: Option[String],
+      key: Option[ObjectKey],
+      postfix: Option[String],
+      params: Map[String, String]
+    ): String
   }
 }

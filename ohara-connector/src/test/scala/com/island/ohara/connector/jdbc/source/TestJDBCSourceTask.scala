@@ -37,9 +37,9 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
 class TestJDBCSourceTask extends OharaTest with MockitoSugar {
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-  private[this] val tableName = "TABLE1"
+  private[this] val db                  = Database.local()
+  private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val tableName           = "TABLE1"
   private[this] val timestampColumnName = "COLUMN1"
 
   @Before
@@ -53,25 +53,32 @@ class TestJDBCSourceTask extends OharaTest with MockitoSugar {
     val statement: Statement = db.connection.createStatement()
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)")
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)")
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:03.12', 'a41', 'a42', 4)")
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:03.12', 'a41', 'a42', 4)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:04.123456', 'a51', 'a52', 5)")
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:04.123456', 'a51', 'a52', 5)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)"
+    )
   }
 
   @Test
   def testPoll(): Unit = {
-    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val taskContext: SourceTaskContext = mock[SourceTaskContext]
+    val jdbcSourceTask: JDBCSourceTask           = new JDBCSourceTask()
+    val taskContext: SourceTaskContext           = mock[SourceTaskContext]
     val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
     jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
@@ -133,7 +140,8 @@ class TestJDBCSourceTask extends OharaTest with MockitoSugar {
 
     val statement: Statement = db.connection.createStatement()
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-02 00:00:00.0', 'a81', 'a82', 8)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-02 00:00:00.0', 'a81', 'a82', 8)"
+    )
     jdbcSourceTask.stop()
     val maps: Map[String, Object] = Map("db.table.offset" -> "2018-09-01 00:00:04.123456,0")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
@@ -145,27 +153,29 @@ class TestJDBCSourceTask extends OharaTest with MockitoSugar {
 
   @Test
   def testRowTimestamp(): Unit = {
-    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val schema: Seq[Column] = Seq(Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build())
+    val jdbcSourceTask: JDBCSourceTask         = new JDBCSourceTask()
+    val schema: Seq[Column]                    = Seq(Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build())
     val columnInfo: Seq[ColumnInfo[Timestamp]] = Seq(ColumnInfo("COLUMN1", "timestamp", new Timestamp(0)))
-    val row0: Row = jdbcSourceTask.row(schema, columnInfo)
+    val row0: Row                              = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value.toString shouldBe "1970-01-01 08:00:00.0"
   }
 
   @Test
   def testRowInt(): Unit = {
-    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val schema: Seq[Column] = Seq(Column.builder().name("COLUMN1").dataType(DataType.INT).order(0).build())
+    val jdbcSourceTask: JDBCSourceTask   = new JDBCSourceTask()
+    val schema: Seq[Column]              = Seq(Column.builder().name("COLUMN1").dataType(DataType.INT).order(0).build())
     val columnInfo: Seq[ColumnInfo[Int]] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
-    val row0: Row = jdbcSourceTask.row(schema, columnInfo)
+    val row0: Row                        = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value shouldBe 100
   }
 
   @Test
   def testCellOrder(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val schema: Seq[Column] = Seq(Column.builder().name("c1").dataType(DataType.INT).order(1).build(),
-                                  Column.builder().name("c0").dataType(DataType.INT).order(0).build())
+    val schema: Seq[Column] = Seq(
+      Column.builder().name("c1").dataType(DataType.INT).order(1).build(),
+      Column.builder().name("c0").dataType(DataType.INT).order(0).build()
+    )
     val columnInfo: Seq[ColumnInfo[Int]] =
       Seq(ColumnInfo("c1", "int", new Integer(100)), ColumnInfo("c0", "int", new Integer(50)))
     val cells = jdbcSourceTask.row(schema, columnInfo).cells().asScala
@@ -179,16 +189,17 @@ class TestJDBCSourceTask extends OharaTest with MockitoSugar {
   def testRowNewName(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val schema: Seq[Column] = Seq(
-      Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.INT).order(0).build())
+      Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.INT).order(0).build()
+    )
     val columnInfo: Seq[ColumnInfo[Int]] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
-    val row0: Row = jdbcSourceTask.row(schema, columnInfo)
+    val row0: Row                        = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN100").value shouldBe 100
   }
 
   @Test
   def testPollNewName(): Unit = {
-    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val taskContext: SourceTaskContext = mock[SourceTaskContext]
+    val jdbcSourceTask: JDBCSourceTask           = new JDBCSourceTask()
+    val taskContext: SourceTaskContext           = mock[SourceTaskContext]
     val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
     jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
@@ -242,10 +253,10 @@ class TestJDBCSourceTask extends OharaTest with MockitoSugar {
   @Test
   def testIsRunningQuery(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val frequenceTime = Duration("5 second")
+    val frequenceTime                  = Duration("5 second")
     // Test first call _poll function
     var currentTime: Long = System.currentTimeMillis()
-    var lastTime: Long = -1
+    var lastTime: Long    = -1
     jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe true
 
     // Test second call _poll function

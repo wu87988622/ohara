@@ -34,8 +34,11 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
   override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
     val previous = cachedTopics.get(topicKey.topicNameOnKafka())
     if (previous == null)
-      Future.failed(new NoSuchElementException(
-        s"the topic:${topicKey.topicNameOnKafka()} doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"))
+      Future.failed(
+        new NoSuchElementException(
+          s"the topic:${topicKey.topicNameOnKafka()} doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"
+        )
+      )
     else {
       cachedTopics.put(
         topicKey.topicNameOnKafka(),
@@ -56,21 +59,22 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       cachedTopics.values().asScala.toSeq
     }
 
-  override def creator: TopicAdmin.Creator = (topicKey, numberOfPartitions, numberOfReplications, configs) =>
-    if (cachedTopics.contains(topicKey.topicNameOnKafka()))
-      Future.failed(new IllegalArgumentException(s"${topicKey.topicNameOnKafka()} already exists!"))
-    else {
-      val topicInfo = new KafkaTopicInfo(
-        name = topicKey.topicNameOnKafka(),
-        numberOfPartitions = numberOfPartitions,
-        numberOfReplications = numberOfReplications,
-        partitionInfos = Seq.empty,
-        configs
-      )
-      if (cachedTopics.putIfAbsent(topicKey.topicNameOnKafka(), topicInfo) != null)
-        throw new RuntimeException(s"the ${topicKey.topicNameOnKafka()} already exists in kafka")
-      Future.unit
-  }
+  override def creator: TopicAdmin.Creator =
+    (topicKey, numberOfPartitions, numberOfReplications, configs) =>
+      if (cachedTopics.contains(topicKey.topicNameOnKafka()))
+        Future.failed(new IllegalArgumentException(s"${topicKey.topicNameOnKafka()} already exists!"))
+      else {
+        val topicInfo = new KafkaTopicInfo(
+          name = topicKey.topicNameOnKafka(),
+          numberOfPartitions = numberOfPartitions,
+          numberOfReplications = numberOfReplications,
+          partitionInfos = Seq.empty,
+          configs
+        )
+        if (cachedTopics.putIfAbsent(topicKey.topicNameOnKafka(), topicInfo) != null)
+          throw new RuntimeException(s"the ${topicKey.topicNameOnKafka()} already exists in kafka")
+        Future.unit
+      }
   private[this] var _closed = false
   override def close(): Unit = {
     _closed = true

@@ -49,14 +49,16 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
           portMappings = Seq.empty,
           environments = Map.empty,
           hostname = "host1"
-        ))
+        )
+      )
     }
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
     throw new UnsupportedOperationException("FakeK8SClient not support remove function")
 
   override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerApi.ContainerInfo]] =
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[ContainerApi.ContainerInfo]] =
     throw new UnsupportedOperationException("FakeK8SClient not support remove node function")
 
   override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] =

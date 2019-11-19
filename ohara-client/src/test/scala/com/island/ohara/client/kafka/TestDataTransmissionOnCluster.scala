@@ -28,11 +28,10 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestDataTransmissionOnCluster extends WithBrokerWorker {
-
   private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
-  private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
-  private[this] val schema = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
+  private[this] val row          = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
+  private[this] val schema       = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
   private[this] val numberOfRows = 20
 
   @After
@@ -90,7 +89,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         try result(workerClient.status(connectorKey)).connector.state == State.RUNNING.name
         catch {
           case _: Throwable => false
-      })
+        }
+    )
   }
 
   @Test
@@ -128,14 +128,14 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
 
   @Test
   def testProducer2SinkConnector(): Unit = {
-    val srcKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val srcKey    = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val targetKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test deleted topic
     createTopic(srcKey, false)
     createTopic(targetKey, false)
     testProducer2SinkConnector(srcKey, targetKey)
 
-    val srcKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val srcKey2    = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val targetKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test compacted topic
     createTopic(srcKey2, true)
@@ -157,7 +157,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> targetKey.topicNameOnKafka))
-        .create())
+        .create()
+    )
 
     try {
       checkConnector(connectorKey)
@@ -168,14 +169,14 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
 
   @Test
   def testSourceConnector2Consumer(): Unit = {
-    val srcKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val srcKey    = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val targetKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test deleted topic
     createTopic(srcKey, false)
     createTopic(targetKey, false)
     testSourceConnector2Consumer(srcKey, targetKey)
 
-    val srcKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val srcKey2    = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val targetKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test compacted topic
     createTopic(srcKey2, true)
@@ -197,7 +198,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> srcKey.topicNameOnKafka))
-        .create())
+        .create()
+    )
 
     try {
       checkConnector(connectorKey)
@@ -211,7 +213,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
     */
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
-    val topicName = CommonUtils.randomString(10)
+    val topicName  = CommonUtils.randomString(10)
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try topicAdmin.creator
       .topicKey(TopicKey.of("fake", topicName))
@@ -248,7 +250,6 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
       row.cell(0).name shouldBe "c"
       row.cell(1).name shouldBe "b"
       row.cell(2).name shouldBe "a"
-
     } finally consumer.close()
   }
 
@@ -259,8 +260,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
   @Test
   def testWorkerClient(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-    val outputTopic = CommonUtils.randomString(10)
+    val topicKeys    = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
+    val outputTopic  = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
@@ -270,7 +271,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
-        .create())
+        .create()
+    )
 
     val activeConnectors = result(workerClient.activeConnectors())
     activeConnectors.contains(connectorKey.connectorNameOnKafka()) shouldBe true
@@ -283,7 +285,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         try result(workerClient.status(connectorKey)).tasks.nonEmpty
         catch {
           case _: Throwable => false
-      })
+        }
+    )
     val status = result(workerClient.status(connectorKey))
     status.tasks.head should not be null
 

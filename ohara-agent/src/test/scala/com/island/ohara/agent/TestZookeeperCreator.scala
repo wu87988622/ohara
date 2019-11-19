@@ -27,7 +27,6 @@ import spray.json.DeserializationException
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestZookeeperCreator extends OharaTest {
-
   private[this] def zkCreator(): ZookeeperCollie.ClusterCreator =
     (executionContext, creation) => {
       if (executionContext == null) throw new AssertionError()
@@ -38,7 +37,8 @@ class TestZookeeperCreator extends OharaTest {
           state = None,
           error = None,
           lastModified = 0
-        ))
+        )
+      )
     }
 
   @Test
@@ -87,14 +87,15 @@ class TestZookeeperCreator extends OharaTest {
   }
 
   @Test
-  def testNameLength(): Unit = zkCreator()
-    .name(CommonUtils.randomString(10))
-    .group(CommonUtils.randomString(10))
-    .peerPort(CommonUtils.availablePort())
-    .clientPort(CommonUtils.availablePort())
-    .electionPort(CommonUtils.availablePort())
-    .nodeName(CommonUtils.randomString())
-    .create()
+  def testNameLength(): Unit =
+    zkCreator()
+      .name(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .peerPort(CommonUtils.availablePort())
+      .clientPort(CommonUtils.availablePort())
+      .electionPort(CommonUtils.availablePort())
+      .nodeName(CommonUtils.randomString())
+      .create()
 
   @Test
   def testInvalidName(): Unit =

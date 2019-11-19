@@ -23,7 +23,6 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 class TestJDBCSourceConnectorConfig extends OharaTest {
-
   private[this] def jdbcConfig(settings: Map[String, String]): JDBCSourceConnectorConfig =
     JDBCSourceConnectorConfig(TaskSetting.of(settings.asJava))
 
@@ -31,11 +30,11 @@ class TestJDBCSourceConnectorConfig extends OharaTest {
   def testSettingProperty(): Unit = {
     val map1: Map[String, String] =
       Map(
-        DB_URL -> "jdbc:mysql://localhost/test",
-        DB_USERNAME -> "root",
-        DB_PASSWORD -> "123456",
-        DB_TABLENAME -> "TABLE1",
-        DB_SCHEMA_PATTERN -> "schema1",
+        DB_URL                -> "jdbc:mysql://localhost/test",
+        DB_USERNAME           -> "root",
+        DB_PASSWORD           -> "123456",
+        DB_TABLENAME          -> "TABLE1",
+        DB_SCHEMA_PATTERN     -> "schema1",
         TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
       )
 
@@ -54,12 +53,12 @@ class TestJDBCSourceConnectorConfig extends OharaTest {
   def testFetchDataSize(): Unit = {
     val map1: Map[String, String] =
       Map(
-        DB_URL -> "jdbc:mysql://localhost/test",
-        DB_USERNAME -> "root",
-        DB_PASSWORD -> "123456",
-        DB_TABLENAME -> "TABLE1",
-        DB_SCHEMA_PATTERN -> "schema1",
-        JDBC_FETCHDATA_SIZE -> "500",
+        DB_URL                -> "jdbc:mysql://localhost/test",
+        DB_USERNAME           -> "root",
+        DB_PASSWORD           -> "123456",
+        DB_TABLENAME          -> "TABLE1",
+        DB_SCHEMA_PATTERN     -> "schema1",
+        JDBC_FETCHDATA_SIZE   -> "500",
         TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
       )
 
@@ -71,11 +70,11 @@ class TestJDBCSourceConnectorConfig extends OharaTest {
   def testFrequenceTimeDefault(): Unit = {
     val map1: Map[String, String] =
       Map(
-        DB_URL -> "jdbc:mysql://localhost/test",
-        DB_USERNAME -> "root",
-        DB_PASSWORD -> "123456",
-        DB_TABLENAME -> "TABLE1",
-        DB_SCHEMA_PATTERN -> "schema1",
+        DB_URL                -> "jdbc:mysql://localhost/test",
+        DB_USERNAME           -> "root",
+        DB_PASSWORD           -> "123456",
+        DB_TABLENAME          -> "TABLE1",
+        DB_SCHEMA_PATTERN     -> "schema1",
         TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
       )
     val jdbcSourceConnectorConfig = jdbcConfig(map1)
@@ -86,12 +85,12 @@ class TestJDBCSourceConnectorConfig extends OharaTest {
   def testFrequenceTime(): Unit = {
     val map1: Map[String, String] =
       Map(
-        DB_URL -> "jdbc:mysql://localhost/test",
-        DB_USERNAME -> "root",
-        DB_PASSWORD -> "123456",
-        DB_TABLENAME -> "TABLE1",
-        DB_SCHEMA_PATTERN -> "schema1",
-        JDBC_FREQUENCE_TIME -> "10 second",
+        DB_URL                -> "jdbc:mysql://localhost/test",
+        DB_USERNAME           -> "root",
+        DB_PASSWORD           -> "123456",
+        DB_TABLENAME          -> "TABLE1",
+        DB_SCHEMA_PATTERN     -> "schema1",
+        JDBC_FREQUENCE_TIME   -> "10 second",
         TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
       )
     val jdbcSourceConnectorConfig = jdbcConfig(map1)
@@ -133,13 +132,13 @@ class TestJDBCSourceConnectorConfig extends OharaTest {
     config.toMap.contains(DB_SCHEMA_PATTERN) shouldBe false
 
     val configMap = Map[String, String](
-      DB_URL -> "aa",
-      DB_USERNAME -> "aa",
-      DB_PASSWORD -> "aa",
-      DB_TABLENAME -> "aa",
-      DB_CATALOG_PATTERN -> "aa",
-      DB_SCHEMA_PATTERN -> "aa",
-      MODE -> "aa",
+      DB_URL                -> "aa",
+      DB_USERNAME           -> "aa",
+      DB_PASSWORD           -> "aa",
+      DB_TABLENAME          -> "aa",
+      DB_CATALOG_PATTERN    -> "aa",
+      DB_SCHEMA_PATTERN     -> "aa",
+      MODE                  -> "aa",
       TIMESTAMP_COLUMN_NAME -> "aa"
     )
 
@@ -147,11 +146,11 @@ class TestJDBCSourceConnectorConfig extends OharaTest {
     jdbcConfig(configMap).dbCatalogPattern.isEmpty shouldBe false
 
     val configMap2 = Map[String, String](
-      DB_URL -> "aa",
-      DB_USERNAME -> "aa",
-      DB_PASSWORD -> "aa",
-      DB_TABLENAME -> "aa",
-      MODE -> "aa",
+      DB_URL                -> "aa",
+      DB_USERNAME           -> "aa",
+      DB_PASSWORD           -> "aa",
+      DB_TABLENAME          -> "aa",
+      MODE                  -> "aa",
       TIMESTAMP_COLUMN_NAME -> "aa"
     )
 

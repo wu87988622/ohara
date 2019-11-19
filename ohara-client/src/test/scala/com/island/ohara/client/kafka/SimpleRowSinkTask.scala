@@ -26,7 +26,7 @@ import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting
 import scala.collection.JavaConverters._
 
 class SimpleRowSinkTask extends RowSinkTask {
-  private[this] var outputTopic: String = _
+  private[this] var outputTopic: String                  = _
   private[this] var producer: Producer[Row, Array[Byte]] = _
   override protected def _start(settings: TaskSetting): Unit = {
     outputTopic = settings.stringValue(OUTPUT)

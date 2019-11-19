@@ -26,7 +26,6 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
 
 class TestWorkerApi extends OharaTest {
-
   private[this] final val accessApi =
     WorkerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
 
@@ -74,13 +73,14 @@ class TestWorkerApi extends OharaTest {
       .length should not be 0
 
   @Test
-  def testTags(): Unit = accessApi
-    .nodeName(CommonUtils.randomString(10))
-    .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
-    .brokerClusterKey(ObjectKey.of("g", "n"))
-    .creation
-    .tags
-    .size shouldBe 2
+  def testTags(): Unit =
+    accessApi
+      .nodeName(CommonUtils.randomString(10))
+      .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
+      .brokerClusterKey(ObjectKey.of("g", "n"))
+      .creation
+      .tags
+      .size shouldBe 2
 
   @Test
   def ignoreNodeNamesOnCreation(): Unit =
@@ -153,20 +153,20 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString(5)
-    val group = CommonUtils.randomString(10)
-    val clientPort = CommonUtils.availablePort()
-    val jmxPort = CommonUtils.availablePort()
-    val brokerClusterKey = ObjectKey.of("default", CommonUtils.randomString())
-    val configTopicName = CommonUtils.randomString(10)
+    val name                           = CommonUtils.randomString(5)
+    val group                          = CommonUtils.randomString(10)
+    val clientPort                     = CommonUtils.availablePort()
+    val jmxPort                        = CommonUtils.availablePort()
+    val brokerClusterKey               = ObjectKey.of("default", CommonUtils.randomString())
+    val configTopicName                = CommonUtils.randomString(10)
     val configTopicReplications: Short = 2
-    val offsetTopicName = CommonUtils.randomString(10)
-    val offsetTopicPartitions: Int = 2
+    val offsetTopicName                = CommonUtils.randomString(10)
+    val offsetTopicPartitions: Int     = 2
     val offsetTopicReplications: Short = 2
-    val statusTopicName = CommonUtils.randomString(10)
-    val statusTopicPartitions: Int = 2
+    val statusTopicName                = CommonUtils.randomString(10)
+    val statusTopicPartitions: Int     = 2
     val statusTopicReplications: Short = 2
-    val nodeName = CommonUtils.randomString()
+    val nodeName                       = CommonUtils.randomString()
     val creation = WorkerApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
@@ -226,8 +226,8 @@ class TestWorkerApi extends OharaTest {
     creation.nodeNames.head shouldBe nodeName
     creation.pluginKeys.size shouldBe 0
 
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
+    val group     = CommonUtils.randomString(10)
     val creation2 = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name",
@@ -257,10 +257,10 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def testUpdate(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
-    val clientPort = CommonUtils.availablePort()
-    val nodeName = CommonUtils.randomString()
+    val name             = CommonUtils.randomString(10)
+    val group            = CommonUtils.randomString(10)
+    val clientPort       = CommonUtils.availablePort()
+    val nodeName         = CommonUtils.randomString()
     val brokerClusterKey = ObjectKey.of("g", "n")
 
     val creation = accessApi.name(name).nodeName(nodeName).brokerClusterKey(brokerClusterKey).creation
@@ -736,7 +736,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def stringArrayToPluginKeys(): Unit = {
-    val key = CommonUtils.randomString()
+    val key      = CommonUtils.randomString()
     val updating = WorkerApi.WORKER_UPDATING_JSON_FORMAT.read(s"""
                                                   |  {
                                                   |    "pluginKeys": ["$key"]
@@ -747,7 +747,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def stringArrayToSharedJarKeys(): Unit = {
-    val key = CommonUtils.randomString()
+    val key      = CommonUtils.randomString()
     val updating = WorkerApi.WORKER_UPDATING_JSON_FORMAT.read(s"""
                                                                  |  {
                                                                  |    "sharedJarKeys": ["$key"]
@@ -767,7 +767,8 @@ class TestWorkerApi extends OharaTest {
         state = None,
         error = None,
         lastModified = CommonUtils.current()
-      ))
+      )
+    )
 
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name

@@ -30,8 +30,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestPerfDefinition extends WithBrokerWorker {
-  private[this] val perfSource = new PerfSource
-  private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
+  private[this] val perfSource                 = new PerfSource
+  private[this] val workerClient               = WorkerClient(testUtil().workersConnProps())
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
@@ -66,7 +66,8 @@ class TestPerfDefinition extends WithBrokerWorker {
         .numberOfTasks(1)
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
-        .run())
+        .run()
+    )
 
     response.settings().size should not be 0
     response

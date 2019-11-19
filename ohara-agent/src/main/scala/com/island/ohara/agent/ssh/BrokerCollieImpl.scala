@@ -27,19 +27,21 @@ import scala.concurrent.{ExecutionContext, Future}
 private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl[BrokerClusterStatus](dataCollie, dockerCache, clusterCache)
     with BrokerCollie {
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] =
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: NodeApi.Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
         _.containerCreator()
           .imageName(containerInfo.imageName)
           .portMappings(
-            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
+            containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+          )
           .hostname(containerInfo.hostname)
           .envs(containerInfo.environments)
           .name(containerInfo.name)
@@ -62,8 +64,10 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
     updateRoute(node, container.name, route)
   }
 
-  override protected def postCreate(clusterStatus: BrokerClusterStatus,
-                                    successfulContainers: Seq[ContainerInfo]): Unit =
+  override protected def postCreate(
+    clusterStatus: BrokerClusterStatus,
+    successfulContainers: Seq[ContainerInfo]
+  ): Unit =
     clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
 
   override protected def prefixKey: String = PREFIX_KEY

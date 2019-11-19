@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[SshCollieGroup]))
 class TestListCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
-  private[this] val nameHolder = ClusterNameHolder(nodes)
+  private[this] val nameHolder       = ClusterNameHolder(nodes)
 
   private[this] val dataCollie: DataCollie = DataCollie(nodes)
 
@@ -40,21 +40,26 @@ class TestListCluster extends IntegrationTest {
     ServiceCollie.builderOfSsh.dataCollie(dataCollie).build()
 
   @Before
-  def setup(): Unit = if (nodes.size < 2) skipTest("please buy more servers to run this test")
-  else
-    nodes.foreach { node =>
-      val dockerClient =
-        DockerClient(
-          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
-      try {
-        withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
-      } finally dockerClient.close()
-    }
+  def setup(): Unit =
+    if (nodes.size < 2) skipTest("please buy more servers to run this test")
+    else
+      nodes.foreach { node =>
+        val dockerClient =
+          DockerClient(
+            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+          )
+        try {
+          withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
+            dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true
+          )
+          withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
+            dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true
+          )
+          withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
+            dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true
+          )
+        } finally dockerClient.close()
+      }
 
   @Test
   def deadContainerAndClusterShouldDisappear(): Unit = {

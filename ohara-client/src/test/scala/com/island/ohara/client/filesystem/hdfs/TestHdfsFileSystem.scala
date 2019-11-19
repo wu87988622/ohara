@@ -26,7 +26,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestHdfsFileSystem extends FileSystemTestBase {
-
   private[this] val tempFolder: File = CommonUtils.createTempFolder("local_hdfs")
 
   private[this] val hdfsURL: String = new File(tempFolder.getAbsolutePath).toURI.toString
@@ -49,9 +48,9 @@ class TestHdfsFileSystem extends FileSystemTestBase {
   // override this method because the Local HDFS doesn't support append()
   @Test
   override def testDeleteFileThatHaveBeenRead(): Unit = {
-    val file = randomFile(rootDir)
+    val file              = randomFile(rootDir)
     val data: Seq[String] = Seq("123", "456")
-    val writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(file), StandardCharsets.UTF_8))
+    val writer            = new BufferedWriter(new OutputStreamWriter(fileSystem.create(file), StandardCharsets.UTF_8))
     try data.foreach(line => {
       writer.append(line)
       writer.newLine()

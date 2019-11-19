@@ -25,7 +25,6 @@ import akka.http.scaladsl.server.directives.PathDirectives._
 import akka.http.scaladsl.server.directives.RouteDirectives._
 
 private trait SourceRoute {
-
   implicit def actorSystem: ActorSystem
 
   lazy private val log = Logging(actorSystem, classOf[SourceRoute])
@@ -37,5 +36,4 @@ private trait SourceRoute {
         complete((StatusCodes.OK, "sourceRoute OK"))
       }
     }
-
 }

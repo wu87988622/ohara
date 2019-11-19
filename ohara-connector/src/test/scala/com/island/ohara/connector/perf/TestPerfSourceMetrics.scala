@@ -37,7 +37,7 @@ class TestPerfSourceMetrics extends WithBrokerWorker {
 
   @Test
   def test(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     Await.result(
       workerClient

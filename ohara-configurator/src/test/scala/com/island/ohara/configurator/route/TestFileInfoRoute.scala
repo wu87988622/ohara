@@ -32,7 +32,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestFileInfoRoute extends OharaTest {
-
   private[this] val configurator: Configurator = Configurator.builder.fake().build()
   private[this] val streamApi: StreamApi.Access =
     StreamApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -41,7 +40,7 @@ class TestFileInfoRoute extends OharaTest {
 
   private[this] val file = RouteUtils.streamFile
   private[this] def tmpFile(bytes: Array[Byte]): File = {
-    val f = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
+    val f      = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
     val output = new FileOutputStream(f)
     try output.write(bytes)
     finally output.close()
@@ -54,14 +53,14 @@ class TestFileInfoRoute extends OharaTest {
   def testUpload(): Unit = {
     // upload jar to random group
     val data = CommonUtils.randomString(10).getBytes
-    val f = tmpFile(data)
-    val jar = result(fileApi.request.file(f).upload())
+    val f    = tmpFile(data)
+    val jar  = result(fileApi.request.file(f).upload())
     jar.size shouldBe f.length()
     f.getName.contains(jar.name) shouldBe true
     result(fileApi.list()).size shouldBe 1
 
     // upload jar to specific group
-    val group = CommonUtils.randomString(10)
+    val group        = CommonUtils.randomString(10)
     val jarWithGroup = result(fileApi.request.group(group).file(f).upload())
     jarWithGroup.group shouldBe group
     jarWithGroup.size shouldBe data.size
@@ -75,7 +74,7 @@ class TestFileInfoRoute extends OharaTest {
   @Test
   def testUploadOutOfLimitFile(): Unit = {
     val bytes = new Array[Byte](DEFAULT_FILE_SIZE_BYTES.toInt + 1)
-    val f = tmpFile(bytes)
+    val f     = tmpFile(bytes)
 
     an[IllegalArgumentException] should be thrownBy result(fileApi.request.file(f).upload())
 
@@ -84,8 +83,8 @@ class TestFileInfoRoute extends OharaTest {
 
   @Test
   def testUploadWithNewName(): Unit = {
-    val name = CommonUtils.randomString()
-    val file = tmpFile(CommonUtils.randomString(10).getBytes)
+    val name     = CommonUtils.randomString()
+    val file     = tmpFile(CommonUtils.randomString(10).getBytes)
     val fileInfo = result(fileApi.request.file(file).name(name).upload())
     result(fileApi.list()).size shouldBe 1
     fileInfo.group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
@@ -105,8 +104,8 @@ class TestFileInfoRoute extends OharaTest {
   @Test
   def testDelete(): Unit = {
     val data = CommonUtils.randomString(10).getBytes
-    val f = tmpFile(data)
-    val jar = result(fileApi.request.file(f).upload())
+    val f    = tmpFile(data)
+    val jar  = result(fileApi.request.file(f).upload())
     jar.size shouldBe f.length()
     f.getName.contains(jar.name) shouldBe true
     result(fileApi.list()).size shouldBe 1
@@ -121,7 +120,7 @@ class TestFileInfoRoute extends OharaTest {
   def testDeleteJarUsedByStream(): Unit = {
     val name = CommonUtils.randomString(10)
     // upload jar
-    val jar = result(fileApi.request.file(file).upload())
+    val jar               = result(fileApi.request.file(file).upload())
     val brokerClusterInfo = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
     val fromTopic = result(
       TopicApi.access
@@ -129,14 +128,16 @@ class TestFileInfoRoute extends OharaTest {
         .port(configurator.port)
         .request
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
     val toTopic = result(
       TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
         .brokerClusterKey(brokerClusterInfo.key)
-        .create())
+        .create()
+    )
     // create stream property
     val streamInfo = result(
       streamApi.request
@@ -146,7 +147,8 @@ class TestFileInfoRoute extends OharaTest {
         .toTopicKey(toTopic.key)
         .brokerClusterKey(brokerClusterInfo.key)
         .nodeNames(brokerClusterInfo.nodeNames)
-        .create())
+        .create()
+    )
     // cannot delete a used jar
     intercept[IllegalArgumentException] {
       result(fileApi.delete(jar.key))
@@ -162,12 +164,13 @@ class TestFileInfoRoute extends OharaTest {
 
   @Test
   def duplicateDeleteFile(): Unit =
-    (0 to 10).foreach(_ =>
-      result(fileApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
+    (0 to 10).foreach(
+      _ => result(fileApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
+    )
 
   @Test
   def updateTags(): Unit = {
-    val file = tmpFile(CommonUtils.randomString().getBytes())
+    val file     = tmpFile(CommonUtils.randomString().getBytes())
     val fileInfo = result(fileApi.request.file(file).upload())
     fileInfo.tags shouldBe Map.empty
 
@@ -184,8 +187,8 @@ class TestFileInfoRoute extends OharaTest {
   @Test
   def failToRemoveFileUsedByWorkerCluster(): Unit = {
     val data = CommonUtils.randomString(10).getBytes
-    val f = tmpFile(data)
-    val jar = result(fileApi.request.file(f).upload())
+    val f    = tmpFile(data)
+    val jar  = result(fileApi.request.file(f).upload())
 
     val wk = result(
       WorkerApi.access
@@ -194,10 +197,13 @@ class TestFileInfoRoute extends OharaTest {
         .request
         .pluginKeys(Set(jar.key))
         .nodeNames(
-          result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.nodeNames)
+          result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.nodeNames
+        )
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
 
     an[IllegalArgumentException] should be thrownBy result(fileApi.delete(jar.key))
 
@@ -207,10 +213,10 @@ class TestFileInfoRoute extends OharaTest {
 
   @Test
   def testDownload(): Unit = {
-    val data = CommonUtils.randomString(10).getBytes
-    val f = tmpFile(data)
-    val jar = result(fileApi.request.file(f).upload())
-    val input = jar.url.get.openStream()
+    val data     = CommonUtils.randomString(10).getBytes
+    val f        = tmpFile(data)
+    val jar      = result(fileApi.request.file(f).upload())
+    val input    = jar.url.get.openStream()
     val tempFile = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
     if (tempFile.exists()) tempFile.delete() shouldBe true
     try Files.copy(input, tempFile.toPath)

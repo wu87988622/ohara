@@ -19,22 +19,22 @@ package com.island.ohara.connector.jdbc
 import scala.concurrent.duration.Duration
 
 package object source {
-  val DB_URL: String = "source.db.url"
-  val DB_USERNAME: String = "source.db.username"
-  val DB_PASSWORD: String = "source.db.password"
-  val DB_TABLENAME: String = "source.table.name"
-  val DB_CATALOG_PATTERN: String = "source.schema.catalog"
-  val DB_SCHEMA_PATTERN: String = "source.schema.pattern"
-  val JDBC_FETCHDATA_SIZE: String = "source.jdbc.fetch.size"
-  val JDBC_FLUSHDATA_SIZE: String = "source.jdbc.flush.size"
-  val JDBC_FREQUENCE_TIME: String = "source.jdbc.frequence.time"
-  val MODE: String = "mode"
-  val MODE_DEFAULT = "timestamp"
-  val JDBC_FETCHDATA_SIZE_DEFAULT: Int = 1000
-  val JDBC_FLUSHDATA_SIZE_DEFAULT: Int = 1000
+  val DB_URL: String                        = "source.db.url"
+  val DB_USERNAME: String                   = "source.db.username"
+  val DB_PASSWORD: String                   = "source.db.password"
+  val DB_TABLENAME: String                  = "source.table.name"
+  val DB_CATALOG_PATTERN: String            = "source.schema.catalog"
+  val DB_SCHEMA_PATTERN: String             = "source.schema.pattern"
+  val JDBC_FETCHDATA_SIZE: String           = "source.jdbc.fetch.size"
+  val JDBC_FLUSHDATA_SIZE: String           = "source.jdbc.flush.size"
+  val JDBC_FREQUENCE_TIME: String           = "source.jdbc.frequence.time"
+  val MODE: String                          = "mode"
+  val MODE_DEFAULT                          = "timestamp"
+  val JDBC_FETCHDATA_SIZE_DEFAULT: Int      = 1000
+  val JDBC_FLUSHDATA_SIZE_DEFAULT: Int      = 1000
   val JDBC_FREQUENCE_TIME_DEFAULT: Duration = Duration("0 second")
-  val TIMESTAMP_COLUMN_NAME: String = "source.timestamp.column.name"
-  val ORACLE_DB_NAME = "oracle"
+  val TIMESTAMP_COLUMN_NAME: String         = "source.timestamp.column.name"
+  val ORACLE_DB_NAME                        = "oracle"
 
   def toJavaDuration(d: Duration): java.time.Duration = java.time.Duration.ofMillis(d.toMillis)
   def toScalaDuration(d: java.time.Duration): Duration =

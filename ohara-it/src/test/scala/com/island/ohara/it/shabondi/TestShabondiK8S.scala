@@ -31,14 +31,13 @@ import scala.concurrent.{Await, Future}
 // TODO: https://github.com/oharastream/ohara/issues/1008
 @Ignore
 class TestShabondiK8S extends IntegrationTest with Inside {
-
   private val podLabelName = "shabondi"
-  private val domainName = "default"
-  private val hostname = "shabondi-host"
-  private val podHostname = CommonUtils.randomString()
+  private val domainName   = "default"
+  private val hostname     = "shabondi-host"
+  private val podHostname  = CommonUtils.randomString()
 
   private var k8sClient: K8SClient = _
-  private var nodeName: String = _
+  private var nodeName: String     = _
 
   private def awaitResult[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
@@ -57,9 +56,11 @@ class TestShabondiK8S extends IntegrationTest with Inside {
     val containerInfoOpt = awaitResult {
       containerCreator
         .imageName(ShabondiApi.IMAGE_NAME_DEFAULT)
-        .portMappings(Map(
-          9090 -> 8080
-        ))
+        .portMappings(
+          Map(
+            9090 -> 8080
+          )
+        )
         .nodeName(nodeName)
         .hostname(podHostname)
         .labelName(podLabelName)
@@ -93,6 +94,5 @@ class TestShabondiK8S extends IntegrationTest with Inside {
         c.hostname == podHostname
       }
     })
-
   }
 }

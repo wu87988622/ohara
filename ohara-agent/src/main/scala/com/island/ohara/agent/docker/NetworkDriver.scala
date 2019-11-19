@@ -23,7 +23,6 @@ import com.island.ohara.client.Enum
 sealed abstract class NetworkDriver
 
 object NetworkDriver extends Enum[NetworkDriver] {
-
   /**
     * The default network driver.
     * If you don’t specify a driver, this is the type of network you are creating.

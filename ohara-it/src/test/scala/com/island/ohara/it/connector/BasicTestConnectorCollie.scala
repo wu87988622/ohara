@@ -45,16 +45,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 abstract class BasicTestConnectorCollie extends IntegrationTest {
-  private[this] val log = Logger(classOf[BasicTestConnectorCollie])
+  private[this] val log                    = Logger(classOf[BasicTestConnectorCollie])
   private[this] val JAR_FOLDER_KEY: String = "ohara.it.jar.folder"
-  private[this] val jarFolderPath = sys.env.getOrElse(JAR_FOLDER_KEY, "/jar")
+  private[this] val jarFolderPath          = sys.env.getOrElse(JAR_FOLDER_KEY, "/jar")
 
   protected def nodes: Seq[Node]
 
   protected def nameHolder: ClusterNameHolder
 
   private[this] val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-  private[this] val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+  private[this] val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
   protected def tableName(): String
   protected def columnPrefixName(): String
@@ -94,7 +94,8 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodes.foreach { node =>
       result(
-        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
+      )
     }
     uploadJDBCJarToConfigurator() //For upload JDBC jar
 
@@ -123,7 +124,6 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
 
   @Test
   def testJDBCSourceConnector(): Unit = {
-
     val zkCluster = result(
       zk_create(
         clusterKey = nameHolder.generateClusterKey(),
@@ -131,7 +131,8 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
         nodeNames = Set(nodes.head.name)
-      ))
+      )
+    )
     result(zk_start(zkCluster.key))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
     val bkCluster = result(
@@ -141,14 +142,15 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
         nodeNames = Set(nodes.head.name)
-      ))
+      )
+    )
     result(bk_start(bkCluster.key))
     assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
     log.info("[WORKER] start to test worker")
     val nodeName = nodes.head.name
     log.info("[WORKER] verify:nonExists done")
     val clientPort = CommonUtils.availablePort()
-    val jmxPort = CommonUtils.availablePort()
+    val jmxPort    = CommonUtils.availablePort()
     log.info("[WORKER] create ...")
     val wkCluster = result(
       wk_create(
@@ -157,7 +159,8 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
         jmxPort = jmxPort,
         brokerClusterKey = bkCluster.key,
         nodeNames = Set(nodeName)
-      ))
+      )
+    )
     log.info("[WORKER] create done")
     result(wk_start(wkCluster.key))
     log.info("[WORKER] start done")
@@ -193,7 +196,8 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props().toMap)
-        .create())
+        .create()
+    )
 
   private[this] def checkTopicData(brokers: String, topicNameOnKafka: String): Unit = {
     val consumer =
@@ -218,7 +222,6 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
       record.last.key.get.cell(1).value shouldBe "a100"
       record.last.key.get.cell(2).value shouldBe 100
       new String(record.last.key.get.cell(3).value.asInstanceOf[Array[Byte]]) shouldBe "binary-value100"
-
     } finally {
       consumer.close()
     }
@@ -226,7 +229,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
 
   private[this] def uploadJDBCJarToConfigurator(): Unit = {
     val jarApi: FileInfoApi.Access = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
-    val jar = new File(CommonUtils.path(jarFolderPath, jdbcDriverJarFileName()))
+    val jar                        = new File(CommonUtils.path(jarFolderPath, jdbcDriverJarFileName()))
     jdbcJarFileInfo = result(jarApi.request.file(jar).upload())
   }
 
@@ -238,11 +241,13 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
 
   private[this] def zk_start(clusterKey: ObjectKey): Future[Unit] = zkApi.start(clusterKey)
 
-  private[this] def zk_create(clusterKey: ObjectKey,
-                              clientPort: Int,
-                              electionPort: Int,
-                              peerPort: Int,
-                              nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
+  private[this] def zk_create(
+    clusterKey: ObjectKey,
+    clientPort: Int,
+    electionPort: Int,
+    peerPort: Int,
+    nodeNames: Set[String]
+  ): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkApi.request
       .key(clusterKey)
       .clientPort(clientPort)
@@ -258,11 +263,13 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
   private[this] def bk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterKey).map(_.flatMap(_.containers))
 
-  private[this] def bk_create(clusterKey: ObjectKey,
-                              clientPort: Int,
-                              jmxPort: Int,
-                              zookeeperClusterKey: ObjectKey,
-                              nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
+  private[this] def bk_create(
+    clusterKey: ObjectKey,
+    clientPort: Int,
+    jmxPort: Int,
+    zookeeperClusterKey: ObjectKey,
+    nodeNames: Set[String]
+  ): Future[BrokerApi.BrokerClusterInfo] =
     bkApi.request
       .key(clusterKey)
       .clientPort(clientPort)
@@ -285,11 +292,13 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
 
   private[this] def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
 
-  private[this] def wk_create(clusterKey: ObjectKey,
-                              clientPort: Int,
-                              jmxPort: Int,
-                              brokerClusterKey: ObjectKey,
-                              nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
+  private[this] def wk_create(
+    clusterKey: ObjectKey,
+    clientPort: Int,
+    jmxPort: Int,
+    brokerClusterKey: ObjectKey,
+    nodeNames: Set[String]
+  ): Future[WorkerApi.WorkerClusterInfo] =
     wkApi.request
       .key(clusterKey)
       .clientPort(clientPort)
@@ -317,19 +326,22 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)
             false
-      }
+        }
     )
 
   private[this] def props(): JDBCSourceConnectorConfig =
     JDBCSourceConnectorConfig(
-      TaskSetting.of(Map(
-        "source.db.url" -> dbUrl().get,
-        "source.db.username" -> dbUserName().get,
-        "source.db.password" -> dbPassword().get,
-        "source.table.name" -> tableName,
-        "source.timestamp.column.name" -> timestampColumn,
-        "source.schema.pattern" -> "TUSER"
-      ).asJava))
+      TaskSetting.of(
+        Map(
+          "source.db.url"                -> dbUrl().get,
+          "source.db.username"           -> dbUserName().get,
+          "source.db.password"           -> dbPassword().get,
+          "source.table.name"            -> tableName,
+          "source.timestamp.column.name" -> timestampColumn,
+          "source.schema.pattern"        -> "TUSER"
+        ).asJava
+      )
+    )
 
   @After
   def afterTest(): Unit = {

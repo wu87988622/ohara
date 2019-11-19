@@ -28,10 +28,10 @@ import scala.collection.JavaConverters._
   * It is not placed at test scope since we need jar when tests manually.
   */
 class DumbSourceConnector extends RowSourceConnector {
-  private[this] var settings: TaskSetting = _
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[DumbSourceTask]
+  private[this] var settings: TaskSetting                                     = _
+  override protected def _taskClass(): Class[_ <: RowSourceTask]              = classOf[DumbSourceTask]
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
-  override protected def _start(settings: TaskSetting): Unit = this.settings = settings
-  override protected def _stop(): Unit = {}
-  override protected def _definitions(): util.List[SettingDef] = DUMB_SETTING_DEFINITIONS.asJava
+  override protected def _start(settings: TaskSetting): Unit                  = this.settings = settings
+  override protected def _stop(): Unit                                        = {}
+  override protected def _definitions(): util.List[SettingDef]                = DUMB_SETTING_DEFINITIONS.asJava
 }

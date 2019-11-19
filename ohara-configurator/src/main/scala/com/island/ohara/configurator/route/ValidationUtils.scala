@@ -39,48 +39,55 @@ object ValidationUtils {
   private[this] val TIMEOUT = 30 seconds
 
   def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbValidation, taskCount: Int)(
-    implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]] = run(
-    workerClient,
-    topicAdmin,
-    ValidationApi.VALIDATION_RDB_PREFIX_PATH,
-    ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
-    taskCount
-  ).map {
-    _.flatMap {
-      case r: RdbValidationReport => Some(r)
-      case r: ValidationReport =>
-        Some(
-          RdbValidationReport(
-            hostname = r.hostname,
-            message = r.message,
-            pass = r.pass,
-            rdbInfo = None
-          ))
-      case _ => None
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[RdbValidationReport]] =
+    run(
+      workerClient,
+      topicAdmin,
+      ValidationApi.VALIDATION_RDB_PREFIX_PATH,
+      ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
+      taskCount
+    ).map {
+      _.flatMap {
+        case r: RdbValidationReport => Some(r)
+        case r: ValidationReport =>
+          Some(
+            RdbValidationReport(
+              hostname = r.hostname,
+              message = r.message,
+              pass = r.pass,
+              rdbInfo = None
+            )
+          )
+        case _ => None
+      }
     }
-  }
 
   def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: HdfsValidation, taskCount: Int)(
-    implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
-    workerClient,
-    topicAdmin,
-    ValidationApi.VALIDATION_HDFS_PREFIX_PATH,
-    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
-    taskCount
-  ).map {
-    _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
-  }
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[ValidationReport]] =
+    run(
+      workerClient,
+      topicAdmin,
+      ValidationApi.VALIDATION_HDFS_PREFIX_PATH,
+      ValidationApi.HDFS_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
+      taskCount
+    ).map {
+      _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
+    }
 
   def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: FtpValidation, taskCount: Int)(
-    implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
-    workerClient,
-    topicAdmin,
-    ValidationApi.VALIDATION_FTP_PREFIX_PATH,
-    ValidationApi.FTP_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
-    taskCount
-  ).map {
-    _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
-  }
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[ValidationReport]] =
+    run(
+      workerClient,
+      topicAdmin,
+      ValidationApi.VALIDATION_FTP_PREFIX_PATH,
+      ValidationApi.FTP_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields,
+      taskCount
+    ).map {
+      _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
+    }
 
   /**
     * a helper method to run the validation process quickly.
@@ -91,30 +98,34 @@ object ValidationUtils {
     * @param taskCount the number from task. It implies how many worker nodes should be verified
     * @return reports
     */
-  private[this] def run(workerClient: WorkerClient,
-                        topicAdmin: TopicAdmin,
-                        target: String,
-                        settings: Map[String, JsValue],
-                        taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Any]] = {
+  private[this] def run(
+    workerClient: WorkerClient,
+    topicAdmin: TopicAdmin,
+    target: String,
+    settings: Map[String, JsValue],
+    taskCount: Int
+  )(implicit executionContext: ExecutionContext): Future[Seq[Any]] = {
     val requestId: String = CommonUtils.randomString()
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
+    val connectorKey      = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
     workerClient
       .connectorCreator()
       .connectorKey(connectorKey)
       .className("com.island.ohara.connector.validation.Validator")
       .numberOfTasks(taskCount)
       .topicKey(ValidationApi.INTERNAL_TOPIC_KEY)
-      .settings(Map(
-        ValidationApi.SETTINGS_KEY -> JsObject(settings.filter {
-          case (_, value) =>
-            value match {
-              case JsNull => false
-              case _      => true
-            }
-        }).toString(),
-        ValidationApi.REQUEST_ID -> requestId,
-        ValidationApi.TARGET_KEY -> target
-      ))
+      .settings(
+        Map(
+          ValidationApi.SETTINGS_KEY -> JsObject(settings.filter {
+            case (_, value) =>
+              value match {
+                case JsNull => false
+                case _      => true
+              }
+          }).toString(),
+          ValidationApi.REQUEST_ID -> requestId,
+          ValidationApi.TARGET_KEY -> target
+        )
+      )
       .threadPool(executionContext)
       .create()
       .map { _ =>

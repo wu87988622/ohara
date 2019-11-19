@@ -24,10 +24,10 @@ import scala.collection.JavaConverters._
 
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _
-  private[this] var topics: Seq[String] = _
+  private[this] var topics: Seq[String]    = _
   @VisibleForTesting
   private[perf] var schema: Seq[Column] = _
-  private[this] var lastPoll: Long = -1
+  private[this] var lastPoll: Long      = -1
   @VisibleForTesting
   override protected def _start(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)

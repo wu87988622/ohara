@@ -31,7 +31,6 @@ import spray.json.{JsArray, JsString, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorApi extends OharaTest {
-
   @Test
   def nullKeyInGet(): Unit =
     an[NullPointerException] should be thrownBy ConnectorApi.access.get(null)
@@ -43,12 +42,12 @@ class TestConnectorApi extends OharaTest {
   @Test
   def testParseCreation(): Unit = {
     val workerClusterName = CommonUtils.randomString()
-    val className = CommonUtils.randomString()
-    val topicKeys = Set(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-    val numberOfTasks = 10
-    val tags = Map("a" -> JsString("b"), "b" -> JsNumber(1))
-    val anotherKey = CommonUtils.randomString()
-    val anotherValue = CommonUtils.randomString()
+    val className         = CommonUtils.randomString()
+    val topicKeys         = Set(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
+    val numberOfTasks     = 10
+    val tags              = Map("a" -> JsString("b"), "b" -> JsNumber(1))
+    val anotherKey        = CommonUtils.randomString()
+    val anotherValue      = CommonUtils.randomString()
 
     val creation = CONNECTOR_CREATION_FORMAT.read(s"""
        |{
@@ -76,7 +75,7 @@ class TestConnectorApi extends OharaTest {
     CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)).settings shouldBe creation.settings
 
     val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
+    val name  = CommonUtils.randomString()
     val column = Column
       .builder()
       .name(CommonUtils.randomString())
@@ -121,8 +120,9 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def testStateJson(): Unit = {
-    State.all.foreach(state =>
-      ConnectorApi.CONNECTOR_STATE_FORMAT.read(ConnectorApi.CONNECTOR_STATE_FORMAT.write(state)) shouldBe state)
+    State.all.foreach(
+      state => ConnectorApi.CONNECTOR_STATE_FORMAT.read(ConnectorApi.CONNECTOR_STATE_FORMAT.write(state)) shouldBe state
+    )
   }
 
   @Test
@@ -130,8 +130,8 @@ class TestConnectorApi extends OharaTest {
     val response = ConnectorInfo(
       settings = Map(
         CommonUtils.randomString() -> JsString(CommonUtils.randomString()),
-        GROUP_KEY -> JsString(CommonUtils.randomString()),
-        NAME_KEY -> JsString(CommonUtils.randomString())
+        GROUP_KEY                  -> JsString(CommonUtils.randomString()),
+        NAME_KEY                   -> JsString(CommonUtils.randomString())
       ),
       status = None,
       tasksStatus = Seq.empty,
@@ -168,7 +168,7 @@ class TestConnectorApi extends OharaTest {
   @Test
   def parsePreviousKeyOfClassNameFromConnectorDescription(): Unit = {
     import spray.json._
-    val className = CommonUtils.randomString()
+    val className            = CommonUtils.randomString()
     val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.read(s"""
       |  {
       |    "id": "asdasdsad",
@@ -210,7 +210,7 @@ class TestConnectorApi extends OharaTest {
       |    ]
       |  }
       | """.stripMargin.parseJson)
-    val column = PropGroup.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
+    val column          = PropGroup.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
     column.order() shouldBe 1
     column.name() shouldBe "abc"
     column.newName() shouldBe "ccc"
@@ -218,34 +218,37 @@ class TestConnectorApi extends OharaTest {
   }
 
   @Test
-  def ignoreClassNameOnCreation(): Unit = intercept[DeserializationException] {
+  def ignoreClassNameOnCreation(): Unit =
+    intercept[DeserializationException] {
+      ConnectorApi.access
+        .hostname(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .request
+        .workerClusterKey(ObjectKey.of("default", "name"))
+        .topicKey(TopicKey.of("g", "n"))
+        .creation
+    }.getMessage should include(CONNECTOR_CLASS_KEY)
+
+  @Test
+  def ignoreNameOnCreation(): Unit =
     ConnectorApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
       .request
+      .className(CommonUtils.randomString())
       .workerClusterKey(ObjectKey.of("default", "name"))
       .topicKey(TopicKey.of("g", "n"))
       .creation
-  }.getMessage should include(CONNECTOR_CLASS_KEY)
+      .name
+      .length should not be 0
 
   @Test
-  def ignoreNameOnCreation(): Unit = ConnectorApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .className(CommonUtils.randomString())
-    .workerClusterKey(ObjectKey.of("default", "name"))
-    .topicKey(TopicKey.of("g", "n"))
-    .creation
-    .name
-    .length should not be 0
-
-  @Test
-  def ignoreNameOnUpdate(): Unit = an[NoSuchElementException] should be thrownBy ConnectorApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .update()
+  def ignoreNameOnUpdate(): Unit =
+    an[NoSuchElementException] should be thrownBy ConnectorApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .update()
 
   @Test
   def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.group("")
@@ -293,13 +296,13 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
     val className = CommonUtils.randomString(10)
     val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
     val map = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
-      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10))
     )
     val creation =
       ConnectorApi.access.request
@@ -338,10 +341,10 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def parseColumn(): Unit = {
-    val name = CommonUtils.randomString()
-    val newName = CommonUtils.randomString()
+    val name     = CommonUtils.randomString()
+    val newName  = CommonUtils.randomString()
     val dataType = DataType.BOOLEAN
-    val order = 1
+    val order    = 1
     val creation = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                             |  {
                                             |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -404,7 +407,8 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def emptyNameForCreatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(
+      s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                    |      "group": "g",
@@ -419,11 +423,13 @@ class TestConnectorApi extends OharaTest {
                                                                                                    |      }
                                                                                                    |    ]
                                                                                                    |  }
-                                                                                                        |""".stripMargin.parseJson)
+                                                                                                        |""".stripMargin.parseJson
+    )
 
   @Test
   def emptyNewNameForCreatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(
+      s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                    |      "group": "g",
@@ -439,7 +445,8 @@ class TestConnectorApi extends OharaTest {
                                                                                                    |      }
                                                                                                    |    ]
                                                                                                    |  }
-                                                                                                        |""".stripMargin.parseJson)
+                                                                                                        |""".stripMargin.parseJson
+    )
 
   @Test
   def negativeOrderForCreatingColumn(): Unit =
@@ -463,7 +470,8 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def duplicateOrderForCreatingColumns(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(
+      s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                    |      "group": "g",
@@ -485,11 +493,13 @@ class TestConnectorApi extends OharaTest {
                                                                                                    |      }
                                                                                                    |    ]
                                                                                                    |  }
-                                                                                                   |""".stripMargin.parseJson)
+                                                                                                   |""".stripMargin.parseJson
+    )
 
   @Test
   def emptyNameForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+      s"""
                                                                                                         |  {
                                                                                                         |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                         |      "group": "g",
@@ -504,11 +514,13 @@ class TestConnectorApi extends OharaTest {
                                                                                                         |       }
                                                                                                         |    ]
                                                                                                         |  }
-                                                                                                        |""".stripMargin.parseJson)
+                                                                                                        |""".stripMargin.parseJson
+    )
 
   @Test
   def emptyNewNameForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+      s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                    |      "group": "g",
@@ -524,11 +536,13 @@ class TestConnectorApi extends OharaTest {
                                                                                                    |      }
                                                                                                    |    ]
                                                                                                    |  }
-                                                                                                   |""".stripMargin.parseJson)
+                                                                                                   |""".stripMargin.parseJson
+    )
 
   @Test
   def negativeOrderForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+      s"""
                                                                                                  |  {
                                                                                                  |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                  |      "group": "g",
@@ -544,11 +558,13 @@ class TestConnectorApi extends OharaTest {
                                                                                                  |      }
                                                                                                  |    ]
                                                                                                  |  }
-                                                                                                 |""".stripMargin.parseJson)
+                                                                                                 |""".stripMargin.parseJson
+    )
 
   @Test
   def duplicateOrderForUpdatingColumns(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+      s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                                                    |      "group": "g",
@@ -570,7 +586,8 @@ class TestConnectorApi extends OharaTest {
                                                                                                    |      }
                                                                                                    |    ]
                                                                                                    |  }
-                                                                                                   |""".stripMargin.parseJson)
+                                                                                                   |""".stripMargin.parseJson
+    )
 
   @Test
   def nullTags(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.tags(null)
@@ -639,25 +656,27 @@ class TestConnectorApi extends OharaTest {
        |     """.stripMargin.parseJson).numberOfTasks shouldBe ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.defaultInt
 
   @Test
-  def testCustomGroup(): Unit = ConnectorApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .group("abc")
-    .className(CommonUtils.randomString())
-    .workerClusterKey(ObjectKey.of("g", "n"))
-    .topicKey(TopicKey.of("g", "n"))
-    .creation
-    .group shouldBe "abc"
+  def testCustomGroup(): Unit =
+    ConnectorApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .group("abc")
+      .className(CommonUtils.randomString())
+      .workerClusterKey(ObjectKey.of("g", "n"))
+      .topicKey(TopicKey.of("g", "n"))
+      .creation
+      .group shouldBe "abc"
 
   @Test
-  def testDefaultGroup(): Unit = ConnectorApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .className(CommonUtils.randomString())
-    .workerClusterKey(ObjectKey.of("g", "n"))
-    .topicKey(TopicKey.of("g", "n"))
-    .creation
-    .group shouldBe GROUP_DEFAULT
+  def testDefaultGroup(): Unit =
+    ConnectorApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .className(CommonUtils.randomString())
+      .workerClusterKey(ObjectKey.of("g", "n"))
+      .topicKey(TopicKey.of("g", "n"))
+      .creation
+      .group shouldBe GROUP_DEFAULT
 }

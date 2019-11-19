@@ -27,12 +27,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestInspectWorkerCluster extends WithBrokerWorker {
-
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
   private[this] def inspectApi = InspectApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)

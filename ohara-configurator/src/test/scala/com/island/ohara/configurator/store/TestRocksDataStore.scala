@@ -123,7 +123,8 @@ class TestRocksDataStore extends OharaTest {
   @Test
   def testUpdate(): Unit = {
     an[NoSuchElementException] should be thrownBy result(
-      store.addIfPresent[SimpleData](ObjectKey.of(random(), random()), (_: SimpleData) => createData()))
+      store.addIfPresent[SimpleData](ObjectKey.of(random(), random()), (_: SimpleData) => createData())
+    )
     val value0 = createData()
     val value1 = value0.copy(kind = CommonUtils.randomString())
     result(store.addIfAbsent(value0)) shouldBe value0
@@ -226,7 +227,8 @@ class TestRocksDataStore extends OharaTest {
     an[RuntimeException] should be thrownBy result(store2.add[SimpleData](createData()))
     an[RuntimeException] should be thrownBy result(store2.exist[SimpleData](ObjectKey.of(random(), random())))
     an[RuntimeException] should be thrownBy result(
-      store2.addIfPresent[SimpleData](ObjectKey.of(random(), random()), (_: SimpleData) => createData()))
+      store2.addIfPresent[SimpleData](ObjectKey.of(random(), random()), (_: SimpleData) => createData())
+    )
     an[RuntimeException] should be thrownBy result(store2.raws(ObjectKey.of(random(), random())))
     an[RuntimeException] should be thrownBy result(store2.raws())
     an[RuntimeException] should be thrownBy result(store2.value[SimpleData](ObjectKey.of(random(), random())))
@@ -239,7 +241,8 @@ class TestRocksDataStore extends OharaTest {
     val data = createData()
     store.add(data)
     an[IllegalArgumentException] should be thrownBy result(
-      store.addIfPresent(data.key, (_: SimpleData) => createData()))
+      store.addIfPresent(data.key, (_: SimpleData) => createData())
+    )
   }
 
   private[this] def random(): String = CommonUtils.randomString(5)

@@ -28,7 +28,6 @@ import org.apache.sshd.client.SshClient
   * represent a remote node. Default implementation is based on ssh.
   */
 trait Agent extends Releasable {
-
   /**
     * @return the hostname of remote node
     */
@@ -47,15 +46,14 @@ trait Agent extends Releasable {
   * the default implementation is based on ssh
   */
 object Agent {
-
   def builder: Builder = new Builder()
 
   class Builder private[agent] extends com.island.ohara.common.pattern.Builder[Agent] {
     private[this] var hostname: String = _
-    private[this] var port: Int = 22
-    private[this] var user: String = _
+    private[this] var port: Int        = 22
+    private[this] var user: String     = _
     private[this] var password: String = _
-    private[this] var charset = StandardCharsets.US_ASCII
+    private[this] var charset          = StandardCharsets.US_ASCII
 
     /**
       * set remote hostname
@@ -108,12 +106,12 @@ object Agent {
     }
 
     override def build: Agent = new Agent {
-      val hostname: String = CommonUtils.requireNonEmpty(Builder.this.hostname)
-      private[this] val port: Int = CommonUtils.requireConnectionPort(Builder.this.port)
-      private[this] val user: String = CommonUtils.requireNonEmpty(Builder.this.user)
+      val hostname: String               = CommonUtils.requireNonEmpty(Builder.this.hostname)
+      private[this] val port: Int        = CommonUtils.requireConnectionPort(Builder.this.port)
+      private[this] val user: String     = CommonUtils.requireNonEmpty(Builder.this.user)
       private[this] val password: String = CommonUtils.requireNonEmpty(Builder.this.password)
       private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
-      private[this] val client = SshClient.setUpDefaultSimpleClient()
+      private[this] val client           = SshClient.setUpDefaultSimpleClient()
       override def execute(command: String): Option[String] = {
         // The default timeout for sshClient is Long.MAX_VALUE (see SimpleClientConfigurator.java in apache.sshd.client)
         // Should we set a smaller timeout for session ?...by Sam
@@ -123,9 +121,10 @@ object Agent {
           try {
             val stdError = new ByteArrayOutputStream
             try {
-              def response(): Option[String] = if (stdOut.size() != 0) Some(new String(stdOut.toByteArray, charset))
-              else if (stdError.size() != 0) Some(new String(stdError.toByteArray, charset))
-              else None
+              def response(): Option[String] =
+                if (stdOut.size() != 0) Some(new String(stdOut.toByteArray, charset))
+                else if (stdError.size() != 0) Some(new String(stdError.toByteArray, charset))
+                else None
               try {
                 session.executeRemoteCommand(command, stdOut, stdError, charset)
                 response()

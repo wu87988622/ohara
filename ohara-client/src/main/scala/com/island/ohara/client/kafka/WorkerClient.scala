@@ -49,7 +49,6 @@ import scala.util.Random
   * ensues from response.
   */
 trait WorkerClient {
-
   /**
     * start a process to create source/sink connector
     * @return connector creator
@@ -67,8 +66,8 @@ trait WorkerClient {
     * @param connectorKey connector's key
     * @return async future containing nothing
     */
-  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = delete(
-    connectorKey.connectorNameOnKafka())
+  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+    delete(connectorKey.connectorNameOnKafka())
 
   /**
     * delete a connector from worker cluster. Make sure you do know the real name!
@@ -115,7 +114,8 @@ trait WorkerClient {
     */
   def connectorDefinition(className: String)(implicit executionContext: ExecutionContext): Future[ClassInfo] =
     connectorDefinitions().map(
-      _.find(_.className == className).getOrElse(throw new NoSuchElementException(s"$className does not exist")))
+      _.find(_.className == className).getOrElse(throw new NoSuchElementException(s"$className does not exist"))
+    )
 
   /**
     * list available plugin's names
@@ -146,7 +146,8 @@ trait WorkerClient {
     * @return task status
     */
   def taskStatus(connectorKey: ConnectorKey, id: Int)(
-    implicit executionContext: ExecutionContext): Future[KafkaTaskStatus]
+    implicit executionContext: ExecutionContext
+  ): Future[KafkaTaskStatus]
 
   /**
     * Check whether a connector name is used in creating connector (even if the connector fails to start, this method
@@ -174,11 +175,9 @@ trait WorkerClient {
       .topicKey(TopicKey.of("fake_group", "fake_name"))
       .run()
       .map(_.settings().asScala.map(_.definition()))
-
 }
 
 object WorkerClient {
-
   /**
     * THIS METHOD SHOULD BE USED BY TESTING ONLY.
     * Worker cluster key is a required config to ohara connectors. However, there are many tests against "connectors"
@@ -203,15 +202,14 @@ object WorkerClient {
   private[this] val LOG = Logger(WorkerClient.getClass)
 
   class Builder private[WorkerClient] extends com.island.ohara.common.pattern.Builder[WorkerClient] {
-
     /**
       * set the fake key to following operations. This is workaround to avoid we encounter the error of lacking
       * worker key in communicating with kafka connectors.
       */
     private[this] var workerClusterKey: ObjectKey = ObjectKey.of("fake", "fake")
-    private[this] var connectionProps: String = _
-    private[this] var retryLimit: Int = 3
-    private[this] var retryInternal: Duration = 3 seconds
+    private[this] var connectionProps: String     = _
+    private[this] var retryLimit: Int             = 3
+    private[this] var retryInternal: Duration     = 3 seconds
 
     def workerClusterKey(workerClusterKey: ObjectKey): Builder = {
       this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
@@ -261,7 +259,8 @@ object WorkerClient {
         * @return response
         */
       private[this] def retry[T](exec: () => Future[T], msg: String, retryCount: Int = 0)(
-        implicit executionContext: ExecutionContext): Future[T] =
+        implicit executionContext: ExecutionContext
+      ): Future[T] =
         exec().recoverWith {
           case e @ (_: HttpRetryException | _: StreamTcpException) =>
             LOG.info(s"$msg $retryCount/$retryLimit", e)
@@ -278,27 +277,33 @@ object WorkerClient {
       private[this] def format = ConnectorFormatter.of().workerClusterKey(Objects.requireNonNull(workerClusterKey))
 
       override def connectorCreator(): Creator = new Creator(format) {
-        override protected def doCreate(executionContext: ExecutionContext,
-                                        creation: Creation): Future[KafkaConnectorCreationResponse] = {
+        override protected def doCreate(
+          executionContext: ExecutionContext,
+          creation: Creation
+        ): Future[KafkaConnectorCreationResponse] = {
           implicit val exec: ExecutionContext = executionContext
           retry(
             () =>
               HttpExecutor.SINGLETON.post[Creation, KafkaConnectorCreationResponse, KafkaError](
                 s"http://$workerAddress/connectors",
                 creation
-            ),
+              ),
             "connectorCreator"
           )
         }
       }
 
       override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() => HttpExecutor.SINGLETON.delete[KafkaError](s"http://$workerAddress/connectors/$connectorName"),
-              s"delete $connectorName")
+        retry(
+          () => HttpExecutor.SINGLETON.delete[KafkaError](s"http://$workerAddress/connectors/$connectorName"),
+          s"delete $connectorName"
+        )
 
-      override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] = retry(
-        () => HttpExecutor.SINGLETON.get[Seq[KafkaPlugin], KafkaError](s"http://$workerAddress/connector-plugins"),
-        s"fetch plugins $workerAddress")
+      override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] =
+        retry(
+          () => HttpExecutor.SINGLETON.get[Seq[KafkaPlugin], KafkaError](s"http://$workerAddress/connector-plugins"),
+          s"fetch plugins $workerAddress"
+        )
 
       override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ClassInfo]] =
         plugins()
@@ -306,15 +311,17 @@ object WorkerClient {
             definitions(p.className)
               .map(
                 definitions =>
-                  Some(ClassInfo(
-                    className = p.className,
-                    classType = definitions
-                      .filter(_.hasDefault)
-                      .find(_.key() == ConnectorDefUtils.KIND_KEY)
-                      .map(_.defaultString)
-                      .getOrElse("connector"),
-                    settingDefinitions = definitions
-                  ))
+                  Some(
+                    ClassInfo(
+                      className = p.className,
+                      classType = definitions
+                        .filter(_.hasDefault)
+                        .find(_.key() == ConnectorDefUtils.KIND_KEY)
+                        .map(_.defaultString)
+                        .getOrElse("connector"),
+                      settingDefinitions = definitions
+                    )
+                  )
               )
               .recover {
                 // It should fail if we try to parse non-ohara connectors
@@ -323,60 +330,76 @@ object WorkerClient {
           })
           .map(_.flatten)
 
-      override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
-        () => HttpExecutor.SINGLETON.get[Seq[String], KafkaError](s"http://$workerAddress/connectors"),
-        "fetch active connectors")
+      override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] =
+        retry(
+          () => HttpExecutor.SINGLETON.get[Seq[String], KafkaError](s"http://$workerAddress/connectors"),
+          "fetch active connectors"
+        )
 
       override def status(connectorKey: ConnectorKey)(
-        implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] = retry(
+        implicit executionContext: ExecutionContext
+      ): Future[KafkaConnectorInfo] = retry(
         () =>
           HttpExecutor.SINGLETON.get[KafkaConnectorInfo, KafkaError](
-            s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/status"),
+            s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/status"
+          ),
         s"status of $connectorKey"
       )
 
       override def config(connectorKey: ConnectorKey)(
-        implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig] = retry(
+        implicit executionContext: ExecutionContext
+      ): Future[KafkaConnectorConfig] = retry(
         () =>
           HttpExecutor.SINGLETON.get[KafkaConnectorConfig, KafkaError](
-            s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/config"),
+            s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/config"
+          ),
         s"config of $connectorKey"
       )
 
       override def taskStatus(connectorKey: ConnectorKey, id: Int)(
-        implicit executionContext: ExecutionContext): Future[KafkaTaskStatus] =
+        implicit executionContext: ExecutionContext
+      ): Future[KafkaTaskStatus] =
         retry(
           () =>
             HttpExecutor.SINGLETON.get[KafkaTaskStatus, KafkaError](
-              s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/tasks/$id/status"),
+              s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/tasks/$id/status"
+            ),
           s"status of $connectorKey/$id"
         )
       override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() =>
-                HttpExecutor.SINGLETON
-                  .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/pause"),
-              s"pause $connectorKey")
+        retry(
+          () =>
+            HttpExecutor.SINGLETON
+              .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/pause"),
+          s"pause $connectorKey"
+        )
 
       override def resume(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() =>
-                HttpExecutor.SINGLETON
-                  .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/resume"),
-              s"resume $connectorKey")
+        retry(
+          () =>
+            HttpExecutor.SINGLETON
+              .put[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/resume"),
+          s"resume $connectorKey"
+        )
 
       override def connectorValidator(): Validator = new Validator(format) {
-        override protected def doValidate(executionContext: ExecutionContext,
-                                          validation: Validation): Future[SettingInfo] = {
+        override protected def doValidate(
+          executionContext: ExecutionContext,
+          validation: Validation
+        ): Future[SettingInfo] = {
           implicit val exec: ExecutionContext = executionContext
           retry(
             () => {
               if (validation.topicNames().isEmpty)
                 throw new IllegalArgumentException(
                   "I'm sorry for this error. However, please fill the topics" +
-                    "for your validation request in order to test other settings. This prerequisite is introduced by kafka 2.x")
+                    "for your validation request in order to test other settings. This prerequisite is introduced by kafka 2.x"
+                )
               HttpExecutor.SINGLETON
                 .put[Validation, ConfigInfos, KafkaError](
                   s"http://$workerAddress/connector-plugins/${validation.className()}/config/validate",
-                  validation)
+                  validation
+                )
                 .map(SettingInfo.of)
             },
             "connectorValidator"
@@ -540,12 +563,13 @@ object WorkerClient {
       *
       * @return response
       */
-    protected def doCreate(executionContext: ExecutionContext,
-                           creation: Creation): Future[KafkaConnectorCreationResponse]
+    protected def doCreate(
+      executionContext: ExecutionContext,
+      creation: Creation
+    ): Future[KafkaConnectorCreationResponse]
   }
 
   abstract class Validator(formatter: ConnectorFormatter) {
-
     def className(className: String): Validator = {
       this.formatter.className(CommonUtils.requireNonEmpty(className))
       this
@@ -554,8 +578,8 @@ object WorkerClient {
     def connectorClass(clz: Class[_]): Validator = className(clz.getName)
 
     @Optional("Default is none")
-    def setting(key: String, value: String): Validator = settings(
-      Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value)))
+    def setting(key: String, value: String): Validator =
+      settings(Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value)))
 
     @Optional("Default is none")
     def settings(settings: Map[String, String]): Validator = {
@@ -616,6 +640,5 @@ object WorkerClient {
       * @return response
       */
     protected def doValidate(executionContext: ExecutionContext, validation: Validation): Future[SettingInfo]
-
   }
 }

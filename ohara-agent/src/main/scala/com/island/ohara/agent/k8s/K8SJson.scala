@@ -38,19 +38,22 @@ object K8SJson {
     override def write(obj: ImagePullPolicy): JsValue = JsString(obj.toString)
   }
 
-  final case class Container(name: String,
-                             image: String,
-                             ports: Option[Seq[ContainerPort]],
-                             env: Option[Seq[EnvVar]],
-                             imagePullPolicy: Option[ImagePullPolicy],
-                             volumeMounts: Option[Seq[VolumeMount]],
-                             command: Option[Seq[String]],
-                             args: Option[Seq[String]])
+  final case class Container(
+    name: String,
+    image: String,
+    ports: Option[Seq[ContainerPort]],
+    env: Option[Seq[EnvVar]],
+    imagePullPolicy: Option[ImagePullPolicy],
+    volumeMounts: Option[Seq[VolumeMount]],
+    command: Option[Seq[String]],
+    args: Option[Seq[String]]
+  )
   implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat8(Container)
 
   final case class ConfigMapVolumeSource(name: String)
   implicit val CONFIGMAP_VOLUME_SOURCE_JSON_FORMAT: RootJsonFormat[ConfigMapVolumeSource] = jsonFormat1(
-    ConfigMapVolumeSource)
+    ConfigMapVolumeSource
+  )
 
   final case class Volume(name: String, configMap: Option[ConfigMapVolumeSource])
   implicit val VOLUME_JSON_FORMAT: RootJsonFormat[Volume] = jsonFormat2(Volume)
@@ -83,14 +86,16 @@ object K8SJson {
       )
     }
 
-  final case class PodSpec(nodeSelector: Option[NodeSelector],
-                           hostname: String,
-                           hostAliases: Option[Seq[HostAliases]],
-                           subdomain: Option[String],
-                           nodeName: Option[String],
-                           containers: Seq[Container],
-                           restartPolicy: Option[RestartPolicy],
-                           volumes: Option[Seq[Volume]])
+  final case class PodSpec(
+    nodeSelector: Option[NodeSelector],
+    hostname: String,
+    hostAliases: Option[Seq[HostAliases]],
+    subdomain: Option[String],
+    nodeName: Option[String],
+    containers: Seq[Container],
+    restartPolicy: Option[RestartPolicy],
+    volumes: Option[Seq[Volume]]
+  )
   implicit val SPEC_JSON_FORMAT: RootJsonFormat[PodSpec] = jsonFormat8(PodSpec)
 
   final case class Metadata(uid: Option[String], name: String, labels: Option[Label], creationTimestamp: Option[String])
@@ -111,7 +116,7 @@ object K8SJson {
   implicit val NODE_HOSTINFO_FORMAT: RootJsonFormat[NodeAddresses] =
     new RootJsonFormat[NodeAddresses] {
       override def write(obj: NodeAddresses): JsValue = JsObject(
-        "type" -> JsString(obj.nodeType),
+        "type"    -> JsString(obj.nodeType),
         "address" -> JsString(obj.nodeAddress)
       )
 
@@ -139,8 +144,8 @@ object K8SJson {
         }
 
       override def write(obj: Condition): JsValue = JsObject(
-        "type" -> JsString(obj.conditionType),
-        "status" -> JsString(obj.status),
+        "type"    -> JsString(obj.conditionType),
+        "status"  -> JsString(obj.status),
         "message" -> JsString(obj.message)
       )
     }
@@ -148,10 +153,12 @@ object K8SJson {
   final case class Allocatable(cpu: Option[String], memory: Option[String])
   implicit val ALLOCATABLE_JSON_FORMAT: RootJsonFormat[Allocatable] = jsonFormat2(Allocatable)
 
-  final case class NodeStatus(allocatable: Option[Allocatable],
-                              addresses: Seq[NodeAddresses],
-                              images: Seq[ImageNames],
-                              conditions: Seq[Condition])
+  final case class NodeStatus(
+    allocatable: Option[Allocatable],
+    addresses: Seq[NodeAddresses],
+    images: Seq[ImageNames],
+    conditions: Seq[Condition]
+  )
   implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat4(NodeStatus)
 
   final case class NodeMetaData(name: String)

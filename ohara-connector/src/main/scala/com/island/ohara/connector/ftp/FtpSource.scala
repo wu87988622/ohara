@@ -30,7 +30,7 @@ import scala.collection.JavaConverters._
 class FtpSource extends CsvSourceConnector {
   private[this] var settings: TaskSetting = _
   private[this] var props: FtpSourceProps = _
-  private[this] var schema: Seq[Column] = _
+  private[this] var schema: Seq[Column]   = _
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[FtpSourceTask]
 

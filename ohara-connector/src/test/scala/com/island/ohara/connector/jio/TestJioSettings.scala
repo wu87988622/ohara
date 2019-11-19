@@ -23,7 +23,6 @@ import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 class TestJioSettings extends OharaTest {
-
   @Test
   def testBufferSetting(): Unit = {
     DATA_BUFFER_SIZE_DEFINITION.key() shouldBe DATA_BUFFER_SIZE_KEY

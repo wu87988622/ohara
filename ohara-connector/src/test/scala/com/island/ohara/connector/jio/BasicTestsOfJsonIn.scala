@@ -57,9 +57,12 @@ trait BasicTestsOfJsonIn {
     def post(request: JsValue) = {
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(
-          HttpRequest(HttpMethods.POST,
-                      s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}",
-                      entity = entity))
+          HttpRequest(
+            HttpMethods.POST,
+            s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}",
+            entity = entity
+          )
+        )
       }
     }
 
@@ -88,7 +91,7 @@ trait BasicTestsOfJsonIn {
   private[this] def setupConnector(): (String, TopicKey) = setupConnector(props)
 
   private[this] def setupConnector(props: JioProps): (String, TopicKey) = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -98,7 +101,8 @@ trait BasicTestsOfJsonIn {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .settings(props.plain)
-        .create())
+        .create()
+    )
     ConnectorTestUtils.checkConnector(workerClient.connectionProps, connectorKey)
     (result(workerClient.status(connectorKey)).tasks.head.workerHostname, topicKey)
   }
@@ -109,15 +113,17 @@ trait BasicTestsOfJsonIn {
     val data = Seq(
       JioData(
         Map(
-          "a" -> JsString(CommonUtils.randomString()),
+          "a"    -> JsString(CommonUtils.randomString()),
           "tags" -> JsArray(JsString(CommonUtils.randomString()))
-        )),
+        )
+      ),
       JioData(
         Map(
-          "c" -> JsString(CommonUtils.randomString()),
-          "d" -> JsNumber(100),
+          "c"    -> JsString(CommonUtils.randomString()),
+          "d"    -> JsNumber(100),
           "tags" -> JsArray(JsString(CommonUtils.randomString()))
-        ))
+        )
+      )
     )
     pushData(connectorHostname, data).foreach(_.isSuccess() shouldBe true)
     val receivedData = pollData(topicKey, 30 seconds, data.size)
@@ -138,15 +144,17 @@ trait BasicTestsOfJsonIn {
 
   @Test
   def testBufferSize(): Unit = {
-    val bufferSize = 3
-    val dataSize = bufferSize * 5
+    val bufferSize                    = 3
+    val dataSize                      = bufferSize * 5
     val (connectorHostname, topicKey) = setupConnector(props.copy(bufferSize = bufferSize))
     val data = (0 until dataSize).map(
       _ =>
         JioData(
           Map(
             CommonUtils.randomString() -> JsString(CommonUtils.randomString())
-          )))
+          )
+        )
+    )
     // the size of data is larger than buffer size so some data must be discard
     val result = pushData(connectorHostname, data)
     result.forall(_.isSuccess()) shouldBe false

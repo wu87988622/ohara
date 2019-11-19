@@ -28,6 +28,6 @@ import com.island.ohara.client.Enum
 sealed abstract class CleanupPolicy(val name: String)
 
 object CleanupPolicy extends Enum[CleanupPolicy] {
-  case object DELETE extends CleanupPolicy("delete")
+  case object DELETE    extends CleanupPolicy("delete")
   case object COMPACTED extends CleanupPolicy("compact")
 }

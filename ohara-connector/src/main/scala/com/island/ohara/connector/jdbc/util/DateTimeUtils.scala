@@ -20,7 +20,7 @@ import java.util.{Calendar, TimeZone}
 
 object DateTimeUtils {
   private val timeZoneID: String = System.getProperty("user.timezone")
-  private val UTC: TimeZone = TimeZone.getTimeZone(timeZoneID)
+  private val UTC: TimeZone      = TimeZone.getTimeZone(timeZoneID)
 
   val CALENDAR: Calendar = Calendar.getInstance(UTC)
 }

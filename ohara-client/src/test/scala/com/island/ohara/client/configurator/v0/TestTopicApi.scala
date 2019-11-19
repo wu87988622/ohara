@@ -26,7 +26,6 @@ import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicApi extends OharaTest {
-
   @Test
   def nullKeyInGet(): Unit =
     an[NullPointerException] should be thrownBy TopicApi.access.get(null)
@@ -42,26 +41,29 @@ class TestTopicApi extends OharaTest {
   def nullGroup(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.group(null)
 
   @Test
-  def brokerClusterKeyShouldBeRequired(): Unit = intercept[DeserializationException] {
-    TopicApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
-  }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_DEFINITION.key())
+  def brokerClusterKeyShouldBeRequired(): Unit =
+    intercept[DeserializationException] {
+      TopicApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
+    }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_DEFINITION.key())
 
   @Test
-  def ignoreNameOnCreation(): Unit = TopicApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .brokerClusterKey(ObjectKey.of("fake", "fake"))
-    .creation
-    .name
-    .length should not be 0
+  def ignoreNameOnCreation(): Unit =
+    TopicApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .brokerClusterKey(ObjectKey.of("fake", "fake"))
+      .creation
+      .name
+      .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NoSuchElementException] should be thrownBy TopicApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .update()
+  def ignoreNameOnUpdate(): Unit =
+    an[NoSuchElementException] should be thrownBy TopicApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .update()
 
   @Test
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy TopicApi.access.request.name("")
@@ -83,12 +85,12 @@ class TestTopicApi extends OharaTest {
 
   @Test
   def parseCreation(): Unit = {
-    val brokerClusterName = CommonUtils.randomString()
-    val numberOfPartitions = 100
+    val brokerClusterName    = CommonUtils.randomString()
+    val numberOfPartitions   = 100
     val numberOfReplications = 10
-    val group = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
-    val creation = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+    val group                = CommonUtils.randomString()
+    val name                 = CommonUtils.randomString()
+    val creation             = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
@@ -107,11 +109,11 @@ class TestTopicApi extends OharaTest {
 
   @Test
   def parseJsonForUpdate(): Unit = {
-    val name = CommonUtils.randomString()
-    val brokerClusterName = CommonUtils.randomString()
-    val numberOfPartitions = 100
+    val name                 = CommonUtils.randomString()
+    val brokerClusterName    = CommonUtils.randomString()
+    val numberOfPartitions   = 100
     val numberOfReplications = 10
-    val update = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
+    val update               = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
       |{
       | "$NAME_KEY": "$name",
       | "${BROKER_CLUSTER_KEY_DEFINITION.key()}": "$brokerClusterName",
@@ -141,19 +143,21 @@ class TestTopicApi extends OharaTest {
   def emptyTags(): Unit = TopicApi.access.request.tags(Map.empty)
 
   @Test
-  def testNameLimit(): Unit = an[DeserializationException] should be thrownBy
-    TopicApi.access
-      .hostname(CommonUtils.randomString())
-      .port(CommonUtils.availablePort())
-      .request
-      .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
-      .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
-      .creation
+  def testNameLimit(): Unit =
+    an[DeserializationException] should be thrownBy
+      TopicApi.access
+        .hostname(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .request
+        .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
+        .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
+        .creation
 
   @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
-  def negativeReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+  def negativeReplicationsIsIllegalInCreation(): Unit =
+    intercept[DeserializationException] {
+      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -162,12 +166,13 @@ class TestTopicApi extends OharaTest {
                                            |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("the number must")
+    }.getMessage should include("the number must")
 
   @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
-  def negativePartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+  def negativePartitionsIsIllegalInCreation(): Unit =
+    intercept[DeserializationException] {
+      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -176,12 +181,13 @@ class TestTopicApi extends OharaTest {
                                            |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": -1
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("the number must")
+    }.getMessage should include("the number must")
 
   @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
-  def zeroReplicationsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+  def zeroReplicationsIsIllegalInCreation(): Unit =
+    intercept[DeserializationException] {
+      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -190,12 +196,13 @@ class TestTopicApi extends OharaTest {
                                            |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("the number must")
+    }.getMessage should include("the number must")
 
   @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
-  def zeroPartitionsIsIllegalInCreation(): Unit = intercept[DeserializationException] {
-    TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+  def zeroPartitionsIsIllegalInCreation(): Unit =
+    intercept[DeserializationException] {
+      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -204,5 +211,5 @@ class TestTopicApi extends OharaTest {
                                            |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": 0
                                            |  }
        """.stripMargin.parseJson)
-  }.getMessage should include("the number must")
+    }.getMessage should include("the number must")
 }

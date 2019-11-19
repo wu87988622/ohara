@@ -37,16 +37,16 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-  private[this] val tableName = "table1"
+  private[this] val db                  = Database.local()
+  private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
     val connection = client.connection
-    val statement = connection.createStatement()
+    val statement  = connection.createStatement()
 
     statement.executeUpdate(
       s"create table $tableName($timestampColumnName timestamp(6)," +
@@ -61,9 +61,10 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
         "column10 date," +
         "column11 time," +
         "column12 ENUM('A','B')," +
-        "column13 LONGTEXT)")
+        "column13 LONGTEXT)"
+    )
 
-    val sql = s"INSERT INTO table1 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)"
+    val sql   = s"INSERT INTO table1 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)"
     val pstmt = connection.prepareStatement(sql)
 
     val binaryData = "some string data ...".getBytes()
@@ -86,7 +87,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
   @Test
   def test(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
       workerClient
@@ -96,11 +97,12 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props.toMap)
-        .create())
+        .create()
+    )
 
     try {
       val record = pollData(topicKey, 30 seconds, 1)
-      val row0 = record.head.key.get
+      val row0   = record.head.key.get
 
       record.size shouldBe 1
 
@@ -155,13 +157,14 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
       // Test longtext type
       row0.cell(12).value.isInstanceOf[String] shouldBe true
       row0.cell(12).value.toString shouldBe "aaaaaaaaaa"
-
     } finally result(workerClient.delete(connectorKey))
   }
 
-  private[this] def pollData(topicKey: TopicKey,
-                             timeout: scala.concurrent.duration.Duration,
-                             size: Int): Seq[Record[Row, Array[Byte]]] = {
+  private[this] def pollData(
+    topicKey: TopicKey,
+    timeout: scala.concurrent.duration.Duration,
+    size: Int
+  ): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder()
       .topicName(topicKey.topicNameOnKafka)
@@ -184,9 +187,13 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
 
   private[this] val props = JDBCSourceConnectorConfig(
     TaskSetting.of(
-      Map(DB_URL -> db.url,
-          DB_USERNAME -> db.user,
-          DB_PASSWORD -> db.password,
-          DB_TABLENAME -> tableName,
-          TIMESTAMP_COLUMN_NAME -> timestampColumnName).asJava))
+      Map(
+        DB_URL                -> db.url,
+        DB_USERNAME           -> db.user,
+        DB_PASSWORD           -> db.password,
+        DB_TABLENAME          -> tableName,
+        TIMESTAMP_COLUMN_NAME -> timestampColumnName
+      ).asJava
+    )
+  )
 }

@@ -23,17 +23,19 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStat
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class ZookeeperCollieImpl(val dataCollie: DataCollie,
-                                  dockerCache: DockerClientCache,
-                                  clusterCache: ServiceCache)
-    extends BasicCollieImpl[ZookeeperClusterStatus](dataCollie, dockerCache, clusterCache)
+private class ZookeeperCollieImpl(
+  val dataCollie: DataCollie,
+  dockerCache: DockerClientCache,
+  clusterCache: ServiceCache
+) extends BasicCollieImpl[ZookeeperClusterStatus](dataCollie, dockerCache, clusterCache)
     with ZookeeperCollie {
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] =
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node, { client =>
@@ -41,7 +43,8 @@ private class ZookeeperCollieImpl(val dataCollie: DataCollie,
             .containerCreator()
             .imageName(containerInfo.imageName)
             .portMappings(
-              containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap)
+              containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+            )
             .hostname(containerInfo.hostname)
             .envs(containerInfo.environments)
             .name(containerInfo.name)
@@ -61,14 +64,18 @@ private class ZookeeperCollieImpl(val dataCollie: DataCollie,
         None
     })
 
-  override protected def postCreate(clusterStatus: ZookeeperClusterStatus,
-                                    successfulContainers: Seq[ContainerInfo]): Unit =
+  override protected def postCreate(
+    clusterStatus: ZookeeperClusterStatus,
+    successfulContainers: Seq[ContainerInfo]
+  ): Unit =
     clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support remove node from a running cluster"))
+      new UnsupportedOperationException("zookeeper collie doesn't support remove node from a running cluster")
+    )
 
   override protected def prefixKey: String = PREFIX_KEY
 }

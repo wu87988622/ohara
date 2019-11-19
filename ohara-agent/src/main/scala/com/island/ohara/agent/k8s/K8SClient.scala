@@ -38,7 +38,8 @@ trait K8SClient {
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def removeNode(containerName: String, nodeName: String, serviceName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[ContainerInfo]]
   def log(name: String)(implicit executionContext: ExecutionContext): Future[String]
   def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
   def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
@@ -54,7 +55,7 @@ object K8SClient {
   val NAMESPACE_DEFAULT_VALUE: String = "default"
 
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
-  private[agent] val K8S_KIND_NAME = "K8S"
+  private[agent] val K8S_KIND_NAME          = "K8S"
 
   def apply(k8sApiServerURL: String): K8SClient = apply(k8sApiServerURL, NAMESPACE_DEFAULT_VALUE)
 
@@ -67,30 +68,32 @@ object K8SClient {
       override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
         HttpExecutor.SINGLETON
           .get[PodList, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$namespace/pods")
-          .map(podList =>
-            podList.items.map(pod => {
-              val spec: PodSpec = pod.spec.getOrElse(
-                throw new RuntimeException(s"the container doesn't have spec : ${pod.metadata.name}"))
-              val containerInfo: Container = spec.containers.head
-              val phase = pod.status.map(_.phase).getOrElse("Unknown")
-              val hostIP = pod.status.fold("Unknown")(_.hostIP.getOrElse("Unknown"))
-              ContainerInfo(
-                nodeName = spec.nodeName.getOrElse("Unknown"),
-                id = pod.metadata.uid.getOrElse("Unknown"),
-                imageName = containerInfo.image,
-                state = K8sContainerState.all
-                  .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
-                  .getOrElse(K8sContainerState.UNKNOWN)
-                  .name,
-                kind = K8S_KIND_NAME,
-                size = -1,
-                name = pod.metadata.name,
-                portMappings =
-                  containerInfo.ports.getOrElse(Seq.empty).map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
-                environments = containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
-                hostname = spec.hostname
-              )
-            }))
+          .map(
+            podList =>
+              podList.items.map(pod => {
+                val spec: PodSpec = pod.spec
+                  .getOrElse(throw new RuntimeException(s"the container doesn't have spec : ${pod.metadata.name}"))
+                val containerInfo: Container = spec.containers.head
+                val phase                    = pod.status.map(_.phase).getOrElse("Unknown")
+                val hostIP                   = pod.status.fold("Unknown")(_.hostIP.getOrElse("Unknown"))
+                ContainerInfo(
+                  nodeName = spec.nodeName.getOrElse("Unknown"),
+                  id = pod.metadata.uid.getOrElse("Unknown"),
+                  imageName = containerInfo.image,
+                  state = K8sContainerState.all
+                    .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
+                    .getOrElse(K8sContainerState.UNKNOWN)
+                    .name,
+                  kind = K8S_KIND_NAME,
+                  size = -1,
+                  name = pod.metadata.name,
+                  portMappings =
+                    containerInfo.ports.getOrElse(Seq.empty).map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
+                  environments = containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
+                  hostname = spec.hostname
+                )
+              })
+          )
 
       override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
         HttpExecutor.SINGLETON
@@ -101,8 +104,8 @@ object K8SClient {
 
       override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] =
         HttpExecutor.SINGLETON.get[K8SNodeInfo, K8SErrorResponse](s"$k8sApiServerURL/nodes").map { r =>
-          val filterNode: Seq[NodeItems] = r.items.filter(x => x.metadata.name.equals(nodeName))
-          val isK8SNode: Boolean = filterNode.size == 1
+          val filterNode: Seq[NodeItems]        = r.items.filter(x => x.metadata.name.equals(nodeName))
+          val isK8SNode: Boolean                = filterNode.size == 1
           var statusInfo: Option[K8SStatusInfo] = None
           if (isK8SNode)
             statusInfo = Some(
@@ -113,7 +116,8 @@ object K8SClient {
                   if (x.status.equals("True")) K8SStatusInfo(true, x.message)
                   else K8SStatusInfo(false, x.message)
                 }))
-                .head)
+                .head
+            )
           Report(nodeName, isK8SNode, statusInfo)
         }
 
@@ -124,7 +128,8 @@ object K8SClient {
         removePod(name, false)
 
       override def removeNode(containerName: String, nodeName: String, serviceName: String)(
-        implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
+        implicit executionContext: ExecutionContext
+      ): Future[Seq[ContainerInfo]] = {
         containers()
           .map(cs => cs.filter(c => c.name == containerName && c.nodeName == nodeName))
           .flatMap(
@@ -133,7 +138,8 @@ object K8SClient {
                 cs.map(container => {
                   remove(container.name)
                 })
-            ))
+              )
+          )
           .map(cs => {
             cs.map(container => {
               //Kubernetes remove pod container is async to need to await container remove completely to return the
@@ -159,14 +165,16 @@ object K8SClient {
       override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]] =
         HttpExecutor.SINGLETON
           .get[K8SNodeInfo, K8SErrorResponse](s"$k8sApiServerURL/nodes")
-          .map(nodeInfo =>
-            nodeInfo.items.map(item => {
-              val internalIP: String =
-                item.status.addresses.filter(node => node.nodeType.equals("InternalIP")).head.nodeAddress
-              val hostName: String =
-                item.status.addresses.filter(node => node.nodeType.equals("Hostname")).head.nodeAddress
-              HostAliases(internalIP, Seq(hostName))
-            }))
+          .map(
+            nodeInfo =>
+              nodeInfo.items.map(item => {
+                val internalIP: String =
+                  item.status.addresses.filter(node => node.nodeType.equals("InternalIP")).head.nodeAddress
+                val hostName: String =
+                  item.status.addresses.filter(node => node.nodeType.equals("Hostname")).head.nodeAddress
+                HostAliases(internalIP, Seq(hostName))
+              })
+          )
 
       override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] = {
         if (metricsAPIServerURL == null) Future.successful(Map.empty)
@@ -177,8 +185,10 @@ object K8SClient {
             .map(metrics => {
               metrics.items
                 .flatMap(nodeMetricsInfo => {
-                  Seq(nodeMetricsInfo.metadata.name ->
-                    K8SMetricsUsage(nodeMetricsInfo.usage.cpu, nodeMetricsInfo.usage.memory))
+                  Seq(
+                    nodeMetricsInfo.metadata.name ->
+                      K8SMetricsUsage(nodeMetricsInfo.usage.cpu, nodeMetricsInfo.usage.memory)
+                  )
                 })
                 .toMap
             })
@@ -186,34 +196,37 @@ object K8SClient {
           // Get K8S Node info
           HttpExecutor.SINGLETON
             .get[K8SNodeInfo, K8SErrorResponse](s"$k8sApiServerURL/nodes")
-            .map(nodeInfo =>
-              nodeInfo.items
-                .map { item =>
-                  val allocatable =
-                    item.status.allocatable.getOrElse(Allocatable(None, None))
-                  (item.metadata.name, allocatable.cpu, allocatable.memory)
-                }
-                .map { nodeResource =>
-                  nodeResourceUsage.map {
-                    resourceUsage =>
-                      val nodeName: String = nodeResource._1
-                      val cpuValueCore: Int = nodeResource._2.getOrElse("0").toInt
-                      val memoryValueKB: Long = nodeResource._3.getOrElse("0").replace("Ki", "").toLong
-                      if (resourceUsage.contains(nodeName)) {
-                        // List all resource unit for Kubernetes metrics server, Please refer the source code:
-                        // https://github.com/kubernetes/apimachinery/blob/ed135c5b96450fd24e5e981c708114fbbd950697/pkg/api/resource/suffix.go
-                        val cpuUsed: Option[Double] = Option(cpuUsedCalc(resourceUsage(nodeName).cpu, cpuValueCore))
-                        val memoryUsed: Option[Double] =
-                          Option(memoryUsedCalc(resourceUsage(nodeName).memory, memoryValueKB))
-                        nodeName -> Seq(Resource.cpu(cpuValueCore, cpuUsed),
-                                        Resource.memory(memoryValueKB * 1024, memoryUsed))
-                      } else nodeName -> Seq.empty
+            .map(
+              nodeInfo =>
+                nodeInfo.items
+                  .map { item =>
+                    val allocatable =
+                      item.status.allocatable.getOrElse(Allocatable(None, None))
+                    (item.metadata.name, allocatable.cpu, allocatable.memory)
                   }
-              })
+                  .map { nodeResource =>
+                    nodeResourceUsage.map {
+                      resourceUsage =>
+                        val nodeName: String    = nodeResource._1
+                        val cpuValueCore: Int   = nodeResource._2.getOrElse("0").toInt
+                        val memoryValueKB: Long = nodeResource._3.getOrElse("0").replace("Ki", "").toLong
+                        if (resourceUsage.contains(nodeName)) {
+                          // List all resource unit for Kubernetes metrics server, Please refer the source code:
+                          // https://github.com/kubernetes/apimachinery/blob/ed135c5b96450fd24e5e981c708114fbbd950697/pkg/api/resource/suffix.go
+                          val cpuUsed: Option[Double] = Option(cpuUsedCalc(resourceUsage(nodeName).cpu, cpuValueCore))
+                          val memoryUsed: Option[Double] =
+                            Option(memoryUsedCalc(resourceUsage(nodeName).memory, memoryValueKB))
+                          nodeName -> Seq(
+                            Resource.cpu(cpuValueCore, cpuUsed),
+                            Resource.memory(memoryValueKB * 1024, memoryUsed)
+                          )
+                        } else nodeName -> Seq.empty
+                    }
+                  }
+            )
             .flatMap(Future.sequence(_))
             .map(_.toMap)
         }
-
       }
 
       override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]] = {
@@ -232,19 +245,19 @@ object K8SClient {
 
       override def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator =
         new ContainerCreator() {
-          private[this] var name: String = CommonUtils.randomString()
+          private[this] var name: String                     = CommonUtils.randomString()
           private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
-          private[this] var restartPolicy: RestartPolicy = RestartPolicy.Never
-          private[this] var imageName: String = _
-          private[this] var hostname: String = _
-          private[this] var nodeName: String = _
-          private[this] var domainName: String = _
-          private[this] var labelName: String = _
-          private[this] var envs: Map[String, String] = Map.empty
-          private[this] var ports: Map[Int, Int] = Map.empty
-          private[this] var routes: Map[String, String] = Map.empty
-          private[this] var command: Seq[String] = Seq.empty
-          private[this] var args: Seq[String] = Seq.empty
+          private[this] var restartPolicy: RestartPolicy     = RestartPolicy.Never
+          private[this] var imageName: String                = _
+          private[this] var hostname: String                 = _
+          private[this] var nodeName: String                 = _
+          private[this] var domainName: String               = _
+          private[this] var labelName: String                = _
+          private[this] var envs: Map[String, String]        = Map.empty
+          private[this] var ports: Map[Int, Int]             = Map.empty
+          private[this] var routes: Map[String, String]      = Map.empty
+          private[this] var command: Seq[String]             = Seq.empty
+          private[this] var args: Seq[String]                = Seq.empty
           private[this] implicit var executionContext: ExecutionContext =
             scala.concurrent.ExecutionContext.Implicits.global
 
@@ -337,16 +350,18 @@ object K8SClient {
                   hostname = hostname, //hostname is container name
                   subdomain = Some(domainName),
                   hostAliases = Some(ipInfo ++ routes.map { case (host, ip) => HostAliases(ip, Seq(host)) }),
-                  containers = Seq(Container(
-                    name = labelName,
-                    image = imageName,
-                    env = if (envs.isEmpty) None else Some(envs.map(x => EnvVar(x._1, Some(x._2))).toSeq),
-                    ports = if (ports.isEmpty) None else Some(ports.map(x => ContainerPort(x._1, x._2)).toSeq),
-                    imagePullPolicy = Some(imagePullPolicy),
-                    volumeMounts = None,
-                    command = if (command.isEmpty) None else Some(command),
-                    args = if (args.isEmpty) None else Some(args)
-                  )),
+                  containers = Seq(
+                    Container(
+                      name = labelName,
+                      image = imageName,
+                      env = if (envs.isEmpty) None else Some(envs.map(x => EnvVar(x._1, Some(x._2))).toSeq),
+                      ports = if (ports.isEmpty) None else Some(ports.map(x => ContainerPort(x._1, x._2)).toSeq),
+                      imagePullPolicy = Some(imagePullPolicy),
+                      volumeMounts = None,
+                      command = if (command.isEmpty) None else Some(command),
+                      args = if (args.isEmpty) None else Some(args)
+                    )
+                  ),
                   restartPolicy = Some(restartPolicy),
                   nodeName = None,
                   volumes = None
@@ -354,8 +369,8 @@ object K8SClient {
               }
               .flatMap(podSpec => { //name is pod name
                 val request = Pod(Metadata(None, name, Some(Label(labelName)), None), Some(podSpec), None)
-                HttpExecutor.SINGLETON.post[Pod, Pod, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$namespace/pods",
-                                                                        request)
+                HttpExecutor.SINGLETON
+                  .post[Pod, Pod, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$namespace/pods", request)
               })
               .map(pod => {
                 Option(
@@ -373,19 +388,22 @@ object K8SClient {
                     portMappings = ports.map(x => PortMapping(hostname, x._1, x._2)).toSeq,
                     environments = envs,
                     hostname = hostname
-                  ))
+                  )
+                )
               })
           }
         }
 
       private[this] def removePod(name: String, isForce: Boolean)(
-        implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+        implicit executionContext: ExecutionContext
+      ): Future[ContainerInfo] =
         containers()
           .map(_.find(_.name == name).getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist")))
           .flatMap(container => {
             if (isForce)
               HttpExecutor.SINGLETON.delete[K8SErrorResponse](
-                s"$k8sApiServerURL/namespaces/$namespace/pods/${container.name}?gracePeriodSeconds=0")
+                s"$k8sApiServerURL/namespaces/$namespace/pods/${container.name}?gracePeriodSeconds=0"
+              )
             else
               HttpExecutor.SINGLETON
                 .delete[K8SErrorResponse](s"$k8sApiServerURL/namespaces/$namespace/pods/${container.name}")
@@ -465,7 +483,6 @@ object K8SClient {
 
   sealed abstract class ImagePullPolicy
   object ImagePullPolicy extends Enum[ImagePullPolicy] {
-
     case object ALWAYS extends ImagePullPolicy {
       override def toString: String = "Always"
     }
@@ -491,5 +508,4 @@ object K8SClient {
       override def toString: String = "Never"
     }
   }
-
 }

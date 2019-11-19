@@ -24,7 +24,6 @@ import com.island.ohara.kafka.connector.csv.CsvSourceConnector
 import org.junit.AssumptionViolatedException
 
 class TestSmbSource extends CsvSourceTestBase {
-
   private[this] val itProps: ITSmbProps = try ITSmbProps(sys.env)
   catch {
     case e: IllegalArgumentException =>
@@ -42,13 +41,13 @@ class TestSmbSource extends CsvSourceTestBase {
   override protected val connectorClass: Class[_ <: CsvSourceConnector] = classOf[SmbSource]
 
   override protected val setupProps: Map[String, String] = Map(
-    SMB_HOSTNAME_KEY -> itProps.hostname,
-    SMB_PORT_KEY -> itProps.port.toString,
-    SMB_USER_KEY -> itProps.username,
-    SMB_PASSWORD_KEY -> itProps.password,
-    SMB_SHARE_NAME_KEY -> itProps.shareName,
-    INPUT_FOLDER_KEY -> "input",
+    SMB_HOSTNAME_KEY     -> itProps.hostname,
+    SMB_PORT_KEY         -> itProps.port.toString,
+    SMB_USER_KEY         -> itProps.username,
+    SMB_PASSWORD_KEY     -> itProps.password,
+    SMB_SHARE_NAME_KEY   -> itProps.shareName,
+    INPUT_FOLDER_KEY     -> "input",
     COMPLETED_FOLDER_KEY -> "completed",
-    ERROR_FOLDER_KEY -> "error"
+    ERROR_FOLDER_KEY     -> "error"
   )
 }

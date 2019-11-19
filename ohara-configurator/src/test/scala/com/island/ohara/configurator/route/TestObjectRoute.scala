@@ -27,7 +27,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestObjectRoute extends OharaTest {
-
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val objectApi = ObjectApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -39,7 +38,8 @@ class TestObjectRoute extends OharaTest {
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   @Test
   def testTopic(): Unit = {
@@ -50,8 +50,10 @@ class TestObjectRoute extends OharaTest {
         .request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
 
     var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
@@ -67,8 +69,10 @@ class TestObjectRoute extends OharaTest {
         .request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
 
     objs = result(objectApi.list())
 
@@ -88,8 +92,10 @@ class TestObjectRoute extends OharaTest {
         .request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
 
     val connector = result(
       connectorApi.request
@@ -98,7 +104,8 @@ class TestObjectRoute extends OharaTest {
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topic.key)
-        .create())
+        .create()
+    )
 
     val objs = result(objectApi.list())
 

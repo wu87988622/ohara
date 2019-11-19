@@ -21,7 +21,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestConnectorCreator extends OharaTest {
-
   private[this] val notWorkingClient = WorkerClient("localhost:2222")
 
   @Test
@@ -40,9 +39,10 @@ class TestConnectorCreator extends OharaTest {
     an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().numberOfTasks(-1)
 
   @Test
-  def nullClass(): Unit = an[NullPointerException] should be thrownBy notWorkingClient
-    .connectorCreator()
-    .connectorClass(null.asInstanceOf[Class[_]])
+  def nullClass(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient
+      .connectorCreator()
+      .connectorClass(null.asInstanceOf[Class[_]])
 
   @Test
   def nullClassName(): Unit =
@@ -63,5 +63,4 @@ class TestConnectorCreator extends OharaTest {
   @Test
   def emptyTopicKeys(): Unit =
     an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().topicKeys(Set.empty)
-
 }

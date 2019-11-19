@@ -21,7 +21,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 class TestConsoleSink extends OharaTest {
-
   @Test
   def testFrequenceDefinitions(): Unit = {
     val sink = new ConsoleSink

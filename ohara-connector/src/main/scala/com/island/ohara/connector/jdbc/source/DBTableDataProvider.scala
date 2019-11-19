@@ -46,9 +46,11 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
 
   private[this] val rdbColumnInfo = columns(jdbcSourceConnectorConfig.dbTableName)
 
-  private[source] def executeQuery(tableName: String,
-                                   timeStampColumnName: String,
-                                   tsOffset: Timestamp): QueryResultIterator = {
+  private[source] def executeQuery(
+    tableName: String,
+    timeStampColumnName: String,
+    tsOffset: Timestamp
+  ): QueryResultIterator = {
     if (queryFlag) {
       val sql =
         s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? AND $timeStampColumnName < ? ORDER BY $timeStampColumnName"

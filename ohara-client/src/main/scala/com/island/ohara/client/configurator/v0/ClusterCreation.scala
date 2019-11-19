@@ -20,7 +20,6 @@ package com.island.ohara.client.configurator.v0
   * this is a basic interface of cluster request to create a normal object resource.
   */
 trait ClusterCreation extends BasicCreation {
-
   /**
     * @return nodes to run this cluster
     */

@@ -27,14 +27,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestFakeWorkerClient extends OharaTest {
-
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test
   def testControlConnector(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val className = CommonUtils.randomString(10)
-    val fake = new FakeWorkerClient()
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val className    = CommonUtils.randomString(10)
+    val fake         = new FakeWorkerClient()
     result(
       fake
         .connectorCreator()
@@ -42,7 +41,8 @@ class TestFakeWorkerClient extends OharaTest {
         .topicKey(topicKey)
         .numberOfTasks(1)
         .className(className)
-        .create())
+        .create()
+    )
 
     result(fake.exist(connectorKey)) shouldBe true
 

@@ -61,26 +61,28 @@ object PipelineApi {
 
   import MetricsApi._
 
-  final case class ObjectAbstract(group: String,
-                                  name: String,
-                                  kind: String,
-                                  className: Option[String],
-                                  state: Option[String],
-                                  error: Option[String],
-                                  metrics: Metrics,
-                                  lastModified: Long,
-                                  tags: Map[String, JsValue])
-      extends Data
+  final case class ObjectAbstract(
+    group: String,
+    name: String,
+    kind: String,
+    className: Option[String],
+    state: Option[String],
+    error: Option[String],
+    metrics: Metrics,
+    lastModified: Long,
+    tags: Map[String, JsValue]
+  ) extends Data
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat9(ObjectAbstract)
 
-  final case class Pipeline(group: String,
-                            name: String,
-                            flows: Seq[Flow],
-                            objects: Set[ObjectAbstract],
-                            jarKeys: Set[ObjectKey],
-                            lastModified: Long,
-                            tags: Map[String, JsValue])
-      extends Data {
+  final case class Pipeline(
+    group: String,
+    name: String,
+    flows: Seq[Flow],
+    objects: Set[ObjectAbstract],
+    jarKeys: Set[ObjectKey],
+    lastModified: Long,
+    tags: Map[String, JsValue]
+  ) extends Data {
     override def kind: String = "pipeline"
   }
 
@@ -90,7 +92,6 @@ object PipelineApi {
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
-
     /**
       * set the group and name via key
       * @param objectKey object key
@@ -147,18 +148,18 @@ object PipelineApi {
 
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, Pipeline](PIPELINES_PREFIX_PATH) {
-
     def refresh(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, REFRESH_COMMAND)
 
     def query: Query = new Query {
       override protected def doExecute(request: QueryRequest)(
-        implicit executionContext: ExecutionContext): Future[Seq[Pipeline]] = list(request)
+        implicit executionContext: ExecutionContext
+      ): Future[Seq[Pipeline]] = list(request)
     }
 
     def request: Request = new Request {
-      private[this] var group: String = GROUP_DEFAULT
-      private[this] var name: String = _
-      private[this] var flows: Seq[Flow] = _
+      private[this] var group: String              = GROUP_DEFAULT
+      private[this] var name: String               = _
+      private[this] var flows: Seq[Flow]           = _
       private[this] var tags: Map[String, JsValue] = _
 
       override def group(group: String): Request = {
@@ -184,12 +185,15 @@ object PipelineApi {
       override private[v0] def creation: Creation =
         // auto-complete the creation via our refiner
         PIPELINE_CREATION_JSON_FORMAT.read(
-          PIPELINE_CREATION_JSON_FORMAT.write(Creation(
-            group = CommonUtils.requireNonEmpty(group),
-            name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
-            flows = if (flows == null) Seq.empty else flows,
-            tags = if (tags == null) Map.empty else tags
-          )))
+          PIPELINE_CREATION_JSON_FORMAT.write(
+            Creation(
+              group = CommonUtils.requireNonEmpty(group),
+              name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
+              flows = if (flows == null) Seq.empty else flows,
+              tags = if (tags == null) Map.empty else tags
+            )
+          )
+        )
 
       override private[v0] def updating: Updating =
         // auto-complete the updating via our refiner
@@ -198,7 +202,9 @@ object PipelineApi {
             Updating(
               flows = Option(flows),
               tags = Option(tags)
-            )))
+            )
+          )
+        )
 
       override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =

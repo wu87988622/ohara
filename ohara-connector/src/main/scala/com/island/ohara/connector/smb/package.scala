@@ -21,11 +21,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.island.ohara.common.setting.SettingDef
 
 package object smb {
-
   /**
     * used to set the order of definitions.
     */
-  private[this] val COUNTER = new AtomicInteger(0)
+  private[this] val COUNTER    = new AtomicInteger(0)
   val SMB_HOSTNAME_KEY: String = "smb.hostname"
   val SMB_HOSTNAME_DEFINITION: SettingDef = SettingDef
     .builder()
@@ -52,7 +51,8 @@ package object smb {
     .key(SMB_USER_KEY)
     .displayName("Username")
     .documentation(
-      "the username of SMB server. This account must have read/delete permission of input folder and error folder")
+      "the username of SMB server. This account must have read/delete permission of input folder and error folder"
+    )
     .required(SettingDef.Type.STRING)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()

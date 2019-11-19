@@ -48,22 +48,23 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
   *
   */
-class Configurator private[configurator] (val hostname: String, val port: Int)(implicit val store: DataStore,
-                                                                               val dataCollie: DataCollie,
-                                                                               val serviceCollie: ServiceCollie,
-                                                                               val k8sClient: Option[K8SClient])
-    extends ReleaseOnce {
-
+class Configurator private[configurator] (val hostname: String, val port: Int)(
+  implicit val store: DataStore,
+  val dataCollie: DataCollie,
+  val serviceCollie: ServiceCollie,
+  val k8sClient: Option[K8SClient]
+) extends ReleaseOnce {
   private[this] val threadMax = {
     val value = Runtime.getRuntime.availableProcessors()
     if (value <= 1)
       throw new IllegalArgumentException(
         s"I'm sorry that your machine is too weak to run Ohara Configurator." +
-          s" The required number of core must be bigger than 2, but actual number is $value")
+          s" The required number of core must be bigger than 2, but actual number is $value"
+      )
     value
   }
 
-  private[this] val threadPool = Executors.newFixedThreadPool(threadMax)
+  private[this] val threadPool       = Executors.newFixedThreadPool(threadMax)
   private[this] val checkK8SNodePool = Executors.newSingleThreadExecutor()
 
   private[this] implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(threadPool)
@@ -82,19 +83,19 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     * purpose. However, we have not met related use cases or bugs and hence we leave a constant timeout here.
     */
   private[this] val terminateTimeout = 3 seconds
-  private[this] val cacheTimeout = 3 seconds
-  private[this] val cleanupTimeout = 30 seconds
+  private[this] val cacheTimeout     = 3 seconds
+  private[this] val cleanupTimeout   = 30 seconds
 
   private[configurator] def size: Int = store.size()
 
   private[this] val log = Logger(classOf[Configurator])
 
   private[this] implicit val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
-  private[this] implicit val brokerCollie: BrokerCollie = serviceCollie.brokerCollie
-  private[this] implicit val workerCollie: WorkerCollie = serviceCollie.workerCollie
-  private[this] implicit val streamCollie: StreamCollie = serviceCollie.streamCollie
-  private[this] implicit val adminCleaner: AdminCleaner = new AdminCleaner(cleanupTimeout)
-  private[this] implicit val objectChecker: ObjectChecker = ObjectChecker()
+  private[this] implicit val brokerCollie: BrokerCollie       = serviceCollie.brokerCollie
+  private[this] implicit val workerCollie: WorkerCollie       = serviceCollie.workerCollie
+  private[this] implicit val streamCollie: StreamCollie       = serviceCollie.streamCollie
+  private[this] implicit val adminCleaner: AdminCleaner       = new AdminCleaner(cleanupTimeout)
+  private[this] implicit val objectChecker: ObjectChecker     = ObjectChecker()
 
   def mode: Mode = serviceCollie match {
     case _: com.island.ohara.agent.ssh.ServiceCollieImpl         => Mode.SSH
@@ -175,12 +176,13 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
         // we do the sync here to simplify the interface
         // TODO: how to set a suitable timeout ??? by chia
         val clusters = Await.result(serviceCollie.clusters(), cacheTimeout * 5)
-        def swallow(f: () => Map[String, Seq[Meter]], serviceName: String): Map[String, Seq[Meter]] = try f()
-        catch {
-          case e: Throwable =>
-            log.error(s"failed to get metrics of service:$serviceName", e)
-            Map.empty[String, Seq[Meter]]
-        }
+        def swallow(f: () => Map[String, Seq[Meter]], serviceName: String): Map[String, Seq[Meter]] =
+          try f()
+          catch {
+            case e: Throwable =>
+              log.error(s"failed to get metrics of service:$serviceName", e)
+              Map.empty[String, Seq[Meter]]
+          }
         clusters.keys
           .flatMap {
             case status: BrokerClusterStatus =>
@@ -216,18 +218,22 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 
   private[configurator] def addK8SNodes(): Future[Seq[NodeApi.Node]] = {
     log.info("Running check Kubernetes node")
-    val nodeApi = NodeApi.access.hostname(hostname).port(port)
+    val nodeApi           = NodeApi.access.hostname(hostname).port(port)
     val client: K8SClient = this.k8sClient.getOrElse(throw new RuntimeException("K8SClient object isn't exist"))
     client
       .nodes()
-      .flatMap(nodes =>
-        Future.sequence(nodes.map { k8sNode =>
-          nodeApi
-            .list()
-            .map(nodes =>
-              if (nodes.map(_.hostname).contains(k8sNode.nodeName)) Seq.empty
-              else Seq(nodeApi.request.hostname(k8sNode.nodeName).create()))
-        }))
+      .flatMap(
+        nodes =>
+          Future.sequence(nodes.map { k8sNode =>
+            nodeApi
+              .list()
+              .map(
+                nodes =>
+                  if (nodes.map(_.hostname).contains(k8sNode.nodeName)) Seq.empty
+                  else Seq(nodeApi.request.hostname(k8sNode.nodeName).create())
+              )
+          })
+      )
       .flatMap(x => Future.sequence(x.flatten))
   }
 
@@ -249,29 +255,31 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
-  private[this] def basicRoute: server.Route = pathPrefix(version)(
-    Seq[server.Route](
-      TopicRoute.apply,
-      PipelineRoute.apply,
-      ValidationRoute.apply,
-      ConnectorRoute.apply,
-      InspectRoute.apply(mode),
-      StreamRoute.apply,
-      ShabondiRoute.apply,
-      NodeRoute.apply,
-      ZookeeperRoute.apply,
-      BrokerRoute.apply,
-      WorkerRoute.apply,
-      FileInfoRoute.apply(hostname, port, version),
-      LogRoute.apply,
-      ObjectRoute.apply,
-      ContainerRoute.apply
-    ).reduce[server.Route]((a, b) => a ~ b))
+  private[this] def basicRoute: server.Route =
+    pathPrefix(version)(
+      Seq[server.Route](
+        TopicRoute.apply,
+        PipelineRoute.apply,
+        ValidationRoute.apply,
+        ConnectorRoute.apply,
+        InspectRoute.apply(mode),
+        StreamRoute.apply,
+        ShabondiRoute.apply,
+        NodeRoute.apply,
+        ZookeeperRoute.apply,
+        BrokerRoute.apply,
+        WorkerRoute.apply,
+        FileInfoRoute.apply(hostname, port, version),
+        LogRoute.apply,
+        ObjectRoute.apply,
+        ContainerRoute.apply
+      ).reduce[server.Route]((a, b) => a ~ b)
+    )
 
   private[this] def finalRoute: server.Route =
     path(Remaining)(routeToOfficialUrl)
 
-  private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
+  private[this] implicit val actorSystem: ActorSystem             = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
   private[this] val httpServer: Http.ServerBinding =
     try Await.result(
@@ -329,20 +337,19 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 }
 
 object Configurator {
-
   def builder: ConfiguratorBuilder = new ConfiguratorBuilder()
 
   //----------------[main]----------------//
-  private[configurator] lazy val LOG = Logger(Configurator.getClass)
-  private[configurator] val HELP_KEY = "--help"
-  private[configurator] val FOLDER_KEY = "--folder"
-  private[configurator] val HOSTNAME_KEY = "--hostname"
-  private[configurator] val K8S_NAMESPACE_KEY = "--k8s-namespace"
+  private[configurator] lazy val LOG                = Logger(Configurator.getClass)
+  private[configurator] val HELP_KEY                = "--help"
+  private[configurator] val FOLDER_KEY              = "--folder"
+  private[configurator] val HOSTNAME_KEY            = "--hostname"
+  private[configurator] val K8S_NAMESPACE_KEY       = "--k8s-namespace"
   private[configurator] val K8S_METRICS_SERVICE_KEY = "--k8s-metrics-server"
-  private[configurator] val K8S_KEY = "--k8s"
-  private[configurator] val FAKE_KEY = "--fake"
-  private[configurator] val PORT_KEY = "--port"
-  private val USAGE = s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $FAKE_KEY"
+  private[configurator] val K8S_KEY                 = "--k8s"
+  private[configurator] val FAKE_KEY                = "--fake"
+  private[configurator] val PORT_KEY                = "--port"
+  private val USAGE                                 = s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $FAKE_KEY"
 
   /**
     * parse input arguments and then generate a Configurator instance.
@@ -374,36 +381,38 @@ object Configurator {
     }
   }
 
-  def main(args: Array[String]): Unit = try {
-    if (args.length == 1 && args(0) == HELP_KEY) {
-      println(USAGE)
-      return
+  def main(args: Array[String]): Unit =
+    try {
+      if (args.length == 1 && args(0) == HELP_KEY) {
+        println(USAGE)
+        return
+      }
+      if (GLOBAL_CONFIGURATOR != null) throw new RuntimeException("configurator is running!!!")
+
+      GLOBAL_CONFIGURATOR = configurator(args)
+
+      LOG.info(
+        s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}"
+      )
+      LOG.info("enter ctrl+c to terminate the configurator")
+
+      val intervalAddK8SNodeTime = 5
+      if (GLOBAL_CONFIGURATOR.k8sClient.nonEmpty)
+        GLOBAL_CONFIGURATOR.executeAddK8SNodes(intervalAddK8SNodeTime)
+
+      while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
+        TimeUnit.SECONDS.sleep(2)
+        LOG.info(s"Current data size:${GLOBAL_CONFIGURATOR.size}")
+      }
+    } finally {
+      Releasable.close(GLOBAL_CONFIGURATOR)
+      GLOBAL_CONFIGURATOR = null
+
+      /**
+        * the akka http executor is shared globally so we have to close it in this final block
+        */
+      HttpExecutor.close()
     }
-    if (GLOBAL_CONFIGURATOR != null) throw new RuntimeException("configurator is running!!!")
-
-    GLOBAL_CONFIGURATOR = configurator(args)
-
-    LOG.info(
-      s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}")
-    LOG.info("enter ctrl+c to terminate the configurator")
-
-    val intervalAddK8SNodeTime = 5
-    if (GLOBAL_CONFIGURATOR.k8sClient.nonEmpty)
-      GLOBAL_CONFIGURATOR.executeAddK8SNodes(intervalAddK8SNodeTime)
-
-    while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
-      TimeUnit.SECONDS.sleep(2)
-      LOG.info(s"Current data size:${GLOBAL_CONFIGURATOR.size}")
-    }
-  } finally {
-    Releasable.close(GLOBAL_CONFIGURATOR)
-    GLOBAL_CONFIGURATOR = null
-
-    /**
-      * the akka http executor is shared globally so we have to close it in this final block
-      */
-    HttpExecutor.close()
-  }
 
   /**
     * visible for testing.
@@ -426,12 +435,11 @@ object Configurator {
     * show the mode of running configurator.
     */
   object Mode extends com.island.ohara.client.Enum[Mode] {
-
     /**
       * No extra services are running. Configurator fake all content of response for all requests. This mode is useful to test only the APIs
       */
     case object FAKE extends Mode
-    case object SSH extends Mode
-    case object K8S extends Mode
+    case object SSH  extends Mode
+    case object K8S  extends Mode
   }
 }

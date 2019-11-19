@@ -39,15 +39,15 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.ClassTag
 class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
-  private[this] var hostname: String = _
-  private[this] var port: Int = -1
-  private[this] var homeFolder: String = _
-  private[this] var store: DataStore = _
+  private[this] var hostname: String             = _
+  private[this] var port: Int                    = -1
+  private[this] var homeFolder: String           = _
+  private[this] var store: DataStore             = _
   private[this] var serviceCollie: ServiceCollie = _
-  private[this] var k8sApiServer: String = _
-  private[this] var k8sClient: K8SClient = _
-  private[this] var metricsServiceURL: String = _
-  private[this] var k8sNamespace: String = K8SClient.NAMESPACE_DEFAULT_VALUE
+  private[this] var k8sApiServer: String         = _
+  private[this] var k8sClient: K8SClient         = _
+  private[this] var metricsServiceURL: String    = _
+  private[this] var k8sNamespace: String         = K8SClient.NAMESPACE_DEFAULT_VALUE
 
   @Optional("default is random folder")
   def homeFolder(homeFolder: String): ConfiguratorBuilder = doOrReleaseObjects {
@@ -103,8 +103,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     doOrReleaseObjects {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
-      val store = getOrCreateStore()
-      val embeddedZkName = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedzk")
+      val store             = getOrCreateStore()
+      val embeddedZkName    = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedzk")
       val embeddedBrokerKey = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedbk")
       val embeddedWorkerKey = ObjectKey.of(com.island.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedwk")
       // we fake nodes for embedded bk and wk
@@ -214,11 +214,13 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     * @return this builder
     */
   @VisibleForTesting
-  private[configurator] def fake(numberOfBrokerCluster: Int,
-                                 numberOfWorkerCluster: Int,
-                                 zkClusterNamePrefix: String = "fakezkcluster",
-                                 bkClusterNamePrefix: String = "fakebkcluster",
-                                 wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder =
+  private[configurator] def fake(
+    numberOfBrokerCluster: Int,
+    numberOfWorkerCluster: Int,
+    zkClusterNamePrefix: String = "fakezkcluster",
+    bkClusterNamePrefix: String = "fakebkcluster",
+    wkClusterNamePrefix: String = "fakewkcluster"
+  ): ConfiguratorBuilder =
     doOrReleaseObjects {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
@@ -228,13 +230,13 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
       if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
         throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
-      val store = getOrCreateStore()
+      val store  = getOrCreateStore()
       val collie = new FakeServiceCollie(createCollie(), store)
 
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkCreations = (0 until numberOfBrokerCluster).map { index =>
         val nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
-        val creation = ZookeeperApi.access.request.name(s"$zkClusterNamePrefix$index").nodeNames(nodeNames).creation
+        val creation  = ZookeeperApi.access.request.name(s"$zkClusterNamePrefix$index").nodeNames(nodeNames).creation
         collie.zookeeperCollie.addCluster(
           new ZookeeperClusterStatus(
             group = creation.group,
@@ -306,7 +308,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               state = Some(ServiceState.RUNNING.name),
               error = None,
               lastModified = CommonUtils.current()
-          ))
+            )
+        )
         .foreach(store.addIfAbsent[ZookeeperClusterInfo])
       bkCreations
         .map(
@@ -320,7 +323,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               state = Some(ServiceState.RUNNING.name),
               error = None,
               lastModified = CommonUtils.current()
-          ))
+            )
+        )
         .foreach(store.addIfAbsent[BrokerClusterInfo])
       wkCreations
         .map(
@@ -332,7 +336,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               state = Some(ServiceState.RUNNING.name),
               error = None,
               lastModified = CommonUtils.current()
-          ))
+            )
+        )
         .foreach(store.addIfAbsent[WorkerClusterInfo])
 
       // fake nodes
@@ -340,18 +345,20 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .flatMap(_.nodeNames)
         // DON'T add duplicate nodes!!!
         .toSet[String]
-        .map(name =>
-          Node(
-            hostname = name,
-            port = Some(22),
-            user = Some("fake"),
-            password = Some("fake"),
-            services = Seq.empty,
-            lastModified = CommonUtils.current(),
-            validationReport = None,
-            resources = Seq.empty,
-            tags = Map.empty
-        ))
+        .map(
+          name =>
+            Node(
+              hostname = name,
+              port = Some(22),
+              user = Some("fake"),
+              password = Some("fake"),
+              services = Seq.empty,
+              lastModified = CommonUtils.current(),
+              validationReport = None,
+              resources = Seq.empty,
+              tags = Map.empty
+            )
+        )
         .foreach(store.addIfAbsent[Node])
       serviceCollie(collie)
     }
@@ -436,10 +443,13 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     }
 
     doOrReleaseObjects(
-      new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(store = getOrCreateStore(),
-                                                                                   dataCollie = createCollie(),
-                                                                                   serviceCollie = getOrCreateCollie(),
-                                                                                   k8sClient = Option(k8sClient)))
+      new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(
+        store = getOrCreateStore(),
+        dataCollie = createCollie(),
+        serviceCollie = getOrCreateCollie(),
+        k8sClient = Option(k8sClient)
+      )
+    )
   }
 
   private[this] def folder(prefix: String): String =
@@ -460,26 +470,29 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     homeFolder
   }
 
-  private[this] def getOrCreateStore(): DataStore = if (store == null) try {
-    store = DataStore.builder.persistentFolder(folder("store")).build()
-    store
-  } catch {
-    case e: RocksDBException =>
-      if (e.getMessage.contains("Permission denied"))
-        throw new RuntimeException(
-          "Permission denied! if you are trying to mount host folder to Configurator container, " +
-            "the UID of the host folder must be 1000 since the user of Configurator container is ohara and its UID is 1000",
-          e
-        )
-      else throw e
-  } else store
+  private[this] def getOrCreateStore(): DataStore =
+    if (store == null) try {
+      store = DataStore.builder.persistentFolder(folder("store")).build()
+      store
+    } catch {
+      case e: RocksDBException =>
+        if (e.getMessage.contains("Permission denied"))
+          throw new RuntimeException(
+            "Permission denied! if you are trying to mount host folder to Configurator container, " +
+              "the UID of the host folder must be 1000 since the user of Configurator container is ohara and its UID is 1000",
+            e
+          )
+        else throw e
+    }
+    else store
 
-  private[this] def getOrCreateCollie(): ServiceCollie = if (serviceCollie == null) {
-    this.serviceCollie =
-      if (k8sClient == null) ServiceCollie.builderOfSsh.dataCollie(createCollie()).build
-      else ServiceCollie.builderOfK8s().dataCollie(createCollie()).k8sClient(k8sClient).build()
-    serviceCollie
-  } else serviceCollie
+  private[this] def getOrCreateCollie(): ServiceCollie =
+    if (serviceCollie == null) {
+      this.serviceCollie =
+        if (k8sClient == null) ServiceCollie.builderOfSsh.dataCollie(createCollie()).build
+        else ServiceCollie.builderOfK8s().dataCollie(createCollie()).k8sClient(k8sClient).build()
+      serviceCollie
+    } else serviceCollie
 
   /**
     * do the action and auto-release all internal objects if the action fails.
@@ -487,13 +500,14 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     * @tparam T return type
     * @return object created by action
     */
-  private[this] def doOrReleaseObjects[T](f: => T): T = try f
-  catch {
-    case t: Throwable =>
-      Configurator.LOG.error("failed to pre-create resource", t)
-      cleanup()
-      throw t
-  }
+  private[this] def doOrReleaseObjects[T](f: => T): T =
+    try f
+    catch {
+      case t: Throwable =>
+        Configurator.LOG.error("failed to pre-create resource", t)
+        cleanup()
+        throw t
+    }
 
   private[this] def alreadyExistMessage(key: String) = s"$key already exists!!!"
 

@@ -24,7 +24,6 @@ object ServerStarter {
   private val usageMessage = "Usage: [--source | --sink] [$$port]"
 
   def main(args: Array[String]): Unit = {
-
     parseArgs(args) match {
       case Success(cmdArgs) =>
         val webServer = new WebServer(cmdArgs.serverType)
@@ -52,5 +51,4 @@ object ServerStarter {
       throw new IllegalArgumentException(usageMessage)
     }
   }
-
 }

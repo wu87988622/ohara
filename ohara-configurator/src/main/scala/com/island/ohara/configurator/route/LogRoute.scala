@@ -36,9 +36,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * this is just a workaround.
   */
 object LogRoute {
-
   private[this] def route(clusterKey: ObjectKey, data: Future[Map[ContainerInfo, String]])(
-    implicit executionContext: ExecutionContext): server.Route =
+    implicit executionContext: ExecutionContext
+  ): server.Route =
     complete(data.map { d =>
       if (d.isEmpty) throw new NoSuchClusterException(s"cluster:$clusterKey does not exist")
       else
@@ -72,7 +72,8 @@ object LogRoute {
                   clusterKey = ObjectKey.of("N/A", "unknown"),
                   logs = Seq(NodeLog(hostname = "unknown", value = e.getMessage))
                 )
-            })
+            }
+        )
       } ~ path(ZOOKEEPER_PREFIX_PATH / Segment) { clusterName =>
         parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
           val clusterKey =

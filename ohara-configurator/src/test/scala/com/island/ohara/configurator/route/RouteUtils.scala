@@ -19,7 +19,6 @@ package com.island.ohara.configurator.route
 import java.io.File
 
 object RouteUtils {
-
   /**
     * the test of Configurator is executed after building a test-purposed stream jar (see ohara-configurator/build.gradle)
     * so it is ok to assume the jar file exists

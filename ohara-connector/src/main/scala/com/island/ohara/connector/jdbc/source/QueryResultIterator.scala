@@ -22,10 +22,11 @@ import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 
-class QueryResultIterator(rdbDataTypeConverter: RDBDataTypeConverter,
-                          var resultSet: ResultSet,
-                          columns: Seq[DatabaseClient.Column])
-    extends Iterator[Seq[ColumnInfo[_]]] {
+class QueryResultIterator(
+  rdbDataTypeConverter: RDBDataTypeConverter,
+  var resultSet: ResultSet,
+  columns: Seq[DatabaseClient.Column]
+) extends Iterator[Seq[ColumnInfo[_]]] {
   private[this] var cache: Seq[ColumnInfo[_]] = _
 
   /**

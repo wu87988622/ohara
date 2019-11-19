@@ -21,7 +21,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorValidator extends OharaTest {
-
   /**
     * we won't make connection in this test
     */
@@ -64,14 +63,16 @@ class TestConnectorValidator extends OharaTest {
     an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().numberOfTasks(-1)
 
   @Test
-  def nullClass(): Unit = an[NullPointerException] should be thrownBy notWorkingClient
-    .connectorValidator()
-    .connectorClass(null.asInstanceOf[Class[_]])
+  def nullClass(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient
+      .connectorValidator()
+      .connectorClass(null.asInstanceOf[Class[_]])
 
   @Test
-  def nullClassName(): Unit = an[NullPointerException] should be thrownBy notWorkingClient
-    .connectorValidator()
-    .className(null.asInstanceOf[String])
+  def nullClassName(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient
+      .connectorValidator()
+      .className(null.asInstanceOf[String])
 
   @Test
   def emptyClassName(): Unit =

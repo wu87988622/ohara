@@ -31,8 +31,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestStreamCreator extends OharaTest {
-
-  private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
+  private[this] def topicKey(): TopicKey             = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of("group", name)
 
   private[this] def brokerKey(): ObjectKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
@@ -170,7 +169,8 @@ class TestStreamCreator extends OharaTest {
         .toTopicKey(topicKey())
         .jmxPort(CommonUtils.availablePort())
         .nodeName(CommonUtils.randomString())
-        .create())
+        .create()
+    )
 
   @Test
   def testParseJarKey(): Unit = {
@@ -220,16 +220,17 @@ class TestStreamCreator extends OharaTest {
     * the ignored jmx port is replaced by random one.
     */
   @Test
-  def ignoreJmxPort(): Unit = CommonUtils.requireConnectionPort(
-    streamCreator()
-      .name(CommonUtils.randomString(10))
-      .group(CommonUtils.randomString(10))
-      .brokerClusterKey(brokerKey())
-      .jarKey(fileInfo.key)
-      .fromTopicKey(topicKey())
-      .toTopicKey(topicKey())
-      .nodeName(CommonUtils.randomString())
-      .creation
-      .jmxPort)
-
+  def ignoreJmxPort(): Unit =
+    CommonUtils.requireConnectionPort(
+      streamCreator()
+        .name(CommonUtils.randomString(10))
+        .group(CommonUtils.randomString(10))
+        .brokerClusterKey(brokerKey())
+        .jarKey(fileInfo.key)
+        .fromTopicKey(topicKey())
+        .toTopicKey(topicKey())
+        .nodeName(CommonUtils.randomString())
+        .creation
+        .jmxPort
+    )
 }

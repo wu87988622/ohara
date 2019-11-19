@@ -56,7 +56,8 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
           .nodeName(nodes.head.hostname)
           .create()
           .map(_.key)
-          .flatMap(key => zkApi.start(key).map(_ => key)))
+          .flatMap(key => zkApi.start(key).map(_ => key))
+      )
       await { () =>
         try result(zkApi.get(zkKey)).state.map(_.toLowerCase).contains("running")
         catch {
@@ -72,7 +73,8 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
           .nodeName(nodes.head.hostname)
           .create()
           .map(_.key)
-          .flatMap(key => bkApi.start(key).map(_ => key)))
+          .flatMap(key => bkApi.start(key).map(_ => key))
+      )
       await { () =>
         try result(bkApi.get(bkKey)).state.map(_.toLowerCase).contains("running")
         catch {
@@ -89,7 +91,8 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
           .freePort(freePort)
           .create()
           .map(_.key)
-          .flatMap(key => wkApi.start(key).map(_ => key)))
+          .flatMap(key => wkApi.start(key).map(_ => key))
+      )
       await { () =>
         try result(wkApi.get(wkKey)).state.map(_.toLowerCase).contains("running")
         catch {

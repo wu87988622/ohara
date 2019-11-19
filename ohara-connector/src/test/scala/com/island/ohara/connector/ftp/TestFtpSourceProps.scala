@@ -22,17 +22,16 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestFtpSourceProps extends OharaTest {
-
   @Test
   def testGetter(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val port = 12345
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
-    val inputFolder = CommonUtils.randomString()
+    val hostname        = CommonUtils.randomString()
+    val port            = 12345
+    val user            = CommonUtils.randomString()
+    val password        = CommonUtils.randomString()
+    val inputFolder     = CommonUtils.randomString()
     val completedFolder = CommonUtils.randomString()
-    val errorFolder = CommonUtils.randomString()
-    val encode = CommonUtils.randomString()
+    val errorFolder     = CommonUtils.randomString()
+    val encode          = CommonUtils.randomString()
     val props = FtpSourceProps(
       hostname = hostname,
       port = port,
@@ -52,5 +51,4 @@ class TestFtpSourceProps extends OharaTest {
     props(ERROR_FOLDER_KEY) shouldBe errorFolder
     props(FILE_ENCODE_KEY) shouldBe encode
   }
-
 }

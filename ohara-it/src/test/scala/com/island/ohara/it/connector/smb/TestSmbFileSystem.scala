@@ -21,7 +21,6 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.AssumptionViolatedException
 
 class TestSmbFileSystem extends FileSystemTestBase {
-
   private[this] val itProps: ITSmbProps = try ITSmbProps(sys.env)
   catch {
     case e: IllegalArgumentException =>

@@ -24,7 +24,6 @@ import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 class TestFtpSourceDefinitions extends OharaTest {
-
   private[this] val ftpSource = new FtpSource
   @Test
   def checkInputFolder(): Unit = {

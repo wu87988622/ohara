@@ -24,9 +24,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
 class TestAgent extends OharaTest {
-
   private[this] val customCommands = Map(
-    "hello" -> Seq("world"),
+    "hello"    -> Seq("world"),
     "chia7712" -> Seq("jellynina")
   )
 

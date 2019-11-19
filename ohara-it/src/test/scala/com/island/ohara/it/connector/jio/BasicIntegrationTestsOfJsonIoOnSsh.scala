@@ -32,7 +32,7 @@ abstract class BasicIntegrationTestsOfJsonIoOnSsh extends BasicIntegrationTestsO
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   override protected val configurator: Configurator = {
     val configurator = Configurator.builder.build()
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    val nodeApi      = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodes.foreach(
       node =>
         result(
@@ -41,7 +41,9 @@ abstract class BasicIntegrationTestsOfJsonIoOnSsh extends BasicIntegrationTestsO
             .port(node.port.get)
             .user(node.user.get)
             .password(node.password.get)
-            .create()))
+            .create()
+        )
+    )
     configurator
   }
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)

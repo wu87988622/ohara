@@ -26,16 +26,17 @@ import com.island.ohara.connector.jdbc.util.ColumnInfo
   * This class for converter the ResultSet data
   */
 object ResultSetDataConverter {
-
   /**
     * Converter the ResultSet a record data
     * @param resultSet
     * @param columns
     * @return
     */
-  protected[source] def converterRecord(rdbDataTypeConverter: RDBDataTypeConverter,
-                                        resultSet: ResultSet,
-                                        columns: Seq[DatabaseClient.Column]): Seq[ColumnInfo[_]] = {
+  protected[source] def converterRecord(
+    rdbDataTypeConverter: RDBDataTypeConverter,
+    resultSet: ResultSet,
+    columns: Seq[DatabaseClient.Column]
+  ): Seq[ColumnInfo[_]] = {
     columns.map(column => {
       val resultValue: Any = rdbDataTypeConverter.converterValue(resultSet, column)
       // Setting data value to ColumnInfo case class

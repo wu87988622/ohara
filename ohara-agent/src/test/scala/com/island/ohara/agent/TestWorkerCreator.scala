@@ -28,7 +28,6 @@ import spray.json.DeserializationException
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestWorkerCreator extends OharaTest {
-
   private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext, creation) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
     if (executionContext == null) throw new AssertionError()
@@ -39,7 +38,8 @@ class TestWorkerCreator extends OharaTest {
         state = None,
         error = None,
         lastModified = 0
-      ))
+      )
+    )
   }
 
   @Test
@@ -149,23 +149,24 @@ class TestWorkerCreator extends OharaTest {
   }
 
   @Test
-  def testNameLength(): Unit = wkCreator()
-    .name(CommonUtils.randomString(10))
-    .group(CommonUtils.randomString(10))
-    .brokerClusterKey(ObjectKey.of("default", "bk"))
-    .clientPort(CommonUtils.availablePort())
-    .jmxPort(8084)
-    .groupId(CommonUtils.randomString(10))
-    .configTopicName(CommonUtils.randomString(10))
-    .configTopicReplications(1)
-    .statusTopicName(CommonUtils.randomString(10))
-    .statusTopicPartitions(1)
-    .statusTopicReplications(1)
-    .offsetTopicName(CommonUtils.randomString(10))
-    .offsetTopicPartitions(1)
-    .offsetTopicReplications(1)
-    .nodeName(CommonUtils.randomString())
-    .create()
+  def testNameLength(): Unit =
+    wkCreator()
+      .name(CommonUtils.randomString(10))
+      .group(CommonUtils.randomString(10))
+      .brokerClusterKey(ObjectKey.of("default", "bk"))
+      .clientPort(CommonUtils.availablePort())
+      .jmxPort(8084)
+      .groupId(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
+      .configTopicReplications(1)
+      .statusTopicName(CommonUtils.randomString(10))
+      .statusTopicPartitions(1)
+      .statusTopicReplications(1)
+      .offsetTopicName(CommonUtils.randomString(10))
+      .offsetTopicPartitions(1)
+      .offsetTopicReplications(1)
+      .nodeName(CommonUtils.randomString())
+      .create()
 
   @Test
   def testInvalidName(): Unit =

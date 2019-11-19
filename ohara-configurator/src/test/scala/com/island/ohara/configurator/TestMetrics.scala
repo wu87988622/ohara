@@ -41,25 +41,27 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestMetrics extends WithBrokerWorker {
-
   private[this] val configurator =
     Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi     = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val streamApi    = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val fileApi      = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   private[this] val nodeNames = workerClusterInfo.nodeNames
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
-    CommonUtils.await(() => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
-                      java.time.Duration.ofSeconds(20))
+    CommonUtils.await(
+      () => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
+      java.time.Duration.ofSeconds(20)
+    )
   }
 
   @Test
@@ -68,8 +70,10 @@ class TestMetrics extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString())
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(topic.key))
     val producer = Producer
       .builder()
@@ -108,8 +112,10 @@ class TestMetrics extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString())
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(topic.key))
 
     val sink = result(
@@ -119,7 +125,8 @@ class TestMetrics extends WithBrokerWorker {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     sink.metrics.meters.size shouldBe 0
 
@@ -148,8 +155,10 @@ class TestMetrics extends WithBrokerWorker {
       topicApi.request
         .name(topicName)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(topic.key))
 
     val sink = result(
@@ -159,7 +168,8 @@ class TestMetrics extends WithBrokerWorker {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -171,14 +181,16 @@ class TestMetrics extends WithBrokerWorker {
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.metrics.meters.nonEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
 
     result(connectorApi.stop(sink.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.metrics.meters.isEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
   }
 
   @Test
@@ -188,8 +200,10 @@ class TestMetrics extends WithBrokerWorker {
       topicApi.request
         .name(topicName)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(topic.key))
 
     val source = result(
@@ -198,10 +212,12 @@ class TestMetrics extends WithBrokerWorker {
         .className("com.island.ohara.connector.perf.PerfSource")
         .topicKey(topic.key)
         .numberOfTasks(1)
-        .settings(Map("perf.batch" -> JsNumber(1),
-                      "perf.frequence" -> JsString(java.time.Duration.ofSeconds(1).toString)))
+        .settings(
+          Map("perf.batch" -> JsNumber(1), "perf.frequence" -> JsString(java.time.Duration.ofSeconds(1).toString))
+        )
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -213,29 +229,34 @@ class TestMetrics extends WithBrokerWorker {
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.metrics.meters.nonEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
 
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == topic.key).head.metrics.meters.nonEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
 
     result(connectorApi.stop(source.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.metrics.meters.isEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
 
     // remove topic
     result(connectorApi.delete(source.key))
-    CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.key == source.key),
-                      java.time.Duration.ofSeconds(30))
+    CommonUtils.await(
+      () => !result(pipelineApi.get(pipeline.key)).objects.exists(_.key == source.key),
+      java.time.Duration.ofSeconds(30)
+    )
   }
 
   @Test
   def testStreamMeterInPipeline(): Unit = {
-    val wkInfo = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys)).head
-    val jar = RouteUtils.streamFile
+    val wkInfo  = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys)).head
+    val jar     = RouteUtils.streamFile
     val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
     jarInfo.name shouldBe jar.getName
 
@@ -243,14 +264,18 @@ class TestMetrics extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     val t2 = result(
       topicApi.request
         .name(CommonUtils.randomString)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     result(topicApi.start(t1.key))
     result(topicApi.start(t2.key))
 
@@ -260,9 +285,11 @@ class TestMetrics extends WithBrokerWorker {
         .fromTopicKey(t1.key)
         .toTopicKey(t2.key)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -270,7 +297,8 @@ class TestMetrics extends WithBrokerWorker {
       pipelineApi.request
         .name(CommonUtils.randomString())
         .flows(Seq(Flow(t1.key, Set(stream.key)), Flow(stream.key, Set(t2.key))))
-        .create())
+        .create()
+    )
 
     pipeline.objects.filter(_.key == stream.key).head.metrics.meters.size shouldBe 0
 
@@ -278,13 +306,15 @@ class TestMetrics extends WithBrokerWorker {
     // the stream is running so we should "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.nonEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
 
     result(streamApi.stop(stream.key))
     // the stream is stopped so we should NOT "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.isEmpty,
-      java.time.Duration.ofSeconds(20))
+      java.time.Duration.ofSeconds(20)
+    )
   }
 
   @After

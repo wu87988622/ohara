@@ -31,13 +31,13 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestWorkerRoute extends OharaTest {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
+  private[this] val configurator    = Configurator.builder.fake(numberOfCluster, 0).build()
 
   /**
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
-  private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val workerApi            = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val brokerClusterKey =
     Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds).head.key
@@ -74,7 +74,8 @@ class TestWorkerRoute extends OharaTest {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .brokerClusterKey(brokerClusterKey)
-        .create()).brokerClusterKey shouldBe brokerClusterKey
+        .create()
+    ).brokerClusterKey shouldBe brokerClusterKey
 
   @Test
   def createWithIncorrectBk(): Unit =
@@ -83,21 +84,22 @@ class TestWorkerRoute extends OharaTest {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .brokerClusterKey(ObjectKey.of("default", CommonUtils.randomString()))
-        .create())
+        .create()
+    )
 
   @Test
   def testAllSetting(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val clientPort = CommonUtils.availablePort()
-    val jmxPort = CommonUtils.availablePort()
-    val groupId = CommonUtils.randomString(10)
-    val configTopicName = CommonUtils.randomString(10)
+    val name                           = CommonUtils.randomString(10)
+    val clientPort                     = CommonUtils.availablePort()
+    val jmxPort                        = CommonUtils.availablePort()
+    val groupId                        = CommonUtils.randomString(10)
+    val configTopicName                = CommonUtils.randomString(10)
     val configTopicReplications: Short = 2
-    val offsetTopicName = CommonUtils.randomString(10)
-    val offsetTopicPartitions = 2
+    val offsetTopicName                = CommonUtils.randomString(10)
+    val offsetTopicPartitions          = 2
     val offsetTopicReplications: Short = 2
-    val statusTopicName = CommonUtils.randomString(10)
-    val statusTopicPartitions = 2
+    val statusTopicName                = CommonUtils.randomString(10)
+    val statusTopicPartitions          = 2
     val statusTopicReplications: Short = 2
 
     val wkCluster = result(
@@ -116,7 +118,8 @@ class TestWorkerRoute extends OharaTest {
         .statusTopicPartitions(statusTopicPartitions)
         .statusTopicReplications(statusTopicReplications)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     wkCluster.jmxPort shouldBe jmxPort
     wkCluster.clientPort shouldBe clientPort
     wkCluster.groupId shouldBe groupId
@@ -181,7 +184,8 @@ class TestWorkerRoute extends OharaTest {
     )
     result(workerApi.start(cluster.key))
     result(workerApi.addNode(cluster.key, nodeNames.last).flatMap(_ => workerApi.get(cluster.key))).nodeNames shouldBe cluster.nodeNames ++ Set(
-      nodeNames.last)
+      nodeNames.last
+    )
   }
 
   @Test
@@ -392,7 +396,8 @@ class TestWorkerRoute extends OharaTest {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .brokerClusterKey(brokerClusterKey)
-        .create())
+        .create()
+    )
     result(workerApi.start(wk1.key))
     result(workerApi.forceStop(wk1.key))
     result(workerApi.delete(wk1.key))
@@ -435,11 +440,12 @@ class TestWorkerRoute extends OharaTest {
 
     // same name but different group
     val name = CommonUtils.randomString(10)
-    val bk1 = result(workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
+    val bk1  = result(workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     bk1.name shouldBe name
     bk1.group should not be group
     val bk2 = result(
-      workerApi.request.name(name).group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
+      workerApi.request.name(name).group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()
+    )
     bk2.name shouldBe name
     bk2.group shouldBe group
 
@@ -448,7 +454,7 @@ class TestWorkerRoute extends OharaTest {
 
   @Test
   def testNameFilter(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name   = CommonUtils.randomString(10)
     val worker = result(workerApi.request.name(name).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
@@ -459,7 +465,7 @@ class TestWorkerRoute extends OharaTest {
 
   @Test
   def testGroupFilter(): Unit = {
-    val group = CommonUtils.randomString(10)
+    val group  = CommonUtils.randomString(10)
     val worker = result(workerApi.request.group(group).nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
@@ -509,7 +515,9 @@ class TestWorkerRoute extends OharaTest {
             .nodeNames(nodeNames)
             .brokerClusterKey(brokerClusterKey)
             .create()
-            .flatMap(z => workerApi.start(z.key))))
+            .flatMap(z => workerApi.start(z.key))
+        )
+    )
     result(workerApi.list()).size shouldBe 4
     result(workerApi.start(worker.key))
     val workers = result(workerApi.query.aliveNodes(Set(nodeNames.head)).execute())
@@ -535,7 +543,8 @@ class TestWorkerRoute extends OharaTest {
         .className(CommonUtils.randomString(10))
         .topicKey(topic.key)
         .workerClusterKey(worker.key)
-        .create())
+        .create()
+    )
 
     intercept[IllegalArgumentException] {
       result(workerApi.delete(worker.key))

@@ -22,7 +22,6 @@ import com.island.ohara.kafka.connector.storage.FileSystem
 import com.island.ohara.client.filesystem
 
 class SmbSourceTask extends CsvSourceTask {
-
   /**
     * Return the client of SMB for this connector
     *

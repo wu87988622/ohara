@@ -44,7 +44,6 @@ import scala.concurrent.duration.{Duration, _}
   * port. will replace the older cluster info, and then you will get the new cluster info when calling snapshot method.
   */
 trait ServiceCache extends Releasable {
-
   /**
     * @return the cached data
     */
@@ -83,14 +82,13 @@ trait ServiceCache extends Releasable {
 }
 
 object ServiceCache {
-
   sealed abstract class Service
   object Service extends Enum[Service] {
     case object ZOOKEEPER extends Service
-    case object BROKER extends Service
-    case object WORKER extends Service
-    case object STREAM extends Service
-    case object UNKNOWN extends Service
+    case object BROKER    extends Service
+    case object WORKER    extends Service
+    case object STREAM    extends Service
+    case object UNKNOWN   extends Service
   }
 
   def builder: Builder = new Builder
@@ -108,8 +106,8 @@ object ServiceCache {
   }
 
   class Builder private[ServiceCache] extends com.island.ohara.common.pattern.Builder[ServiceCache] {
-    private[this] var frequency: Duration = 5 seconds
-    private[this] var lazyRemove: Duration = 0 seconds
+    private[this] var frequency: Duration                                    = 5 seconds
+    private[this] var lazyRemove: Duration                                   = 0 seconds
     private[this] var supplier: () => Map[ClusterStatus, Seq[ContainerInfo]] = _
 
     @Optional("default value is 5 seconds")
@@ -151,10 +149,12 @@ object ServiceCache {
       new ServiceCache {
         private[this] val cache = RefreshableCache
           .builder[RequestKey, (ClusterStatus, Seq[ContainerInfo])]()
-          .supplier(() =>
-            supplier().map {
-              case (clusterInfo, containers) => key(clusterInfo) -> (clusterInfo -> containers)
-            }.asJava)
+          .supplier(
+            () =>
+              supplier().map {
+                case (clusterInfo, containers) => key(clusterInfo) -> (clusterInfo -> containers)
+              }.asJava
+          )
           .frequency(java.time.Duration.ofMillis(frequency.toMillis))
           .preRemoveObserver((key, _) => CommonUtils.current() - key.createdTime > lazyRemove.toMillis)
           .build()

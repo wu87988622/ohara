@@ -61,16 +61,16 @@ import scala.reflect.ClassTag
   */
 trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     extends com.island.ohara.common.pattern.Builder[server.Route] {
-  private[this] var root: String = _
-  private[this] var customPost: Option[() => Route] = None
-  private[this] var hookOfCreation: Option[HookOfCreation[Creation, Res]] = None
-  private[this] var hookOfUpdating: Option[HookOfUpdating[Updating, Res]] = None
-  private[this] var hookOfGet: HookOfGet[Res] = (res: Res) => Future.successful(res)
-  private[this] var hookOfList: HookOfList[Res] = (res: Seq[Res]) => Future.successful(res)
-  private[this] var hookBeforeDelete: HookBeforeDelete = (_: ObjectKey) => Future.successful(Unit)
-  private[this] val hookOfPutActions = mutable.Map[String, HookOfAction[Res]]()
-  private[this] var hookOfFinalPutAction: Option[HookOfAction[Res]] = None
-  private[this] val hookOfDeleteActions = mutable.Map[String, HookOfAction[ObjectKey]]()
+  private[this] var root: String                                             = _
+  private[this] var customPost: Option[() => Route]                          = None
+  private[this] var hookOfCreation: Option[HookOfCreation[Creation, Res]]    = None
+  private[this] var hookOfUpdating: Option[HookOfUpdating[Updating, Res]]    = None
+  private[this] var hookOfGet: HookOfGet[Res]                                = (res: Res) => Future.successful(res)
+  private[this] var hookOfList: HookOfList[Res]                              = (res: Seq[Res]) => Future.successful(res)
+  private[this] var hookBeforeDelete: HookBeforeDelete                       = (_: ObjectKey) => Future.successful(Unit)
+  private[this] val hookOfPutActions                                         = mutable.Map[String, HookOfAction[Res]]()
+  private[this] var hookOfFinalPutAction: Option[HookOfAction[Res]]          = None
+  private[this] val hookOfDeleteActions                                      = mutable.Map[String, HookOfAction[ObjectKey]]()
   private[this] var hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]] = None
 
   def root(root: String): RouteBuilder[Creation, Updating, Res] = {
@@ -131,15 +131,18 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   }
 
   @Optional("add custom hook to response specific DELETE action")
-  def hookOfDeleteAction(action: String,
-                         hookOfAction: HookOfAction[ObjectKey]): RouteBuilder[Creation, Updating, Res] = {
+  def hookOfDeleteAction(
+    action: String,
+    hookOfAction: HookOfAction[ObjectKey]
+  ): RouteBuilder[Creation, Updating, Res] = {
     this.hookOfDeleteActions += (CommonUtils.requireNonEmpty(action) -> Objects.requireNonNull(hookOfAction))
     this
   }
 
   @Optional("add custom hook to response remaining DELETE action")
   def hookOfFinalDeleteAction(
-    hookOfFinalDeleteAction: HookOfAction[ObjectKey]): RouteBuilder[Creation, Updating, Res] = {
+    hookOfFinalDeleteAction: HookOfAction[ObjectKey]
+  ): RouteBuilder[Creation, Updating, Res] = {
     this.hookOfFinalDeleteAction = Some(hookOfFinalDeleteAction)
     this
   }
@@ -158,22 +161,22 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     hookOfFinalDeleteAction = hookOfFinalDeleteAction
   )
 
-  protected def doBuild(root: String,
-                        customPost: Option[() => Route],
-                        hookOfCreation: Option[HookOfCreation[Creation, Res]],
-                        hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
-                        hookOfList: HookOfList[Res],
-                        hookOfGet: HookOfGet[Res],
-                        hookBeforeDelete: HookBeforeDelete,
-                        hookOfPutActions: Map[String, HookOfAction[Res]],
-                        hookOfFinalPutAction: Option[HookOfAction[Res]],
-                        hookOfDeleteActions: Map[String, HookOfAction[ObjectKey]],
-                        hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]]): Route
-
+  protected def doBuild(
+    root: String,
+    customPost: Option[() => Route],
+    hookOfCreation: Option[HookOfCreation[Creation, Res]],
+    hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete,
+    hookOfPutActions: Map[String, HookOfAction[Res]],
+    hookOfFinalPutAction: Option[HookOfAction[Res]],
+    hookOfDeleteActions: Map[String, HookOfAction[ObjectKey]],
+    hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]]
+  ): Route
 }
 
 object RouteBuilder {
-
   def apply[Creation <: BasicCreation, Updating, Res <: Data: ClassTag]()(
     implicit store: DataStore,
     // normally, update request does not carry the name field,
@@ -182,18 +185,21 @@ object RouteBuilder {
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Updating],
     rm2: RootJsonFormat[Res],
-    executionContext: ExecutionContext): RouteBuilder[Creation, Updating, Res] =
-    (root: String,
-     customPost: Option[() => Route],
-     hookOfCreation: Option[HookOfCreation[Creation, Res]],
-     hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
-     hookOfList: HookOfList[Res],
-     hookOfGet: HookOfGet[Res],
-     hookBeforeDelete: HookBeforeDelete,
-     hookOfPutActions: Map[String, HookOfAction[Res]],
-     hookOfFinalPutAction: Option[HookOfAction[Res]],
-     hookOfDeleteActions: Map[String, HookOfAction[ObjectKey]],
-     hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]]) =>
+    executionContext: ExecutionContext
+  ): RouteBuilder[Creation, Updating, Res] =
+    (
+      root: String,
+      customPost: Option[() => Route],
+      hookOfCreation: Option[HookOfCreation[Creation, Res]],
+      hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
+      hookOfList: HookOfList[Res],
+      hookOfGet: HookOfGet[Res],
+      hookBeforeDelete: HookBeforeDelete,
+      hookOfPutActions: Map[String, HookOfAction[Res]],
+      hookOfFinalPutAction: Option[HookOfAction[Res]],
+      hookOfDeleteActions: Map[String, HookOfAction[ObjectKey]],
+      hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]]
+    ) =>
       pathPrefix(root) {
         pathEnd {
           customPost
@@ -213,7 +219,8 @@ object RouteBuilder {
                       // the empty stuff causes false always since there is nothing matched to "empty"
                       // hence, we remove them from parameters for careless users :)
                       case (key, value) => key.nonEmpty && value.nonEmpty
-                    })))))
+                    }))))
+                )
               }
             }
         } ~ path(Segment) { name =>
@@ -224,8 +231,11 @@ object RouteBuilder {
                 rm.check(NAME_KEY, JsString(name)).value
               )
             get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
-              delete(complete(
-                hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
+              delete(
+                complete(
+                  hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent))
+                )
+              ) ~
               put(
                 entity(as[Updating])(
                   update =>
@@ -236,11 +246,12 @@ object RouteBuilder {
                             store
                               .get[Res](key)
                               .flatMap(previous => hook(key = key, update = update, previous = previous))
-                              .flatMap(store.add)))
+                              .flatMap(store.add)
+                          )
+                      )
                       .getOrElse(routeToOfficialUrl(s"/$root/${key.name}?${key.group()}"))
                 )
               )
-
           }
         }
       } ~ pathPrefix(root / Segment / Segment) {
@@ -266,5 +277,5 @@ object RouteBuilder {
                 .getOrElse(routeToOfficialUrl(s"/$root/$subName"))
             }
           }
-    }
+      }
 }

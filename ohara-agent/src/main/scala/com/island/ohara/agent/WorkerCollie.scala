@@ -33,7 +33,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait WorkerCollie extends Collie[WorkerClusterStatus] {
-
   override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
 
   // TODO: remove this hard code (see #2957)
@@ -62,14 +61,15 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
         case None => Future.successful(Map.empty[Node, ContainerInfo])
       }
       brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
-      pluginInfos <- dataCollie.values[FileInfo](creation.pluginKeys)
-      sharedJarInfos <- dataCollie.values[FileInfo](creation.sharedJarKeys)
-    } yield
-      (existentNodes,
-       allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
-       brokerClusterInfo,
-       pluginInfos,
-       sharedJarInfos)
+      pluginInfos       <- dataCollie.values[FileInfo](creation.pluginKeys)
+      sharedJarInfos    <- dataCollie.values[FileInfo](creation.sharedJarKeys)
+    } yield (
+      existentNodes,
+      allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
+      brokerClusterInfo,
+      pluginInfos,
+      sharedJarInfos
+    )
 
     resolveRequiredInfos.flatMap {
       case (existentNodes, newNodes, brokerClusterInfo, pluginInfos, sharedJarInfos) =>
@@ -87,7 +87,8 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
               // Normally, the jar host name should be resolvable by worker since
               // we should add the "hostname" to configurator for most cases...
               // This is for those configurators that have no hostname (for example, temp configurator)
-                ++ pluginInfos.map(_.url.get.getHost).toSet)
+                ++ pluginInfos.map(_.url.get.getHost).toSet
+            )
             existentNodes.foreach {
               case (node, container) => hookOfNewRoute(node, container, route)
             }
@@ -111,7 +112,8 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                         hostIp = Collie.UNKNOWN,
                         hostPort = port,
                         containerPort = port
-                    ))
+                      )
+                  )
                   .toSeq,
                 environments = Map(
                   "KAFKA_JMX_OPTS" -> (s"-Dcom.sun.management.jmxremote" +
@@ -121,7 +123,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
                     s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
                     s" -Djava.rmi.server.hostname=${newNode.hostname}"),
                   // define the urls as string list so as to simplify the script for worker
-                  "WORKER_PLUGIN_URLS" -> pluginInfos.map(_.url.get.toURI.toASCIIString).mkString(","),
+                  "WORKER_PLUGIN_URLS"     -> pluginInfos.map(_.url.get.toURI.toASCIIString).mkString(","),
                   "WORKER_SHARED_JAR_URLS" -> sharedJarInfos.map(_.url.get.toURI.toASCIIString).mkString(",")
                 ),
                 hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
@@ -168,7 +170,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
           }
         successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
-          val state = toClusterState(aliveContainers).map(_.name)
+          val state           = toClusterState(aliveContainers).map(_.name)
           postCreate(
             new WorkerClusterStatus(
               group = creation.group,
@@ -204,11 +206,13 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     * @param node node object
     * @param route ip-host mapping
     */
-  protected def doCreator(executionContext: ExecutionContext,
-                          containerInfo: ContainerInfo,
-                          node: Node,
-                          route: Map[String, String],
-                          arguments: Seq[String]): Future[Unit]
+  protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit]
 
   /**
     * After the worker container creates complete, you maybe need to do other things.
@@ -223,8 +227,9 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     * @param workerClusterInfo target cluster
     * @return worker client
     */
-  def workerClient(workerClusterInfo: WorkerClusterInfo)(
-    implicit executionContext: ExecutionContext): Future[WorkerClient] =
+  def workerClient(
+    workerClusterInfo: WorkerClusterInfo
+  )(implicit executionContext: ExecutionContext): Future[WorkerClient] =
     cluster(workerClusterInfo.key).map(_ => WorkerClient(workerClusterInfo))
 
   /**
@@ -232,12 +237,14 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     * @param cluster cluster
     * @return counter beans
     */
-  def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] = cluster.aliveNodes.flatMap { node =>
-    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
-  }.toSeq
+  def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
+    cluster.aliveNodes.flatMap { node =>
+      BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
+    }.toSeq
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterStatus] =
+    implicit executionContext: ExecutionContext
+  ): Future[WorkerClusterStatus] =
     Future.successful(
       new WorkerClusterStatus(
         group = key.group(),
@@ -248,7 +255,8 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None
-      ))
+      )
+    )
 }
 
 object WorkerCollie {

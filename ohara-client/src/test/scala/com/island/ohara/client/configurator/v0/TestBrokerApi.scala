@@ -26,7 +26,6 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
 
 class TestBrokerApi extends OharaTest {
-
   private[this] final val access =
     BrokerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
 
@@ -46,21 +45,23 @@ class TestBrokerApi extends OharaTest {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = access
-    .nodeName(CommonUtils.randomString(10))
-    .zookeeperClusterKey(ObjectKey.of("g", "n"))
-    .creation
-    .name
-    .length should not be 0
+  def ignoreNameOnCreation(): Unit =
+    access
+      .nodeName(CommonUtils.randomString(10))
+      .zookeeperClusterKey(ObjectKey.of("g", "n"))
+      .creation
+      .name
+      .length should not be 0
 
   @Test
-  def testTags(): Unit = access
-    .nodeName(CommonUtils.randomString(10))
-    .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
-    .zookeeperClusterKey(ObjectKey.of("g", "n"))
-    .creation
-    .tags
-    .size shouldBe 2
+  def testTags(): Unit =
+    access
+      .nodeName(CommonUtils.randomString(10))
+      .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
+      .zookeeperClusterKey(ObjectKey.of("g", "n"))
+      .creation
+      .tags
+      .size shouldBe 2
 
   @Test
   def ignoreNodeNamesOnCreation(): Unit =
@@ -95,12 +96,12 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
+    val name       = CommonUtils.randomString(10)
+    val group      = CommonUtils.randomString(10)
     val clientPort = CommonUtils.availablePort()
-    val jmxPort = CommonUtils.availablePort()
-    val zkKey = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val nodeName = CommonUtils.randomString()
+    val jmxPort    = CommonUtils.availablePort()
+    val zkKey      = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val nodeName   = CommonUtils.randomString()
     val creation = access
       .name(name)
       .group(group)
@@ -119,7 +120,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def testExtraSettingInCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name  = CommonUtils.randomString(10)
     val name2 = JsString(CommonUtils.randomString(10))
     val creation = access
       .name(name)
@@ -154,12 +155,12 @@ class TestBrokerApi extends OharaTest {
     creation.jmxPort should not be 0
     creation.ports.size shouldBe 2
 
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
-    val zkKey = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val name       = CommonUtils.randomString(10)
+    val group      = CommonUtils.randomString(10)
+    val zkKey      = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
-    val jmxPort = CommonUtils.availablePort()
-    val creation2 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    val jmxPort    = CommonUtils.availablePort()
+    val creation2  = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name",
       |    "group": "$group",
@@ -197,10 +198,10 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def testUpdate(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
+    val name       = CommonUtils.randomString(10)
+    val group      = CommonUtils.randomString(10)
     val clientPort = CommonUtils.availablePort()
-    val nodeName = CommonUtils.randomString()
+    val nodeName   = CommonUtils.randomString()
 
     val creation = access.name(name).nodeName(nodeName).zookeeperClusterKey(ObjectKey.of("g", "n")).creation
     creation.name shouldBe name
@@ -571,7 +572,8 @@ class TestBrokerApi extends OharaTest {
         error = None,
         lastModified = CommonUtils.current(),
         topicDefinition = BrokerApi.TOPIC_DEFINITION
-      ))
+      )
+    )
     // serialize to json should see the object key (group, name)
     res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
     res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT

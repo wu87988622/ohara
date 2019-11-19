@@ -29,7 +29,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestControlConnector extends WithBrokerWorker {
-
   private[this] val configurator =
     Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
@@ -42,7 +41,8 @@ class TestControlConnector extends WithBrokerWorker {
   private[this] def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), java.time.Duration.ofSeconds(20))
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   @Test
   def testNormalCase(): Unit = {
@@ -50,8 +50,10 @@ class TestControlConnector extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
 
     val sink = result(
       connectorApi.request
@@ -60,7 +62,8 @@ class TestControlConnector extends WithBrokerWorker {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     // test idempotent start
     result(topicApi.start(topic.key))
@@ -73,7 +76,8 @@ class TestControlConnector extends WithBrokerWorker {
           try if (result(workerClient.exist(sink.key))) true else false
           catch {
             case _: Throwable => false
-        })
+          }
+      )
       await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
       result(connectorApi.get(sink.key)).status.get.state shouldBe State.RUNNING
 
@@ -103,8 +107,10 @@ class TestControlConnector extends WithBrokerWorker {
       topicApi.request
         .name(topicName)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -112,7 +118,8 @@ class TestControlConnector extends WithBrokerWorker {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
     // test start
     result(topicApi.start(topic.key))
     result(connectorApi.start(sink.key))
@@ -123,7 +130,8 @@ class TestControlConnector extends WithBrokerWorker {
           try if (result(workerClient.exist(sink.key))) true else false
           catch {
             case _: Throwable => false
-        })
+          }
+      )
       await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
 
       an[IllegalArgumentException] should be thrownBy result(
@@ -133,11 +141,14 @@ class TestControlConnector extends WithBrokerWorker {
           .className(classOf[DumbSink].getName)
           .numberOfTasks(1)
           .topicKey(topic.key)
-          .workerClusterKey(Await
-            .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
-            .head
-            .key)
-          .create())
+          .workerClusterKey(
+            Await
+              .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+              .head
+              .key
+          )
+          .create()
+      )
 
       // test stop. the connector should be removed
       result(connectorApi.stop(sink.key))
@@ -153,8 +164,10 @@ class TestControlConnector extends WithBrokerWorker {
       topicApi.request
         .name(topicName)
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -162,7 +175,8 @@ class TestControlConnector extends WithBrokerWorker {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
     // test start
     result(topicApi.start(topic.key))
     result(connectorApi.start(sink.key))
@@ -173,7 +187,8 @@ class TestControlConnector extends WithBrokerWorker {
           try if (result(workerClient.exist(sink.key))) true else false
           catch {
             case _: Throwable => false
-        })
+          }
+      )
       result(workerClient.delete(sink.key))
       result(workerClient.exist(sink.key)) shouldBe false
     } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
@@ -185,8 +200,10 @@ class TestControlConnector extends WithBrokerWorker {
       topicApi.request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key)
-        .create())
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
 
     val sink = result(
       connectorApi.request
@@ -195,7 +212,8 @@ class TestControlConnector extends WithBrokerWorker {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     result(topicApi.start(topic.key))
     result(connectorApi.start(sink.key))

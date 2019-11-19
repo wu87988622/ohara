@@ -34,7 +34,7 @@ import scala.concurrent.{Await, Future}
 class TestPipelineRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
-  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val fileApi   = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -46,7 +46,8 @@ class TestPipelineRoute extends OharaTest {
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   private[this] val nodeNames = workerClusterInfo.nodeNames
 
@@ -55,7 +56,8 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testFlowAndObjects(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     result(topicApi.start(topic.key))
 
     val connector = result(
@@ -65,7 +67,8 @@ class TestPipelineRoute extends OharaTest {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
     result(connectorApi.start(connector.key))
 
     var pipeline = result(
@@ -109,8 +112,8 @@ class TestPipelineRoute extends OharaTest {
   def testAddStreamToPipeline(): Unit = {
     // create worker
     val fileInfo = result(fileApi.request.file(RouteUtils.streamFile).upload())
-    val bk = result(brokerApi.list()).head
-    val from = result(topicApi.request.brokerClusterKey(bk.key).create())
+    val bk       = result(brokerApi.list()).head
+    val from     = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(from.key))
     val to = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(to.key))
@@ -123,10 +126,12 @@ class TestPipelineRoute extends OharaTest {
         .brokerClusterKey(bk.key)
         .jarKey(fileInfo.key)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(stream.key, Set.empty)).create())
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(stream.key, Set.empty)).create()
+    )
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe stream.key
     pipeline.flows.head.to shouldBe Set.empty
@@ -145,9 +150,10 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testNonexistentData(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
-    val name = CommonUtils.randomString()
-    val flow = Flow(from = topic.key, to = Set(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())))
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
+    val name     = CommonUtils.randomString()
+    val flow     = Flow(from = topic.key, to = Set(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())))
     val pipeline = result(pipelineApi.request.name(name).flow(flow).create())
     // the "to" is reference to an nonexistent data
     pipeline.objects.size shouldBe 1
@@ -156,10 +162,12 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def addMultiPipelines(): Unit = {
     val topic0 = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
 
     val topic1 = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
 
     val pipeline0 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.key, topic1.key).create())
 
@@ -174,7 +182,8 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def listConnectorWhichIsNotRunning(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
 
     val connector = result(
       connectorApi.request
@@ -183,7 +192,8 @@ class TestPipelineRoute extends OharaTest {
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topic.key)
-        .create())
+        .create()
+    )
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
 
@@ -197,7 +207,8 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testRunningConnector(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     result(topicApi.start(topic.key))
     val connector = result(
       connectorApi.request
@@ -206,12 +217,14 @@ class TestPipelineRoute extends OharaTest {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     result(connectorApi.start(connector.key))
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(connector.key, connector.key).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(connector.key, connector.key).create()
+    )
 
     // duplicate object is removed
     pipeline.objects.size shouldBe 1
@@ -224,7 +237,8 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def nonexistentConnectorClass(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     result(topicApi.start(topic.key))
 
     val connector = result(
@@ -234,7 +248,8 @@ class TestPipelineRoute extends OharaTest {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
     result(connectorApi.start(connector.key))
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
@@ -248,8 +263,9 @@ class TestPipelineRoute extends OharaTest {
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ =>
-      result(pipelineApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
+    (0 to 10).foreach(
+      _ => result(pipelineApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
+    )
 
   @Test
   def duplicateUpdate(): Unit = {
@@ -260,9 +276,9 @@ class TestPipelineRoute extends OharaTest {
 
   @Test
   def updatingNonexistentNameCanNotIgnoreFlows(): Unit = {
-    val name = CommonUtils.randomString()
+    val name             = CommonUtils.randomString()
     val flows: Seq[Flow] = Seq.empty
-    val pipeline = result(pipelineApi.request.name(name).flows(flows).update())
+    val pipeline         = result(pipelineApi.request.name(name).flows(flows).update())
     result(pipelineApi.list()).size shouldBe 1
     pipeline.name shouldBe name
     pipeline.flows shouldBe flows
@@ -271,9 +287,11 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def updateOnlyFlow(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[ObjectKey]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[ObjectKey]).update()
+    )
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe topic.key
     pipeline.flows.head.to.size shouldBe 0
@@ -286,7 +304,7 @@ class TestPipelineRoute extends OharaTest {
 
   @Test
   def testDuplicateObjectName(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name  = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(name).brokerClusterKey(result(brokerApi.list()).head.key).create())
 
     val connector = result(
@@ -296,10 +314,12 @@ class TestPipelineRoute extends OharaTest {
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
-        .create())
+        .create()
+    )
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, connector.key).create())
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, connector.key).create()
+    )
     pipeline.flows.size shouldBe 1
     pipeline.objects.size shouldBe 2
   }
@@ -332,7 +352,7 @@ class TestPipelineRoute extends OharaTest {
     // default group
     result(pipelineApi.request.create()).group shouldBe com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
-    val group = CommonUtils.randomString()
+    val group   = CommonUtils.randomString()
     val ftpInfo = result(pipelineApi.request.group(group).create())
     ftpInfo.group shouldBe group
 
@@ -353,10 +373,12 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testDuplicateObjects(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
 
     val pipeline = result(
-      pipelineApi.request.flows(Seq(Flow(topic.key, Set(topic.key)), Flow(topic.key, Set(topic.key)))).create())
+      pipelineApi.request.flows(Seq(Flow(topic.key, Set(topic.key)), Flow(topic.key, Set(topic.key)))).create()
+    )
 
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.key shouldBe topic.key
@@ -365,7 +387,8 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def connectorObjectAlwaysCarryClassName(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     val className = CommonUtils.randomString()
     val connector = result(
       connectorApi.request
@@ -373,7 +396,8 @@ class TestPipelineRoute extends OharaTest {
         .className(className)
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topic.key)
-        .create())
+        .create()
+    )
     val pipeline = result(pipelineApi.request.flow(Flow(connector.key, Set(topic.key))).create())
     pipeline.objects.size shouldBe 2
     pipeline.objects.find(_.key == connector.key).get.className shouldBe Some(className)
@@ -382,20 +406,23 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testRefresh(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topic.key)
-        .create())
+        .create()
+    )
     val pipeline = result(
       pipelineApi.request
       // the first flow contains the topic in "to"
       // the second flow contains the topic in "from"
         .flows(Seq(Flow(connector.key, Set(topic.key)), Flow(topic.key, Set(connector.key))))
-        .create())
+        .create()
+    )
     pipeline.objects.size shouldBe 2
 
     result(connectorApi.delete(connector.key))
@@ -412,7 +439,8 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testTopicState(): Unit = {
     val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
+    )
     val pipeline = result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create())
     pipeline.objects.size shouldBe 1
     // the topic is not running so no state is responded
@@ -425,8 +453,8 @@ class TestPipelineRoute extends OharaTest {
 
   @Test
   def testNameFilter(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val name     = CommonUtils.randomString(10)
+    val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     val pipeline = result(pipelineApi.request.name(name).flow(Flow(topic.key, Set(topic.key))).create())
     (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
     result(pipelineApi.list()).size shouldBe 4
@@ -437,8 +465,8 @@ class TestPipelineRoute extends OharaTest {
 
   @Test
   def testGroupFilter(): Unit = {
-    val group = CommonUtils.randomString(10)
-    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val group    = CommonUtils.randomString(10)
+    val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     val pipeline = result(pipelineApi.request.group(group).flow(Flow(topic.key, Set(topic.key))).create())
     (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
     result(pipelineApi.list()).size shouldBe 4
@@ -456,7 +484,7 @@ class TestPipelineRoute extends OharaTest {
       "d" -> JsArray(JsString("B")),
       "e" -> JsObject("a" -> JsNumber(123))
     )
-    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
     val pipeline = result(pipelineApi.request.tags(tags).flow(Flow(topic.key, Set(topic.key))).create())
     (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
     result(pipelineApi.list()).size shouldBe 4

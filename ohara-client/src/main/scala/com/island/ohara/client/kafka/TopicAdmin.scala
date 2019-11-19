@@ -39,7 +39,6 @@ import scala.concurrent.{Future, Promise}
   * to us.
   */
 trait TopicAdmin extends Releasable {
-
   /**
     * Change the number of partitions of topic.
     * Currently, reducing the number of partitions is not allowed!
@@ -87,9 +86,8 @@ trait TopicAdmin extends Releasable {
 }
 
 object TopicAdmin {
-
   def apply(_connectionProps: String): TopicAdmin = new TopicAdmin {
-    private[this] val _closed = new AtomicBoolean(false)
+    private[this] val _closed            = new AtomicBoolean(false)
     override val connectionProps: String = _connectionProps
 
     override def closed: Boolean = _closed.get()
@@ -100,11 +98,12 @@ object TopicAdmin {
       * @tparam T return type
       * @return return value
       */
-    private[this] def unwrap[T](f: () => T): T = try f()
-    catch {
-      case e: ExecutionException =>
-        throw e.getCause
-    }
+    private[this] def unwrap[T](f: () => T): T =
+      try f()
+      catch {
+        case e: ExecutionException =>
+          throw e.getCause
+      }
     private[this] def toAdminProps(connectionProps: String): Properties = {
       val adminProps = new Properties
       adminProps.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Objects.requireNonNull(connectionProps))
@@ -124,26 +123,29 @@ object TopicAdmin {
               .createTopics(
                 util.Collections.singletonList(
                   new NewTopic(topicKey.topicNameOnKafka(), numberOfPartitions, numberOfReplications)
-                    .configs(configs.asJava)))
+                    .configs(configs.asJava)
+                )
+              )
               .values()
               .get(topicKey.topicNameOnKafka())
               .whenComplete((_, exception) => {
                 if (exception == null)
                   promise.success(Unit)
                 else promise.failure(exception)
-              }))
+              })
+        )
         promise.future
       }
-    type TopicName = String
-    type Partition = Int
+    type TopicName       = String
+    type Partition       = Int
     type BeginningOffset = Long
-    type EndOffset = Long
+    type EndOffset       = Long
 
     private[this] def toTopicInfo(
       topicDescription: TopicDescription,
       configs: Map[String, String],
-      offsets: Map[TopicName, Map[Partition, (BeginningOffset, EndOffset)]]): KafkaTopicInfo = {
-
+      offsets: Map[TopicName, Map[Partition, (BeginningOffset, EndOffset)]]
+    ): KafkaTopicInfo = {
       new KafkaTopicInfo(
         name = topicDescription.name(),
         numberOfPartitions = topicDescription.partitions().size(),
@@ -187,10 +189,11 @@ object TopicAdmin {
                 offsets.getOrElse(
                   partition,
                   throw new NoSuchElementException(
-                    s"topic:${partition.topic()} partition:${partition.partition()} does not exist")
+                    s"topic:${partition.topic()} partition:${partition.partition()} does not exist"
+                  )
                 )
               val beginningOffsets = consumer.beginningOffsets(pts.asJava).asScala.toMap
-              val endOffsets = consumer.endOffsets(pts.asJava).asScala.toMap
+              val endOffsets       = consumer.endOffsets(pts.asJava).asScala.toMap
               topicName -> pts
                 .map(pt => pt.partition() -> (fetchOffset(beginningOffsets, pt) -> fetchOffset(endOffsets, pt)))
                 .toMap
@@ -199,56 +202,62 @@ object TopicAdmin {
       } finally Releasable.close(consumer)
     }
 
-    override def topics(): Future[Seq[KafkaTopicInfo]] = try {
-      val allOffsets = topicOffsets()
-      val promise = Promise[Seq[KafkaTopicInfo]]
-      unwrap(
-        () =>
-          admin
-            .listTopics()
-            .names()
-            .whenComplete((topicNames, exception) => {
-              if (exception == null)
-                admin
-                  .describeTopics(topicNames)
-                  .all()
-                  .whenComplete((topicDescriptions, exception) => {
-                    if (exception == null)
-                      admin
-                        .describeConfigs(
-                          topicDescriptions
-                            .keySet()
-                            .asScala
-                            .map(name => new ConfigResource(ConfigResource.Type.TOPIC, name))
-                            .asJava)
-                        .all()
-                        .whenComplete((topicsAndConfigs, exception) =>
-                          try {
-                            if (exception == null)
-                              promise.success(
-                                topicDescriptions
-                                  .values()
-                                  .asScala
-                                  .map { topicDescription =>
-                                    val configs = topicsAndConfigs.asScala
-                                      .find(_._1.name() == topicDescription.name())
-                                      .map(_._2.entries().asScala.map(e => e.name() -> e.value()).toMap)
-                                      .getOrElse(Map.empty)
-                                    toTopicInfo(topicDescription, configs, allOffsets)
-                                  }
-                                  .toSeq)
-                            else promise.failure(exception)
-                          } catch {
-                            case e: Throwable => promise.failure(e)
-                        })
-                    else promise.failure(exception)
-                  })
-              else promise.failure(exception)
-            }))
-      promise.future
-    } catch {
-      case e: Throwable => Future.failed(e)
-    }
+    override def topics(): Future[Seq[KafkaTopicInfo]] =
+      try {
+        val allOffsets = topicOffsets()
+        val promise    = Promise[Seq[KafkaTopicInfo]]
+        unwrap(
+          () =>
+            admin
+              .listTopics()
+              .names()
+              .whenComplete((topicNames, exception) => {
+                if (exception == null)
+                  admin
+                    .describeTopics(topicNames)
+                    .all()
+                    .whenComplete((topicDescriptions, exception) => {
+                      if (exception == null)
+                        admin
+                          .describeConfigs(
+                            topicDescriptions
+                              .keySet()
+                              .asScala
+                              .map(name => new ConfigResource(ConfigResource.Type.TOPIC, name))
+                              .asJava
+                          )
+                          .all()
+                          .whenComplete(
+                            (topicsAndConfigs, exception) =>
+                              try {
+                                if (exception == null)
+                                  promise.success(
+                                    topicDescriptions
+                                      .values()
+                                      .asScala
+                                      .map { topicDescription =>
+                                        val configs = topicsAndConfigs.asScala
+                                          .find(_._1.name() == topicDescription.name())
+                                          .map(_._2.entries().asScala.map(e => e.name() -> e.value()).toMap)
+                                          .getOrElse(Map.empty)
+                                        toTopicInfo(topicDescription, configs, allOffsets)
+                                      }
+                                      .toSeq
+                                  )
+                                else promise.failure(exception)
+                              } catch {
+                                case e: Throwable => promise.failure(e)
+                              }
+                          )
+                      else promise.failure(exception)
+                    })
+                else promise.failure(exception)
+              })
+        )
+        promise.future
+      } catch {
+        case e: Throwable => Future.failed(e)
+      }
 
     override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
       val promise = Promise[Unit]
@@ -256,12 +265,14 @@ object TopicAdmin {
         () =>
           admin
             .createPartitions(
-              Collections.singletonMap(topicKey.topicNameOnKafka(), NewPartitions.increaseTo(numberOfPartitions)))
+              Collections.singletonMap(topicKey.topicNameOnKafka(), NewPartitions.increaseTo(numberOfPartitions))
+            )
             .all()
             .whenComplete((_, exception) => {
               if (exception == null) promise.success(Unit)
               else promise.failure(exception)
-            }))
+            })
+      )
       promise.future
     }
 
@@ -285,7 +296,8 @@ object TopicAdmin {
                 else
                   promise.success(false)
               } else promise.failure(exception)
-            }))
+            })
+      )
       promise.future
     }
 
@@ -299,27 +311,32 @@ object TopicAdmin {
             .whenComplete((topicNames, exception) => {
               if (exception == null) promise.success(topicNames.asScala.contains(topicKey.topicNameOnKafka()))
               else promise.failure(exception)
-            }))
+            })
+      )
       promise.future
     }
   }
 
-  final class KafkaPartitionInfo(val index: Int,
-                                 val leaderNode: String,
-                                 val replicaNodes: Set[String],
-                                 val inSyncReplicaNodes: Set[String],
-                                 val beginningOffset: Long,
-                                 val endOffset: Long)
+  final class KafkaPartitionInfo(
+    val index: Int,
+    val leaderNode: String,
+    val replicaNodes: Set[String],
+    val inSyncReplicaNodes: Set[String],
+    val beginningOffset: Long,
+    val endOffset: Long
+  )
 
-  final class KafkaTopicInfo(val name: String,
-                             val numberOfPartitions: Int,
-                             val numberOfReplications: Short,
-                             val partitionInfos: Seq[KafkaPartitionInfo],
-                             val configs: Map[String, String])
+  final class KafkaTopicInfo(
+    val name: String,
+    val numberOfPartitions: Int,
+    val numberOfReplications: Short,
+    val partitionInfos: Seq[KafkaPartitionInfo],
+    val configs: Map[String, String]
+  )
 
   trait Creator extends com.island.ohara.common.pattern.Creator[Future[Unit]] {
-    private[this] var topicKey: TopicKey = _
-    private[this] var numberOfPartitions: Int = 1
+    private[this] var topicKey: TopicKey          = _
+    private[this] var numberOfPartitions: Int     = 1
     private[this] var numberOfReplications: Short = 1
     private[this] var configs: Map[String, String] = Map(
       TopicConfig.CLEANUP_POLICY_CONFIG -> CleanupPolicy.DELETE.name
@@ -364,9 +381,11 @@ object TopicAdmin {
       configs = Objects.requireNonNull(configs)
     )
 
-    protected def doCreate(topicKey: TopicKey,
-                           numberOfPartitions: Int,
-                           numberOfReplications: Short,
-                           configs: Map[String, String]): Future[Unit]
+    protected def doCreate(
+      topicKey: TopicKey,
+      numberOfPartitions: Int,
+      numberOfReplications: Short,
+      configs: Map[String, String]
+    ): Future[Unit]
   }
 }

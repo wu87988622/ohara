@@ -24,9 +24,7 @@ import com.island.ohara.streams.{OStream, Stream}
   * It is not placed at test scope since we need jar when tests manually.
   */
 class DumbStream extends Stream {
-
   override def start(ostream: OStream[Row], configs: StreamSetting): Unit = {
-
     // do nothing but only start stream and write exactly data to output topic
     ostream.start()
   }

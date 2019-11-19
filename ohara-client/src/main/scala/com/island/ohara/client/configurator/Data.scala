@@ -52,26 +52,26 @@ trait Data {
     * @param request query request
     * @return true if the query matches this object. otherwise, false
     */
-  final def matched(request: QueryRequest): Boolean = try request.raw.forall {
-    case (key, value) =>
-      key match {
-        case "name" => value == name
-        case "group" =>
-          value == group
-        case "tags"         => value.parseJson.asJsObject == JsObject(tags)
-        case "lastModified" => value.toLong == lastModified
+  final def matched(request: QueryRequest): Boolean =
+    try request.raw.forall {
+      case (key, value) =>
+        key match {
+          case "name" => value == name
+          case "group" =>
+            value == group
+          case "tags"         => value.parseJson.asJsObject == JsObject(tags)
+          case "lastModified" => value.toLong == lastModified
 
-        /**
-          * this field belongs to sub class so we count on the implementation of sub class.
-          */
-        case _ =>
-          matched(key, value)
-      }
-  } catch {
-
-    /**
-      * this means the key is not a part of data :(
-      */
-    case _: MatchError => false
-  }
+          /**
+            * this field belongs to sub class so we count on the implementation of sub class.
+            */
+          case _ =>
+            matched(key, value)
+        }
+    } catch {
+      /**
+        * this means the key is not a part of data :(
+        */
+      case _: MatchError => false
+    }
 }

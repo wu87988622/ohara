@@ -26,13 +26,12 @@ import org.mockito.Mockito._
 import org.scalatest.Matchers._
 import scala.concurrent.duration._
 class TestAdminCleaner extends OharaTest {
-
   @Test
   def testTimeout(): Unit = {
     val timeout: Duration = 2 seconds
-    val cleaner = new AdminCleaner(timeout)
-    val fakeAdmin2 = mock(classOf[TopicAdmin])
-    val _closed = new AtomicBoolean(false)
+    val cleaner           = new AdminCleaner(timeout)
+    val fakeAdmin2        = mock(classOf[TopicAdmin])
+    val _closed           = new AtomicBoolean(false)
     when(fakeAdmin2.closed).thenReturn(false)
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
     try {
@@ -54,7 +53,7 @@ class TestAdminCleaner extends OharaTest {
   @Test
   def testClose2(): Unit = {
     val fakeAdmin2 = mock(classOf[TopicAdmin])
-    val _closed = new AtomicBoolean(false)
+    val _closed    = new AtomicBoolean(false)
     when(fakeAdmin2.closed).thenReturn(false)
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
     val cleaner = new AdminCleaner(2 seconds)

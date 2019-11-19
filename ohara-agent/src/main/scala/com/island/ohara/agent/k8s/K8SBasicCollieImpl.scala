@@ -24,69 +24,83 @@ import com.island.ohara.common.setting.ObjectKey
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](dataCollie: DataCollie,
-                                                                              k8sClient: K8SClient)
-    extends Collie[T] {
-
+private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
+  dataCollie: DataCollie,
+  k8sClient: K8SClient
+) extends Collie[T] {
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] = {
     Future.sequence(containerInfos.map(c => k8sClient.remove(c.name))).map(_.nonEmpty)
   }
 
   override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] = {
     Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_.nonEmpty)
   }
 
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] = {
     k8sClient.removeNode(beRemovedContainer.name, beRemovedContainer.nodeName, serviceName).map(_ => true)
   }
 
-  override def logs(objectKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = dataCollie
-    .values[Node]()
-    .flatMap(
-      nodes => filterContainerService(nodes)
-    )
-    .flatMap(
-      cs =>
-        Future.sequence(
-          cs.filter(container =>
-              Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName))
-            .map(container => k8sClient.log(container.name).map(container -> _))
-      ))
-    .map(_.toMap)
+  override def logs(
+    objectKey: ObjectKey
+  )(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    dataCollie
+      .values[Node]()
+      .flatMap(
+        nodes => filterContainerService(nodes)
+      )
+      .flatMap(
+        cs =>
+          Future.sequence(
+            cs.filter(
+                container =>
+                  Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName)
+              )
+              .map(container => k8sClient.log(container.name).map(container -> _))
+          )
+      )
+      .map(_.toMap)
 
   override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = dataCollie
-    .values[Node]()
-    .flatMap(filterContainerService)
-    .map(
-      _.map(container => Collie.objectKeyOfContainerName(container.name) -> container)
-        .groupBy(_._1)
-        .map {
-          case (objectKey, value) => objectKey -> value.map(_._2)
-        }
-        .map {
-          case (objectKey, containers) => toStatus(objectKey, containers).map(_ -> containers)
-        }
-        .toSeq)
-    .flatMap(Future.sequence(_))
-    .map(_.toMap)
+    implicit executionContext: ExecutionContext
+  ): Future[Map[T, Seq[ContainerInfo]]] =
+    dataCollie
+      .values[Node]()
+      .flatMap(filterContainerService)
+      .map(
+        _.map(container => Collie.objectKeyOfContainerName(container.name) -> container)
+          .groupBy(_._1)
+          .map {
+            case (objectKey, value) => objectKey -> value.map(_._2)
+          }
+          .map {
+            case (objectKey, containers) => toStatus(objectKey, containers).map(_ -> containers)
+          }
+          .toSeq
+      )
+      .flatMap(Future.sequence(_))
+      .map(_.toMap)
 
-  private[this] def filterContainerService(nodes: Seq[Node])(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+  private[this] def filterContainerService(
+    nodes: Seq[Node]
+  )(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future
       .sequence(
         nodes.map { node =>
           k8sClient
             .containers()
-            .map(_.filter(_.name.split(DIVIDER).length >= 4) //Container name format is PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
-              .filter { container =>
-                container.nodeName.equals(node.name) && container.name
-                  .startsWith(PREFIX_KEY) && container.name.split(DIVIDER)(3).equals(serviceName)
-              })
+            .map(
+              _.filter(_.name.split(DIVIDER).length >= 4) //Container name format is PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
+                .filter { container =>
+                  container.nodeName.equals(node.name) && container.name
+                    .startsWith(PREFIX_KEY) && container.name.split(DIVIDER)(3).equals(serviceName)
+                }
+            )
         }
       )
       .map(_.flatten)

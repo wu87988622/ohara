@@ -29,9 +29,8 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicAdmin extends With3Brokers {
-
   private[this] val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-  private[this] val GROUP = "topic_group"
+  private[this] val GROUP      = "topic_group"
 
   private[this] def waitAndGetTopicInfo(topicKey: TopicKey): KafkaTopicInfo = {
     // wait the topic to be available
@@ -42,7 +41,7 @@ class TestTopicAdmin extends With3Brokers {
           // the partition is not ready
           case _: NoSuchElementException           => false
           case _: UnknownTopicOrPartitionException => false
-      },
+        },
       java.time.Duration.ofSeconds(60)
     )
     result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get
@@ -50,16 +49,17 @@ class TestTopicAdmin extends With3Brokers {
 
   @Test
   def createTopic(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topicKey = TopicKey.of(GROUP, name)
-    val numberOfPartitions: Int = 1
+    val name                        = CommonUtils.randomString(10)
+    val topicKey                    = TopicKey.of(GROUP, name)
+    val numberOfPartitions: Int     = 1
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .topicKey(topicKey)
-        .create())
+        .create()
+    )
     val topic = waitAndGetTopicInfo(topicKey)
     topic.name shouldBe topicKey.topicNameOnKafka()
     topic.numberOfPartitions shouldBe numberOfPartitions
@@ -74,9 +74,9 @@ class TestTopicAdmin extends With3Brokers {
 
   @Test
   def addPartitions(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topicKey = TopicKey.of(GROUP, name)
-    val numberOfPartitions: Int = 1
+    val name                        = CommonUtils.randomString(10)
+    val topicKey                    = TopicKey.of(GROUP, name)
+    val numberOfPartitions: Int     = 1
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
@@ -93,49 +93,53 @@ class TestTopicAdmin extends With3Brokers {
 
   @Test
   def reducePartitions(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topicKey = TopicKey.of(GROUP, name)
-    val numberOfPartitions: Int = 2
+    val name                        = CommonUtils.randomString(10)
+    val topicKey                    = TopicKey.of(GROUP, name)
+    val numberOfPartitions: Int     = 2
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .topicKey(topicKey)
-        .create())
+        .create()
+    )
     waitAndGetTopicInfo(topicKey)
     an[InvalidPartitionsException] should be thrownBy result(
-      topicAdmin.changePartitions(topicKey, numberOfPartitions - 1))
+      topicAdmin.changePartitions(topicKey, numberOfPartitions - 1)
+    )
   }
 
   @Test
   def negativePartitions(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topicKey = TopicKey.of(GROUP, name)
-    val numberOfPartitions: Int = 2
+    val name                        = CommonUtils.randomString(10)
+    val topicKey                    = TopicKey.of(GROUP, name)
+    val numberOfPartitions: Int     = 2
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .topicKey(topicKey)
-        .create())
+        .create()
+    )
     waitAndGetTopicInfo(topicKey)
     an[InvalidPartitionsException] should be thrownBy result(topicAdmin.changePartitions(topicKey, -10))
   }
 
   @Test
   def keepPartitions(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topicKey = TopicKey.of(GROUP, name)
-    val numberOfPartitions: Int = 2
+    val name                        = CommonUtils.randomString(10)
+    val topicKey                    = TopicKey.of(GROUP, name)
+    val numberOfPartitions: Int     = 2
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .topicKey(topicKey)
-        .create())
+        .create()
+    )
     waitAndGetTopicInfo(topicKey)
     an[InvalidPartitionsException] should be thrownBy result(topicAdmin.changePartitions(topicKey, numberOfPartitions))
   }
@@ -143,11 +147,12 @@ class TestTopicAdmin extends With3Brokers {
   @Test
   def changePartitionsOfNonexistentTopic(): Unit =
     an[UnknownTopicOrPartitionException] should be thrownBy result(
-      topicAdmin.changePartitions(TopicKey.of(GROUP, CommonUtils.randomString(10)), 10))
+      topicAdmin.changePartitions(TopicKey.of(GROUP, CommonUtils.randomString(10)), 10)
+    )
 
   @Test
   def deleteNonexistentTopic(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name     = CommonUtils.randomString(10)
     val topicKey = TopicKey.of(GROUP, name)
     result(topicAdmin.delete(TopicKey.of(GROUP, CommonUtils.randomString()))) shouldBe false
     result(topicAdmin.creator.topicKey(topicKey).create())
@@ -157,7 +162,7 @@ class TestTopicAdmin extends With3Brokers {
 
   @Test
   def testCleanupPolicy(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name     = CommonUtils.randomString(10)
     val topicKey = TopicKey.of(GROUP, name)
     result(topicAdmin.creator.topicKey(topicKey).cleanupPolicy(CleanupPolicy.DELETE).create())
     val topic = waitAndGetTopicInfo(topicKey)
@@ -166,10 +171,10 @@ class TestTopicAdmin extends With3Brokers {
 
   @Test
   def testCustomConfigs(): Unit = {
-    val name = CommonUtils.randomString(10)
+    val name     = CommonUtils.randomString(10)
     val topicKey = TopicKey.of(GROUP, name)
-    val key = TopicConfig.SEGMENT_BYTES_CONFIG
-    val value = 1024 * 1024
+    val key      = TopicConfig.SEGMENT_BYTES_CONFIG
+    val value    = 1024 * 1024
     result(topicAdmin.creator.topicKey(topicKey).config(key, value.toString).create())
     val topic = waitAndGetTopicInfo(topicKey)
     topic.configs(key) shouldBe value.toString
@@ -178,7 +183,7 @@ class TestTopicAdmin extends With3Brokers {
   @Test
   def testExist(): Unit = {
     result(topicAdmin.exist(TopicKey.of(GROUP, CommonUtils.randomString()))) shouldBe false
-    val name = CommonUtils.randomString(10)
+    val name     = CommonUtils.randomString(10)
     val topicKey = TopicKey.of(GROUP, name)
     result(topicAdmin.creator.topicKey(topicKey).create())
     waitAndGetTopicInfo(topicKey)
@@ -205,7 +210,8 @@ class TestTopicAdmin extends With3Brokers {
             .topicName(topicKey.topicNameOnKafka())
             .key(CommonUtils.randomString())
             .value(CommonUtils.randomString())
-            .send())
+            .send()
+      )
       producer.flush()
     } finally Releasable.close(producer)
     val topicInfo = result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get

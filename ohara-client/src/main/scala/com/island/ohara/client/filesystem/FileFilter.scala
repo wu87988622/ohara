@@ -21,7 +21,6 @@ trait FileFilter {
 }
 
 object FileFilter {
-
   /**
     * All pass
     * @return a file filter

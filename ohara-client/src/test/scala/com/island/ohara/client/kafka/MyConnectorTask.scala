@@ -21,7 +21,7 @@ import java.util
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 class MyConnectorTask extends RowSourceTask {
-  private[this] var lastSent: Long = 0
+  private[this] var lastSent: Long    = 0
   private[this] var topicName: String = _
 
   override protected def _start(settings: TaskSetting): Unit = this.topicName = settings.topicNames().get(0)

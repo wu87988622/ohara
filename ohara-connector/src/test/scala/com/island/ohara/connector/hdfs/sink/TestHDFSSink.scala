@@ -25,8 +25,8 @@ import com.island.ohara.connector.CsvSinkTestBase
 import com.island.ohara.kafka.connector.csv.CsvSinkConnector
 
 class TestHDFSSink extends CsvSinkTestBase {
-  private[this] val tempFolder: File = CommonUtils.createTempFolder("local_hdfs")
-  private[this] val localHdfsURL: String = new File(tempFolder.getAbsolutePath).toURI.toString
+  private[this] val tempFolder: File       = CommonUtils.createTempFolder("local_hdfs")
+  private[this] val localHdfsURL: String   = new File(tempFolder.getAbsolutePath).toURI.toString
   private[this] val localTopicsDir: String = Paths.get(tempFolder.getPath, "output").toString
 
   override val fileSystem: FileSystem = FileSystem.hdfsBuilder.url(localHdfsURL).build()

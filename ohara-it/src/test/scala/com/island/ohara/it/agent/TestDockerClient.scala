@@ -31,7 +31,6 @@ import org.scalatest.Matchers._
   * $ gradle clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
   */
 class TestDockerClient extends IntegrationTest {
-
   private[this] var client: DockerClient = _
 
   private[this] val webHost = "www.google.com.tw"
@@ -44,7 +43,8 @@ class TestDockerClient extends IntegrationTest {
   def setup(): Unit =
     EnvTestingUtils.sshNodes().headOption.foreach { node =>
       client = DockerClient(
-        Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
+        Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+      )
       remoteHostname = node.hostname
     }
 
@@ -52,9 +52,10 @@ class TestDockerClient extends IntegrationTest {
     * make sure all test cases here are executed only if we have defined the docker server.
     * @param f test case
     */
-  private[this] def runTest(f: DockerClient => Unit): Unit = if (client == null)
-    skipTest(s"no available nodes are passed from env variables")
-  else f(client)
+  private[this] def runTest(f: DockerClient => Unit): Unit =
+    if (client == null)
+      skipTest(s"no available nodes are passed from env variables")
+    else f(client)
 
   @Test
   def testLog(): Unit = runTest { client =>
@@ -143,7 +144,7 @@ class TestDockerClient extends IntegrationTest {
   @Test
   def testPortMapping(): Unit = runTest { client =>
     val availablePort = CommonUtils.availablePort()
-    val name = CommonUtils.randomString(5)
+    val name          = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
@@ -181,7 +182,7 @@ class TestDockerClient extends IntegrationTest {
 
   @Test
   def testHostname(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
+    val name     = CommonUtils.randomString(5)
     val hostname = CommonUtils.randomString(5)
     client
       .containerCreator()

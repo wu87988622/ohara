@@ -18,21 +18,20 @@ package com.island.ohara.connector.jdbc.datatype
 import com.island.ohara.client.database.DatabaseClient
 
 class GenericDataTypeConverter extends RDBDataTypeConverter {
-
-  private[this] val TYPE_NAME_BOOLEAN: String = "BOOLEAN"
-  private[this] val TYPE_NAME_BIT: String = "BIT"
-  private[this] val TYPE_NAME_INTEGER: String = "INT"
-  private[this] val TYPE_NAME_BIGINT: String = "BIGINT"
-  private[this] val TYPE_NAME_FLOAT: String = "FLOAT"
-  private[this] val TYPE_NAME_DOUBLE: String = "DOUBLE"
-  private[this] val TYPE_NAME_CHAR: String = "CHAR"
-  private[this] val TYPE_NAME_VARCHAR: String = "VARCHAR"
+  private[this] val TYPE_NAME_BOOLEAN: String     = "BOOLEAN"
+  private[this] val TYPE_NAME_BIT: String         = "BIT"
+  private[this] val TYPE_NAME_INTEGER: String     = "INT"
+  private[this] val TYPE_NAME_BIGINT: String      = "BIGINT"
+  private[this] val TYPE_NAME_FLOAT: String       = "FLOAT"
+  private[this] val TYPE_NAME_DOUBLE: String      = "DOUBLE"
+  private[this] val TYPE_NAME_CHAR: String        = "CHAR"
+  private[this] val TYPE_NAME_VARCHAR: String     = "VARCHAR"
   private[this] val TYPE_NAME_LONGVARCHAR: String = "LONGVARCHAR"
-  private[this] val TYPE_NAME_TIMESTAMP: String = "TIMESTAMP"
-  private[this] val TYPE_NAME_DATE: String = "DATE"
-  private[this] val TYPE_NAME_TIME: String = "TIME"
-  private[this] val TYPE_NAME_VARCHAR2: String = "VARCHAR2"
-  private[this] val TYPE_NAME_NUMBER: String = "NUMBER"
+  private[this] val TYPE_NAME_TIMESTAMP: String   = "TIMESTAMP"
+  private[this] val TYPE_NAME_DATE: String        = "DATE"
+  private[this] val TYPE_NAME_TIME: String        = "TIME"
+  private[this] val TYPE_NAME_VARCHAR2: String    = "VARCHAR2"
+  private[this] val TYPE_NAME_NUMBER: String      = "NUMBER"
 
   override protected[datatype] def dataBaseProductName: String = "generic"
 

@@ -28,11 +28,11 @@ import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
 
 class TestResultSetDataConverter extends OharaTest with MockitoSugar {
-  private[this] val VARCHAR: String = "VARCHAR"
+  private[this] val VARCHAR: String   = "VARCHAR"
   private[this] val TIMESTAMP: String = "TIMESTAMP"
-  private[this] val INT: String = "INT"
-  private[this] val DATE: String = "DATE"
-  private[this] val TIME: String = "TIME"
+  private[this] val INT: String       = "INT"
+  private[this] val DATE: String      = "DATE"
+  private[this] val TIME: String      = "TIME"
 
   @Test
   def testConverterRecord(): Unit = {
@@ -47,7 +47,7 @@ class TestResultSetDataConverter extends OharaTest with MockitoSugar {
       new DatabaseClient.Column("column3", INT, false)
     )
     val dataTypeConverter: RDBDataTypeConverter = new MySQLDataTypeConverter()
-    val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)
+    val result: Seq[ColumnInfo[_]]              = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)
     result.head.columnName shouldBe "column1"
     result.head.columnType shouldBe TIMESTAMP
     result.head.value.toString shouldBe "1970-01-01 08:00:00.0"
@@ -76,7 +76,7 @@ class TestResultSetDataConverter extends OharaTest with MockitoSugar {
       new DatabaseClient.Column("column4", TIME, false)
     )
     val dataTypeConverter: RDBDataTypeConverter = new MySQLDataTypeConverter()
-    val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)
+    val result: Seq[ColumnInfo[_]]              = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)
     result(1).columnName shouldBe "column2"
     result(1).columnType shouldBe VARCHAR
     result(1).value shouldBe "null"

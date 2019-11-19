@@ -24,13 +24,12 @@ import spray.json.JsObject
 
 import scala.concurrent.duration._
 package object jio {
-
   /**
     * used to set the order of definitions.
     */
   private[this] val COUNTER = new AtomicInteger(0)
 
-  val DATA_BUFFER_SIZE_KEY: String = "jio.data.buffer.size"
+  val DATA_BUFFER_SIZE_KEY: String  = "jio.data.buffer.size"
   val DATA_BUFFER_SIZE_DEFAULT: Int = 100
   val DATA_BUFFER_SIZE_DEFINITION: SettingDef = SettingDef
     .builder()
@@ -39,7 +38,7 @@ package object jio {
     .optional(DATA_BUFFER_SIZE_DEFAULT)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
-  val CLOSE_TIMEOUT_KEY: String = "jio.close.timeout"
+  val CLOSE_TIMEOUT_KEY: String             = "jio.close.timeout"
   val CLOSE_TIMEOUT_DEFAULT: FiniteDuration = 30 seconds
   val CLOSE_TIMEOUT_DEFINITION: SettingDef = SettingDef
     .builder()
@@ -48,7 +47,7 @@ package object jio {
     .optional(java.time.Duration.ofMillis(CLOSE_TIMEOUT_DEFAULT.toMillis))
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
-  val BINDING_TIMEOUT_KEY: String = "jio.binding.timeout"
+  val BINDING_TIMEOUT_KEY: String             = "jio.binding.timeout"
   val BINDING_TIMEOUT_DEFAULT: FiniteDuration = 30 seconds
   val BINDING_TIMEOUT_DEFINITION: SettingDef = SettingDef
     .builder()
@@ -65,13 +64,14 @@ package object jio {
     .required(SettingDef.Type.BINDING_PORT)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
-  val BINDING_PATH_KEY: String = "jio.binding.path"
+  val BINDING_PATH_KEY: String     = "jio.binding.path"
   val BINDING_PATH_DEFAULT: String = "data"
   val BINDING_PATH_DEFINITION: SettingDef = SettingDef
     .builder()
     .key(BINDING_PATH_KEY)
     .documentation(
-      "the path to url resource. For example, if you define the path=abc and port=11111, the url bound by JI connector is host:11111/abc")
+      "the path to url resource. For example, if you define the path=abc and port=11111, the url bound by JI connector is host:11111/abc"
+    )
     .optional(BINDING_PATH_DEFAULT)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
@@ -90,5 +90,4 @@ package object jio {
   def toJson(row: Row): JsObject = com.island.ohara.client.configurator.v0.toJson(row)
 
   def toRow(obj: JsObject): Row = com.island.ohara.client.configurator.v0.toRow(obj)
-
 }

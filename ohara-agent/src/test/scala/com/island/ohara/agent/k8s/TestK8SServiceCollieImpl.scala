@@ -29,15 +29,15 @@ import scala.concurrent.duration._
 import org.scalatest.Matchers._
 
 class TestK8SServiceCollieImpl extends OharaTest {
-
   @Test
   def testResource(): Unit = {
-    val nodeCache = (1 to 3).map(x => Node(s"node${x}", None, None, None, Seq.empty, 0L, None, Seq.empty, Map.empty))
+    val nodeCache  = (1 to 3).map(x => Node(s"node${x}", None, None, None, Seq.empty, 0L, None, Seq.empty, Map.empty))
     val dataCollie = DataCollie(nodeCache)
 
     val k8sClient = new FakeK8SClient(false, None, "container1") {
       override def resources()(
-        implicit executionContext: ExecutionContext): Future[Map[String, Seq[NodeApi.Resource]]] =
+        implicit executionContext: ExecutionContext
+      ): Future[Map[String, Seq[NodeApi.Resource]]] =
         Future.successful {
           Map(
             "node1" -> Seq(Resource.cpu(8, Option(2.0)), Resource.memory(1024 * 1024 * 1024 * 100, Option(5.0))),
@@ -47,7 +47,7 @@ class TestK8SServiceCollieImpl extends OharaTest {
         }
     }
 
-    val k8sServiceCollieImpl = new K8SServiceCollieImpl(dataCollie, k8sClient)
+    val k8sServiceCollieImpl               = new K8SServiceCollieImpl(dataCollie, k8sClient)
     val resource: Map[Node, Seq[Resource]] = result(k8sServiceCollieImpl.resources())
     resource.size shouldBe 3
     val nodeNames = resource.map(_._1.hostname).toSeq
@@ -71,16 +71,17 @@ class TestK8SServiceCollieImpl extends OharaTest {
 
   @Test
   def testEmptyResource(): Unit = {
-    val nodeCache = (1 to 3).map(x => Node(s"node${x}", None, None, None, Seq.empty, 0L, None, Seq.empty, Map.empty))
+    val nodeCache  = (1 to 3).map(x => Node(s"node${x}", None, None, None, Seq.empty, 0L, None, Seq.empty, Map.empty))
     val dataCollie = DataCollie(nodeCache)
 
     val k8sClient = new FakeK8SClient(false, None, "container1") {
       override def resources()(
-        implicit executionContext: ExecutionContext): Future[Map[String, Seq[NodeApi.Resource]]] =
+        implicit executionContext: ExecutionContext
+      ): Future[Map[String, Seq[NodeApi.Resource]]] =
         Future.successful(Map.empty)
     }
 
-    val k8sServiceCollieImpl = new K8SServiceCollieImpl(dataCollie, k8sClient)
+    val k8sServiceCollieImpl               = new K8SServiceCollieImpl(dataCollie, k8sClient)
     val resource: Map[Node, Seq[Resource]] = result(k8sServiceCollieImpl.resources())
     resource.size shouldBe 0
   }

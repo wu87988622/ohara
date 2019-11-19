@@ -103,43 +103,42 @@ class TestConfiguratorBuilder extends OharaTest {
       .build()
 
   @Test
-  def reassignK8sClient(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .k8sClient(MockitoSugar.mock[K8SClient])
-    .k8sClient(MockitoSugar.mock[K8SClient])
-    .build()
+  def reassignK8sClient(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.builder
+      .k8sClient(MockitoSugar.mock[K8SClient])
+      .k8sClient(MockitoSugar.mock[K8SClient])
+      .build()
 
   @Test
   def testK8SClientNamespaceDefault(): Unit = {
-    val namespace = K8SClient.NAMESPACE_DEFAULT_VALUE
-    val podName = "pod1"
+    val namespace  = K8SClient.NAMESPACE_DEFAULT_VALUE
+    val podName    = "pod1"
     val logMessage = "start pods ......."
-    val apiServer = k8sServer(namespace, podName, logMessage)
+    val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sApiServer(apiServer.url).build()
       Await.result(configurator.k8sClient.get.log(podName), 10 seconds) shouldBe logMessage
-
     } finally apiServer.close()
   }
 
   @Test
   def testK8SClientNamespaceAssign(): Unit = {
-    val namespace = "ohara"
-    val podName = "pod1"
+    val namespace  = "ohara"
+    val podName    = "pod1"
     val logMessage = "start pods ......."
-    val apiServer = k8sServer(namespace, podName, logMessage)
+    val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sNamespace(namespace).k8sApiServer(apiServer.url).build()
       Await.result(configurator.k8sClient.get.log(podName), 10 seconds) shouldBe logMessage
-
     } finally apiServer.close()
   }
 
   @Test
   def testK8SClientNamespaceNone(): Unit = {
-    val namespace = K8SClient.NAMESPACE_DEFAULT_VALUE
-    val podName = "pod1"
+    val namespace  = K8SClient.NAMESPACE_DEFAULT_VALUE
+    val podName    = "pod1"
     val logMessage = "start pods ......."
-    val apiServer = k8sServer(namespace, podName, logMessage)
+    val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sClient(K8SClient(apiServer.url)).build()
       Await.result(configurator.k8sClient.get.log(podName), 10 seconds) shouldBe logMessage
@@ -148,10 +147,10 @@ class TestConfiguratorBuilder extends OharaTest {
 
   @Test
   def testK8SClientNamespace(): Unit = {
-    val namespace = "ohara"
-    val podName = "pod1"
+    val namespace  = "ohara"
+    val podName    = "pod1"
     val logMessage = "start pods ......."
-    val apiServer = k8sServer(namespace, podName, logMessage)
+    val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator =
         Configurator.builder.k8sClient(K8SClient(apiServer.url, namespace)).build()
@@ -160,36 +159,41 @@ class TestConfiguratorBuilder extends OharaTest {
   }
 
   @Test
-  def reassignServiceCollie(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .serviceCollie(MockitoSugar.mock[ServiceCollie])
-    .serviceCollie(MockitoSugar.mock[ServiceCollie])
-    .build()
+  def reassignServiceCollie(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.builder
+      .serviceCollie(MockitoSugar.mock[ServiceCollie])
+      .serviceCollie(MockitoSugar.mock[ServiceCollie])
+      .build()
 
   @Test
-  def reassignHostname(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .hostname(CommonUtils.hostname())
-    .hostname(CommonUtils.hostname())
-    .build()
+  def reassignHostname(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.builder
+      .hostname(CommonUtils.hostname())
+      .hostname(CommonUtils.hostname())
+      .build()
 
   @Test
-  def reassignPort(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .port(CommonUtils.availablePort())
-    .port(CommonUtils.availablePort())
-    .build()
+  def reassignPort(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.builder
+      .port(CommonUtils.availablePort())
+      .port(CommonUtils.availablePort())
+      .build()
 
   @Test
-  def reassignHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-    .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
-    .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
-    .build()
+  def reassignHomeFolder(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.builder
+      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
+      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
+      .build()
 
   @Test
-  def reassignHomeFolderAfterFake(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.builder
-  // in fake mode, we have created a store
-    .fake(1, 1)
-    // you can't change the folder of store now
-    .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
-    .build()
+  def reassignHomeFolderAfterFake(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.builder
+    // in fake mode, we have created a store
+      .fake(1, 1)
+      // you can't change the folder of store now
+      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
+      .build()
 
   @Test
   def assigningK8sBeforeHomeFolderShouldNotCauseException(): Unit =
@@ -198,13 +202,13 @@ class TestConfiguratorBuilder extends OharaTest {
       .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(5)).getAbsolutePath)
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system = ActorSystem("my-system")
+    implicit val system       = ActorSystem("my-system")
     implicit val materializer = ActorMaterializer()
-    val server = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    val server                = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
 
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
-      override def port: Int = server.localAddress.getPort
+      override def port: Int        = server.localAddress.getPort
       override def close(): Unit = {
         Await.result(server.unbind(), 30 seconds)
         Await.result(system.terminate(), 30 seconds)
@@ -214,9 +218,9 @@ class TestConfiguratorBuilder extends OharaTest {
 
   @Test
   def testBuild(): Unit = {
-    val apiServer = k8sServer("default", "pod", "log")
+    val apiServer           = k8sServer("default", "pod", "log")
     val configuratorBuilder = Configurator.builder
-    val configurator = configuratorBuilder.k8sApiServer(apiServer.url).k8sNamespace("default").build()
+    val configurator        = configuratorBuilder.k8sApiServer(apiServer.url).k8sNamespace("default").build()
     configurator.mode shouldBe Mode.K8S
   }
 

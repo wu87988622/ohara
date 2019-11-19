@@ -37,7 +37,6 @@ trait MeterCache extends Releasable {
 }
 
 object MeterCache {
-
   def builder: Builder = new Builder()
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
@@ -47,13 +46,13 @@ object MeterCache {
       case another: RequestKey => another.key == key && another.service == service
       case _                   => false
     }
-    override def hashCode(): Int = 31 * key.hashCode + service.hashCode
+    override def hashCode(): Int  = 31 * key.hashCode + service.hashCode
     override def toString: String = s"key:$key, service:$service"
   }
 
   class Builder private[MeterCache] extends com.island.ohara.common.pattern.Builder[MeterCache] {
     private[this] var refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]] = _
-    private[this] var frequency: Duration = 5 seconds
+    private[this] var frequency: Duration                                        = 5 seconds
 
     def refresher(refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]]): Builder = {
       this.refresher = Objects.requireNonNull(refresher)
@@ -69,14 +68,16 @@ object MeterCache {
     override def build: MeterCache = new MeterCache {
       import scala.collection.JavaConverters._
       private[this] val refresher = Objects.requireNonNull(Builder.this.refresher)
-      private[this] val closed = new AtomicBoolean(false)
+      private[this] val closed    = new AtomicBoolean(false)
       private[this] val cache = RefreshableCache
         .builder[RequestKey, Map[String, Seq[Meter]]]()
-        .supplier(() =>
-          refresher().map {
-            case (clusterInfo, meters) =>
-              key(clusterInfo) -> meters
-          }.asJava)
+        .supplier(
+          () =>
+            refresher().map {
+              case (clusterInfo, meters) =>
+                key(clusterInfo) -> meters
+            }.asJava
+        )
         .frequency(java.time.Duration.ofMillis(frequency.toMillis))
         .build()
 

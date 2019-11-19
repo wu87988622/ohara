@@ -35,20 +35,21 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestInspectRoute extends OharaTest {
-  private[this] val db = Database.local()
+  private[this] val db           = Database.local()
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   private[this] val workerClusterInfo = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
 
   private[this] def inspectApi = InspectApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testQueryDb(): Unit = {
     val tableName = CommonUtils.randomString(10)
-    val dbClient = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+    val dbClient  = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
     try {
       val r = result(
         inspectApi.rdbRequest
@@ -56,7 +57,8 @@ class TestInspectRoute extends OharaTest {
           .user(db.user())
           .password(db.password())
           .workerClusterKey(workerClusterInfo.key)
-          .query())
+          .query()
+      )
       r.name shouldBe "mysql"
       r.tables.isEmpty shouldBe true
 
@@ -80,7 +82,9 @@ class TestInspectRoute extends OharaTest {
             .user(db.user())
             .password(db.password())
             .workerClusterKey(workerClusterInfo.key)
-            .query()))
+            .query()
+        )
+      )
 
       verify(
         result(
@@ -91,7 +95,9 @@ class TestInspectRoute extends OharaTest {
             .catalogPattern(db.databaseName)
             .tableName(tableName)
             .workerClusterKey(workerClusterInfo.key)
-            .query()))
+            .query()
+        )
+      )
       dbClient.dropTable(tableName)
     } finally dbClient.close()
   }
@@ -125,7 +131,7 @@ class TestInspectRoute extends OharaTest {
   @Test
   def testQueryIllegalFile(): Unit = {
     val file = {
-      val f = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
+      val f      = CommonUtils.createTempFile(CommonUtils.randomString(10), ".jar")
       val output = new FileOutputStream(f)
       try output.write("asdasdsad".getBytes())
       finally output.close()

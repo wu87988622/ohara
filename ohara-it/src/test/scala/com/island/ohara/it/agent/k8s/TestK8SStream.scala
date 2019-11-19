@@ -25,7 +25,6 @@ import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[K8sConfiguratorGroup]))
 class TestK8SStream extends BasicTests4Stream {
-
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
 
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())

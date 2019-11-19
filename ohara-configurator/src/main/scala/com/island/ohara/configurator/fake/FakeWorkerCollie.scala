@@ -33,7 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps: String)
     extends FakeCollie[WorkerClusterStatus](node)
     with WorkerCollie {
-
   override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
     // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
     BeanChannel.local().counterMBeans().asScala
@@ -42,42 +41,49 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
     */
   private[this] val fakeClientCache = new ConcurrentSkipListMap[WorkerClusterInfo, FakeWorkerClient](
-    (o1: WorkerClusterInfo, o2: WorkerClusterInfo) => o1.key.compareTo(o2.key))
-  override def creator: WorkerCollie.ClusterCreator = (_, creation) =>
-    Future.successful(
-      addCluster(
-        new WorkerClusterStatus(
-          group = creation.group,
-          name = creation.name,
-          aliveNodes = creation.nodeNames ++ clusterCache.asScala
-            .find(_._1.key == creation.key)
-            .map(_._2.map(_.nodeName))
-            .getOrElse(Set.empty),
-          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ServiceState.RUNNING.name),
-          error = None
-        ),
-        creation.imageName,
-        creation.ports
-      ))
+    (o1: WorkerClusterInfo, o2: WorkerClusterInfo) => o1.key.compareTo(o2.key)
+  )
+  override def creator: WorkerCollie.ClusterCreator =
+    (_, creation) =>
+      Future.successful(
+        addCluster(
+          new WorkerClusterStatus(
+            group = creation.group,
+            name = creation.name,
+            aliveNodes = creation.nodeNames ++ clusterCache.asScala
+              .find(_._1.key == creation.key)
+              .map(_._2.map(_.nodeName))
+              .getOrElse(Set.empty),
+            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+            state = Some(ServiceState.RUNNING.name),
+            error = None
+          ),
+          creation.imageName,
+          creation.ports
+        )
+      )
 
-  override def workerClient(cluster: WorkerClusterInfo)(
-    implicit executionContext: ExecutionContext): Future[WorkerClient] =
+  override def workerClient(
+    cluster: WorkerClusterInfo
+  )(implicit executionContext: ExecutionContext): Future[WorkerClient] =
     if (wkConnectionProps != null)
       Future.successful(
-        WorkerClient.builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(wkConnectionProps).build)
+        WorkerClient.builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(wkConnectionProps).build
+      )
     else if (clusterCache.keySet().asScala.exists(_.key == cluster.key)) {
       val fake = FakeWorkerClient()
-      val r = fakeClientCache.putIfAbsent(cluster, fake)
+      val r    = fakeClientCache.putIfAbsent(cluster, fake)
       Future.successful(if (r == null) fake else r)
     } else
       Future.failed(new NoSuchClusterException(s"cluster:${cluster.key} is not running"))
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] =
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: NodeApi.Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
 
   override protected def dataCollie: DataCollie = node

@@ -30,7 +30,6 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.ExecutionContext
 
 object ContainerRoute {
-
   def apply(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     path(CONTAINER_PREFIX_PATH / Segment)({ clusterName =>
       parameter(GROUP_KEY ? GROUP_DEFAULT) {
@@ -52,7 +51,8 @@ object ContainerRoute {
                       },
                       containers = containers
                     )
-                }))
+                })
+            )
           }
       }
     })

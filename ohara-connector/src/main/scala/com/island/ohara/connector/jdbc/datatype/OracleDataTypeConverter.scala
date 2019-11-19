@@ -18,27 +18,27 @@ package com.island.ohara.connector.jdbc.datatype
 import com.island.ohara.client.database.DatabaseClient
 
 class OracleDataTypeConverter extends RDBDataTypeConverter {
-  private[this] val TYPE_NAME_CHAR: String = "CHAR"
-  private[this] val TYPE_NAME_CHARACTER: String = "CHARACTER"
-  private[this] val TYPE_NAME_LONG: String = "LONG"
-  private[this] val TYPE_NAME_VARCHAR: String = "VARCHAR"
-  private[this] val TYPE_NAME_VARCHAR2: String = "VARCHAR2"
-  private[this] val TYPE_NAME_NCHAR: String = "NCHAR"
-  private[this] val TYPE_NAME_NVARCHAR2: String = "NVARCHAR2"
-  private[this] val TYPE_NAME_RAW: String = "RAW"
-  private[this] val TYPE_NAME_LONGRAW: String = "LONG RAW"
-  private[this] val TYPE_NAME_INT: String = "INT"
-  private[this] val TYPE_NAME_INTEGER: String = "INTEGER"
-  private[this] val TYPE_NAME_DEC: String = "DEC"
-  private[this] val TYPE_NAME_DECIMAL: String = "DECIMAL"
-  private[this] val TYPE_NAME_NUMBER: String = "NUMBER"
-  private[this] val TYPE_NAME_NUMERIC: String = "NUMERIC"
-  private[this] val TYPE_NAME_DOUBLE_PRECISION: String = "DOUBLE PRECISION"
-  private[this] val TYPE_NAME_FLOAT: String = "FLOAT"
-  private[this] val TYPE_NAME_SMALLINT: String = "SMALLINT"
-  private[this] val TYPE_NAME_REAL: String = "REAL"
-  private[this] val TYPE_NAME_DATE: String = "DATE"
-  private[this] val TYPE_NAME_TIMESTAMP: String = "TIMESTAMP"
+  private[this] val TYPE_NAME_CHAR: String                   = "CHAR"
+  private[this] val TYPE_NAME_CHARACTER: String              = "CHARACTER"
+  private[this] val TYPE_NAME_LONG: String                   = "LONG"
+  private[this] val TYPE_NAME_VARCHAR: String                = "VARCHAR"
+  private[this] val TYPE_NAME_VARCHAR2: String               = "VARCHAR2"
+  private[this] val TYPE_NAME_NCHAR: String                  = "NCHAR"
+  private[this] val TYPE_NAME_NVARCHAR2: String              = "NVARCHAR2"
+  private[this] val TYPE_NAME_RAW: String                    = "RAW"
+  private[this] val TYPE_NAME_LONGRAW: String                = "LONG RAW"
+  private[this] val TYPE_NAME_INT: String                    = "INT"
+  private[this] val TYPE_NAME_INTEGER: String                = "INTEGER"
+  private[this] val TYPE_NAME_DEC: String                    = "DEC"
+  private[this] val TYPE_NAME_DECIMAL: String                = "DECIMAL"
+  private[this] val TYPE_NAME_NUMBER: String                 = "NUMBER"
+  private[this] val TYPE_NAME_NUMERIC: String                = "NUMERIC"
+  private[this] val TYPE_NAME_DOUBLE_PRECISION: String       = "DOUBLE PRECISION"
+  private[this] val TYPE_NAME_FLOAT: String                  = "FLOAT"
+  private[this] val TYPE_NAME_SMALLINT: String               = "SMALLINT"
+  private[this] val TYPE_NAME_REAL: String                   = "REAL"
+  private[this] val TYPE_NAME_DATE: String                   = "DATE"
+  private[this] val TYPE_NAME_TIMESTAMP: String              = "TIMESTAMP"
   private[this] val TYPE_NAME_INTERVAL_YEAR_TO_MONTH: String = "INTERVAL YEAR TO MONTH"
   private[this] val TYPE_NAME_INTERVAL_DAY_TO_SECOND: String = "INTERVAL DAY TO SECOND"
 
@@ -47,9 +47,11 @@ class OracleDataTypeConverter extends RDBDataTypeConverter {
   override protected[datatype] def converterDataType(column: DatabaseClient.Column): DataTypeEnum = {
     val typeName: String = column.dataType.toUpperCase
     if (typeName.startsWith(TYPE_NAME_INT) || typeName.startsWith(TYPE_NAME_INTEGER) || typeName.startsWith(
-          TYPE_NAME_SMALLINT) ||
+          TYPE_NAME_SMALLINT
+        ) ||
         typeName.startsWith(TYPE_NAME_DEC) || typeName.startsWith(TYPE_NAME_DECIMAL) || typeName.startsWith(
-          TYPE_NAME_NUMBER) ||
+          TYPE_NAME_NUMBER
+        ) ||
         typeName.startsWith(TYPE_NAME_NUMERIC))
       DataTypeEnum.INTEGER
     else if (typeName.startsWith(TYPE_NAME_REAL))
@@ -57,9 +59,11 @@ class OracleDataTypeConverter extends RDBDataTypeConverter {
     else if (typeName.startsWith(TYPE_NAME_DOUBLE_PRECISION) || typeName.startsWith(TYPE_NAME_FLOAT))
       DataTypeEnum.DOUBLE
     else if (typeName.startsWith(TYPE_NAME_CHAR) || typeName.startsWith(TYPE_NAME_CHARACTER) || typeName.startsWith(
-               TYPE_NAME_LONG) || typeName.startsWith(TYPE_NAME_VARCHAR) || typeName.startsWith(TYPE_NAME_VARCHAR2) ||
+               TYPE_NAME_LONG
+             ) || typeName.startsWith(TYPE_NAME_VARCHAR) || typeName.startsWith(TYPE_NAME_VARCHAR2) ||
              typeName.startsWith(TYPE_NAME_NCHAR) || typeName.startsWith(TYPE_NAME_NVARCHAR2) || typeName.startsWith(
-               TYPE_NAME_INTERVAL_YEAR_TO_MONTH) || typeName.startsWith(TYPE_NAME_INTERVAL_DAY_TO_SECOND))
+               TYPE_NAME_INTERVAL_YEAR_TO_MONTH
+             ) || typeName.startsWith(TYPE_NAME_INTERVAL_DAY_TO_SECOND))
       DataTypeEnum.STRING
     else if (typeName.startsWith(TYPE_NAME_DATE))
       DataTypeEnum.DATE

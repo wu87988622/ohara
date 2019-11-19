@@ -26,7 +26,7 @@ import scala.collection.JavaConverters._
 
 class FtpSink extends CsvSinkConnector {
   private[this] var settings: TaskSetting = _
-  private[this] var props: FtpSinkProps = _
+  private[this] var props: FtpSinkProps   = _
 
   override protected[ftp] def _start(settings: TaskSetting): Unit = {
     this.settings = settings

@@ -20,17 +20,19 @@ import com.island.ohara.kafka.connector.TaskSetting
 
 import scala.concurrent.duration._
 import scala.compat.java8.OptionConverters._
-case class JioProps(bufferSize: Int,
-                    closeTimeout: FiniteDuration,
-                    bindingTimeout: FiniteDuration,
-                    bindingPort: Int,
-                    bindingPath: String) {
+case class JioProps(
+  bufferSize: Int,
+  closeTimeout: FiniteDuration,
+  bindingTimeout: FiniteDuration,
+  bindingPort: Int,
+  bindingPath: String
+) {
   def plain: Map[String, String] = Map(
     DATA_BUFFER_SIZE_KEY -> bufferSize.toString,
-    CLOSE_TIMEOUT_KEY -> java.time.Duration.ofMillis(closeTimeout.toMillis).toString,
-    BINDING_TIMEOUT_KEY -> java.time.Duration.ofMillis(bindingTimeout.toMillis).toString,
-    BINDING_PORT_KEY -> bindingPort.toString,
-    BINDING_PATH_KEY -> bindingPath
+    CLOSE_TIMEOUT_KEY    -> java.time.Duration.ofMillis(closeTimeout.toMillis).toString,
+    BINDING_TIMEOUT_KEY  -> java.time.Duration.ofMillis(bindingTimeout.toMillis).toString,
+    BINDING_PORT_KEY     -> bindingPort.toString,
+    BINDING_PATH_KEY     -> bindingPath
   )
 }
 

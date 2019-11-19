@@ -29,10 +29,11 @@ private[validation] abstract class WithConfigurator extends With3Brokers3Workers
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
   private[this] val workerCluster = result(
-    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
-  protected val workerClusterKey: ObjectKey = workerCluster.key
+    WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
+  protected val workerClusterKey: ObjectKey  = workerCluster.key
   protected val configuratorHostname: String = configurator.hostname
-  protected val configuratorPort: Int = configurator.port
+  protected val configuratorPort: Int        = configurator.port
 
   @After
   def tearDown(): Unit =

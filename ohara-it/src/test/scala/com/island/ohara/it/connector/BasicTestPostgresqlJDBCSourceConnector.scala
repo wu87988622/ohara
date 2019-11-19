@@ -19,9 +19,9 @@ package com.island.ohara.it.connector
 import com.island.ohara.common.util.CommonUtils
 
 abstract class BasicTestPostgresqlJDBCSourceConnector extends BasicTestConnectorCollie {
-  private[this] val DB_URL_KEY: String = "ohara.it.postgresql.db.url"
+  private[this] val DB_URL_KEY: String       = "ohara.it.postgresql.db.url"
   private[this] val DB_USER_NAME_KEY: String = "ohara.it.postgresql.db.username"
-  private[this] val DB_PASSWORD_KEY: String = "ohara.it.postgresql.db.password"
+  private[this] val DB_PASSWORD_KEY: String  = "ohara.it.postgresql.db.password"
 
   override protected def dbUrl(): Option[String] = sys.env.get(DB_URL_KEY)
 

@@ -29,12 +29,12 @@ import scala.util.Try
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
-                                              store: DataStore,
-                                              bkConnectionProps: String,
-                                              wkConnectionProps: String)
-    extends ServiceCollie {
-
+private[configurator] class FakeServiceCollie(
+  dataCollie: DataCollie,
+  store: DataStore,
+  bkConnectionProps: String,
+  wkConnectionProps: String
+) extends ServiceCollie {
   def this(dataCollie: DataCollie, store: DataStore) {
     this(dataCollie, store, null, null)
   }
@@ -55,10 +55,13 @@ private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
     dataCollie.values[Node]().map { nodes =>
       nodes
         .map(
-          _ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT,
-                   BrokerApi.IMAGE_NAME_DEFAULT,
-                   WorkerApi.IMAGE_NAME_DEFAULT,
-                   StreamApi.IMAGE_NAME_DEFAULT))
+          _ -> Seq(
+            ZookeeperApi.IMAGE_NAME_DEFAULT,
+            BrokerApi.IMAGE_NAME_DEFAULT,
+            WorkerApi.IMAGE_NAME_DEFAULT,
+            StreamApi.IMAGE_NAME_DEFAULT
+          )
+        )
         .toMap
     }
 
@@ -78,7 +81,7 @@ private[configurator] class FakeServiceCollie(dataCollie: DataCollie,
         nodes =>
           nodes
             .map(node => {
-              val cpuResource = Resource.cpu(32, Option(positiveValue(CommonUtils.randomDouble())))
+              val cpuResource    = Resource.cpu(32, Option(positiveValue(CommonUtils.randomDouble())))
               val memoryResource = Resource.memory(137438953472L, Option(positiveValue(CommonUtils.randomDouble())))
               (node, Seq(cpuResource, memoryResource))
             })

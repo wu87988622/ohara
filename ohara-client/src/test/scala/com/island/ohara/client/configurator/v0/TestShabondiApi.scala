@@ -22,12 +22,11 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestShabondiApi extends OharaTest {
-
   @Test
   def testJsonConversion(): Unit = {
     import spray.json._
 
-    val desc = ShabondiDescription("name1", 123, Some("RUNNING"), Seq.empty, 129, 1)
+    val desc  = ShabondiDescription("name1", 123, Some("RUNNING"), Seq.empty, 129, 1)
     val json1 = SHABONDI_DESCRIPTION_JSON_FORMAT.write(desc).toString()
     json1 should be("""{"name":"name1","state":"RUNNING","lastModified":123,"instances":1,"to":[],"port":129}""")
 
@@ -55,5 +54,4 @@ class TestShabondiApi extends OharaTest {
     desc3.instances should be(3)
     desc3.port should be(3200)
   }
-
 }

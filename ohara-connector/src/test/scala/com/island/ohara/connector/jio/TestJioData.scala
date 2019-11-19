@@ -24,7 +24,6 @@ import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 class TestJioData extends OharaTest {
-
   @Test
   def rowToJioData(): Unit = {
     val row = Row.of(

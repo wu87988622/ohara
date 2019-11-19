@@ -32,13 +32,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * this stuff is also in charge of releasing the configurator after testing.
   */
 abstract class WithRemoteConfigurator extends IntegrationTest {
-  private[this] val nodes = EnvTestingUtils.sshNodes()
-  private[this] val node = nodes.head
-  private[this] val clusterNameHolder = ClusterNameHolder(nodes)
+  private[this] val nodes                    = EnvTestingUtils.sshNodes()
+  private[this] val node                     = nodes.head
+  private[this] val clusterNameHolder        = ClusterNameHolder(nodes)
   private[this] val configuratorContainerKey = clusterNameHolder.generateClusterKey()
 
   protected val configuratorHostname: String = node.hostname
-  protected val configuratorPort: Int = CommonUtils.availablePort()
+  protected val configuratorPort: Int        = CommonUtils.availablePort()
 
   /**
     * we have to combine the group and name in order to make name holder to delete related container.
@@ -47,7 +47,8 @@ abstract class WithRemoteConfigurator extends IntegrationTest {
     s"${configuratorContainerKey.group()}-${configuratorContainerKey.name()}"
 
   private[this] val dockerClient: DockerClient = DockerClient(
-    Agent.builder.hostname(node.hostname).port(node.port.get).user(node.user.get).password(node.password.get).build)
+    Agent.builder.hostname(node.hostname).port(node.port.get).user(node.user.get).password(node.password.get).build
+  )
   private[this] val imageName = s"oharastream/configurator:${VersionUtils.VERSION}"
 
   @Before
@@ -72,7 +73,8 @@ abstract class WithRemoteConfigurator extends IntegrationTest {
             .port(node.port.get)
             .user(node.user.get)
             .password(node.password.get)
-            .create())
+            .create()
+        )
         true
       } catch {
         // wait for the configurator container

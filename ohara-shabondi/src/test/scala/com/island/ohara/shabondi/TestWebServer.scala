@@ -22,7 +22,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestWebServer extends OharaTest {
-
   import HttpMethods._
   import ShabondiRouteTest._
   import com.island.ohara.shabondi.Model._
@@ -48,5 +47,4 @@ class TestWebServer extends OharaTest {
       entityAs[String] should ===("sinkRoute OK")
     }
   }
-
 }

@@ -30,7 +30,6 @@ import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerApi {
-
   val BROKER_PREFIX_PATH: String = "brokers"
 
   val BROKER_SERVICE_NAME: String = "bk"
@@ -49,55 +48,61 @@ object BrokerApi {
     _DEFINITIONS += (settingDef.key() -> settingDef)
     settingDef
   }
-  val GROUP_DEFINITION: SettingDef = createDef(groupDefinition)
-  val NAME_DEFINITION: SettingDef = createDef(nameDefinition)
-  val IMAGE_NAME_DEFINITION: SettingDef = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
-  val CLIENT_PORT_DEFINITION: SettingDef = createDef(clientPortDefinition)
-  val JMX_PORT_DEFINITION: SettingDef = createDef(jmxPortDefinition)
-  val NODE_NAMES_DEFINITION: SettingDef = createDef(nodeDefinition)
-  val TAGS_DEFINITION: SettingDef = createDef(tagDefinition)
+  val GROUP_DEFINITION: SettingDef                    = createDef(groupDefinition)
+  val NAME_DEFINITION: SettingDef                     = createDef(nameDefinition)
+  val IMAGE_NAME_DEFINITION: SettingDef               = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
+  val CLIENT_PORT_DEFINITION: SettingDef              = createDef(clientPortDefinition)
+  val JMX_PORT_DEFINITION: SettingDef                 = createDef(jmxPortDefinition)
+  val NODE_NAMES_DEFINITION: SettingDef               = createDef(nodeDefinition)
+  val TAGS_DEFINITION: SettingDef                     = createDef(tagDefinition)
   private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
   val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
       .documentation("the zookeeper cluster used to manage broker nodes")
       .required(Type.OBJECT_KEY)
       .reference(Reference.ZOOKEEPER_CLUSTER)
-      .build())
+      .build()
+  )
   private[this] val LOG_DIRS_KEY: String = "log.dirs"
-  private[this] val LOG_DIRS_DEFAULT = s"$BROKER_HOME_FOLDER/data"
+  private[this] val LOG_DIRS_DEFAULT     = s"$BROKER_HOME_FOLDER/data"
   val LOG_DIRS_DEFINITION: SettingDef = createDef(
-    _.key(LOG_DIRS_KEY).documentation("the folder used to store data of broker").optional(LOG_DIRS_DEFAULT).build())
+    _.key(LOG_DIRS_KEY).documentation("the folder used to store data of broker").optional(LOG_DIRS_DEFAULT).build()
+  )
   private[this] val NUMBER_OF_PARTITIONS_KEY: String = "num.partitions"
-  private[this] val NUMBER_OF_PARTITIONS_DEFAULT = 1
+  private[this] val NUMBER_OF_PARTITIONS_DEFAULT     = 1
   val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_PARTITIONS_KEY)
       .documentation("the number of partitions for all topics by default")
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_PARTITIONS_DEFAULT)
-      .build())
+      .build()
+  )
   private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
-  private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT = 1
+  private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT     = 1
   val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
       .documentation("the number of replications for internal offset topic")
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
-      .build())
+      .build()
+  )
   private[this] val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
-  private[this] val NUMBER_OF_NETWORK_THREADS_DEFAULT = 1
+  private[this] val NUMBER_OF_NETWORK_THREADS_DEFAULT     = 1
   val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_NETWORK_THREADS_KEY)
       .documentation("the number of threads used to accept network requests")
       // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
       .optional(NUMBER_OF_NETWORK_THREADS_DEFAULT)
-      .build())
+      .build()
+  )
   private[this] val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
-  private[this] val NUMBER_OF_IO_THREADS_DEFAULT = 1
+  private[this] val NUMBER_OF_IO_THREADS_DEFAULT     = 1
   val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_IO_THREADS_KEY)
       .documentation("the number of threads used to process network requests")
       .optional(NUMBER_OF_IO_THREADS_DEFAULT)
-      .build())
+      .build()
+  )
 
   /**
     * all public configs
@@ -107,7 +112,6 @@ object BrokerApi {
   val TOPIC_DEFINITION: TopicDefinition = TopicDefinition(TopicApi.DEFINITIONS)
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
-
     /**
       * reuse the parser from Update.
       * @param settings settings
@@ -116,25 +120,25 @@ object BrokerApi {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
-    override def name: String = settings.name.get
+    override def name: String  = settings.name.get
     override def group: String = settings.group.get
     // helper method to get the key
     private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
-    override def imageName: String = settings.imageName.get
-    override def nodeNames: Set[String] = settings.nodeNames.get
-    override def ports: Set[Int] = Set(clientPort, jmxPort)
+    override def imageName: String          = settings.imageName.get
+    override def nodeNames: Set[String]     = settings.nodeNames.get
+    override def ports: Set[Int]            = Set(clientPort, jmxPort)
     override def tags: Map[String, JsValue] = settings.tags.get
 
-    def clientPort: Int = settings.clientPort.get
-    def jmxPort: Int = settings.jmxPort.get
+    def clientPort: Int                = settings.clientPort.get
+    def jmxPort: Int                   = settings.jmxPort.get
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
-    def logDirs: String = settings.logDirs.get
-    def numberOfPartitions: Int = settings.numberOfPartitions.get
+    def logDirs: String                = settings.logDirs.get
+    def numberOfPartitions: Int        = settings.numberOfPartitions.get
     def numberOfReplications4OffsetsTopic: Int =
       settings.numberOfReplications4OffsetsTopic.get
     def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads.get
-    def numberOfIoThreads: Int = settings.numberOfIoThreads.get
+    def numberOfIoThreads: Int      = settings.numberOfIoThreads.get
   }
 
   /**
@@ -151,9 +155,9 @@ object BrokerApi {
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
-    private[BrokerApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    private[BrokerApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[BrokerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    override def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
+    override def imageName: Option[String]       = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
     override def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
     override def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map {
@@ -163,7 +167,7 @@ object BrokerApi {
     }
 
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
-    def jmxPort: Option[Int] = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
+    def jmxPort: Option[Int]    = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
 
     def zookeeperClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -195,22 +199,23 @@ object BrokerApi {
   implicit val TOPIC_DEFINITION_JSON_FORMAT: OharaJsonFormat[TopicDefinition] =
     JsonRefiner[TopicDefinition].format(jsonFormat1(TopicDefinition)).rejectEmptyString().refine
 
-  class BrokerClusterStatus(val group: String,
-                            val name: String,
-                            val topicDefinition: TopicDefinition,
-                            val aliveNodes: Set[String],
-                            val state: Option[String],
-                            val error: Option[String])
-      extends ClusterStatus
+  class BrokerClusterStatus(
+    val group: String,
+    val name: String,
+    val topicDefinition: TopicDefinition,
+    val aliveNodes: Set[String],
+    val state: Option[String],
+    val error: Option[String]
+  ) extends ClusterStatus
 
-  final case class BrokerClusterInfo private[BrokerApi] (settings: Map[String, JsValue],
-                                                         aliveNodes: Set[String],
-                                                         lastModified: Long,
-                                                         state: Option[String],
-                                                         error: Option[String],
-                                                         topicDefinition: TopicDefinition)
-      extends ClusterInfo {
-
+  final case class BrokerClusterInfo private[BrokerApi] (
+    settings: Map[String, JsValue],
+    aliveNodes: Set[String],
+    lastModified: Long,
+    state: Option[String],
+    error: Option[String],
+    topicDefinition: TopicDefinition
+  ) extends ClusterInfo {
     /**
       * update the runtime information for this cluster info
       * @param status runtime information
@@ -230,37 +235,39 @@ object BrokerApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def name: String = settings.name
-    override def group: String = settings.group
-    override def kind: String = BROKER_SERVICE_NAME
-    override def ports: Set[Int] = Set(clientPort, jmxPort)
-    override def tags: Map[String, JsValue] = settings.tags
-    def nodeNames: Set[String] = settings.nodeNames
+    override def name: String                                                     = settings.name
+    override def group: String                                                    = settings.group
+    override def kind: String                                                     = BROKER_SERVICE_NAME
+    override def ports: Set[Int]                                                  = Set(clientPort, jmxPort)
+    override def tags: Map[String, JsValue]                                       = settings.tags
+    def nodeNames: Set[String]                                                    = settings.nodeNames
 
     /**
       * the node names is not equal to "running" nodes. The connection props may reference to invalid nodes and the error
       * should be handled by the client code.
       * @return a string host_0:port,host_1:port
       */
-    def connectionProps: String = if (nodeNames.isEmpty) throw new IllegalArgumentException("there is no nodes!!!")
-    else nodeNames.map(n => s"$n:$clientPort").mkString(",")
+    def connectionProps: String =
+      if (nodeNames.isEmpty) throw new IllegalArgumentException("there is no nodes!!!")
+      else nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
-    override def imageName: String = settings.imageName
-    def clientPort: Int = settings.clientPort
-    def jmxPort: Int = settings.jmxPort
-    def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey
-    def logDirs: String = settings.logDirs
-    def numberOfPartitions: Int = settings.numberOfPartitions
+    override def imageName: String             = settings.imageName
+    def clientPort: Int                        = settings.clientPort
+    def jmxPort: Int                           = settings.jmxPort
+    def zookeeperClusterKey: ObjectKey         = settings.zookeeperClusterKey
+    def logDirs: String                        = settings.logDirs
+    def numberOfPartitions: Int                = settings.numberOfPartitions
     def numberOfReplications4OffsetsTopic: Int = settings.numberOfReplications4OffsetsTopic
-    def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads
-    def numberOfIoThreads: Int = settings.numberOfIoThreads
+    def numberOfNetworkThreads: Int            = settings.numberOfNetworkThreads
+    def numberOfIoThreads: Int                 = settings.numberOfIoThreads
   }
 
   /**
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat6(
-    BrokerClusterInfo)
+    BrokerClusterInfo
+  )
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -308,14 +315,13 @@ object BrokerApi {
 
   final class Access private[BrokerApi]
       extends ClusterAccess[Creation, Updating, BrokerClusterInfo](BROKER_PREFIX_PATH) {
-
     override def query: Query[BrokerClusterInfo] = new Query[BrokerClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
-        implicit executionContext: ExecutionContext): Future[Seq[BrokerClusterInfo]] = list(request)
+        implicit executionContext: ExecutionContext
+      ): Future[Seq[BrokerClusterInfo]] = list(request)
     }
 
     def request: ExecutableRequest = new ExecutableRequest {
-
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =

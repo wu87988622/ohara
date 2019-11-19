@@ -51,8 +51,8 @@ class TestK8SClient extends OharaTest {
   @Test
   def testPullPolicyIFNOTPRESENT(): Unit = {
     val nodeName = "ohara-it-02"
-    val podName = "container1"
-    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
+    val podName  = "container1"
+    val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient(s.url)
       val result: Option[ContainerInfo] = Await.result(
@@ -71,15 +71,14 @@ class TestK8SClient extends OharaTest {
       result.get.name shouldBe podName
       result.get.environments shouldBe Map.empty
       result.get.nodeName shouldBe nodeName
-
     } finally s.close()
   }
 
   @Test
   def testRestartPolicyDefault(): Unit = {
     val nodeName = "ohara-it-02"
-    val podName = "container1"
-    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
+    val podName  = "container1"
+    val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient(s.url)
       val result: Option[ContainerInfo] = Await.result(
@@ -104,8 +103,8 @@ class TestK8SClient extends OharaTest {
   @Test
   def testPullPolicyIsAlways(): Unit = {
     val nodeName = "ohara-it-02"
-    val podName = "container1"
-    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.ALWAYS)
+    val podName  = "container1"
+    val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.ALWAYS)
     try {
       val client = K8SClient(s.url)
       val result: Option[ContainerInfo] = Await.result(
@@ -130,8 +129,8 @@ class TestK8SClient extends OharaTest {
   @Test
   def testPullPolicyIsNever(): Unit = {
     val nodeName = "ohara-it-02"
-    val podName = "container1"
-    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.NEVER)
+    val podName  = "container1"
+    val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.NEVER)
     try {
       val client = K8SClient(s.url)
       val result: Option[ContainerInfo] = Await.result(
@@ -156,8 +155,8 @@ class TestK8SClient extends OharaTest {
   @Test
   def testPullPolicyNotSetting(): Unit = {
     val nodeName = "ohara-it-02"
-    val podName = "container1"
-    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
+    val podName  = "container1"
+    val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient(s.url)
       val result: Option[ContainerInfo] = Await.result(
@@ -180,9 +179,9 @@ class TestK8SClient extends OharaTest {
 
   @Test
   def testImages(): Unit = {
-    val node = CommonUtils.randomString()
+    val node   = CommonUtils.randomString()
     val images = Seq(CommonUtils.randomString(), CommonUtils.randomString())
-    val plain = s"""
+    val plain  = s"""
                  |{
                  |  "status": {
                  |    "addresses": [],
@@ -215,7 +214,7 @@ class TestK8SClient extends OharaTest {
       }
     }
     try {
-      val client = K8SClient(s.url)
+      val client           = K8SClient(s.url)
       val imagesFromServer = Await.result(client.images(node), 30 seconds)
       imagesFromServer shouldBe images
     } finally s.close()
@@ -223,7 +222,7 @@ class TestK8SClient extends OharaTest {
 
   @Test
   def testForceRemovePod(): Unit = {
-    val s = forceRemovePodURL("k8soccl-057aac6a97-bk-c720992")
+    val s         = forceRemovePodURL("k8soccl-057aac6a97-bk-c720992")
     val k8sClient = K8SClient(s.url)
     try {
       val result: ContainerInfo = Await.result(k8sClient.forceRemove("k8soccl-057aac6a97-bk-c720992"), 30 seconds)
@@ -236,9 +235,9 @@ class TestK8SClient extends OharaTest {
   @Test
   def testLog(): Unit = {
     val podName = "broker-pod"
-    val s = log(podName)
+    val s       = log(podName)
     try {
-      val k8sClient = K8SClient(s.url)
+      val k8sClient      = K8SClient(s.url)
       val result: String = Await.result(k8sClient.log(podName), 5 seconds)
       result shouldBe "start pods ......."
     } finally s.close()
@@ -270,7 +269,7 @@ class TestK8SClient extends OharaTest {
   def testNodes(): Unit = {
     val s = nodes()
     try {
-      val k8sClient = K8SClient(s.url)
+      val k8sClient                 = K8SClient(s.url)
       val nodes: Seq[K8SNodeReport] = Await.result(k8sClient.nodes, 5 seconds)
       nodes.size shouldBe 3
       nodes(0).nodeName shouldBe "ohara-jenkins-it-00"
@@ -284,7 +283,7 @@ class TestK8SClient extends OharaTest {
     val s = nodes()
     try {
       val k8sClient = K8SClient(s.url)
-      val result = Await.result(k8sClient.resources(), 5 seconds)
+      val result    = Await.result(k8sClient.resources(), 5 seconds)
       result.size shouldBe 0
       result.isEmpty shouldBe true
     } finally s.close()
@@ -296,7 +295,7 @@ class TestK8SClient extends OharaTest {
     try {
       val k8sClient = K8SClient(s.url)
       k8sClient.k8sMetricsAPIServerURL(s.url)
-      val resource = Await.result(k8sClient.resources(), 5 seconds)
+      val resource           = Await.result(k8sClient.resources(), 5 seconds)
       val nodes: Seq[String] = resource.map(x => x._1).toSeq
       nodes(0) shouldBe "ohara-jenkins-it-00"
 
@@ -309,9 +308,7 @@ class TestK8SClient extends OharaTest {
       node1Resource(1).name shouldBe "Memory"
       node1Resource(1).unit shouldBe "MB"
       node1Resource(1).used.get > 0.08 shouldBe true
-
     } finally s.close()
-
   }
 
   @Test
@@ -320,15 +317,13 @@ class TestK8SClient extends OharaTest {
     try {
       val k8sClient = K8SClient(s.url)
       k8sClient.k8sMetricsAPIServerURL(s.url)
-      val resource = Await.result(k8sClient.resources(), 5 seconds)
+      val resource           = Await.result(k8sClient.resources(), 5 seconds)
       val nodes: Seq[String] = resource.map(x => x._1).toSeq
       nodes(0) shouldBe "ohara-jenkins-it-00"
 
       val node1Resource = resource.map(x => (x._1, x._2)).filter(_._1 == "ohara-jenkins-it-00").map(_._2).head
       node1Resource.size shouldBe 0
-
     } finally s.close()
-
   }
 
   @Test
@@ -369,7 +364,7 @@ class TestK8SClient extends OharaTest {
                                  |   "items":[]
                                  |}
        """.stripMargin
-    val nodes: String = s"""
+    val nodes: String       = s"""
                            |{
                            |   "items":[
                            |      {
@@ -407,7 +402,6 @@ class TestK8SClient extends OharaTest {
           }
         }
     }
-
   }
 
   private[this] def resources(): SimpleServer = {
@@ -426,7 +420,7 @@ class TestK8SClient extends OharaTest {
          |   ]
          |}
        """.stripMargin
-    val nodes: String = s"""
+    val nodes: String       = s"""
          |{
          |   "items":[
          |      {
@@ -526,9 +520,11 @@ class TestK8SClient extends OharaTest {
     }
   }
 
-  private[this] def imagePolicyURL(nodeName: String,
-                                   podName: String,
-                                   expectImagePullPolicy: ImagePullPolicy): SimpleServer = {
+  private[this] def imagePolicyURL(
+    nodeName: String,
+    podName: String,
+    expectImagePullPolicy: ImagePullPolicy
+  ): SimpleServer = {
     val nodesResponse = s"""
                            |{"items": [
                            |    {
@@ -678,8 +674,11 @@ class TestK8SClient extends OharaTest {
           post {
             entity(as[Pod]) { _ =>
               complete(
-                HttpResponse(status = StatusCodes.BadRequest,
-                             entity = HttpEntity(ContentTypes.`application/json`, resultMessage)))
+                HttpResponse(
+                  status = StatusCodes.BadRequest,
+                  entity = HttpEntity(ContentTypes.`application/json`, resultMessage)
+                )
+              )
             }
           }
         }
@@ -738,12 +737,12 @@ class TestK8SClient extends OharaTest {
   }
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system = ActorSystem("my-system")
+    implicit val system       = ActorSystem("my-system")
     implicit val materializer = ActorMaterializer()
-    val server = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    val server                = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
-      override def port: Int = server.localAddress.getPort
+      override def port: Int        = server.localAddress.getPort
       override def close(): Unit = {
         Await.result(server.unbind(), 30 seconds)
         Await.result(system.terminate(), 30 seconds)

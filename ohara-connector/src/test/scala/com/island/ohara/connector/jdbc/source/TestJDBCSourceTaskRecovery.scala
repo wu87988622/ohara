@@ -35,13 +35,13 @@ import org.scalatest.mockito.MockitoSugar
 import scala.collection.JavaConverters._
 
 class TestJDBCSourceTaskRecovery extends OharaTest with MockitoSugar {
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-  private[this] val tableName = "TABLE1"
-  private[this] val timestampColumnName = "COLUMN1"
-  private[this] val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-  private[this] val taskContext: SourceTaskContext = mock[SourceTaskContext]
-  private[this] val taskSetting: TaskSetting = mock[TaskSetting]
+  private[this] val db                                       = Database.local()
+  private[this] val client                                   = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val tableName                                = "TABLE1"
+  private[this] val timestampColumnName                      = "COLUMN1"
+  private[this] val jdbcSourceTask: JDBCSourceTask           = new JDBCSourceTask()
+  private[this] val taskContext: SourceTaskContext           = mock[SourceTaskContext]
+  private[this] val taskSetting: TaskSetting                 = mock[TaskSetting]
   private[this] val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
 
   @Before
@@ -55,19 +55,26 @@ class TestJDBCSourceTaskRecovery extends OharaTest with MockitoSugar {
     val statement: Statement = db.connection.createStatement()
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a21', 'a22', 2)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a21', 'a22', 2)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a31', 'a32', 3)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a31', 'a32', 3)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a41', 'a42', 4)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:00', 'a41', 'a42', 4)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:02', 'a51', 'a52', 5)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:02', 'a51', 'a52', 5)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:03.12', 'a61', 'a62', 6)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:03.12', 'a61', 'a62', 6)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-02 00:00:04', 'a71', 'a72', 7)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-02 00:00:04', 'a71', 'a72', 7)"
+    )
 
     // Mock JDBC Source Task
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
@@ -94,7 +101,6 @@ class TestJDBCSourceTaskRecovery extends OharaTest with MockitoSugar {
 
     when(taskSetting.columns).thenReturn(columns.asJava)
     when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
-
   }
 
   @Test
@@ -190,7 +196,8 @@ class TestJDBCSourceTaskRecovery extends OharaTest with MockitoSugar {
   def testInsertData(): Unit = {
     val statement: Statement = db.connection.createStatement()
     statement.executeUpdate(
-      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-03 00:00:04', 'a81', 'a82', 8)")
+      s"INSERT INTO $tableName($timestampColumnName,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-03 00:00:04', 'a81', 'a82', 8)"
+    )
 
     val maps: Map[String, Object] = Map("db.table.offset" -> "2018-09-01 00:00:02.0,1")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)

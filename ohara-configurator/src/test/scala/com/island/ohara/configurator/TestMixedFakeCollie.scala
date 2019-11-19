@@ -30,7 +30,6 @@ import scala.concurrent.duration._
   * Embedded mode with fake cluster.
   */
 class TestMixedFakeCollie extends WithBrokerWorker {
-
   @Test
   def test(): Unit = {
     val configurator = Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
@@ -96,7 +95,6 @@ class TestMixedFakeCollie extends WithBrokerWorker {
       Await
         .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
         .size shouldBe 2
-
     } finally configurator.close()
   }
 }

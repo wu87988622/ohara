@@ -45,9 +45,9 @@ class TestFtp2Ftp extends With3Brokers3Workers {
     Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
   )
 
-  private[this] val row = Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false))
+  private[this] val row            = Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false))
   private[this] val header: String = row.cells().asScala.map(_.name).mkString(",")
-  private[this] val data = (1 to 1000).map(_ => row.cells().asScala.map(_.value.toString).mkString(","))
+  private[this] val data           = (1 to 1000).map(_ => row.cells().asScala.map(_.value.toString).mkString(","))
 
   private[this] val fileSystem = FileSystem.ftpBuilder
     .hostname(testUtil.ftpServer.hostname)
@@ -88,8 +88,8 @@ class TestFtp2Ftp extends With3Brokers3Workers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val sinkConnectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey           = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val sinkConnectorKey   = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val sourceConnectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     // start sink
     Await.result(
@@ -121,8 +121,10 @@ class TestFtp2Ftp extends With3Brokers3Workers {
         )
         CommonUtils
           .await(() => fileSystem.listFileNames(sourceProps.inputFolder).asScala.isEmpty, Duration.ofSeconds(30))
-        CommonUtils.await(() => fileSystem.listFileNames(sourceProps.completedFolder.get).asScala.size == 1,
-                          Duration.ofSeconds(30))
+        CommonUtils.await(
+          () => fileSystem.listFileNames(sourceProps.completedFolder.get).asScala.size == 1,
+          Duration.ofSeconds(30)
+        )
         val committedFolder = CommonUtils.path(sinkProps.topicsDir, topicKey.topicNameOnKafka(), "partition0")
         CommonUtils.await(() => {
           if (fileSystem.exists(committedFolder))
@@ -132,7 +134,8 @@ class TestFtp2Ftp extends With3Brokers3Workers {
         val lines =
           fileSystem.readLines(
             com.island.ohara.common.util.CommonUtils
-              .path(committedFolder, fileSystem.listFileNames(committedFolder).asScala.toSeq.head))
+              .path(committedFolder, fileSystem.listFileNames(committedFolder).asScala.toSeq.head)
+          )
         lines.length shouldBe data.length + 1 // header
         lines(0) shouldBe header
         lines(1) shouldBe data.head
@@ -152,7 +155,6 @@ class TestFtp2Ftp extends With3Brokers3Workers {
 }
 
 object TestFtp2Ftp {
-
   /**
     * delete all stuffs in the path and then recreate it as a folder
     * @param fileSystem ftp client
@@ -173,8 +175,8 @@ object TestFtp2Ftp {
 
   def setupInput(fileSystem: FileSystem, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
     val writer = new BufferedWriter(
-      new OutputStreamWriter(
-        fileSystem.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))))
+      new OutputStreamWriter(fileSystem.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc")))
+    )
     try {
       writer.append(header)
       writer.newLine()

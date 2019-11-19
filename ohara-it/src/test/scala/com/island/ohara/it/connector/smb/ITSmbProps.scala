@@ -17,26 +17,28 @@
 package com.island.ohara.it.connector.smb
 
 case class ITSmbProps(hostname: String, port: Int, username: String, password: String, shareName: String) {
-  def toMap: Map[String, String] = Map(
-    IT_SMB_HOSTNAME_KEY -> hostname,
-    IT_SMB_PORT_KEY -> port.toString,
-    IT_SMB_USERNAME_KEY -> username,
-    IT_SMB_PASSWORD_KEY -> password,
-    IT_SMB_SHARE_NAME_KEY -> shareName
-  ).filter(_._2.nonEmpty)
+  def toMap: Map[String, String] =
+    Map(
+      IT_SMB_HOSTNAME_KEY   -> hostname,
+      IT_SMB_PORT_KEY       -> port.toString,
+      IT_SMB_USERNAME_KEY   -> username,
+      IT_SMB_PASSWORD_KEY   -> password,
+      IT_SMB_SHARE_NAME_KEY -> shareName
+    ).filter(_._2.nonEmpty)
 }
 
 object ITSmbProps {
   def apply(variables: Map[String, String]): ITSmbProps = {
-    val hostname = variables.get(IT_SMB_HOSTNAME_KEY)
-    val port = variables.get(IT_SMB_PORT_KEY)
-    val username = variables.get(IT_SMB_USERNAME_KEY)
-    val password = variables.get(IT_SMB_PASSWORD_KEY)
+    val hostname  = variables.get(IT_SMB_HOSTNAME_KEY)
+    val port      = variables.get(IT_SMB_PORT_KEY)
+    val username  = variables.get(IT_SMB_USERNAME_KEY)
+    val password  = variables.get(IT_SMB_PASSWORD_KEY)
     val shareName = variables.get(IT_SMB_SHARE_NAME_KEY)
 
     if (hostname.isEmpty || port.isEmpty || username.isEmpty || password.isEmpty || shareName.isEmpty) {
       throw new IllegalArgumentException(
-        s"please setting $IT_SMB_HOSTNAME_KEY, $IT_SMB_PORT_KEY, $IT_SMB_USERNAME_KEY, $IT_SMB_PASSWORD_KEY and $IT_SMB_SHARE_NAME_KEY properties")
+        s"please setting $IT_SMB_HOSTNAME_KEY, $IT_SMB_PORT_KEY, $IT_SMB_USERNAME_KEY, $IT_SMB_PASSWORD_KEY and $IT_SMB_SHARE_NAME_KEY properties"
+      )
     }
 
     ITSmbProps(
@@ -44,7 +46,7 @@ object ITSmbProps {
       port = Integer.parseInt(port.get),
       username = username.get,
       password = password.get,
-      shareName = shareName.get,
+      shareName = shareName.get
     )
   }
 }

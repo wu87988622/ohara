@@ -25,7 +25,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{RootJsonFormat, _}
 class TestJsonRefiner extends OharaTest {
   private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat6(SimpleData)
-  private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
+  private[this] val format2: RootJsonFormat[SimpleData2]        = jsonFormat2(SimpleData2)
 
   @Test
   def nullFormat(): Unit = an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].format(null)
@@ -88,11 +88,12 @@ class TestJsonRefiner extends OharaTest {
   }
 
   @Test
-  def testRejectEmptyString(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .rejectEmptyString()
-    .refine
-    .read("""
+  def testRejectEmptyString(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .rejectEmptyString()
+      .refine
+      .read("""
             |{
             | "stringValue": "",
             | "bindPort": 123,
@@ -129,11 +130,12 @@ class TestJsonRefiner extends OharaTest {
             """.stripMargin.parseJson).connectionPort shouldBe 77
 
   @Test
-  def testNullConnectionPort(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .requireConnectionPort("connectionPort")
-    .refine
-    .read("""
+  def testNullConnectionPort(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .requireConnectionPort("connectionPort")
+      .refine
+      .read("""
             |{
             | "stringValue": "abc",
             | "bindPort": 123,
@@ -144,11 +146,12 @@ class TestJsonRefiner extends OharaTest {
           """.stripMargin.parseJson)
 
   @Test
-  def testIgnoreConnectionPort(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .requireConnectionPort("connectionPort")
-    .refine
-    .read("""
+  def testIgnoreConnectionPort(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .requireConnectionPort("connectionPort")
+      .refine
+      .read("""
             |{
             | "stringValue": "abc",
             | "bindPort": 123,
@@ -384,11 +387,12 @@ class TestJsonRefiner extends OharaTest {
           """.stripMargin.parseJson)
 
   @Test
-  def testRejectEmptyArray(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .rejectEmptyArray()
-    .refine
-    .read("""
+  def testRejectEmptyArray(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .rejectEmptyArray()
+      .refine
+      .read("""
             |{
             | "stringValue": "abc",
             | "bindPort": 9999,
@@ -452,7 +456,7 @@ class TestJsonRefiner extends OharaTest {
 
   @Test
   def testAcceptStringToNumber(): Unit = {
-    val bindPort = CommonUtils.availablePort()
+    val bindPort       = CommonUtils.availablePort()
     val connectionPort = CommonUtils.availablePort()
     val data = JsonRefiner[SimpleData]
       .format(format)
@@ -475,10 +479,11 @@ class TestJsonRefiner extends OharaTest {
   }
 
   @Test
-  def testParseStringForBindPOrt(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .refine
-    .read("""
+  def testParseStringForBindPOrt(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .refine
+      .read("""
             |{
             | "stringValue": "abc",
             | "bindPort": "123",
@@ -489,10 +494,11 @@ class TestJsonRefiner extends OharaTest {
           """.stripMargin.parseJson)
 
   @Test
-  def testParseStringForConnectionPOrt(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-    .format(format)
-    .refine
-    .read("""
+  def testParseStringForConnectionPOrt(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .refine
+      .read("""
             |{
             | "stringValue": "abc",
             | "bindPort": 123,
@@ -971,12 +977,14 @@ class TestJsonRefiner extends OharaTest {
     an[DeserializationException] should be thrownBy f.read(
       JsObject(
         format.write(data).asJsObject.fields + ("a" -> JsString("bb"))
-      ))
+      )
+    )
 
     f.read(
       JsObject(
         format.write(data).asJsObject.fields + ("a" -> JsString("bb")) + ("b" -> JsString("bb"))
-      ))
+      )
+    )
   }
 
   @Test
@@ -1005,7 +1013,8 @@ class TestJsonRefiner extends OharaTest {
 
     // the sum length (stringValue, group) is bigger than 100
     an[DeserializationException] should be thrownBy f.read(
-      format.write(data.copy(stringValue = CommonUtils.randomString(100))))
+      format.write(data.copy(stringValue = CommonUtils.randomString(100)))
+    )
 
     // duplicate values should not be distinct
     val str = CommonUtils.randomString(100)
@@ -1054,7 +1063,8 @@ class TestJsonRefiner extends OharaTest {
     f.read(format.write(data.copy(group = "", stringValue = CommonUtils.randomString(100))))
     // the length of stringValue + group is bigger than 100
     an[DeserializationException] should be thrownBy f.read(
-      format.write(data.copy(group = "aa", stringValue = CommonUtils.randomString(100))))
+      format.write(data.copy(group = "aa", stringValue = CommonUtils.randomString(100)))
+    )
   }
 
   @Test
@@ -1119,7 +1129,7 @@ class TestJsonRefiner extends OharaTest {
 
   @Test
   def testStringDefinitionWithDefaultValue(): Unit = {
-    val key = CommonUtils.randomString()
+    val key     = CommonUtils.randomString()
     val default = CommonUtils.randomString()
     val format = JsonRefiner[JsObject]
       .format(new RootJsonFormat[JsObject] {
@@ -1192,7 +1202,7 @@ class TestJsonRefiner extends OharaTest {
 
   @Test
   def testShortDefinitionWithDefaultValue(): Unit = {
-    val key = CommonUtils.randomString()
+    val key            = CommonUtils.randomString()
     val default: Short = 100
     val format = JsonRefiner[JsObject]
       .format(new RootJsonFormat[JsObject] {
@@ -1252,7 +1262,8 @@ class TestJsonRefiner extends OharaTest {
                    |    }
                    |  }
                    |  """.stripMargin.parseJson).fields(key) shouldBe JsObject(
-      Map("group" -> JsString("g"), "name" -> JsString("n")))
+      Map("group" -> JsString("g"), "name" -> JsString("n"))
+    )
 
     // this form is ok to ObjectKey - the default value of group is "default"
     format.read(s"""
@@ -1295,7 +1306,8 @@ class TestJsonRefiner extends OharaTest {
                    |    }
                    |  }
                    |  """.stripMargin.parseJson).fields(key) shouldBe JsObject(
-      Map("group" -> JsString("g"), "name" -> JsString("n")))
+      Map("group" -> JsString("g"), "name" -> JsString("n"))
+    )
 
     intercept[DeserializationException] {
       format.read(s"""
@@ -1335,7 +1347,8 @@ class TestJsonRefiner extends OharaTest {
                    |    ]
                    |  }
                    |  """.stripMargin.parseJson).fields(key) shouldBe JsArray(
-      Vector(JsObject(Map("group" -> JsString("g"), "name" -> JsString("n")))))
+      Vector(JsObject(Map("group" -> JsString("g"), "name" -> JsString("n"))))
+    )
 
     // this error is generated by akka so the error message is a bit different.
     intercept[DeserializationException] {
@@ -1535,9 +1548,10 @@ class TestJsonRefiner extends OharaTest {
                    |  }
                    |  """.stripMargin.parseJson).fields(key) shouldBe JsArray(
       Vector(
-        JsObject(Map("a" -> JsString("b"), "b" -> JsString("c"))),
+        JsObject(Map("a"  -> JsString("b"), "b"  -> JsString("c"))),
         JsObject(Map("a1" -> JsString("b"), "b1" -> JsString("c")))
-      ))
+      )
+    )
 
     // the error is generated by jackson so the error message is a bit different
     intercept[DeserializationException] {
@@ -1593,10 +1607,12 @@ class TestJsonRefiner extends OharaTest {
   def testPositiveNumber(): Unit = {
     val key = CommonUtils.randomString()
 
-    val types = Seq(SettingDef.Type.POSITIVE_SHORT,
-                    SettingDef.Type.POSITIVE_INT,
-                    SettingDef.Type.POSITIVE_LONG,
-                    SettingDef.Type.POSITIVE_DOUBLE)
+    val types = Seq(
+      SettingDef.Type.POSITIVE_SHORT,
+      SettingDef.Type.POSITIVE_INT,
+      SettingDef.Type.POSITIVE_LONG,
+      SettingDef.Type.POSITIVE_DOUBLE
+    )
 
     types.foreach { t =>
       val format = JsonRefiner[JsObject]
@@ -1627,7 +1643,7 @@ class TestJsonRefiner extends OharaTest {
 
   @Test
   def testCompleteObjectKey(): Unit = {
-    val key = CommonUtils.randomString()
+    val key  = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val format = JsonRefiner[JsObject]
       .format(new RootJsonFormat[JsObject] {
@@ -1642,7 +1658,8 @@ class TestJsonRefiner extends OharaTest {
                    |    "$key": "$name"
                    |  }
                    |  """.stripMargin.parseJson).fields(key).asJsObject.fields(GROUP_KEY) shouldBe JsString(
-      GROUP_DEFAULT)
+      GROUP_DEFAULT
+    )
 
     format.read(s"""
                    |  {
@@ -1651,13 +1668,14 @@ class TestJsonRefiner extends OharaTest {
                    |    }
                    |  }
                    |  """.stripMargin.parseJson).fields(key).asJsObject.fields(GROUP_KEY) shouldBe JsString(
-      GROUP_DEFAULT)
+      GROUP_DEFAULT
+    )
   }
 
   @Test
   def testCompleteObjectKeys(): Unit = {
-    val key = CommonUtils.randomString()
-    val name = CommonUtils.randomString()
+    val key   = CommonUtils.randomString()
+    val name  = CommonUtils.randomString()
     val name2 = CommonUtils.randomString()
     val format = JsonRefiner[JsObject]
       .format(new RootJsonFormat[JsObject] {
@@ -1698,7 +1716,7 @@ class TestJsonRefiner extends OharaTest {
 
   @Test
   def testDefineReadonlyField(): Unit = {
-    val key = CommonUtils.randomString()
+    val key   = CommonUtils.randomString()
     val value = CommonUtils.randomString()
     val format = JsonRefiner[JsObject]
       .format(new RootJsonFormat[JsObject] {

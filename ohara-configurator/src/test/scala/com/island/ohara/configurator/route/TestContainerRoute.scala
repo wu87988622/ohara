@@ -31,8 +31,8 @@ import scala.concurrent.duration.Duration
 class TestContainerRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val brokerApi    = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val workerApi    = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val zkClusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
   private[this] val bkClusterKey = ObjectKey.of("default", CommonUtils.randomString(10))
@@ -57,7 +57,8 @@ class TestContainerRoute extends OharaTest {
         .request
         .key(zkClusterKey)
         .nodeNames(nodeNames)
-        .create())
+        .create()
+    )
     zk.key shouldBe zkClusterKey
     result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key))
 

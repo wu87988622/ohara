@@ -34,8 +34,11 @@ class TestFtpSink extends CsvSinkTestBase {
 
   override val connectorClass: Class[_ <: CsvSinkConnector] = classOf[FtpSink]
 
-  override def setupProps: Map[String, String] = Map(FTP_HOSTNAME_KEY -> ftpServer.hostname,
-                                                     FTP_PORT_KEY -> ftpServer.port.toString,
-                                                     FTP_USER_NAME_KEY -> ftpServer.user,
-                                                     FTP_PASSWORD_KEY -> ftpServer.password)
+  override def setupProps: Map[String, String] =
+    Map(
+      FTP_HOSTNAME_KEY  -> ftpServer.hostname,
+      FTP_PORT_KEY      -> ftpServer.port.toString,
+      FTP_USER_NAME_KEY -> ftpServer.user,
+      FTP_PASSWORD_KEY  -> ftpServer.password
+    )
 }

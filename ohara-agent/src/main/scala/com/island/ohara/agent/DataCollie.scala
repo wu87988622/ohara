@@ -27,7 +27,6 @@ import scala.reflect.{ClassTag, classTag}
   * to other components to avoid updating unintentionally.
   */
 trait DataCollie {
-
   /**
     * Noted, the type of stored data must be equal to input type.
     * @param name data name. the group is "default"
@@ -73,11 +72,9 @@ trait DataCollie {
     * @return all data associated to type
     */
   def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]]
-
 }
 
 object DataCollie {
-
   /**
     * instantiate a readonly store simply. It is good to our testing.
     * @param objs readonly objs.

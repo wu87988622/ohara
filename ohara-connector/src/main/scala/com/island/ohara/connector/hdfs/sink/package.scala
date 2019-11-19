@@ -23,12 +23,11 @@ import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions
 
 package object sink {
-
   /**
     * used to set the order of definitions.
     */
   private[this] val COUNTER = new AtomicInteger(0)
-  val HDFS_URL_KEY: String = "hdfs.url"
+  val HDFS_URL_KEY: String  = "hdfs.url"
   val HDFS_URL_DEFINITION = SettingDef
     .builder()
     .displayName("HDFS URL")
@@ -45,13 +44,13 @@ package object sink {
     HDFS_URL_DEFINITION
   )
 
-  @VisibleForTesting val TOPICS_DIR_KEY: String = CsvConnectorDefinitions.TOPICS_DIR_KEY
-  @VisibleForTesting val FLUSH_SIZE_KEY: String = CsvConnectorDefinitions.FLUSH_SIZE_KEY
-  @VisibleForTesting val FLUSH_SIZE_DEFAULT: Int = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
-  @VisibleForTesting val ROTATE_INTERVAL_MS_KEY: String = CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY
-  @VisibleForTesting val ROTATE_INTERVAL_MS_DEFAULT: Long = CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFAULT
-  @VisibleForTesting val FILE_NEED_HEADER_KEY: String = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
+  @VisibleForTesting val TOPICS_DIR_KEY: String            = CsvConnectorDefinitions.TOPICS_DIR_KEY
+  @VisibleForTesting val FLUSH_SIZE_KEY: String            = CsvConnectorDefinitions.FLUSH_SIZE_KEY
+  @VisibleForTesting val FLUSH_SIZE_DEFAULT: Int           = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
+  @VisibleForTesting val ROTATE_INTERVAL_MS_KEY: String    = CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY
+  @VisibleForTesting val ROTATE_INTERVAL_MS_DEFAULT: Long  = CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFAULT
+  @VisibleForTesting val FILE_NEED_HEADER_KEY: String      = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
   @VisibleForTesting val FILE_NEED_HEADER_DEFAULT: Boolean = CsvConnectorDefinitions.FILE_NEED_HEADER_DEFAULT
-  @VisibleForTesting val FILE_ENCODE_KEY: String = CsvConnectorDefinitions.FILE_ENCODE_KEY
-  @VisibleForTesting val FILE_ENCODE_DEFAULT: String = CsvConnectorDefinitions.FILE_ENCODE_DEFAULT
+  @VisibleForTesting val FILE_ENCODE_KEY: String           = CsvConnectorDefinitions.FILE_ENCODE_KEY
+  @VisibleForTesting val FILE_ENCODE_DEFAULT: String       = CsvConnectorDefinitions.FILE_ENCODE_DEFAULT
 }

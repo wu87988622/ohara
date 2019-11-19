@@ -35,15 +35,18 @@ import scala.concurrent.{ExecutionContext, Future}
 object NodeRoute {
   private[this] lazy val LOG = Logger(NodeRoute.getClass)
 
-  private[this] def updateServices(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
-                                                     executionContext: ExecutionContext): Future[Seq[Node]] =
+  private[this] def updateServices(
+    nodes: Seq[Node]
+  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
     serviceCollie
       .clusters()
       .map(_.keys.toSeq)
-      .flatMap(clusters =>
-        serviceCollie.configuratorContainerName().map(clusters -> Some(_)).recover {
-          case _: NoSuchElementException => clusters -> None
-      })
+      .flatMap(
+        clusters =>
+          serviceCollie.configuratorContainerName().map(clusters -> Some(_)).recover {
+            case _: NoSuchElementException => clusters -> None
+          }
+      )
       .map {
         case (clusters, configuratorContainerOption) =>
           nodes.map { node =>
@@ -89,7 +92,9 @@ object NodeRoute {
                       NodeService(
                         name = NodeApi.CONFIGURATOR_SERVICE_NAME,
                         clusterKeys = Seq(ObjectKey.of("N/A", container.name))
-                      )))
+                      )
+                    )
+                )
                 .getOrElse(Seq.empty)
             )
           }
@@ -103,41 +108,52 @@ object NodeRoute {
   /**
     * fetch the hardware resources.
     */
-  private[this] def updateResources(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
-                                                      executionContext: ExecutionContext): Future[Seq[Node]] =
+  private[this] def updateResources(
+    nodes: Seq[Node]
+  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
     serviceCollie
       .resources()
-      .map(rs =>
-        nodes.map { node =>
-          node.copy(resources = rs.find(_._1.hostname == node.hostname).map(_._2).getOrElse(Seq.empty))
-      })
+      .map(
+        rs =>
+          nodes.map { node =>
+            node.copy(resources = rs.find(_._1.hostname == node.hostname).map(_._2).getOrElse(Seq.empty))
+          }
+      )
 
-  private[this] def updateRuntimeInfo(node: Node)(implicit serviceCollie: ServiceCollie,
-                                                  executionContext: ExecutionContext): Future[Node] =
+  private[this] def updateRuntimeInfo(
+    node: Node
+  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Node] =
     updateRuntimeInfo(Seq(node)).map(_.head)
 
-  private[this] def updateRuntimeInfo(nodes: Seq[Node])(implicit serviceCollie: ServiceCollie,
-                                                        executionContext: ExecutionContext): Future[Seq[Node]] =
+  private[this] def updateRuntimeInfo(
+    nodes: Seq[Node]
+  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
     updateServices(nodes).flatMap(updateResources)
 
-  private[this] def hookOfGet(implicit serviceCollie: ServiceCollie,
-                              executionContext: ExecutionContext): HookOfGet[Node] = updateRuntimeInfo
+  private[this] def hookOfGet(
+    implicit serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): HookOfGet[Node] = updateRuntimeInfo
 
-  private[this] def hookOfList(implicit serviceCollie: ServiceCollie,
-                               executionContext: ExecutionContext): HookOfList[Node] = updateRuntimeInfo
+  private[this] def hookOfList(
+    implicit serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): HookOfList[Node] = updateRuntimeInfo
 
-  private[this] def creationToNode(creation: Creation): Future[Node] = Future.successful(
-    Node(
-      hostname = creation.hostname,
-      port = creation.port,
-      user = creation.user,
-      password = creation.password,
-      services = Seq.empty,
-      lastModified = CommonUtils.current(),
-      validationReport = None,
-      resources = Seq.empty,
-      tags = creation.tags
-    ))
+  private[this] def creationToNode(creation: Creation): Future[Node] =
+    Future.successful(
+      Node(
+        hostname = creation.hostname,
+        port = creation.port,
+        user = creation.user,
+        password = creation.password,
+        services = Seq.empty,
+        lastModified = CommonUtils.current(),
+        validationReport = None,
+        resources = Seq.empty,
+        tags = creation.tags
+      )
+    )
 
   private[this] def hookOfCreation: HookOfCreation[Creation, Node] = creationToNode(_)
 
@@ -147,8 +163,10 @@ object NodeRoute {
       throw new IllegalArgumentException(s"node:$nodeName is used by $serviceName.")
   }
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, Node] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, Node] =
     (key: ObjectKey, updating: Updating, previousOption: Option[Node]) =>
       previousOption match {
         case None =>
@@ -159,7 +177,8 @@ object NodeRoute {
               user = updating.user,
               password = updating.password,
               tags = updating.tags.getOrElse(Map.empty)
-            ))
+            )
+          )
         case Some(previous) =>
           objectChecker.checkList
             .allZookeepers()
@@ -167,8 +186,9 @@ object NodeRoute {
             .allWorkers()
             .allStreams()
             .check()
-            .map(report =>
-              (report.runningZookeepers, report.runningBrokers, report.runningWorkers, report.runningStreams))
+            .map(
+              report => (report.runningZookeepers, report.runningBrokers, report.runningWorkers, report.runningStreams)
+            )
             .flatMap {
               case (zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
                 checkConflict(key.name, "zookeeper cluster", zookeeperClusterInfos)
@@ -182,45 +202,53 @@ object NodeRoute {
                     user = updating.user.orElse(previous.user),
                     password = updating.password.orElse(previous.password),
                     tags = updating.tags.getOrElse(previous.tags)
-                  ))
+                  )
+                )
             }
-
-    }
-
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    objectChecker.checkList
-      .allZookeepers()
-      .allBrokers()
-      .allWorkers()
-      .allStreams()
-      .node(key)
-      .check()
-      .map(
-        report =>
-          (report.nodes.head,
-           report.zookeeperClusterInfos.keys.toSeq,
-           report.brokerClusterInfos.keys.toSeq,
-           report.workerClusterInfos.keys.toSeq,
-           report.streamClusterInfos.keys.toSeq))
-      .map {
-        case (node, zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
-          checkConflict(node.hostname, "zookeeper cluster", zookeeperClusterInfos)
-          checkConflict(node.hostname, "broker cluster", brokerClusterInfos)
-          checkConflict(node.hostname, "worker cluster", workerClusterInfos)
-          checkConflict(node.hostname, "stream cluster", streamClusterInfos)
       }
-      .recover {
-        // the duplicate deletes are legal to ohara
-        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
-        case e: Throwable                                           => throw e
-      }
-      .map(_ => Unit)
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            serviceCollie: ServiceCollie,
-            executionContext: ExecutionContext): server.Route =
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
+    (key: ObjectKey) =>
+      objectChecker.checkList
+        .allZookeepers()
+        .allBrokers()
+        .allWorkers()
+        .allStreams()
+        .node(key)
+        .check()
+        .map(
+          report =>
+            (
+              report.nodes.head,
+              report.zookeeperClusterInfos.keys.toSeq,
+              report.brokerClusterInfos.keys.toSeq,
+              report.workerClusterInfos.keys.toSeq,
+              report.streamClusterInfos.keys.toSeq
+            )
+        )
+        .map {
+          case (node, zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
+            checkConflict(node.hostname, "zookeeper cluster", zookeeperClusterInfos)
+            checkConflict(node.hostname, "broker cluster", brokerClusterInfos)
+            checkConflict(node.hostname, "worker cluster", workerClusterInfos)
+            checkConflict(node.hostname, "stream cluster", streamClusterInfos)
+        }
+        .recover {
+          // the duplicate deletes are legal to ohara
+          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: Throwable                                           => throw e
+        }
+        .map(_ => Unit)
+
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): server.Route =
     RouteBuilder[Creation, Updating, Node]()
       .root(NODES_PREFIX_PATH)
       .hookOfCreation(hookOfCreation)

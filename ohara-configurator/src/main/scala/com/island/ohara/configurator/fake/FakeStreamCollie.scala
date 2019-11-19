@@ -30,7 +30,6 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class FakeStreamCollie(node: DataCollie)
     extends FakeCollie[StreamClusterStatus](node)
     with StreamCollie {
-
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
     // we fake counters since stream is not really running in fake collie mode
     Seq(
@@ -39,7 +38,8 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
         .group(StreamRoute.STREAM_GROUP)
         .name("fakeCounter")
         .value(CommonUtils.randomInteger().toLong)
-        .build())
+        .build()
+    )
 
   override def creator: StreamCollie.ClusterCreator =
     (_, creation) =>
@@ -58,18 +58,23 @@ private[configurator] class FakeStreamCollie(node: DataCollie)
             ),
             creation.imageName,
             creation.ports
-          ))
+          )
+        )
 
   override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.failed(
-      new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))
+      new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster")
+    )
 
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   containerInfo: ContainerInfo,
-                                   node: Node,
-                                   route: Map[String, String],
-                                   arguments: Seq[String]): Future[Unit] = Future.unit
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] = Future.unit
 
   override protected def dataCollie: DataCollie = node
 

@@ -30,7 +30,6 @@ import spray.json._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 object StreamApi {
-
   val STREAM_PREFIX_PATH: String = "streams"
 
   /**
@@ -46,11 +45,10 @@ object StreamApi {
   final val IMAGE_NAME_DEFAULT: String = StreamDefUtils.IMAGE_NAME_DEFINITION.defaultString()
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
-
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     // the name and group fields are used to identify zookeeper cluster object
     // we should give them default value in JsonRefiner
-    override def name: String = settings.name.get
+    override def name: String  = settings.name.get
     override def group: String = settings.group.get
     // helper method to get the key
     private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
@@ -85,8 +83,7 @@ object StreamApi {
     def jmxPort: Int = settings.jmxPort.get
 
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
-    def toTopicKeys: Set[TopicKey] = settings.toTopicKeys.get
-
+    def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     rulesOfCreation[Creation](
@@ -99,7 +96,7 @@ object StreamApi {
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     // We use the update parser to get the name and group
-    private[StreamApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+    private[StreamApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
     private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
 
     def brokerClusterKey: Option[ObjectKey] =
@@ -143,12 +140,13 @@ object StreamApi {
       }
     )
 
-  class StreamClusterStatus(val group: String,
-                            val name: String,
-                            val aliveNodes: Set[String],
-                            val state: Option[String],
-                            val error: Option[String])
-      extends ClusterStatus
+  class StreamClusterStatus(
+    val group: String,
+    val name: String,
+    val aliveNodes: Set[String],
+    val state: Option[String],
+    val error: Option[String]
+  ) extends ClusterStatus
 
   /**
     * The Stream Cluster Information stored in configurator
@@ -160,14 +158,14 @@ object StreamApi {
     * @param metrics the metrics bean
     * @param lastModified this data change time
     */
-  final case class StreamClusterInfo(settings: Map[String, JsValue],
-                                     aliveNodes: Set[String],
-                                     state: Option[String],
-                                     error: Option[String],
-                                     metrics: Metrics,
-                                     lastModified: Long)
-      extends ClusterInfo {
-
+  final case class StreamClusterInfo(
+    settings: Map[String, JsValue],
+    aliveNodes: Set[String],
+    state: Option[String],
+    error: Option[String],
+    metrics: Metrics,
+    lastModified: Long
+  ) extends ClusterInfo {
     /**
       * update the runtime information for this cluster info
       * @param status runtime information
@@ -187,10 +185,10 @@ object StreamApi {
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
 
-    override def name: String = settings.name
-    override def group: String = settings.group
-    override def kind: String = STREAM_SERVICE_NAME
-    override def ports: Set[Int] = settings.ports
+    override def name: String               = settings.name
+    override def group: String              = settings.group
+    override def kind: String               = STREAM_SERVICE_NAME
+    override def ports: Set[Int]            = settings.ports
     override def tags: Map[String, JsValue] = settings.tags
 
     def imageName: String = settings.imageName
@@ -203,10 +201,10 @@ object StreamApi {
       */
     def jarKey: ObjectKey = settings.jarKey
 
-    def brokerClusterKey: ObjectKey = settings.brokerClusterKey
+    def brokerClusterKey: ObjectKey  = settings.brokerClusterKey
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
-    def toTopicKeys: Set[TopicKey] = settings.toTopicKeys
-    def jmxPort: Int = settings.jmxPort
+    def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys
+    def jmxPort: Int                 = settings.jmxPort
 
     def nodeNames: Set[String] = settings.nodeNames
 
@@ -216,7 +214,7 @@ object StreamApi {
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
     JsonRefiner[StreamClusterInfo]
       .format(new RootJsonFormat[StreamClusterInfo] {
-        private[this] val format = jsonFormat6(StreamClusterInfo)
+        private[this] val format                            = jsonFormat6(StreamClusterInfo)
         override def read(json: JsValue): StreamClusterInfo = format.read(json)
         override def write(obj: StreamClusterInfo): JsValue =
           JsObject(noJsNull(format.write(obj).asJsObject.fields))
@@ -235,15 +233,19 @@ object StreamApi {
       setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarKey).parseJson)
     def fromTopicKey(fromTopicKey: TopicKey): Request.this.type = fromTopicKeys(Set(fromTopicKey))
     def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request.this.type =
-      setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-              JsArray(fromTopicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
+      setting(
+        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+        JsArray(fromTopicKeys.map(TOPIC_KEY_FORMAT.write).toVector)
+      )
     def toTopicKey(toTopicKey: TopicKey): Request.this.type = toTopicKeys(Set(toTopicKey))
     def toTopicKeys(toTopicKeys: Set[TopicKey]): Request.this.type =
       setting(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(toTopicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
     @Optional("server picks up a broker cluster for you if broker cluster name is empty")
-    def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type = setting(
-      StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key(),
-      OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey)))
+    def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type =
+      setting(
+        StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key(),
+        OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey))
+      )
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
@@ -293,14 +295,13 @@ object StreamApi {
 
   final class Access private[StreamApi]
       extends ClusterAccess[Creation, Updating, StreamClusterInfo](STREAM_PREFIX_PATH) {
-
     override def query: Query[StreamClusterInfo] = new Query[StreamClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
-        implicit executionContext: ExecutionContext): Future[Seq[StreamClusterInfo]] = list(request)
+        implicit executionContext: ExecutionContext
+      ): Future[Seq[StreamClusterInfo]] = list(request)
     }
 
     def request: ExecutableRequest = new ExecutableRequest {
-
       override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =

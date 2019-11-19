@@ -38,7 +38,6 @@ import scala.concurrent.duration._
   * https://github.com/oharastream/ohara/issues/873.
   */
 class Test873 extends OharaTest {
-
   @Test
   def testCreateConnector(): Unit = {
     val className = CommonUtils.randomString()
@@ -60,7 +59,8 @@ class Test873 extends OharaTest {
                 name = req.name(),
                 config = req.configs().asScala.toMap,
                 tasks = tasks
-              ))
+              )
+            )
           }
         }
       }
@@ -68,9 +68,10 @@ class Test873 extends OharaTest {
 
     try {
       val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-      val client = WorkerClient(s"${server.hostname}:${server.port}")
+      val client       = WorkerClient(s"${server.hostname}:${server.port}")
       val response = result(
-        client.connectorCreator().connectorKey(connectorKey).settings(settings).className(className).create())
+        client.connectorCreator().connectorKey(connectorKey).settings(settings).className(className).create()
+      )
       response.name shouldBe connectorKey.connectorNameOnKafka()
       response.tasks shouldBe tasks
       settings.foreach {
@@ -81,12 +82,12 @@ class Test873 extends OharaTest {
   }
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system: ActorSystem = ActorSystem("my-system")
+    implicit val system: ActorSystem             = ActorSystem("my-system")
     implicit val materializer: ActorMaterializer = ActorMaterializer()
-    val server = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    val server                                   = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
-      override def port: Int = server.localAddress.getPort
+      override def port: Int        = server.localAddress.getPort
       override def close(): Unit = {
         Await.result(server.unbind(), 30 seconds)
         Await.result(system.terminate(), 30 seconds)

@@ -37,11 +37,11 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-  private[this] val tableName = "table1"
+  private[this] val db                  = Database.local()
+  private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
@@ -55,14 +55,15 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
 
     (1 to 1000).foreach(x => {
       statement.executeUpdate(
-        s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a${x}-1', 'a${x}-2', ${x})")
+        s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a${x}-1', 'a${x}-2', ${x})"
+      )
     })
   }
 
   @Test
   def testRecovery(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
       workerClient
@@ -104,7 +105,8 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
         val statement: Statement = db.connection.createStatement()
 
         statement.executeUpdate(
-          s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-01 01:00:00', 'a1001-1', 'a1001-2', 1001)")
+          s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-01 01:00:00', 'a1001-1', 'a1001-2', 1001)"
+        )
 
         //Resume JDBC Source Connector
         result(workerClient.resume(connectorKey))
@@ -142,7 +144,8 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
             .create()
         )
         statement.executeUpdate(
-          s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-02 00:00:01', 'a1002-1', 'a1002-2', 1002)")
+          s"INSERT INTO $tableName($timestampColumnName,column2,column3,column4) VALUES('2018-09-02 00:00:01', 'a1002-1', 'a1002-2', 1002)"
+        )
 
         //Get all topic data for test
         consumer.seekToBeginning() //Reset consumer
@@ -174,14 +177,17 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
 
   import scala.collection.JavaConverters._
   private[this] val props = JDBCSourceConnectorConfig(
-    TaskSetting.of(Map(
-      DB_URL -> db.url,
-      DB_USERNAME -> db.user,
-      DB_PASSWORD -> db.password,
-      DB_TABLENAME -> tableName,
-      TIMESTAMP_COLUMN_NAME -> timestampColumnName,
-      JDBC_FETCHDATA_SIZE -> "1",
-      JDBC_FLUSHDATA_SIZE -> "1"
-    ).asJava))
+    TaskSetting.of(
+      Map(
+        DB_URL                -> db.url,
+        DB_USERNAME           -> db.user,
+        DB_PASSWORD           -> db.password,
+        DB_TABLENAME          -> tableName,
+        TIMESTAMP_COLUMN_NAME -> timestampColumnName,
+        JDBC_FETCHDATA_SIZE   -> "1",
+        JDBC_FLUSHDATA_SIZE   -> "1"
+      ).asJava
+    )
+  )
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 }

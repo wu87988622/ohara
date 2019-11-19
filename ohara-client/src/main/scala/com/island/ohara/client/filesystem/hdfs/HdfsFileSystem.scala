@@ -32,7 +32,7 @@ private[filesystem] object HdfsFileSystem {
   def builder(): Builder = new Builder
 
   class Builder private[filesystem] extends com.island.ohara.common.pattern.Builder[FileSystem] {
-    private[this] val LOG = Logger(classOf[FileSystem])
+    private[this] val LOG         = Logger(classOf[FileSystem])
     private[this] var url: String = _
 
     def url(value: String): Builder = {
@@ -47,7 +47,6 @@ private[filesystem] object HdfsFileSystem {
     }
 
     private[this] class HdfsFileSystemImpl(hadoopFS: org.apache.hadoop.fs.FileSystem) extends FileSystem {
-
       /**
         * Returns whether a file or folder exists
         *
@@ -69,7 +68,7 @@ private[filesystem] object HdfsFileSystem {
         implicit def convertToScalaIterator[T](underlying: RemoteIterator[T]): Iterator[T] = {
           case class wrapper(underlying: RemoteIterator[T]) extends Iterator[T] {
             override def hasNext: Boolean = underlying.hasNext
-            override def next(): T = underlying.next()
+            override def next(): T        = underlying.next()
           }
           wrapper(underlying)
         }

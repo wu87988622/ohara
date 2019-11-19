@@ -24,30 +24,33 @@ import scala.concurrent.duration.Duration
 /**
   * This class is getting property value
   */
-case class JDBCSourceConnectorConfig(dbURL: String,
-                                     dbUserName: String,
-                                     dbPassword: String,
-                                     dbTableName: String,
-                                     dbCatalogPattern: Option[String],
-                                     dbSchemaPattern: Option[String],
-                                     mode: String,
-                                     jdbcFetchDataSize: Int,
-                                     jdbcFlushDataSize: Int,
-                                     jdbcFrequenceTime: Duration,
-                                     timestampColumnName: String) {
-  def toMap: Map[String, String] = Map(
-    DB_URL -> dbURL,
-    DB_USERNAME -> dbUserName,
-    DB_PASSWORD -> dbPassword,
-    DB_TABLENAME -> dbTableName,
-    MODE -> mode,
-    JDBC_FETCHDATA_SIZE -> jdbcFetchDataSize.toString,
-    JDBC_FLUSHDATA_SIZE -> jdbcFlushDataSize.toString,
-    JDBC_FREQUENCE_TIME -> toJavaDuration(jdbcFrequenceTime).toString,
-    TIMESTAMP_COLUMN_NAME -> timestampColumnName
-  ) ++ dbCatalogPattern.map(s => Map(DB_CATALOG_PATTERN -> s)).getOrElse(Map.empty) ++ dbSchemaPattern
-    .map(s => Map(DB_SCHEMA_PATTERN -> s))
-    .getOrElse(Map.empty)
+case class JDBCSourceConnectorConfig(
+  dbURL: String,
+  dbUserName: String,
+  dbPassword: String,
+  dbTableName: String,
+  dbCatalogPattern: Option[String],
+  dbSchemaPattern: Option[String],
+  mode: String,
+  jdbcFetchDataSize: Int,
+  jdbcFlushDataSize: Int,
+  jdbcFrequenceTime: Duration,
+  timestampColumnName: String
+) {
+  def toMap: Map[String, String] =
+    Map(
+      DB_URL                -> dbURL,
+      DB_USERNAME           -> dbUserName,
+      DB_PASSWORD           -> dbPassword,
+      DB_TABLENAME          -> dbTableName,
+      MODE                  -> mode,
+      JDBC_FETCHDATA_SIZE   -> jdbcFetchDataSize.toString,
+      JDBC_FLUSHDATA_SIZE   -> jdbcFlushDataSize.toString,
+      JDBC_FREQUENCE_TIME   -> toJavaDuration(jdbcFrequenceTime).toString,
+      TIMESTAMP_COLUMN_NAME -> timestampColumnName
+    ) ++ dbCatalogPattern.map(s => Map(DB_CATALOG_PATTERN -> s)).getOrElse(Map.empty) ++ dbSchemaPattern
+      .map(s => Map(DB_SCHEMA_PATTERN                     -> s))
+      .getOrElse(Map.empty)
 }
 
 object JDBCSourceConnectorConfig {

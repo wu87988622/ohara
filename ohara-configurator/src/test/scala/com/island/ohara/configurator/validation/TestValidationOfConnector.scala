@@ -51,7 +51,8 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .numberOfTasks(1)
         .workerClusterKey(wkCluster.key)
         .topicKeys(topicKeys)
-        .verify())
+        .verify()
+    )
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get() shouldBe 1
@@ -69,28 +70,32 @@ class TestValidationOfConnector extends With3Brokers3Workers {
     * the classname is required so the request will be rejected directly
     */
   @Test
-  def ignoreClassName(): Unit = an[DeserializationException] should be thrownBy result(
-    ValidationApi.access
-      .hostname(configurator.hostname)
-      .port(configurator.port)
-      .connectorRequest
-      .name(CommonUtils.randomString(10))
-      .numberOfTasks(1)
-      .workerClusterKey(wkCluster.key)
-      .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-      .verify())
+  def ignoreClassName(): Unit =
+    an[DeserializationException] should be thrownBy result(
+      ValidationApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .connectorRequest
+        .name(CommonUtils.randomString(10))
+        .numberOfTasks(1)
+        .workerClusterKey(wkCluster.key)
+        .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
+        .verify()
+    )
 
   @Test
-  def ignoreTopicName(): Unit = an[IllegalArgumentException] should be thrownBy result(
-    ValidationApi.access
-      .hostname(configurator.hostname)
-      .port(configurator.port)
-      .connectorRequest
-      .name(CommonUtils.randomString(10))
-      .className(classOf[DumbSink].getName)
-      .numberOfTasks(1)
-      .workerClusterKey(wkCluster.key)
-      .verify())
+  def ignoreTopicName(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      ValidationApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .connectorRequest
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .numberOfTasks(1)
+        .workerClusterKey(wkCluster.key)
+        .verify()
+    )
 
   @Test
   def ignoreNumberOfTasks(): Unit = {
@@ -103,7 +108,8 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .className(classOf[DumbSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterKey(wkCluster.key)
-        .verify())
+        .verify()
+    )
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get shouldBe 1
@@ -129,7 +135,8 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterKey(wkCluster.key)
         .tags(tags)
-        .verify())
+        .verify()
+    )
     response.value(ConnectorDefUtils.TAGS_DEFINITION.key()).get().parseJson shouldBe JsObject(Map("a" -> JsString("b")))
     response
       .settings()
@@ -151,7 +158,8 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .className(classOf[DumbSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterKey(wkCluster.key)
-        .verify())
+        .verify()
+    )
     response2.errorCount() shouldBe 0
   }
 

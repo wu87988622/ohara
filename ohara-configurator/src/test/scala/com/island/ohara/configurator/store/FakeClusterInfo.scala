@@ -21,7 +21,6 @@ import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
 
 case class FakeClusterInfo(name: String) extends ClusterInfo {
-
   override def imageName: String = "I DON'T CARE"
 
   override def ports: Set[Int] = Set.empty

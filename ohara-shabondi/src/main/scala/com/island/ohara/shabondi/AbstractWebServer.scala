@@ -35,7 +35,6 @@ import scala.util.{Failure, Success, Try}
   * reference: akka.http.scaladsl.server.HttpApp
   */
 private abstract class AbstractWebServer extends Directives {
-
   private val serverBinding = new AtomicReference[ServerBinding]()
 
   protected val actorSystemRef = new AtomicReference[ActorSystem]()
@@ -46,7 +45,7 @@ private abstract class AbstractWebServer extends Directives {
 
   protected def postBinding(binding: ServerBinding): Unit = {
     val hostname = binding.localAddress.getHostName
-    val port = binding.localAddress.getPort
+    val port     = binding.localAddress.getPort
     actorSystemRef.get().log.info(s"Server online at http://$hostname:$port/")
   }
 
@@ -81,7 +80,7 @@ private abstract class AbstractWebServer extends Directives {
 
     actorSystemRef.set(actorSystem)
 
-    implicit val materializer = ActorMaterializer()
+    implicit val materializer     = ActorMaterializer()
     implicit val executionContext = actorSystem.dispatcher
 
     val bindingFuture: Future[Http.ServerBinding] = Http().bindAndHandle(
@@ -110,7 +109,5 @@ private abstract class AbstractWebServer extends Directives {
         postServerShutdown(attempt, actorSystem)
         actorSystem.terminate()
       })
-
   }
-
 }

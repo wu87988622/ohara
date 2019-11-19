@@ -41,41 +41,46 @@ import spray.json._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FileInfoRoute {
-
   private[this] val LOG = Logger(FileInfoRoute.getClass)
 
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    objectChecker.checkList
-      .allStreams()
-      .allWorkers()
-      .check()
-      .map(report => (report.workerClusterInfos.keys, report.streamClusterInfos.keys))
-      .map {
-        case (workerClusterInfos, streamClusterInfos) =>
-          workerClusterInfos.foreach { workerClusterInfo =>
-            if (workerClusterInfo.pluginKeys.contains(key))
-              throw new IllegalArgumentException(s"file:$key is used by worker cluster:${workerClusterInfo.key}")
-          }
-          streamClusterInfos.foreach { streamClusterInfo =>
-            if (streamClusterInfo.jarKey == key)
-              throw new IllegalArgumentException(s"file:$key is used by stream cluster:${streamClusterInfo.key}")
-          }
-    }
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
+    (key: ObjectKey) =>
+      objectChecker.checkList
+        .allStreams()
+        .allWorkers()
+        .check()
+        .map(report => (report.workerClusterInfos.keys, report.streamClusterInfos.keys))
+        .map {
+          case (workerClusterInfos, streamClusterInfos) =>
+            workerClusterInfos.foreach { workerClusterInfo =>
+              if (workerClusterInfo.pluginKeys.contains(key))
+                throw new IllegalArgumentException(s"file:$key is used by worker cluster:${workerClusterInfo.key}")
+            }
+            streamClusterInfos.foreach { streamClusterInfo =>
+              if (streamClusterInfo.jarKey == key)
+                throw new IllegalArgumentException(s"file:$key is used by stream cluster:${streamClusterInfo.key}")
+            }
+        }
 
   /**
     * This is a specific prefix which enables user to download binary of file
     */
   private[this] val DOWNLOAD_FILE_PREFIX_PATH: String = "downloadFiles"
 
-  def routeToDownload(implicit store: DataStore,
-                      executionContext: ExecutionContext,
-                      resolver: ContentTypeResolver): Route =
+  def routeToDownload(
+    implicit store: DataStore,
+    executionContext: ExecutionContext,
+    resolver: ContentTypeResolver
+  ): Route =
     pathPrefix(DOWNLOAD_FILE_PREFIX_PATH / Segment / Segment) {
       case (group, name) =>
         complete(store.value[FileInfo](ObjectKey.of(group, name)).map { fileInfo =>
           HttpResponse(
-            entity = HttpEntity.Strict(contentType = resolver(fileInfo.name), data = ByteString(fileInfo.bytes)))
+            entity = HttpEntity.Strict(contentType = resolver(fileInfo.name), data = ByteString(fileInfo.bytes))
+          )
         })
     }
 
@@ -88,7 +93,8 @@ private[configurator] object FileInfoRoute {
   }
   private[route] def routeOfUploadingFile(urlMaker: ObjectKey => Option[URL], storeOption: Option[DataStore])(
     implicit serviceCollie: ServiceCollie,
-    executionContext: ExecutionContext) = withSizeLimit(DEFAULT_FILE_SIZE_BYTES) {
+    executionContext: ExecutionContext
+  ) = withSizeLimit(DEFAULT_FILE_SIZE_BYTES) {
     // We need to convert the request entity to strict entity in order to fetch the "form fields",
     // The timeout here used seconds by the formula (for a worse case):
     // timeout = DEFAULT_FILE_SIZE_BYTES(50MB) / 10Mbps upload = 40 seconds
@@ -99,7 +105,7 @@ private[configurator] object FileInfoRoute {
           storeUploadedFile(FIELD_NAME, fileInfo => CommonUtils.createTempFile(fileInfo.getFileName, ".jar")) {
             case (metadata, file) =>
               val name = metadata.fileName
-              val key = ObjectKey.of(group, name)
+              val key  = ObjectKey.of(group, name)
               complete(
                 storeOption
                   .map(_.exist[FileInfo](key))
@@ -129,20 +135,24 @@ private[configurator] object FileInfoRoute {
                         }
                         .flatMap(fileInfo => storeOption.map(_.add(fileInfo)).getOrElse(Future.successful(fileInfo)))
                     }
-                  })
+                  }
+              )
           }
       }
     }
   }
 
-  private[this] def customPost(hostname: String, port: Int, version: String)(
-    implicit store: DataStore,
-    serviceCollie: ServiceCollie,
-    executionContext: ExecutionContext): () => Route = () =>
-    routeOfUploadingFile(
-      urlMaker = key =>
-        Some(new URL(s"http://$hostname:$port/$version/$DOWNLOAD_FILE_PREFIX_PATH/${key.group()}/${key.name()}")),
-      storeOption = Some(store))
+  private[this] def customPost(
+    hostname: String,
+    port: Int,
+    version: String
+  )(implicit store: DataStore, serviceCollie: ServiceCollie, executionContext: ExecutionContext): () => Route =
+    () =>
+      routeOfUploadingFile(
+        urlMaker = key =>
+          Some(new URL(s"http://$hostname:$port/$version/$DOWNLOAD_FILE_PREFIX_PATH/${key.group()}/${key.name()}")),
+        storeOption = Some(store)
+      )
 
   private[this] def hookOfUpdating: HookOfUpdating[Updating, FileInfo] =
     (_: ObjectKey, updating: Updating, previousOption: Option[FileInfo]) =>
@@ -158,8 +168,9 @@ private[configurator] object FileInfoRoute {
               bytes = previous.bytes,
               classInfos = previous.classInfos,
               tags = updating.tags.getOrElse(previous.tags)
-            ))
-    }
+            )
+          )
+      }
 
   /**
     * FileInfo route does not use Creation so there is no creation in FileInfo APIs.
@@ -167,8 +178,8 @@ private[configurator] object FileInfoRoute {
     * default route of creation. We have defined a custom route to replace the default one.
     */
   private[this] class FakeCreation extends BasicCreation {
-    override def group: String = throw new UnsupportedOperationException
-    override def name: String = throw new UnsupportedOperationException
+    override def group: String              = throw new UnsupportedOperationException
+    override def name: String               = throw new UnsupportedOperationException
     override def tags: Map[String, JsValue] = throw new UnsupportedOperationException
   }
 
@@ -182,15 +193,16 @@ private[configurator] object FileInfoRoute {
   /**
     * @param version the version is a part of generated URL. This is important stuff since we may reject the deprecated URL in the future.
     */
-  def apply(hostname: String, port: Int, version: String)(implicit store: DataStore,
-                                                          serviceCollie: ServiceCollie,
-                                                          objectChecker: ObjectChecker,
-                                                          executionContext: ExecutionContext): server.Route =
+  def apply(hostname: String, port: Int, version: String)(
+    implicit store: DataStore,
+    serviceCollie: ServiceCollie,
+    objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): server.Route =
     RouteBuilder[FakeCreation, Updating, FileInfo]()
       .root(FILE_PREFIX_PATH)
       .customPost(customPost(hostname, port, version))
       .hookOfUpdating(hookOfUpdating)
       .hookBeforeDelete(hookBeforeDelete)
       .build() ~ routeToDownload
-
 }

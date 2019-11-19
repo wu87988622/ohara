@@ -32,7 +32,7 @@ abstract class BasicIntegrationTestsOfJsonIoOnK8s extends BasicIntegrationTestsO
   private[this] val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
   override protected val configurator: Configurator = {
     val configurator = Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    val nodeApi      = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodes.foreach(node => result(nodeApi.request.hostname(node.name).port(node.port.get).create()))
     configurator
   }

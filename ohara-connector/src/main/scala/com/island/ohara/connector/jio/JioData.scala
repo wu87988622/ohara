@@ -19,7 +19,6 @@ package com.island.ohara.connector.jio
 import com.island.ohara.common.data.Row
 import spray.json.{JsNull, JsObject, JsValue, RootJsonFormat}
 class JioData private (raw: Map[String, JsValue]) {
-
   def fields: Map[String, JsValue] = raw.filter {
     case (_, value) =>
       value match {
@@ -39,7 +38,7 @@ class JioData private (raw: Map[String, JsValue]) {
     case _              => false
   }
 
-  override def hashCode(): Int = fields.hashCode()
+  override def hashCode(): Int  = fields.hashCode()
   override def toString: String = fields.toString()
 }
 

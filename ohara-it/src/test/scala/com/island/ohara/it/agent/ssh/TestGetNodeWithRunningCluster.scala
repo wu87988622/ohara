@@ -33,7 +33,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[SshConfiguratorGroup]))
 class TestGetNodeWithRunningCluster extends IntegrationTest {
-
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 
   private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
@@ -45,10 +44,12 @@ class TestGetNodeWithRunningCluster extends IntegrationTest {
     nodes.foreach { node =>
       val dockerClient =
         DockerClient(
-          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
+          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+        )
       try {
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
+          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true
+        )
       } finally dockerClient.close()
     }
     nodes.foreach { node =>
@@ -61,7 +62,8 @@ class TestGetNodeWithRunningCluster extends IntegrationTest {
           .port(node._port)
           .user(node._user)
           .password(node._password)
-          .create())
+          .create()
+      )
     }
   }
 
@@ -81,7 +83,9 @@ class TestGetNodeWithRunningCluster extends IntegrationTest {
               .hostname(configurator.hostname)
               .port(configurator.port)
               .start(info.key)
-              .flatMap(_ => ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).get(info.key))))
+              .flatMap(_ => ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).get(info.key))
+        )
+    )
     assertCluster(
       () => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()),
       () =>
@@ -90,7 +94,8 @@ class TestGetNodeWithRunningCluster extends IntegrationTest {
             .hostname(configurator.hostname)
             .port(configurator.port)
             .get(cluster.key)
-            .map(_.flatMap(_.containers))),
+            .map(_.flatMap(_.containers))
+        ),
       cluster.key
     )
     result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list()).isEmpty shouldBe false

@@ -21,10 +21,10 @@ import com.island.ohara.testing.service.FtpServer
 
 class TestFtpFileSystem extends FileSystemTestBase {
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
-  private[this] val hostname = ftpServer.hostname
-  private[this] val port = ftpServer.port
-  private[this] val user = ftpServer.user
-  private[this] val password = ftpServer.password
+  private[this] val hostname  = ftpServer.hostname
+  private[this] val port      = ftpServer.port
+  private[this] val user      = ftpServer.user
+  private[this] val password  = ftpServer.password
 
   override protected val fileSystem: FileSystem =
     FileSystem.ftpBuilder.hostname(hostname).port(port).user(user).password(password).build

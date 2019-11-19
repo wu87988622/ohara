@@ -20,7 +20,6 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 object MetricsApi {
-
   /**
     * the metric information
     * @param value the value of metric record

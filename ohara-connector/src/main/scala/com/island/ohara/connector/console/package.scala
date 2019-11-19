@@ -23,13 +23,12 @@ import com.island.ohara.common.setting.SettingDef
 import scala.concurrent.duration._
 
 package object console {
-
   /**
     * used to set the order of definitions.
     */
-  private[this] val COUNTER = new AtomicInteger(0)
-  val CONSOLE_FREQUENCE: String = "console.sink.frequence"
-  val CONSOLE_FREQUENCE_DOC: String = "the frequence to print the row on log"
+  private[this] val COUNTER               = new AtomicInteger(0)
+  val CONSOLE_FREQUENCE: String           = "console.sink.frequence"
+  val CONSOLE_FREQUENCE_DOC: String       = "the frequence to print the row on log"
   val CONSOLE_FREQUENCE_DEFAULT: Duration = 3 seconds
   val CONSOLE_FREQUENCE_DEFINITION: SettingDef = SettingDef
     .builder()

@@ -31,8 +31,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
-  private[this] val jdbcSource = new JDBCSourceConnector
-  private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
+  private[this] val jdbcSource                 = new JDBCSourceConnector
+  private[this] val workerClient               = WorkerClient(testUtil().workersConnProps())
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
@@ -158,13 +158,13 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def testSource(): Unit = {
-    val url: String = "jdbc:postgresql://localhost:5432/postgres"
-    val userName: String = "user1"
-    val password: String = "123456"
-    val tableName: String = "table1"
+    val url: String                 = "jdbc:postgresql://localhost:5432/postgres"
+    val userName: String            = "user1"
+    val password: String            = "123456"
+    val tableName: String           = "table1"
     val timeStampColumnName: String = "COLUMN1"
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey                    = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val connectorKey                = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     val response = result(
       workerClient
@@ -172,18 +172,21 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
         .connectorKey(connectorKey)
         .numberOfTasks(1)
         .topicKey(topicKey)
-        .settings(Map(
-          DB_URL -> url,
-          DB_USERNAME -> userName,
-          DB_PASSWORD -> password,
-          DB_TABLENAME -> tableName,
-          TIMESTAMP_COLUMN_NAME -> timeStampColumnName,
-          JDBC_FETCHDATA_SIZE -> "1000",
-          JDBC_FLUSHDATA_SIZE -> "1000",
-          JDBC_FREQUENCE_TIME -> "1 second",
-        ))
+        .settings(
+          Map(
+            DB_URL                -> url,
+            DB_USERNAME           -> userName,
+            DB_PASSWORD           -> password,
+            DB_TABLENAME          -> tableName,
+            TIMESTAMP_COLUMN_NAME -> timeStampColumnName,
+            JDBC_FETCHDATA_SIZE   -> "1000",
+            JDBC_FLUSHDATA_SIZE   -> "1000",
+            JDBC_FREQUENCE_TIME   -> "1 second"
+          )
+        )
         .connectorClass(classOf[JDBCSourceConnector])
-        .run())
+        .run()
+    )
     response.settings().size should not be 0
 
     response

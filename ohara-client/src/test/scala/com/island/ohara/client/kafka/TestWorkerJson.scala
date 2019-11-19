@@ -26,7 +26,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json._
 class TestWorkerJson extends OharaTest {
-
   @Test
   def testValidatedValue(): Unit = {
     val validatedValue = KafkaValidatedValue(
@@ -39,9 +38,9 @@ class TestWorkerJson extends OharaTest {
 
   @Test
   def testValidatedValueFromString(): Unit = {
-    val name = CommonUtils.randomString(5)
-    val value = CommonUtils.randomString(5)
-    val error = CommonUtils.randomString(5)
+    val name           = CommonUtils.randomString(5)
+    val value          = CommonUtils.randomString(5)
+    val error          = CommonUtils.randomString(5)
     val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                |{
                                                |  "name":"$name",
@@ -56,8 +55,8 @@ class TestWorkerJson extends OharaTest {
 
   @Test
   def testValidatedValueFromStringWithoutValue(): Unit = {
-    val name = CommonUtils.randomString(5)
-    val error = CommonUtils.randomString(5)
+    val name           = CommonUtils.randomString(5)
+    val error          = CommonUtils.randomString(5)
     val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
@@ -71,8 +70,8 @@ class TestWorkerJson extends OharaTest {
 
   @Test
   def testValidatedValueFromStringWithEmptyValue(): Unit = {
-    val name = CommonUtils.randomString(5)
-    val error = CommonUtils.randomString(5)
+    val name           = CommonUtils.randomString(5)
+    val error          = CommonUtils.randomString(5)
     val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
@@ -87,8 +86,8 @@ class TestWorkerJson extends OharaTest {
 
   @Test
   def testValidatedValueFromStringWithNullValue(): Unit = {
-    val name = CommonUtils.randomString(5)
-    val error = CommonUtils.randomString(5)
+    val name           = CommonUtils.randomString(5)
+    val error          = CommonUtils.randomString(5)
     val validatedValue = KAFKA_VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",

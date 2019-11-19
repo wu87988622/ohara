@@ -33,9 +33,8 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class Access[Creation <: BasicCreation, Updating, Res] private[v0] (prefixPath: String)(
   implicit rm: RootJsonFormat[Creation],
   rm1: RootJsonFormat[Updating],
-  rm2: RootJsonFormat[Res])
-    extends BasicAccess(prefixPath) {
-
+  rm2: RootJsonFormat[Res]
+) extends BasicAccess(prefixPath) {
   //-----------------------[Http Requests]-----------------------//
 
   def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Res] =

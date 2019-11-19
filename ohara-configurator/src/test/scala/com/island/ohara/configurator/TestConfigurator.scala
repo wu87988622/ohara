@@ -27,7 +27,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class TestConfigurator extends OharaTest {
-
   @Test
   def testK8SNodes(): Unit = {
     val k8sClient = new FakeK8SClient(true, None, "") {
@@ -36,7 +35,7 @@ class TestConfigurator extends OharaTest {
     }
     val configurator = Configurator.builder.k8sClient(k8sClient).build()
 
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    val nodeApi    = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     val createNode = Await.result(nodeApi.request.hostname("node1").create(), 15 seconds)
     createNode.hostname shouldBe "node1"
 

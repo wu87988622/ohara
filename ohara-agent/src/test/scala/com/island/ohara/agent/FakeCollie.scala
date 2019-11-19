@@ -32,25 +32,32 @@ import scala.reflect.ClassTag
   */
 class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](dataCollie: DataCollie, containers: Seq[ContainerInfo])
     extends Collie[FakeCollieClusterInfo] {
-
   override protected def doRemoveNode(previousCluster: FakeCollieClusterInfo, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
     Future.successful(true)
 
   override protected def doRemove(clusterInfo: FakeCollieClusterInfo, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[Boolean] = Future.successful(true)
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] = Future.successful(true)
 
-  override def logs(objectKey: ObjectKey)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+  override def logs(
+    objectKey: ObjectKey
+  )(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     Future.successful(Map.empty)
 
   override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext): Future[Map[FakeCollieClusterInfo, Seq[ContainerInfo]]] =
+    implicit executionContext: ExecutionContext
+  ): Future[Map[FakeCollieClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(
       Map(
-        FakeCollieClusterInfo(FakeCollie.key,
-                              containers.map(c => c.nodeName).toSet,
-                              toClusterState(containers).map(_.name)) -> containers))
+        FakeCollieClusterInfo(
+          FakeCollie.key,
+          containers.map(c => c.nodeName).toSet,
+          toClusterState(containers).map(_.name)
+        ) -> containers
+      )
+    )
 
   override def creator: FakeCollie.FakeClusterCreator =
     () => Future.successful(FakeCollieClusterInfo(FakeCollie.key, Set.empty, None))
@@ -74,7 +81,8 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](dataCollie: DataCollie, c
   override def serviceName: String = "fake"
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[FakeCollieClusterInfo] =
+    implicit executionContext: ExecutionContext
+  ): Future[FakeCollieClusterInfo] =
     throw new UnsupportedOperationException("this is fake stuff :(")
 }
 
@@ -105,9 +113,9 @@ case class FakeCollieClusterInfo(objectKey: ObjectKey, nodeNames: Set[String], s
 
 object FakeCollie {
   private[this] val clusterName: String = "fakecluster1"
-  private[this] val group: String = "fakegroup"
-  protected[agent] val key: ObjectKey = ObjectKey.of(group, clusterName)
-  val FAKE_SERVICE_NAME: String = "fake"
+  private[this] val group: String       = "fakegroup"
+  protected[agent] val key: ObjectKey   = ObjectKey.of(group, clusterName)
+  val FAKE_SERVICE_NAME: String         = "fake"
   trait FakeClusterCreator extends Collie.ClusterCreator {
     override def group(group: String): FakeClusterCreator.this.type =
       throw new UnsupportedOperationException

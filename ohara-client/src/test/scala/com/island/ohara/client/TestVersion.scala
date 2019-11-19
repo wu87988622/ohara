@@ -23,7 +23,6 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestVersion extends OharaTest {
-
   @Test
   def testZookeeper(): Unit = {
     ZookeeperApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/zookeeper:${VersionUtils.VERSION}"

@@ -54,12 +54,13 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
           case None => Future.successful(Map.empty[Node, ContainerInfo])
         }
         brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
-        fileInfo <- dataCollie.value[FileInfo](creation.jarKey)
-      } yield
-        (existentNodes,
-         allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
-         brokerClusterInfo,
-         fileInfo)
+        fileInfo          <- dataCollie.value[FileInfo](creation.jarKey)
+      } yield (
+        existentNodes,
+        allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
+        brokerClusterInfo,
+        fileInfo
+      )
 
       resolveRequiredInfos
         .map {
@@ -98,10 +99,11 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                             hostIp = Collie.UNKNOWN,
                             hostPort = port,
                             containerPort = port
-                        ))
+                          )
+                      )
                       .toSeq,
                     environments = Map(
-                      "JMX_PORT" -> creation.jmxPort.toString,
+                      "JMX_PORT"     -> creation.jmxPort.toString,
                       "JMX_HOSTNAME" -> newNode.hostname,
                       // define the urls as string list so as to simplify the script for stream
                       "STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString
@@ -157,12 +159,14 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
     * @param cluster cluster
     * @return counter beans
     */
-  def counters(cluster: StreamClusterInfo): Seq[CounterMBean] = cluster.aliveNodes.flatMap { node =>
-    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
-  }.toSeq
+  def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
+    cluster.aliveNodes.flatMap { node =>
+      BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
+    }.toSeq
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[StreamClusterStatus] =
+    implicit executionContext: ExecutionContext
+  ): Future[StreamClusterStatus] =
     Future.successful(
       new StreamClusterStatus(
         group = key.group(),
@@ -172,7 +176,8 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
         aliveNodes = containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         state = toClusterState(containers).map(_.name),
         error = None
-      ))
+      )
+    )
 
   protected def dataCollie: DataCollie
 
@@ -184,16 +189,17 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
 
   override val serviceName: String = StreamApi.STREAM_SERVICE_NAME
 
-  protected def doCreator(executionContext: ExecutionContext,
-                          containerInfo: ContainerInfo,
-                          node: Node,
-                          route: Map[String, String],
-                          arguments: Seq[String]): Future[Unit]
+  protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit]
 
   protected def postCreate(clusterStatus: StreamClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default do nothing
   }
-
 }
 
 object StreamCollie {

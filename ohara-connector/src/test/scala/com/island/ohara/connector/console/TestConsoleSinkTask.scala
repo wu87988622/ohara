@@ -28,11 +28,11 @@ import org.scalatest.Matchers._
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 class TestConsoleSinkTask extends OharaTest {
-
-  private[this] def configs(key: String, value: String): java.util.Map[String, String] = Map(
-    "name" -> CommonUtils.randomString(),
-    key -> value
-  ).asJava
+  private[this] def configs(key: String, value: String): java.util.Map[String, String] =
+    Map(
+      "name" -> CommonUtils.randomString(),
+      key    -> value
+    ).asJava
 
   @Test
   def testEmptySetting(): Unit = {
@@ -51,7 +51,7 @@ class TestConsoleSinkTask extends OharaTest {
 
   @Test
   def testDivider(): Unit = {
-    val task = new ConsoleSinkTask()
+    val task    = new ConsoleSinkTask()
     val divider = CommonUtils.randomString()
     task.start(configs(CONSOLE_ROW_DIVIDER, divider))
     task.divider shouldBe divider
@@ -84,15 +84,18 @@ class TestConsoleSinkTask extends OharaTest {
     lastLogCopy3 should not be -1
   }
 
-  private[this] def putRecord(task: ConsoleSinkTask): Unit = task.put(
-    java.util.Collections.singletonList(
-      new SinkRecord(
-        CommonUtils.randomString(),
-        1,
-        null,
-        Row.EMPTY,
-        null,
-        null,
-        1
-      )))
+  private[this] def putRecord(task: ConsoleSinkTask): Unit =
+    task.put(
+      java.util.Collections.singletonList(
+        new SinkRecord(
+          CommonUtils.randomString(),
+          1,
+          null,
+          Row.EMPTY,
+          null,
+          null,
+          1
+        )
+      )
+    )
 }

@@ -21,7 +21,6 @@ import spray.json.JsValue
   * this is a basic interface of cluster request to update a normal object resource.
   */
 trait ClusterUpdating {
-
   def imageName: Option[String]
 
   def nodeNames: Option[Set[String]]

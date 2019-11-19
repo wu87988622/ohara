@@ -42,11 +42,11 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   protected def setupProps: Map[String, String]
 
   private[this] val defaultProps: Map[String, String] = Map(
-    TOPICS_DIR_KEY -> "/output",
-    FLUSH_SIZE_KEY -> "3",
+    TOPICS_DIR_KEY         -> "/output",
+    FLUSH_SIZE_KEY         -> "3",
     ROTATE_INTERVAL_MS_KEY -> "0", // don't auto commit on time
-    FILE_NEED_HEADER_KEY -> "false",
-    FILE_ENCODE_KEY -> "UTF-8"
+    FILE_NEED_HEADER_KEY   -> "false",
+    FILE_ENCODE_KEY        -> "UTF-8"
   )
 
   private[this] def props: Map[String, String] = defaultProps ++ setupProps
@@ -94,7 +94,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   private[this] def setupConnector(props: Map[String, String], schema: Option[Seq[Column]]): TopicKey = {
     // create a connector and check its state is running
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
       val creator = workerClient
@@ -123,7 +123,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   @Test
   def testNormalCase(): Unit = {
     val topicKey = setupConnector(props, schema)
-    val data = createReplicaData(row, 3)
+    val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).lengthCompare(3) == 0, Duration.ofSeconds(20))
@@ -143,7 +143,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
       Column.builder().name("c").dataType(DataType.BOOLEAN).order(1).build()
     )
     val topicKey = setupConnector(props, newSchema)
-    val data = createReplicaData(row, 3)
+    val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 3, Duration.ofSeconds(20))
@@ -160,7 +160,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     // need header
     val newProps = props ++ Map(FILE_NEED_HEADER_KEY -> "true")
     val topicKey = setupConnector(newProps, schema)
-    val data = createReplicaData(row, 3)
+    val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 4, Duration.ofSeconds(20))
@@ -175,7 +175,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val newProps = props ++ Map(FILE_NEED_HEADER_KEY -> "true")
     // without schema
     val topicKey = setupConnector(newProps, None)
-    val data = createReplicaData(row, 3)
+    val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 4, Duration.ofSeconds(20))
@@ -197,7 +197,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
       Column.builder().name("c").newName("cc").dataType(DataType.BOOLEAN).order(3).build()
     )
     val topicKey = setupConnector(newProps, newSchema)
-    val data = createReplicaData(row, 3)
+    val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 4, Duration.ofSeconds(20))
@@ -214,7 +214,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     // will use default UTF-8
     val newProps = props - FILE_ENCODE_KEY
     val topicKey = setupConnector(newProps, schema)
-    val data = createReplicaData(row, 3)
+    val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 3, Duration.ofSeconds(20))
@@ -229,8 +229,8 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   def testPartialColumns(): Unit = {
     // skip last column
     val newSchema = schema.slice(0, schema.length - 1)
-    val topicKey = setupConnector(props, newSchema)
-    val data = createReplicaData(row, 3)
+    val topicKey  = setupConnector(props, newSchema)
+    val data      = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 3, Duration.ofSeconds(20))
@@ -248,8 +248,8 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   def testUnmatchedSchema(): Unit = {
     // the name can't be casted to int
     val newSchema = Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build())
-    val topicKey = setupConnector(props, newSchema)
-    val data = createReplicaData(row, 3)
+    val topicKey  = setupConnector(props, newSchema)
+    val data      = createReplicaData(row, 3)
     pushData(data, topicKey)
     TimeUnit.SECONDS.sleep(5)
     fetchData(topicKey).size shouldBe 0
@@ -260,7 +260,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     // auto commit per 10 records
     val newProps = props ++ Map(FLUSH_SIZE_KEY -> "10")
     val topicKey = setupConnector(newProps, schema)
-    val data = createReplicaData(row, 10)
+    val data     = createReplicaData(row, 10)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 10, Duration.ofSeconds(20))
@@ -275,11 +275,11 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   def testCommitPer10Seconds(): Unit = {
     // auto commit per 10 seconds
     val newProps = props ++ Map(
-      FLUSH_SIZE_KEY -> Int.MaxValue.toString, // don't commit by size
-      ROTATE_INTERVAL_MS_KEY -> "10000",
+      FLUSH_SIZE_KEY         -> Int.MaxValue.toString, // don't commit by size
+      ROTATE_INTERVAL_MS_KEY -> "10000"
     )
     val topicKey = setupConnector(newProps, schema)
-    val data = createReplicaData(row, 99)
+    val data     = createReplicaData(row, 99)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => fetchData(topicKey).size == 99, Duration.ofSeconds(20))
@@ -293,8 +293,8 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   @Test
   def testNonMappingSchema(): Unit = {
     val newSchema = Seq(Column.builder().name("d").dataType(DataType.BOOLEAN).order(1).build())
-    val topicKey = setupConnector(props, newSchema)
-    val data = createReplicaData(row, 3)
+    val topicKey  = setupConnector(props, newSchema)
+    val data      = createReplicaData(row, 3)
     pushData(data, topicKey)
     TimeUnit.SECONDS.sleep(5)
     fetchData(topicKey).size shouldBe 0

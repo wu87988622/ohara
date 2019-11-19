@@ -31,7 +31,6 @@ import spray.json.DefaultJsonProtocol._
   * information".
   */
 trait ClusterInfo extends ClusterStatus with Data {
-
   /**
     * override the key to avoid conflict of double inheritance.
     */

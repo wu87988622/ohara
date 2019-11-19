@@ -31,11 +31,10 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestWorkerClient extends With3Brokers3Workers {
-
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   @Test
   def testExist(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(workerClient.exist(connectorKey)) shouldBe false
 
@@ -46,7 +45,8 @@ class TestWorkerClient extends With3Brokers3Workers {
         .connectorClass(classOf[MyConnector])
         .connectorKey(connectorKey)
         .numberOfTasks(1)
-        .create())
+        .create()
+    )
 
     try assertExist(workerClient, connectorKey)
     finally result(workerClient.delete(connectorKey))
@@ -54,7 +54,7 @@ class TestWorkerClient extends With3Brokers3Workers {
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(workerClient.exist(connectorKey)) shouldBe false
 
@@ -65,7 +65,8 @@ class TestWorkerClient extends With3Brokers3Workers {
         .connectorClass(classOf[BrokenConnector])
         .connectorKey(connectorKey)
         .numberOfTasks(1)
-        .create())
+        .create()
+    )
 
     try assertExist(workerClient, connectorKey)
     finally result(workerClient.delete(connectorKey))
@@ -73,7 +74,7 @@ class TestWorkerClient extends With3Brokers3Workers {
 
   @Test
   def testPauseAndResumeSource(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -82,7 +83,8 @@ class TestWorkerClient extends With3Brokers3Workers {
         .connectorClass(classOf[MyConnector])
         .connectorKey(connectorKey)
         .numberOfTasks(1)
-        .create())
+        .create()
+    )
     try {
       assertExist(workerClient, connectorKey)
       val consumer =
@@ -126,20 +128,23 @@ class TestWorkerClient extends With3Brokers3Workers {
 
   @Test
   def testValidate(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val topicName = CommonUtils.randomString(10)
+    val name          = CommonUtils.randomString(10)
+    val topicName     = CommonUtils.randomString(10)
     val numberOfTasks = 1
     val settingInfo = result(
       workerClient
         .connectorValidator()
         .className(classOf[MyConnector].getName)
-        .settings(Map(
-          ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key() -> name,
-          ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
-            Collections.singletonList(topicName)),
-          ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
-        ))
-        .run())
+        .settings(
+          Map(
+            ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key() -> name,
+            ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key() -> StringList
+              .toJsonString(Collections.singletonList(topicName)),
+            ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
+          )
+        )
+        .run()
+    )
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
     settingInfo.topicNamesOnKafka.asScala shouldBe Seq(topicName)
@@ -147,8 +152,10 @@ class TestWorkerClient extends With3Brokers3Workers {
   }
 
   @Test
-  def ignoreTopicNames(): Unit = an[NoSuchElementException] should be thrownBy result(
-    workerClient.connectorValidator().className(classOf[MyConnector].getName).run())
+  def ignoreTopicNames(): Unit =
+    an[NoSuchElementException] should be thrownBy result(
+      workerClient.connectorValidator().className(classOf[MyConnector].getName).run()
+    )
 
   @Test
   def ignoreClassName(): Unit =
@@ -158,7 +165,8 @@ class TestWorkerClient extends With3Brokers3Workers {
   def testValidateWithoutValue(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val settingInfo = result(
-      workerClient.connectorValidator().className(classOf[MyConnector].getName).topicKey(topicKey).run())
+      workerClient.connectorValidator().className(classOf[MyConnector].getName).topicKey(topicKey).run()
+    )
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
     settingInfo.topicNamesOnKafka.isEmpty shouldBe false
@@ -315,7 +323,8 @@ class TestWorkerClient extends With3Brokers3Workers {
           .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
           .numberOfTasks(1)
           .settings(Map(ConnectorDefUtils.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
-          .create())
+          .create()
+      )
     }
     //see SettingDef.checker
     e.getMessage.contains("can't be converted to PropGroup type") shouldBe true
@@ -333,7 +342,8 @@ class TestWorkerClient extends With3Brokers3Workers {
           .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
           .numberOfTasks(1)
           .settings(Map(MyConnector.DURATION_KEY -> "Asdasdasd"))
-          .create())
+          .create()
+      )
     }
     //see ConnectorDefinitions.validator
     e.getMessage.contains("can't be converted to Duration type") shouldBe true
@@ -350,7 +360,8 @@ class TestWorkerClient extends With3Brokers3Workers {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1S"))
-        .create())
+        .create()
+    )
   }
   @Test
   def pass1Minute1Second(): Unit = {
@@ -363,7 +374,8 @@ class TestWorkerClient extends With3Brokers3Workers {
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
-        .create())
+        .create()
+    )
   }
 
   @Test

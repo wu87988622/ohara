@@ -22,7 +22,6 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 class TestFtpFileSystemBuilder extends OharaTest {
-
   @Test
   def ignoreHostname(): Unit = {
     an[NullPointerException] should be thrownBy FtpFileSystem.builder

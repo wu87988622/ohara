@@ -32,9 +32,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends OharaTest {
-
-  private[this] val db = Database.local()
-  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
+  private[this] val db        = Database.local()
+  private[this] val client    = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName = "table1"
 
   @Before
@@ -48,24 +47,28 @@ class TestDBTableDataProvider extends OharaTest {
     val statement: Statement = db.connection.createStatement()
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)"
+    )
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)"
+    )
   }
 
   @Test
   def testRowListResultSet(): Unit = {
-
-    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
+    val dbTableDataProvider          = new DBTableDataProvider(jdbcConfig)
     val results: QueryResultIterator = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0)) //0 is 1970-01-01 00:00:00
 
-    var count = 0
+    var count                                      = 0
     val resultList: ListBuffer[Seq[ColumnInfo[_]]] = new ListBuffer[Seq[ColumnInfo[_]]]
     while (results.hasNext) {
       val listBuffer: Seq[ColumnInfo[_]] = results.next()
@@ -80,9 +83,9 @@ class TestDBTableDataProvider extends OharaTest {
 
   @Test
   def testDbCurrentTime(): Unit = {
-    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
-    val dbCurrentTime = dbTableDataProvider.dbCurrentTime(DateTimeUtils.CALENDAR)
-    val dbCurrentTimestamp = dbCurrentTime.getTime
+    val dbTableDataProvider    = new DBTableDataProvider(jdbcConfig)
+    val dbCurrentTime          = dbTableDataProvider.dbCurrentTime(DateTimeUtils.CALENDAR)
+    val dbCurrentTimestamp     = dbCurrentTime.getTime
     val systemCurrentTimestamp = CommonUtils.current()
     ((systemCurrentTimestamp - dbCurrentTimestamp) < 5000) shouldBe true
   }
@@ -90,7 +93,7 @@ class TestDBTableDataProvider extends OharaTest {
   @Test
   def testColumnList(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
-    val columns = dbTableDataProvider.columns(tableName)
+    val columns             = dbTableDataProvider.columns(tableName)
     columns.head.name shouldBe "column1"
     columns(1).name shouldBe "column2"
     columns(2).name shouldBe "column3"
@@ -112,7 +115,7 @@ class TestDBTableDataProvider extends OharaTest {
   @Test
   def testQueryFlag(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
-    val result1 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
+    val result1             = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
     result1.size shouldBe 3
 
     val result2 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
@@ -132,11 +135,11 @@ class TestDBTableDataProvider extends OharaTest {
   private[this] def jdbcConfig(): JDBCSourceConnectorConfig = {
     val map: Map[String, String] =
       Map(
-        DB_URL -> db.url,
-        DB_USERNAME -> db.user,
-        DB_PASSWORD -> db.password,
-        DB_TABLENAME -> tableName,
-        DB_SCHEMA_PATTERN -> "schema1",
+        DB_URL                -> db.url,
+        DB_USERNAME           -> db.user,
+        DB_PASSWORD           -> db.password,
+        DB_TABLENAME          -> tableName,
+        DB_SCHEMA_PATTERN     -> "schema1",
         TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
       )
     JDBCSourceConnectorConfig(TaskSetting.of(map.asJava))

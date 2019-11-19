@@ -49,7 +49,8 @@ object ShabondiRoute {
     store.remove[ShabondiDescription](ShabondiApi.key(name)).map(_ => StatusCodes.NoContent)
 
   private def updateProperty(name: String, property: ShabondiProperty, store: DataStore)(
-    implicit executionContext: ExecutionContext) = {
+    implicit executionContext: ExecutionContext
+  ) = {
     LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
       duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
@@ -57,7 +58,8 @@ object ShabondiRoute {
   }
 
   private def updateShabondiState(name: String, state: String, store: DataStore)(
-    implicit executionContext: ExecutionContext) = {
+    implicit executionContext: ExecutionContext
+  ) = {
     LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
       data.copy(state = Some(state), lastModified = CommonUtils.current())
@@ -66,16 +68,17 @@ object ShabondiRoute {
 
   private def randomPickNode(store: DataStore)(implicit executionContext: ExecutionContext): Node = {
     val random = new scala.util.Random
-    val nodes = awaitResult(store.values[Node]())
+    val nodes  = awaitResult(store.values[Node]())
     if (nodes.isEmpty)
       throw new RuntimeException("Cannot find any ohara node.")
     nodes(random.nextInt(nodes.length))
   }
 
   private def startShabondi(name: String, k8sClient: K8SClient, store: DataStore)(
-    implicit executionContext: ExecutionContext) = {
+    implicit executionContext: ExecutionContext
+  ) = {
     val nodeName = randomPickNode(store).name
-    val podName = POD_NAME_PREFIX + name
+    val podName  = POD_NAME_PREFIX + name
     createContainer(k8sClient, nodeName, podName).flatMap {
       case Some(container) =>
         LOG.info(s"Shabondi pod created: $podName")
@@ -86,7 +89,8 @@ object ShabondiRoute {
   }
 
   private def stopShabondi(name: String, k8sClient: K8SClient, store: DataStore)(
-    implicit executionContext: ExecutionContext) = {
+    implicit executionContext: ExecutionContext
+  ) = {
     LOG.info(s"shabondi stop: $name")
     val podName = POD_NAME_PREFIX + name
     k8sClient.remove(podName).flatMap { container =>
@@ -95,9 +99,11 @@ object ShabondiRoute {
     }
   }
 
-  def apply(implicit k8sClientOpt: Option[K8SClient],
-            store: DataStore,
-            executionContext: ExecutionContext): server.Route =
+  def apply(
+    implicit k8sClientOpt: Option[K8SClient],
+    store: DataStore,
+    executionContext: ExecutionContext
+  ): server.Route =
     pathPrefix(PATH_PREFIX) {
       pathEnd {
         post { complete { addShabondi(store) } }
@@ -135,19 +141,22 @@ object ShabondiRoute {
 
   private def awaitResult[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private val POD_LABEL = "shabondi"
+  private val POD_LABEL       = "shabondi"
   private val POD_DOMAIN_NAME = "default"
   private val POD_NAME_PREFIX = "shabondi-"
-  private val POD_NAME = "shabondi-host"
+  private val POD_NAME        = "shabondi-host"
 
   private def createContainer(k8sClient: K8SClient, slaveNode: String, podHostname: String)(
-    implicit executionContext: ExecutionContext) = {
+    implicit executionContext: ExecutionContext
+  ) = {
     val creator: K8SClient.ContainerCreator = k8sClient.containerCreator()
     creator
       .imageName(IMAGE_NAME_DEFAULT)
-      .portMappings(Map(
-        9090 -> 8080
-      ))
+      .portMappings(
+        Map(
+          9090 -> 8080
+        )
+      )
       .nodeName(slaveNode)
       .hostname(podHostname)
       .labelName(POD_LABEL)
@@ -164,5 +173,4 @@ object ShabondiRoute {
     if (prop.port.isDefined) duplicate = duplicate.copy(port = prop.port.get)
     duplicate
   }
-
 }

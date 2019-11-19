@@ -53,9 +53,11 @@ class TestPerfSource extends With3Brokers3Workers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] def pollData(topicKey: TopicKey,
-                             timeout: scala.concurrent.duration.Duration,
-                             size: Int): Seq[Record[Row, Array[Byte]]] = {
+  private[this] def pollData(
+    topicKey: TopicKey,
+    timeout: scala.concurrent.duration.Duration,
+    size: Int
+  ): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder()
       .topicName(topicKey.topicNameOnKafka)
@@ -85,7 +87,7 @@ class TestPerfSource extends With3Brokers3Workers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -96,7 +98,8 @@ class TestPerfSource extends With3Brokers3Workers {
         .connectorKey(connectorKey)
         .columns(schema)
         .settings(props.toMap)
-        .create())
+        .create()
+    )
 
     try {
       ConnectorTestUtils.checkConnector(testUtil, connectorKey)
@@ -118,7 +121,7 @@ class TestPerfSource extends With3Brokers3Workers {
 
   @Test
   def testNormalCaseWithoutBatch(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -129,7 +132,8 @@ class TestPerfSource extends With3Brokers3Workers {
         .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_FREQUENCE -> "PT5S"))
-        .create())
+        .create()
+    )
 
     try {
       ConnectorTestUtils.checkConnector(testUtil, connectorKey)
@@ -151,7 +155,7 @@ class TestPerfSource extends With3Brokers3Workers {
 
   @Test
   def testNormalCaseWithoutFrequence(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -162,7 +166,8 @@ class TestPerfSource extends With3Brokers3Workers {
         .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_BATCH -> "5"))
-        .create())
+        .create()
+    )
 
     try {
       ConnectorTestUtils.checkConnector(testUtil, connectorKey)
@@ -184,7 +189,7 @@ class TestPerfSource extends With3Brokers3Workers {
 
   @Test
   def testNormalCaseWithoutInput(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -195,7 +200,8 @@ class TestPerfSource extends With3Brokers3Workers {
         .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map.empty)
-        .create())
+        .create()
+    )
 
     try {
       ConnectorTestUtils.checkConnector(testUtil, connectorKey)
@@ -217,7 +223,7 @@ class TestPerfSource extends With3Brokers3Workers {
 
   @Test
   def testInvalidInput(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     an[IllegalArgumentException] should be thrownBy result(
       workerClient
@@ -228,12 +234,13 @@ class TestPerfSource extends With3Brokers3Workers {
         .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_FREQUENCE -> "abcd"))
-        .create())
+        .create()
+    )
   }
 
   @Test
   def testInvalidInputWithNegative(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
@@ -244,7 +251,8 @@ class TestPerfSource extends With3Brokers3Workers {
         .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_BATCH -> "-1"))
-        .create())
+        .create()
+    )
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
   }
 }

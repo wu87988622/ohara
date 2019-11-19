@@ -25,7 +25,6 @@ import com.island.ohara.client.filesystem.smb.SmbFileSystem
 import com.island.ohara.common.exception.OharaFileSystemException
 
 trait FileSystem extends com.island.ohara.kafka.connector.storage.FileSystem {
-
   /**
     * Filter files in the given path using the user-supplied path filter
     *
@@ -75,7 +74,8 @@ trait FileSystem extends com.island.ohara.kafka.connector.storage.FileSystem {
   def attach(path: String, messages: Seq[String]): Unit = {
     val writer = new BufferedWriter(
       new OutputStreamWriter(if (exists(path)) append(path) else create(path), StandardCharsets.UTF_8),
-      messages.map(_.length).sum * 2)
+      messages.map(_.length).sum * 2
+    )
     try messages.foreach(line => {
       writer.append(line)
       writer.newLine()
@@ -95,16 +95,17 @@ trait FileSystem extends com.island.ohara.kafka.connector.storage.FileSystem {
     finally reader.close()
   }
 
-  def wrap[T](f: () => T): T = try {
-    f()
-  } catch {
-    case e: IOException           => throw new OharaFileSystemException(e.getMessage, e)
-    case e: IllegalStateException => throw new OharaFileSystemException(e.getMessage, e)
-  }
+  def wrap[T](f: () => T): T =
+    try {
+      f()
+    } catch {
+      case e: IOException           => throw new OharaFileSystemException(e.getMessage, e)
+      case e: IllegalStateException => throw new OharaFileSystemException(e.getMessage, e)
+    }
 }
 
 object FileSystem {
   def hdfsBuilder: HdfsFileSystem.Builder = HdfsFileSystem.builder
-  def ftpBuilder: FtpFileSystem.Builder = FtpFileSystem.builder
-  def smbBuilder: SmbFileSystem.Builder = SmbFileSystem.builder
+  def ftpBuilder: FtpFileSystem.Builder   = FtpFileSystem.builder
+  def smbBuilder: SmbFileSystem.Builder   = SmbFileSystem.builder
 }

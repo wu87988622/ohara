@@ -29,9 +29,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
 class TestShabondiRoute extends OharaTest {
-
   private val configurator = Configurator.builder.fake().build()
-  private val access = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
+  private val access       = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
@@ -66,9 +65,9 @@ class TestShabondiRoute extends OharaTest {
 
   @Test
   def tesUpdateProperty(): Unit = {
-    val desc1 = result(access.add())
+    val desc1    = result(access.add())
     val property = ShabondiProperty(Some(Seq("topic1")), Some(250))
-    val desc2 = result(access.updateProperty(desc1.name, property))
+    val desc2    = result(access.updateProperty(desc1.name, property))
 
     desc2.to should be(Seq("topic1"))
     desc2.port should be(250)

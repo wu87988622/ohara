@@ -27,14 +27,13 @@ import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
-
   /**
     * this key points to the settings passed by user. Those settings are converted to a "single" string and then it is
     * submitted to kafka to run the Validator. Kafka doesn't support various type of json so we have to transfer data
     * via pure string.
     */
-  val SETTINGS_KEY = "settings"
-  val TARGET_KEY = "target"
+  val SETTINGS_KEY                   = "settings"
+  val TARGET_KEY                     = "target"
   val VALIDATION_PREFIX_PATH: String = "validate"
   // TODO: We should use a temporary topic instead of fixed topic...by chia
   val INTERNAL_TOPIC_KEY: TopicKey = TopicKey.of(GROUP_DEFAULT, "_Validator_topic")
@@ -54,19 +53,23 @@ object ValidationApi {
   /**
     * the QueryRoute needs to create this object to get tables from validation connector.
     */
-  final case class RdbValidation private[ohara] (url: String,
-                                                 user: String,
-                                                 password: String,
-                                                 workerClusterKey: ObjectKey)
+  final case class RdbValidation private[ohara] (
+    url: String,
+    user: String,
+    password: String,
+    workerClusterKey: ObjectKey
+  )
   implicit val RDB_VALIDATION_JSON_FORMAT: OharaJsonFormat[RdbValidation] =
     JsonRefiner[RdbValidation].format(jsonFormat4(RdbValidation)).rejectEmptyString().refine
 
   val VALIDATION_FTP_PREFIX_PATH: String = "ftp"
-  final case class FtpValidation private[ValidationApi] (hostname: String,
-                                                         port: Int,
-                                                         user: String,
-                                                         password: String,
-                                                         workerClusterKey: ObjectKey)
+  final case class FtpValidation private[ValidationApi] (
+    hostname: String,
+    port: Int,
+    user: String,
+    password: String,
+    workerClusterKey: ObjectKey
+  )
 
   implicit val FTP_VALIDATION_JSON_FORMAT: OharaJsonFormat[FtpValidation] = JsonRefiner[FtpValidation]
     .format(jsonFormat5(FtpValidation))
@@ -78,10 +81,12 @@ object ValidationApi {
     .refine
 
   val VALIDATION_NODE_PREFIX_PATH: String = "node"
-  final case class NodeValidation private[ValidationApi] (hostname: String,
-                                                          port: Option[Int],
-                                                          user: Option[String],
-                                                          password: Option[String])
+  final case class NodeValidation private[ValidationApi] (
+    hostname: String,
+    port: Option[Int],
+    user: Option[String],
+    password: Option[String]
+  )
   implicit val NODE_VALIDATION_JSON_FORMAT: OharaJsonFormat[NodeValidation] = JsonRefiner[NodeValidation]
     .format(jsonFormat4(NodeValidation))
     .rejectEmptyString()
@@ -107,7 +112,6 @@ object ValidationApi {
     * used to send the request of validating connector to Configurator.
     */
   abstract class ConnectorRequest extends com.island.ohara.client.configurator.v0.ConnectorApi.BasicRequest {
-
     /**
       * used to verify the setting of connector on specific worker cluster
       * @return validation reports
@@ -117,9 +121,9 @@ object ValidationApi {
 
   sealed abstract class BasicNodeRequest {
     protected var port: Option[Int] = None
-    protected var hostname: String = _
-    protected var user: String = _
-    protected var password: String = _
+    protected var hostname: String  = _
+    protected var user: String      = _
+    protected var password: String  = _
 
     def port(port: Int): BasicNodeRequest.this.type = {
       this.port = Some(CommonUtils.requireConnectionPort(port))
@@ -169,7 +173,6 @@ object ValidationApi {
   }
 
   sealed trait HdfsRequest {
-
     def uri(uri: String): HdfsRequest
 
     @Optional("server will try to pick a worker cluster for you if this field is ignored")
@@ -211,7 +214,6 @@ object ValidationApi {
   }
 
   sealed abstract class NodeRequest extends BasicNodeRequest {
-
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
       * @return the payload of creation
@@ -227,7 +229,6 @@ object ValidationApi {
   }
 
   sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
-
     /**
       * start a progress to build a request to validate connector
       * @return request of validating connector
@@ -252,9 +253,8 @@ object ValidationApi {
   }
 
   def access: Access = new Access(VALIDATION_PREFIX_PATH) {
-
     override def hdfsRequest: HdfsRequest = new HdfsRequest {
-      private[this] var uri: String = _
+      private[this] var uri: String                 = _
       private[this] var workerClusterKey: ObjectKey = _
 
       override def uri(uri: String): HdfsRequest = {
@@ -275,13 +275,12 @@ object ValidationApi {
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
         exec
           .put[HdfsValidation, Seq[ValidationReport], ErrorApi.Error](s"$url/$VALIDATION_HDFS_PREFIX_PATH", validation)
-
     }
 
     override def rdbRequest: RdbRequest = new RdbRequest {
-      private[this] var jdbcUrl: String = _
-      private[this] var user: String = _
-      private[this] var password: String = _
+      private[this] var jdbcUrl: String             = _
+      private[this] var user: String                = _
+      private[this] var password: String            = _
       private[this] var workerClusterKey: ObjectKey = _
 
       override def jdbcUrl(jdbcUrl: String): RdbRequest = {
@@ -321,7 +320,7 @@ object ValidationApi {
         hostname = CommonUtils.requireNonEmpty(hostname),
         port = port.map(CommonUtils.requireConnectionPort),
         user = Option(user).map(CommonUtils.requireNonEmpty),
-        password = Option(password).map(CommonUtils.requireNonEmpty),
+        password = Option(password).map(CommonUtils.requireNonEmpty)
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
@@ -333,7 +332,8 @@ object ValidationApi {
       override def verify()(implicit executionContext: ExecutionContext): Future[SettingInfo] =
         exec.put[com.island.ohara.client.configurator.v0.ConnectorApi.Creation, SettingInfo, ErrorApi.Error](
           s"$url/$VALIDATION_CONNECTOR_PREFIX_PATH",
-          creation)
+          creation
+        )
     }
 
     override def ftpRequest: FtpRequest = new FtpRequest {

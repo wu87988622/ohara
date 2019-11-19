@@ -32,8 +32,8 @@ object WorkerJson {
     * this custom format is necessary since some keys in json are keywords in scala also...
     */
   private[kafka] implicit val KAFKA_PLUGIN_JSON_FORMAT: RootJsonFormat[KafkaPlugin] = new RootJsonFormat[KafkaPlugin] {
-    private[this] val classKey: String = "class"
-    private[this] val typeKey: String = "type"
+    private[this] val classKey: String   = "class"
+    private[this] val typeKey: String    = "type"
     private[this] val versionKey: String = "version"
 
     override def read(json: JsValue): KafkaPlugin = json.asJsObject.getFields(classKey, typeKey, versionKey) match {
@@ -42,18 +42,21 @@ object WorkerJson {
       case other: Any => throw DeserializationException(s"${classOf[KafkaPlugin].getSimpleName} expected but $other")
     }
     override def write(obj: KafkaPlugin) = JsObject(
-      classKey -> JsString(obj.className),
-      typeKey -> JsString(obj.typeName),
+      classKey   -> JsString(obj.className),
+      typeKey    -> JsString(obj.typeName),
       versionKey -> JsString(obj.version)
     )
   }
   final case class KafkaConnectorTaskId(connector: String, task: Int)
   private[kafka] implicit val KAFKA_CONNECTOR_TASK_ID_JSON_FORMAT: RootJsonFormat[KafkaConnectorTaskId] = jsonFormat2(
-    KafkaConnectorTaskId)
+    KafkaConnectorTaskId
+  )
 
-  final case class KafkaConnectorCreationResponse(name: String,
-                                                  config: Map[String, String],
-                                                  tasks: Seq[KafkaConnectorTaskId])
+  final case class KafkaConnectorCreationResponse(
+    name: String,
+    config: Map[String, String],
+    tasks: Seq[KafkaConnectorTaskId]
+  )
 
   private[kafka] implicit val KAFKA_CONNECTOR_CREATION_RESPONSE_JSON_FORMAT
     : RootJsonFormat[KafkaConnectorCreationResponse] =
@@ -65,7 +68,8 @@ object WorkerJson {
     }
   }
   private[kafka] implicit val KAFKA_CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[KafkaConnectorStatus] = jsonFormat3(
-    KafkaConnectorStatus)
+    KafkaConnectorStatus
+  )
   final case class KafkaTaskStatus(id: Int, state: String, worker_id: String, trace: Option[String]) {
     def workerHostname: String = {
       val splitIndex = worker_id.lastIndexOf(":")
@@ -73,24 +77,28 @@ object WorkerJson {
     }
   }
   private[kafka] implicit val KAFKA_TASK_STATUS_JSON_FORMAT: RootJsonFormat[KafkaTaskStatus] = jsonFormat4(
-    KafkaTaskStatus)
+    KafkaTaskStatus
+  )
   final case class KafkaConnectorInfo(name: String, connector: KafkaConnectorStatus, tasks: Seq[KafkaTaskStatus])
   private[kafka] implicit val KAFKA_CONNECTOR_INFO_JSON_FORMAT: RootJsonFormat[KafkaConnectorInfo] = jsonFormat3(
-    KafkaConnectorInfo)
+    KafkaConnectorInfo
+  )
 
   final case class KafkaError(error_code: Int, message: String) extends HttpExecutor.Error
   private[kafka] implicit val KAFKA_ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[KafkaError] = jsonFormat2(KafkaError)
 
-  final case class KafkaConnectorConfig(tasksMax: Int,
-                                        topicNames: Set[String],
-                                        connectorClass: String,
-                                        args: Map[String, String])
+  final case class KafkaConnectorConfig(
+    tasksMax: Int,
+    topicNames: Set[String],
+    connectorClass: String,
+    args: Map[String, String]
+  )
 
   // open to ohara-configurator
   private[ohara] implicit val KAFKA_CONNECTOR_CONFIG_FORMAT: RootJsonFormat[KafkaConnectorConfig] =
     new RootJsonFormat[KafkaConnectorConfig] {
-      private[this] val taskMaxKey: String = "tasks.max"
-      private[this] val topicNamesKey: String = "topics"
+      private[this] val taskMaxKey: String      = "tasks.max"
+      private[this] val topicNamesKey: String   = "topics"
       private[this] val connectClassKey: String = "connector.class"
 
       override def read(json: JsValue): KafkaConnectorConfig =
@@ -109,7 +117,7 @@ object WorkerJson {
       override def write(config: KafkaConnectorConfig): JsValue =
         JsObject(
           config.args.map(f => f._1 -> JsString(f._2)) + (taskMaxKey -> JsString(config.tasksMax.toString),
-          topicNamesKey -> JsString(config.topicNames.mkString(",")),
+          topicNamesKey   -> JsString(config.topicNames.mkString(",")),
           connectClassKey -> JsString(config.connectorClass))
         )
     }
@@ -118,8 +126,8 @@ object WorkerJson {
 
   private[kafka] implicit val KAFKA_VALIDATED_VALUE_FORMAT: RootJsonFormat[KafkaValidatedValue] =
     new RootJsonFormat[KafkaValidatedValue] {
-      private[this] val nameKey: String = "name"
-      private[this] val valueKey: String = "value"
+      private[this] val nameKey: String   = "name"
+      private[this] val valueKey: String  = "value"
       private[this] val errorsKey: String = "errors"
 
       override def read(json: JsValue): KafkaValidatedValue = json.asJsObject.getFields(nameKey, errorsKey) match {
@@ -143,8 +151,8 @@ object WorkerJson {
           throw DeserializationException(s"${classOf[KafkaValidatedValue].getSimpleName} expected but $other")
       }
       override def write(obj: KafkaValidatedValue) = JsObject(
-        nameKey -> JsString(obj.name),
-        valueKey -> obj.value.map(JsString(_)).getOrElse(JsNull),
+        nameKey   -> JsString(obj.name),
+        valueKey  -> obj.value.map(JsString(_)).getOrElse(JsNull),
         errorsKey -> JsArray(obj.errors.map(JsString(_)).toVector)
       )
     }

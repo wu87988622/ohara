@@ -24,7 +24,7 @@ import com.island.ohara.kafka.connector.{ConnectorVersion, RowSinkConnector, Row
 import scala.collection.JavaConverters._
 
 class ConsoleSink extends RowSinkConnector {
-  private[this] var config: TaskSetting = _
+  private[this] var config: TaskSetting                    = _
   override protected def _start(config: TaskSetting): Unit = this.config = config
 
   override protected def _stop(): Unit = {
@@ -37,8 +37,9 @@ class ConsoleSink extends RowSinkConnector {
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
-  override protected def _definitions(): util.List[SettingDef] = Seq(
-    CONSOLE_FREQUENCE_DEFINITION,
-    CONSOLE_ROW_DIVIDER_DEFINITION
-  ).asJava
+  override protected def _definitions(): util.List[SettingDef] =
+    Seq(
+      CONSOLE_FREQUENCE_DEFINITION,
+      CONSOLE_ROW_DIVIDER_DEFINITION
+    ).asJava
 }

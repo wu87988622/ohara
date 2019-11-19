@@ -23,7 +23,6 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
 class TestIllegalFtpFileSystem extends OharaTest {
-
   private[this] val server = FtpServer.local()
 
   private[this] val fileSystem =

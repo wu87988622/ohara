@@ -29,7 +29,6 @@ import scala.collection.mutable.ArrayBuffer
   * A scala wrap of jdbc connection.
   */
 trait DatabaseClient extends Releasable {
-
   /**
     * a helper method to fetch all table from remote database
     * @return all database readable to user
@@ -55,12 +54,11 @@ trait DatabaseClient extends Releasable {
 }
 
 object DatabaseClient {
-
   def builder: Builder = new Builder
 
   class Builder private[DatabaseClient] extends com.island.ohara.common.pattern.Builder[DatabaseClient] {
-    private[this] var url: String = _
-    private[this] var user: String = _
+    private[this] var url: String      = _
+    private[this] var user: String     = _
     private[this] var password: String = _
 
     def url(url: String): Builder = {
@@ -84,17 +82,17 @@ object DatabaseClient {
 
     override def build: DatabaseClient = new DatabaseClient {
       private[this] def toTableCatalog(rs: ResultSet): String = rs.getString("TABLE_CAT")
-      private[this] def toTableSchema(rs: ResultSet): String = rs.getString("TABLE_SCHEM")
-      private[this] def toTableName(rs: ResultSet): String = rs.getString("TABLE_NAME")
-      private[this] def toColumnName(rs: ResultSet): String = rs.getString("COLUMN_NAME")
-      private[this] def toColumnType(rs: ResultSet): String = rs.getString("TYPE_NAME")
+      private[this] def toTableSchema(rs: ResultSet): String  = rs.getString("TABLE_SCHEM")
+      private[this] def toTableName(rs: ResultSet): String    = rs.getString("TABLE_NAME")
+      private[this] def toColumnName(rs: ResultSet): String   = rs.getString("COLUMN_NAME")
+      private[this] def toColumnType(rs: ResultSet): String   = rs.getString("TYPE_NAME")
       private[this] def toTableType(rs: ResultSet): Seq[String] = {
         val r = rs.getString("TABLE_TYPE")
         if (r == null) Seq.empty
         else r.split(" ")
       }
       private[this] def systemTable(types: Seq[String]): Boolean = types.contains("SYSTEM")
-      private[this] val conn = DriverManager.getConnection(CommonUtils.requireNonEmpty(url), user, password)
+      private[this] val conn                                     = DriverManager.getConnection(CommonUtils.requireNonEmpty(url), user, password)
       override def databaseType: String = {
         val l = url.indexOf(":")
         if (l < 0) return url
@@ -112,7 +110,8 @@ object DatabaseClient {
               .mkString(",") + ", PRIMARY KEY (" + columns
               .filter(_.pk)
               .map(c => s"""\"${c.name}\"""")
-              .mkString(",") + "))")
+              .mkString(",") + "))"
+          )
 
       override def dropTable(name: String): Unit = execute(s"""DROP TABLE \"$name\"""")
 
@@ -127,8 +126,8 @@ object DatabaseClient {
       override def close(): Unit = conn.close()
 
       override def tableQuery: TableQuery = new TableQuery {
-        private[this] var catalog: String = _
-        private[this] var schema: String = _
+        private[this] var catalog: String   = _
+        private[this] var schema: String    = _
         private[this] var tableName: String = _
 
         @Optional("default value is null")
@@ -185,9 +184,11 @@ object DatabaseClient {
                 implicit val rs: ResultSet = md.getColumns(c, null, t, null)
                 val columns = try {
                   val buf = new ArrayBuffer[DatabaseClient.Column]()
-                  while (rs.next()) buf += new DatabaseClient.Column(name = toColumnName(rs),
-                                                                     dataType = toColumnType(rs),
-                                                                     pk = pks.contains(toColumnName(rs)))
+                  while (rs.next()) buf += new DatabaseClient.Column(
+                    name = toColumnName(rs),
+                    dataType = toColumnType(rs),
+                    pk = pks.contains(toColumnName(rs))
+                  )
                   buf
                 } finally rs.close()
                 new DatabaseClient.Table(Option(c), Option(s), t, columns)
@@ -199,16 +200,17 @@ object DatabaseClient {
   }
 
   class Column(val name: String, val dataType: String, val pk: Boolean)
-  class Table(val catalogPattern: Option[String],
-              val schemaPattern: Option[String],
-              val name: String,
-              val columns: Seq[Column])
+  class Table(
+    val catalogPattern: Option[String],
+    val schemaPattern: Option[String],
+    val name: String,
+    val columns: Seq[Column]
+  )
 
   /**
     * a simple builder to create a suitable query by fluent pattern.
     */
   trait TableQuery {
-
     @Optional("default value is null")
     @Nullable
     def catalog(catalog: String): TableQuery.this.type

@@ -30,10 +30,9 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
-
-  private[this] def creationToClusterInfo(creation: Creation)(
-    implicit objectChecker: ObjectChecker,
-    executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+  private[this] def creationToClusterInfo(
+    creation: Creation
+  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[WorkerClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
@@ -55,12 +54,16 @@ object WorkerRoute {
         )
       }
 
-  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfCreation[Creation, WorkerClusterInfo] =
     creationToClusterInfo(_)
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, WorkerClusterInfo] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, WorkerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[WorkerClusterInfo]) =>
       previousOption match {
         case None => creationToClusterInfo(WorkerApi.access.request.settings(updating.settings).key(key).creation)
@@ -75,20 +78,24 @@ object WorkerRoute {
                 .settings(updating.settings)
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
-                .creation)
+                .creation
+            )
           }
-    }
+      }
 
   private[this] def checkConflict(workerClusterInfo: WorkerClusterInfo, connectorInfos: Seq[ConnectorInfo]): Unit = {
     val conflictConnectors = connectorInfos.filter(_.workerClusterKey == workerClusterInfo.key)
     if (conflictConnectors.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove worker cluster:${workerClusterInfo.key} since it is used by connector:${conflictConnectors.map(_.key).mkString(",")}")
+        s"you can't remove worker cluster:${workerClusterInfo.key} since it is used by connector:${conflictConnectors.map(_.key).mkString(",")}"
+      )
   }
 
-  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
-                                serviceCollie: ServiceCollie,
-                                executionContext: ExecutionContext): HookOfAction[WorkerClusterInfo] =
+  private[this] def hookOfStart(
+    implicit objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[WorkerClusterInfo] =
     (workerClusterInfo: WorkerClusterInfo, _, _) =>
       objectChecker.checkList
       // node names check is covered in super route
@@ -100,25 +107,29 @@ object WorkerRoute {
           // check group id
           runningWorkerClusters.find(_.groupId == workerClusterInfo.groupId).foreach { cluster =>
             throw new IllegalArgumentException(
-              s"group id:${workerClusterInfo.groupId} is used by wk cluster:${cluster.name}")
+              s"group id:${workerClusterInfo.groupId} is used by wk cluster:${cluster.name}"
+            )
           }
 
           // check setting topic
           runningWorkerClusters.find(_.configTopicName == workerClusterInfo.configTopicName).foreach { cluster =>
             throw new IllegalArgumentException(
-              s"configTopicName:${workerClusterInfo.configTopicName} is used by wk cluster:${cluster.name}")
+              s"configTopicName:${workerClusterInfo.configTopicName} is used by wk cluster:${cluster.name}"
+            )
           }
 
           // check offset topic
           runningWorkerClusters.find(_.offsetTopicName == workerClusterInfo.offsetTopicName).foreach { cluster =>
             throw new IllegalArgumentException(
-              s"offsetTopicName:${workerClusterInfo.offsetTopicName} is used by wk cluster:${cluster.name}")
+              s"offsetTopicName:${workerClusterInfo.offsetTopicName} is used by wk cluster:${cluster.name}"
+            )
           }
 
           // check status topic
           runningWorkerClusters.find(_.statusTopicName == workerClusterInfo.statusTopicName).foreach { cluster =>
             throw new IllegalArgumentException(
-              s"statusTopicName:${workerClusterInfo.statusTopicName} is used by wk cluster:${cluster.name}")
+              s"statusTopicName:${workerClusterInfo.statusTopicName} is used by wk cluster:${cluster.name}"
+            )
           }
 
           serviceCollie.workerCollie.creator
@@ -145,13 +156,17 @@ object WorkerRoute {
         }
         .map(_ => Unit)
 
-  private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfAction[WorkerClusterInfo] =
+  private[this] def hookBeforeStop(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfAction[WorkerClusterInfo] =
     (workerClusterInfo: WorkerClusterInfo, _, _) =>
       objectChecker.checkList.allConnectors().check().map(_.runningConnectors).map(checkConflict(workerClusterInfo, _))
 
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete =
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
     key =>
       objectChecker.checkList
         .allConnectors()
@@ -168,12 +183,14 @@ object WorkerRoute {
         }
         .map(_ => Unit)
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            meterCache: MeterCache,
-            workerCollie: WorkerCollie,
-            serviceCollie: ServiceCollie,
-            executionContext: ExecutionContext): server.Route =
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    meterCache: MeterCache,
+    workerCollie: WorkerCollie,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): server.Route =
     clusterRoute[WorkerClusterInfo, WorkerClusterStatus, Creation, Updating](
       root = WORKER_PREFIX_PATH,
       metricsKey = None,

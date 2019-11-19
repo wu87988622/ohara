@@ -47,27 +47,29 @@ trait ObjectChecker {
 }
 
 object ObjectChecker {
-
-  case class ObjectInfos(topicInfos: Map[TopicInfo, Condition],
-                         connectorInfos: Map[ConnectorInfo, Condition],
-                         fileInfos: Seq[FileInfo],
-                         nodes: Seq[Node],
-                         zookeeperClusterInfos: Map[ZookeeperClusterInfo, Condition],
-                         brokerClusterInfos: Map[BrokerClusterInfo, Condition],
-                         workerClusterInfos: Map[WorkerClusterInfo, Condition],
-                         streamClusterInfos: Map[StreamClusterInfo, Condition]) {
-    def runningTopics: Seq[TopicInfo] = topicInfos.filter(_._2 == RUNNING).keys.toSeq
-    def runningConnectors: Seq[ConnectorInfo] = connectorInfos.filter(_._2 == RUNNING).keys.toSeq
+  case class ObjectInfos(
+    topicInfos: Map[TopicInfo, Condition],
+    connectorInfos: Map[ConnectorInfo, Condition],
+    fileInfos: Seq[FileInfo],
+    nodes: Seq[Node],
+    zookeeperClusterInfos: Map[ZookeeperClusterInfo, Condition],
+    brokerClusterInfos: Map[BrokerClusterInfo, Condition],
+    workerClusterInfos: Map[WorkerClusterInfo, Condition],
+    streamClusterInfos: Map[StreamClusterInfo, Condition]
+  ) {
+    def runningTopics: Seq[TopicInfo]                = topicInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningConnectors: Seq[ConnectorInfo]        = connectorInfos.filter(_._2 == RUNNING).keys.toSeq
     def runningZookeepers: Seq[ZookeeperClusterInfo] = zookeeperClusterInfos.filter(_._2 == RUNNING).keys.toSeq
-    def runningBrokers: Seq[BrokerClusterInfo] = brokerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
-    def runningWorkers: Seq[WorkerClusterInfo] = workerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
-    def runningStreams: Seq[StreamClusterInfo] = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningBrokers: Seq[BrokerClusterInfo]       = brokerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningWorkers: Seq[WorkerClusterInfo]       = workerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningStreams: Seq[StreamClusterInfo]       = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
   }
 
-  final class ObjectCheckException(val objectType: String,
-                                   val nonexistent: Set[ObjectKey],
-                                   val illegalObjs: Map[ObjectKey, Condition])
-      extends RuntimeException(
+  final class ObjectCheckException(
+    val objectType: String,
+    val nonexistent: Set[ObjectKey],
+    val illegalObjs: Map[ObjectKey, Condition]
+  ) extends RuntimeException(
         s"type:$objectType ${nonexistent.map(k => s"$k does not exist").mkString(",")} ${illegalObjs
           .map {
             case (key, condition) =>
@@ -76,10 +78,10 @@ object ObjectChecker {
                 case RUNNING => s"$key MUST be running"
               }
           }
-          .mkString(",")}")
+          .mkString(",")}"
+      )
 
   trait ChickList {
-
     //---------------[topic]---------------//
 
     /**
@@ -311,28 +313,28 @@ object ObjectChecker {
 
   def apply()(implicit store: DataStore, serviceCollie: ServiceCollie, adminCleaner: AdminCleaner): ObjectChecker =
     new ObjectChecker {
-
       override def checkList: ChickList = new ChickList {
-        private[this] var requireAllNodes = false
-        private[this] val requiredNodes = mutable.Set[ObjectKey]()
-        private[this] var requireAllFiles = false
-        private[this] val requiredFiles = mutable.Set[ObjectKey]()
-        private[this] var requireAllTopics = false
-        private[this] val requiredTopics = mutable.Map[TopicKey, Option[Condition]]()
+        private[this] var requireAllNodes      = false
+        private[this] val requiredNodes        = mutable.Set[ObjectKey]()
+        private[this] var requireAllFiles      = false
+        private[this] val requiredFiles        = mutable.Set[ObjectKey]()
+        private[this] var requireAllTopics     = false
+        private[this] val requiredTopics       = mutable.Map[TopicKey, Option[Condition]]()
         private[this] var requireAllConnectors = false
-        private[this] val requiredConnectors = mutable.Map[ConnectorKey, Option[Condition]]()
+        private[this] val requiredConnectors   = mutable.Map[ConnectorKey, Option[Condition]]()
         private[this] var requireAllZookeepers = false
-        private[this] val requiredZookeepers = mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] var requireAllBrokers = false
-        private[this] val requiredBrokers = mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] var requireAllWorkers = false
-        private[this] val requiredWorkers = mutable.Map[ObjectKey, Option[Condition]]()
-        private[this] var requireAllStreams = false
-        private[this] val requiredStreams = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] val requiredZookeepers   = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllBrokers    = false
+        private[this] val requiredBrokers      = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllWorkers    = false
+        private[this] val requiredWorkers      = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllStreams    = false
+        private[this] val requiredStreams      = mutable.Map[ObjectKey, Option[Condition]]()
 
         private[this] def checkCluster[S <: ClusterStatus, C <: ClusterInfo: ClassTag](
           collie: Collie[S],
-          key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Option[(C, Condition)]] =
+          key: ObjectKey
+        )(implicit executionContext: ExecutionContext): Future[Option[(C, Condition)]] =
           store.get[C](key).flatMap {
             case None => Future.successful(None)
             case Some(cluster) =>
@@ -341,7 +343,8 @@ object ObjectChecker {
 
         private[this] def checkClusters[S <: ClusterStatus, C <: ClusterInfo: ClassTag](
           collie: Collie[S],
-          keys: Set[ObjectKey])(implicit executionContext: ExecutionContext): Future[Map[C, Condition]] =
+          keys: Set[ObjectKey]
+        )(implicit executionContext: ExecutionContext): Future[Map[C, Condition]] =
           Future
             .traverse(keys) { key =>
               checkCluster[S, C](collie, key)
@@ -349,60 +352,80 @@ object ObjectChecker {
             .map(_.flatten.toMap)
 
         private[this] def checkZookeepers()(
-          implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Condition]] =
+          implicit executionContext: ExecutionContext
+        ): Future[Map[ZookeeperClusterInfo, Condition]] =
           if (requireAllZookeepers)
             store
               .values[ZookeeperClusterInfo]()
               .map(_.map(_.key))
-              .flatMap(keys =>
-                checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie, keys.toSet))
+              .flatMap(
+                keys =>
+                  checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie, keys.toSet)
+              )
           else
-            checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie,
-                                                                        requiredZookeepers.keys.toSet)
+            checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](
+              serviceCollie.zookeeperCollie,
+              requiredZookeepers.keys.toSet
+            )
 
         private[this] def checkBrokers()(
-          implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Condition]] =
+          implicit executionContext: ExecutionContext
+        ): Future[Map[BrokerClusterInfo, Condition]] =
           if (requireAllBrokers)
             store
               .values[BrokerClusterInfo]()
               .map(_.map(_.key))
-              .flatMap(keys =>
-                checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie, keys.toSet))
+              .flatMap(
+                keys => checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie, keys.toSet)
+              )
           else
-            checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie,
-                                                                  requiredBrokers.keys.toSet)
+            checkClusters[BrokerClusterStatus, BrokerClusterInfo](
+              serviceCollie.brokerCollie,
+              requiredBrokers.keys.toSet
+            )
 
         private[this] def checkWorkers()(
-          implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Condition]] =
+          implicit executionContext: ExecutionContext
+        ): Future[Map[WorkerClusterInfo, Condition]] =
           if (requireAllWorkers)
             store
               .values[WorkerClusterInfo]()
               .map(_.map(_.key))
-              .flatMap(keys =>
-                checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie, keys.toSet))
+              .flatMap(
+                keys => checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie, keys.toSet)
+              )
           else
-            checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie,
-                                                                  requiredWorkers.keys.toSet)
+            checkClusters[WorkerClusterStatus, WorkerClusterInfo](
+              serviceCollie.workerCollie,
+              requiredWorkers.keys.toSet
+            )
 
         private[this] def checkStreams()(
-          implicit executionContext: ExecutionContext): Future[Map[StreamClusterInfo, Condition]] =
+          implicit executionContext: ExecutionContext
+        ): Future[Map[StreamClusterInfo, Condition]] =
           if (requireAllStreams)
             store
               .values[StreamClusterInfo]()
               .map(_.map(_.key))
-              .flatMap(keys =>
-                checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, keys.toSet))
+              .flatMap(
+                keys => checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, keys.toSet)
+              )
           else
-            checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie,
-                                                                  requiredStreams.keys.toSet)
+            checkClusters[StreamClusterStatus, StreamClusterInfo](
+              serviceCollie.streamCollie,
+              requiredStreams.keys.toSet
+            )
 
-        private[this] def checkTopic(key: TopicKey)(
-          implicit executionContext: ExecutionContext): Future[Option[(TopicInfo, Condition)]] =
+        private[this] def checkTopic(
+          key: TopicKey
+        )(implicit executionContext: ExecutionContext): Future[Option[(TopicInfo, Condition)]] =
           store.get[TopicInfo](key).flatMap {
             case None => Future.successful(None)
             case Some(topicInfo) =>
-              checkCluster[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie,
-                                                                   topicInfo.brokerClusterKey).flatMap {
+              checkCluster[BrokerClusterStatus, BrokerClusterInfo](
+                serviceCollie.brokerCollie,
+                topicInfo.brokerClusterKey
+              ).flatMap {
                 case None => Future.successful(Some(topicInfo -> STOPPED))
                 case Some((brokerClusterInfo, condition)) =>
                   condition match {
@@ -414,8 +437,11 @@ object ObjectChecker {
                           admin =>
                             admin
                               .topics()
-                              .map(try _
-                              finally Releasable.close(admin)))
+                              .map(
+                                try _
+                                finally Releasable.close(admin)
+                              )
+                        )
                         .map(_.exists(_.name == key.topicNameOnKafka()))
                         .map(if (_) RUNNING else STOPPED)
                         .map(condition => Some(topicInfo -> condition))
@@ -424,18 +450,22 @@ object ObjectChecker {
           }
 
         private[this] def checkTopics()(
-          implicit executionContext: ExecutionContext): Future[Map[TopicInfo, Condition]] =
+          implicit executionContext: ExecutionContext
+        ): Future[Map[TopicInfo, Condition]] =
           if (requireAllTopics) store.values[TopicInfo]().map(_.map(_.key)).flatMap { keys =>
             Future.traverse(keys)(checkTopic).map(_.flatten.toMap)
           } else Future.traverse(requiredTopics.keySet)(checkTopic).map(_.flatten.toMap)
 
-        private[this] def checkConnector(key: ConnectorKey)(
-          implicit executionContext: ExecutionContext): Future[Option[(ConnectorInfo, Condition)]] =
+        private[this] def checkConnector(
+          key: ConnectorKey
+        )(implicit executionContext: ExecutionContext): Future[Option[(ConnectorInfo, Condition)]] =
           store.get[ConnectorInfo](key).flatMap {
             case None => Future.successful(None)
             case Some(connectorInfo) =>
-              checkCluster[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie,
-                                                                   connectorInfo.workerClusterKey).flatMap {
+              checkCluster[WorkerClusterStatus, WorkerClusterInfo](
+                serviceCollie.workerCollie,
+                connectorInfo.workerClusterKey
+              ).flatMap {
                 case None => Future.successful(Some(connectorInfo -> STOPPED))
                 case Some((workerClusterInfo, condition)) =>
                   condition match {
@@ -452,7 +482,8 @@ object ObjectChecker {
           }
 
         private[this] def checkConnectors()(
-          implicit executionContext: ExecutionContext): Future[Map[ConnectorInfo, Condition]] =
+          implicit executionContext: ExecutionContext
+        ): Future[Map[ConnectorInfo, Condition]] =
           if (requireAllConnectors) store.values[ConnectorInfo]().map(_.map(_.key)).flatMap { keys =>
             Future.traverse(keys)(checkConnector).map(_.flatten.toMap)
           } else Future.traverse(requiredConnectors.keySet)(checkConnector).map(_.flatten.toMap)
@@ -466,9 +497,11 @@ object ObjectChecker {
           else
             Future.traverse(requiredNodes)(store.get[Node]).map(_.flatten.toSeq)
 
-        private[this] def compare(name: String,
-                                  result: Map[ObjectKey, Condition],
-                                  required: Map[ObjectKey, Option[Condition]]): Unit = {
+        private[this] def compare(
+          name: String,
+          result: Map[ObjectKey, Condition],
+          required: Map[ObjectKey, Option[Condition]]
+        ): Unit = {
           val nonexistent = required.keys.filterNot(key => result.exists(_._1 == key)).toSet
           val illegal = required
           // this key exists and it does not care for condition.

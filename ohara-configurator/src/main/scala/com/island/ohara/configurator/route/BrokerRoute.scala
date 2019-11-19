@@ -32,10 +32,9 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {
-
-  private[this] def creationToClusterInfo(creation: Creation)(
-    implicit objectChecker: ObjectChecker,
-    executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+  private[this] def creationToClusterInfo(
+    creation: Creation
+  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[BrokerClusterInfo] =
     objectChecker.checkList.nodeNames(creation.nodeNames).zookeeperCluster(creation.zookeeperClusterKey).check().map {
       _ =>
         BrokerClusterInfo(
@@ -48,12 +47,16 @@ object BrokerRoute {
         )
     }
 
-  private[this] def hookOfCreation(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfCreation[Creation, BrokerClusterInfo] =
     creationToClusterInfo(_)
 
-  private[this] def hookOfUpdating(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfUpdating[Updating, BrokerClusterInfo] =
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[Updating, BrokerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[BrokerClusterInfo]) =>
       previousOption match {
         case None =>
@@ -62,7 +65,8 @@ object BrokerRoute {
               .settings(updating.settings)
               // the key is not in update's settings so we have to add it to settings
               .key(key)
-              .creation)
+              .creation
+          )
         case Some(previous) =>
           objectChecker.checkList.brokerCluster(key, STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
@@ -74,13 +78,16 @@ object BrokerRoute {
                 .settings(updating.settings)
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
-                .creation)
+                .creation
+            )
           }
-    }
+      }
 
-  private[this] def hookOfStart(implicit objectChecker: ObjectChecker,
-                                serviceCollie: ServiceCollie,
-                                executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
+  private[this] def hookOfStart(
+    implicit objectChecker: ObjectChecker,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[BrokerClusterInfo] =
     (brokerClusterInfo: BrokerClusterInfo, _, _) =>
       objectChecker.checkList
       // node names check is covered in super route
@@ -93,7 +100,8 @@ object BrokerRoute {
             runningBrokerClusters.filter(_.zookeeperClusterKey == brokerClusterInfo.zookeeperClusterKey)
           if (conflictBrokerClusters.nonEmpty)
             throw new IllegalArgumentException(
-              s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}")
+              s"zk cluster:${brokerClusterInfo.zookeeperClusterKey} is already used by broker cluster:${conflictBrokerClusters.head.name}"
+            )
           serviceCollie.brokerCollie.creator
             .settings(brokerClusterInfo.settings)
             .name(brokerClusterInfo.name)
@@ -107,26 +115,33 @@ object BrokerRoute {
         }
         .map(_ => Unit)
 
-  private[this] def checkConflict(brokerClusterInfo: BrokerClusterInfo,
-                                  workerClusterInfos: Seq[WorkerClusterInfo],
-                                  streamClusterInfos: Seq[StreamClusterInfo],
-                                  topicInfos: Seq[TopicInfo]): Unit = {
+  private[this] def checkConflict(
+    brokerClusterInfo: BrokerClusterInfo,
+    workerClusterInfos: Seq[WorkerClusterInfo],
+    streamClusterInfos: Seq[StreamClusterInfo],
+    topicInfos: Seq[TopicInfo]
+  ): Unit = {
     val conflictWorkers = workerClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictWorkers.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers.map(_.key).mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers.map(_.key).mkString(",")}"
+      )
     val conflictStreams = streamClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictStreams.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreams.map(_.key).mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreams.map(_.key).mkString(",")}"
+      )
     val conflictTopics = topicInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictTopics.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreams.map(_.key).mkString(",")}")
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreams.map(_.key).mkString(",")}"
+      )
   }
 
-  private[this] def hookBeforeStop(implicit objectChecker: ObjectChecker,
-                                   executionContext: ExecutionContext): HookOfAction[BrokerClusterInfo] =
+  private[this] def hookBeforeStop(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfAction[BrokerClusterInfo] =
     (brokerClusterInfo: BrokerClusterInfo, _: String, _: Map[String, String]) =>
       objectChecker.checkList
         .allWorkers()
@@ -137,35 +152,42 @@ object BrokerRoute {
         .map {
           case (workerClusterInfos, streamClusterInfos, topicInfos) =>
             checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
-      }
+        }
 
-  private[this] def hookBeforeDelete(implicit objectChecker: ObjectChecker,
-                                     executionContext: ExecutionContext): HookBeforeDelete = key =>
-    objectChecker.checkList
-      .allWorkers()
-      .allStreams()
-      .allTopics()
-      .brokerCluster(key, STOPPED)
-      .check()
-      .map(report =>
-        (report.brokerClusterInfos.head._1, report.runningWorkers, report.runningStreams, report.runningTopics))
-      .map {
-        case (brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos) =>
-          checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
-      }
-      .recover {
-        // the duplicate deletes are legal to ohara
-        case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
-        case e: Throwable                                           => throw e
-      }
-      .map(_ => Unit)
+  private[this] def hookBeforeDelete(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookBeforeDelete =
+    key =>
+      objectChecker.checkList
+        .allWorkers()
+        .allStreams()
+        .allTopics()
+        .brokerCluster(key, STOPPED)
+        .check()
+        .map(
+          report =>
+            (report.brokerClusterInfos.head._1, report.runningWorkers, report.runningStreams, report.runningTopics)
+        )
+        .map {
+          case (brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos) =>
+            checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
+        }
+        .recover {
+          // the duplicate deletes are legal to ohara
+          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: Throwable                                           => throw e
+        }
+        .map(_ => Unit)
 
-  def apply(implicit store: DataStore,
-            objectChecker: ObjectChecker,
-            meterCache: MeterCache,
-            brokerCollie: BrokerCollie,
-            serviceCollie: ServiceCollie,
-            executionContext: ExecutionContext): server.Route =
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    meterCache: MeterCache,
+    brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): server.Route =
     clusterRoute[BrokerClusterInfo, BrokerClusterStatus, Creation, Updating](
       root = BROKER_PREFIX_PATH,
       metricsKey = None,

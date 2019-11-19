@@ -31,7 +31,6 @@ import scala.collection.mutable
   *    this prop is exposed to env variable
   */
 trait ArgumentsBuilder extends com.island.ohara.common.pattern.Builder[Seq[String]] {
-
   /**
     * define single property to single line for specific file
     * @param path file path (in container)
@@ -51,17 +50,17 @@ trait ArgumentsBuilder extends com.island.ohara.common.pattern.Builder[Seq[Strin
 
 object ArgumentsBuilder {
   trait FileAppender {
-    private[this] val props = new mutable.HashSet[String]()
-    def append(prop: Int): FileAppender = append(prop.toString)
+    private[this] val props                = new mutable.HashSet[String]()
+    def append(prop: Int): FileAppender    = append(prop.toString)
     def append(prop: String): FileAppender = append(Set(prop))
     def append(props: Set[String]): FileAppender = {
       this.props ++= props
       this
     }
     def append(key: String, value: Boolean): FileAppender = append(s"$key=$value")
-    def append(key: String, value: Short): FileAppender = append(s"$key=$value")
-    def append(key: String, value: Int): FileAppender = append(s"$key=$value")
-    def append(key: String, value: String): FileAppender = append(s"$key=$value")
+    def append(key: String, value: Short): FileAppender   = append(s"$key=$value")
+    def append(key: String, value: Int): FileAppender     = append(s"$key=$value")
+    def append(key: String, value: String): FileAppender  = append(s"$key=$value")
     def append(key: String, value: JsValue): FileAppender = append(
       key,
       value match {
@@ -77,18 +76,19 @@ object ArgumentsBuilder {
     protected def done(props: Set[String]): ArgumentsBuilder
   }
   def apply(): ArgumentsBuilder = new ArgumentsBuilder {
-    private[this] val files = mutable.Map[String, Set[String]]()
+    private[this] val files                  = mutable.Map[String, Set[String]]()
     private[this] var mainConfigFile: String = _
 
-    override def build: Seq[String] = if (CommonUtils.isEmpty(mainConfigFile))
-      throw new IllegalArgumentException("you have to define the main configs")
-    else
-      // format: --file path=line0,line1 --file path1=line0,line1
-      // NOTED: the path and props must be in different line. otherwise, k8s will merge them into single line and our
-      // script will fail to parse the command-line arguments
-      files.flatMap {
-        case (path, props) => Seq("--file", s"$path=${props.mkString(",")}")
-      }.toSeq ++ Seq("--config", mainConfigFile)
+    override def build: Seq[String] =
+      if (CommonUtils.isEmpty(mainConfigFile))
+        throw new IllegalArgumentException("you have to define the main configs")
+      else
+        // format: --file path=line0,line1 --file path1=line0,line1
+        // NOTED: the path and props must be in different line. otherwise, k8s will merge them into single line and our
+        // script will fail to parse the command-line arguments
+        files.flatMap {
+          case (path, props) => Seq("--file", s"$path=${props.mkString(",")}")
+        }.toSeq ++ Seq("--config", mainConfigFile)
 
     override def file(path: String): FileAppender = (props: Set[String]) => {
       this.files += (path -> props)

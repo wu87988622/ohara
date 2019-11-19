@@ -47,6 +47,7 @@ class TestValidationOfRdb extends WithConfigurator {
         .user(rdb.user)
         .password(CommonUtils.randomString())
         .workerClusterKey(workerClusterKey)
-        .verify())
+        .verify()
+    )
   )
 }

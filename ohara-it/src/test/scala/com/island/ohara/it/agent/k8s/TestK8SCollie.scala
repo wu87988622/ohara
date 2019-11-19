@@ -29,21 +29,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.Matchers._
 @Category(Array(classOf[K8sConfiguratorGroup]))
 class TestK8SCollie extends BasicTests4Collie {
-
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
   override protected val configurator: Configurator =
     Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
 
   @Before
-  final def setup(): Unit = if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
-  else {
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodes.foreach { node =>
-      result(
-        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+  final def setup(): Unit =
+    if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
+    else {
+      val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+      nodes.foreach { node =>
+        result(
+          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
+        )
+      }
+      result(nodeApi.list()).size shouldBe nodes.size
+      result(nodeApi.list()).foreach(node => nodes.exists(_.name == node.name) shouldBe true)
     }
-    result(nodeApi.list()).size shouldBe nodes.size
-    result(nodeApi.list()).foreach(node => nodes.exists(_.name == node.name) shouldBe true)
-  }
 }

@@ -24,7 +24,6 @@ import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 class TestZookeeperApi extends OharaTest {
-
   private[this] final val access =
     ZookeeperApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
 
@@ -45,12 +44,13 @@ class TestZookeeperApi extends OharaTest {
   def ignoreNameOnCreation(): Unit = access.nodeName(CommonUtils.randomString(10)).creation.name.length should not be 0
 
   @Test
-  def testTags(): Unit = access
-    .nodeName(CommonUtils.randomString(10))
-    .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
-    .creation
-    .tags
-    .size shouldBe 2
+  def testTags(): Unit =
+    access
+      .nodeName(CommonUtils.randomString(10))
+      .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
+      .creation
+      .tags
+      .size shouldBe 2
 
   @Test
   def ignoreNodeNamesOnCreation(): Unit =
@@ -88,13 +88,13 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
-    val jmxPort = CommonUtils.availablePort()
-    val clientPort = CommonUtils.availablePort()
-    val peerPort = CommonUtils.availablePort()
+    val name         = CommonUtils.randomString(10)
+    val group        = CommonUtils.randomString(10)
+    val jmxPort      = CommonUtils.availablePort()
+    val clientPort   = CommonUtils.availablePort()
+    val peerPort     = CommonUtils.availablePort()
     val electionPort = CommonUtils.availablePort()
-    val nodeName = CommonUtils.randomString()
+    val nodeName     = CommonUtils.randomString()
     val creation = access
       .name(name)
       .group(group)
@@ -115,8 +115,8 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testExtraSettingInCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val name2 = JsString(CommonUtils.randomString(10))
+    val name     = CommonUtils.randomString(10)
+    val name2    = JsString(CommonUtils.randomString(10))
     val creation = access.name(name).nodeNames(Set("n1")).settings(Map("name" -> name2)).creation
 
     // settings() has higher priority than name()
@@ -141,8 +141,8 @@ class TestZookeeperApi extends OharaTest {
     creation.electionPort should not be 0
     creation.peerPort should not be 0
 
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
+    val group     = CommonUtils.randomString(10)
     val creation2 = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "group": "$group",
@@ -163,10 +163,10 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testUpdate(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val group = CommonUtils.randomString(10)
+    val name       = CommonUtils.randomString(10)
+    val group      = CommonUtils.randomString(10)
     val clientPort = CommonUtils.availablePort()
-    val nodeName = CommonUtils.randomString()
+    val nodeName   = CommonUtils.randomString()
 
     val creation = access.name(name).nodeName(nodeName).creation
     creation.name shouldBe name
@@ -375,7 +375,8 @@ class TestZookeeperApi extends OharaTest {
         state = None,
         error = None,
         lastModified = CommonUtils.current()
-      ))
+      )
+    )
     // serialize to json should see the object key (group, name) in "settings"
     res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
     res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT

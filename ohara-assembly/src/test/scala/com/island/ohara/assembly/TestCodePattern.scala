@@ -27,7 +27,6 @@ import org.scalatest.Matchers._
   * have similar form of method signature.
   */
 class TestCodePattern extends OharaTest {
-
   @Test
   def testBuilder(): Unit =
     checkBaseClasses(
@@ -82,23 +81,29 @@ class TestCodePattern extends OharaTest {
       )
     )
 
-  private[this] def checkMethodNames(postfix: String,
-                                     illegalPrefixName: Set[String],
-                                     excludedMethods: Set[String]): Unit = {
+  private[this] def checkMethodNames(
+    postfix: String,
+    illegalPrefixName: Set[String],
+    excludedMethods: Set[String]
+  ): Unit = {
     val invalidClassesAndMethods = classesInProductionScope()
       .filter(_.getName.toLowerCase.endsWith(postfix))
       .map(
         clz =>
           clz -> clz.getMethods
             .filter(m => illegalPrefixName.exists(n => m.getName.startsWith(n)))
-            .filterNot(m => excludedMethods.contains(m.getName)))
+            .filterNot(m => excludedMethods.contains(m.getName))
+      )
       .filter(_._2.nonEmpty)
     if (invalidClassesAndMethods.nonEmpty)
       throw new IllegalArgumentException(
         invalidClassesAndMethods
-          .map(clzAndMethods =>
-            s"${clzAndMethods._1} has following illegal methods:${clzAndMethods._2.map(_.getName).mkString(",")}")
-          .mkString("|"))
+          .map(
+            clzAndMethods =>
+              s"${clzAndMethods._1} has following illegal methods:${clzAndMethods._2.map(_.getName).mkString(",")}"
+          )
+          .mkString("|")
+      )
   }
 
   private[this] def checkBaseClasses(baseClass: Class[_], postfix: String, excludedClasses: Seq[Class[_]]): Unit = {
@@ -110,6 +115,7 @@ class TestCodePattern extends OharaTest {
       .filter(clz => !excludedClasses.contains(clz))
     if (invalidClasses.nonEmpty)
       throw new IllegalArgumentException(
-        s"those classes:${invalidClasses.map(_.getName).mkString(",")} do not extend $baseClass")
+        s"those classes:${invalidClasses.map(_.getName).mkString(",")} do not extend $baseClass"
+      )
   }
 }

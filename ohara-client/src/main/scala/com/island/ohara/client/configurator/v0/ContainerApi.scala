@@ -38,16 +38,18 @@ object ContainerApi {
     */
   final class ContainerName(val id: String, val name: String, val imageName: String, val nodeName: String)
 
-  final case class ContainerInfo(nodeName: String,
-                                 id: String,
-                                 imageName: String,
-                                 state: String,
-                                 kind: String,
-                                 name: String,
-                                 size: Long,
-                                 portMappings: Seq[PortMapping],
-                                 environments: Map[String, String],
-                                 hostname: String)
+  final case class ContainerInfo(
+    nodeName: String,
+    id: String,
+    imageName: String,
+    state: String,
+    kind: String,
+    name: String,
+    size: Long,
+    portMappings: Seq[PortMapping],
+    environments: Map[String, String],
+    hostname: String
+  )
 
   implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat10(ContainerInfo)
 

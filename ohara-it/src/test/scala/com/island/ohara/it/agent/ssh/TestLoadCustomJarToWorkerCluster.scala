@@ -37,7 +37,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 @Category(Array(classOf[SshConfiguratorGroup]))
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
-
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
@@ -66,16 +65,19 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
   private[this] val nameHolder = ClusterNameHolder(nodes)
 
   @Before
-  def setup(): Unit = if (nodes.isEmpty || port == invalidPort || hostname == invalidHostname)
-    skipTest("public hostname and public port must exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
-  else {
-
-    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodes.foreach { node =>
-      result(
-        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+  def setup(): Unit =
+    if (nodes.isEmpty || port == invalidPort || hostname == invalidHostname)
+      skipTest(
+        "public hostname and public port must exist so all tests in TestLoadCustomJarToWorkerCluster are ignored"
+      )
+    else {
+      val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+      nodes.foreach { node =>
+        result(
+          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
+        )
+      }
     }
-  }
 
   @Test
   def test(): Unit = {
@@ -84,22 +86,30 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
 
     // jars should use "group" (here is worker name) to identify which worker cluster will use it
     val jars = result(
-      Future.traverse(Seq(new File(currentPath, "build/libs/ohara-it-source.jar"),
-                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(file => {
+      Future.traverse(
+        Seq(
+          new File(currentPath, "build/libs/ohara-it-source.jar"),
+          new File(currentPath, "build/libs/ohara-it-sink.jar")
+        )
+      )(file => {
         // avoid too "frequently" create group folder for same group files
         TimeUnit.SECONDS.sleep(1)
         fileApi.request.file(file).upload()
-      }))
+      })
+    )
 
     val zkCluster = result(
       zkApi.request
         .key(nameHolder.generateClusterKey())
         .nodeNames(nodes.map(_.name).toSet)
         .create()
-        .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key))))
-    assertCluster(() => result(zkApi.list()),
-                  () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
-                  zkCluster.key)
+        .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key)))
+    )
+    assertCluster(
+      () => result(zkApi.list()),
+      () => result(containerApi.get(zkCluster.key).map(_.flatMap(_.containers))),
+      zkCluster.key
+    )
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
       bkApi.request
@@ -107,10 +117,13 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
         .zookeeperClusterKey(zkCluster.key)
         .nodeNames(nodes.map(_.name).toSet)
         .create()
-        .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key))))
-    assertCluster(() => result(bkApi.list()),
-                  () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
-                  bkCluster.key)
+        .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key)))
+    )
+    assertCluster(
+      () => result(bkApi.list()),
+      () => result(containerApi.get(bkCluster.key).map(_.flatMap(_.containers))),
+      bkCluster.key
+    )
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
       wkApi.request
@@ -118,11 +131,14 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
         .brokerClusterKey(bkCluster.key)
         .pluginKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
         .nodeName(nodes.head.name)
-        .create())
+        .create()
+    )
     result(wkApi.start(wkCluster.key))
-    assertCluster(() => result(wkApi.list()),
-                  () => result(containerApi.get(wkCluster.key).map(_.flatMap(_.containers))),
-                  wkCluster.key)
+    assertCluster(
+      () => result(wkApi.list()),
+      () => result(containerApi.get(wkCluster.key).map(_.flatMap(_.containers))),
+      wkCluster.key
+    )
     // add all remaining node to the running worker cluster
     nodes.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
       result(wkApi.addNode(wkCluster.key, n.name))
@@ -136,12 +152,13 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
             && result(workerClient.plugins()).exists(_.className == classOf[DumbSourceConnector].getName)
           catch {
             case _: Throwable => false
-        }
+          }
       )
     }
     await(() => {
       val connectors = result(
-        InspectApi.access.hostname(configurator.hostname).port(configurator.port).workerInfo(wkCluster.key)).classInfos
+        InspectApi.access.hostname(configurator.hostname).port(configurator.port).workerInfo(wkCluster.key)
+      ).classInfos
       connectors.map(_.className).contains(classOf[DumbSinkConnector].getName) &&
       connectors.map(_.className).contains(classOf[DumbSourceConnector].getName)
     })

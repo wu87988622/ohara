@@ -33,7 +33,6 @@ import scala.util.Try
 // accessible to configurator
 private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataCollie, cacheThreadPool: ExecutorService)
     extends ServiceCollie {
-
   private[this] val dockerCache = DockerClientCache()
 
   private[this] val clusterCache: ServiceCache = ServiceCache.builder
@@ -45,49 +44,55 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     .build()
 
   override val zookeeperCollie: ZookeeperCollie = new ZookeeperCollieImpl(dataCollie, dockerCache, clusterCache)
-  override val brokerCollie: BrokerCollie = new BrokerCollieImpl(dataCollie, dockerCache, clusterCache)
-  override val workerCollie: WorkerCollie = new WorkerCollieImpl(dataCollie, dockerCache, clusterCache)
-  override val streamCollie: StreamCollie = new StreamCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val brokerCollie: BrokerCollie       = new BrokerCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val workerCollie: WorkerCollie       = new WorkerCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val streamCollie: StreamCollie       = new StreamCollieImpl(dataCollie, dockerCache, clusterCache)
 
   private[this] def doClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] = dataCollie
-    .values[Node]()
-    .flatMap(Future
-      .traverse(_) { node =>
-        // multi-thread to seek all containers from multi-nodes
-        // Note: we fetch all containers (include exited and running) here
-        dockerCache.exec(node, _.containers(containerName => containerName.startsWith(PREFIX_KEY))).recover {
-          case e: Throwable =>
-            LOG.error(s"failed to get active containers from $node", e)
-            Seq.empty
-        }
-      }
-      .map(_.flatten))
-    .flatMap { allContainers =>
-      def parse(
-        serviceName: String,
-        f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterStatus]): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
+    implicit executionContext: ExecutionContext
+  ): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
+    dataCollie
+      .values[Node]()
+      .flatMap(
         Future
-          .sequence(
-            allContainers
-              .filter(_.name.contains(s"$DIVIDER$serviceName$DIVIDER"))
-              .map(container => Collie.objectKeyOfContainerName(container.name) -> container)
-              .groupBy(_._1)
-              .map {
-                case (clusterKey, value) => clusterKey -> value.map(_._2)
-              }
-              .map {
-                case (clusterKey, containers) => f(clusterKey, containers).map(_ -> containers)
-              })
-          .map(_.toMap)
+          .traverse(_) { node =>
+            // multi-thread to seek all containers from multi-nodes
+            // Note: we fetch all containers (include exited and running) here
+            dockerCache.exec(node, _.containers(containerName => containerName.startsWith(PREFIX_KEY))).recover {
+              case e: Throwable =>
+                LOG.error(s"failed to get active containers from $node", e)
+                Seq.empty
+            }
+          }
+          .map(_.flatten)
+      )
+      .flatMap { allContainers =>
+        def parse(
+          serviceName: String,
+          f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterStatus]
+        ): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
+          Future
+            .sequence(
+              allContainers
+                .filter(_.name.contains(s"$DIVIDER$serviceName$DIVIDER"))
+                .map(container => Collie.objectKeyOfContainerName(container.name) -> container)
+                .groupBy(_._1)
+                .map {
+                  case (clusterKey, value) => clusterKey -> value.map(_._2)
+                }
+                .map {
+                  case (clusterKey, containers) => f(clusterKey, containers).map(_ -> containers)
+                }
+            )
+            .map(_.toMap)
 
-      for {
-        zkMap <- parse(ZookeeperApi.ZOOKEEPER_SERVICE_NAME, zookeeperCollie.toStatus)
-        bkMap <- parse(BrokerApi.BROKER_SERVICE_NAME, brokerCollie.toStatus)
-        wkMap <- parse(WorkerApi.WORKER_SERVICE_NAME, workerCollie.toStatus)
-        streamMap <- parse(StreamApi.STREAM_SERVICE_NAME, streamCollie.toStatus)
-      } yield zkMap ++ bkMap ++ wkMap ++ streamMap
-    }
+        for {
+          zkMap     <- parse(ZookeeperApi.ZOOKEEPER_SERVICE_NAME, zookeeperCollie.toStatus)
+          bkMap     <- parse(BrokerApi.BROKER_SERVICE_NAME, brokerCollie.toStatus)
+          wkMap     <- parse(WorkerApi.WORKER_SERVICE_NAME, workerCollie.toStatus)
+          streamMap <- parse(StreamApi.STREAM_SERVICE_NAME, streamCollie.toStatus)
+        } yield zkMap ++ bkMap ++ wkMap ++ streamMap
+      }
 
   override def close(): Unit = {
     Releasable.close(dockerCache)
@@ -110,7 +115,8 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
         val name = CommonUtils.randomString(10)
         val dockerClient =
           DockerClient(
-            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build)
+            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+          )
         try {
           val helloWorldImage = "hello-world"
           dockerClient.containerCreator().name(name).imageName(helloWorldImage).create()
@@ -146,21 +152,26 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
   override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
     logs(_ => true)
 
-  private[this] def logs(filter: ContainerName => Boolean)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+  private[this] def logs(
+    filter: ContainerName => Boolean
+  )(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
     dataCollie
       .values[Node]()
-      .map(_.flatMap(node =>
-        dockerCache.exec(
-          node,
-          client =>
-            client.containerNames().filter(filter).flatMap { containerName =>
-              try Some((containerName, client.log(containerName.name)))
-              catch {
-                case _: Throwable => None
-              }
-          }
-      )).toMap)
+      .map(
+        _.flatMap(
+          node =>
+            dockerCache.exec(
+              node,
+              client =>
+                client.containerNames().filter(filter).flatMap { containerName =>
+                  try Some((containerName, client.log(containerName.name)))
+                  catch {
+                    case _: Throwable => None
+                  }
+                }
+            )
+        ).toMap
+      )
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
     dataCollie
@@ -171,5 +182,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
             node -> dockerCache.exec(
               node,
               _.resources()
-          )).toMap)
+            )
+        ).toMap
+      )
 }

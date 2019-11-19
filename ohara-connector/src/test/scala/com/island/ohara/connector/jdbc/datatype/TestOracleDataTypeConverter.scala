@@ -26,14 +26,13 @@ import org.scalatest.Matchers._
 import org.scalatest.mockito.MockitoSugar
 
 class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
-
   @Test
   def testConverterCharValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn("value1")
-    val column = new DatabaseClient.Column("column1", "CHAR", false)
+    val column                  = new DatabaseClient.Column("column1", "CHAR", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
-    val result = oracleDataTypeConverter.converterValue(resultSet, column)
+    val result                  = oracleDataTypeConverter.converterValue(resultSet, column)
     result shouldBe "value1"
     result.isInstanceOf[String] shouldBe true
   }
@@ -42,9 +41,9 @@ class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
   def testConverterRawValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn("aaaa".getBytes)
-    val column = new DatabaseClient.Column("column1", "RAW", false)
+    val column                  = new DatabaseClient.Column("column1", "RAW", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
-    val result = oracleDataTypeConverter.converterValue(resultSet, column)
+    val result                  = oracleDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Array[Byte]] shouldBe true
     new String(result.asInstanceOf[Array[Byte]]) shouldBe "aaaa"
   }
@@ -53,9 +52,9 @@ class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
   def testConverterRawNullValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn(null)
-    val column = new DatabaseClient.Column("column1", "RAW", false)
+    val column                  = new DatabaseClient.Column("column1", "RAW", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
-    val result = oracleDataTypeConverter.converterValue(resultSet, column)
+    val result                  = oracleDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Array[Byte]] shouldBe true
     result.asInstanceOf[Array[Byte]].length shouldBe 0
   }
@@ -64,9 +63,9 @@ class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
   def testConverterSmallIntValue(): Unit = {
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getInt("column1")).thenReturn(111)
-    val column = new DatabaseClient.Column("column1", "INT", false)
+    val column                  = new DatabaseClient.Column("column1", "INT", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
-    val result = oracleDataTypeConverter.converterValue(resultSet, column)
+    val result                  = oracleDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Integer] shouldBe true
     result.asInstanceOf[Integer] shouldBe 111
   }

@@ -20,10 +20,10 @@ import com.island.ohara.kafka.connector.TaskSetting
 
 case class SmbProps(hostname: String, port: Int, user: String, password: String, shareName: String) {
   def plain: Map[String, String] = Map(
-    SMB_HOSTNAME_KEY -> hostname,
-    SMB_PORT_KEY -> port.toString,
-    SMB_USER_KEY -> user,
-    SMB_PASSWORD_KEY -> password,
+    SMB_HOSTNAME_KEY   -> hostname,
+    SMB_PORT_KEY       -> port.toString,
+    SMB_USER_KEY       -> user,
+    SMB_PASSWORD_KEY   -> password,
     SMB_SHARE_NAME_KEY -> shareName
   )
 }
