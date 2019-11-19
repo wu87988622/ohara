@@ -132,6 +132,8 @@ class TestPipelineRoute extends OharaTest {
     pipeline.flows.head.to shouldBe Set.empty
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.className should not be None
+    pipeline.jarKeys.size shouldBe 1
+    pipeline.jarKeys.head shouldBe fileInfo.key
 
     // stream is not running so the objects have error
     result(pipelineApi.get(pipeline.key)).objects.head.error should not be None

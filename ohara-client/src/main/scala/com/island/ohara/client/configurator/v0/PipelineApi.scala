@@ -77,13 +77,14 @@ object PipelineApi {
                             name: String,
                             flows: Seq[Flow],
                             objects: Set[ObjectAbstract],
+                            jarKeys: Set[ObjectKey],
                             lastModified: Long,
                             tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "pipeline"
   }
 
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
+  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)
 
   /**
     * used to generate the payload and url for POST/PUT request.

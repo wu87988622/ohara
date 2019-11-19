@@ -63,8 +63,6 @@ The properties used in generating pipeline are shown below.
 
 #. tags (**object**) — the extra description to this object
 
-
-
 Following information are written by Ohara.
 
 #. lastModified (**long**) — the last time to update this pipeline
@@ -88,6 +86,7 @@ Following information are written by Ohara.
    - meters[i].queryTime (**long**) — the time of query metrics from remote machine
    - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 
+#. jarKeys (**array(object)**) — the jars used by the objects in pipeline.
 
 create a pipeline
 -----------------

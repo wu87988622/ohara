@@ -156,13 +156,13 @@ private[configurator] object PipelineRoute {
     * @param meterCache meter cache
     * @return updated pipeline
     */
-  private[this] def updateObjects(pipeline: Pipeline)(implicit brokerCollie: BrokerCollie,
-                                                      workerCollie: WorkerCollie,
-                                                      streamCollie: StreamCollie,
-                                                      adminCleaner: AdminCleaner,
-                                                      store: DataStore,
-                                                      executionContext: ExecutionContext,
-                                                      meterCache: MeterCache): Future[Pipeline] =
+  private[this] def updateObjectsAndJarKeys(pipeline: Pipeline)(implicit brokerCollie: BrokerCollie,
+                                                                workerCollie: WorkerCollie,
+                                                                streamCollie: StreamCollie,
+                                                                adminCleaner: AdminCleaner,
+                                                                store: DataStore,
+                                                                executionContext: ExecutionContext,
+                                                                meterCache: MeterCache): Future[Pipeline] =
     Future
       .traverse(pipeline.flows.flatMap(flow => flow.to ++ Set(flow.from)))(store.raws)
       .map(_.flatten.toSet)
@@ -187,6 +187,23 @@ private[configurator] object PipelineRoute {
         }
       })
       .map(objects => pipeline.copy(objects = objects))
+      // update the jar keys used by the objects
+      .flatMap { pipeline =>
+        Future
+          .traverse(pipeline.objects.map(obj => ObjectKey.of(obj.group, obj.name)))(store.raws)
+          .map(_.flatten)
+          .map(_.map {
+            case connectorInfo: ConnectorInfo =>
+              store
+                .get[WorkerClusterInfo](connectorInfo.workerClusterKey)
+                .map(_.map(w => w.sharedJarKeys ++ w.pluginKeys).getOrElse(Set.empty))
+            case streamClusterInfo: StreamClusterInfo => Future.successful(Set(streamClusterInfo.jarKey))
+            case _                                    => Future.successful(Set.empty[ObjectKey])
+          })
+          .flatMap(s => Future.sequence(s))
+          .map(_.flatten)
+          .map(jarKeys => pipeline.copy(jarKeys = jarKeys))
+      }
 
   private[this] def hookOfGet(implicit brokerCollie: BrokerCollie,
                               workerCollie: WorkerCollie,
@@ -194,7 +211,7 @@ private[configurator] object PipelineRoute {
                               adminCleaner: AdminCleaner,
                               store: DataStore,
                               executionContext: ExecutionContext,
-                              meterCache: MeterCache): HookOfGet[Pipeline] = updateObjects(_)
+                              meterCache: MeterCache): HookOfGet[Pipeline] = updateObjectsAndJarKeys(_)
 
   private[this] def hookOfList(implicit brokerCollie: BrokerCollie,
                                workerCollie: WorkerCollie,
@@ -202,7 +219,8 @@ private[configurator] object PipelineRoute {
                                adminCleaner: AdminCleaner,
                                store: DataStore,
                                executionContext: ExecutionContext,
-                               meterCache: MeterCache): HookOfList[Pipeline] = Future.traverse(_)(updateObjects)
+                               meterCache: MeterCache): HookOfList[Pipeline] =
+    Future.traverse(_)(updateObjectsAndJarKeys)
 
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
                                    workerCollie: WorkerCollie,
@@ -212,12 +230,13 @@ private[configurator] object PipelineRoute {
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfCreation[Creation, Pipeline] =
     (creation: Creation) =>
-      updateObjects(
+      updateObjectsAndJarKeys(
         Pipeline(
           group = creation.group,
           name = creation.name,
           flows = creation.flows,
           objects = Set.empty,
+          jarKeys = Set.empty,
           lastModified = CommonUtils.current(),
           tags = creation.tags
         ))
@@ -230,12 +249,13 @@ private[configurator] object PipelineRoute {
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfUpdating[Updating, Pipeline] =
     (key: ObjectKey, update: Updating, previous: Option[Pipeline]) =>
-      updateObjects(
+      updateObjectsAndJarKeys(
         Pipeline(
           group = key.group,
           name = key.name,
           flows = update.flows.getOrElse(previous.map(_.flows).getOrElse(Seq.empty)),
           objects = previous.map(_.objects).getOrElse(Set.empty),
+          jarKeys = previous.map(_.jarKeys).getOrElse(Set.empty),
           lastModified = CommonUtils.current(),
           tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
         ))
