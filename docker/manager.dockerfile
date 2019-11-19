@@ -29,7 +29,7 @@ RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 RUN $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara.sh -v > $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara_version
 
-FROM centos:7.6.1810
+FROM centos7.7.1908
 
 # install nodejs
 # NOTED: ohara-manager requires nodejs 10.x
