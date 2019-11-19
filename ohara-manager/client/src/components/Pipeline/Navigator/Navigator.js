@@ -54,6 +54,7 @@ const Navigator = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { workspaceName } = useParams();
   const { findByWorkspaceName } = useWorkspace();
+  const [isExpanded, setIsExpanded] = useState(true);
   const {
     setIsOpen: setIsEditWorkspaceOpen,
     setTab: setEditWorkspaceTab,
@@ -159,8 +160,20 @@ const Navigator = () => {
         )}
       />
 
-      <StyledExpansionPanel defaultExpanded={true}>
-        <ExpansionPanelSummary disableRipple expandIcon={<ExpandMoreIcon />}>
+      <StyledExpansionPanel defaultExpanded={true} expanded={isExpanded}>
+        <ExpansionPanelSummary
+          disableRipple
+          onClick={event => {
+            // Only toggles the panel with button (which has the role attr)
+            // not the whole div. This prevents users accidentally clicking
+            // on the div when they're trying to click on the `+` icon in
+            // order to create a new pipeline.
+            if (event.target.getAttribute('role')) {
+              setIsExpanded(!isExpanded);
+            }
+          }}
+          expandIcon={<ExpandMoreIcon />}
+        >
           <StyledSubtitle1>Pipelines</StyledSubtitle1>
           <AddIcon
             className="new-pipeline-button"

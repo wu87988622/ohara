@@ -122,6 +122,17 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
       top: 8px;
       width: 30px;
       height: 30px;
+      cursor: pointer;
+    }
+
+    .MuiExpansionPanelSummary-root.Mui-focused {
+      /* Remove default focused color which looks a lot like a bug... */
+      background-color: transparent;
+    }
+
+    .MuiExpansionPanelSummary-root:hover:not(.Mui-disabled) {
+      /* Disable the title from having pointer cursor */
+      cursor: auto;
     }
   `,
 );
