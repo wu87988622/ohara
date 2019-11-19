@@ -43,7 +43,7 @@ RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-connector/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 RUN cp $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/lib/* $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/libs/
 
-FROM centos:7.6.1810
+FROM centos:7.7.1908
 
 # install tools
 RUN yum install -y \

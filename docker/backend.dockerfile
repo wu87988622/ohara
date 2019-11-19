@@ -28,7 +28,7 @@ RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-testing-util/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
-FROM centos:7.6.1810
+FROM centos:7.7.1908
 
 # install tools
 RUN yum install -y \
