@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM centos7.7.1908
+FROM centos:7.6.1810
 
 # install tools
 RUN yum install -y \

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM centos7.7.1908 as deps
+FROM centos:7.6.1810 as deps
 
 # install tools
 RUN yum install -y \
@@ -42,7 +42,7 @@ RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
 RUN git rev-parse HEAD > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "zookeeper-*")/bin/ohara_version
 
-FROM centos7.7.1908
+FROM centos:7.6.1810
 
 # install tools
 RUN yum install -y \
