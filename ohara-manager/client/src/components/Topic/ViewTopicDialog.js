@@ -15,7 +15,6 @@
  */
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -31,58 +30,27 @@ import Divider from '@material-ui/core/Divider';
 import Link from '@material-ui/core/Link';
 import NumberFormat from 'react-number-format';
 
-import * as topicApi from 'api/topicApi';
 import { useViewTopic } from 'context/ViewTopicContext';
-import { useSnackbar } from 'context/SnackbarContext';
-import { useTopic } from 'context/TopicContext';
-import { useWorkspace } from 'context/WorkspaceContext';
+import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Wrapper } from './ViewTopicDialogStyles';
 
 const ViewTopicDialog = () => {
   const { isOpen, setIsOpen, topic } = useViewTopic();
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const showMessage = useSnackbar();
+  const { isFetching: isDeleting } = useTopicState();
+  const { deleteTopic } = useTopicActions();
 
-  const { findByWorkspaceName } = useWorkspace();
-  const { workspaceName } = useParams();
-  const currentWorkspace = findByWorkspaceName(workspaceName);
-  const { doFetch: fetchTopics } = useTopic();
-
-  const topicGroup = get(topic, 'settings.group');
-  const topicName = get(topic, 'settings.name');
-  const partitions = get(topic, 'settings.numberOfPartitions');
-  const replications = get(topic, 'settings.numberOfReplications');
-  const state = get(topic, 'state', 'Unknown');
-  const metrics = get(topic, 'metrics.meters', []);
-  const usedByPipelines = []; // TODO: fetch pipelines
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    const removeTopicResponse = await topicApi.remove({
-      name: topicName,
-      group: topicGroup,
-    });
-    const isRemoved = !isEmpty(removeTopicResponse);
-
-    // Failed to remove, show a custom error message here and keep the
-    // dialog open
-    if (!isRemoved) {
-      showMessage(`Failed to delete topic ${topicName}`);
-      setIsDeleting(false);
-      return;
-    }
-
-    // Topic successfully deleted, display success message,
-    // update topic list and close the dialog
-    showMessage(`Successfully deleted topic ${topicName}`);
-    await fetchTopics(currentWorkspace.settings.name);
-
-    setIsDeleting(false);
+  const handleDelete = () => {
+    const name = get(topic, 'settings.name');
+    const group = get(topic, 'settings.group');
+    deleteTopic(name, group);
     setIsConfirmOpen(false);
     setIsOpen(false);
   };
+
+  const topicName = get(topic, 'settings.name', '');
+  const usedByPipelines = []; // TODO: fetch pipelines
 
   return (
     <FullScreenDialog
@@ -134,11 +102,15 @@ const ViewTopicDialog = () => {
                     </TableRow>
                     <TableRow>
                       <TableCell>Partitions</TableCell>
-                      <TableCell>{partitions}</TableCell>
+                      <TableCell>
+                        {get(topic, 'settings.numberOfPartitions', 0)}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Replications</TableCell>
-                      <TableCell>{replications}</TableCell>
+                      <TableCell>
+                        {get(topic, 'settings.numberOfReplications', 0)}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Type</TableCell>
@@ -146,7 +118,7 @@ const ViewTopicDialog = () => {
                     </TableRow>
                     <TableRow>
                       <TableCell>State</TableCell>
-                      <TableCell>{state}</TableCell>
+                      <TableCell>{get(topic, 'state', 'Unknown')}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -160,7 +132,7 @@ const ViewTopicDialog = () => {
               <CardContent>
                 <Table>
                   <TableBody>
-                    {metrics.map(metric => {
+                    {get(topic, 'metrics.meters', []).map(metric => {
                       const document = get(metric, 'document');
                       const value = get(metric, 'value');
                       const unit = get(metric, 'unit');

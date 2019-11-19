@@ -15,6 +15,8 @@
  */
 
 import React from 'react';
+import { useParams } from 'react-router-dom';
+import { get, isEmpty } from 'lodash';
 import Tooltip from '@material-ui/core/Tooltip';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
@@ -36,10 +38,30 @@ import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
-  const { workspaces } = useWorkspace();
+  const { workspaceName } = useParams();
+  const {
+    workspaces,
+    currentWorkspace,
+    findByWorkspaceName,
+    setCurrentWorkspace,
+  } = useWorkspace();
+
   const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
   const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
   const { setIsOpen: setIsDevToolDialogOpen } = useDevToolDialog();
+
+  React.useEffect(() => {
+    if (isEmpty(workspaceName) || isEmpty(workspaces)) return;
+    if (get(currentWorkspace, 'settings.name') === workspaceName) return;
+    const workspaceFound = findByWorkspaceName(workspaceName);
+    setCurrentWorkspace(workspaceFound);
+  }, [
+    workspaces,
+    currentWorkspace,
+    findByWorkspaceName,
+    setCurrentWorkspace,
+    workspaceName,
+  ]);
 
   return (
     <>

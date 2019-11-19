@@ -46,7 +46,7 @@ import { StyledToolbox } from './ToolboxStyles';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useSnackbar } from 'context/SnackbarContext';
 import { useAddTopic } from 'context/AddTopicContext';
-import { useTopic } from 'context/TopicContext';
+import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
 import { useConnectors, useFiles } from './ToolboxHooks';
@@ -64,7 +64,8 @@ const Toolbox = props => {
 
   const { findByWorkspaceName } = useWorkspace();
   const { workspaceName } = useParams();
-  const { topics, doFetch: fetchTopics } = useTopic();
+  const { data: topics } = useTopicState();
+  const { fetchTopics } = useTopicActions();
   const { setIsOpen: setIsAddTopicOpen } = useAddTopic();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');

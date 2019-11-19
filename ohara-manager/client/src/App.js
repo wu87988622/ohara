@@ -51,7 +51,11 @@ const App = () => {
         <Route exact path="/:workspaceName/view" component={TopicDataWindow} />
         <Container className="container">
           <GlobalStyle />
-          <AppBar />
+          <Route
+            exact
+            path="/:workspaceName?/:pipelineName?"
+            component={AppBar}
+          />
           <Route
             exact
             path="/:workspaceName?/:pipelineName?"

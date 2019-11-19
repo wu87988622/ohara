@@ -15,28 +15,27 @@
  */
 
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { get } from 'lodash';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useViewTopic } from 'context/ViewTopicContext';
 import { Table } from 'components/common/Table';
-import { useTopic } from 'context/TopicContext';
+import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { Button } from 'components/common/Form';
 import ViewTopicDialog from './ViewTopicDialog';
 
 function TopicTable() {
-  const { findByWorkspaceName } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
   const { setTopic, setIsOpen: setIsViewTopicOpen } = useViewTopic();
-  const { workspaceName } = useParams();
-  const { topics, doFetch: fetchTopics } = useTopic();
-  const currentWorkspace = findByWorkspaceName(workspaceName);
+  const { data: topics } = useTopicState();
+  const { fetchTopics } = useTopicActions();
 
   useEffect(() => {
     if (!currentWorkspace) return;
     fetchTopics(currentWorkspace.settings.name);
-  }, [fetchTopics, currentWorkspace.settings.name, currentWorkspace]);
+  }, [fetchTopics, currentWorkspace]);
 
   const tableHeaders = [
     'Name',
@@ -44,18 +43,24 @@ function TopicTable() {
     'Replications',
     'Used by pipelines',
     'Type',
+    'State',
     'Actions',
   ];
   return (
     <>
       <Table headers={tableHeaders} title="All Topics">
         {topics.map(topic => (
-          <TableRow key={topic.settings.name}>
-            <TableCell>{topic.settings.name}</TableCell>
-            <TableCell>{topic.settings.numberOfPartitions}</TableCell>
-            <TableCell>{topic.settings.numberOfReplications}</TableCell>
+          <TableRow key={get(topic, 'settings.name', '')}>
+            <TableCell>{get(topic, 'settings.name', '')}</TableCell>
+            <TableCell>
+              {get(topic, 'settings.numberOfPartitions', 0)}
+            </TableCell>
+            <TableCell>
+              {get(topic, 'settings.numberOfReplications', 0)}
+            </TableCell>
             <TableCell></TableCell>
             <TableCell></TableCell>
+            <TableCell>{get(topic, 'state', 'Unknown')}</TableCell>
             <TableCell align="right">
               <Button
                 variant="outlined"

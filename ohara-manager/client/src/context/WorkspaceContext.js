@@ -24,6 +24,7 @@ const WorkspaceContext = createContext();
 const WorkspaceProvider = ({ children }) => {
   const [workspaces, setWorkspaces] = useState([]);
   const [isFetching, setIsFetching] = useState(true);
+  const [currentWorkspace, setCurrentWorkspace] = useState();
 
   useEffect(() => {
     const fetchWorkers = async () => {
@@ -51,6 +52,8 @@ const WorkspaceProvider = ({ children }) => {
         workspaces: sortedWorkspaces,
         isFetching,
         findByWorkspaceName,
+        currentWorkspace,
+        setCurrentWorkspace,
       }}
     >
       {children}

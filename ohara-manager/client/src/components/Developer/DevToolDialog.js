@@ -31,7 +31,7 @@ import { TextField } from '@material-ui/core';
 import { Select } from 'components/common/Form';
 import { useDevToolDialog } from 'context/DevToolDialogContext';
 import { useWorkspace } from 'context/WorkspaceContext';
-import { useTopic } from 'context/TopicContext';
+import { useTopicState, useTopicActions } from 'context/TopicContext';
 import TopicDataTable from './TopicDataTable';
 import { DevTool, SearchBody } from './Styles';
 import * as inspectApi from 'api/inspectApi';
@@ -39,7 +39,8 @@ import * as inspectApi from 'api/inspectApi';
 const DevToolDialog = () => {
   const { workspaceName } = useParams();
   const { findByWorkspaceName } = useWorkspace();
-  const { topics, doFetch: fetchTopics } = useTopic([]);
+  const { data: topics } = useTopicState();
+  const { fetchTopics } = useTopicActions();
   const { isOpen, setIsOpen } = useDevToolDialog();
   const [tabIndex, setTabIndex] = useState('topics');
   const [topicLimit, setTopicLimit] = useState(10);
