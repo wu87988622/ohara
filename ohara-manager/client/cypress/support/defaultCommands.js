@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-import * as fileApi from '../../src/api/fileApi';
-
 // Utility commands
-Cypress.Commands.add('createJar', (fixturePath, jarName, jarGroup) => {
-  cy.fixture(`${fixturePath}/${jarName}`, 'base64')
+Cypress.Commands.add('createJar', file => {
+  const { fixturePath, name, group: jarGroup, tags: jarTags } = file;
+  cy.fixture(`${fixturePath}/${name}`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
     .then(blob => {
       const type = 'application/java-archive';
-      const testFile = new File([blob], jarName, { type });
+      const testFile = new File([blob], name, { type });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;
       const params = {
         file: blob[0],
         group: jarGroup,
-        tags: {
-          name: jarName,
-        },
       };
-      return fileApi.create(params);
+      if (jarTags) params.tags = jarTags;
+      return params;
     });
 });

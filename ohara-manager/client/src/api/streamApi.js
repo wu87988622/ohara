@@ -19,21 +19,22 @@ import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
-import * as inspect from './inspectApi';
+import * as file from './fileApi';
+import { classType } from './inspectApi';
 
 const url = URL.STREAM_URL;
 
 export const create = async (params, body) => {
   if (!body) {
     // get the stream definition by the required jar file
-    const result = await inspect.getFileInfo({
+    const result = await file.get({
       group: params.jarKey.group,
       name: params.jarKey.name,
     });
-    const { classes } = result;
+    const { classInfos } = result;
     // we only support one stream class right now
     // find the first match result
-    body = classes.find(info => info.classType === inspect.classType.stream);
+    body = classInfos.find(info => info.classType === classType.stream);
   }
   const requestBody = requestUtil(params, stream, body);
   const res = await axiosInstance.post(url, requestBody);

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-unused-expressions */
+
 import * as generate from '../../src/utils/generate';
 import * as fileApi from '../../src/api/fileApi';
+import * as inspectApi from '../../src/api/inspectApi';
 import { deleteAllServices } from '../utils';
 
 const generateFile = () => {
@@ -25,6 +28,7 @@ const generateFile = () => {
     name: 'ohara-it-source.jar',
     group: generate.serviceName({ prefix: 'group' }),
   };
+  params.tags = { name: params.name };
   return params;
 };
 
@@ -33,49 +37,10 @@ describe('File API', () => {
 
   it('uploadJar', () => {
     const file = generateFile();
-    cy.createJar(file.fixturePath, file.name, file.group).then(data => {
-      const { group, name, size, url, lastModified, tags } = data;
-      expect(group).to.be.a('string');
-      expect(group).to.eq(file.group);
-
-      expect(name).to.be.a('string');
-      expect(name).to.eq(file.name);
-
-      expect(size).to.be.a('number');
-      expect(size).to.not.eq(0);
-
-      expect(url).to.be.a('string');
-      expect(url.length).to.not.eq(0);
-
-      expect(lastModified).to.be.a('number');
-
-      expect(tags).to.be.an('object');
-      expect(tags.name).to.eq(file.name);
-    });
-  });
-
-  it('fetchJars', () => {
-    const file = generateFile();
-    const group = { group: file.group };
-    cy.createJar(file.fixturePath, file.name, file.group).then(() => {
-      fileApi.getAll(group).then(result => {
-        expect(result).to.be.an('array');
-        expect(result.length).to.eq(1);
-
-        const fileInfo = result[0];
-        expect(fileInfo).to.include.keys('name', 'group');
-        expect(fileInfo.name).to.be.a('string');
-        expect(fileInfo.group).to.be.a('string');
-        expect(fileInfo.tags.name).to.eq(fileInfo.name);
-      });
-    });
-  });
-
-  it('fetchJar', () => {
-    const file = generateFile();
-    cy.createJar(file.fixturePath, file.name, file.group).then(() => {
-      fileApi.get(file).then(result => {
-        const { group, name, size, url, lastModified, tags } = result;
+    cy.createJar(file)
+      .then(params => fileApi.create(params))
+      .then(data => {
+        const { group, name, size, url, lastModified, classInfos, tags } = data;
         expect(group).to.be.a('string');
         expect(group).to.eq(file.group);
 
@@ -90,47 +55,123 @@ describe('File API', () => {
 
         expect(lastModified).to.be.a('number');
 
+        expect(classInfos).to.be.an('array');
+        expect(classInfos.length > 0).to.be.true;
+
+        const { className, classType, settingDefinitions } = classInfos[0];
+        expect(className).to.be.a('string');
+
+        expect(classType).to.be.a('string');
+        expect(classType).to.eq(inspectApi.classType.source);
+
+        expect(settingDefinitions).to.be.an('array');
+        expect(settingDefinitions.length > 0).to.be.true;
+
         expect(tags).to.be.an('object');
         expect(tags.name).to.eq(file.name);
       });
-    });
+  });
+
+  it('fetchJars', () => {
+    const file = generateFile();
+    const group = { group: file.group };
+    cy.createJar(file)
+      .then(params => fileApi.create(params))
+      .then(() => {
+        fileApi.getAll(group).then(result => {
+          expect(result).to.be.an('array');
+          expect(result.length).to.eq(1);
+
+          const fileInfo = result[0];
+          expect(fileInfo).to.include.keys('name', 'group');
+          expect(fileInfo.name).to.be.a('string');
+          expect(fileInfo.group).to.be.a('string');
+          expect(fileInfo.tags.name).to.eq(fileInfo.name);
+        });
+      });
+  });
+
+  it('fetchJar', () => {
+    const file = generateFile();
+    cy.createJar(file)
+      .then(params => fileApi.create(params))
+      .then(() => {
+        fileApi.get(file).then(result => {
+          const {
+            group,
+            name,
+            size,
+            url,
+            lastModified,
+            classInfos,
+            tags,
+          } = result;
+          expect(group).to.be.a('string');
+          expect(group).to.eq(file.group);
+
+          expect(name).to.be.a('string');
+          expect(name).to.eq(file.name);
+
+          expect(size).to.be.a('number');
+          expect(size).to.not.eq(0);
+
+          expect(url).to.be.a('string');
+          expect(url.length).to.not.eq(0);
+
+          expect(classInfos).to.be.an('array');
+          expect(classInfos.length > 0).to.be.true;
+
+          const { className, classType, settingDefinitions } = classInfos[0];
+          expect(className).to.be.a('string');
+
+          expect(classType).to.be.a('string');
+          expect(classType).to.eq(inspectApi.classType.source);
+
+          expect(settingDefinitions).to.be.an('array');
+          expect(settingDefinitions.length > 0).to.be.true;
+
+          expect(lastModified).to.be.a('number');
+
+          expect(tags).to.be.an('object');
+          expect(tags.name).to.eq(file.name);
+        });
+      });
   });
 
   it('updateJarTags', () => {
     const file = generateFile();
     const newFile = Object.assign({}, file, { tags: { tag: 'aaa' } });
 
-    cy.createJar(file.fixturePath, file.name, file.group).then(() => {
-      fileApi.update(newFile).then(result => {
-        const { group, name, size, url, lastModified, tags } = result;
-        expect(group).to.be.a('string');
-        expect(group).to.eq(file.group);
+    cy.createJar(file)
+      .then(params => fileApi.create(params))
+      .then(() => {
+        fileApi.update(newFile).then(result => {
+          const { group, name, size, url, lastModified, tags } = result;
+          expect(group).to.be.a('string');
+          expect(group).to.eq(file.group);
 
-        expect(name).to.be.a('string');
-        expect(name).to.eq(file.name);
+          expect(name).to.be.a('string');
+          expect(name).to.eq(file.name);
 
-        expect(size).to.be.a('number');
-        expect(size).to.not.eq(0);
+          expect(size).to.be.a('number');
+          expect(size).to.not.eq(0);
 
-        expect(url).to.be.a('string');
-        expect(url.length).to.not.eq(0);
+          expect(url).to.be.a('string');
+          expect(url.length).to.not.eq(0);
 
-        expect(lastModified).to.be.a('number');
+          expect(lastModified).to.be.a('number');
 
-        expect(tags).to.be.an('object');
-        expect(tags.tag).to.eq('aaa');
+          expect(tags).to.be.an('object');
+          expect(tags.tag).to.eq('aaa');
+        });
       });
-    });
   });
 
   it('deleteJar', () => {
     const file = generateFile();
-    const group = { group: file.group };
-    cy.createJar(file.fixturePath, file.name, file.group).then(async () => {
-      await fileApi.remove(file);
-      await fileApi
-        .getAll(group)
-        .then(result => expect(result.length).to.eq(0));
-    });
+    cy.createJar(file)
+      .then(params => fileApi.create(params))
+      .then(() => fileApi.remove(file))
+      .then(result => expect(result.length).to.eq(0));
   });
 });

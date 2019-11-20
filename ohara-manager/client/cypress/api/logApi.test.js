@@ -21,6 +21,7 @@ import * as generate from '../../src/utils/generate';
 import * as logApi from '../../src/api/logApi';
 import * as topicApi from '../../src/api/topicApi';
 import * as streamApi from '../../src/api/streamApi';
+import * as fileApi from '../../src/api/fileApi';
 import { createServices, deleteAllServices } from '../utils';
 
 const file = {
@@ -43,7 +44,7 @@ const generateCluster = async () => {
 describe('Log API', () => {
   beforeEach(async () => {
     await deleteAllServices();
-    cy.createJar(file.fixturePath, file.name, file.group);
+    cy.createJar(file).then(params => fileApi.create(params));
   });
 
   it('fetchConfiguratorLog', async () => {

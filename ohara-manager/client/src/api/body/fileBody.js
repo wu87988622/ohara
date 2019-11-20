@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { object, string, number, option } from '../utils/validation';
+import { object, string, number, array, option } from '../utils/validation';
 
 export const request = () => {
   const file = [object];
@@ -26,16 +26,20 @@ export const request = () => {
 
 export const response = () => {
   const name = [string];
-  const lastModified = [number];
   const group = [string];
   const url = [string];
+  const lastModified = [number];
   const size = [number];
+  const classInfos = [array];
+  const tags = [object];
 
   return {
     name,
     group,
-    size,
     url,
     lastModified,
+    size,
+    classInfos,
+    tags,
   };
 };

@@ -17,7 +17,6 @@
 import * as file from './body/fileBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
-import * as inspectApi from './inspectApi';
 
 const url = URL.FILE_URL;
 
@@ -35,19 +34,8 @@ export const create = async (params = {}) => {
   if (requestBody.tags) {
     formData.append('tags', JSON.stringify(requestBody.tags));
   }
-  const res = responseUtil(
-    await axiosInstance.post(url, formData, config),
-    file,
-  );
-
-  const fileInfo = await inspectApi.getFileInfo({
-    group: res.group,
-    name: res.name,
-  });
-  const mergeTags = Object.assign(res.tags, fileInfo);
-  const updateTags = await update(res, { body: { tags: mergeTags } });
-
-  return updateTags;
+  const res = await axiosInstance.post(url, formData, config);
+  return responseUtil(res, file);
 };
 
 export const update = async params => {

@@ -115,80 +115,164 @@ describe('Inspect API', () => {
     });
   });
 
-  it('fetchStreamFileDefinition', async () => {
+  it('fetchStreamFileDefinition', () => {
     const file = {
       fixturePath: 'stream',
       name: 'ohara-it-stream.jar',
       group: generate.serviceName({ prefix: 'group' }),
     };
+    file.tags = { name: file.name };
 
-    cy.createJar(file.fixturePath, file.name, file.group)
-      .then(file => inspect.getFileInfo(file))
+    cy.createJar(file)
+      .then(params => inspect.getFileInfoWithoutUpload(params))
       .then(result => {
-        const { classes } = result;
-        expect(classes).to.be.an('array');
-        // the ohara-it-stream.jar only includes stream class, so the length must be 1
-        expect(classes).have.lengthOf(1);
+        const {
+          name,
+          group,
+          classInfos,
+          lastModified,
+          size,
+          tags,
+          url,
+        } = result;
 
-        const { className, classType, settingDefinitions } = classes[0];
+        expect(name).to.be.a('string');
+        expect(name).to.eq(file.name);
+
+        expect(group).to.be.a('string');
+        expect(group).to.eq(file.group);
+
+        expect(classInfos).to.be.an('array');
+        // the ohara-it-stream.jar only includes stream class, so the length must be 1
+        expect(classInfos).have.lengthOf(1);
+
+        const { className, classType, settingDefinitions } = classInfos[0];
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
         expect(classType).to.eq(inspect.classType.stream);
 
         expect(settingDefinitions).to.be.an('array');
+        expect(settingDefinitions.length > 0).to.be.true;
+
+        expect(lastModified).to.be.a('number');
+
+        expect(size).to.be.a('number');
+        expect(size > 0).to.be.true;
+
+        expect(tags).to.be.an('object');
+        expect(tags.name).to.eq(file.name);
+
+        // the file does not upload, url will be null
+        expect(url).to.eq(null);
       });
   });
 
-  it('fetchSourceConnectorFileDefinition', async () => {
+  it('fetchSourceConnectorFileDefinition', () => {
     const source = {
       fixturePath: 'plugin',
       // we use an existing file to simulate upload jar
       name: 'ohara-it-source.jar',
       group: generate.serviceName({ prefix: 'group' }),
     };
+    source.tags = { name: source.name };
 
-    cy.createJar(source.fixturePath, source.name, source.group)
-      .then(file => inspect.getFileInfo(file))
+    cy.createJar(source)
+      .then(params => inspect.getFileInfoWithoutUpload(params))
       .then(result => {
-        const { classes } = result;
-        expect(classes).to.be.an('array');
-        // the ohara-it-source.jar only includes source class, so the length must be 1
-        expect(classes).have.lengthOf(1);
+        const {
+          name,
+          group,
+          classInfos,
+          lastModified,
+          size,
+          tags,
+          url,
+        } = result;
 
-        const { className, classType, settingDefinitions } = classes[0];
+        expect(name).to.be.a('string');
+        expect(name).to.eq(source.name);
+
+        expect(group).to.be.a('string');
+        expect(group).to.eq(source.group);
+
+        expect(classInfos).to.be.an('array');
+        // the ohara-it-stream.jar only includes stream class, so the length must be 1
+        expect(classInfos).have.lengthOf(1);
+
+        const { className, classType, settingDefinitions } = classInfos[0];
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
         expect(classType).to.eq(inspect.classType.source);
 
         expect(settingDefinitions).to.be.an('array');
+        expect(settingDefinitions.length > 0).to.be.true;
+
+        expect(lastModified).to.be.a('number');
+
+        expect(size).to.be.a('number');
+        expect(size > 0).to.be.true;
+
+        expect(tags).to.be.an('object');
+        expect(tags.name).to.eq(source.name);
+
+        // the file does not upload, url will be null
+        expect(url).to.eq(null);
       });
   });
 
-  it('fetchSinkConnectorFileDefinition', async () => {
+  it('fetchSinkConnectorFileDefinition', () => {
     const sink = {
       fixturePath: 'plugin',
       // we use an existing file to simulate upload jar
       name: 'ohara-it-sink.jar',
       group: generate.serviceName({ prefix: 'group' }),
     };
+    sink.tags = { name: sink.name };
 
-    cy.createJar(sink.fixturePath, sink.name, sink.group)
-      .then(file => inspect.getFileInfo(file))
+    cy.createJar(sink)
+      .then(params => inspect.getFileInfoWithoutUpload(params))
       .then(result => {
-        const { classes } = result;
-        expect(classes).to.be.an('array');
-        // the ohara-it-sink.jar only includes source class, so the length must be 1
-        expect(classes).have.lengthOf(1);
+        const {
+          name,
+          group,
+          classInfos,
+          lastModified,
+          size,
+          tags,
+          url,
+        } = result;
 
-        const { className, classType, settingDefinitions } = classes[0];
+        expect(name).to.be.a('string');
+        expect(name).to.eq(sink.name);
+
+        expect(group).to.be.a('string');
+        expect(group).to.eq(sink.group);
+
+        expect(classInfos).to.be.an('array');
+        // the ohara-it-stream.jar only includes stream class, so the length must be 1
+        expect(classInfos).have.lengthOf(1);
+
+        const { className, classType, settingDefinitions } = classInfos[0];
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
         expect(classType).to.eq(inspect.classType.sink);
 
         expect(settingDefinitions).to.be.an('array');
+        expect(settingDefinitions.length > 0).to.be.true;
+
+        expect(lastModified).to.be.a('number');
+
+        expect(size).to.be.a('number');
+        expect(size > 0).to.be.true;
+
+        expect(tags).to.be.an('object');
+        expect(tags.name).to.eq(sink.name);
+
+        // the file does not upload, url will be null
+        expect(url).to.eq(null);
       });
   });
 });

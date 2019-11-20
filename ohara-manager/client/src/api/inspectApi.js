@@ -16,9 +16,9 @@
 
 import * as inspectConfiguratorBody from './body/inspectConfiguratorBody';
 import * as inspectServiceBody from './body/inspectServiceBody';
-import * as inspectFileBody from './body/inspectFileBody';
 import * as inspectTopicBody from './body/inspectTopicBody';
 import * as inspectRdbBody from './body/inspectRdbBody';
+import * as file from './body/fileBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
@@ -31,13 +31,13 @@ export const kind = {
   stream: 'stream',
   rdb: 'rdb',
   topic: 'topic',
-  file: 'file',
+  file: 'files',
 };
 
 export const classType = {
   stream: 'stream',
-  sink: 'sink connector',
-  source: 'source connector',
+  sink: 'sink',
+  source: 'source',
 };
 
 export const getConfiguratorInfo = async () => {
@@ -71,10 +71,24 @@ export const getStreamsInfo = async (params = {}) => {
   return responseUtil(res, inspectServiceBody);
 };
 
-export const getFileInfo = async params => {
-  const fileUrl = `${url}/${kind.file}/${params.name}?group=${params.group}`;
-  const res = await axiosInstance.get(fileUrl);
-  return responseUtil(res, inspectFileBody);
+export const getFileInfoWithoutUpload = async params => {
+  const fileUrl = `${url}/${kind.file}`;
+
+  const requestBody = requestUtil(params, file);
+  const config = {
+    headers: {
+      'content-type': 'multipart/form-data',
+    },
+  };
+
+  let formData = new FormData();
+  formData.append('file', requestBody.file);
+  formData.append('group', requestBody.group);
+  if (requestBody.tags) {
+    formData.append('tags', JSON.stringify(requestBody.tags));
+  }
+  const res = await axiosInstance.post(fileUrl, formData, config);
+  return responseUtil(res, file);
 };
 
 export const getTopicData = async params => {
