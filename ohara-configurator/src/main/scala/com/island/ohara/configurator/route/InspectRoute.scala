@@ -206,15 +206,6 @@ private[configurator] object InspectRoute {
           )
         }
       }
-    } ~ path("file" / Segment) { fileName =>
-      // TODO: remove this deprecated API (see https://github.com/oharastream/ohara/issues/3293)
-      parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
-        complete(
-          dataStore
-            .value[FileInfo](ObjectKey.of(group, fileName))
-            .flatMap(fileInfo => serviceCollie.fileContent(Seq(fileInfo.url.get)))
-        )
-      }
     } ~ path(FILE_PREFIX_PATH) {
       FileInfoRoute.routeOfUploadingFile(urlMaker = _ => None, storeOption = None)
     } ~ path(CONFIGURATOR_PREFIX_PATH) {
