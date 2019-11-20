@@ -17,6 +17,7 @@
 import {
   string,
   number,
+  positiveNumber,
   array,
   object,
   boolean,
@@ -50,6 +51,12 @@ const getTypeWithValueType = key => {
     case 'DOUBLE':
     case 'PORT':
       return number;
+
+    case 'POSITIVE_SHORT':
+    case 'POSITIVE_INT':
+    case 'POSITIVE_LONG':
+    case 'POSITIVE_DOUBLE':
+      return positiveNumber;
 
     case 'ARRAY':
     case 'BINDING_PORT':

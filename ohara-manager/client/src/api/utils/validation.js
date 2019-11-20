@@ -28,6 +28,8 @@ export const string = value => isString(value);
 
 export const number = value => isNumber(value);
 
+export const positiveNumber = value => isNumber(value) && value > 0;
+
 export const array = value => isArray(value);
 
 export const object = value => {
