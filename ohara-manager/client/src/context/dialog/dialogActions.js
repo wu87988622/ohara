@@ -15,13 +15,14 @@
  */
 
 import { get, find, some } from 'lodash';
+
 import {
   openDialogRoutine,
   setDialogDataRoutine,
   closeDialogRoutine,
   closePeakDialogRoutine,
   closeAllDialogRoutine,
-} from 'routines/dialog';
+} from './dialogRoutines';
 
 export const createOpenDialog = (_, dispatch) => name =>
   dispatch(openDialogRoutine.trigger({ name }));

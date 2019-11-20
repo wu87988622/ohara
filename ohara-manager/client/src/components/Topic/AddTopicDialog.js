@@ -19,9 +19,12 @@ import { Form, Field } from 'react-final-form';
 
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
-import { useAddTopicDialog } from 'context/DialogContext';
-import { useTopicState, useTopicActions } from 'context/TopicContext';
-import { useWorkspace } from 'context/WorkspaceContext';
+import {
+  useWorkspace,
+  useTopicState,
+  useTopicActions,
+  useAddTopicDialog,
+} from 'context';
 
 import {
   required,

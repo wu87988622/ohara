@@ -22,7 +22,7 @@ import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
 import Toolbar from './Toolbar';
 import Graph from './Graph';
-import { useWorkspace } from 'context/WorkspaceContext';
+import { useWorkspace } from 'context';
 import { usePipeline } from 'context/PipelineContext';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';

@@ -30,8 +30,7 @@ import { TextField } from '@material-ui/core';
 
 import { Select } from 'components/common/Form';
 import { useDevToolDialog } from 'context/DevToolDialogContext';
-import { useWorkspace } from 'context/WorkspaceContext';
-import { useTopicState, useTopicActions } from 'context/TopicContext';
+import { useWorkspace, useTopicState, useTopicActions } from 'context';
 import TopicDataTable from './TopicDataTable';
 import { DevTool, SearchBody } from './Styles';
 import * as inspectApi from 'api/inspectApi';

@@ -30,8 +30,7 @@ import Divider from '@material-ui/core/Divider';
 import Link from '@material-ui/core/Link';
 import NumberFormat from 'react-number-format';
 
-import { useViewTopicDialog } from 'context/DialogContext';
-import { useTopicState, useTopicActions } from 'context/TopicContext';
+import { useViewTopicDialog, useTopicState, useTopicActions } from 'context';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Wrapper } from './ViewTopicDialogStyles';
 

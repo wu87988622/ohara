@@ -18,7 +18,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-import { useWorkspace } from 'context/WorkspaceContext';
+import { useWorkspace } from 'context';
 import TopicDataTable from './TopicDataTable';
 import * as inspectApi from 'api/inspectApi';
 

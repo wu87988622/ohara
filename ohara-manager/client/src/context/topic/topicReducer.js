@@ -15,13 +15,13 @@
  */
 
 import { reject, get } from 'lodash';
+
+import { changeWorkspaceRoutine } from 'context/workspace/workspaceRoutines';
 import {
   fetchTopicsRoutine,
   addTopicRoutine,
   deleteTopicRoutine,
-} from 'routines/topic';
-
-import { changeWorkspaceRoutine } from 'routines/workspace';
+} from './topicRoutines';
 
 const initialState = {
   workspace: null,

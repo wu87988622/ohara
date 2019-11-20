@@ -35,10 +35,13 @@ import * as _ from 'lodash';
 import * as fileApi from 'api/fileApi';
 import AddGraphDialog from './AddGraphDialog';
 import { StyledToolbox } from './ToolboxStyles';
-import { useWorkspace } from 'context/WorkspaceContext';
+import {
+  useWorkspace,
+  useTopicState,
+  useTopicActions,
+  useAddTopicDialog,
+} from 'context';
 import { useSnackbar } from 'context/SnackbarContext';
-import { useAddTopicDialog } from 'context/DialogContext';
-import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
 import { useConnectors, useFiles } from './ToolboxHooks';

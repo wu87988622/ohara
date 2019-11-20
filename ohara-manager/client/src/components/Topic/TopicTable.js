@@ -19,10 +19,13 @@ import { get } from 'lodash';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 
-import { useWorkspace } from 'context/WorkspaceContext';
-import { useViewTopicDialog } from 'context/DialogContext';
+import {
+  useWorkspace,
+  useViewTopicDialog,
+  useTopicState,
+  useTopicActions,
+} from 'context';
 import { Table } from 'components/common/Table';
-import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { Button } from 'components/common/Form';
 import ViewTopicDialog from './ViewTopicDialog';
 

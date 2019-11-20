@@ -21,7 +21,7 @@ import {
   fetchTopicsRoutine,
   addTopicRoutine,
   deleteTopicRoutine,
-} from 'routines/topic';
+} from './topicRoutines';
 
 const createFetchTopics = (state, dispatch) => async workspaceName => {
   if (state.isFetching || state.lastUpdated || state.error) return;

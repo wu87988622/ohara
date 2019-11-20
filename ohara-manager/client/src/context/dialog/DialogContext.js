@@ -25,14 +25,13 @@ import {
   createCloseDialog,
   createClosePeakDialog,
   createCloseAllDialog,
-} from 'actions/dialog';
-
+} from './dialogActions';
 import {
   EDIT_WORKSPACE_DIALOG,
   ADD_TOPIC_DIALOG,
   VIEW_TOPIC_DIALOG,
-} from 'constants/dialog';
-import { reducer, initialState } from 'reducers/dialog';
+} from './dialogNames';
+import { reducer, initialState } from './dialogReducer';
 
 const DialogStateContext = React.createContext();
 const DialogDispatchContext = React.createContext();

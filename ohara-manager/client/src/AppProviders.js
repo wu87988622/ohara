@@ -24,13 +24,11 @@ import {
 
 import MuiTheme from './theme/muiTheme';
 
-import { DialogProvider } from './context/DialogContext';
+import { DialogProvider, WorkspaceProvider, TopicProvider } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
-import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
-import { TopicProvider } from './context/TopicContext';
 import { DevToolDialogProvider } from './context/DevToolDialogContext';
 
 const ContextProviderComposer = ({ contextProviders, children }) => {

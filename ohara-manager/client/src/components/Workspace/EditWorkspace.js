@@ -27,10 +27,7 @@ import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 
 import { FullScreenDialog } from 'components/common/Dialog';
-import {
-  useEditWorkspaceDialog,
-  useAddTopicDialog,
-} from 'context/DialogContext';
+import { useEditWorkspaceDialog, useAddTopicDialog } from 'context';
 import { TopicsTab } from 'components/Workspace/TopicsTab';
 import { AddTopicDialog } from 'components/Topic';
 import { StyledActions } from './Styles';

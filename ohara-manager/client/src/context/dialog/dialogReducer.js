@@ -15,13 +15,14 @@
  */
 
 import { dropRight, has, reject } from 'lodash';
+
 import {
   openDialogRoutine,
   setDialogDataRoutine,
   closeDialogRoutine,
   closePeakDialogRoutine,
   closeAllDialogRoutine,
-} from 'routines/dialog';
+} from './dialogRoutines';
 
 /**
  * The element in dialogs should be like

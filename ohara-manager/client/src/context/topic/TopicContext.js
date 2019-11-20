@@ -18,14 +18,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty } from 'lodash';
 import { useSnackbar } from 'context/SnackbarContext';
-import { useWorkspace } from 'context/WorkspaceContext';
+import { useWorkspace } from 'context';
+import { changeWorkspaceRoutine } from 'context/workspace/workspaceRoutines';
 import {
   createFetchTopics,
   createAddTopic,
   createDeleteTopic,
-} from 'actions/topic';
-import { reducer, initialState } from 'reducers/topic';
-import { changeWorkspaceRoutine } from 'routines/workspace';
+} from './topicActions';
+import { reducer, initialState } from './topicReducer';
 
 const TopicStateContext = React.createContext();
 const TopicDispatchContext = React.createContext();
