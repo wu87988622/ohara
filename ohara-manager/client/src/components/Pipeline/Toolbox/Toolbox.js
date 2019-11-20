@@ -15,16 +15,12 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { renderToString } from 'react-dom/server';
 import PropTypes from 'prop-types';
 import Draggable from 'react-draggable';
 import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -32,13 +28,9 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import SearchIcon from '@material-ui/icons/Search';
 import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
-import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
-import FlightLandIcon from '@material-ui/icons/FlightLand';
-import StorageIcon from '@material-ui/icons/Storage';
 import { useParams } from 'react-router-dom';
 import * as joint from 'jointjs';
 import * as _ from 'lodash';
-import * as $ from 'jquery';
 
 import * as fileApi from 'api/fileApi';
 import AddGraphDialog from './AddGraphDialog';
@@ -50,6 +42,7 @@ import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
 import { useConnectors, useFiles } from './ToolboxHooks';
+import { enableDragAndDrop, createToolboxList } from './ToolboxUtils';
 
 const Toolbox = props => {
   const {
@@ -67,9 +60,10 @@ const Toolbox = props => {
   const { data: topics } = useTopicState();
   const { fetchTopics } = useTopicActions();
   const { setIsOpen: setIsAddTopicOpen } = useAddTopic();
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [graphType, setGraphType] = useState('');
   const [position, setPosition] = useState({ x: 0, y: 0 });
+
   const showMessage = useSnackbar();
 
   const currentWorkspace = findByWorkspaceName(workspaceName);
@@ -108,222 +102,87 @@ const Toolbox = props => {
     }
   };
 
+  const handleAddGraph = newGraph => {
+    if (newGraph) {
+      graph.addCell(
+        new joint.shapes.basic.Rect({
+          position,
+          size: { width: 100, height: 40 },
+          attrs: {
+            text: { text: newGraph },
+            rect: { magnet: true },
+          },
+        }),
+      );
+    }
+
+    showMessage(`${newGraph} has been added`);
+    setIsOpen(false);
+  };
+
   let sourceGraph = useRef(null);
   let sinkGraph = useRef(null);
   let topicGraph = useRef(null);
+  let streamGraph = useRef(null);
 
   useEffect(() => {
+    // Should we handle topic and stream here?
     if (!sources || !sinks) return;
 
-    const sourceIcon = renderToString(<FlightTakeoffIcon />);
-    const sinkIcon = renderToString(<FlightLandIcon />);
-    const AddPrivateTopic = renderToString(<StorageIcon />);
-
-    const sharedProps = {
-      width: 'auto',
-      height: 'auto',
-      interactive: false,
-      // this fixes JointJs cannot properly render these html elements in es6 modules: https://github.com/clientIO/joint/issues/1134
-      cellViewNamespace: joint.shapes,
-    };
-
     const renderToolbox = () => {
+      const sharedProps = {
+        width: 'auto',
+        height: 'auto',
+        interactive: false,
+        // this fixes JointJs cannot properly render these html elements in es6 modules: https://github.com/clientIO/joint/issues/1134
+        cellViewNamespace: joint.shapes,
+      };
+
       sourceGraph.current = new joint.dia.Graph();
+      topicGraph.current = new joint.dia.Graph();
+      streamGraph.current = new joint.dia.Graph();
+      sinkGraph.current = new joint.dia.Graph();
+
       const sourcePaper = new joint.dia.Paper({
         el: document.getElementById('source-list'),
         model: sourceGraph.current,
         ...sharedProps,
       });
 
-      sinkGraph.current = new joint.dia.Graph();
-      const sinkPaper = new joint.dia.Paper({
-        el: document.getElementById('sink-list'),
-        model: sinkGraph.current,
-        ...sharedProps,
-      });
-
-      topicGraph.current = new joint.dia.Graph();
       const topicPaper = new joint.dia.Paper({
         el: document.getElementById('topic-list'),
         model: topicGraph.current,
         ...sharedProps,
       });
 
-      // Create a custom element.
-      joint.shapes.html = {};
-      joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
-        defaults: joint.util.deepSupplement(
-          {
-            type: 'html.Element',
-            attrs: {
-              rect: { stroke: 'none', fill: 'transparent' },
-            },
-          },
-          joint.shapes.basic.Rect.prototype.defaults,
-        ),
+      const streamPaper = new joint.dia.Paper({
+        el: document.getElementById('stream-list'),
+        model: streamGraph.current,
+        ...sharedProps,
       });
 
-      // Create a custom view for that element that displays an HTML div above it.
-      joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-        template: [
-          `<div class="item">
-          <span class="icon"></span>
-          <label></label>
-          </div>`,
-        ],
-
-        initialize() {
-          _.bindAll(this, 'updateBox');
-          joint.dia.ElementView.prototype.initialize.apply(this, arguments);
-          this.$box = $(_.template(this.template)());
-          // Update the box position whenever the underlying model changes.
-          this.model.on('change', this.updateBox, this);
-          this.updateBox();
-        },
-        render() {
-          joint.dia.ElementView.prototype.render.apply(this, arguments);
-          this.paper.$el.append(this.$box);
-          this.updateBox();
-          return this;
-        },
-
-        updateBox() {
-          // Updating the HTML with a data stored in the cell model.
-          this.$box.find('label').text(this.model.get('label'));
-          this.$box.find('.icon').html(this.model.get('icon'));
-        },
+      const sinkPaper = new joint.dia.Paper({
+        el: document.getElementById('sink-list'),
+        model: sinkGraph.current,
+        ...sharedProps,
       });
 
-      // Create JointJS elements and add them to the graph as usual.
-      sources.forEach((source, index) => {
-        sourceGraph.current.addCell(
-          new joint.shapes.html.Element({
-            position: { x: 10, y: index * 44 },
-            size: { width: 272 - 8 * 2, height: 44 },
-            label: source,
-            icon: sourceIcon,
-          }),
-        );
+      createToolboxList({
+        sources,
+        sinks,
+        topics,
+        sourceGraph,
+        sinkGraph,
+        topicGraph,
       });
 
-      sinks.forEach((sink, index) => {
-        sinkGraph.current.addCell(
-          new joint.shapes.html.Element({
-            position: { x: 10, y: index * 44 },
-            size: { width: 272 - 8 * 2, height: 44 },
-            label: sink,
-            icon: sinkIcon,
-          }),
-        );
-      });
-
-      // Add private pipeline `Pipeline Only` so
-      // users can add private pipeline with this
-      // button
-      const updatedTopics = [
-        {
-          settings: {
-            name: 'Pipeline Only',
-          },
-        },
-        ...topics,
-      ];
-
-      updatedTopics.forEach((topic, index) => {
-        topicGraph.current.addCell(
-          new joint.shapes.html.Element({
-            position: { x: 10, y: index * 44 },
-            size: { width: 272 - 8 * 2, height: 44 },
-            label: topic.settings.name,
-            icon: AddPrivateTopic,
-          }),
-        );
-      });
-
-      [sourcePaper, sinkPaper, topicPaper].forEach(toolPaper => {
-        // Add "hover" state in items, I cannot figure out how to do
-        // this when initializing the HTML elements...
-        toolPaper.on('cell:mouseenter', function(cellView) {
-          cellView.$box.css('backgroundColor', 'rgba(0, 0, 0, 0.08)');
-        });
-
-        toolPaper.on('cell:mouseleave', function(cellView) {
-          cellView.$box.css('backgroundColor', 'transparent');
-        });
-
-        toolPaper.on('cell:pointerdown', function(cellView, e, x, y) {
-          $('#paper').append(
-            '<div id="flying-paper" class="flying-paper"></div>',
-          );
-
-          const flyingGraph = new joint.dia.Graph();
-          new joint.dia.Paper({
-            el: $('#flying-paper'),
-            width: 160,
-            height: 50,
-            model: flyingGraph,
-            cellViewNamespace: joint.shapes,
-            interactive: false,
-          });
-
-          const flyingShape = cellView.model.clone();
-
-          const pos = cellView.model.position();
-          const offset = {
-            x: x - pos.x,
-            y: y - pos.y,
-          };
-
-          flyingShape.position(0, 0);
-          flyingGraph.addCell(flyingShape);
-
-          $('#flying-paper').offset({
-            left: e.pageX - offset.x,
-            top: e.pageY - offset.y,
-          });
-
-          function isInsidePaper() {
-            const target = paper.$el.offset();
-            const x = e.pageX;
-            const y = e.pageY;
-
-            return (
-              x > target.left &&
-              x < target.left + paper.$el.width() &&
-              y > target.top &&
-              y < target.top + paper.$el.height()
-            );
-          }
-
-          $('#paper').on('mousemove.fly', e => {
-            $('#flying-paper').offset({
-              left: e.pageX - offset.x,
-              top: e.pageY - offset.y,
-            });
-          });
-
-          $('#paper').on('mouseup.fly', e => {
-            const x = e.pageX;
-            const y = e.pageY;
-            const target = paper.$el.offset();
-
-            // Dropped over paper ?
-            if (isInsidePaper()) {
-              setOpen(true);
-              setPosition({
-                x: x - target.left - offset.x,
-                y: y - target.top - offset.y,
-              });
-            }
-
-            $('#paper')
-              .off('mousemove.fly')
-              .off('mouseup.fly');
-            flyingShape.remove();
-
-            $('#flying-paper').remove();
-          });
-        });
+      // Add the ability to drag and drop connectors/streams/topics
+      enableDragAndDrop({
+        toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
+        paper, // main paper
+        setGraphType,
+        setPosition,
+        setIsOpen,
       });
     };
 
@@ -358,7 +217,7 @@ const Toolbox = props => {
             </ExpansionPanelSummary>
             <ExpansionPanelDetails className="detail">
               <List disablePadding>
-                <div id="source-list" className="toolbar-list"></div>
+                <div id="source-list" className="toolbox-list"></div>
               </List>
 
               <div className="add-button">
@@ -382,7 +241,7 @@ const Toolbox = props => {
             </ExpansionPanelSummary>
             <ExpansionPanelDetails className="detail">
               <List disablePadding>
-                <div id="topic-list" className="toolbar-list"></div>
+                <div id="topic-list" className="toolbox-list"></div>
               </List>
 
               <div className="add-button">
@@ -406,14 +265,7 @@ const Toolbox = props => {
             </ExpansionPanelSummary>
             <ExpansionPanelDetails className="detail">
               <List disablePadding>
-                {streamJars.map(jar => (
-                  <ListItem key={jar.name} button>
-                    <ListItemIcon>
-                      <StorageIcon />
-                    </ListItemIcon>
-                    <ListItemText primary={jar.name} />
-                  </ListItem>
-                ))}
+                <div id="stream-list" className="toolbox-list"></div>
               </List>
 
               <div className="add-button">
@@ -433,7 +285,7 @@ const Toolbox = props => {
                   </Label>
                 </IconButton>
 
-                <Typography variant="subtitle2">Add stream apps</Typography>
+                <Typography variant="subtitle2">Add streams</Typography>
               </div>
             </ExpansionPanelDetails>
           </ExpansionPanel>
@@ -448,7 +300,7 @@ const Toolbox = props => {
             </ExpansionPanelSummary>
             <ExpansionPanelDetails className="detail">
               <List disablePadding>
-                <div id="sink-list" className="toolbar-list"></div>
+                <div id="sink-list" className="toolbox-list"></div>
               </List>
 
               <div className="add-button">
@@ -462,26 +314,11 @@ const Toolbox = props => {
         </div>
 
         <AddGraphDialog
-          open={open}
-          value={value}
-          handleChange={event => setValue(event.target.value)}
-          handleConfirm={() => {
-            if (value) {
-              graph.addCell(
-                new joint.shapes.basic.Rect({
-                  position,
-                  size: { width: 100, height: 40 },
-                  attrs: { text: { text: value }, rect: { magnet: true } },
-                }),
-              );
-            }
-
-            setOpen(false);
-            setValue('');
-          }}
+          isOpen={isOpen}
+          graphType={graphType}
+          handleConfirm={handleAddGraph}
           handleClose={() => {
-            setOpen(false);
-            setValue('');
+            setIsOpen(false);
           }}
         />
       </StyledToolbox>

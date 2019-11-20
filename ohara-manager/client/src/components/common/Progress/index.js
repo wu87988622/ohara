@@ -15,4 +15,6 @@
  */
 
 import Progress from './Progress';
-export { Progress };
+import Percentage from './Percentage';
+
+export { Progress, Percentage };

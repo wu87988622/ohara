@@ -40,7 +40,7 @@ export const Paper = styled.div(
           margin-right: ${theme.spacing(1)}px;
         }
 
-        label {
+        .display-name {
           overflow: hidden;
           text-overflow: ellipsis;
         }

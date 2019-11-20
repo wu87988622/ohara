@@ -18,8 +18,9 @@ import React from 'react';
 import { isString } from 'lodash';
 import Tooltip from '@material-ui/core/Tooltip';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Typography from '@material-ui/core/Typography';
 
-const Prcentage = (values, key) => {
+const Percentage = (values, key) => {
   if (!isString(values)) {
     return values;
   }
@@ -32,8 +33,7 @@ const Prcentage = (values, key) => {
   const color = used > 80 ? 'secondary' : 'primary';
   return (
     <>
-      {value}
-      <br />
+      <Typography variant="subtitle2">{value}</Typography>
       <Tooltip title={`${used} %`}>
         <LinearProgress value={used} variant="determinate" color={color} />
       </Tooltip>
@@ -41,4 +41,4 @@ const Prcentage = (values, key) => {
   );
 };
 
-export default Prcentage;
+export default Percentage;

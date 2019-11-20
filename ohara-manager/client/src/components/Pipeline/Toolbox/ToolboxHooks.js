@@ -30,13 +30,20 @@ export const useConnectors = workspace => {
       const { name, group } = workspace.settings;
       const data = await inspectApi.getWorkerInfo({ name, group });
       data.classInfos.forEach(info => {
-        const className = info.className.split('.').pop();
+        const { className, classType } = info;
+        const displayClassName = className.split('.').pop();
         if (info.classType === 'source') {
-          setSources(prevState => [...prevState, className]);
+          setSources(prevState => [
+            ...prevState,
+            { displayName: displayClassName, classType },
+          ]);
           return;
         }
 
-        setSinks(prevState => [...prevState, className]);
+        setSinks(prevState => [
+          ...prevState,
+          { displayName: displayClassName, classType },
+        ]);
       });
     };
 
@@ -47,7 +54,9 @@ export const useConnectors = workspace => {
 };
 
 export const useFiles = workspace => {
-  const [files, setFiles] = useState([]);
+  // We're not filtering out other jars here
+  // but it should be done when stream jars
+  const [streams, setStreams] = useState([]);
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
@@ -55,14 +64,27 @@ export const useFiles = workspace => {
 
     const fetchStreamJars = async workspaceName => {
       const files = await fileApi.getAll({ group: workspaceName });
-      const sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
 
-      setFiles(sortedFiles);
+      const fetchStreamsInfo = async () => {
+        return Promise.all(
+          files.map(file => {
+            return inspectApi.getStreamsInfo({
+              group: file.group,
+              name: file.name,
+            });
+          }),
+        );
+      };
+
+      // TODO: we need to filter out the class defs and store them for
+      // later. This is tracked in #3184
+      const streams = await fetchStreamsInfo();
+      setStreams(streams);
       setStatus('loaded');
     };
 
     fetchStreamJars(workspace.settings.name);
   }, [status, workspace]);
 
-  return [files, setStatus];
+  return [streams, setStatus];
 };

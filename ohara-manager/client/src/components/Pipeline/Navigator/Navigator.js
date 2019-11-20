@@ -79,6 +79,7 @@ const Navigator = () => {
     const response = await pipelineApi.create({
       name: pipelineName,
       group: workspaceName,
+      flows: [],
     });
 
     // TODO: this logic can be simplify once #3124 is done

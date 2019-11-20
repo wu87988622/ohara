@@ -26,7 +26,7 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
 
-import Prcentage from '../Progress/Prcentage';
+import { Percentage } from '../Progress';
 
 const SelectTableHead = props => {
   const {
@@ -172,7 +172,7 @@ const SelectTable = props => {
                             key={`${key}:${row[key]}`}
                             align={arr.length - 1 === i ? 'right' : 'left'}
                           >
-                            {Prcentage(row[key], '|')}
+                            {Percentage(row[key], '|')}
                           </TableCell>
                         );
                       })}

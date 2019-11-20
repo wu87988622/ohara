@@ -25,6 +25,7 @@ import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
+import Typography from '@material-ui/core/Typography';
 
 import DrabblePaper from './DrabblePaper';
 
@@ -71,8 +72,8 @@ const MuiDialog = props => {
       data-testid="dialog-container"
     >
       <div data-testid={testId}>
-        <StyledDialogTitle>
-          {title}
+        <StyledDialogTitle disableTypography>
+          <Typography variant="h3">{title}</Typography>
           <IconButton className="close-button" onClick={handleClose}>
             <CloseIcon />
           </IconButton>
@@ -82,7 +83,6 @@ const MuiDialog = props => {
         {showActions && (
           <StyledDialogActions>
             <Button onClick={handleClose}>{cancelText}</Button>
-
             <Button
               onClick={handleConfirm}
               disabled={confirmDisabled}

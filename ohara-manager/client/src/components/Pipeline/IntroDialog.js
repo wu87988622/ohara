@@ -100,17 +100,19 @@ const MuiDialog = () => {
         fullWidth
         data-testid="dialog-container"
       >
-        <StyledDialogTitle>
+        <StyledDialogTitle disableTypography>
           <div className="brand">
             <Logo width="38" height="38" />
-            <span className="name">Ohara Stream</span>
+            <Typography variant="h3">
+              <span className="name">Ohara Stream</span>
+            </Typography>
           </div>
           <IconButton className="close-button" onClick={onClose}>
             <CloseIcon />
           </IconButton>
         </StyledDialogTitle>
         <StyledDialogContent>
-          <Typography variant="body2">
+          <Typography variant="subtitle1">
             Ohara is a scalable streaming platform that allows users to easily
             organized their input, output, and streaming applications with a
             clean and comprehensive GUI

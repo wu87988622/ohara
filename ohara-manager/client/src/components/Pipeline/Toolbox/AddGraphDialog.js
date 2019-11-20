@@ -16,56 +16,67 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import { capitalize } from 'lodash';
+import { Form, Field } from 'react-final-form';
+
+import { InputField } from 'components/common/Form';
+import { Dialog } from 'components/common/Dialog';
+import { required, validServiceName, composeValidators } from 'utils/validate';
 
 const AddGraphDialog = props => {
-  const { open, handleClose, handleConfirm, value, handleChange } = props;
+  const { isOpen, handleClose, handleConfirm, graphType } = props;
+
+  const onSubmit = async (values, form) => {
+    handleConfirm(values.newGraph);
+    setTimeout(form.reset);
+  };
 
   return (
-    <div>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Subscribe</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            To subscribe to this website, please enter your email address here.
-            We will send updates occasionally.
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Email Address"
-            type="email"
-            value={value}
-            onChange={handleChange}
-            fullWidth
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleConfirm} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirm} color="primary">
-            Subscribe
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+    <Form
+      onSubmit={onSubmit}
+      initialValues={{}}
+      render={({ handleSubmit, form, submitting, pristine, invalid }) => {
+        return (
+          <Dialog
+            open={isOpen}
+            handleClose={() => {
+              handleClose();
+              form.reset();
+            }}
+            handleConfirm={handleSubmit}
+            title={`Add a new ${graphType}`}
+            confirmText="ADD"
+            confirmDisabled={submitting || pristine || invalid}
+          >
+            <DialogContentText>
+              Please note that once the name is added, it will become
+              "Read-only".
+            </DialogContentText>
+
+            <form onSubmit={handleSubmit}>
+              <Field
+                type="text"
+                name="newGraph"
+                label={`${capitalize(graphType)} Name`}
+                component={InputField}
+                validate={composeValidators(required, validServiceName)}
+                autoFocus
+                required
+              />
+            </form>
+          </Dialog>
+        );
+      }}
+    />
   );
 };
 
 AddGraphDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
+  isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   handleConfirm: PropTypes.func.isRequired,
-  value: PropTypes.string.isRequired,
-  handleChange: PropTypes.func.isRequired,
+  graphType: PropTypes.string.isRequired,
 };
 
 export default AddGraphDialog;

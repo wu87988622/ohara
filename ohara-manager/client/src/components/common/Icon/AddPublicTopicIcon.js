@@ -21,12 +21,14 @@ export const AddPublicTopicIcon = ({
   width,
   height,
   fillColor = 'currentColor',
+  ...otherProps
 }) => {
   return (
     <svg
+      {...otherProps}
       width={width}
       height={height}
-      fillcolor={fillColor}
+      fill={fillColor}
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       viewBox="0 0 40 40"
@@ -45,12 +47,12 @@ export const AddPublicTopicIcon = ({
           id="e"
         />
       </defs>
-      <g fill="none" fillRule="evenodd">
+      <g fillRule="evenodd">
         <g>
           <mask id="b" fill="#fff">
             <use xlinkHref="#a" />
           </mask>
-          <g mask="url(#b)" fill="#000" fillOpacity="0.54">
+          <g mask="url(#b)" fill="#000">
             <path d="M0-6h48v48H0z" />
           </g>
         </g>
@@ -66,7 +68,7 @@ export const AddPublicTopicIcon = ({
           <mask id="f" fill="#fff">
             <use xlinkHref="#e" />
           </mask>
-          <g mask="url(#f)" fill="#000" fillOpacity="0.54">
+          <g mask="url(#f)" fill="#000">
             <path d="M0 0h26v26H0z" />
           </g>
         </g>

@@ -106,7 +106,7 @@ export const StyledToolbox = styled.div(
     }
 
     /* Toolbox list */
-    .toolbar-list {
+    .toolbox-list {
       .item {
         display: flex;
         align-items: center;
@@ -114,7 +114,7 @@ export const StyledToolbox = styled.div(
         padding: ${theme.spacing(1, 2)};
       }
 
-      .MuiSvgIcon-root {
+      svg {
         margin-right: ${theme.spacing(1)}px;
       }
     }

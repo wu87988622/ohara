@@ -15,6 +15,7 @@
  */
 
 import { get, has, isEmpty } from 'lodash';
+
 import * as topicApi from 'api/topicApi';
 import {
   fetchTopicsRoutine,
@@ -73,7 +74,7 @@ const createAddTopic = (state, dispatch, showMessage) => async values => {
     return;
   }
 
-  // Topic successsfully created, display success message
+  // Topic successfully created, display success message
   dispatch(addTopicRoutine.success(createTopicResponse));
   showMessage(`Successfully added topic ${topicName}`);
 };
@@ -96,8 +97,6 @@ const createDeleteTopic = (state, dispatch, showMessage) => async (
   if (!isStopped) {
     const error = `Failed to stop topic ${topicName}`;
     dispatch(deleteTopicRoutine.failure(error));
-    // After the error handling logic is done in https://github.com/oharastream/ohara/issues/3124
-    // we can remove this custom message since it's handled higher up in the API layer
     showMessage(error);
     return;
   }

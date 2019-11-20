@@ -29,7 +29,7 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 
-import Prcentage from 'components/common/Progress/Prcentage';
+import { Percentage } from 'components/common/Progress';
 
 const StyledDiv = styled.div(
   ({ theme }) => css`
@@ -132,7 +132,7 @@ const SelectCard = props => {
                 <Typography variant="subtitle2">
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </Typography>
-                <div>{Prcentage(rows[key], '|')}</div>
+                <div>{Percentage(rows[key], '|')}</div>
               </StyledDiv>
             );
           })}

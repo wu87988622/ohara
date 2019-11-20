@@ -120,8 +120,7 @@ const WorkspaceQuick = props => {
 
   const removeNodeCard = node => {
     const newNodes = selected.filter(
-      selecte =>
-        selecte[Object.keys(selecte)[0]] !== node[Object.keys(node)[0]],
+      select => select[Object.keys(select)[0]] !== node[Object.keys(node)[0]],
     );
     setSelected(newNodes);
   };
@@ -159,15 +158,14 @@ const WorkspaceQuick = props => {
   };
 
   const removeFileCard = async file => {
-    const newfiles = files.filter(
-      selecte =>
-        selecte[Object.keys(selecte)[0]] !== file[Object.keys(file)[0]],
+    const newFiles = files.filter(
+      select => select[Object.keys(select)[0]] !== file[Object.keys(file)[0]],
     );
     await fileApi.remove({
       group: file.group,
       name: file.file,
     });
-    setFiles(newfiles);
+    setFiles(newFiles);
   };
 
   const checkStepValue = (values, index) => {
@@ -217,8 +215,8 @@ const WorkspaceQuick = props => {
     return zkStartRes;
   };
 
-  const createBk = async parmas => {
-    const { nodeNames, zookeeper } = parmas;
+  const createBk = async params => {
+    const { nodeNames, zookeeper } = params;
     const bkCreateRes = await bkApi.create({
       name: generate.serviceName({ prefix: 'bk' }),
       nodeNames,
@@ -235,8 +233,8 @@ const WorkspaceQuick = props => {
     return bkStartRes;
   };
 
-  const createWk = async parmas => {
-    const { nodeNames, broker, workerName, plugins } = parmas;
+  const createWk = async params => {
+    const { nodeNames, broker, workerName, plugins } = params;
     const wkCreateRes = await wkApi.create({
       name: workerName,
       nodeNames,
@@ -370,7 +368,7 @@ const WorkspaceQuick = props => {
                 <Table>
                   <TableBody>
                     <StyledTableRow>
-                      <TableCell>{'Worspace Name'}</TableCell>
+                      <TableCell>{'Workspace Name'}</TableCell>
                       <TableCell>{values.workerName}</TableCell>
                     </StyledTableRow>
                     <StyledTableRow>
