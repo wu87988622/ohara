@@ -18,7 +18,7 @@ package com.island.ohara.agent.fake
 
 import com.island.ohara.agent.k8s._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, NodeApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -55,11 +55,6 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
     throw new UnsupportedOperationException("FakeK8SClient not support remove function")
-
-  override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Seq[ContainerApi.ContainerInfo]] =
-    throw new UnsupportedOperationException("FakeK8SClient not support remove node function")
 
   override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] =
     Future.successful(s"fake k8s log for $name")

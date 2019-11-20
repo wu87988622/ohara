@@ -27,7 +27,7 @@ import com.island.ohara.client.{Enum, HttpExecutor}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class K8SStatusInfo(isHealth: Boolean, message: String)
 case class K8SNodeReport(nodeName: String)
@@ -37,9 +37,6 @@ trait K8SClient {
   def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
-  def removeNode(containerName: String, nodeName: String, serviceName: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Seq[ContainerInfo]]
   def log(name: String)(implicit executionContext: ExecutionContext): Future[String]
   def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
   def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
@@ -51,11 +48,9 @@ trait K8SClient {
 }
 
 object K8SClient {
-  import scala.concurrent.duration._
   val NAMESPACE_DEFAULT_VALUE: String = "default"
 
-  private[this] val TIMEOUT: FiniteDuration = 30 seconds
-  private[agent] val K8S_KIND_NAME          = "K8S"
+  private[agent] val K8S_KIND_NAME = "K8S"
 
   def apply(k8sApiServerURL: String): K8SClient = apply(k8sApiServerURL, NAMESPACE_DEFAULT_VALUE)
 
@@ -126,36 +121,6 @@ object K8SClient {
 
       override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
         removePod(name, false)
-
-      override def removeNode(containerName: String, nodeName: String, serviceName: String)(
-        implicit executionContext: ExecutionContext
-      ): Future[Seq[ContainerInfo]] = {
-        containers()
-          .map(cs => cs.filter(c => c.name == containerName && c.nodeName == nodeName))
-          .flatMap(
-            cs =>
-              Future.sequence(
-                cs.map(container => {
-                  remove(container.name)
-                })
-              )
-          )
-          .map(cs => {
-            cs.map(container => {
-              //Kubernetes remove pod container is async to need to await container remove completely to return the
-              //container info.
-              var isRemovedContainer: Boolean = false
-              while (!isRemovedContainer) {
-                if (!Await
-                      .result(containers(), TIMEOUT)
-                      .exists(c => c.name == containerName && c.nodeName == nodeName)) {
-                  isRemovedContainer = true
-                }
-              }
-              container
-            })
-          })
-      }
 
       override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] =
         HttpExecutor.SINGLETON

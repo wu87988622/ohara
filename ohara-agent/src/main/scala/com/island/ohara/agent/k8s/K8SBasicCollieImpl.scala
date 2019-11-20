@@ -42,9 +42,8 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
 
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] = {
-    k8sClient.removeNode(beRemovedContainer.name, beRemovedContainer.nodeName, serviceName).map(_ => true)
-  }
+  ): Future[Boolean] =
+    k8sClient.remove(beRemovedContainer.name).map(_ => true)
 
   override def logs(
     objectKey: ObjectKey
