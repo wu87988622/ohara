@@ -26,12 +26,12 @@ import { NavLink, useParams } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
 import * as pipelineApi from 'api/pipelineApi';
-import { InputField } from 'components/common/Form';
-import { Dialog } from 'components/common/Dialog';
 import { useSnackbar } from 'context/SnackbarContext';
 import { usePipeline } from 'context/PipelineContext';
 import { useWorkspace } from 'context/WorkspaceContext';
-import { useEditWorkspace } from 'context/EditWorkspaceContext';
+import { useEditWorkspaceDialog } from 'context/DialogContext';
+import { InputField } from 'components/common/Form';
+import { Dialog } from 'components/common/Dialog';
 import { EditWorkspace } from 'components/Workspace';
 import {
   required,
@@ -55,11 +55,11 @@ const Navigator = () => {
   const { workspaceName } = useParams();
   const { findByWorkspaceName } = useWorkspace();
   const [isExpanded, setIsExpanded] = useState(true);
-  const {
-    setIsOpen: setIsEditWorkspaceOpen,
-    setTab: setEditWorkspaceTab,
-  } = useEditWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
+  const {
+    open: openEditWorkspaceDialog,
+    setData: setEditWorkspaceDialogData,
+  } = useEditWorkspaceDialog();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -70,8 +70,8 @@ const Navigator = () => {
   };
 
   const handleMenuItemClick = key => () => {
-    setIsEditWorkspaceOpen(true);
-    setEditWorkspaceTab(key);
+    openEditWorkspaceDialog();
+    setEditWorkspaceDialogData({ tab: key });
     handleClose();
   };
 

@@ -30,13 +30,17 @@ import Divider from '@material-ui/core/Divider';
 import Link from '@material-ui/core/Link';
 import NumberFormat from 'react-number-format';
 
-import { useViewTopic } from 'context/ViewTopicContext';
+import { useViewTopicDialog } from 'context/DialogContext';
 import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Wrapper } from './ViewTopicDialogStyles';
 
 const ViewTopicDialog = () => {
-  const { isOpen, setIsOpen, topic } = useViewTopic();
+  const {
+    isOpen: isDialogOpen,
+    close: closeDialog,
+    data: topic,
+  } = useViewTopicDialog();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { isFetching: isDeleting } = useTopicState();
   const { deleteTopic } = useTopicActions();
@@ -46,7 +50,7 @@ const ViewTopicDialog = () => {
     const group = get(topic, 'settings.group');
     deleteTopic(name, group);
     setIsConfirmOpen(false);
-    setIsOpen(false);
+    closeDialog();
   };
 
   const topicName = get(topic, 'settings.name', '');
@@ -55,8 +59,8 @@ const ViewTopicDialog = () => {
   return (
     <FullScreenDialog
       title="View topic detail"
-      open={isOpen}
-      handleClose={() => setIsOpen(false)}
+      open={isDialogOpen}
+      handleClose={closeDialog}
       loading={isDeleting}
     >
       <Wrapper>

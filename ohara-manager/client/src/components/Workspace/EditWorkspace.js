@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { get } from 'lodash';
 import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
@@ -26,8 +27,10 @@ import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 
 import { FullScreenDialog } from 'components/common/Dialog';
-import { useEditWorkspace } from 'context/EditWorkspaceContext';
-import { useAddTopic } from 'context/AddTopicContext';
+import {
+  useEditWorkspaceDialog,
+  useAddTopicDialog,
+} from 'context/DialogContext';
 import { TopicsTab } from 'components/Workspace/TopicsTab';
 import { AddTopicDialog } from 'components/Topic';
 import { StyledActions } from './Styles';
@@ -56,25 +59,31 @@ TabPanel.propTypes = {
 };
 
 const EditWorkspace = () => {
-  const { isOpen, setIsOpen, tab, setTab } = useEditWorkspace();
-  const { setIsOpen: setIsAddTopicOpen } = useAddTopic();
+  const {
+    isOpen: isEditWorkspaceDialogOpen,
+    close: closeEditWorkspaceDialog,
+    data: editWorkspaceDialogData,
+    setData: setEditWorkspaceDialogData,
+  } = useEditWorkspaceDialog();
+  const { open: openAddTopicDialog } = useAddTopicDialog();
 
   const handleChange = (event, newTab) => {
-    setTab(newTab);
+    setEditWorkspaceDialogData({ tab: newTab });
   };
 
+  const tab = get(editWorkspaceDialogData, 'tab', 'overview');
   return (
     <>
       <FullScreenDialog
         title="Your workspace for oharadevteam"
-        open={isOpen}
-        handleClose={() => setIsOpen(false)}
+        open={isEditWorkspaceDialogOpen}
+        handleClose={closeEditWorkspaceDialog}
       >
         <StyledActions>
           <Button
             variant="contained"
             color="primary"
-            onClick={() => setIsAddTopicOpen(true)}
+            onClick={openAddTopicDialog}
           >
             ADD TOPIC
           </Button>

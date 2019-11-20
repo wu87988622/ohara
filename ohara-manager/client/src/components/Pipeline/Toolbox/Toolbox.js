@@ -37,7 +37,7 @@ import AddGraphDialog from './AddGraphDialog';
 import { StyledToolbox } from './ToolboxStyles';
 import { useWorkspace } from 'context/WorkspaceContext';
 import { useSnackbar } from 'context/SnackbarContext';
-import { useAddTopic } from 'context/AddTopicContext';
+import { useAddTopicDialog } from 'context/DialogContext';
 import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
@@ -59,7 +59,7 @@ const Toolbox = props => {
   const { workspaceName } = useParams();
   const { data: topics } = useTopicState();
   const { fetchTopics } = useTopicActions();
-  const { setIsOpen: setIsAddTopicOpen } = useAddTopic();
+  const { open: openAddTopicDialog } = useAddTopicDialog();
   const [isOpen, setIsOpen] = useState(false);
   const [graphType, setGraphType] = useState('');
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -245,7 +245,7 @@ const Toolbox = props => {
               </List>
 
               <div className="add-button">
-                <IconButton onClick={() => setIsAddTopicOpen(true)}>
+                <IconButton onClick={openAddTopicDialog}>
                   <AddIcon />
                 </IconButton>
                 <Typography variant="subtitle2">Add topics</Typography>

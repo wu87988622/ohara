@@ -23,13 +23,12 @@ import {
 } from '@material-ui/styles';
 
 import MuiTheme from './theme/muiTheme';
+
+import { DialogProvider } from './context/DialogContext';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
-import { AddTopicProvider } from './context/AddTopicContext';
-import { ViewTopicProvider } from './context/ViewTopicContext';
-import { EditWorkspaceProvider } from './context/EditWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
 import { TopicProvider } from './context/TopicContext';
 import { DevToolDialogProvider } from './context/DevToolDialogContext';
@@ -50,14 +49,12 @@ const AppProviders = ({ children }) => {
         <StylesProvider injectFirst children={children} />,
         <MuiThemeProvider theme={MuiTheme} children={children} />,
         <ThemeProvider theme={MuiTheme} children={children} />,
+        <DialogProvider children={children} />,
         <SnackbarProvider children={children} />,
         <NewWorkspaceProvider children={children} />,
         <WorkspaceProvider children={children} />,
-        <EditWorkspaceProvider children={children} />,
         <PipelineProvider children={children} />,
         <TopicProvider children={children} />,
-        <AddTopicProvider children={children} />,
-        <ViewTopicProvider children={children} />,
         <NodeDialogProvider children={children} />,
         <DevToolDialogProvider children={children} />,
       ]}

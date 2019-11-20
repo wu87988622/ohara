@@ -19,7 +19,7 @@ import { Form, Field } from 'react-final-form';
 
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
-import { useAddTopic } from 'context/AddTopicContext';
+import { useAddTopicDialog } from 'context/DialogContext';
 import { useTopicState, useTopicActions } from 'context/TopicContext';
 import { useWorkspace } from 'context/WorkspaceContext';
 
@@ -31,12 +31,11 @@ import {
 } from 'utils/validate';
 
 const AddTopicDialog = () => {
-  const { isOpen, setIsOpen } = useAddTopic();
   const { currentWorkspace } = useWorkspace();
   const { isFetching: isSaving } = useTopicState();
   const { addTopic } = useTopicActions();
 
-  const handleClose = () => setIsOpen(false);
+  const { isOpen: isDialogOpen, close: closeDialog } = useAddTopicDialog();
 
   const onSubmit = async (values, form) => {
     const { name: topicName } = values;
@@ -52,7 +51,7 @@ const AddTopicDialog = () => {
       group: topicGroup,
     });
     setTimeout(form.reset);
-    handleClose();
+    closeDialog();
   };
 
   return (
@@ -62,11 +61,11 @@ const AddTopicDialog = () => {
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
-            open={isOpen}
+            open={isDialogOpen}
             title="Add a new topic"
             handleClose={() => {
               form.reset();
-              handleClose();
+              closeDialog();
             }}
             loading={isSaving}
             handleConfirm={handleSubmit}
