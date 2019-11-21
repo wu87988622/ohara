@@ -1,4 +1,4 @@
-[![Build Status](https://builds.is-land.com.tw/buildStatus/icon?job=PostCommit-OHARA)](https://builds.is-land.com.tw/job/PostCommit-OHARA/)
+[![Build Status](https://github.com/oharastream/ohara/workflows/PostCommit/badge.svg)](https://github.com/oharastream/ohara/actions?query=workflow%3APostCommit)
 [![Documentation Status](https://readthedocs.org/projects/ohara/badge/?version=latest)](https://ohara.readthedocs.io/en/latest/?badge=latest)
 [![Github Assets](https://img.shields.io/badge/download-assets-brightgreen.svg)](https://github.com/oharastream/ohara/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

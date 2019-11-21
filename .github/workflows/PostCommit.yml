@@ -1,0 +1,66 @@
+#
+# Copyright 2019 is-land
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# this config is used to complete the final QA for each PUSH. Noted that it describes only unit tests since IT is
+# too expensive to run on Github Actions.
+name: PostCommit
+
+on: [push]
+
+jobs:
+  tests:
+    # the supported linux distribution is ubuntu. Fortunately, all actions are executed by container so it is ok
+    # to use ubuntu.
+    runs-on: ubuntu-latest
+    container: oharastream/ohara:ci
+    steps:
+      - name: sync
+        working-directory: /ohara
+        run: |
+          git pull
+      - name: build
+        working-directory: /ohara
+        run: |
+          gradle clean build -PskipManager -x test
+      - name: unit tests
+        working-directory: /ohara
+        # the hardware supported by Github is
+        # 2-core CPU
+        # 7 GB of RAM memory
+        # 14 GB of SSD disk space
+        # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
+        run: |
+          gradle clean build -PmaxParallelForks=2
+  documentation:
+    runs-on: ubuntu-latest
+    container: oharastream/ohara:ci
+    steps:
+      - name: sync
+        working-directory: /ohara
+        run: |
+          git pull
+      - name: javadoc
+        working-directory: /ohara
+        run: |
+          gradle javadoc
+      - name: scaladoc
+        working-directory: /ohara
+        run: |
+          gradle scaladoc
+      - name: doc
+        working-directory: /ohara/docs
+        run: |
+          make html
