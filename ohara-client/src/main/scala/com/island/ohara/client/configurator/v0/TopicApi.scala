@@ -78,8 +78,7 @@ object TopicApi {
   val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createCoreDef(
     _.key(NUMBER_OF_PARTITIONS_KEY)
       .documentation("the number of partitions")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(NUMBER_OF_PARTITIONS_DEFAULT)
+      .positiveNumber(NUMBER_OF_PARTITIONS_DEFAULT)
       .build()
   )
   private[this] val NUMBER_OF_REPLICATIONS_KEY            = "numberOfReplications"
@@ -87,8 +86,7 @@ object TopicApi {
   val NUMBER_OF_REPLICATIONS_DEFINITION: SettingDef = createCoreDef(
     _.key(NUMBER_OF_REPLICATIONS_KEY)
       .documentation("the number of replications")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(NUMBER_OF_REPLICATIONS_DEFAULT)
+      .positiveNumber(NUMBER_OF_REPLICATIONS_DEFAULT)
       .build()
   )
 
@@ -97,8 +95,7 @@ object TopicApi {
   val SEGMENT_BYTES_DEFINITION: SettingDef = createExtraDef(
     _.key(SEGMENT_BYTES_KEY)
       .documentation(TopicConfig.SEGMENT_BYTES_DOC)
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(SEGMENT_BYTES_DEFAULT)
+      .positiveNumber(SEGMENT_BYTES_DEFAULT)
       .build()
   )
 
@@ -108,8 +105,7 @@ object TopicApi {
   val SEGMENT_MS_DEFINITION: SettingDef = createExtraDef(
     _.key(SEGMENT_MS_KEY)
       .documentation(TopicConfig.SEGMENT_MS_DOC)
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(SEGMENT_MS_DEFAULT)
+      .positiveNumber(SEGMENT_MS_DEFAULT)
       .build()
   )
 

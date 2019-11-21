@@ -141,9 +141,7 @@ public final class ConnectorDefUtils {
               builder
                   .displayName("Number of tasks")
                   .key("tasks.max")
-                  // TODO: use positive number instead (see
-                  // https://github.com/oharastream/ohara/issues/3168)
-                  .optional(1)
+                  .positiveNumber(1)
                   .documentation("the number of tasks invoked by connector")
                   .build());
   public static final SettingDef COLUMNS_DEFINITION =

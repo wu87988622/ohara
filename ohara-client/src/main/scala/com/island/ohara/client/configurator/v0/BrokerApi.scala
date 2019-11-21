@@ -73,8 +73,7 @@ object BrokerApi {
   val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_PARTITIONS_KEY)
       .documentation("the number of partitions for all topics by default")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(NUMBER_OF_PARTITIONS_DEFAULT)
+      .positiveNumber(NUMBER_OF_PARTITIONS_DEFAULT)
       .build()
   )
   private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
@@ -82,8 +81,7 @@ object BrokerApi {
   val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
       .documentation("the number of replications for internal offset topic")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
+      .positiveNumber(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
       .build()
   )
   private[this] val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
@@ -91,8 +89,7 @@ object BrokerApi {
   val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_NETWORK_THREADS_KEY)
       .documentation("the number of threads used to accept network requests")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(NUMBER_OF_NETWORK_THREADS_DEFAULT)
+      .positiveNumber(NUMBER_OF_NETWORK_THREADS_DEFAULT)
       .build()
   )
   private[this] val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
@@ -100,7 +97,7 @@ object BrokerApi {
   val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = createDef(
     _.key(NUMBER_OF_IO_THREADS_KEY)
       .documentation("the number of threads used to process network requests")
-      .optional(NUMBER_OF_IO_THREADS_DEFAULT)
+      .positiveNumber(NUMBER_OF_IO_THREADS_DEFAULT)
       .build()
   )
 

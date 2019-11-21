@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json._
 
@@ -153,7 +153,6 @@ class TestTopicApi extends OharaTest {
         .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
         .creation
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeReplicationsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
@@ -168,7 +167,6 @@ class TestTopicApi extends OharaTest {
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativePartitionsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
@@ -183,7 +181,6 @@ class TestTopicApi extends OharaTest {
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def zeroReplicationsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
@@ -198,7 +195,6 @@ class TestTopicApi extends OharaTest {
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def zeroPartitionsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {

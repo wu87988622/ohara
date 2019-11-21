@@ -104,8 +104,7 @@ object WorkerApi {
   val STATUS_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(STATUS_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for status topic")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(STATUS_TOPIC_PARTITIONS_DEFAULT)
+      .positiveNumber(STATUS_TOPIC_PARTITIONS_DEFAULT)
       .build()
   )
   private[this] val STATUS_TOPIC_REPLICATIONS_KEY            = "status.storage.replication.factor"
@@ -113,8 +112,7 @@ object WorkerApi {
   val STATUS_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
     _.key(STATUS_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for status topic")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(STATUS_TOPIC_REPLICATIONS_DEFAULT)
+      .positiveNumber(STATUS_TOPIC_REPLICATIONS_DEFAULT)
       .build()
   )
 
@@ -131,8 +129,7 @@ object WorkerApi {
   val CONFIG_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(CONFIG_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for config topic. this value MUST be 1")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(CONFIG_TOPIC_PARTITIONS_DEFAULT)
+      .positiveNumber(CONFIG_TOPIC_PARTITIONS_DEFAULT)
       .readonly()
       .build()
   )
@@ -141,8 +138,7 @@ object WorkerApi {
   val CONFIG_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
     _.key(CONFIG_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for config topic")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(CONFIG_TOPIC_REPLICATIONS_DEFAULT)
+      .positiveNumber(CONFIG_TOPIC_REPLICATIONS_DEFAULT)
       .build()
   )
   //-------------[offset topic]-------------//
@@ -158,8 +154,7 @@ object WorkerApi {
   val OFFSET_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
     _.key(OFFSET_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for offset topic")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(OFFSET_TOPIC_PARTITIONS_DEFAULT)
+      .positiveNumber(OFFSET_TOPIC_PARTITIONS_DEFAULT)
       .build()
   )
   private[this] val OFFSET_TOPIC_REPLICATIONS_KEY            = "offset.storage.replication.factor"
@@ -167,8 +162,7 @@ object WorkerApi {
   val OFFSET_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
     _.key(OFFSET_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for offset topic")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(OFFSET_TOPIC_REPLICATIONS_DEFAULT)
+      .positiveNumber(OFFSET_TOPIC_REPLICATIONS_DEFAULT)
       .build()
   )
 

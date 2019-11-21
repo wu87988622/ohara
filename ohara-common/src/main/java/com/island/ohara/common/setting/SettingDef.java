@@ -192,7 +192,8 @@ public class SettingDef implements JsonObject, Serializable {
           "the __ is keyword so it is illegal word to definition key");
     this.valueType = Objects.requireNonNull(valueType);
     this.necessary = necessary;
-    if (valueType == Type.SHORT && defaultValue instanceof Integer) {
+    if ((valueType == Type.SHORT || valueType == Type.POSITIVE_SHORT)
+        && defaultValue instanceof Integer) {
       // jackson convert the number to int by default so we have to cast it again.
       this.defaultValue = (short) ((int) defaultValue);
     } else this.defaultValue = defaultValue;
@@ -468,7 +469,8 @@ public class SettingDef implements JsonObject, Serializable {
    * @return default value in short type
    */
   public short defaultShort() {
-    if (valueType == Type.SHORT) return (short) Objects.requireNonNull(defaultValue);
+    if (valueType == Type.SHORT || valueType == Type.POSITIVE_SHORT)
+      return (short) Objects.requireNonNull(defaultValue);
     throw new IllegalStateException("expected type: short, but actual:" + valueType);
   }
 
@@ -478,7 +480,8 @@ public class SettingDef implements JsonObject, Serializable {
    * @return default value in int type
    */
   public int defaultInt() {
-    if (valueType == Type.INT) return (int) Objects.requireNonNull(defaultValue);
+    if (valueType == Type.INT || valueType == Type.POSITIVE_INT)
+      return (int) Objects.requireNonNull(defaultValue);
     throw new IllegalStateException("expected type: int, but actual:" + valueType);
   }
 
@@ -488,7 +491,8 @@ public class SettingDef implements JsonObject, Serializable {
    * @return default value in long type
    */
   public long defaultLong() {
-    if (valueType == Type.LONG) return (long) Objects.requireNonNull(defaultValue);
+    if (valueType == Type.LONG || valueType == Type.POSITIVE_LONG)
+      return (long) Objects.requireNonNull(defaultValue);
     throw new IllegalStateException("expected type: long, but actual:" + valueType);
   }
 
@@ -498,7 +502,8 @@ public class SettingDef implements JsonObject, Serializable {
    * @return default value in double type
    */
   public double defaultDouble() {
-    if (valueType == Type.DOUBLE) return (double) Objects.requireNonNull(defaultValue);
+    if (valueType == Type.DOUBLE || valueType == Type.POSITIVE_DOUBLE)
+      return (double) Objects.requireNonNull(defaultValue);
     throw new IllegalStateException("expected type: double, but actual:" + valueType);
   }
 

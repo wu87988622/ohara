@@ -61,7 +61,8 @@ public class TestCoreDefinitions extends OharaTest {
         ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.orderInGroup(), key.orderInGroup);
     Assert.assertEquals(ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.group(), key.group);
     Assert.assertEquals(
-        ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.valueType().name(), key.type.name());
+        ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.valueType().name(),
+        SettingDef.Type.POSITIVE_INT.name());
   }
 
   @Test

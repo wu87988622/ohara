@@ -68,8 +68,7 @@ object ZookeeperApi {
   val TICK_TIME_DEFINITION: SettingDef = createDef(
     _.key(TICK_TIME_KEY)
       .documentation("basic time unit in zookeeper")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(TICK_TIME_DEFAULT)
+      .positiveNumber(TICK_TIME_DEFAULT)
       .build()
   )
   private[this] val INIT_LIMIT_KEY          = "initLimit"
@@ -77,8 +76,7 @@ object ZookeeperApi {
   val INIT_LIMIT_DEFINITION: SettingDef = createDef(
     _.key(INIT_LIMIT_KEY)
       .documentation("timeout to connect to leader")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(INIT_LIMIT_DEFAULT)
+      .positiveNumber(INIT_LIMIT_DEFAULT)
       .build()
   )
   private[this] val SYNC_LIMIT_KEY          = "syncLimit"
@@ -86,8 +84,7 @@ object ZookeeperApi {
   val SYNC_LIMIT_DEFINITION: SettingDef = createDef(
     _.key(SYNC_LIMIT_KEY)
       .documentation("the out-of-date of a sever from leader")
-      // TODO: use positive number instead (see https://github.com/oharastream/ohara/issues/3168)
-      .optional(SYNC_LIMIT_DEFAULT)
+      .positiveNumber(SYNC_LIMIT_DEFAULT)
       .build()
   )
   private[this] val DATA_DIR_KEY     = "dataDir"

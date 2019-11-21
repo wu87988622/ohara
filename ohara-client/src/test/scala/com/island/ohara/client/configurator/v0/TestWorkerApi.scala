@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
@@ -489,42 +489,54 @@ class TestWorkerApi extends OharaTest {
     }.getMessage should include("the number must be")
   }
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  /**
+    * CONFIG_TOPIC_PARTITIONS_DEFINITION is readonly so the value is immutable
+    */
   @Test
   def zeroNumberOfPartitionsForConfigTopic(): Unit =
-    intercept[DeserializationException] {
-      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-           |  {
-           |    "nodeNames": [
-           |      "node"
-           |    ],
-           |    "brokerClusterKey": {
-           |      "group": "g",
-           |      "name": "n"
-           |    },
-           |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION.key()}": 0
-           |  }
-           |  """.stripMargin.parseJson)
-    }.getMessage should include("the number must be")
+    WorkerApi.WORKER_CREATION_JSON_FORMAT
+      .read(
+        s"""
+                                                                                                   |  {
+                                                                                                   |    "nodeNames": [
+                                                                                                   |      "node"
+                                                                                                   |    ],
+                                                                                                   |    "brokerClusterKey": {
+                                                                                                   |      "group": "g",
+                                                                                                   |      "name": "n"
+                                                                                                   |    },
+                                                                                                   |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION
+             .key()}": 0
+                                                                                                   |  }
+                                                                                                   |  """.stripMargin.parseJson
+      )
+      .settings(CONFIG_TOPIC_PARTITIONS_DEFINITION.key())
+      .convertTo[Int] shouldBe CONFIG_TOPIC_PARTITIONS_DEFINITION.defaultInt()
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+  /**
+    * CONFIG_TOPIC_PARTITIONS_DEFINITION is readonly so the value is immutable
+    */
   @Test
   def negativeNumberOfPartitionsForConfigTopic(): Unit =
-    intercept[DeserializationException] {
-      WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-                                                    |  {
-                                                    |    "nodeNames": [
-                                                    |      "node"
-                                                    |    ],
-                                                    |    "brokerClusterKey": {
-                                                    |      "group": "g",
-                                                    |      "name": "n"
-                                                    |    },
-                                                    |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION.key()}": -1
-                                                    |  }
-                                                    |  """.stripMargin.parseJson)
-    }.getMessage should include("the number must be")
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+    WorkerApi.WORKER_CREATION_JSON_FORMAT
+      .read(
+        s"""
+                                                                                                       |  {
+                                                                                                       |    "nodeNames": [
+                                                                                                       |      "node"
+                                                                                                       |    ],
+                                                                                                       |    "brokerClusterKey": {
+                                                                                                       |      "group": "g",
+                                                                                                       |      "name": "n"
+                                                                                                       |    },
+                                                                                                       |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION
+             .key()}": -1
+                                                                                                       |  }
+                                                                                                       |  """.stripMargin.parseJson
+      )
+      .settings(CONFIG_TOPIC_PARTITIONS_DEFINITION.key())
+      .convertTo[Int] shouldBe CONFIG_TOPIC_PARTITIONS_DEFINITION.defaultInt()
+
   @Test
   def zeroNumberOfReplicationForConfigTopic(): Unit =
     intercept[DeserializationException] {
@@ -542,7 +554,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeNumberOfReplicationForConfigTopic(): Unit =
     intercept[DeserializationException] {
@@ -560,7 +571,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def zeroNumberOfPartitionsForOffsetTopic(): Unit =
     intercept[DeserializationException] {
@@ -578,7 +588,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeNumberOfPartitionsForOffsetTopic(): Unit =
     intercept[DeserializationException] {
@@ -595,7 +604,7 @@ class TestWorkerApi extends OharaTest {
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+
   @Test
   def zeroNumberOfReplicationForOffsetTopic(): Unit =
     intercept[DeserializationException] {
@@ -613,7 +622,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeNumberOfReplicationForOffsetTopic(): Unit =
     intercept[DeserializationException] {
@@ -631,7 +639,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def zeroNumberOfPartitionsForStatusTopic(): Unit =
     intercept[DeserializationException] {
@@ -649,7 +656,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeNumberOfPartitionsForStatusTopic(): Unit =
     intercept[DeserializationException] {
@@ -666,7 +672,7 @@ class TestWorkerApi extends OharaTest {
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
+
   @Test
   def zeroNumberOfReplicationForStatusTopic(): Unit =
     intercept[DeserializationException] {
@@ -684,7 +690,6 @@ class TestWorkerApi extends OharaTest {
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
 
-  @Ignore("TODO: enable this test if we complete https://github.com/oharastream/ohara/issues/3168")
   @Test
   def negativeNumberOfReplicationForStatusTopic(): Unit =
     intercept[DeserializationException] {
