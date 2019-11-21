@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export const usePrevious = value => {
   // The ref object is a generic container whose current property is mutable ...
@@ -28,4 +28,20 @@ export const usePrevious = value => {
 
   // Return previous value (happens before update in useEffect above)
   return ref.current;
+};
+
+export const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    // Set debouncedValue to value (passed in) after the specified delay
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [delay, value]);
+
+  return debouncedValue;
 };

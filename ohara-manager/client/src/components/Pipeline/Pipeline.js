@@ -135,9 +135,8 @@ const Pipeline = () => {
                 isToolboxOpen={isToolboxOpen}
                 handleToolboxOpen={() => setIsToolboxOpen(true)}
                 handleToolboxClick={panel => {
-                  // Reset the state first, then open the new panel
-                  setToolboxExpanded(initialState);
-                  handleToolboxClick(panel);
+                  // Open a particular panel
+                  setToolboxExpanded({ ...initialState, [panel]: true });
                 }}
               />
               <GraphWrapper>
@@ -150,6 +149,7 @@ const Pipeline = () => {
                     setToolboxExpanded(initialState);
                   }}
                   toolboxKey={toolboxKey}
+                  setToolboxExpanded={setToolboxExpanded}
                 />
               </GraphWrapper>
             </>

@@ -57,34 +57,41 @@ export const useFiles = workspace => {
   // We're not filtering out other jars here
   // but it should be done when stream jars
   const [streams, setStreams] = useState([]);
+  const [fileNames, setFileNames] = useState([]);
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     if (!workspace || status !== 'loading') return;
 
-    const fetchStreamJars = async workspaceName => {
+    const fetchFiles = async workspaceName => {
       const files = await fileApi.getAll({ group: workspaceName });
 
-      const fetchStreamsInfo = async () => {
-        return Promise.all(
-          files.map(file => {
-            return inspectApi.getStreamsInfo({
-              group: file.group,
-              name: file.name,
-            });
-          }),
-        );
-      };
+      const fileNames = files.map(file => file.name);
+      setFileNames(fileNames);
 
-      // TODO: we need to filter out the class defs and store them for
-      // later. This is tracked in #3184
-      const streams = await fetchStreamsInfo();
-      setStreams(streams);
+      const streamClasses = files
+        .map(file => file.classInfos)
+        .flat()
+        .filter(cls => cls.classType === 'stream');
+
+      if (streamClasses.length > 0) {
+        const results = streamClasses
+          .map(({ className, classType }) => {
+            const displayName = className.split('.').pop();
+            return {
+              displayName,
+              classType,
+            };
+          })
+          .sort((a, b) => a.className.localeCompare(b.className));
+        setStreams(results);
+      }
+
       setStatus('loaded');
     };
 
-    fetchStreamJars(workspace.settings.name);
+    fetchFiles(workspace.settings.name);
   }, [status, workspace]);
 
-  return [streams, setStatus];
+  return { streams, setStatus, fileNames };
 };

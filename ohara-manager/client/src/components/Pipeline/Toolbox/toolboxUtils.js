@@ -16,24 +16,34 @@
 
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import * as joint from 'jointjs';
-import * as $ from 'jquery';
-import * as _ from 'lodash';
+import { isNull, bindAll, template } from 'lodash';
 import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import StorageIcon from '@material-ui/icons/Storage';
+import WavesIcon from '@material-ui/icons/Waves';
+import * as $ from 'jquery';
+import * as joint from 'jointjs';
+
+import { AddPublicTopicIcon } from 'components/common/Icon';
 
 export const createToolboxList = ({
   sources,
   sinks,
+  streams,
   topics,
   sourceGraph,
-  sinkGraph,
   topicGraph,
+  streamGraph,
+  sinkGraph,
+  searchResults,
 }) => {
   const sourceIcon = renderToString(<FlightTakeoffIcon />);
   const sinkIcon = renderToString(<FlightLandIcon />);
+  const streamIcon = renderToString(<WavesIcon />);
   const AddPrivateTopic = renderToString(<StorageIcon />);
+  const AddPublicTopic = renderToString(
+    <AddPublicTopicIcon className="public-topic" width={23} height={22} />,
+  );
 
   // Create a custom element.
   joint.shapes.html = {};
@@ -59,9 +69,9 @@ export const createToolboxList = ({
     ],
 
     initialize() {
-      _.bindAll(this, 'updateBox');
+      bindAll(this, 'updateBox');
       joint.dia.ElementView.prototype.initialize.apply(this, arguments);
-      this.$box = $(_.template(this.template)());
+      this.$box = $(template(this.template)());
       // Update the box position whenever the underlying model changes.
       this.model.on('change', this.updateBox, this);
       this.updateBox();
@@ -80,8 +90,12 @@ export const createToolboxList = ({
     },
   });
 
+  const displaySources = isNull(searchResults)
+    ? sources
+    : searchResults.sources;
+
   // Create JointJS elements and add them to the graph as usual.
-  sources.forEach((source, index) => {
+  displaySources.forEach((source, index) => {
     sourceGraph.current.addCell(
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 44 },
@@ -93,31 +107,39 @@ export const createToolboxList = ({
     );
   });
 
-  // Add private pipeline `Pipeline Only` so
-  // users can add private pipeline with this
-  // button
-  const updatedTopics = [
-    {
-      settings: {
-        name: 'Pipeline Only',
-      },
-    },
-    ...topics,
-  ];
+  const displayTopics = isNull(searchResults) ? topics : searchResults.topics;
 
-  updatedTopics.forEach((topic, index) => {
+  displayTopics.forEach((topic, index) => {
     topicGraph.current.addCell(
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 44 },
         size: { width: 272 - 8 * 2, height: 44 },
-        displayName: topic.settings.name,
-        classType: 'topic', // topic doesn't have className and classType
-        icon: index === 0 ? AddPrivateTopic : AddPrivateTopic,
+        displayName: topic.displayName,
+        classType: topic.classType,
+        icon: index === 0 ? AddPrivateTopic : AddPublicTopic,
       }),
     );
   });
 
-  sinks.forEach((sink, index) => {
+  const displayStreams = isNull(searchResults)
+    ? streams
+    : searchResults.streams;
+
+  displayStreams.forEach((stream, index) => {
+    streamGraph.current.addCell(
+      new joint.shapes.html.Element({
+        position: { x: 10, y: index * 44 },
+        size: { width: 272 - 8 * 2, height: 44 },
+        displayName: stream.displayName,
+        classType: stream.classType,
+        icon: streamIcon,
+      }),
+    );
+  });
+
+  const displaySinks = isNull(searchResults) ? sinks : searchResults.sinks;
+
+  displaySinks.forEach((sink, index) => {
     sinkGraph.current.addCell(
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 44 },

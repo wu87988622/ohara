@@ -28,6 +28,7 @@ const Graph = props => {
     handleToolboxClick,
     handleToolboxClose,
     toolboxKey,
+    setToolboxExpanded,
   } = props;
 
   let graph = useRef(null);
@@ -69,6 +70,7 @@ const Graph = props => {
         paper={paper.current}
         graph={graph.current}
         toolboxKey={toolboxKey}
+        setToolboxExpanded={setToolboxExpanded}
       />
       <Paper id="paper"></Paper>
     </>
@@ -86,6 +88,7 @@ Graph.propTypes = {
   handleToolboxClick: PropTypes.func.isRequired,
   handleToolboxClose: PropTypes.func.isRequired,
   toolboxKey: PropTypes.number.isRequired,
+  setToolboxExpanded: PropTypes.func.isRequired,
 };
 
 export default Graph;

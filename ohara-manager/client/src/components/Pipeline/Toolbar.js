@@ -30,7 +30,7 @@ const StyledToolbar = styled.div(
   ({ theme }) => css`
     height: 72px;
     padding: 0 ${theme.spacing(3)}px;
-    background-color: #f5f6fa;
+    background-color: ${theme.palette.grey[100]};
     border-bottom: 1px solid ${theme.palette.divider};
     display: flex;
     align-items: center;

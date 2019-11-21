@@ -32,7 +32,7 @@ export const StyledToolbox = styled.div(
 
     .title {
       padding: ${theme.spacing(1)}px ${theme.spacing(2)}px;
-      background-color: #f5f6fa;
+      background-color: ${theme.palette.grey[100]};
 
       &.box-title {
         cursor: move;
@@ -81,8 +81,9 @@ export const StyledToolbox = styled.div(
       }
     }
 
-    .panel-title {
-      background-color: #f5f6fa;
+    .MuiExpansionPanelSummary-root {
+      padding: ${theme.spacing(0, 2)};
+      background-color: ${theme.palette.grey[100]};
     }
 
     .MuiExpansionPanel-root {
@@ -112,10 +113,22 @@ export const StyledToolbox = styled.div(
         align-items: center;
         width: 100%;
         padding: ${theme.spacing(1, 2)};
+        color: ${theme.palette.text.primary};
+
+        .icon {
+          display: flex;
+        }
       }
 
       svg {
         margin-right: ${theme.spacing(1)}px;
+      }
+
+      .public-topic {
+        /* Need to hard-code this since the margin is needed in order 
+           to align this icon with the private icon
+        */
+        margin-left: 2px;
       }
     }
   `,

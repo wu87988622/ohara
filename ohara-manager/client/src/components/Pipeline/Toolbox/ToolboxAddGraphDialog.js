@@ -24,10 +24,10 @@ import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { required, validServiceName, composeValidators } from 'utils/validate';
 
-const AddGraphDialog = props => {
+const ToolboxAddGraphDialog = props => {
   const { isOpen, handleClose, handleConfirm, graphType } = props;
 
-  const onSubmit = async (values, form) => {
+  const onSubmit = (values, form) => {
     handleConfirm(values.newGraph);
     setTimeout(form.reset);
   };
@@ -72,11 +72,11 @@ const AddGraphDialog = props => {
   );
 };
 
-AddGraphDialog.propTypes = {
+ToolboxAddGraphDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   handleConfirm: PropTypes.func.isRequired,
   graphType: PropTypes.string.isRequired,
 };
 
-export default AddGraphDialog;
+export default ToolboxAddGraphDialog;

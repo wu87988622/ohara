@@ -18,14 +18,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Draggable from 'react-draggable';
 import Typography from '@material-ui/core/Typography';
-import InputBase from '@material-ui/core/InputBase';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import SearchIcon from '@material-ui/icons/Search';
 import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
 import { useParams } from 'react-router-dom';
@@ -33,7 +31,8 @@ import * as joint from 'jointjs';
 import * as _ from 'lodash';
 
 import * as fileApi from 'api/fileApi';
-import AddGraphDialog from './AddGraphDialog';
+import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
+import ToolboxSearch from './ToolboxSearch';
 import { StyledToolbox } from './ToolboxStyles';
 import {
   useWorkspace,
@@ -45,7 +44,7 @@ import { useSnackbar } from 'context/SnackbarContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
 import { useConnectors, useFiles } from './ToolboxHooks';
-import { enableDragAndDrop, createToolboxList } from './ToolboxUtils';
+import { enableDragAndDrop, createToolboxList } from './toolboxUtils';
 
 const Toolbox = props => {
   const {
@@ -56,27 +55,38 @@ const Toolbox = props => {
     paper,
     graph,
     toolboxKey,
+    setToolboxExpanded,
   } = props;
 
   const { findByWorkspaceName } = useWorkspace();
   const { workspaceName } = useParams();
-  const { data: topics } = useTopicState();
+  const { data: topicsData } = useTopicState();
   const { fetchTopics } = useTopicActions();
   const { open: openAddTopicDialog } = useAddTopicDialog();
   const [isOpen, setIsOpen] = useState(false);
   const [graphType, setGraphType] = useState('');
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [searchResults, setSearchResults] = useState(null);
 
   const showMessage = useSnackbar();
 
   const currentWorkspace = findByWorkspaceName(workspaceName);
   const [sources, sinks] = useConnectors(currentWorkspace);
-  const [streamJars, setStatus] = useFiles(currentWorkspace);
+  const { streams, fileNames, setStatus } = useFiles(currentWorkspace);
 
   useEffect(() => {
     if (!currentWorkspace) return;
     fetchTopics(currentWorkspace.settings.name);
   }, [fetchTopics, currentWorkspace.settings.name, currentWorkspace]);
+
+  const privateTopic = {
+    settings: { name: 'Pipeline Only' },
+  };
+
+  const topics = [privateTopic, ...topicsData].map(topic => ({
+    classType: 'topic',
+    displayName: topic.settings.name,
+  }));
 
   const uploadJar = async file => {
     const response = await fileApi.create({
@@ -93,10 +103,9 @@ const Toolbox = props => {
 
   const handleFileSelect = event => {
     const file = event.target.files[0];
+    const isDuplicate = fileNames.some(fileName => fileName === file.name);
 
-    const isDuplicate = () => streamJars.some(jar => jar.name === file.name);
-
-    if (isDuplicate()) {
+    if (isDuplicate) {
       return showMessage('The jar name is already taken!');
     }
 
@@ -174,9 +183,12 @@ const Toolbox = props => {
         sources,
         sinks,
         topics,
+        streams,
+        streamGraph,
         sourceGraph,
         sinkGraph,
         topicGraph,
+        searchResults,
       });
 
       // Add the ability to drag and drop connectors/streams/topics
@@ -190,7 +202,7 @@ const Toolbox = props => {
     };
 
     renderToolbox();
-  }, [paper, sinks, sources, topics]);
+  }, [paper, searchResults, sinks, sources, streams, topics]);
 
   return (
     <Draggable bounds="parent" handle=".box-title" key={toolboxKey}>
@@ -201,10 +213,12 @@ const Toolbox = props => {
             <CloseIcon />
           </IconButton>
         </div>
-        <IconButton>
-          <SearchIcon />
-        </IconButton>
-        <InputBase placeholder="Search topic & connector..." />
+
+        <ToolboxSearch
+          searchData={[...sources, ...sinks, ...topics, ...streams]}
+          setSearchResults={setSearchResults}
+          setToolboxExpanded={setToolboxExpanded}
+        />
         <div className="toolbox-body">
           <ExpansionPanel
             square
@@ -212,7 +226,6 @@ const Toolbox = props => {
             defaultExpanded={true}
           >
             <ExpansionPanelSummary
-              className="panel-title"
               expandIcon={<ExpandMoreIcon />}
               onClick={() => handleClick('source')}
             >
@@ -316,7 +329,7 @@ const Toolbox = props => {
           </ExpansionPanel>
         </div>
 
-        <AddGraphDialog
+        <ToolboxAddGraphDialog
           isOpen={isOpen}
           graphType={graphType}
           handleConfirm={handleAddGraph}
@@ -340,6 +353,7 @@ Toolbox.propTypes = {
     stream: PropTypes.bool.isRequired,
   }).isRequired,
   toolboxKey: PropTypes.number.isRequired,
+  setToolboxExpanded: PropTypes.func.isRequired,
   paper: PropTypes.any,
   graph: PropTypes.any,
 };
