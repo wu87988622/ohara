@@ -19,8 +19,9 @@ package com.island.ohara.agent.docker
 import java.util.Objects
 
 import com.island.ohara.agent.Agent
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.docker.DockerClient.{Creator, Inspector}
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName, PortMapping}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Resource
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}

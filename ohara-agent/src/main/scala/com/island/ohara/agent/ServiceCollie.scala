@@ -20,10 +20,11 @@ import java.net.{URL, URLClassLoader}
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import com.island.ohara.agent.ssh.ServiceCollieImpl
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.client.configurator.v0.InspectApi.FileContent
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}

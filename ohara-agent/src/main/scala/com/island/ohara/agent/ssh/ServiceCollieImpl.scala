@@ -19,8 +19,9 @@ package com.island.ohara.agent.ssh
 import java.util.concurrent.{ExecutorService, TimeUnit}
 
 import com.island.ohara.agent._
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerName}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey

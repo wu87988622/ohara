@@ -27,17 +27,6 @@ object ContainerApi {
   final case class PortMapping(hostIp: String, hostPort: Int, containerPort: Int)
   implicit val PORT_MAPPING_JSON_FORMAT: RootJsonFormat[PortMapping] = jsonFormat3(PortMapping)
 
-  /**
-    * Getting full information of container is a expensive operation. And most cases requires the name, id, image name
-    * and node name only. Hence, we separate a class to contain less data to reduce the cost of fetching whole container
-    * from remote
-    * @param id container id
-    * @param name container name
-    * @param imageName image name
-    * @param nodeName node running this container
-    */
-  final class ContainerName(val id: String, val name: String, val imageName: String, val nodeName: String)
-
   final case class ContainerInfo(
     nodeName: String,
     id: String,
