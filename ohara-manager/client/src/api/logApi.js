@@ -20,7 +20,7 @@ import * as URL from './utils/url';
 
 const url = URL.LOG_URL;
 
-const service = {
+export const services = {
   configurator: 'configurator',
   zookeeper: 'zookeepers',
   broker: 'brokers',
@@ -30,7 +30,7 @@ const service = {
 
 export const getConfiguratorLog = async (params = {}) => {
   const res = await axiosInstance.get(
-    url + '/' + service.configurator + URL.toQueryParameters(params),
+    `${url}/${services.configurator}${URL.toQueryParameters(params)}`,
   );
   return responseUtil(res, log);
 };
@@ -38,7 +38,7 @@ export const getConfiguratorLog = async (params = {}) => {
 export const getZookeeperLog = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(
-    `${url}/${service.zookeeper}/${name}?group=${group}`,
+    `${url}/${services.zookeeper}/${name}?group=${group}`,
   );
   return responseUtil(res, log);
 };
@@ -46,7 +46,7 @@ export const getZookeeperLog = async params => {
 export const getBrokerLog = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(
-    `${url}/${service.broker}/${name}?group=${group}`,
+    `${url}/${services.broker}/${name}?group=${group}`,
   );
   return responseUtil(res, log);
 };
@@ -54,7 +54,7 @@ export const getBrokerLog = async params => {
 export const getWorkerLog = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(
-    `${url}/${service.worker}/${name}?group=${group}`,
+    `${url}/${services.worker}/${name}?group=${group}`,
   );
   return responseUtil(res, log);
 };
@@ -62,7 +62,7 @@ export const getWorkerLog = async params => {
 export const getStreamLog = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(
-    `${url}/${service.stream}/${name}?group=${group}`,
+    `${url}/${services.stream}/${name}?group=${group}`,
   );
   return responseUtil(res, log);
 };

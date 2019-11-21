@@ -29,7 +29,6 @@ import { SnackbarProvider } from './context/SnackbarContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
-import { DevToolDialogProvider } from './context/DevToolDialogContext';
 
 const ContextProviderComposer = ({ contextProviders, children }) => {
   return contextProviders.reduceRight(
@@ -54,7 +53,6 @@ const AppProviders = ({ children }) => {
         <PipelineProvider children={children} />,
         <TopicProvider children={children} />,
         <NodeDialogProvider children={children} />,
-        <DevToolDialogProvider children={children} />,
       ]}
     >
       {children}

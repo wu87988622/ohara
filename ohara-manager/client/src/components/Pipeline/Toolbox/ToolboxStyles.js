@@ -25,7 +25,6 @@ export const StyledToolbox = styled.div(
     background-color: ${theme.palette.common.white};
     box-shadow: ${theme.shadows[24]};
     display: none;
-    z-index: ${theme.zIndex.modal};
     &.is-open {
       display: block;
     }

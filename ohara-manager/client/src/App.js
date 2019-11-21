@@ -20,7 +20,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
 import AppBar from 'components/Layout/AppBar';
-import { DevToolDialog, TopicDataWindow } from 'components/Developer';
+import { DevToolDialog, TopicDataWindow } from 'components/DevTool';
 import NotFoundPage from 'components/NotFoundPage';
 import { Pipeline, Navigator } from 'components/Pipeline';
 

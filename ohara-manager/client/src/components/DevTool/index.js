@@ -14,35 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  DialogProvider,
-  useAddTopicDialog,
-  useViewTopicDialog,
-  useEditWorkspaceDialog,
-  useDevToolDialog,
-} from 'context/dialog/DialogContext';
-import {
-  TopicProvider,
-  useTopicState,
-  useTopicActions,
-} from 'context/topic/TopicContext';
-import {
-  WorkspaceProvider,
-  useWorkspace,
-} from 'context/workspace/WorkspaceContext';
+import DevToolDialog from './DevToolDialog';
+import TopicDataWindow from './Body/TopicDataWindow';
 
-export {
-  // Dialog
-  DialogProvider,
-  useViewTopicDialog,
-  useEditWorkspaceDialog,
-  useAddTopicDialog,
-  useDevToolDialog,
-  // Topic
-  TopicProvider,
-  useTopicState,
-  useTopicActions,
-  // Workspace
-  WorkspaceProvider,
-  useWorkspace,
-};
+export { DevToolDialog, TopicDataWindow };

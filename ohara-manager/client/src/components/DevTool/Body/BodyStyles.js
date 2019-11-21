@@ -14,35 +14,20 @@
  * limitations under the License.
  */
 
-import {
-  DialogProvider,
-  useAddTopicDialog,
-  useViewTopicDialog,
-  useEditWorkspaceDialog,
-  useDevToolDialog,
-} from 'context/dialog/DialogContext';
-import {
-  TopicProvider,
-  useTopicState,
-  useTopicActions,
-} from 'context/topic/TopicContext';
-import {
-  WorkspaceProvider,
-  useWorkspace,
-} from 'context/workspace/WorkspaceContext';
+import styled from 'styled-components';
+import { TableRow } from '@material-ui/core';
 
-export {
-  // Dialog
-  DialogProvider,
-  useViewTopicDialog,
-  useEditWorkspaceDialog,
-  useAddTopicDialog,
-  useDevToolDialog,
-  // Topic
-  TopicProvider,
-  useTopicState,
-  useTopicActions,
-  // Workspace
-  WorkspaceProvider,
-  useWorkspace,
-};
+export const StyledTopicView = styled.div`
+  textarea {
+    width: 100%;
+    height: 200px;
+    resize: none;
+  }
+`;
+
+export const StyledFooter = styled(TableRow)`
+  td {
+    padding: 1px;
+    height: 26px;
+  }
+`;

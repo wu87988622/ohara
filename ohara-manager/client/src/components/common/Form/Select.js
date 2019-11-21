@@ -24,6 +24,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 // we're not using Mui's <Select /> component directly here
 const StyledSelect = styled(TextField)`
   width: ${props => props.width};
+  margin: ${props => props.theme.spacing(1)}px;
 `;
 
 const Select = props => {

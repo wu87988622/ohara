@@ -23,7 +23,7 @@ import TableCell from '@material-ui/core/TableCell';
 
 import { Table } from 'components/common/Table';
 import { Dialog } from 'components/common/Dialog';
-import { DialogBody, FooterRow } from './Styles';
+import { StyledTopicView, StyledFooter } from './BodyStyles';
 
 const TopicDataTable = props => {
   const [viewTopicMessage, setViewTopicMessage] = useState({});
@@ -40,7 +40,7 @@ const TopicDataTable = props => {
         });
       }
     });
-    // the detail view header
+    // the detail view header must insert to the first element
     headers.sort().unshift('');
     return headers;
   };
@@ -83,9 +83,9 @@ const TopicDataTable = props => {
         children={genDataBody(topicData)}
         footer={
           isEmpty(topicData) ? null : (
-            <FooterRow>
+            <StyledFooter>
               <TableCell>${topicData.length} rows per query</TableCell>
-            </FooterRow>
+            </StyledFooter>
           )
         }
       />
@@ -94,7 +94,7 @@ const TopicDataTable = props => {
         open={!isEmpty(viewTopicMessage)}
         handleClose={() => setViewTopicMessage({})}
         children={
-          <DialogBody>
+          <StyledTopicView>
             <textarea
               readOnly
               value={JSON.stringify(
@@ -105,7 +105,7 @@ const TopicDataTable = props => {
                 2,
               )}
             />
-          </DialogBody>
+          </StyledTopicView>
         }
         showActions={false}
       />

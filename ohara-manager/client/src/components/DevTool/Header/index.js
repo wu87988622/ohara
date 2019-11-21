@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import DevToolDialog from './DevToolDialog';
-import TopicDataTable from './TopicDataTable';
-import TopicDataWindow from './TopicDataWindow';
+import Header from './Header';
 
-export { DevToolDialog, TopicDataTable, TopicDataWindow };
+export default Header;

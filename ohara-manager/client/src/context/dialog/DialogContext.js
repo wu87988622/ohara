@@ -30,6 +30,7 @@ import {
   EDIT_WORKSPACE_DIALOG,
   ADD_TOPIC_DIALOG,
   VIEW_TOPIC_DIALOG,
+  DEV_TOOL_DIALOG,
 } from './dialogNames';
 import { reducer, initialState } from './dialogReducer';
 
@@ -106,10 +107,12 @@ const createUseDialogActions = name => () => {
 const useEditWorkspaceDialog = createUseDialogActions(EDIT_WORKSPACE_DIALOG);
 const useAddTopicDialog = createUseDialogActions(ADD_TOPIC_DIALOG);
 const useViewTopicDialog = createUseDialogActions(VIEW_TOPIC_DIALOG);
+const useDevToolDialog = createUseDialogActions(DEV_TOOL_DIALOG);
 
 export {
   DialogProvider,
   useEditWorkspaceDialog,
   useAddTopicDialog,
   useViewTopicDialog,
+  useDevToolDialog,
 };

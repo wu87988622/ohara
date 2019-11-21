@@ -26,9 +26,8 @@ import AddIcon from '@material-ui/icons/Add';
 import { Link } from 'react-router-dom';
 
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
-import { useWorkspace } from 'context';
+import { useWorkspace, useDevToolDialog } from 'context';
 import { useNodeDialog } from 'context/NodeDialogContext';
-import { useDevToolDialog } from 'context/DevToolDialogContext';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
@@ -48,7 +47,7 @@ const AppBar = () => {
 
   const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
   const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
-  const { setIsOpen: setIsDevToolDialogOpen } = useDevToolDialog();
+  const { open: openDevToolDialog } = useDevToolDialog();
 
   React.useEffect(() => {
     if (isEmpty(workspaceName) || isEmpty(workspaces)) return;
@@ -111,10 +110,7 @@ const AppBar = () => {
         <Tools>
           <AppsIcon className="workspace item" />
           <AssignmentIcon className="item" />
-          <DeveloperModeIcon
-            className="item"
-            onClick={() => setIsDevToolDialogOpen(true)}
-          />
+          <DeveloperModeIcon className="item" onClick={openDevToolDialog} />
           <StorageIcon
             className="nodes item"
             onClick={() => setIsNodeDialogOpen(true)}
