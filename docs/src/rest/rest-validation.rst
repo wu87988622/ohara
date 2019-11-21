@@ -182,50 +182,6 @@ Example Response
        }
      ]
 
-
-Validate the node connection
-----------------------------
-
-*PUT /v0/validate/node*
-
-The parameters of request are shown below:
-
-#. hostname (**string**) — hostname of node
-#. port (**int**) — ssh port of node
-#. user (**string**) — ssh account
-#. password (**string**) — ssh password
-
-Example Request
-  .. code-block:: json
-
-     {
-       "hostname": "node00",
-       "port": 22,
-       "user": "abc",
-       "password": "pwd"
-     }
-
-Since Node connection is used by ohara configurator only, ohara
-configurator validates the connection by itself. The format of report is
-same to other reports but the **hostname** is fill with **node’s hostname**
-rather than node which execute the validation.
-
-#. hostname (**string**) — node’s hostname
-#. message (**string**) — the description about this validation
-#. pass (**boolean**) — true is pass
-
-Example Response
-  .. code-block:: json
-
-     [
-       {
-         "hostname": "node00",
-         "message": "succeed to connector to ssh server",
-         "pass": true
-       }
-     ]
-
-
 Validate the connector settings
 -------------------------------
 

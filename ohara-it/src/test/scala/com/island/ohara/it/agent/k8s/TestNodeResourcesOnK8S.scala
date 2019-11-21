@@ -44,11 +44,7 @@ class TestNodeResourcesOnK8S extends BasicTests4Resources {
     if (nodes.isEmpty) skipTest(s"You must assign nodes for collie tests")
     else {
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-      nodes.foreach { node =>
-        result(
-          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
-        )
-      }
+      nodes.foreach(node => result(nodeApi.request.node(node).create()))
       result(nodeApi.list()).size shouldBe nodes.size
       result(nodeApi.list()).foreach(node => nodes.exists(_.name == node.name) shouldBe true)
     }

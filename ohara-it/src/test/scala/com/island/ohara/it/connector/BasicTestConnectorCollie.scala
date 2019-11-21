@@ -92,11 +92,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
   final def setup(): Unit = {
     checkDataBaseInfo() //Check db info
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodes.foreach { node =>
-      result(
-        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
-      )
-    }
+    nodes.foreach(node => result(nodeApi.request.node(node).create()))
     uploadJDBCJarToConfigurator() //For upload JDBC jar
 
     // Create database client

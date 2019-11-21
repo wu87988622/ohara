@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{NodeApi, ValidationApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -25,8 +25,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 class TestValidationRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake().build()
 
@@ -141,69 +141,6 @@ class TestValidationRoute extends OharaTest {
         .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
         .verify()
     )
-
-  @Test
-  def validateNode(): Unit = {
-    val hostname = CommonUtils.randomString(5)
-    val port     = 22
-    val user     = CommonUtils.randomString(5)
-    val password = CommonUtils.randomString(5)
-    result(
-      NodeApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .hostname(hostname)
-        .port(port)
-        .user(user)
-        .password(password)
-        .create()
-    )
-    val reports = result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .nodeRequest
-        .hostname(hostname)
-        .port(port)
-        .user(user)
-        .password(password)
-        .verify()
-    )
-    reports.isEmpty shouldBe false
-    reports.foreach(_.pass shouldBe true)
-    // the validated node is equal to existent node so report is attached to the existent node
-    // the number of node validation report is always one
-    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport.get shouldBe reports.head
-
-    val report2 = result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .nodeRequest
-        .hostname(hostname)
-        .port(port + 1)
-        .user(user)
-        .password(password)
-        .verify()
-    ).head
-    // the validated node is not equal to existent node so report2 is attached to the existent node
-    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport.get should not be report2
-
-    // updating the node can clean the report
-    result(
-      NodeApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .hostname(hostname)
-        .port(port)
-        .user(user)
-        .password(password)
-        .update()
-    )
-    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport shouldBe None
-  }
 
   @Test
   def testFakeReport(): Unit = result(ValidationRoute.fakeReport()).foreach(_.pass shouldBe true)

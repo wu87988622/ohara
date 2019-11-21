@@ -18,7 +18,6 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.configurator.Data
-import com.island.ohara.client.configurator.v0.ValidationApi.ValidationReport
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -135,7 +134,6 @@ object NodeApi {
     password: Option[String],
     services: Seq[NodeService],
     lastModified: Long,
-    validationReport: Option[ValidationReport],
     resources: Seq[Resource],
     tags: Map[String, JsValue]
   ) extends Data {
@@ -149,12 +147,43 @@ object NodeApi {
     override def kind: String                  = "node"
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat9(Node)
+  object Node {
+    /**
+      * create a node with only hostname. It means this node is illegal to ssh mode.
+      * @param hostname hostname
+      * @return node
+      */
+    def apply(hostname: String): Node = Node(
+      hostname = hostname,
+      port = None,
+      user = None,
+      password = None,
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      resources = Seq.empty,
+      tags = Map.empty
+    )
+  }
+
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat8(Node.apply)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    /**
+      * a specific setter that user can generate a request according to a existent node.
+      * Noted that not all fields are copy to server. the included fields are shown below.
+      * 1) hostname
+      * 2) port
+      * 3) user
+      * 4) password
+      * 5) tags
+      * @param node node info
+      * @return request
+      */
+    def node(node: Node): Request
+
     def hostname(hostname: String): Request
 
     @Optional("it is ignorable if you are going to send update request")
@@ -206,6 +235,16 @@ object NodeApi {
       private[this] var user: Option[String]       = None
       private[this] var password: Option[String]   = None
       private[this] var tags: Map[String, JsValue] = _
+
+      override def node(node: Node): Request = {
+        this.hostname = node.hostname
+        this.port = node.port
+        this.user = node.user
+        this.password = node.password
+        this.tags = node.tags
+        this
+      }
+
       override def hostname(hostname: String): Request = {
         this.hostname = CommonUtils.requireNonEmpty(hostname)
         this

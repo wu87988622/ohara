@@ -127,7 +127,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             user = Some("fake"),
             password = Some("fake"),
             lastModified = CommonUtils.current(),
-            validationReport = None,
             resources = Seq.empty,
             tags = Map.empty
           )
@@ -345,20 +344,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .flatMap(_.nodeNames)
         // DON'T add duplicate nodes!!!
         .toSet[String]
-        .map(
-          name =>
-            Node(
-              hostname = name,
-              port = Some(22),
-              user = Some("fake"),
-              password = Some("fake"),
-              services = Seq.empty,
-              lastModified = CommonUtils.current(),
-              validationReport = None,
-              resources = Seq.empty,
-              tags = Map.empty
-            )
-        )
+        .map(Node.apply)
         .foreach(store.addIfAbsent[Node])
       serviceCollie(collie)
     }
@@ -410,7 +396,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
   /**
     * Set a k8s api server url
-    * @param url k8s api server url
     * @return this builder
     */
   @Optional("default value is null")

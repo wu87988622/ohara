@@ -53,18 +53,8 @@ class TestK8SBasicCollieImpl extends OharaTest {
   }
 
   private[this] def zookeeperClusterName(containerName: String): String = {
-    val node1Name = "node1"
-    val node1: Node = Node(
-      hostname = node1Name,
-      port = Some(22),
-      user = Some("fake"),
-      password = Some("fake"),
-      services = Seq.empty,
-      lastModified = CommonUtils.current(),
-      validationReport = None,
-      resources = Seq.empty,
-      tags = Map.empty
-    )
+    val node1Name        = "node1"
+    val node1: Node      = Node(node1Name)
     val nodes: Seq[Node] = Seq(node1)
     val dataCollie       = DataCollie(nodes)
     val k8sClient        = new FakeK8SClient(true, None, containerName)

@@ -17,10 +17,9 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.fake.FakeK8SClient
-import com.island.ohara.agent.{ServiceCollie, DataCollie}
+import com.island.ohara.agent.{DataCollie, ServiceCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
 
@@ -34,17 +33,7 @@ class TestK8SClientVerify extends OharaTest {
   private[this] val nodeCache              = new ArrayBuffer[Node]()
   private[this] val dataCollie: DataCollie = DataCollie(nodeCache)
 
-  private[this] def node: Node = Node(
-    hostname = "ohara",
-    port = Some(22),
-    user = Some("fake"),
-    password = Some("fake"),
-    services = Seq.empty,
-    lastModified = CommonUtils.current(),
-    validationReport = None,
-    resources = Seq.empty,
-    tags = Map.empty
-  )
+  private[this] def node: Node = Node("ohara")
 
   @Test
   def testMockK8sClientVerifyNode1(): Unit = {
@@ -101,19 +90,7 @@ class TestK8SClientVerify extends OharaTest {
       ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
-        serviceCollie.verifyNode(
-          Node(
-            hostname = "ohara",
-            port = Some(22),
-            user = Some("fake"),
-            password = Some("fake"),
-            services = Seq.empty,
-            lastModified = CommonUtils.current(),
-            validationReport = None,
-            resources = Seq.empty,
-            tags = Map.empty
-          )
-        ),
+        serviceCollie.verifyNode(Node("ohara")),
         30 seconds
       )
     runningNode match {

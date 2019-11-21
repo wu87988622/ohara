@@ -68,20 +68,7 @@ object EnvTestingUtils {
       .get(K8S_NODES_KEY)
       .map(
         _.split(",")
-          .map(
-            node =>
-              Node(
-                hostname = node,
-                port = Some(22),
-                user = Some("fake"),
-                password = Some("fake"),
-                services = Seq.empty,
-                lastModified = CommonUtils.current(),
-                validationReport = None,
-                resources = Seq.empty,
-                tags = Map.empty
-              )
-          )
+          .map(Node.apply)
           .toSeq
       )
       .getOrElse(throw new AssumptionViolatedException(s"$K8S_NODES_KEY does not exists!!!"))
@@ -107,7 +94,6 @@ object EnvTestingUtils {
           password = Some(password),
           services = Seq.empty,
           lastModified = CommonUtils.current(),
-          validationReport = None,
           resources = Seq.empty,
           tags = Map.empty
         )

@@ -16,12 +16,12 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.ValidationApi.FTP_VALIDATION_JSON_FORMAT
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
-import ValidationApi.FTP_VALIDATION_JSON_FORMAT
-import com.island.ohara.common.setting.ObjectKey
 import spray.json._
 class TestValidationApi extends OharaTest {
   @Test
@@ -206,52 +206,6 @@ class TestValidationApi extends OharaTest {
     validation.user shouldBe user
     validation.password shouldBe password
     validation.workerClusterKey shouldBe workerClusterKey
-  }
-
-  @Test
-  def nullHostnameOnNode(): Unit =
-    an[NullPointerException] should be thrownBy ValidationApi.access.nodeRequest.hostname(null)
-
-  @Test
-  def emptyHostnameOnNode(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.nodeRequest.hostname("")
-
-  @Test
-  def negativePortOnNode(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.nodeRequest.port(-1)
-
-  @Test
-  def zeoPortOnNode(): Unit = an[IllegalArgumentException] should be thrownBy ValidationApi.access.nodeRequest.port(0)
-
-  @Test
-  def nullUserOnNode(): Unit = an[NullPointerException] should be thrownBy ValidationApi.access.nodeRequest.user(null)
-
-  @Test
-  def emptyUserOnNode(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.nodeRequest.user("")
-
-  @Test
-  def nullPasswordOnNode(): Unit =
-    an[NullPointerException] should be thrownBy ValidationApi.access.nodeRequest.password(null)
-
-  @Test
-  def emptyPasswordOnNode(): Unit =
-    an[IllegalArgumentException] should be thrownBy ValidationApi.access.nodeRequest.password("")
-
-  @Test
-  def testNodeValidation(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val port     = CommonUtils.availablePort()
-    val user     = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
-
-    val validation =
-      ValidationApi.access.nodeRequest.hostname(hostname).port(port).user(user).password(password).validation
-
-    validation.hostname shouldBe hostname
-    validation.port.get shouldBe port
-    validation.user.get shouldBe user
-    validation.password.get shouldBe password
   }
 
   @Test
@@ -468,100 +422,6 @@ class TestValidationApi extends OharaTest {
     )
 
     an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
-      """
-        |  {
-        |    "hostname": "hostname",
-        |    "port": 123,
-        |    "user": "user",
-        |    "password": ""
-        |  }
-      """.stripMargin.parseJson
-    )
-  }
-
-  @Test
-  def testParseNodeValidation(): Unit = {
-    val hostname       = CommonUtils.randomString()
-    val port           = CommonUtils.availablePort()
-    val user           = CommonUtils.randomString()
-    val password       = CommonUtils.randomString()
-    val nodeValidation = ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(s"""
-         |  {
-         |    "hostname": "$hostname",
-         |    "port": $port,
-         |    "user": "$user",
-         |    "password": "$password"
-         |  }
-      """.stripMargin.parseJson)
-
-    nodeValidation.hostname shouldBe hostname
-    nodeValidation.port.get shouldBe port
-    nodeValidation.user.get shouldBe user
-    nodeValidation.password.get shouldBe password
-  }
-
-  @Test
-  def testNegativeConnectionPortForNodeValidation(): Unit =
-    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
-      """
-        |  {
-        |    "hostname": "hostname",
-        |    "port": -1,
-        |    "user": "user",
-        |    "password": "password"
-        |  }
-      """.stripMargin.parseJson
-    )
-
-  @Test
-  def testZeroConnectionPortForNodeValidation(): Unit =
-    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
-      """
-        |  {
-        |    "hostname": "hostname",
-        |    "port": 0,
-        |    "user": "user",
-        |    "password": "password"
-        |  }
-      """.stripMargin.parseJson
-    )
-
-  @Test
-  def testEmptyStringForNodeValidation(): Unit = {
-    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
-      """
-        |  {
-        |    "hostname": "",
-        |    "port": 123,
-        |    "user": "user",
-        |    "password": "password"
-        |  }
-      """.stripMargin.parseJson
-    )
-
-    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
-      """
-        |  {
-        |    "hostname": "hostname",
-        |    "port": "",
-        |    "user": "user",
-        |    "password": "password"
-        |  }
-      """.stripMargin.parseJson
-    )
-
-    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
-      """
-        |  {
-        |    "hostname": "hostname",
-        |    "port": 123,
-        |    "user": "",
-        |    "password": "password"
-        |  }
-      """.stripMargin.parseJson
-    )
-
-    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
       """
         |  {
         |    "hostname": "hostname",

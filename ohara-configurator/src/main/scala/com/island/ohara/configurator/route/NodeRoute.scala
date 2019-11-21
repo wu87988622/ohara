@@ -149,7 +149,6 @@ object NodeRoute {
         password = creation.password,
         services = Seq.empty,
         lastModified = CommonUtils.current(),
-        validationReport = None,
         resources = Seq.empty,
         tags = creation.tags
       )

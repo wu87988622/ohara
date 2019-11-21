@@ -323,4 +323,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testLargeMemoryResource(): Unit = Resource.memory(Long.MaxValue, None).unit shouldBe "MB"
+
+  @Test
+  def testNodeSetter(): Unit = NodeApi.access.request.node(Node(CommonUtils.randomString()))
 }

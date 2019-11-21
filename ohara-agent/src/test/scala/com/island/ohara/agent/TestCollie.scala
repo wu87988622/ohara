@@ -39,7 +39,6 @@ class TestCollie extends OharaTest {
     password = Some("123456"),
     services = Seq.empty,
     lastModified = CommonUtils.current(),
-    validationReport = None,
     resources = Seq.empty,
     tags = Map.empty
   )

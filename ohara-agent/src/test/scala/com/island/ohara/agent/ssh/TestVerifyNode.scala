@@ -101,7 +101,6 @@ class TestVerifyNode extends OharaTest {
     password = Some(sshServer.password()),
     services = Seq.empty,
     lastModified = CommonUtils.current(),
-    validationReport = None,
     resources = Seq.empty,
     tags = Map.empty
   )

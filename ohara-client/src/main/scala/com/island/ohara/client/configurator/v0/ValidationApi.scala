@@ -80,19 +80,6 @@ object ValidationApi {
     .acceptStringToNumber("port")
     .refine
 
-  val VALIDATION_NODE_PREFIX_PATH: String = "node"
-  final case class NodeValidation private[ValidationApi] (
-    hostname: String,
-    port: Option[Int],
-    user: Option[String],
-    password: Option[String]
-  )
-  implicit val NODE_VALIDATION_JSON_FORMAT: OharaJsonFormat[NodeValidation] = JsonRefiner[NodeValidation]
-    .format(jsonFormat4(NodeValidation))
-    .rejectEmptyString()
-    .requireConnectionPort("port")
-    .refine
-
   final case class ValidationReport(hostname: String, message: String, pass: Boolean, lastModified: Long)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat4(ValidationReport)
 
@@ -213,21 +200,6 @@ object ValidationApi {
     def verify()(implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]]
   }
 
-  sealed abstract class NodeRequest extends BasicNodeRequest {
-    /**
-      * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
-      * @return the payload of creation
-      */
-    @VisibleForTesting
-    private[v0] def validation: NodeValidation
-
-    /**
-      * used to verify the setting of rdb on specific worker cluster
-      * @return validation reports
-      */
-    def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
-  }
-
   sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
     /**
       * start a progress to build a request to validate connector
@@ -248,8 +220,6 @@ object ValidationApi {
     def hdfsRequest: HdfsRequest
 
     def rdbRequest: RdbRequest
-
-    def nodeRequest: NodeRequest
   }
 
   def access: Access = new Access(VALIDATION_PREFIX_PATH) {
@@ -313,19 +283,6 @@ object ValidationApi {
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]] =
         exec
           .put[RdbValidation, Seq[RdbValidationReport], ErrorApi.Error](s"$url/$VALIDATION_RDB_PREFIX_PATH", validation)
-    }
-
-    override def nodeRequest: NodeRequest = new NodeRequest {
-      override private[v0] def validation = NodeValidation(
-        hostname = CommonUtils.requireNonEmpty(hostname),
-        port = port.map(CommonUtils.requireConnectionPort),
-        user = Option(user).map(CommonUtils.requireNonEmpty),
-        password = Option(password).map(CommonUtils.requireNonEmpty)
-      )
-
-      override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-        exec
-          .put[NodeValidation, Seq[ValidationReport], ErrorApi.Error](s"$url/$VALIDATION_NODE_PREFIX_PATH", validation)
     }
 
     override def connectorRequest: ConnectorRequest = new ConnectorRequest {

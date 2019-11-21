@@ -33,7 +33,7 @@ abstract class BasicIntegrationTestsOfJsonIoOnK8s extends BasicIntegrationTestsO
   override protected val configurator: Configurator = {
     val configurator = Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
     val nodeApi      = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    nodes.foreach(node => result(nodeApi.request.hostname(node.name).port(node.port.get).create()))
+    nodes.foreach(node => result(nodeApi.request.node(node).create()))
     configurator
   }
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())

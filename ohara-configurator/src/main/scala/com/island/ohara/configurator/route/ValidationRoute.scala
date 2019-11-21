@@ -19,10 +19,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
-import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
-import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
@@ -30,10 +28,9 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.store.DataStore
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsObject, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
@@ -105,7 +102,6 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     dataStore: DataStore,
     adminCleaner: AdminCleaner,
     workerCollie: WorkerCollie,
-    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =
     pathPrefix(VALIDATION_PREFIX_PATH) {
@@ -141,55 +137,23 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                 case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
               }
           }
-      ) ~ verifyRoute(
-        root = VALIDATION_NODE_PREFIX_PATH,
-        verify = (req: NodeValidation) =>
-          serviceCollie
-            .verifyNode(
-              Node(
-                hostname = req.hostname,
-                port = req.port,
-                user = req.user,
-                password = req.password,
-                services = Seq.empty,
-                lastModified = CommonUtils.current(),
-                validationReport = None,
-                resources = Seq.empty,
-                tags = Map.empty
+      ) ~ path("node") {
+        put {
+          entity(as[JsObject])(
+            obj =>
+              complete(
+                Seq(
+                  ValidationReport(
+                    hostname = obj.fields.get("hostname").map(_.convertTo[String]).getOrElse("unknown"),
+                    message = "this is deprecated",
+                    pass = true,
+                    lastModified = CommonUtils.current()
+                  )
+                )
               )
-            )
-            .map {
-              case Success(value) =>
-                ValidationReport(
-                  hostname = req.hostname,
-                  message = value,
-                  pass = true,
-                  lastModified = CommonUtils.current()
-                )
-              case Failure(exception) =>
-                ValidationReport(
-                  hostname = req.hostname,
-                  message = exception.getMessage,
-                  pass = false,
-                  lastModified = CommonUtils.current()
-                )
-            }
-            .flatMap { report =>
-              dataStore.get[Node](NodeApi.key(req.hostname)).flatMap { nodeOption =>
-                nodeOption
-                  .filter { node =>
-                    node.hostname == req.hostname &&
-                    node.port == req.port &&
-                    node.user == req.user &&
-                    node.password == req.password
-                  }
-                  .map(_.copy(validationReport = Some(report)))
-                  .map(node => dataStore.add[Node](node).map(_ => report))
-                  .getOrElse(Future.successful(report))
-              }
-            }
-            .map(Seq(_))
-      ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
+          )
+        }
+      } ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
         put {
           entity(as[Creation])(
             req =>

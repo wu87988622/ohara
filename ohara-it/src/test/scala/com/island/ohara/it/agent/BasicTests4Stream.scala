@@ -84,11 +84,7 @@ abstract class BasicTests4Stream extends IntegrationTest {
       access = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       // add all available nodes
-      nodes.foreach { node =>
-        result(
-          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
-        )
-      }
+      nodes.foreach(node => result(nodeApi.request.node(node).create()))
       nodes.size shouldBe nodes.size
       nodes.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
 

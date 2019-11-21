@@ -72,11 +72,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
       )
     else {
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-      nodes.foreach { node =>
-        result(
-          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create()
-        )
-      }
+      nodes.foreach(node => result(nodeApi.request.node(node).create()))
     }
 
   @Test
