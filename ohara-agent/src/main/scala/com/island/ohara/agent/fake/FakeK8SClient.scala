@@ -56,7 +56,9 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
     throw new UnsupportedOperationException("FakeK8SClient not support remove function")
 
-  override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] =
+  override def log(name: String, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[String] =
     Future.successful(s"fake k8s log for $name")
 
   override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] =

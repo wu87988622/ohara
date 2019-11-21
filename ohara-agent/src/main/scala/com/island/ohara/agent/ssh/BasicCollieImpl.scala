@@ -87,7 +87,9 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
         true
       }
 
-  override def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+  override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[Map[ContainerInfo, String]] =
     dataCollie
       .values[Node]()
       .flatMap(
@@ -114,7 +116,7 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
               container -> dockerCache.exec(
                 node,
                 client =>
-                  try client.log(container.name)
+                  try client.log(container.name, sinceSeconds)
                   catch {
                     case _: Throwable => s"failed to get log from ${container.name}"
                   }

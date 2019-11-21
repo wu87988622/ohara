@@ -146,15 +146,9 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
     dataCollie.values[Node]().map(_.flatMap(dockerCache.exec(_, _.containerNames())))
 
-  override def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] =
-    logs(_.name == name).map(_.head)
-
-  override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
-    logs(_ => true)
-
-  private[this] def logs(
-    filter: ContainerName => Boolean
-  )(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+  override def log(name: String, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[(ContainerName, String)] =
     dataCollie
       .values[Node]()
       .map(
@@ -163,14 +157,14 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
             dockerCache.exec(
               node,
               client =>
-                client.containerNames().filter(filter).flatMap { containerName =>
-                  try Some((containerName, client.log(containerName.name)))
+                client.containerNames().filter(_.name == name).flatMap { containerName =>
+                  try Some((containerName, client.log(containerName.name, sinceSeconds)))
                   catch {
                     case _: Throwable => None
                   }
                 }
             )
-        ).toMap
+        ).head
       )
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =

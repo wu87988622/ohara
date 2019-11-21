@@ -54,7 +54,7 @@ private class K8SBrokerCollieImpl(val dataCollie: DataCollie, zkCollie: Zookeepe
       .envs(containerInfo.environments)
       .name(containerInfo.name)
       .threadPool(executionContext)
-      .args(arguments)
+      .arguments(arguments)
       .create()
       .recover {
         case e: Throwable =>

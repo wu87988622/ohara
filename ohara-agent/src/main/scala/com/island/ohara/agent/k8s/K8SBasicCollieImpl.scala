@@ -45,9 +45,9 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
   ): Future[Boolean] =
     k8sClient.remove(beRemovedContainer.name).map(_ => true)
 
-  override def logs(
-    objectKey: ObjectKey
-  )(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+  override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[Map[ContainerInfo, String]] =
     dataCollie
       .values[Node]()
       .flatMap(
@@ -60,7 +60,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
                 container =>
                   Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName)
               )
-              .map(container => k8sClient.log(container.name).map(container -> _))
+              .map(container => k8sClient.log(container.name, sinceSeconds).map(container -> _))
           )
       )
       .map(_.toMap)

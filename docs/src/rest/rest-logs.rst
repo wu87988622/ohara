@@ -24,6 +24,10 @@ blame for simplifying your life, there is a slim chance that something
 don’t work well in ohara. The Logs APIs, which are engineers’ best
 friend, open a door to observe the logs of running cluster.
 
+The available query parameters are shown below.
+
+#. sinceSeconds (**long**) — show the logs since relative time
+
 It collect output from all containers’ of a cluster and then format them
 to JSON representation which has following elements.
 

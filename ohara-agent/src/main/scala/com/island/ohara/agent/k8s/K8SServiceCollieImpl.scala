@@ -70,15 +70,12 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
         )
       )
 
-  override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+  override def log(name: String, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[(ContainerName, String)] =
     containerNames()
-      .flatMap(
-        containerNames =>
-          Future.sequence(containerNames.map { containerName =>
-            k8sClient.log(containerName.name).map(containerName -> _)
-          })
-      )
-      .map(_.toMap)
+      .map(_.find(_.name == name).getOrElse(throw new NoSuchElementException(s"$name does not exist")))
+      .flatMap(containerName => k8sClient.log(containerName.name, sinceSeconds).map(containerName -> _))
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] = {
     k8sClient
@@ -86,11 +83,11 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
       .flatMap(
         k8sNodeResource =>
           dataCollie.values[Node]().map {
-            _.map(
+            _.flatMap(
               node =>
                 if (k8sNodeResource.contains(node.hostname)) Seq(node -> k8sNodeResource(node.hostname))
                 else Seq.empty
-            ).flatten.toMap
+            ).toMap
           }
       )
   }

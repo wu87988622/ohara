@@ -53,7 +53,7 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .labelName(OHARA_LABEL)
       .domainName(K8S_DOMAIN_NAME)
       .name(containerInfo.name)
-      .args(arguments)
+      .arguments(arguments)
       .threadPool(executionContext)
       .create()
       .recover {

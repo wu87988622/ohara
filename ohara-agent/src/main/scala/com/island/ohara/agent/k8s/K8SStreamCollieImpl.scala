@@ -54,7 +54,7 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       )
       .routes(route)
       .envs(containerInfo.environments)
-      .args(arguments)
+      .arguments(arguments)
       .threadPool(executionContext)
       .create()
       .recover {

@@ -41,9 +41,9 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](dataCollie: DataCollie, c
     implicit executionContext: ExecutionContext
   ): Future[Boolean] = Future.successful(true)
 
-  override def logs(
-    objectKey: ObjectKey
-  )(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+  override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[Map[ContainerInfo, String]] =
     Future.successful(Map.empty)
 
   override def clusterWithAllContainers()(

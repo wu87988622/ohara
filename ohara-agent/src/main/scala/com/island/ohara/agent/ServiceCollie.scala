@@ -149,19 +149,9 @@ abstract class ServiceCollie extends Releasable {
     * @param executionContext thread pool
     * @return log or NoSuchElementException
     */
-  def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] =
-    logs().map(
-      _.find(_._1.name == name)
-        .map(e => e._1 -> e._2)
-        .getOrElse(throw new NoSuchElementException(s"container:$name is not existed!!!"))
-    )
-
-  /**
-    * list all container and log from hosted nodes
-    * @param executionContext thread pool
-    * @return container and log
-    */
-  def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]]
+  def log(name: String, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[(ContainerName, String)]
 
   /**
     * Fetch the available hardware resources of hosted nodes.

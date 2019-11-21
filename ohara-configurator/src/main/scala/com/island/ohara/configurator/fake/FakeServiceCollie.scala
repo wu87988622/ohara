@@ -71,9 +71,6 @@ private[configurator] class FakeServiceCollie(
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
     Future.successful(Seq.empty)
 
-  override def logs()(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
-    Future.successful(Map.empty)
-
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
     dataCollie
       .values[Node]()
@@ -89,4 +86,9 @@ private[configurator] class FakeServiceCollie(
       )
 
   private[this] def positiveValue(value: Double): Double = Math.abs(value)
+
+  override def log(name: String, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[(ContainerName, String)] =
+    Future.failed(new NoSuchElementException)
 }

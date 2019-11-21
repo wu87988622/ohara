@@ -86,7 +86,9 @@ trait Collie[T <: ClusterStatus] {
     * @param key cluster key
     * @return all log content from cluster. Each container has a log.
     */
-  def logs(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
+  def logs(key: ObjectKey, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[Map[ContainerInfo, String]]
 
   /**
     * create a cluster creator. The subclass should have following rules.

@@ -131,7 +131,7 @@ object ClusterNameHolder {
                 println(
                   s"[-----------------------------------[image:${containerName.imageName}][name:${containerName.name}-----------------------------------]"
                 )
-                val containerLogs = try client.log(containerName.name)
+                val containerLogs = try client.log(containerName.name, None)
                 catch {
                   case e: Throwable =>
                     s"failed to fetch the logs for container:${containerName.name}. caused by:${e.getMessage}"
@@ -170,7 +170,7 @@ object ClusterNameHolder {
           .foreach { container =>
             try {
               println(s"[-----------------------------------${container.name}-----------------------------------]")
-              val containerLogs = try Await.result(client.log(container.name), 30 seconds)
+              val containerLogs = try Await.result(client.log(container.name, None), 30 seconds)
               catch {
                 case e: Throwable =>
                   s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"

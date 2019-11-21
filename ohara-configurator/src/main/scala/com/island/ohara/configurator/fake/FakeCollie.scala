@@ -81,9 +81,9 @@ private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](da
   ): Future[Boolean] =
     Future.successful(clusterCache.remove(clusterInfo) != null)
 
-  override def logs(
-    objectKey: ObjectKey
-  )(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+  override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
+    implicit executionContext: ExecutionContext
+  ): Future[Map[ContainerInfo, String]] =
     exist(objectKey).flatMap(if (_) Future.successful {
       val containers = clusterCache.asScala.find(_._1.key == objectKey).get._2
       containers.map(_ -> "fake log").toMap

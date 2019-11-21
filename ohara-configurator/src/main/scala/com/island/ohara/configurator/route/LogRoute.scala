@@ -53,47 +53,53 @@ object LogRoute {
   def apply(implicit collie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LOG_PREFIX_PATH) {
       path(CONFIGURATOR_PREFIX_PATH) {
-        complete(
-          collie
-            .configuratorContainerName()
-            .map(_.name)
-            .flatMap(collie.log)
-            .map {
-              case (containerName, log) =>
-                ClusterLog(
-                  clusterKey = ObjectKey.of("N/A", containerName.name),
-                  logs = Seq(NodeLog(hostname = containerName.nodeName, value = log))
-                )
-            }
-            .recover {
-              // the configurator may be not accessible to us so we convert the error to log.
-              case e: Throwable =>
-                ClusterLog(
-                  clusterKey = ObjectKey.of("N/A", "unknown"),
-                  logs = Seq(NodeLog(hostname = "unknown", value = e.getMessage))
-                )
-            }
-        )
+        parameters(SINCE_SECONDS_KEY.as[Long] ?) { sinceSeconds =>
+          complete(
+            collie
+              .configuratorContainerName()
+              .map(_.name)
+              .flatMap(name => collie.log(name, sinceSeconds))
+              .map {
+                case (containerName, log) =>
+                  ClusterLog(
+                    clusterKey = ObjectKey.of("N/A", containerName.name),
+                    logs = Seq(NodeLog(hostname = containerName.nodeName, value = log))
+                  )
+              }
+              .recover {
+                // the configurator may be not accessible to us so we convert the error to log.
+                case e: Throwable =>
+                  ClusterLog(
+                    clusterKey = ObjectKey.of("N/A", "unknown"),
+                    logs = Seq(NodeLog(hostname = "unknown", value = e.getMessage))
+                  )
+              }
+          )
+        }
       } ~ path(ZOOKEEPER_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
-          val clusterKey =
-            ObjectKey.of(group, clusterName)
-          route(clusterKey, collie.zookeeperCollie.logs(clusterKey))
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+          case (group, sinceSeconds) =>
+            val clusterKey =
+              ObjectKey.of(group, clusterName)
+            route(clusterKey, collie.zookeeperCollie.logs(clusterKey, sinceSeconds))
         }
       } ~ path(BROKER_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
-          val clusterKey = ObjectKey.of(group, clusterName)
-          route(clusterKey, collie.brokerCollie.logs(clusterKey))
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+          case (group, sinceSeconds) =>
+            val clusterKey = ObjectKey.of(group, clusterName)
+            route(clusterKey, collie.brokerCollie.logs(clusterKey, sinceSeconds))
         }
       } ~ path(WORKER_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
-          val clusterKey = ObjectKey.of(group, clusterName)
-          route(clusterKey, collie.workerCollie.logs(clusterKey))
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+          case (group, sinceSeconds) =>
+            val clusterKey = ObjectKey.of(group, clusterName)
+            route(clusterKey, collie.workerCollie.logs(clusterKey, sinceSeconds))
         }
       } ~ path(STREAM_PREFIX_PATH / Segment) { clusterName =>
-        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
-          val clusterKey = ObjectKey.of(group, clusterName)
-          route(clusterKey, collie.streamCollie.logs(clusterKey))
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+          case (group, sinceSeconds) =>
+            val clusterKey = ObjectKey.of(group, clusterName)
+            route(clusterKey, collie.streamCollie.logs(clusterKey, sinceSeconds))
         }
       }
     }

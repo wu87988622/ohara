@@ -67,7 +67,7 @@ class TestDockerClient extends IntegrationTest {
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try client.log(name).contains(webHost) shouldBe true
+    try client.log(name, None).contains(webHost) shouldBe true
     finally client.forceRemove(name)
   }
 

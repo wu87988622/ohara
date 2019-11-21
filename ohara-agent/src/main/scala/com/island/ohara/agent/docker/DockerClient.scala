@@ -123,11 +123,11 @@ trait DockerClient extends Releasable {
   def verify(): Boolean
 
   /**
-    * get the console log from the container
+    * get the console log from the container since a related time.
     * @param name container's name
     * @return log
     */
-  def log(name: String): String
+  def log(name: String, sinceSeconds: Option[Long]): String
 
   def imageNames(): Seq[String]
 
@@ -267,9 +267,9 @@ object DockerClient {
     override def verify(): Boolean =
       agent.execute("docker run --rm hello-world").exists(_.contains("Hello from Docker!"))
 
-    override def log(name: String): String =
+    override def log(name: String, sinceSeconds: Option[Long]): String =
       agent
-        .execute(s"docker container logs $name")
+        .execute(s"docker container logs $name ${sinceSeconds.map(seconds => s"--since=${seconds}s").getOrElse("")}")
         .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
         .getOrElse(throw new IllegalArgumentException(s"no response from ${agent.hostname}"))
 

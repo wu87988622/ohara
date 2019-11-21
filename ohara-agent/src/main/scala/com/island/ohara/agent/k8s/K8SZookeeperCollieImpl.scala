@@ -53,7 +53,7 @@ private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SC
       .domainName(K8S_DOMAIN_NAME)
       .envs(containerInfo.environments)
       .name(containerInfo.name)
-      .args(arguments)
+      .arguments(arguments)
       .threadPool(executionContext)
       .create()
       .recover {

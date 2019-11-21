@@ -16,11 +16,14 @@
 
 package com.island.ohara.it.client
 
+import java.util.concurrent.TimeUnit
+
 import com.island.ohara.client.configurator.v0.LogApi
 import org.junit.Test
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.scalatest.Matchers._
+
 class TestQueryConfiguratorLog extends WithRemoteConfigurator {
   @Test
   def test(): Unit = {
@@ -29,5 +32,12 @@ class TestQueryConfiguratorLog extends WithRemoteConfigurator {
     log.logs.size shouldBe 1
     log.logs.head.hostname shouldBe configuratorHostname
     log.logs.head.value.length should not be 0
+
+    val logOf1Second = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator(1)).logs.head.value
+    TimeUnit.SECONDS.sleep(3)
+    val logOf3Second = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator(3)).logs.head.value
+    withClue(s"logOf1Second:$logOf1Second\nlogOf3Second:$logOf3Second") {
+      logOf1Second.length should be < logOf3Second.length
+    }
   }
 }

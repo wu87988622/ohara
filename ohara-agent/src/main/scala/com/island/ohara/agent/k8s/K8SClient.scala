@@ -37,7 +37,7 @@ trait K8SClient {
   def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
-  def log(name: String)(implicit executionContext: ExecutionContext): Future[String]
+  def log(name: String, sinceSeconds: Option[Long])(implicit executionContext: ExecutionContext): Future[String]
   def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
   def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
   def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
@@ -122,9 +122,15 @@ object K8SClient {
       override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
         removePod(name, false)
 
-      override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] =
+      override def log(name: String, sinceSeconds: Option[Long])(
+        implicit executionContext: ExecutionContext
+      ): Future[String] =
         HttpExecutor.SINGLETON
-          .getOnlyMessage(s"$k8sApiServerURL/namespaces/$namespace/pods/$name/log")
+          .getOnlyMessage(
+            sinceSeconds
+              .map(seconds => s"$k8sApiServerURL/namespaces/$namespace/pods/$name/log?sinceSeconds=$seconds")
+              .getOrElse(s"$k8sApiServerURL/namespaces/$namespace/pods/$name/log")
+          )
           .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
 
       override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]] =
@@ -214,10 +220,10 @@ object K8SClient {
           private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
           private[this] var restartPolicy: RestartPolicy     = RestartPolicy.Never
           private[this] var imageName: String                = _
-          private[this] var hostname: String                 = _
+          private[this] var hostname: String                 = CommonUtils.randomString(10)
           private[this] var nodeName: String                 = _
-          private[this] var domainName: String               = _
-          private[this] var labelName: String                = _
+          private[this] var domainName: String               = K8S_DOMAIN_NAME
+          private[this] var labelName: String                = OHARA_LABEL
           private[this] var envs: Map[String, String]        = Map.empty
           private[this] var ports: Map[Int, Int]             = Map.empty
           private[this] var routes: Map[String, String]      = Map.empty
@@ -290,7 +296,7 @@ object K8SClient {
           }
 
           @Optional("default is empty")
-          override def args(args: Seq[String]): ContainerCreator = {
+          override def arguments(args: Seq[String]): ContainerCreator = {
             this.args = Objects.requireNonNull(args)
             this
           }
@@ -443,7 +449,7 @@ object K8SClient {
 
     def command(command: Seq[String]): ContainerCreator
 
-    def args(args: Seq[String]): ContainerCreator
+    def arguments(arguments: Seq[String]): ContainerCreator
   }
 
   sealed abstract class ImagePullPolicy
