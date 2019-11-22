@@ -27,7 +27,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 class TestK8SClientVerify extends OharaTest {
   private[this] val nodeCache              = new ArrayBuffer[Node]()
@@ -40,15 +39,10 @@ class TestK8SClientVerify extends OharaTest {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(true, "")), "")
     val serviceCollie: ServiceCollie =
       ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
-    val runningNode =
-      Await.result(
-        serviceCollie.verifyNode(node),
-        30 seconds
-      )
-    runningNode match {
-      case Success(value) => value shouldBe "ohara node is running."
-      case Failure(e)     => throw new AssertionError()
-    }
+    Await.result(
+      serviceCollie.verifyNode(node),
+      30 seconds
+    ) shouldBe "ohara node is running."
   }
 
   @Test
@@ -56,15 +50,12 @@ class TestK8SClientVerify extends OharaTest {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(false, "node failed.")), "")
     val serviceCollie: ServiceCollie =
       ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
-    val runningNode =
+    intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
         30 seconds
       )
-    runningNode match {
-      case Success(value) => throw new AssertionError()
-      case Failure(e)     => e.getMessage shouldBe "ohara node doesn't running container. cause: node failed."
-    }
+    }.getMessage shouldBe "ohara node doesn't running container. cause: node failed."
   }
 
   @Test
@@ -72,15 +63,12 @@ class TestK8SClientVerify extends OharaTest {
     val fakeK8SClient = new FakeK8SClient(false, Option(K8SStatusInfo(false, "failed")), "")
     val serviceCollie: ServiceCollie =
       ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
-    val runningNode =
+    intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
         30 seconds
       )
-    runningNode match {
-      case Success(value) => throw new AssertionError()
-      case Failure(e)     => e.getMessage() shouldBe "ohara node doesn't running container. cause: failed"
-    }
+    }.getMessage shouldBe "ohara node doesn't running container. cause: failed"
   }
 
   @Test
@@ -88,15 +76,11 @@ class TestK8SClientVerify extends OharaTest {
     val fakeK8SClient = new FakeK8SClient(false, None, "")
     val serviceCollie: ServiceCollie =
       ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
-    val runningNode =
+    intercept[IllegalStateException] {
       Await.result(
-        serviceCollie.verifyNode(Node("ohara")),
+        serviceCollie.verifyNode(node),
         30 seconds
       )
-    runningNode match {
-      case Success(value) => throw new AssertionError()
-      case Failure(e) =>
-        e.getMessage() shouldBe "ohara node doesn't running container. cause: ohara node doesn't exists."
-    }
+    }.getMessage shouldBe "ohara node doesn't running container. cause: ohara node doesn't exists."
   }
 }

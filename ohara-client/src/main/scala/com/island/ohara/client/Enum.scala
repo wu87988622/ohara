@@ -40,11 +40,14 @@ abstract class Enum[Enu: ClassTag] { self =>
       .sortBy(_.toString)
   }
 
-  // convert string to enum class.
+  /**
+    * get the enum type according to input string.
+    * Noted this seeks does not care for case.
+    * @param name string name
+    * @return enum type
+    */
   def forName(name: String): Enu =
     all
-      .find(_.toString == name)
-      .getOrElse(
-        throw new NoSuchElementException(s"Unexpected value : $name")
-      )
+      .find(_.toString.toLowerCase == name.toLowerCase)
+      .getOrElse(throw new NoSuchElementException(s"Unexpected value : $name"))
 }

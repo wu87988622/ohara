@@ -40,7 +40,6 @@ import org.reflections.util.ConfigurationBuilder
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 /**
   * This is the top-of-the-range "collie". It maintains and organizes all collies.
@@ -97,7 +96,7 @@ abstract class ServiceCollie extends Releasable {
     * @param executionContext thread pool
     * @return succeed report in string. Or try with exception
     */
-  def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]]
+  def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[String]
 
   /**
     * list all containers from the hosted nodes

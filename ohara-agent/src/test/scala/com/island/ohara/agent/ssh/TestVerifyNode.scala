@@ -18,8 +18,8 @@ package com.island.ohara.agent.ssh
 
 import java.util
 
-import com.island.ohara.agent.{ServiceCollie, DataCollie}
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.agent.{DataCollie, ServiceCollie}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, State}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.SshdServer
@@ -31,7 +31,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
   * the default implementation of verifying node consists of 4 actions.
@@ -100,6 +99,8 @@ class TestVerifyNode extends OharaTest {
     user = Some(sshServer.user()),
     password = Some(sshServer.password()),
     services = Seq.empty,
+    state = State.AVAILABLE,
+    error = None,
     lastModified = CommonUtils.current(),
     resources = Seq.empty,
     tags = Map.empty
@@ -108,51 +109,38 @@ class TestVerifyNode extends OharaTest {
   private[this] val collie = ServiceCollie.builderOfSsh.dataCollie(DataCollie(Seq(node))).build
 
   @Test
-  def happyCase(): Unit = {
-    Await.result(collie.verifyNode(node), 30 seconds) match {
-      case Success(value)     => // pass
-      case Failure(exception) => throw exception
-    }
-  }
+  def happyCase(): Unit = Await.result(collie.verifyNode(node), 30 seconds)
 
   @Test
   def failToRunContainer(): Unit = {
     messageWhenFailToRun = CommonUtils.randomString()
-    Await.result(collie.verifyNode(node), 30 seconds) match {
-      case Success(value) => throw new AssertionError("this should fail!!!")
-      case Failure(exception) =>
-        exception.getMessage should include(messageWhenFailToRun)
-    }
+    intercept[Exception] {
+      Await.result(collie.verifyNode(node), 30 seconds)
+    }.getMessage should include(messageWhenFailToRun)
   }
 
   @Test
   def failToListImages(): Unit = {
     messageWhenFailToListImages = CommonUtils.randomString()
-    Await.result(collie.verifyNode(node), 30 seconds) match {
-      case Success(value) => throw new AssertionError("this should fail!!!")
-      case Failure(exception) =>
-        exception.getMessage should include(messageWhenFailToListImages)
-    }
+    intercept[Exception] {
+      Await.result(collie.verifyNode(node), 30 seconds)
+    }.getMessage should include(messageWhenFailToListImages)
   }
 
   @Test
   def failToPs(): Unit = {
     messageWhenFailToPs = CommonUtils.randomString()
-    Await.result(collie.verifyNode(node), 30 seconds) match {
-      case Success(value) => throw new AssertionError("this should fail!!!")
-      case Failure(exception) =>
-        exception.getMessage should include(messageWhenFailToPs)
-    }
+    intercept[Exception] {
+      Await.result(collie.verifyNode(node), 30 seconds)
+    }.getMessage should include(messageWhenFailToPs)
   }
 
   @Test
   def failToRemove(): Unit = {
     messageWhenFailToRemove = CommonUtils.randomString()
-    Await.result(collie.verifyNode(node), 30 seconds) match {
-      case Success(value) => throw new AssertionError("this should fail!!!")
-      case Failure(exception) =>
-        exception.getMessage should include(messageWhenFailToRemove)
-    }
+    intercept[Exception] {
+      Await.result(collie.verifyNode(node), 30 seconds)
+    }.getMessage should include(messageWhenFailToRemove)
   }
 
   @After

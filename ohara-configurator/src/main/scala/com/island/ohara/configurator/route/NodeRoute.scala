@@ -120,6 +120,23 @@ object NodeRoute {
           }
       )
 
+  private[this] def verify(
+    nodes: Seq[Node]
+  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
+    Future.traverse(nodes)(
+      node =>
+        serviceCollie
+          .verifyNode(node)
+          .map(_ => node)
+          .recover {
+            case e: Throwable =>
+              node.copy(
+                state = State.UNAVAILABLE,
+                error = Some(e.getMessage)
+              )
+          }
+    )
+
   private[this] def updateRuntimeInfo(
     node: Node
   )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Node] =
@@ -128,7 +145,7 @@ object NodeRoute {
   private[this] def updateRuntimeInfo(
     nodes: Seq[Node]
   )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
-    updateServices(nodes).flatMap(updateResources)
+    updateServices(nodes).flatMap(updateResources).flatMap(verify)
 
   private[this] def hookOfGet(
     implicit serviceCollie: ServiceCollie,
@@ -140,21 +157,28 @@ object NodeRoute {
     executionContext: ExecutionContext
   ): HookOfList[Node] = updateRuntimeInfo
 
-  private[this] def creationToNode(creation: Creation): Future[Node] =
-    Future.successful(
+  private[this] def creationToNode(
+    creation: Creation
+  )(implicit executionContext: ExecutionContext, serviceCollie: ServiceCollie): Future[Node] =
+    updateRuntimeInfo(
       Node(
         hostname = creation.hostname,
         port = creation.port,
         user = creation.user,
         password = creation.password,
         services = Seq.empty,
+        state = State.AVAILABLE,
+        error = None,
         lastModified = CommonUtils.current(),
         resources = Seq.empty,
         tags = creation.tags
       )
     )
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, Node] = creationToNode(_)
+  private[this] def hookOfCreation(
+    implicit executionContext: ExecutionContext,
+    serviceCollie: ServiceCollie
+  ): HookOfCreation[Creation, Node] = creationToNode(_)
 
   private[this] def checkConflict(nodeName: String, serviceName: String, clusterInfos: Seq[ClusterInfo]): Unit = {
     val conflicted = clusterInfos.filter(_.nodeNames.contains(nodeName))
@@ -164,7 +188,8 @@ object NodeRoute {
 
   private[this] def hookOfUpdating(
     implicit objectChecker: ObjectChecker,
-    executionContext: ExecutionContext
+    executionContext: ExecutionContext,
+    serviceCollie: ServiceCollie
   ): HookOfUpdating[Updating, Node] =
     (key: ObjectKey, updating: Updating, previousOption: Option[Node]) =>
       previousOption match {

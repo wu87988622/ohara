@@ -53,25 +53,13 @@ The properties used in describing a node are shown below.
 #. user (**string**) — ssh account
 #. password (**string**) — ssh password
 #. tags (**object**) — the extra description to this object
+
+The following information are updated at run-time.
+
 #. services (**array(object)**) — the services hosted by this node
 
    - services[i].name (**string**) — service name (configurator, zookeeper, broker, connect-worker and _stream)
    - services[i].clusterKeys (**array(object)**) — the keys of this service
-
-#. validationReport (**object**) — last validation result.
-
-   This information is attached by Ohara Configurator after you request the :ref:`validation <rest-validation>`
-
-   - validationReport.hostname (**string**) — the host which is in charge of validating node
-   - validationReport.message (**string**) — the report
-   - validationReport.pass (**boolean**) — true if the arguments is able to be connected
-   - validationReport.lastModified (**long**) — the time to execute this validation
-
-.. note::
-   Ohara use above information to login node to manage the containers.
-   Please make sure the account has permission to operate docker (and
-   k8s service) without sudo.
-
 #. resources (**array(object)**) — the available resources of this node
 
    - resources[i].name (**string**) — the resource name
@@ -79,6 +67,9 @@ The properties used in describing a node are shown below.
    - resources[i].used (**option(double)**) — the used "value" in percentage. Noted: this value may be null if the impl is unable
                                       to calculate the used resource.
    - resources[i].unit (**string**) — the description of the "value" unit
+
+#. state (**String**) — "available" means this node works well. otherwise, "unavailable" is returned
+#. error (**option(String)**) — the description to the unavailable node
 
 The following information are tagged by Ohara:
 
@@ -149,7 +140,8 @@ Example Response
       "tags": {},
       "port": 22,
       "user": "chia7712",
-      "password": "jellynina0208"
+      "password": "jellynina0208",
+      "state": "available"
     }
 
 
@@ -223,7 +215,8 @@ Example Response
       "tags": {},
       "port": 22,
       "user": "chia7712",
-      "password": "jellynina0208"
+      "password": "jellynina0208",
+      "state": "available"
     }
 
 
@@ -277,7 +270,8 @@ Example Response
         "tags": {},
         "port": 22,
         "user": "chia7712",
-        "password": "jellynina0208"
+        "password": "jellynina0208",
+        "state": "available"
       }
     ]
 
@@ -347,7 +341,8 @@ Example Response
       "tags": {},
       "port": 22,
       "user": "chia7712",
-      "password": "jellynina0208"
+      "password": "jellynina0208",
+      "state": "available"
     }
 
 .. _oharastream/zookeeper: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/zookeeper

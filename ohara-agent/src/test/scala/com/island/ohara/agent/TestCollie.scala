@@ -32,16 +32,7 @@ class TestCollie extends OharaTest {
   private[this] val fakeClusterKey: ObjectKey = FakeCollie.key
   private[this] val TIMEOUT                   = 10 seconds
 
-  private[this] def node(hostname: String): Node = Node(
-    hostname = hostname,
-    port = Some(22),
-    user = Some("user1"),
-    password = Some("123456"),
-    services = Seq.empty,
-    lastModified = CommonUtils.current(),
-    resources = Seq.empty,
-    tags = Map.empty
-  )
+  private[this] def node(hostname: String): Node = Node(hostname)
 
   @Test
   def testRemoveEmptyNode(): Unit = {

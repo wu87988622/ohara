@@ -22,7 +22,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
@@ -124,6 +124,17 @@ object NodeApi {
   }
   implicit val RESOURCE_JSON_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource.apply)
 
+  sealed abstract class State
+  object State extends com.island.ohara.client.Enum[State] {
+    case object AVAILABLE   extends State
+    case object UNAVAILABLE extends State
+  }
+  implicit val STATE_JSON_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
+    override def write(obj: State): JsValue = JsString(obj.toString)
+
+    override def read(json: JsValue): State = State.forName(json.convertTo[String])
+  }
+
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
     */
@@ -133,6 +144,8 @@ object NodeApi {
     user: Option[String],
     password: Option[String],
     services: Seq[NodeService],
+    state: State,
+    error: Option[String],
     lastModified: Long,
     resources: Seq[Resource],
     tags: Map[String, JsValue]
@@ -159,13 +172,15 @@ object NodeApi {
       user = None,
       password = None,
       services = Seq.empty,
+      state = State.AVAILABLE,
+      error = None,
       lastModified = CommonUtils.current(),
       resources = Seq.empty,
       tags = Map.empty
     )
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat8(Node.apply)
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat10(Node.apply)
 
   /**
     * used to generate the payload and url for POST/PUT request.

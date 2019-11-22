@@ -21,7 +21,6 @@ import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Try}
 
 // accessible to configurator
 private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient) extends ServiceCollie {
@@ -42,17 +41,14 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
         .map(_.toMap)
     }
 
-  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
+  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[String] =
     k8sClient
       .checkNode(node.name)
       .map(report => {
         val statusInfo = report.statusInfo.getOrElse(K8SStatusInfo(false, s"${node.name} node doesn't exists."))
-        if (statusInfo.isHealth)
-          Try(s"${node.name} node is running.")
+        if (statusInfo.isHealth) s"${node.name} node is running."
         else
-          Failure(
-            new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}")
-          )
+          throw new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}")
       })
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =

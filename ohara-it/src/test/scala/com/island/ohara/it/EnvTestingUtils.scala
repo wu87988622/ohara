@@ -17,7 +17,7 @@
 package com.island.ohara.it
 
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, State}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.AssumptionViolatedException
 
@@ -93,6 +93,8 @@ object EnvTestingUtils {
           user = Some(user),
           password = Some(password),
           services = Seq.empty,
+          state = State.AVAILABLE,
+          error = None,
           lastModified = CommonUtils.current(),
           resources = Seq.empty,
           tags = Map.empty

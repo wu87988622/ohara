@@ -23,7 +23,7 @@ import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService, State}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
@@ -126,6 +126,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             port = Some(22),
             user = Some("fake"),
             password = Some("fake"),
+            state = State.AVAILABLE,
+            error = None,
             lastModified = CommonUtils.current(),
             resources = Seq.empty,
             tags = Map.empty
