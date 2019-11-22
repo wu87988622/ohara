@@ -21,6 +21,10 @@ describe('toQueryParameters()', () => {
     expect(toQueryParameters()).toEqual('');
   });
 
+  it('returns "" if the params is give empty object', () => {
+    expect(toQueryParameters({})).toEqual('');
+  });
+
   it('returns valid query parameters if the params is given', () => {
     const params = {
       a: 123,
@@ -31,7 +35,7 @@ describe('toQueryParameters()', () => {
     expect(queryData).toEqual('?a=123&b=foo&bar=false');
   });
 
-  it('returns encoded query parameters for special parameters', () => {
+  it('returns encoded query parameters for special parameters without name', () => {
     const params = {
       name: 'bar',
       group: 'my group',
@@ -39,7 +43,7 @@ describe('toQueryParameters()', () => {
     };
     const queryData = toQueryParameters(params);
     expect(queryData).toEqual(
-      '?name=bar&group=my%20group&time=2019-10-30%2000%3A00%3A00',
+      '?group=my%20group&time=2019-10-30%2000%3A00%3A00',
     );
   });
 

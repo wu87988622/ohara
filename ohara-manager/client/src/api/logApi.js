@@ -36,33 +36,33 @@ export const getConfiguratorLog = async (params = {}) => {
 };
 
 export const getZookeeperLog = async params => {
-  const { name, group } = params;
+  const { name } = params;
   const res = await axiosInstance.get(
-    `${url}/${services.zookeeper}/${name}?group=${group}`,
+    `${url}/${services.zookeeper}/${name}${URL.toQueryParameters(params)}`,
   );
   return responseUtil(res, log);
 };
 
 export const getBrokerLog = async params => {
-  const { name, group } = params;
+  const { name } = params;
   const res = await axiosInstance.get(
-    `${url}/${services.broker}/${name}?group=${group}`,
+    `${url}/${services.broker}/${name}${URL.toQueryParameters(params)}`,
   );
   return responseUtil(res, log);
 };
 
 export const getWorkerLog = async params => {
-  const { name, group } = params;
+  const { name } = params;
   const res = await axiosInstance.get(
-    `${url}/${services.worker}/${name}?group=${group}`,
+    `${url}/${services.worker}/${name}${URL.toQueryParameters(params)}`,
   );
   return responseUtil(res, log);
 };
 
 export const getStreamLog = async params => {
-  const { name, group } = params;
+  const { name } = params;
   const res = await axiosInstance.get(
-    `${url}/${services.stream}/${name}?group=${group}`,
+    `${url}/${services.stream}/${name}${URL.toQueryParameters(params)}`,
   );
   return responseUtil(res, log);
 };

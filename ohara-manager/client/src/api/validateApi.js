@@ -30,26 +30,26 @@ export const resource = {
 };
 
 export const validateHdfs = async params => {
-  const res = await axiosInstance.put(url + '/' + resource.hdfs, params);
+  const res = await axiosInstance.put(`${url}/${resource.hdfs}`, params);
   return responseUtil(res, validateBasicBody);
 };
 
 export const validateRdb = async params => {
-  const res = await axiosInstance.put(url + '/' + resource.rdb, params);
+  const res = await axiosInstance.put(`${url}/${resource.rdb}`, params);
   return responseUtil(res, validateRdbBody);
 };
 
 export const validateFtp = async params => {
-  const res = await axiosInstance.put(url + '/' + resource.ftp, params);
+  const res = await axiosInstance.put(`${url}/${resource.ftp}`, params);
   return responseUtil(res, validateBasicBody);
 };
 
 export const validateNode = async params => {
-  const res = await axiosInstance.put(url + '/' + resource.node, params);
+  const res = await axiosInstance.put(`${url}/${resource.node}`, params);
   return responseUtil(res, validateBasicBody);
 };
 
 export const validateConnector = async params => {
-  const res = await axiosInstance.put(url + '/' + resource.connector, params);
+  const res = await axiosInstance.put(`${url}/${resource.connector}`, params);
   return responseUtil(res, {});
 };

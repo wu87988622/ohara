@@ -41,17 +41,17 @@ export const classType = {
 };
 
 export const getConfiguratorInfo = async () => {
-  const res = await axiosInstance.get(url + '/' + kind.configurator);
+  const res = await axiosInstance.get(`${url}/${kind.configurator}`);
   return responseUtil(res, inspectConfiguratorBody);
 };
 
 export const getZookeeperInfo = async () => {
-  const res = await axiosInstance.get(url + '/' + kind.zookeeper);
+  const res = await axiosInstance.get(`${url}/${kind.zookeeper}`);
   return responseUtil(res, inspectServiceBody);
 };
 
 export const getBrokerInfo = async () => {
-  const res = await axiosInstance.get(url + '/' + kind.broker);
+  const res = await axiosInstance.get(`${url}/${kind.broker}`);
   return responseUtil(res, inspectServiceBody);
 };
 

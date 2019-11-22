@@ -44,6 +44,9 @@ export const toQueryParameters = (params = {}) => {
   }
   const esc = encodeURIComponent;
   const result = Object.keys(params)
+    // we explicitly filter out the "name" field
+    // since it is used in url path
+    .filter(key => key !== 'name')
     .map(key => `${key}=${esc(params[key])}`)
     .join('&');
   return result ? '?'.concat(result) : '';
