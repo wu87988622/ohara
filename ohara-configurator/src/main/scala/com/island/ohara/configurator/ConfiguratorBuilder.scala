@@ -47,7 +47,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var k8sApiServer: String         = _
   private[this] var k8sClient: K8SClient         = _
   private[this] var metricsServiceURL: String    = _
-  private[this] var k8sNamespace: String         = K8SClient.NAMESPACE_DEFAULT_VALUE
+  private[this] var k8sNamespace: String         = _
 
   @Optional("default is random folder")
   def homeFolder(homeFolder: String): ConfiguratorBuilder = doOrReleaseObjects {
@@ -370,7 +370,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
     if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
     this.k8sClient = Objects.requireNonNull(k8sClient)
-    if (this.metricsServiceURL != null) this.k8sClient.k8sMetricsAPIServerURL(metricsServiceURL)
     this
   }
 
@@ -419,7 +418,12 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   override def build(): Configurator = {
     import scala.concurrent.ExecutionContext.Implicits.global
     if (this.k8sApiServer != null) {
-      val client = K8SClient(this.k8sApiServer, k8sNamespace)
+      val client: K8SClient = K8SClient.builder
+        .apiServerURL(this.k8sApiServer)
+        .namespace(k8sNamespace)
+        .metricsApiServerURL(metricsServiceURL)
+        .build()
+
       try if (Await.result(client.nodeNameIPInfo(), 30 seconds).isEmpty)
         throw new IllegalArgumentException("your k8s clusters is empty!!!")
       catch {
