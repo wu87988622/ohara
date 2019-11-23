@@ -16,8 +16,14 @@
 
 package com.island.ohara.shabondi
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.Suite
-import org.scalatest.concurrent.ScalaFutures
+import com.island.ohara.common.util.CommonUtils
 
-object ShabondiRouteTest extends Suite with ScalaFutures with ScalatestRouteTest
+object Boot {
+  import scala.collection.JavaConverters._
+
+  def main(args: Array[String]): Unit = {
+    val rawConfig = CommonUtils.parse(args.toSeq.asJava).asScala.toMap
+    val webServer = new WebServer(Config(rawConfig))
+    webServer.start()
+  }
+}

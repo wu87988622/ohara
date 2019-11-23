@@ -16,24 +16,61 @@
 
 package com.island.ohara.shabondi
 
+import akka.Done
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives._
-import akka.http.scaladsl.server.directives.PathDirectives._
-import akka.http.scaladsl.server.directives.RouteDirectives._
+import akka.http.scaladsl.server.{Directives, ExceptionHandler, Route}
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import com.island.ohara.common.data.Row
+import com.island.ohara.common.setting.TopicKey
+import spray.json._
 
-private trait SourceRoute {
-  implicit def actorSystem: ActorSystem
+import scala.concurrent.Future
 
-  lazy private val log = Logging(actorSystem, classOf[SourceRoute])
+object SourceRoute {
+  def apply(config: Config)(implicit actorSystem: ActorSystem, materializer: ActorMaterializer) =
+    new SourceRoute(config)
+}
 
-  lazy val sourceRoute: Route =
-    path("v0") {
-      post {
-        log.info("[source route]")
-        complete((StatusCodes.OK, "sourceRoute OK"))
-      }
+class SourceRoute(config: Config)(implicit val actorSystem: ActorSystem, implicit val materializer: ActorMaterializer)
+    extends Directives {
+  import JsonSupport._
+  import actorSystem.dispatcher
+
+  private lazy val log = Logging(actorSystem, classOf[SourceRoute])
+
+  private val exceptionHandler = ExceptionHandler {
+    case ex: Throwable =>
+      log.error(ex, ex.getMessage)
+      complete((StatusCodes.InternalServerError, ex.getMessage))
+  }
+
+  private val producer = KafkaClient.newProducer(config.brokers)
+
+  def route(topicKeys: Seq[TopicKey]): Route = {
+    (post & path("v0")) {
+      handleExceptions(exceptionHandler) {
+        entity(as[RowData]) { rowData =>
+          val row = JsonSupport.toRow(JsObject(rowData))
+
+          complete((StatusCodes.OK, sendRowFuture(topicKeys, row).map(_ => "success")))
+        }
+      } // handleExceptions
     }
+  }
+
+  private[shabondi] def sendRowFuture(topicKeys: Seq[TopicKey], row: Row): Future[Done] = {
+    import KafkaClient._
+    val source = Source.single(row)
+    val flowSendRow = Flow[Row].mapAsync(4) { row =>
+      Future.sequence(topicKeys.map { topicKey =>
+        val sender = producer.sender().key(row).topicName(topicKey.name())
+        sender.send.toScala
+      })
+    }
+    val sink = Sink.ignore
+    source.via(flowSendRow).toMat(sink)(Keep.right).run()
+  }
 }

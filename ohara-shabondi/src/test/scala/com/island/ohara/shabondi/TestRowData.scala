@@ -16,24 +16,29 @@
 
 package com.island.ohara.shabondi
 
+import com.island.ohara.common.data.Cell
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.shabondi.Model.{CmdArgs, HttpSink, HttpSource}
+import com.island.ohara.shabondi.JsonSupport._
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.Matchers
+import spray.json._
 
-import scala.util.{Failure, Success}
-
-class TestServerStarter extends OharaTest {
+class TestRowData extends OharaTest with Matchers {
   @Test
-  def testParseArgs(): Unit = {
-    ServerStarter.parseArgs(Array("--source", "9090")) shouldBe
-      Success(CmdArgs(serverType = HttpSource, port = 9090))
+  def testRowData(): Unit = {
+    val jsonData =
+      """
+        |{"col1":"hello", "col2": 200}
+        |""".stripMargin
 
-    ServerStarter.parseArgs(Array("--sink", "9090")) shouldBe
-      Success(CmdArgs(serverType = HttpSink, port = 9090))
+    val rowData: RowData = JsonSupport.rowDataFormat.read(jsonData.parseJson)
 
-    ServerStarter.parseArgs(Array()) shouldBe a[Failure[_]]
-    ServerStarter.parseArgs(Array("--sink")) shouldBe a[Failure[_]]
-    ServerStarter.parseArgs(Array("9090")) shouldBe a[Failure[_]]
+    rowData("col1") should ===(JsString("hello"))
+    rowData("col2") should ===(JsNumber(200))
+
+    val row = JsonSupport.toRow(JsObject(rowData))
+
+    row.cell(0) should ===(Cell.of("col1", "hello"))
+    row.cell(1) should ===(Cell.of("col2", 200))
   }
 }
