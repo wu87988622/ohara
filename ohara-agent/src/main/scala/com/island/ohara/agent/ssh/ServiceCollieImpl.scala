@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.ssh
 
-import java.util.concurrent.{ExecutorService, TimeUnit}
+import java.util.concurrent.ExecutorService
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.container.ContainerName
@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -111,34 +111,17 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     */
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[String] =
     Future {
-      val name = CommonUtils.randomString(10)
       val dockerClient =
         DockerClient(
           Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
         )
-      try {
-        val helloWorldImage = "hello-world"
-        dockerClient.containerCreator().name(name).imageName(helloWorldImage).create()
-
-        // TODO: should we directly reject the node which doesn't have hello-world image??? by chia
-        def checkImage(): Boolean = {
-          val endTime = CommonUtils.current() + 3 * 1000 // 3 seconds to timeout
-          while (endTime >= CommonUtils.current()) {
-            if (dockerClient.imageNames().contains(s"$helloWorldImage:latest")) return true
-            else TimeUnit.SECONDS.sleep(1)
-          }
-          dockerClient.imageNames().contains(helloWorldImage)
-        }
-
-        // there are two checks.
-        // 1) is there hello-world image?
-        // 2) did we succeed to run hello-world container?
-        if (!checkImage()) throw new IllegalStateException(s"Failed to download $helloWorldImage image")
-        else if (dockerClient.containerNames().map(_.name).contains(name))
-          s"succeed to run $helloWorldImage on ${node.name}"
-        else throw new IllegalStateException(s"failed to run container $helloWorldImage")
-      } finally try dockerClient.forceRemove(name)
-      finally dockerClient.close()
+      try if (dockerClient.resources().isEmpty) throw new IllegalStateException(s"failed to execute docker")
+      else s"succeed to check the docker resources on ${node.name}"
+      finally Releasable.close(dockerClient)
+    }.recover {
+      case e: IllegalStateException => throw e
+      case e: Throwable =>
+        throw new IllegalStateException(s"failed to execute docker", e)
     }
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
