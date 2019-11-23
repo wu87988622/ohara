@@ -33,62 +33,29 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 /**
-  * the default implementation of verifying node consists of 4 actions.
-  * 1) run "hello-world" on remote node
-  * 2) check the existence of hello-world image
-  * 3) check the status of hello-world container
-  * 4) remove hello-world container
+  * the default implementation of verifying node consists of 1 actions.
+  * 1) list resources
   * this test injects command handler for above actions that return correct response or throw exception.
   */
 class TestVerifyNode extends OharaTest {
-  private[this] var messageWhenFailToRun: String        = _
-  private[this] var messageWhenFailToListImages: String = _
-  private[this] var messageWhenFailToPs: String         = _
-  private[this] var messageWhenFailToRemove: String     = _
-  private[this] val containerId                         = CommonUtils.randomString()
-  private[this] var containerName: String               = _
+  private[this] var errorMessage: String = _
   private[this] val sshServer = SshdServer.local(
     0,
     Seq(
+      /**
+        * this commend is used by ServiceCollieImpl#verifyNode.
+        */
       new CommandHandler {
-        override def belong(cmd: String): Boolean = cmd.contains("docker run -d") && cmd.contains("hello-world")
+        override def belong(cmd: String): Boolean = cmd.contains("docker info --format '{{json .}}'")
         override def execute(cmd: String): util.List[String] =
-          if (messageWhenFailToRun != null)
-            throw new IllegalArgumentException(messageWhenFailToRun)
-          else {
-            val splits = cmd.split(" ")
-            val nameIndex = splits.zipWithIndex
-              .filter {
-                case (item, index) => item == "--name"
-              }
-              .head
-              ._2
-            containerName = splits(nameIndex + 1)
-            util.Collections.singletonList(containerId)
-          }
-      },
-      new CommandHandler {
-        override def belong(cmd: String): Boolean = cmd.contains("docker images")
-        override def execute(cmd: String): util.List[String] =
-          if (messageWhenFailToListImages != null)
-            throw new IllegalArgumentException(messageWhenFailToListImages)
-          else util.Collections.singletonList("hello-world:latest")
-      },
-      new CommandHandler {
-        override def belong(cmd: String): Boolean = cmd.contains("docker ps -a")
-        override def execute(cmd: String): util.List[String] =
-          if (messageWhenFailToPs != null)
-            throw new IllegalArgumentException(messageWhenFailToPs)
-          // the format used by DockerClientImpl is {{.ID}}\t{{.Names}}\t{{.Image}}
-          else
-            util.Collections.singletonList(s"${CommonUtils.randomString(10)}\t$containerName\tunknown/unknown:unknown")
-      },
-      new CommandHandler {
-        override def belong(cmd: String): Boolean = cmd.contains("docker rm -f")
-        override def execute(cmd: String): util.List[String] =
-          if (messageWhenFailToRemove != null)
-            throw new IllegalArgumentException(messageWhenFailToRemove)
-          else util.Collections.singletonList(containerId)
+          if (errorMessage != null)
+            throw new IllegalArgumentException(errorMessage)
+          else util.Collections.singletonList("""
+              |  {
+              |    "NCPU": 1,
+              |    "MemTotal": 1024
+              |  }
+              |""".stripMargin)
       }
     ).asJava
   )
@@ -112,35 +79,11 @@ class TestVerifyNode extends OharaTest {
   def happyCase(): Unit = Await.result(collie.verifyNode(node), 30 seconds)
 
   @Test
-  def failToRunContainer(): Unit = {
-    messageWhenFailToRun = CommonUtils.randomString()
+  def badCase(): Unit = {
+    errorMessage = CommonUtils.randomString()
     intercept[Exception] {
       Await.result(collie.verifyNode(node), 30 seconds)
-    }.getMessage should include(messageWhenFailToRun)
-  }
-
-  @Test
-  def failToListImages(): Unit = {
-    messageWhenFailToListImages = CommonUtils.randomString()
-    intercept[Exception] {
-      Await.result(collie.verifyNode(node), 30 seconds)
-    }.getMessage should include(messageWhenFailToListImages)
-  }
-
-  @Test
-  def failToPs(): Unit = {
-    messageWhenFailToPs = CommonUtils.randomString()
-    intercept[Exception] {
-      Await.result(collie.verifyNode(node), 30 seconds)
-    }.getMessage should include(messageWhenFailToPs)
-  }
-
-  @Test
-  def failToRemove(): Unit = {
-    messageWhenFailToRemove = CommonUtils.randomString()
-    intercept[Exception] {
-      Await.result(collie.verifyNode(node), 30 seconds)
-    }.getMessage should include(messageWhenFailToRemove)
+    }.getMessage should include(errorMessage)
   }
 
   @After

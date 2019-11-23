@@ -117,13 +117,15 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
         DockerClient(
           Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
         )
-      try if (dockerClient.resources().isEmpty) throw new IllegalStateException(s"failed to execute docker")
+      try if (dockerClient.resources().isEmpty)
+        throw new IllegalStateException(s"the docker on ${node.hostname} is unavailable")
       else s"succeed to check the docker resources on ${node.name}"
       finally Releasable.close(dockerClient)
     }.recover {
       case e: IllegalStateException => throw e
       case e: Throwable =>
-        throw new IllegalStateException(s"failed to execute docker", e)
+        e.printStackTrace()
+        throw new IllegalStateException(s"failed to verify ${node.hostname} since ${e.getMessage}", e)
     }
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
