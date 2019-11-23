@@ -17,10 +17,14 @@
 package com.island.ohara.it.client
 
 import com.island.ohara.client.configurator.v0.NodeApi
+import com.island.ohara.it.category.ClientGroup
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@Category(Array(classOf[ClientGroup]))
 class TestListNode extends WithRemoteConfigurator {
   @Test
   def test(): Unit = {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.stream
 
 import java.io.File
 import java.util.concurrent.ExecutionException
@@ -27,6 +27,7 @@ import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.collie.ClusterNameHolder
 import com.island.ohara.kafka.Producer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException

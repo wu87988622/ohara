@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.k8s
+package com.island.ohara.it.client
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.{BasicTests4Collie, ClusterNameHolder}
-import com.island.ohara.it.category.K8sConfiguratorGroup
+import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.category.ClientGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
+import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.scalatest.Matchers._
-@Category(Array(classOf[K8sConfiguratorGroup]))
-class TestK8SCollie extends BasicTests4Collie {
-  override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
-  override protected val configurator: Configurator =
-    Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+@Category(Array(classOf[ClientGroup]))
+class TestNodeResourcesOnDocker extends BasicTests4NodeResources {
+  override protected val nodes: Seq[Node]           = EnvTestingUtils.sshNodes()
+  override protected val nameHolder                 = ClusterNameHolder(nodes)
+  override protected val configurator: Configurator = Configurator.builder.build()
 
   @Before
   final def setup(): Unit =

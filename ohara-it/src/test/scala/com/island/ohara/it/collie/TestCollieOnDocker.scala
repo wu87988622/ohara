@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.ssh
+package com.island.ohara.it.collie
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.{BasicTests4Collie, ClusterNameHolder}
-import com.island.ohara.it.category.SshConfiguratorGroup
+import com.island.ohara.it.category.CollieGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
+
 import scala.concurrent.ExecutionContext.Implicits.global
-@Category(Array(classOf[SshConfiguratorGroup]))
-class TestSshCollie extends BasicTests4Collie {
+@Category(Array(classOf[CollieGroup]))
+class TestCollieOnDocker extends BasicTests4Collie {
   override protected val nodes: Seq[Node]           = EnvTestingUtils.sshNodes()
   override protected val nameHolder                 = ClusterNameHolder(nodes)
   override protected val configurator: Configurator = Configurator.builder.build()

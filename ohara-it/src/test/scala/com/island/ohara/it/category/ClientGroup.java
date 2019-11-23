@@ -20,4 +20,4 @@ package com.island.ohara.it.category;
  * the category is used to group IT to enable QA run a part of IT. Noted that the full name of
  * category is used by it/build.gradle so make sure both side have consistent information.
  */
-public interface SshConnectorGroup {}
+public interface ClientGroup {}

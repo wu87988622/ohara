@@ -18,11 +18,11 @@ package com.island.ohara.it.connector
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.ClusterNameHolder
-import com.island.ohara.it.category.SshConnectorGroup
+import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.category.ConnectorGroup
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[SshConnectorGroup]))
+@Category(Array(classOf[ConnectorGroup]))
 class TestSshPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSourceConnector {
   override val configurator: Configurator = Configurator.builder
     .hostname(EnvTestingUtils.configuratorHostName())

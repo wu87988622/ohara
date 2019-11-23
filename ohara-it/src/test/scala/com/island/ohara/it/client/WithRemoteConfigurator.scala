@@ -20,7 +20,7 @@ import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
-import com.island.ohara.it.agent.ClusterNameHolder
+import com.island.ohara.it.collie.ClusterNameHolder
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before}
 import org.scalatest.Matchers._

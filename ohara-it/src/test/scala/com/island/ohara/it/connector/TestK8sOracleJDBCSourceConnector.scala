@@ -19,11 +19,11 @@ package com.island.ohara.it.connector
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.ClusterNameHolder
-import com.island.ohara.it.category.K8sConnectorGroup
+import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.category.ConnectorGroup
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[K8sConnectorGroup]))
+@Category(Array(classOf[ConnectorGroup]))
 class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
   override val configurator: Configurator = Configurator.builder
     .hostname(EnvTestingUtils.configuratorHostName())

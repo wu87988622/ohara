@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.client
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.collie.ClusterNameHolder
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class BasicTests4Resources extends IntegrationTest {
+abstract class BasicTests4NodeResources extends IntegrationTest {
   protected def nodes: Seq[Node]
   protected def configurator: Configurator
   protected def nameHolder: ClusterNameHolder

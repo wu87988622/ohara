@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.collie
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient

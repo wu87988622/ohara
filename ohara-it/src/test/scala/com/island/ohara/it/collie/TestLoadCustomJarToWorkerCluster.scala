@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.ssh
+package com.island.ohara.it.collie
 
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -25,8 +25,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.agent.ClusterNameHolder
-import com.island.ohara.it.category.SshConfiguratorGroup
+import com.island.ohara.it.category.CollieGroup
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import com.typesafe.scalalogging.Logger
@@ -35,7 +34,7 @@ import org.junit.{After, Before, Test}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-@Category(Array(classOf[SshConfiguratorGroup]))
+@Category(Array(classOf[CollieGroup]))
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 

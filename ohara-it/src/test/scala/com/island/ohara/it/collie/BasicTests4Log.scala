@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.collie
 
 import java.util.concurrent.TimeUnit
 

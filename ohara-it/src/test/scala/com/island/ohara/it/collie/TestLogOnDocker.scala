@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.ssh
+package com.island.ohara.it.collie
 
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.BasicTests4Log
 import org.junit.After
 
-class Test4LogViaDockerClient extends BasicTests4Log {
+class TestLogOnDocker extends BasicTests4Log {
   private[this] val name       = CommonUtils.randomString(10)
   private[this] val node: Node = EnvTestingUtils.sshNodes().head
   private[this] val dockerClient = DockerClient(

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it
 
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 

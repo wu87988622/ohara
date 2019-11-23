@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.category;
+package com.island.ohara.it.connector.jio
+import com.island.ohara.connector.jio.BasicTestsOfJsonIn
+import com.island.ohara.it.category.ConnectorGroup
+import org.junit.experimental.categories.Category
 
-/**
- * the category is used to group IT to enable QA run a part of IT. Noted that the full name of
- * category is used by it/build.gradle so make sure both side have consistent information.
- */
-public interface K8sConfiguratorGroup {}
+@Category(Array(classOf[ConnectorGroup]))
+class TestJsonInOnDocker extends BasicIntegrationTestsOfJsonIoOnDocker with BasicTestsOfJsonIn

@@ -21,7 +21,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.ClusterNameHolder
+import com.island.ohara.it.collie.ClusterNameHolder
 import org.junit.{After, Before}
 import org.scalatest.Matchers._
 

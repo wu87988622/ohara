@@ -177,57 +177,41 @@ test {
   dependsOn 'streamJar'
 }
 
-def classOfSshCollieGroup = "com.island.ohara.it.category.SshCollieGroup"
-def classOfSshConfiguratorGroup = "com.island.ohara.it.category.SshConfiguratorGroup"
-def classOfSshConnectorGroup = "com.island.ohara.it.category.SshConnectorGroup"
-def classOfK8sCollieGroup = "com.island.ohara.it.category.K8sCollieGroup"
-def classOfK8sConfiguratorGroup = "com.island.ohara.it.category.K8sConfiguratorGroup"
-def classOfK8sConnectorGroup = "com.island.ohara.it.category.K8sConnectorGroup"
+def classOfCollieGroup = "com.island.ohara.it.category.CollieGroup"
+def classOfConnectorGroup = "com.island.ohara.it.category.ConnectorGroup"
+def classOfClientGroup = "com.island.ohara.it.category.ClientGroup"
+def classOfStreamGroup = "com.island.ohara.it.category.StreamGroup"
 
-task sshCollie(type: OharaTest) {
+task collieIT(type: OharaTest) {
   useJUnit {
-    includeCategories classOfSshCollieGroup
+    includeCategories classOfCollieGroup
   }
 }
 
-task sshConfigurator(type: OharaTest) {
+task connectorIT(type: OharaTest) {
   useJUnit {
-    includeCategories classOfSshConfiguratorGroup
+    includeCategories classOfConnectorGroup
   }
 }
 
-task sshConnector(type: OharaTest) {
+task clientIT(type: OharaTest) {
   useJUnit {
-    includeCategories classOfSshConnectorGroup
+    includeCategories classOfClientGroup
   }
 }
 
-task k8sCollie(type: OharaTest) {
+task streamIT(type: OharaTest) {
   useJUnit {
-    includeCategories classOfK8sCollieGroup
-  }
-}
-
-task k8sConfigurator(type: OharaTest) {
-  useJUnit {
-    includeCategories classOfK8sConfiguratorGroup
-  }
-}
-
-task k8sConnector(type: OharaTest) {
-  useJUnit {
-    includeCategories classOfK8sConnectorGroup
+    includeCategories classOfStreamGroup
   }
 }
 
 task otherIT(type: OharaTest) {
   useJUnit {
-    excludeCategories classOfSshCollieGroup,
-            classOfSshConfiguratorGroup,
-            classOfSshConnectorGroup,
-            classOfK8sCollieGroup,
-            classOfK8sConfiguratorGroup,
-            classOfK8sConnectorGroup
+    excludeCategories classOfCollieGroup,
+            classOfConnectorGroup,
+            classOfClientGroup,
+            classOfStreamGroup
   }
 }
 

@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.k8s
+package com.island.ohara.it.collie
 
-import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.{BasicTests4Resources, ClusterNameHolder}
-import com.island.ohara.it.category.K8sConfiguratorGroup
+import com.island.ohara.it.category.CollieGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.Matchers._
 
-@Category(Array(classOf[K8sConfiguratorGroup]))
-class TestNodeResourcesOnK8S extends BasicTests4Resources {
+import scala.concurrent.ExecutionContext.Implicits.global
+@Category(Array(classOf[CollieGroup]))
+class TestCollieOnK8s extends BasicTests4Collie {
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
-
-  private[this] val k8sClient: K8SClient = EnvTestingUtils.k8sClientWithMetricsServer()
-
   override protected val configurator: Configurator =
-    Configurator.builder.k8sClient(k8sClient).build()
+    Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
 
   @Before

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.k8s
+package com.island.ohara.it.stream
 
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.{BasicTests4Stream, ClusterNameHolder}
-import com.island.ohara.it.category.K8sConfiguratorGroup
+import com.island.ohara.it.category.StreamGroup
+import com.island.ohara.it.collie.ClusterNameHolder
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[K8sConfiguratorGroup]))
-class TestK8SStream extends BasicTests4Stream {
-  override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
+@Category(Array(classOf[StreamGroup]))
+class TestStreamOnDocker extends BasicTests4Stream {
+  override protected val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 
   override protected def createConfigurator(hostname: String, port: Int): Configurator =
-    Configurator.builder.hostname(hostname).port(port).k8sClient(EnvTestingUtils.k8sClient()).build()
+    Configurator.builder.hostname(hostname).port(port).build()
 }

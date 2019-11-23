@@ -21,14 +21,14 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.agent.ClusterNameHolder
+import com.island.ohara.it.collie.ClusterNameHolder
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * initialize the configurator on ssh mode.
   */
-abstract class BasicIntegrationTestsOfJsonIoOnSsh extends BasicIntegrationTestsOfJsonIo {
+abstract class BasicIntegrationTestsOfJsonIoOnDocker extends BasicIntegrationTestsOfJsonIo {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
   override protected val configurator: Configurator = {
     val configurator = Configurator.builder.build()

@@ -19,10 +19,13 @@ package com.island.ohara.it.connector.smb
 import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.connector.CsvSinkTestBase
 import com.island.ohara.connector.smb._
+import com.island.ohara.it.category.ConnectorGroup
 import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions._
 import com.island.ohara.kafka.connector.csv.CsvSinkConnector
 import org.junit.AssumptionViolatedException
+import org.junit.experimental.categories.Category
 
+@Category(Array(classOf[ConnectorGroup]))
 class TestSmbSink extends CsvSinkTestBase {
   private[this] val itProps: ITSmbProps = try ITSmbProps(sys.env)
   catch {

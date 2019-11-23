@@ -17,8 +17,8 @@
 package com.island.ohara.it.connector.jio
 
 import com.island.ohara.connector.jio.BasicTestsOfJsonOut
-import com.island.ohara.it.category.K8sConnectorGroup
+import com.island.ohara.it.category.ConnectorGroup
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[K8sConnectorGroup]))
+@Category(Array(classOf[ConnectorGroup]))
 class TestJsonOutOnK8s extends BasicIntegrationTestsOfJsonIoOnK8s with BasicTestsOfJsonOut

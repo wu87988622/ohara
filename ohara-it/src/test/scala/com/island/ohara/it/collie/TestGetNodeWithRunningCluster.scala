@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent.ssh
+package com.island.ohara.it.collie
 
 import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient
@@ -22,16 +22,15 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.it.category.CollieGroup
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
-import com.island.ohara.it.agent.ClusterNameHolder
-import com.island.ohara.it.category.SshConfiguratorGroup
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-@Category(Array(classOf[SshConfiguratorGroup]))
+@Category(Array(classOf[CollieGroup]))
 class TestGetNodeWithRunningCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
 

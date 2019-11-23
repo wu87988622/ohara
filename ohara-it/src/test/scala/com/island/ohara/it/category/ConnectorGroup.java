@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.connector.jio
+package com.island.ohara.it.category;
 
-import com.island.ohara.connector.jio.BasicTestsOfJsonOut
-import com.island.ohara.it.category.SshConnectorGroup
-import org.junit.experimental.categories.Category
-
-@Category(Array(classOf[SshConnectorGroup]))
-class TestJsonOutOnSsh extends BasicIntegrationTestsOfJsonIoOnSsh with BasicTestsOfJsonOut
+/**
+ * the category is used to group IT to enable QA run a part of IT. Noted that the full name of
+ * category is used by it/build.gradle so make sure both side have consistent information.
+ */
+public interface ConnectorGroup {}

@@ -32,7 +32,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.connector.jdbc.source.{JDBCSourceConnector, JDBCSourceConnectorConfig}
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.ClusterNameHolder
+import com.island.ohara.it.collie.ClusterNameHolder
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.connector.TaskSetting
