@@ -188,7 +188,7 @@ object BrokerRoute {
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =
-    clusterRoute[BrokerClusterInfo, BrokerClusterStatus, Creation, Updating](
+    clusterRoute[BrokerClusterInfo, Creation, Updating](
       root = BROKER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,

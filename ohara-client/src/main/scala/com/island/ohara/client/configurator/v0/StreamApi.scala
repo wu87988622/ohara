@@ -140,14 +140,6 @@ object StreamApi {
       }
     )
 
-  class StreamClusterStatus(
-    val group: String,
-    val name: String,
-    val aliveNodes: Set[String],
-    val state: Option[String],
-    val error: Option[String]
-  ) extends ClusterStatus
-
   /**
     * The Stream Cluster Information stored in configurator
     *
@@ -166,18 +158,6 @@ object StreamApi {
     metrics: Metrics,
     lastModified: Long
   ) extends ClusterInfo {
-    /**
-      * update the runtime information for this cluster info
-      * @param status runtime information
-      * @return a updated cluster info
-      */
-    def update(status: StreamClusterStatus): StreamClusterInfo = copy(
-      aliveNodes = status.aliveNodes,
-      state = status.state,
-      error = status.error,
-      lastModified = CommonUtils.current()
-    )
-
     /**
       * reuse the parser from Creation.
       * @param settings settings

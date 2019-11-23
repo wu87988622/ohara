@@ -124,18 +124,15 @@ private[configurator] object PipelineRoute {
     case data: StreamClusterInfo =>
       streamCollie
         .cluster(data.key)
-        .map(_._1)
-        // update the cluster info with runtime status
-        .map(data.update)
-        .map { clusterInfo =>
+        .map { status =>
           ObjectAbstract(
             group = data.group,
             name = data.name,
             kind = data.kind,
             className = Some(data.className),
-            state = clusterInfo.state,
-            error = None,
-            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_GROUP, Seq.empty)),
+            state = status.state,
+            error = status.error,
+            metrics = Metrics(meterCache.meters(data).getOrElse(StreamRoute.STREAM_GROUP, Seq.empty)),
             lastModified = data.lastModified,
             tags = data.tags
           )

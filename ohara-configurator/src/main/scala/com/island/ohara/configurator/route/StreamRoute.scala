@@ -221,7 +221,7 @@ private[configurator] object StreamRoute {
     meterCache: MeterCache,
     executionContext: ExecutionContext
   ): server.Route =
-    clusterRoute[StreamClusterInfo, StreamClusterStatus, Creation, Updating](
+    clusterRoute[StreamClusterInfo, Creation, Updating](
       root = STREAM_PREFIX_PATH,
       metricsKey = Some(STREAM_GROUP),
       hookOfCreation = hookOfCreation,

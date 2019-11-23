@@ -61,7 +61,7 @@ trait DataCollie {
   def values[T <: Data: ClassTag](keys: Set[ObjectKey])(implicit executor: ExecutionContext): Future[Seq[T]] =
     values[T].map { ds =>
       keys.foreach { key =>
-        if (!ds.exists(_.key == key)) throw new NoSuchClusterException(s"$key does not exist")
+        if (!ds.exists(_.key == key)) throw new NoSuchElementException(s"$key does not exist")
       }
       ds.filter(d => keys.contains(d.key))
     }

@@ -19,11 +19,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.ServiceCollie
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi._
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
@@ -32,28 +28,20 @@ import scala.concurrent.ExecutionContext
 object ContainerRoute {
   def apply(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     path(CONTAINER_PREFIX_PATH / Segment)({ clusterName =>
-      parameter(GROUP_KEY ? GROUP_DEFAULT) {
-        group =>
-          get {
-            complete(
-              serviceCollie
-                .clusters()
-                .map(_.filter(_._1.key == ObjectKey.of(group, clusterName)).map {
-                  case (cluster, containers) =>
-                    ContainerGroup(
-                      clusterKey = ObjectKey.of(group, clusterName),
-                      clusterType = cluster match {
-                        case _: ZookeeperClusterStatus => "zookeeper"
-                        case _: BrokerClusterStatus    => "broker"
-                        case _: WorkerClusterStatus    => "worker"
-                        case _: StreamClusterStatus    => "stream"
-                        case _                         => "unknown"
-                      },
-                      containers = containers
-                    )
-                })
-            )
-          }
+      parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
+        get {
+          complete(
+            serviceCollie
+              .clusters()
+              .map(_.filter(_.key == ObjectKey.of(group, clusterName)).map { cluster =>
+                ContainerGroup(
+                  clusterKey = ObjectKey.of(group, clusterName),
+                  clusterType = cluster.kind.toString.toLowerCase,
+                  containers = cluster.containers
+                )
+              })
+          )
+        }
       }
     })
 }

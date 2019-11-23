@@ -16,43 +16,31 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.{DataCollie, ServiceState, ZookeeperCollie}
+import com.island.ohara.agent.{DataCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
+import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeZookeeperCollie(node: DataCollie)
-    extends FakeCollie[ZookeeperClusterStatus](node)
-    with ZookeeperCollie {
+private[configurator] class FakeZookeeperCollie(node: DataCollie) extends FakeCollie(node) with ZookeeperCollie {
   override def creator: ZookeeperCollie.ClusterCreator =
     (_, creation) =>
-      if (clusterCache.asScala.exists(_._1.key == creation.key))
+      if (clusterCache.asScala.exists(_._1 == creation.key))
         Future.failed(new IllegalArgumentException(s"zookeeper can't increase nodes at runtime"))
       else
         Future.successful(
           addCluster(
-            new ZookeeperClusterStatus(
-              group = creation.group,
-              name = creation.name,
-              aliveNodes = creation.nodeNames,
-              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ServiceState.RUNNING.name),
-              error = None
-            ),
-            creation.imageName,
-            creation.ports
+            key = creation.key,
+            kind = ClusterStatus.Kind.ZOOKEEPER,
+            nodeNames = creation.nodeNames ++ clusterCache.asScala
+              .find(_._1 == creation.key)
+              .map(_._2.nodeNames)
+              .getOrElse(Set.empty),
+            imageName = creation.imageName,
+            ports = creation.ports
           )
         )
-
-  override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
-    Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster")
-    )
 
   override protected def doCreator(
     executionContext: ExecutionContext,

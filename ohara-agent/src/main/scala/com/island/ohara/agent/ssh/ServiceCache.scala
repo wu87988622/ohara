@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.ssh
 
 import java.util.Objects
 
-import com.island.ohara.agent.ServiceCache.Service
-import com.island.ohara.client.Enum
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
+import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.cache.RefreshableCache
 import com.island.ohara.common.setting.ObjectKey
@@ -47,7 +41,7 @@ trait ServiceCache extends Releasable {
   /**
     * @return the cached data
     */
-  def snapshot: Map[ClusterStatus, Seq[ContainerInfo]]
+  def snapshot: Seq[ClusterStatus]
 
   /**
     * The inner time-based auto-refresher is enough to most use cases. However, we are always in a situation that we should
@@ -56,59 +50,40 @@ trait ServiceCache extends Releasable {
     */
   def requestUpdate(): Unit
 
-  def get(clusterInfo: ClusterStatus): Seq[ContainerInfo]
-
   /**
     * add data to cache.
     * Noted, the key(ClusterStatus) you added will replace the older one in calling this method..
     *
-    * @param clusterInfo cluster info
-    * @param containers containers
+    * @param clusterStatus cluster info
     */
-  def put(clusterInfo: ClusterStatus, containers: Seq[ContainerInfo])
+  def put(clusterStatus: ClusterStatus)
 
   /**
     * remove the cached cluster data
-    * @param clusterInfo cluster info
+    * @param clusterStatus cluster info
     */
-  def remove(clusterInfo: ClusterStatus): Unit
-
-  /**
-    * remove the cached cluster data
-    * @param key cluster's key
-    * @param service cluster's type
-    */
-  def remove(key: ObjectKey, service: Service): Unit
+  def remove(clusterStatus: ClusterStatus): Unit
 }
 
 object ServiceCache {
-  sealed abstract class Service
-  object Service extends Enum[Service] {
-    case object ZOOKEEPER extends Service
-    case object BROKER    extends Service
-    case object WORKER    extends Service
-    case object STREAM    extends Service
-    case object UNKNOWN   extends Service
-  }
-
   def builder: Builder = new Builder
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[agent] case class RequestKey(key: ObjectKey, service: Service, createdTime: Long) {
+  private[agent] case class RequestKey(key: ObjectKey, kind: Kind, createdTime: Long) {
     override def equals(obj: Any): Boolean = obj match {
-      case another: RequestKey => another.key == key && another.service == service
+      case another: RequestKey => another.key == key && another.kind == kind
       case _                   => false
     }
-    override def hashCode(): Int = 31 * key.hashCode + service.hashCode
+    override def hashCode(): Int = 31 * key.hashCode + kind.hashCode
 
-    override def toString: String = s"name:${ObjectKey.toJsonString(key)}, service:$service"
+    override def toString: String = s"name:${ObjectKey.toJsonString(key)}, kind:$kind"
   }
 
   class Builder private[ServiceCache] extends com.island.ohara.common.pattern.Builder[ServiceCache] {
-    private[this] var frequency: Duration                                    = 5 seconds
-    private[this] var lazyRemove: Duration                                   = 0 seconds
-    private[this] var supplier: () => Map[ClusterStatus, Seq[ContainerInfo]] = _
+    private[this] var frequency: Duration                = 5 seconds
+    private[this] var lazyRemove: Duration               = 0 seconds
+    private[this] var supplier: () => Seq[ClusterStatus] = _
 
     @Optional("default value is 5 seconds")
     def frequency(frequency: Duration): Builder = {
@@ -134,7 +109,7 @@ object ServiceCache {
       * @param supplier supplier
       * @return this builder
       */
-    def supplier(supplier: () => Map[ClusterStatus, Seq[ContainerInfo]]): Builder = {
+    def supplier(supplier: () => Seq[ClusterStatus]): Builder = {
       this.supplier = Objects.requireNonNull(supplier)
       this
     }
@@ -148,12 +123,9 @@ object ServiceCache {
       checkArguments()
       new ServiceCache {
         private[this] val cache = RefreshableCache
-          .builder[RequestKey, (ClusterStatus, Seq[ContainerInfo])]()
+          .builder[RequestKey, ClusterStatus]()
           .supplier(
-            () =>
-              supplier().map {
-                case (clusterInfo, containers) => key(clusterInfo) -> (clusterInfo -> containers)
-              }.asJava
+            () => supplier().map(clusterStatus => key(clusterStatus) -> clusterStatus).toMap.asJava
           )
           .frequency(java.time.Duration.ofMillis(frequency.toMillis))
           .preRemoveObserver((key, _) => CommonUtils.current() - key.createdTime > lazyRemove.toMillis)
@@ -161,45 +133,21 @@ object ServiceCache {
 
         override def close(): Unit = Releasable.close(cache)
 
-        override def snapshot: Map[ClusterStatus, Seq[ContainerInfo]] = cache.snapshot().asScala.toMap.values.toMap
+        override def snapshot: Seq[ClusterStatus] = cache.snapshot().asScala.values.toSeq
 
         override def requestUpdate(): Unit = cache.requestUpdate()
 
-        private def key(clusterInfo: ClusterStatus): RequestKey = RequestKey(
-          key = clusterInfo.key,
-          service = clusterInfo match {
-            case _: ZookeeperClusterStatus => Service.ZOOKEEPER
-            case _: BrokerClusterStatus    => Service.BROKER
-            case _: WorkerClusterStatus    => Service.WORKER
-            case _: StreamClusterStatus    => Service.STREAM
-            case _                         => Service.UNKNOWN
-          },
+        private def key(clusterStatus: ClusterStatus): RequestKey = RequestKey(
+          key = clusterStatus.key,
+          kind = clusterStatus.kind,
           createdTime = CommonUtils.current()
         )
 
-        private[this] def key(objectKey: ObjectKey, service: Service): RequestKey = RequestKey(
-          key = objectKey,
-          service = service,
-          createdTime = CommonUtils.current()
-        )
+        override def put(clusterStatus: ClusterStatus): Unit =
+          cache.put(key(clusterStatus), clusterStatus)
 
-        override def get(clusterInfo: ClusterStatus): Seq[ContainerInfo] = {
-          val containers = cache.get(key(clusterInfo))
-          if (containers.isPresent) cache.get(key(clusterInfo)).get()._2
-          else Seq.empty
-        }
-
-        override def put(clusterInfo: ClusterStatus, containers: Seq[ContainerInfo]): Unit = {
-          val k = key(clusterInfo)
-          // we have to remove key-value first since cluster cache replace the key by a RequestKey which only compare the name and service.
-          // Hence, the new key (ClusterStatus) doesn't replace the older one.
-          cache.remove(k)
-          cache.put(k, (clusterInfo, containers))
-        }
-
-        override def remove(objectKey: ObjectKey, service: Service): Unit = cache.remove(key(objectKey, service))
-
-        override def remove(clusterInfo: ClusterStatus): Unit = cache.remove(key(clusterInfo))
+        override def remove(clusterStatus: ClusterStatus): Unit =
+          cache.remove(key(clusterStatus))
       }
     }
   }

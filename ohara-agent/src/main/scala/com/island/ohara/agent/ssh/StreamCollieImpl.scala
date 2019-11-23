@@ -16,15 +16,17 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{DataCollie, ServiceCache, StreamCollie}
+import com.island.ohara.agent.{DataCollie, StreamCollie}
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
 
 import scala.concurrent.{ExecutionContext, Future}
 private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
-    extends BasicCollieImpl[StreamClusterStatus](dataCollie, dockerCache, clusterCache)
+    extends BasicCollieImpl(dataCollie, dockerCache, clusterCache)
     with StreamCollie {
+  protected implicit val kind: ClusterStatus.Kind = ClusterStatus.Kind.STREAM
+
   override protected def doCreator(
     executionContext: ExecutionContext,
     containerInfo: ContainerInfo,
@@ -59,15 +61,9 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
     })
 
   override protected def postCreate(
-    clusterStatus: StreamClusterStatus,
-    successfulContainers: Seq[ContainerInfo]
+    clusterStatus: ClusterStatus
   ): Unit =
-    clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
-
-  override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
-    Future.failed(new UnsupportedOperationException("stream collie doesn't support remove node from a running cluster"))
+    clusterCache.put(clusterStatus)
 
   override protected def prefixKey: String = PREFIX_KEY
 }

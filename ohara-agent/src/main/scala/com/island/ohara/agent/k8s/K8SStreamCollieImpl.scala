@@ -19,13 +19,12 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent.{BrokerCollie, DataCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[StreamClusterStatus](dataCollie, k8sClient)
+    extends K8SBasicCollieImpl(dataCollie, k8sClient)
     with StreamCollie {
   private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])
 
@@ -64,13 +63,6 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       }
       .map(_ => Unit)
   }
-
-  override protected def doRemoveNode(previousCluster: StreamClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
-    Future.failed(
-      new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster")
-    )
 
   override protected def prefixKey: String = PREFIX_KEY
 }

@@ -29,78 +29,82 @@ import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.ClassTag
-private[configurator] abstract class FakeCollie[T <: ClusterStatus: ClassTag](dataCollie: DataCollie)
-    extends Collie[T] {
+private[configurator] abstract class FakeCollie(dataCollie: DataCollie) extends Collie {
   @VisibleForTesting
-  protected[configurator] val clusterCache =
-    new ConcurrentSkipListMap[T, Seq[ContainerInfo]]((o1: T, o2: T) => o1.key.compareTo(o2.key))
-
-  override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] = {
-    val containers = clusterCache.get(previousCluster)
-    if (containers == null) Future.successful(false)
-    else {
-      clusterCache.put(previousCluster, containers.filter(_.name != beRemovedContainer.name))
-      Future.successful(true)
-    }
-  }
+  protected[configurator] val clusterCache = new ConcurrentSkipListMap[ObjectKey, ClusterStatus]()
 
   /**
     * update the in-memory cluster status and container infos
-    * @param cluster cluster status
     * @return cluster status
     */
-  private[configurator] def addCluster(cluster: T, imageName: String, ports: Set[Int]): T = {
-    val FAKE_KIND_NAME = "FAKE"
-    def genContainers(cluster: T): Seq[ContainerInfo] =
-      cluster.aliveNodes.map { nodeName =>
-        ContainerInfo(
-          nodeName = nodeName,
-          id = CommonUtils.randomString(10),
-          imageName = imageName,
-          state = ContainerState.RUNNING.name,
-          FAKE_KIND_NAME,
-          name = CommonUtils.randomString(10),
-          size = -1,
-          portMappings = ports.map(p => PortMapping("fake", p, p)).toSeq,
-          environments = Map.empty,
-          hostname = CommonUtils.randomString(10)
-        )
-      }.toSeq
-    clusterCache.remove(cluster)
-    clusterCache.put(cluster, genContainers(cluster))
-    cluster
-  }
-  override def exist(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    Future.successful(clusterCache.keySet.asScala.exists(_.key == objectKey))
+  private[configurator] def addCluster(
+    key: ObjectKey,
+    kind: ClusterStatus.Kind,
+    nodeNames: Set[String],
+    imageName: String,
+    ports: Set[Int]
+  ): ClusterStatus =
+    clusterCache.put(
+      key,
+      ClusterStatus(
+        group = key.group(),
+        name = key.name(),
+        state = Some("RUNNING"),
+        error = None,
+        kind = kind,
+        containers = nodeNames
+          .map(
+            nodeName =>
+              ContainerInfo(
+                nodeName = nodeName,
+                id = CommonUtils.randomString(10),
+                imageName = imageName,
+                state = ContainerState.RUNNING.name,
+                kind = "FAKE",
+                name = CommonUtils.randomString(10),
+                size = -1,
+                portMappings = ports.map(p => PortMapping("fake", p, p)).toSeq,
+                environments = Map.empty,
+                hostname = CommonUtils.randomString(10)
+              )
+          )
+          .toSeq
+      )
+    )
 
-  override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+  override def exist(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.successful(clusterCache.keySet.asScala.contains(objectKey))
+
+  override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
-    Future.successful(clusterCache.remove(clusterInfo) != null)
+  ): Future[Boolean] = {
+    val previous = clusterCache.get(clusterInfo.key)
+    if (previous == null) Future.successful(false)
+    else {
+      val newContainers =
+        previous.containers.filterNot(container => beRemovedContainer.exists(_.name == container.name))
+      if (newContainers.isEmpty) clusterCache.remove(clusterInfo.key)
+      else clusterCache.put(previous.key, previous.copy(containers = newContainers))
+      // return true if it does remove something
+      Future.successful(newContainers.size != previous.containers.size)
+    }
+  }
 
   override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerInfo, String]] =
     exist(objectKey).flatMap(if (_) Future.successful {
-      val containers = clusterCache.asScala.find(_._1.key == objectKey).get._2
+      val containers = clusterCache.asScala.find(_._1 == objectKey).get._2.containers
       containers.map(_ -> "fake log").toMap
     } else Future.failed(new NoSuchClusterException(s"$objectKey doesn't exist")))
 
-  override def containers(
-    objectKey: ObjectKey
-  )(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    exist(objectKey).map(if (_) clusterCache.asScala.find(_._1.key == objectKey).get._2 else Seq.empty)
-
-  override def clusterWithAllContainers()(
+  override def clusters()(
     implicit executionContext: ExecutionContext
-  ): Future[Map[T, Seq[ContainerInfo]]] =
-    Future.successful(clusterCache.asScala.toMap)
+  ): Future[Seq[ClusterStatus]] =
+    Future.successful(clusterCache.asScala.values.toSeq)
 
   private[this] val _forceRemoveCount = new AtomicInteger(0)
-  override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+  override protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] =
     try doRemove(clusterInfo, containerInfos)

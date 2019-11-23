@@ -22,17 +22,19 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi
-import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo, WorkerClusterStatus}
+import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
+import com.island.ohara.client.configurator.v0.{ClusterStatus, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
+import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-trait WorkerCollie extends Collie[WorkerClusterStatus] {
+trait WorkerCollie extends Collie {
+  protected val log                = Logger(classOf[WorkerCollie])
   override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
 
   // TODO: remove this hard code (see #2957)
@@ -53,11 +55,11 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
     implicit val exec: ExecutionContext = executionContext
     val resolveRequiredInfos = for {
       allNodes <- dataCollie.valuesByNames[Node](creation.nodeNames)
-      existentNodes <- clusters().map(_.find(_._1.key == creation.key)).flatMap {
+      existentNodes <- clusters().map(_.find(_.key == creation.key)).flatMap {
         case Some(value) =>
           dataCollie
-            .valuesByNames[Node](value._1.aliveNodes)
-            .map(nodes => nodes.map(node => node -> value._2.find(_.nodeName == node.hostname).get).toMap)
+            .valuesByNames[Node](value.nodeNames)
+            .map(nodes => nodes.map(node => node -> value.containers.find(_.nodeName == node.hostname).get).toMap)
         case None => Future.successful(Map.empty[Node, ContainerInfo])
       }
       brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
@@ -163,23 +165,23 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
               doCreator(executionContext, containerInfo, newNode, route, arguments)
                 .map(_ => Some(containerInfo))
                 .recover {
-                  case _: Throwable =>
+                  case e: Throwable =>
+                    log.error(s"failed to create worker container on ${newNode.hostname}", e)
                     None
                 }
             })
           }
         successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
-          val state           = toClusterState(aliveContainers).map(_.name)
           postCreate(
-            new WorkerClusterStatus(
+            ClusterStatus(
               group = creation.group,
               name = creation.name,
-              aliveNodes = aliveContainers.map(_.nodeName).toSet,
-              state = state,
+              containers = aliveContainers,
+              kind = ClusterStatus.Kind.WORKER,
+              state = toClusterState(aliveContainers).map(_.name),
               error = None
-            ),
-            successfulContainers
+            )
           )
         }
     }
@@ -217,7 +219,7 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
   /**
     * After the worker container creates complete, you maybe need to do other things.
     */
-  protected def postCreate(clusterStatus: WorkerClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
     //Default Nothing
   }
 
@@ -244,17 +246,13 @@ trait WorkerCollie extends Collie[WorkerClusterStatus] {
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[WorkerClusterStatus] =
+  ): Future[ClusterStatus] =
     Future.successful(
-      new WorkerClusterStatus(
+      new ClusterStatus(
         group = key.group(),
         name = key.name(),
-        // Currently, docker naming rule for "Running" and Kubernetes naming rule for "PENDING"
-        // it is ok that we use the containerState.RUNNING or containerState.PENDING here.
-        aliveNodes = containers
-          .filter(c => c.state == ContainerState.RUNNING.name || c.state == ContainerState.PENDING.name)
-          .map(_.nodeName)
-          .toSet,
+        containers = containers,
+        kind = ClusterStatus.Kind.WORKER,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None

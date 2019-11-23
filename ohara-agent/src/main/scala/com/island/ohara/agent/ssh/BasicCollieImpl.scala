@@ -17,28 +17,26 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{Collie, DataCollie, ServiceCache, ServiceState}
+import com.island.ohara.agent.{Collie, DataCollie, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.{ClassTag, classTag}
-private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
+private abstract class BasicCollieImpl(
   dataCollie: DataCollie,
   dockerCache: DockerClientCache,
   clusterCache: ServiceCache
-) extends Collie[T] {
-  final override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext
-  ): Future[Map[T, Seq[ContainerInfo]]] = {
-    Future.successful(
-      clusterCache.snapshot.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
-        case (cluster, containers) => cluster.asInstanceOf[T] -> containers
-      }
-    )
-  }
+) extends Collie {
+  /**
+    * all ssh collies share the single cache, and we need a way to distinguish the difference status from different
+    * services. Hence, this implicit field is added to cache to find out the cached data belonging to this collie.
+    */
+  protected implicit val kind: ClusterStatus.Kind
+
+  final override def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]] =
+    Future.successful(clusterCache.snapshot.filter(_.kind == kind))
 
   protected def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
     dockerCache.exec(
@@ -50,21 +48,21 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
         }.toSeq)
     )
 
-  override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+  override protected def doForceRemove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] =
-    remove(clusterInfo, containerInfos, true)
+    remove(clusterInfo, beRemovedContainers, true)
 
-  override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+  override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] =
-    remove(clusterInfo, containerInfos, false)
+    remove(clusterInfo, beRemovedContainers, false)
 
-  private[this] def remove(clusterInfo: T, containerInfos: Seq[ContainerInfo], force: Boolean)(
+  private[this] def remove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo], force: Boolean)(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] =
     Future
-      .traverse(containerInfos) { containerInfo =>
+      .traverse(beRemovedContainers) { containerInfo =>
         dataCollie
           .value[Node](containerInfo.nodeName)
           .map(
@@ -83,8 +81,12 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
           )
       }
       .map { _ =>
-        clusterCache.remove(clusterInfo)
-        true
+        val newContainers =
+          clusterInfo.containers.filterNot(container => beRemovedContainers.exists(_.name == container.name))
+        if (newContainers.isEmpty) clusterCache.remove(clusterInfo)
+        else clusterCache.put(clusterInfo.copy(containers = newContainers))
+        // return true if it does remove something
+        newContainers.size != clusterInfo.containers.size
       }
 
   override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
@@ -125,16 +127,6 @@ private abstract class BasicCollieImpl[T <: ClusterStatus: ClassTag](
           })
           .map(_.toMap)
       }
-
-  override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] = {
-    dataCollie.value[Node](beRemovedContainer.nodeName).map { node =>
-      dockerCache.exec(node, _.stop(beRemovedContainer.name))
-      clusterCache.put(previousCluster, clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name))
-      true
-    }
-  }
 
   override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
     if (containers.isEmpty) None

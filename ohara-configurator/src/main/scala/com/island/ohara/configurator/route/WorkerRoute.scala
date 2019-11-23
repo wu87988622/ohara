@@ -191,7 +191,7 @@ object WorkerRoute {
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =
-    clusterRoute[WorkerClusterInfo, WorkerClusterStatus, Creation, Updating](
+    clusterRoute[WorkerClusterInfo, Creation, Updating](
       root = WORKER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,

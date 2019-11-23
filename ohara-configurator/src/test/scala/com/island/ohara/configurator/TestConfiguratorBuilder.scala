@@ -18,8 +18,7 @@ package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Directives.{complete, get, path}
+import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.ServiceCollie
@@ -76,8 +75,7 @@ class TestConfiguratorBuilder extends OharaTest {
           val nodes = result(configurator.store.values[Node]())
           nodes.isEmpty shouldBe false
           result(configurator.serviceCollie.clusters())
-            .flatMap(_._2.map(_.nodeName))
-            .foreach(name => nodes.exists(_.name == name) shouldBe true)
+            .foreach(clusterStatus => clusterStatus.nodeNames.foreach(n => nodes.exists(_.hostname == n) shouldBe true))
         } finally configurator.close()
     }
   }

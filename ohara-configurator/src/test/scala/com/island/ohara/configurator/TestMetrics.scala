@@ -255,7 +255,7 @@ class TestMetrics extends WithBrokerWorker {
 
   @Test
   def testStreamMeterInPipeline(): Unit = {
-    val wkInfo  = result(configurator.serviceCollie.workerCollie.clusters().map(_.keys)).head
+    val wkInfo  = result(configurator.serviceCollie.workerCollie.clusters()).head
     val jar     = RouteUtils.streamFile
     val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
     jarInfo.name shouldBe jar.getName

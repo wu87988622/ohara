@@ -19,13 +19,12 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent.{BrokerCollie, DataCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[WorkerClusterStatus](dataCollie, k8sClient)
+    extends K8SBasicCollieImpl(dataCollie, k8sClient)
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
 

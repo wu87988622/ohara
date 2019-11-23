@@ -18,14 +18,14 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.agent.{Collie, ServiceCollie}
 import com.island.ohara.client.Enum
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
-import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.Releasable
@@ -331,8 +331,8 @@ object ObjectChecker {
         private[this] var requireAllStreams    = false
         private[this] val requiredStreams      = mutable.Map[ObjectKey, Option[Condition]]()
 
-        private[this] def checkCluster[S <: ClusterStatus, C <: ClusterInfo: ClassTag](
-          collie: Collie[S],
+        private[this] def checkCluster[C <: ClusterInfo: ClassTag](
+          collie: Collie,
           key: ObjectKey
         )(implicit executionContext: ExecutionContext): Future[Option[(C, Condition)]] =
           store.get[C](key).flatMap {
@@ -342,12 +342,12 @@ object ObjectChecker {
           }
 
         private[this] def checkClusters[S <: ClusterStatus, C <: ClusterInfo: ClassTag](
-          collie: Collie[S],
+          collie: Collie,
           keys: Set[ObjectKey]
         )(implicit executionContext: ExecutionContext): Future[Map[C, Condition]] =
           Future
             .traverse(keys) { key =>
-              checkCluster[S, C](collie, key)
+              checkCluster[C](collie, key)
             }
             .map(_.flatten.toMap)
 
@@ -359,11 +359,10 @@ object ObjectChecker {
               .values[ZookeeperClusterInfo]()
               .map(_.map(_.key))
               .flatMap(
-                keys =>
-                  checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie, keys.toSet)
+                keys => checkClusters[ClusterStatus, ZookeeperClusterInfo](serviceCollie.zookeeperCollie, keys.toSet)
               )
           else
-            checkClusters[ZookeeperClusterStatus, ZookeeperClusterInfo](
+            checkClusters[ClusterStatus, ZookeeperClusterInfo](
               serviceCollie.zookeeperCollie,
               requiredZookeepers.keys.toSet
             )
@@ -376,10 +375,10 @@ object ObjectChecker {
               .values[BrokerClusterInfo]()
               .map(_.map(_.key))
               .flatMap(
-                keys => checkClusters[BrokerClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie, keys.toSet)
+                keys => checkClusters[ClusterStatus, BrokerClusterInfo](serviceCollie.brokerCollie, keys.toSet)
               )
           else
-            checkClusters[BrokerClusterStatus, BrokerClusterInfo](
+            checkClusters[ClusterStatus, BrokerClusterInfo](
               serviceCollie.brokerCollie,
               requiredBrokers.keys.toSet
             )
@@ -392,10 +391,10 @@ object ObjectChecker {
               .values[WorkerClusterInfo]()
               .map(_.map(_.key))
               .flatMap(
-                keys => checkClusters[WorkerClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie, keys.toSet)
+                keys => checkClusters[ClusterStatus, WorkerClusterInfo](serviceCollie.workerCollie, keys.toSet)
               )
           else
-            checkClusters[WorkerClusterStatus, WorkerClusterInfo](
+            checkClusters[ClusterStatus, WorkerClusterInfo](
               serviceCollie.workerCollie,
               requiredWorkers.keys.toSet
             )
@@ -408,10 +407,10 @@ object ObjectChecker {
               .values[StreamClusterInfo]()
               .map(_.map(_.key))
               .flatMap(
-                keys => checkClusters[StreamClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, keys.toSet)
+                keys => checkClusters[ClusterStatus, StreamClusterInfo](serviceCollie.streamCollie, keys.toSet)
               )
           else
-            checkClusters[StreamClusterStatus, StreamClusterInfo](
+            checkClusters[ClusterStatus, StreamClusterInfo](
               serviceCollie.streamCollie,
               requiredStreams.keys.toSet
             )
@@ -422,7 +421,7 @@ object ObjectChecker {
           store.get[TopicInfo](key).flatMap {
             case None => Future.successful(None)
             case Some(topicInfo) =>
-              checkCluster[BrokerClusterStatus, BrokerClusterInfo](
+              checkCluster[BrokerClusterInfo](
                 serviceCollie.brokerCollie,
                 topicInfo.brokerClusterKey
               ).flatMap {
@@ -462,7 +461,7 @@ object ObjectChecker {
           store.get[ConnectorInfo](key).flatMap {
             case None => Future.successful(None)
             case Some(connectorInfo) =>
-              checkCluster[WorkerClusterStatus, WorkerClusterInfo](
+              checkCluster[WorkerClusterInfo](
                 serviceCollie.workerCollie,
                 connectorInfo.workerClusterKey
               ).flatMap {

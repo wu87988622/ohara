@@ -50,7 +50,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
 
   private[this] def doClusters(
     implicit executionContext: ExecutionContext
-  ): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
+  ): Future[Seq[ClusterStatus]] =
     dataCollie
       .values[Node]()
       .flatMap(
@@ -69,8 +69,9 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
       .flatMap { allContainers =>
         def parse(
           serviceName: String,
+          service: ClusterStatus.Kind,
           f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterStatus]
-        ): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
+        ): Future[Seq[ClusterStatus]] =
           Future
             .sequence(
               allContainers
@@ -81,22 +82,23 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
                   case (clusterKey, value) => clusterKey -> value.map(_._2)
                 }
                 .map {
-                  case (clusterKey, containers) => f(clusterKey, containers).map(_ -> containers)
+                  case (clusterKey, containers) => f(clusterKey, containers)
                 }
             )
-            .map(_.toMap)
+            .map(_.toSeq)
 
         for {
-          zkMap     <- parse(ZookeeperApi.ZOOKEEPER_SERVICE_NAME, zookeeperCollie.toStatus)
-          bkMap     <- parse(BrokerApi.BROKER_SERVICE_NAME, brokerCollie.toStatus)
-          wkMap     <- parse(WorkerApi.WORKER_SERVICE_NAME, workerCollie.toStatus)
-          streamMap <- parse(StreamApi.STREAM_SERVICE_NAME, streamCollie.toStatus)
+          zkMap     <- parse(ZookeeperApi.ZOOKEEPER_SERVICE_NAME, ClusterStatus.Kind.ZOOKEEPER, zookeeperCollie.toStatus)
+          bkMap     <- parse(BrokerApi.BROKER_SERVICE_NAME, ClusterStatus.Kind.BROKER, brokerCollie.toStatus)
+          wkMap     <- parse(WorkerApi.WORKER_SERVICE_NAME, ClusterStatus.Kind.WORKER, workerCollie.toStatus)
+          streamMap <- parse(StreamApi.STREAM_SERVICE_NAME, ClusterStatus.Kind.STREAM, streamCollie.toStatus)
         } yield zkMap ++ bkMap ++ wkMap ++ streamMap
       }
 
   override def close(): Unit = {
     Releasable.close(dockerCache)
     Releasable.close(clusterCache)
+    Releasable.close(() => cacheThreadPool.shutdownNow())
   }
 
   override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =

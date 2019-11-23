@@ -21,22 +21,21 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamClusterInfo, StreamClusterStatus}
-import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterInfo, ZookeeperClusterStatus}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{
   ClusterCreation,
   ClusterInfo,
-  ClusterStatus,
   ClusterUpdating,
   ErrorApi,
   OharaJsonFormat
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.common.util.VersionUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import spray.json.{DeserializationException, JsArray, JsString, RootJsonFormat}
@@ -87,7 +86,6 @@ package object route {
     */
   def clusterRoute[
     Cluster <: ClusterInfo: ClassTag,
-    Status <: ClusterStatus,
     Creation <: ClusterCreation,
     Updating <: ClusterUpdating
   ](
@@ -102,7 +100,7 @@ package object route {
     implicit store: DataStore,
     objectChecker: ObjectChecker,
     meterCache: MeterCache,
-    collie: Collie[Status],
+    collie: Collie,
     serviceCollie: ServiceCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Updating],
@@ -113,13 +111,13 @@ package object route {
       .root(root)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
-      .hookOfGet(updateState[Cluster, Status](_, metricsKey))
-      .hookOfList((clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState[Cluster, Status](_, metricsKey)))
+      .hookOfGet(updateState[Cluster](_, metricsKey))
+      .hookOfList((clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState[Cluster](_, metricsKey)))
       .hookBeforeDelete(
         (key: ObjectKey) =>
           store.get[Cluster](key).flatMap {
             _.fold(Future.unit) { info =>
-              updateState[Cluster, Status](info, metricsKey)
+              updateState[Cluster](info, metricsKey)
                 .flatMap(cluster => hookBeforeDelete(cluster.key).map(_ => cluster))
                 .map(_.state)
                 .map {
@@ -151,7 +149,7 @@ package object route {
               collie
                 .clusters()
                 .flatMap { clusters =>
-                  if (!clusters.map(_._1.key).exists(_ == clusterInfo.key)) Future.unit
+                  if (!clusters.map(_.key).contains(clusterInfo.key)) Future.unit
                   else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
                   else collie.remove(clusterInfo.key)
                 }
@@ -164,6 +162,7 @@ package object route {
         collie.creator
           .settings(clusterInfo.settings)
           .nodeName(nodeName)
+          .threadPool(executionContext)
           .create()
           // we have to update the nodeNames of stored cluster info. Otherwise, the following Get/List request
           // will see the out-of-date nodeNames
@@ -172,18 +171,32 @@ package object route {
       })
       .hookOfFinalDeleteAction(
         (key: ObjectKey, nodeName: String, _: Map[String, String]) =>
-          store.get[Cluster](key).flatMap { clusterOption =>
-            clusterOption
-              .filter(_.nodeNames.contains(nodeName))
-              .map { cluster =>
-                collie
-                  .removeNode(key, nodeName)
-                  .flatMap(
-                    _ => store.addIfPresent(cluster.newNodeNames(cluster.nodeNames - nodeName).asInstanceOf[Cluster])
-                  )
-                  .flatMap(_ => Future.unit)
-              }
-              .getOrElse(Future.unit)
+          store.get[Cluster](key).flatMap {
+            clusterOption =>
+              clusterOption
+                .filter(_.nodeNames.contains(nodeName))
+                .map { cluster =>
+                  // there is two kind Public Deletion APIs.
+                  // 1) delete a node
+                  // 2) delete whole cluster
+                  // and we don't want to encourage user to call "delete a node" to "remove whole cluster"
+                  // hence, we throw exception here
+                  if (cluster.nodeNames.size <= 1)
+                    Future.failed(
+                      new IllegalStateException(
+                        s"there is only one instance. Please call remove to delete whole cluster"
+                      )
+                    )
+                  else
+                    collie
+                      .removeNode(key, nodeName)
+                      .flatMap(
+                        _ =>
+                          store.addIfPresent(cluster.newNodeNames(cluster.nodeNames - nodeName).asInstanceOf[Cluster])
+                      )
+                      .flatMap(_ => Future.unit)
+                }
+                .getOrElse(Future.unit)
           }
       )
       .build()
@@ -284,69 +297,91 @@ package object route {
         Unit
       }
 
-  private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Status <: ClusterStatus](
+  private[this] def updateState[Cluster <: ClusterInfo: ClassTag](
     cluster: Cluster,
     metricsKey: Option[String]
-  )(implicit meterCache: MeterCache, collie: Collie[Status], executionContext: ExecutionContext): Future[Cluster] =
+  )(implicit meterCache: MeterCache, collie: Collie, executionContext: ExecutionContext): Future[Cluster] =
     collie
       .clusters()
       .map(
-        _.keys
-          .find(_.key == cluster.key)
-          .map {
-            // the casting is a bit ugly but it is safe since we use the type-binding to restrict the input collie
-            case status: ZookeeperClusterStatus =>
-              cluster.asInstanceOf[ZookeeperClusterInfo].update(status)
-            case status: BrokerClusterStatus =>
-              cluster.asInstanceOf[BrokerClusterInfo].update(status)
-            case status: WorkerClusterStatus =>
-              cluster.asInstanceOf[WorkerClusterInfo].update(status)
-            case status: StreamClusterStatus =>
-              cluster
-                .asInstanceOf[StreamClusterInfo]
-                .update(status)
-                .copy(
-                  metrics = Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
-                )
+        clusters =>
+          clusters.find(_.key == cluster.key) match {
+            case None =>
+              // no running cluster. It means no state and no dead nodes.
+              // noted that the failed containers should still exist and we can "get" the cluster from collie.
+              // the case of getting nothing from collie is only one that there is absolutely no containers and
+              // we assume the cluster is NOT running.
+              cluster match {
+                case c: ZookeeperClusterInfo =>
+                  c.copy(
+                    aliveNodes = Set.empty,
+                    state = None,
+                    error = None
+                  )
+                case c: BrokerClusterInfo =>
+                  c.copy(
+                    aliveNodes = Set.empty,
+                    state = None,
+                    error = None
+                  )
+                case c: WorkerClusterInfo =>
+                  c.copy(
+                    aliveNodes = Set.empty,
+                    state = None,
+                    error = None
+                  )
+                case c: StreamClusterInfo =>
+                  c.copy(
+                    aliveNodes = Set.empty,
+                    state = None,
+                    error = None,
+                    // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
+                    metrics = Metrics.EMPTY
+                  )
+              }
+            case Some(status) =>
+              // no running cluster. It means no state and no dead nodes.
+              // noted that the failed containers should still exist and we can "get" the cluster from collie.
+              // the case of getting nothing from collie is only one that there is absolutely no containers and
+              // we assume the cluster is NOT running.
+              cluster match {
+                case c: ZookeeperClusterInfo =>
+                  c.copy(
+                    aliveNodes = status.aliveNodes,
+                    state = status.state,
+                    error = status.error,
+                    lastModified = CommonUtils.current()
+                  )
+                case c: BrokerClusterInfo =>
+                  c.copy(
+                    aliveNodes = status.aliveNodes,
+                    state = status.state,
+                    error = status.error,
+                    lastModified = CommonUtils.current()
+                  )
+                case c: WorkerClusterInfo =>
+                  c.copy(
+                    aliveNodes = status.aliveNodes,
+                    state = status.state,
+                    error = status.error,
+                    lastModified = CommonUtils.current()
+                  )
+                case c: StreamClusterInfo =>
+                  c.copy(
+                    aliveNodes = status.aliveNodes,
+                    state = status.state,
+                    error = status.error,
+                    lastModified = CommonUtils.current(),
+                    // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
+                    metrics =
+                      Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
+                  )
+              }
           }
-          .getOrElse {
-            // no running cluster. It means no state and no dead nodes.
-            // noted that the failed containers should still exist and we can "get" the cluster from collie.
-            // the case of getting nothing from collie is only one that there is absolutely no containers and
-            // we assume the cluster is NOT running.
-            cluster match {
-              case c: ZookeeperClusterInfo =>
-                c.copy(
-                  aliveNodes = Set.empty,
-                  state = None,
-                  error = None
-                )
-              case c: BrokerClusterInfo =>
-                c.copy(
-                  aliveNodes = Set.empty,
-                  state = None,
-                  error = None
-                )
-              case c: WorkerClusterInfo =>
-                c.copy(
-                  aliveNodes = Set.empty,
-                  state = None,
-                  error = None
-                )
-              case c: StreamClusterInfo =>
-                c.copy(
-                  aliveNodes = Set.empty,
-                  state = None,
-                  error = None,
-                  // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
-                  metrics = Metrics.EMPTY
-                )
-            }
-          }
-          // the actual type is erased since the clone method returns the ClusterInfo type.
-          // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
-          .asInstanceOf[Cluster]
       )
+      // the actual type is erased since the clone method returns the ClusterInfo type.
+      // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
+      .map(_.asInstanceOf[Cluster])
 
   /**
     * Create a topic admin according to passed cluster name.

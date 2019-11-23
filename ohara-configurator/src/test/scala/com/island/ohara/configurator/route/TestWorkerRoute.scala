@@ -198,9 +198,15 @@ class TestWorkerRoute extends OharaTest {
         .create()
     )
     result(workerApi.start(cluster.key))
-    cluster.nodeNames shouldBe nodeNames
-    result(workerApi.removeNode(cluster.key, nodeNames.last))
-    result(workerApi.get(cluster.key)).nodeNames shouldBe nodeNames - nodeNames.last
+    result(workerApi.removeNode(cluster.key, nodeNames.head))
+    result(workerApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(workerApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
+    nodeNames should contain(result(workerApi.get(cluster.key)).nodeNames.head)
+    intercept[IllegalArgumentException] {
+      result(workerApi.get(cluster.key)).nodeNames.foreach { nodeName =>
+        result(workerApi.removeNode(cluster.key, nodeName))
+      }
+    }.getMessage should include("there is only one instance")
   }
 
   @Test

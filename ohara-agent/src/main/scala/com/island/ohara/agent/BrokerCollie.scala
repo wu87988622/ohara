@@ -18,20 +18,23 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.BrokerApi
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus, Creation}
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
+import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-trait BrokerCollie extends Collie[BrokerClusterStatus] {
+trait BrokerCollie extends Collie {
+  protected val log = Logger(classOf[BrokerCollie])
+
   override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
 
   // TODO: remove this hard code (see #2957)
@@ -53,11 +56,11 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
 
     val resolveRequiredInfos = for {
       allNodes <- dataCollie.valuesByNames[Node](creation.nodeNames)
-      existentNodes <- clusters().map(_.find(_._1.key == creation.key)).flatMap {
+      existentNodes <- clusters().map(_.find(_.key == creation.key)).flatMap {
         case Some(value) =>
           dataCollie
-            .valuesByNames[Node](value._1.aliveNodes)
-            .map(nodes => nodes.map(node => node -> value._2.find(_.nodeName == node.hostname).get).toMap)
+            .valuesByNames[Node](value.nodeNames)
+            .map(nodes => nodes.map(node => node -> value.containers.find(_.nodeName == node.hostname).get).toMap)
         case None => Future.successful(Map.empty[Node, ContainerInfo])
       }
       zookeeperClusterInfo <- dataCollie.value[ZookeeperClusterInfo](creation.zookeeperClusterKey)
@@ -140,24 +143,24 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
               doCreator(executionContext, containerInfo, newNode, route, arguments)
                 .map(_ => Some(containerInfo))
                 .recover {
-                  case _: Throwable =>
+                  case e: Throwable =>
+                    log.error(s"failed to create broker container on ${newNode.hostname}", e)
                     None
                 }
             })
           }
         successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
-          val state           = toClusterState(aliveContainers).map(_.name)
-          val status = new BrokerClusterStatus(
-            group = creation.group,
-            name = creation.name,
-            // TODO: we should check the supported arguments by the running broker images
-            topicDefinition = BrokerApi.TOPIC_DEFINITION,
-            aliveNodes = aliveContainers.map(_.nodeName).toSet,
-            state = state,
-            error = None
+          postCreate(
+            ClusterStatus(
+              group = creation.group,
+              name = creation.name,
+              containers = aliveContainers,
+              kind = ClusterStatus.Kind.BROKER,
+              state = toClusterState(aliveContainers).map(_.name),
+              error = None
+            )
           )
-          postCreate(status, successfulContainers)
         }
     }
   }
@@ -198,9 +201,8 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
   /**
     * After creating the broker, need to processor other things
     * @param clusterStatus broker cluster information
-    * @param successfulContainers successful created containers
     */
-  protected def postCreate(clusterStatus: BrokerClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
     //Default Nothing
   }
 
@@ -227,19 +229,13 @@ trait BrokerCollie extends Collie[BrokerClusterStatus] {
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[BrokerClusterStatus] =
+  ): Future[ClusterStatus] =
     Future.successful(
-      new BrokerClusterStatus(
+      ClusterStatus(
         group = key.group(),
         name = key.name(),
-        // TODO: we should check the supported arguments by the running broker images
-        topicDefinition = BrokerApi.TOPIC_DEFINITION,
-        // Currently, docker naming rule for "Running" and Kubernetes naming rule for "PENDING"
-        // it is ok that we use the containerState.RUNNING or containerState.PENDING here.
-        aliveNodes = containers
-          .filter(c => c.state == ContainerState.RUNNING.name || c.state == ContainerState.PENDING.name)
-          .map(_.nodeName)
-          .toSet,
+        containers = containers,
+        kind = ClusterStatus.Kind.BROKER,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None

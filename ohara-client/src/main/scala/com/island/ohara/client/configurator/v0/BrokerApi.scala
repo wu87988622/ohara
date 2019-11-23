@@ -196,15 +196,6 @@ object BrokerApi {
   implicit val TOPIC_DEFINITION_JSON_FORMAT: OharaJsonFormat[TopicDefinition] =
     JsonRefiner[TopicDefinition].format(jsonFormat1(TopicDefinition)).rejectEmptyString().refine
 
-  class BrokerClusterStatus(
-    val group: String,
-    val name: String,
-    val topicDefinition: TopicDefinition,
-    val aliveNodes: Set[String],
-    val state: Option[String],
-    val error: Option[String]
-  ) extends ClusterStatus
-
   final case class BrokerClusterInfo private[BrokerApi] (
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
@@ -213,19 +204,6 @@ object BrokerApi {
     error: Option[String],
     topicDefinition: TopicDefinition
   ) extends ClusterInfo {
-    /**
-      * update the runtime information for this cluster info
-      * @param status runtime information
-      * @return a updated cluster info
-      */
-    def update(status: BrokerClusterStatus): BrokerClusterInfo = copy(
-      topicDefinition = status.topicDefinition,
-      aliveNodes = status.aliveNodes,
-      state = status.state,
-      error = status.error,
-      lastModified = CommonUtils.current()
-    )
-
     /**
       * reuse the parser from Creation.
       * @param settings settings

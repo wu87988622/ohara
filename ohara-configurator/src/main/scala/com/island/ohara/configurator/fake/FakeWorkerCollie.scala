@@ -18,10 +18,10 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{DataCollie, NoSuchClusterException, ServiceState, WorkerCollie}
+import com.island.ohara.agent.{DataCollie, NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterInfo, WorkerClusterStatus}
+import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps: String)
-    extends FakeCollie[WorkerClusterStatus](node)
+    extends FakeCollie(node)
     with WorkerCollie {
   override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
     // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
@@ -47,19 +47,14 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
     (_, creation) =>
       Future.successful(
         addCluster(
-          new WorkerClusterStatus(
-            group = creation.group,
-            name = creation.name,
-            aliveNodes = creation.nodeNames ++ clusterCache.asScala
-              .find(_._1.key == creation.key)
-              .map(_._2.map(_.nodeName))
-              .getOrElse(Set.empty),
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ServiceState.RUNNING.name),
-            error = None
-          ),
-          creation.imageName,
-          creation.ports
+          key = creation.key,
+          kind = ClusterStatus.Kind.WORKER,
+          nodeNames = creation.nodeNames ++ clusterCache.asScala
+            .find(_._1 == creation.key)
+            .map(_._2.nodeNames)
+            .getOrElse(Set.empty),
+          imageName = creation.imageName,
+          ports = creation.ports
         )
       )
 
@@ -70,7 +65,7 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
       Future.successful(
         WorkerClient.builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(wkConnectionProps).build
       )
-    else if (clusterCache.keySet().asScala.exists(_.key == cluster.key)) {
+    else if (clusterCache.keySet().asScala.contains(cluster.key)) {
       val fake = FakeWorkerClient()
       val r    = fakeClientCache.putIfAbsent(cluster, fake)
       Future.successful(if (r == null) fake else r)

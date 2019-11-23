@@ -88,7 +88,7 @@ object MeterCache {
           case _: BrokerClusterInfo    => "bk"
           case _: WorkerClusterInfo    => "wk"
           case _: StreamClusterInfo    => "stream"
-          case c: ClusterInfo          => c.getClass.getSimpleName
+          case c: ClusterInfo          => c.getClass.getSimpleName // used by testing
         }
       )
 

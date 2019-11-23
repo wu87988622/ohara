@@ -96,7 +96,7 @@ class TestTopicRoute extends OharaTest {
   @Test
   def removeTopicFromNonexistentBrokerCluster(): Unit = {
     val name = CommonUtils.randomString(10)
-    val bk   = result(configurator.serviceCollie.brokerCollie.clusters()).keys.head
+    val bk   = result(configurator.serviceCollie.brokerCollie.clusters()).head
     result(
       topicApi.request
         .name(name)
@@ -424,8 +424,8 @@ class TestTopicRoute extends OharaTest {
     val cache      = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
     val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
     import scala.collection.JavaConverters._
-    val cluster = cache.keySet().asScala.find(_.key == bk.key).get
-    cache.remove(cluster)
+    val cluster = cache.values().asScala.find(_.key == bk.key).get
+    cache.remove(cluster.key)
     adminCache.remove(bk)
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .find(_.key == bk.key)
@@ -446,8 +446,8 @@ class TestTopicRoute extends OharaTest {
     val cache      = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
     val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
     import scala.collection.JavaConverters._
-    val cluster = cache.keySet().asScala.find(_.key == bk.key).get
-    cache.remove(cluster)
+    val cluster = cache.values().asScala.find(_.key == bk.key).get
+    cache.remove(cluster.key)
     adminCache.remove(bk)
     result(configurator.store.remove[BrokerClusterInfo](bk.key))
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
@@ -467,8 +467,8 @@ class TestTopicRoute extends OharaTest {
     val cache      = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
     val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
     import scala.collection.JavaConverters._
-    val cluster = cache.keySet().asScala.find(_.key == bk.key).get
-    cache.remove(cluster)
+    val cluster = cache.values().asScala.find(_.key == bk.key).get
+    cache.remove(cluster.key)
     adminCache.remove(bk)
     result(configurator.store.remove[BrokerClusterInfo](bk.key))
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())

@@ -19,7 +19,6 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{ClusterRequest, ClusterStatus}
 import com.island.ohara.common.annotations.Optional
@@ -30,9 +29,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
-  * @tparam T cluster description
   */
-trait Collie[T <: ClusterStatus] {
+trait Collie {
   /**
     * remove whole cluster by specified key. The process, mostly, has a graceful shutdown
     * which can guarantee the data consistency. However, the graceful downing whole cluster may take some time...
@@ -42,18 +40,18 @@ trait Collie[T <: ClusterStatus] {
     * @return true if it does remove a running cluster. Otherwise, false
     */
   final def remove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusterWithAllContainers().flatMap(_.find(_._1.key == key).fold(Future.successful(false)) {
-      case (cluster, containerInfos) => doRemove(cluster, containerInfos)
+    clusters().flatMap(_.find(_.key == key).fold(Future.successful(false)) { cluster =>
+      doRemove(cluster, cluster.containers)
     })
 
   /**
     * remove whole cluster gracefully.
     * @param clusterInfo cluster info
-    * @param containerInfos containers info
+    * @param beRemovedContainer the container to remove
     * @param executionContext thread pool
     * @return true if success. otherwise false
     */
-  protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+  protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean]
 
@@ -65,8 +63,8 @@ trait Collie[T <: ClusterStatus] {
     * @return true if it does remove a running cluster. Otherwise, false
     */
   final def forceRemove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusterWithAllContainers().flatMap(_.find(_._1.key == key).fold(Future.successful(false)) {
-      case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
+    clusters().flatMap(_.find(_.key == key).fold(Future.successful(false)) { cluster =>
+      doForceRemove(cluster, cluster.containers)
     })
 
   /**
@@ -76,7 +74,7 @@ trait Collie[T <: ClusterStatus] {
     * @param executionContext thread pool
     * @return true if success. otherwise false
     */
-  protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+  protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] = doRemove(clusterInfo, containerInfos)
 
@@ -105,50 +103,22 @@ trait Collie[T <: ClusterStatus] {
   def creator: ClusterCreator
 
   /**
-    * get the containers information from cluster
-    * Note: this method intends to fetch all containers belong to required cluster, so you should honor to your
-    * filter logic to fetch the running containers or use '''cluster(key)''' instead
-    *
-    * @param key cluster key
-    * @return containers information
-    */
-  def containers(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    clusterWithAllContainers().map(
-      _.find(_._1.key == key)
-        .map(_._2)
-        .getOrElse(throw new IllegalArgumentException(s"cluster with objectKey [$key] is not running"))
-    )
-
-  /**
     * fetch all clusters and belonging containers from cache.
     * Note: this function will only get running containers
     *
     * @param executionContext execution context
     * @return cluster and containers information
     */
-  def clusters()(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
-    clusterWithAllContainers().map(
-      entry =>
-        // Currently, both k8s and pure docker have the same context of "RUNNING".
-        // It is ok to filter container via RUNNING state.
-        // Note: even if all containers are dead, the cluster information should be fetch also.
-        entry.map { case (info, containers) => info -> containers.filter(_.state == ContainerState.RUNNING.name) }
-    )
-
-  // Collie only care about active containers, but we need to trace the exited "orphan" containers for deleting them.
-  // This method intend to fetch all containers of each cluster and we filter out needed containers in other methods.
-  protected def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext
-  ): Future[Map[T, Seq[ContainerInfo]]]
+  def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]]
 
   /**
     * get the cluster information from a cluster
     * @param key cluster key
     * @return cluster information
     */
-  def cluster(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
+  def cluster(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterStatus] =
     clusters().map(
-      _.find(_._1.key == key)
+      _.find(_.key == key)
         .getOrElse(throw new NoSuchClusterException(s"$serviceName cluster with objectKey [$key] is not running"))
     )
 
@@ -157,7 +127,7 @@ trait Collie[T <: ClusterStatus] {
     * @return true if the cluster exists
     */
   def exist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusters().map(_.exists(_._1.key == key))
+    clusters().map(_.exists(_.key == key))
 
   /**
     * @param key cluster key
@@ -169,46 +139,22 @@ trait Collie[T <: ClusterStatus] {
   /**
     * remove a node from a running cluster.
     * NOTED: this is a async operation since graceful downing a node from a running service may be slow.
+    * NOTED: the cluster is gone if there is only one instance.
     * @param key cluster key
     * @param nodeName node name
     * @return true if it does remove a node from a running cluster. Otherwise, false
     */
   final def removeNode(key: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters().flatMap(
-      _.find(_._1.key == key).filter(_._2.exists(_.nodeName == nodeName)).fold(Future.successful(false)) {
-        case (cluster, runningContainers) =>
-          runningContainers.size match {
-            case 1 =>
-              Future.failed(
-                new IllegalArgumentException(
-                  s"cluster [$key] is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"
-                )
-              )
-            case _ =>
-              doRemoveNode(
-                cluster,
-                runningContainers
-                  .find(_.nodeName == nodeName)
-                  .getOrElse(
-                    throw new IllegalArgumentException(
-                      s"This should not be happen!!! $nodeName doesn't exist on cluster:$key"
-                    )
-                  )
-              )
-          }
-      }
+      _.find(_.key == key)
+        .map { cluster =>
+          cluster.containers
+            .find(_.nodeName == nodeName)
+            .map(container => doRemove(cluster, Seq(container)))
+            .getOrElse(Future.successful(false))
+        }
+        .getOrElse(Future.successful(false))
     )
-
-  /**
-    * do the remove actually. Normally, the sub-class doesn't need to check the existence of removed node.
-    * @param previousCluster previous cluster
-    * @param beRemovedContainer the container to be removed
-    * @param executionContext thread pool
-    * @return true if success. otherwise, false
-    */
-  protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean]
 
   /**
     * Get the cluster state by containers.
@@ -267,7 +213,7 @@ trait Collie[T <: ClusterStatus] {
     */
   protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[T]
+  ): Future[ClusterStatus]
 }
 
 object Collie {

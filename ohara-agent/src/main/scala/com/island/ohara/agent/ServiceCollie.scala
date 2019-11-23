@@ -24,7 +24,6 @@ import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import com.island.ohara.agent.ssh.ServiceCollieImpl
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.client.configurator.v0.InspectApi.FileContent
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
@@ -76,7 +75,7 @@ abstract class ServiceCollie extends Releasable {
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of all clusters
     */
-  def clusters()(implicit executionContext: ExecutionContext): Future[Map[ClusterStatus, Seq[ContainerInfo]]] =
+  def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]] =
     for {
       zkMap     <- zookeeperCollie.clusters()
       bkMap     <- brokerCollie.clusters()

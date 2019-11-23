@@ -16,10 +16,10 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{DataCollie, ServiceCache, ZookeeperCollie}
+import com.island.ohara.agent.{DataCollie, ZookeeperCollie}
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,8 +27,10 @@ private class ZookeeperCollieImpl(
   val dataCollie: DataCollie,
   dockerCache: DockerClientCache,
   clusterCache: ServiceCache
-) extends BasicCollieImpl[ZookeeperClusterStatus](dataCollie, dockerCache, clusterCache)
+) extends BasicCollieImpl(dataCollie, dockerCache, clusterCache)
     with ZookeeperCollie {
+  protected implicit val kind: ClusterStatus.Kind = ClusterStatus.Kind.ZOOKEEPER
+
   override protected def doCreator(
     executionContext: ExecutionContext,
     containerInfo: ContainerInfo,
@@ -65,17 +67,9 @@ private class ZookeeperCollieImpl(
     })
 
   override protected def postCreate(
-    clusterStatus: ZookeeperClusterStatus,
-    successfulContainers: Seq[ContainerInfo]
+    clusterStatus: ClusterStatus
   ): Unit =
-    clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
-
-  override protected def doRemoveNode(previousCluster: ZookeeperClusterStatus, beRemovedContainer: ContainerInfo)(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
-    Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support remove node from a running cluster")
-    )
+    clusterCache.put(clusterStatus)
 
   override protected def prefixKey: String = PREFIX_KEY
 }

@@ -16,22 +16,22 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{DataCollie, ServiceCache, WorkerCollie}
+import com.island.ohara.agent.{DataCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
+import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
-    extends BasicCollieImpl[WorkerClusterStatus](dataCollie, dockerCache, clusterCache)
+    extends BasicCollieImpl(dataCollie, dockerCache, clusterCache)
     with WorkerCollie {
+  protected implicit val kind: ClusterStatus.Kind = ClusterStatus.Kind.WORKER
+
   override protected def postCreate(
-    workerClusterStatus: WorkerClusterStatus,
-    successfulContainers: Seq[ContainerInfo]
+    workerClusterStatus: ClusterStatus
   ): Unit =
-    clusterCache.put(workerClusterStatus, clusterCache.get(workerClusterStatus) ++ successfulContainers)
+    clusterCache.put(workerClusterStatus)
 
   override protected def doCreator(
     executionContext: ExecutionContext,

@@ -16,17 +16,18 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{BrokerCollie, DataCollie, ServiceCache}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
+import com.island.ohara.agent.{BrokerCollie, DataCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
-    extends BasicCollieImpl[BrokerClusterStatus](dataCollie, dockerCache, clusterCache)
+    extends BasicCollieImpl(dataCollie, dockerCache, clusterCache)
     with BrokerCollie {
+  protected implicit val kind: ClusterStatus.Kind = ClusterStatus.Kind.BROKER
+
   override protected def doCreator(
     executionContext: ExecutionContext,
     containerInfo: ContainerInfo,
@@ -65,10 +66,9 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
   }
 
   override protected def postCreate(
-    clusterStatus: BrokerClusterStatus,
-    successfulContainers: Seq[ContainerInfo]
+    clusterStatus: ClusterStatus
   ): Unit =
-    clusterCache.put(clusterStatus, clusterCache.get(clusterStatus) ++ successfulContainers)
+    clusterCache.put(clusterStatus)
 
   override protected def prefixKey: String = PREFIX_KEY
 

@@ -30,7 +30,7 @@ import spray.json.DefaultJsonProtocol._
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
   * information".
   */
-trait ClusterInfo extends ClusterStatus with Data {
+trait ClusterInfo extends Data {
   /**
     * override the key to avoid conflict of double inheritance.
     */
@@ -58,6 +58,22 @@ trait ClusterInfo extends ClusterStatus with Data {
     * @return nodes running this cluster
     */
   def nodeNames: Set[String]
+
+  /**
+    * @return the state of this cluster. None means the cluster is not running
+    */
+  def state: Option[String]
+
+  /**
+    * @return the error message of the dead cluster
+    */
+  def error: Option[String]
+
+  /**
+    * the nodes do run the containers of cluster.
+    * @return a collection of node names
+    */
+  def aliveNodes: Set[String]
 
   /**
     * List the dead nodes. the number of dead nodes is calculated since the gone container may be not leave any information

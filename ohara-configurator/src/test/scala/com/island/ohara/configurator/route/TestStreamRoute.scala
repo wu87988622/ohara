@@ -879,6 +879,30 @@ class TestStreamRoute extends OharaTest {
     }.getMessage should include("no available")
   }
 
+  @Test
+  def testRemoveNode(): Unit = {
+    val cluster = result(
+      streamApi.request
+        .jarKey(fileInfo.key)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .toTopicKey(toTopicKey)
+        .fromTopicKey(fromTopicKey)
+        .nodeNames(nodeNames)
+        .create()
+    )
+
+    result(streamApi.start(cluster.key))
+    result(streamApi.removeNode(cluster.key, nodeNames.head))
+    result(streamApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(streamApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
+    nodeNames should contain(result(streamApi.get(cluster.key)).nodeNames.head)
+    intercept[IllegalArgumentException] {
+      result(streamApi.get(cluster.key)).nodeNames.foreach { nodeName =>
+        result(streamApi.removeNode(cluster.key, nodeName))
+      }
+    }.getMessage should include("there is only one instance")
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

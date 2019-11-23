@@ -18,12 +18,8 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ServiceCollie
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterStatus
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.client.configurator.v0.NodeApi._
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterStatus
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterStatus
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterStatus
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
@@ -40,7 +36,6 @@ object NodeRoute {
   )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
     serviceCollie
       .clusters()
-      .map(_.keys.toSeq)
       .flatMap(
         clusters =>
           serviceCollie.configuratorContainerName().map(clusters -> Some(_)).recover {
@@ -55,32 +50,28 @@ object NodeRoute {
                 NodeService(
                   name = NodeApi.ZOOKEEPER_SERVICE_NAME,
                   clusterKeys = clusters
-                    .filter(_.isInstanceOf[ZookeeperClusterStatus])
-                    .map(_.asInstanceOf[ZookeeperClusterStatus])
+                    .filter(_.kind == ClusterStatus.Kind.ZOOKEEPER)
                     .filter(_.aliveNodes.contains(node.name))
                     .map(_.key)
                 ),
                 NodeService(
                   name = NodeApi.BROKER_SERVICE_NAME,
                   clusterKeys = clusters
-                    .filter(_.isInstanceOf[BrokerClusterStatus])
-                    .map(_.asInstanceOf[BrokerClusterStatus])
+                    .filter(_.kind == ClusterStatus.Kind.BROKER)
                     .filter(_.aliveNodes.contains(node.name))
                     .map(_.key)
                 ),
                 NodeService(
                   name = NodeApi.WORKER_SERVICE_NAME,
                   clusterKeys = clusters
-                    .filter(_.isInstanceOf[WorkerClusterStatus])
-                    .map(_.asInstanceOf[WorkerClusterStatus])
+                    .filter(_.kind == ClusterStatus.Kind.WORKER)
                     .filter(_.aliveNodes.contains(node.name))
                     .map(_.key)
                 ),
                 NodeService(
                   name = NodeApi.STREAM_SERVICE_NAME,
                   clusterKeys = clusters
-                    .filter(_.isInstanceOf[StreamClusterStatus])
-                    .map(_.asInstanceOf[StreamClusterStatus])
+                    .filter(_.kind == ClusterStatus.Kind.STREAM)
                     .filter(_.aliveNodes.contains(node.name))
                     .map(_.key)
                 )

@@ -23,13 +23,14 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi
-import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo, StreamClusterStatus}
+import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.{ClusterStatus, StreamApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.Stream
 import com.island.ohara.streams.config.StreamSetting
+import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
 import scala.collection.JavaConverters._
@@ -39,18 +40,19 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling stream cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait StreamCollie extends Collie[StreamClusterStatus] {
+trait StreamCollie extends Collie {
+  protected val log = Logger(classOf[StreamCollie])
   override def creator: StreamCollie.ClusterCreator =
     (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
 
       val resolveRequiredInfos = for {
         allNodes <- dataCollie.valuesByNames[Node](creation.nodeNames)
-        existentNodes <- clusters().map(_.find(_._1.key == creation.key)).flatMap {
+        existentNodes <- clusters().map(_.find(_.key == creation.key)).flatMap {
           case Some(value) =>
             dataCollie
-              .valuesByNames[Node](value._1.aliveNodes)
-              .map(nodes => nodes.map(node => node -> value._2.find(_.nodeName == node.hostname).get).toMap)
+              .valuesByNames[Node](value.nodeNames)
+              .map(nodes => nodes.map(node => node -> value.containers.find(_.nodeName == node.hostname).get).toMap)
           case None => Future.successful(Map.empty[Node, ContainerInfo])
         }
         brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
@@ -132,23 +134,23 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
                   doCreator(executionContext, containerInfo, newNode, route, arguments)
                     .map(_ => Some(containerInfo))
                     .recover {
-                      case _: Throwable =>
+                      case e: Throwable =>
+                        log.error(s"failed to create stream container on ${newNode.hostname}", e)
                         None
                     }
                 })
               }
 
             successfulContainersFuture.map(_.flatten.toSeq).map { aliveContainers =>
-              val state = toClusterState(aliveContainers).map(_.name)
               postCreate(
-                new StreamClusterStatus(
+                ClusterStatus(
                   group = creation.group,
                   name = creation.name,
-                  aliveNodes = aliveContainers.map(_.nodeName).toSet,
-                  state = state,
+                  containers = aliveContainers,
+                  kind = ClusterStatus.Kind.STREAM,
+                  state = toClusterState(aliveContainers).map(_.name),
                   error = None
-                ),
-                aliveContainers
+                )
               )
             }
         }
@@ -166,17 +168,13 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[StreamClusterStatus] =
+  ): Future[ClusterStatus] =
     Future.successful(
-      new StreamClusterStatus(
+      ClusterStatus(
         group = key.group(),
         name = key.name(),
-        // Currently, docker naming rule for "Running" and Kubernetes naming rule for "PENDING"
-        // it is ok that we use the containerState.RUNNING or containerState.PENDING here.
-        aliveNodes = containers
-          .filter(c => c.state == ContainerState.RUNNING.name || c.state == ContainerState.PENDING.name)
-          .map(_.nodeName)
-          .toSet,
+        containers = containers,
+        kind = ClusterStatus.Kind.STREAM,
         state = toClusterState(containers).map(_.name),
         error = None
       )
@@ -200,7 +198,7 @@ trait StreamCollie extends Collie[StreamClusterStatus] {
     arguments: Seq[String]
   ): Future[Unit]
 
-  protected def postCreate(clusterStatus: StreamClusterStatus, successfulContainers: Seq[ContainerInfo]): Unit = {
+  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
     //Default do nothing
   }
 }

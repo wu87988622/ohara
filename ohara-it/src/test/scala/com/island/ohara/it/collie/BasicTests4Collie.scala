@@ -413,15 +413,11 @@ abstract class BasicTests4Collie extends IntegrationTest {
     try {
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames}")
       // make sure all active broker nodes are sync!
-      await(
-        () => {
-          brokerClient.brokerPorts().size() == cluster.nodeNames.size
-        }
-      )
+      await(() => brokerClient.brokerPorts().size() == cluster.nodeNames.size)
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames} ... done")
       log.info(s"[BROKER] number of replications:${cluster.nodeNames.size}")
       await(
-        () => {
+        () =>
           try {
             brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
             true
@@ -436,7 +432,6 @@ abstract class BasicTests4Collie extends IntegrationTest {
               log.error(s"[BROKER] create topic error ${e.getCause}")
               false
           }
-        }
       )
       log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers ... done")
       val producer = Producer

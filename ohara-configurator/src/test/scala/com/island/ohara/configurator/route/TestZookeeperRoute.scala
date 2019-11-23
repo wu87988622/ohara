@@ -142,12 +142,19 @@ class TestZookeeperRoute extends OharaTest {
 
   @Test
   def testRemoveNode(): Unit = {
-    val zk = result(
+    val cluster = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.key))
-    // we don't support to remove zk node at runtime
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.removeNode(zk.key, nodeNames.head))
+    result(zookeeperApi.start(cluster.key))
+    result(zookeeperApi.removeNode(cluster.key, nodeNames.head))
+    result(zookeeperApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(zookeeperApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
+    nodeNames should contain(result(zookeeperApi.get(cluster.key)).nodeNames.head)
+    intercept[IllegalArgumentException] {
+      result(zookeeperApi.get(cluster.key)).nodeNames.foreach { nodeName =>
+        result(zookeeperApi.removeNode(cluster.key, nodeName))
+      }
+    }.getMessage should include("there is only one instance")
   }
 
   @Test

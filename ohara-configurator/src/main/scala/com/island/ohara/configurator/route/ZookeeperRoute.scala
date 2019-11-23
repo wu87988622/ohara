@@ -143,7 +143,7 @@ object ZookeeperRoute {
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =
-    clusterRoute[ZookeeperClusterInfo, ZookeeperClusterStatus, Creation, Updating](
+    clusterRoute[ZookeeperClusterInfo, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,
       metricsKey = None,
       hookOfCreation = hookOfCreation,

@@ -258,14 +258,6 @@ object WorkerApi {
       }
     )
 
-  class WorkerClusterStatus(
-    val group: String,
-    val name: String,
-    val aliveNodes: Set[String],
-    val state: Option[String],
-    val error: Option[String]
-  ) extends ClusterStatus
-
   final case class WorkerClusterInfo private[ohara] (
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
@@ -273,18 +265,6 @@ object WorkerApi {
     state: Option[String],
     error: Option[String]
   ) extends ClusterInfo {
-    /**
-      * update the runtime information for this cluster info
-      * @param status runtime information
-      * @return a updated cluster info
-      */
-    def update(status: WorkerClusterStatus): WorkerClusterInfo = copy(
-      aliveNodes = status.aliveNodes,
-      state = status.state,
-      error = status.error,
-      lastModified = CommonUtils.current()
-    )
-
     /**
       * reuse the parser from Creation.
       * @param settings settings

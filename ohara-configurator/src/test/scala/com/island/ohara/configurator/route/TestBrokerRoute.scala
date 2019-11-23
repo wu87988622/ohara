@@ -231,18 +231,15 @@ class TestBrokerRoute extends OharaTest {
       brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
     )
     result(brokerApi.start(cluster.key))
-
-    result(brokerApi.removeNode(cluster.key, nodeNames.last))
-    result(brokerApi.get(cluster.key)).nodeNames shouldBe cluster.nodeNames - nodeNames.last
-
-    result(brokerApi.addNode(cluster.key, nodeNames.last))
-    result(brokerApi.removeNode(cluster.key, nodeNames.last))
-    result(brokerApi.get(cluster.key)).nodeNames shouldBe cluster.nodeNames - nodeNames.last
+    result(brokerApi.removeNode(cluster.key, nodeNames.head))
+    result(brokerApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(brokerApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
+    nodeNames should contain(result(brokerApi.get(cluster.key)).nodeNames.head)
     intercept[IllegalArgumentException] {
       result(brokerApi.get(cluster.key)).nodeNames.foreach { nodeName =>
         result(brokerApi.removeNode(cluster.key, nodeName))
       }
-    }.getMessage should include("Please use remove(clusterName)")
+    }.getMessage should include("there is only one instance")
   }
 
   @Test

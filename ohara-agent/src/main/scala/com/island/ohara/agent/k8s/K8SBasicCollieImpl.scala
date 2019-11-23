@@ -16,34 +16,27 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.{ServiceState, Collie, DataCollie}
+import com.island.ohara.agent.{Collie, DataCollie, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
-import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.ClassTag
 
-private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
+import scala.concurrent.{ExecutionContext, Future}
+
+private[this] abstract class K8SBasicCollieImpl(
   dataCollie: DataCollie,
   k8sClient: K8SClient
-) extends Collie[T] {
-  override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] = {
-    Future.sequence(containerInfos.map(c => k8sClient.remove(c.name))).map(_.nonEmpty)
-  }
-
-  override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[Boolean] = {
-    Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_.nonEmpty)
-  }
-
-  override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
+) extends Collie {
+  override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] =
-    k8sClient.remove(beRemovedContainer.name).map(_ => true)
+    Future.sequence(beRemovedContainer.map(c => k8sClient.remove(c.name))).map(_.nonEmpty)
+
+  override protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext
+  ): Future[Boolean] =
+    Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_.nonEmpty)
 
   override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
@@ -65,9 +58,9 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
       )
       .map(_.toMap)
 
-  override def clusterWithAllContainers()(
+  override def clusters()(
     implicit executionContext: ExecutionContext
-  ): Future[Map[T, Seq[ContainerInfo]]] =
+  ): Future[Seq[ClusterStatus]] =
     dataCollie
       .values[Node]()
       .flatMap(filterContainerService)
@@ -78,12 +71,11 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterStatus: ClassTag](
             case (objectKey, value) => objectKey -> value.map(_._2)
           }
           .map {
-            case (objectKey, containers) => toStatus(objectKey, containers).map(_ -> containers)
+            case (objectKey, containers) => toStatus(objectKey, containers)
           }
           .toSeq
       )
       .flatMap(Future.sequence(_))
-      .map(_.toMap)
 
   private[this] def filterContainerService(
     nodes: Seq[Node]

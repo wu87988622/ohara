@@ -88,7 +88,10 @@ class TestListCluster extends IntegrationTest {
 
     await { () =>
       val containers =
-        result(serviceCollie.zookeeperCollie.clusters()).find(_._1.key == clusterKey).map(_._2).getOrElse(Seq.empty)
+        result(serviceCollie.zookeeperCollie.clusters())
+          .find(_.key == clusterKey)
+          .map(_.containers)
+          .getOrElse(Seq.empty)
       containers.map(_.nodeName).toSet == Set(aliveNode.hostname)
     }
 
@@ -99,7 +102,7 @@ class TestListCluster extends IntegrationTest {
     )
 
     await { () =>
-      !result(serviceCollie.zookeeperCollie.clusters()).map(_._1.key).toSet.contains(clusterKey)
+      !result(serviceCollie.zookeeperCollie.clusters()).map(_.key).toSet.contains(clusterKey)
     }
   }
 

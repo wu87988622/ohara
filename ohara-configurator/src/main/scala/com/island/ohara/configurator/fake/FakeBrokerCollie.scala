@@ -18,10 +18,10 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException, ServiceState}
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, BrokerClusterStatus}
+import com.island.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi}
+import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.metrics.BeanChannel
@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps: String)
-    extends FakeCollie[BrokerClusterStatus](node)
+    extends FakeCollie(node)
     with BrokerCollie {
   override def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
     // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
@@ -49,21 +49,14 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
     (_, creation) =>
       Future.successful(
         addCluster(
-          new BrokerClusterStatus(
-            group = creation.group,
-            name = creation.name,
-            // TODO: we should check the supported arguments by the running broker images
-            topicDefinition = BrokerApi.TOPIC_DEFINITION,
-            aliveNodes = creation.nodeNames ++ clusterCache.asScala
-              .find(_._1.key == creation.key)
-              .map(_._2.map(_.nodeName))
-              .getOrElse(Set.empty),
-            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-            state = Some(ServiceState.RUNNING.name),
-            error = None
-          ),
-          creation.imageName,
-          creation.ports
+          key = creation.key,
+          kind = ClusterStatus.Kind.BROKER,
+          nodeNames = creation.nodeNames ++ clusterCache.asScala
+            .find(_._1 == creation.key)
+            .map(_._2.nodeNames)
+            .getOrElse(Set.empty),
+          imageName = creation.imageName,
+          ports = creation.ports
         )
       )
 
@@ -71,7 +64,7 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
     brokerClusterInfo: BrokerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
     if (bkConnectionProps != null) Future.successful(TopicAdmin(bkConnectionProps))
-    else if (clusterCache.keySet().asScala.exists(_.key == brokerClusterInfo.key)) {
+    else if (clusterCache.keySet().asScala.contains(brokerClusterInfo.key)) {
       val fake = new FakeTopicAdmin
       val r    = fakeAdminCache.putIfAbsent(brokerClusterInfo, fake)
       Future.successful(if (r == null) fake else r)
