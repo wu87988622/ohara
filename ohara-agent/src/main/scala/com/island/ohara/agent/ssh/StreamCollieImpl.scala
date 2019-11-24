@@ -64,6 +64,4 @@ private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
     clusterStatus: ClusterStatus
   ): Unit =
     clusterCache.put(clusterStatus)
-
-  override protected def prefixKey: String = PREFIX_KEY
 }

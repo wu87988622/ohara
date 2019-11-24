@@ -67,9 +67,6 @@ object K8SJson {
   final case class HostAliases(ip: String, hostnames: Seq[String])
   implicit val HOST_ALIASES_FORMAT: RootJsonFormat[HostAliases] = jsonFormat2(HostAliases)
 
-  final case class Label(name: String)
-  implicit val CREATEPOD_LABEL_FORMAT: RootJsonFormat[Label] = jsonFormat1(Label)
-
   final case class NodeSelector(hostname: String)
   implicit val CREATEPOD_NODESELECTOR_FORMAT: RootJsonFormat[NodeSelector] =
     new RootJsonFormat[NodeSelector] {
@@ -98,7 +95,12 @@ object K8SJson {
   )
   implicit val SPEC_JSON_FORMAT: RootJsonFormat[PodSpec] = jsonFormat8(PodSpec)
 
-  final case class Metadata(uid: Option[String], name: String, labels: Option[Label], creationTimestamp: Option[String])
+  final case class Metadata(
+    uid: Option[String],
+    name: String,
+    labels: Option[Map[String, String]],
+    creationTimestamp: Option[String]
+  )
   implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat4(Metadata)
 
   final case class Status(phase: String, hostIP: Option[String])

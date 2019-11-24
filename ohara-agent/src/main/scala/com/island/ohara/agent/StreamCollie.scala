@@ -92,7 +92,7 @@ trait StreamCollie extends Collie {
                     // other, it will be filtered later ...
                     state = ContainerState.RUNNING.name,
                     kind = Collie.UNKNOWN,
-                    name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                    name = Collie.containerName(creation.group, creation.name, serviceName),
                     size = -1,
                     portMappings = creation.ports
                       .map(
@@ -111,7 +111,7 @@ trait StreamCollie extends Collie {
                       "STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString
                     ),
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
-                    hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                    hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
                   )
 
                   val arguments =
@@ -181,12 +181,6 @@ trait StreamCollie extends Collie {
     )
 
   protected def dataCollie: DataCollie
-
-  /**
-    * Define prefixKey by different environment
-    * @return prefix key
-    */
-  protected def prefixKey: String
 
   override val serviceName: String = StreamApi.STREAM_SERVICE_NAME
 

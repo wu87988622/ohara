@@ -81,11 +81,4 @@ private[configurator] class FakeBrokerCollie(node: DataCollie, bkConnectionProps
     throw new UnsupportedOperationException("Fake broker collie doesn't support doCreator function")
 
   override protected def dataCollie: DataCollie = node
-
-  /**
-    * Implement prefix name for the platform
-    *
-    * @return
-    */
-  override protected def prefixKey: String = "fakebroker"
 }

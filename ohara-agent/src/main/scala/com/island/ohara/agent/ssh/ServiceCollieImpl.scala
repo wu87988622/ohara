@@ -58,7 +58,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
           .traverse(_) { node =>
             // multi-thread to seek all containers from multi-nodes
             // Note: we fetch all containers (include exited and running) here
-            dockerCache.exec(node, _.containers(containerName => containerName.startsWith(PREFIX_KEY))).recover {
+            dockerCache.exec(node, _.containers()).recover {
               case e: Throwable =>
                 LOG.error(s"failed to get active containers from $node", e)
                 Seq.empty
@@ -75,7 +75,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
           Future
             .sequence(
               allContainers
-                .filter(_.name.contains(s"$DIVIDER$serviceName$DIVIDER"))
+                .filter(container => Collie.matched(container.name, serviceName))
                 .map(container => Collie.objectKeyOfContainerName(container.name) -> container)
                 .groupBy(_._1)
                 .map {

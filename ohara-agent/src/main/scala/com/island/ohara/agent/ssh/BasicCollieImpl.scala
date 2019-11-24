@@ -99,14 +99,8 @@ private abstract class BasicCollieImpl(
           // form: PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
           dockerCache.exec(
             _,
-            _.containers(
-              name =>
-                // the prefix check must be at first condition since the following conversion assumes the container name
-                // follow our format.
-                name.startsWith(PREFIX_KEY)
-                  && Collie.objectKeyOfContainerName(name) == key
-                  && name.contains(serviceName)
-            )
+            _.containers()
+              .map(_.filter(container => Collie.objectKeyOfContainerName(container.name) == key))
           )
         )
       )

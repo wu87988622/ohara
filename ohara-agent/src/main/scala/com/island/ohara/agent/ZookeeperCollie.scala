@@ -91,7 +91,7 @@ trait ZookeeperCollie extends Collie {
             // ssh connection is slow so we submit request by multi-thread
             Future.sequence(newNodes.zipWithIndex.map {
               case (newNode, nodeIndex) =>
-                val hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                val hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
                 val zkServers = newNodes
                   .map(_.name)
                   .zipWithIndex
@@ -120,7 +120,7 @@ trait ZookeeperCollie extends Collie {
                   // other, it will be filtered later ...
                   state = ContainerState.RUNNING.name,
                   kind = Collie.UNKNOWN,
-                  name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                  name = Collie.containerName(creation.group, creation.name, serviceName),
                   size = -1,
                   portMappings = creation.ports
                     .map(
@@ -192,12 +192,6 @@ trait ZookeeperCollie extends Collie {
   }
 
   protected def dataCollie: DataCollie
-
-  /**
-    * The prefix name for platform
-    * @return
-    */
-  protected def prefixKey: String
 
   protected def doCreator(
     executionContext: ExecutionContext,

@@ -70,8 +70,6 @@ private class BrokerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
   ): Unit =
     clusterCache.put(clusterStatus)
 
-  override protected def prefixKey: String = PREFIX_KEY
-
   override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit =
     updateRoute(node, container.name, route)
 }

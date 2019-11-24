@@ -52,6 +52,4 @@ private[configurator] class FakeZookeeperCollie(node: DataCollie) extends FakeCo
     throw new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 
   override protected def dataCollie: DataCollie = node
-
-  override protected def prefixKey: String = "fakezookeeper"
 }

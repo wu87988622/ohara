@@ -79,11 +79,4 @@ private class WorkerCollieImpl(val dataCollie: DataCollie, dockerCache: DockerCl
   override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     updateRoute(node, container.name, route)
   }
-
-  /**
-    * Implement prefix name for paltform
-    *
-    * @return
-    */
-  override protected def prefixKey: String = PREFIX_KEY
 }

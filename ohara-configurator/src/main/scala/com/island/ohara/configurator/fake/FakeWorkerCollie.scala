@@ -82,6 +82,4 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
 
   override protected def dataCollie: DataCollie = node
-
-  override protected def prefixKey: String = "fakeworker"
 }

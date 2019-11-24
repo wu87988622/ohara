@@ -141,8 +141,6 @@ object ShabondiRoute {
 
   private def awaitResult[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private val POD_LABEL       = "shabondi"
-  private val POD_DOMAIN_NAME = "default"
   private val POD_NAME_PREFIX = "shabondi-"
   private val POD_NAME        = "shabondi-host"
 
@@ -159,8 +157,6 @@ object ShabondiRoute {
       )
       .nodeName(slaveNode)
       .hostname(podHostname)
-      .labelName(POD_LABEL)
-      .domainName(POD_DOMAIN_NAME)
       .name(POD_NAME)
       .threadPool(executionContext)
       .create()

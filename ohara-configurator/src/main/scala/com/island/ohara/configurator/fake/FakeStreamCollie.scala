@@ -67,6 +67,4 @@ private[configurator] class FakeStreamCollie(node: DataCollie) extends FakeColli
   ): Future[Unit] = Future.unit
 
   override protected def dataCollie: DataCollie = node
-
-  override protected def prefixKey: String = "fakestream"
 }

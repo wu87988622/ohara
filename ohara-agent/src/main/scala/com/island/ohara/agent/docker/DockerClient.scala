@@ -30,6 +30,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.JavaConverters._
 
 /**
   * An interface used to control remote node's docker service.
@@ -38,21 +39,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait DockerClient extends Releasable {
   /**
-    * @return a collection of running docker containers
-    */
-  def activeContainers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    containers.map(_.filter(_.state == ContainerState.RUNNING.name))
-
-  /**
-    * the filter is used to reduce the possible communication across ssh.
-    * @return a collection of running docker containers
-    */
-  def activeContainers(
-    nameFilter: String => Boolean
-  )(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    containers().map(_.filter(_.state.toUpperCase() == ContainerState.RUNNING.name))
-
-  /**
     * @return all containers' name
     */
   def containerNames(): Seq[ContainerName]
@@ -60,36 +46,7 @@ trait DockerClient extends Releasable {
   /**
     * @return a collection of docker containers
     */
-  def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = containers(_ => true)
-
-  /**
-    * the filter is used to reduce the possible communication across ssh.
-    * @return a collection of docker containers
-    */
-  def containers(
-    nameFilter: String => Boolean
-  )(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    Future
-      .sequence(
-        containerNames()
-          .map(_.name)
-          .filter(nameFilter)
-          .map(
-            name =>
-              Future { Some(container(name)) }.recover {
-                case e: Throwable =>
-                  DockerClient.LOG.error(s"fail to inspect docker:$name", e)
-                  None
-              }
-          )
-      )
-      .map(_.flatten)
-
-  /**
-    * @param name container's name
-    * @return container description or None if container doesn't exist
-    */
-  def container(name: String): ContainerInfo
+  def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 
   /**
     * build a docker container.
@@ -187,6 +144,11 @@ object DockerClient {
   private[this] case class Info(NCPU: Int, MemTotal: Long)
   private[this] implicit val INFO_FORMAT: RootJsonFormat[Info] = jsonFormat2(Info)
 
+  /**
+    * this is a specific label to ohara docker. It is useful in filtering out what we created.
+    */
+  private[this] val LABEL_KEY   = "createdByOhara"
+  private[this] val LABEL_VALUE = "docker"
   //-----------------------------[constructor]-----------------------------//
   def apply(agent: Agent): DockerClient = new DockerClient {
     override def close(): Unit = Releasable.close(agent)
@@ -234,20 +196,30 @@ object DockerClient {
               case NetworkDriver.HOST   => "--network=host"
               case NetworkDriver.BRIDGE => "--network=bridge"
             },
+            // add label so we can distinguish the containers from others
+            s"--label $LABEL_KEY=$LABEL_VALUE",
             Objects.requireNonNull(imageName),
             if (command == null) "" else command
           ).filter(_.nonEmpty).mkString(" ")
         )
 
     override def containerNames(): Seq[ContainerName] =
+      containerNamesAndLabels()
+        .filter {
+          case (_, labels) => labels.get(LABEL_KEY).contains(LABEL_VALUE)
+        }
+        .keys
+        .toSeq
+
+    private[this] def containerNamesAndLabels(): Map[ContainerName, Map[String, String]] =
       agent
-        .execute("docker ps -a --format \"{{.ID}}\t{{.Names}}\\t{{.Image}}\"")
+        .execute("docker ps -a --format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\"")
         .map(_.split("\n").toSeq)
         .map(_.map { line =>
           val items = line.split("\t")
-          if (items.size != 3)
+          if (items.size < 3)
             throw new IllegalArgumentException(
-              s"""invalid format:$line from docker with format \"{{.ID}}\t{{.Names}}\t{{.Image}}\""""
+              s"""invalid format:$line from docker with format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\""""
             )
           else
             new ContainerName(
@@ -255,9 +227,11 @@ object DockerClient {
               name = items(1),
               imageName = items(2),
               nodeName = agent.hostname
-            )
+            ) -> (if (items.size < 4) Map.empty[String, String] // no labels
+                  else CommonUtils.parse(items(3).split(",").toSeq.asJava).asScala.toMap)
         })
-        .getOrElse(Seq.empty)
+        .map(_.toMap)
+        .getOrElse(Map.empty)
 
     override def stop(name: String): Unit = agent.execute(s"docker stop $name")
 
@@ -302,7 +276,23 @@ object DockerClient {
 
     override def toString: String = agent.toString
 
-    override def container(name: String): ContainerInfo =
+    override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+      Future
+        .sequence(
+          containerNames()
+            .map(_.name)
+            .map(
+              name =>
+                Future { Some(container(name)) }.recover {
+                  case e: Throwable =>
+                    DockerClient.LOG.error(s"fail to inspect docker:$name", e)
+                    None
+                }
+            )
+        )
+        .map(_.flatten)
+
+    private[this] def container(name: String): ContainerInfo =
       agent
         .execute(s"docker inspect --format '{{json .}}' --size $name")
         .map(_.parseJson)

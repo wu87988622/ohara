@@ -49,8 +49,6 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       .hostname(containerInfo.hostname)
       .nodeName(node.name)
       .envs(containerInfo.environments)
-      .labelName(OHARA_LABEL)
-      .domainName(K8S_DOMAIN_NAME)
       .name(containerInfo.name)
       .arguments(arguments)
       .threadPool(executionContext)
@@ -62,11 +60,4 @@ private class K8SWorkerCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       }
       .map(_ => Unit)
   }
-
-  /**
-    * Implement prefix name for paltform
-    *
-    * @return
-    */
-  override protected def prefixKey: String = PREFIX_KEY
 }

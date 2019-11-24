@@ -96,7 +96,7 @@ trait BrokerCollie extends Collie {
                 // other, it will be filtered later ...
                 state = ContainerState.RUNNING.name,
                 kind = Collie.UNKNOWN,
-                name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                name = Collie.containerName(creation.group, creation.name, serviceName),
                 size = -1,
                 portMappings = creation.ports
                   .map(
@@ -116,7 +116,7 @@ trait BrokerCollie extends Collie {
                     s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
                     s" -Djava.rmi.server.hostname=${newNode.hostname}")
                 ),
-                hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
               )
 
               /**
@@ -166,12 +166,6 @@ trait BrokerCollie extends Collie {
   }
 
   protected def dataCollie: DataCollie
-
-  /**
-    *  Implement prefix name for the platform
-    * @return
-    */
-  protected def prefixKey: String
 
   /**
     * Update exist node info

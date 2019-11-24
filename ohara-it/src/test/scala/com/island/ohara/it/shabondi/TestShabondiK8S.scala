@@ -31,10 +31,8 @@ import scala.concurrent.{Await, Future}
 // TODO: https://github.com/oharastream/ohara/issues/1008
 @Ignore
 class TestShabondiK8S extends IntegrationTest with Inside {
-  private val podLabelName = "shabondi"
-  private val domainName   = "default"
-  private val hostname     = "shabondi-host"
-  private val podHostname  = CommonUtils.randomString()
+  private val hostname    = "shabondi-host"
+  private val podHostname = CommonUtils.randomString()
 
   private var k8sClient: K8SClient = _
   private var nodeName: String     = _
@@ -63,8 +61,6 @@ class TestShabondiK8S extends IntegrationTest with Inside {
         )
         .nodeName(nodeName)
         .hostname(podHostname)
-        .labelName(podLabelName)
-        .domainName(domainName)
         .name(hostname)
         .create()
     }

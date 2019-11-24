@@ -46,8 +46,6 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
         */
       .hostname(containerInfo.hostname)
       .name(containerInfo.name)
-      .labelName(OHARA_LABEL)
-      .domainName(K8S_DOMAIN_NAME)
       .portMappings(
         containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
       )
@@ -63,6 +61,4 @@ private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCo
       }
       .map(_ => Unit)
   }
-
-  override protected def prefixKey: String = PREFIX_KEY
 }

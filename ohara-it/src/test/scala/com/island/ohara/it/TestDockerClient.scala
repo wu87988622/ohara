@@ -23,6 +23,7 @@ import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * all test cases here are executed on remote node. If no remote node is defined, all tests are skipped.
@@ -81,7 +82,7 @@ class TestDockerClient extends IntegrationTest {
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    val container = client.container(name)
+    val container = result(client.containers()).find(_.name == name).get
     try client.containerNames().map(_.name).contains(container.name) shouldBe true
     finally client.forceRemove(container.name)
     client.containerNames().map(_.name).contains(container.name) shouldBe false
@@ -115,7 +116,7 @@ class TestDockerClient extends IntegrationTest {
     try {
       client.containerNames().map(_.name).contains(name) shouldBe true
       TimeUnit.SECONDS.sleep(3)
-      client.container(name).state.toUpperCase shouldBe ContainerState.EXITED.name
+      result(client.containers()).find(_.name == name).get.state.toUpperCase shouldBe ContainerState.EXITED.name
     } finally client.forceRemove(name)
   }
 
@@ -153,7 +154,7 @@ class TestDockerClient extends IntegrationTest {
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
     try {
-      val container = client.container(name)
+      val container = result(client.containers()).find(_.name == name).get
       container.portMappings.size shouldBe 1
       container.portMappings.size shouldBe 1
       container.portMappings.head.hostPort shouldBe availablePort
@@ -173,7 +174,7 @@ class TestDockerClient extends IntegrationTest {
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
     try {
-      val container = client.container(name)
+      val container = result(client.containers()).find(_.name == name).get
       container.environments("abc") shouldBe "123"
       container.environments("ccc") shouldBe "ttt"
     } finally client.forceRemove(name)
@@ -191,7 +192,7 @@ class TestDockerClient extends IntegrationTest {
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try client.container(name).hostname shouldBe hostname
+    try result(client.containers()).find(_.name == name).get.hostname shouldBe hostname
     finally client.forceRemove(name)
   }
 
@@ -205,7 +206,7 @@ class TestDockerClient extends IntegrationTest {
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try client.container(name).nodeName shouldBe remoteHostname
+    try result(client.containers()).find(_.name == name).get.nodeName shouldBe remoteHostname
     finally client.forceRemove(name)
   }
 
@@ -220,7 +221,7 @@ class TestDockerClient extends IntegrationTest {
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
     try {
-      val container = client.container(name)
+      val container = result(client.containers()).find(_.name == name).get
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
       client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"

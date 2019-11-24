@@ -24,8 +24,9 @@ import com.island.ohara.agent.k8s.K8SJson._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Resource
 import com.island.ohara.client.{Enum, HttpExecutor}
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
+
 import scala.concurrent.{ExecutionContext, Future}
 import com.island.ohara.common.pattern.Builder
 
@@ -47,6 +48,14 @@ trait K8SClient {
 }
 
 object K8SClient {
+  /**
+    * this is a specific label to ohara docker. It is useful in filtering out what we created.
+    */
+  private[this] val LABEL_KEY   = "createdByOhara"
+  private[this] val LABEL_VALUE = "k8s"
+  @VisibleForTesting
+  private[k8s] val NAMESPACE_DEFAULT_VALUE = "default"
+
   def builder: K8SClientBuilder = new K8SClientBuilder()
 
   private[K8SClient] class K8SClientBuilder extends Builder[K8SClient] {
@@ -102,30 +111,33 @@ object K8SClient {
             .get[PodList, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$k8sNamespace/pods")
             .map(
               podList =>
-                podList.items.map(pod => {
-                  val spec: PodSpec = pod.spec
-                    .getOrElse(throw new RuntimeException(s"the container doesn't have spec : ${pod.metadata.name}"))
-                  val containerInfo: Container = spec.containers.head
-                  val phase                    = pod.status.map(_.phase).getOrElse("Unknown")
-                  val hostIP                   = pod.status.fold("Unknown")(_.hostIP.getOrElse("Unknown"))
-                  ContainerInfo(
-                    nodeName = spec.nodeName.getOrElse("Unknown"),
-                    id = pod.metadata.uid.getOrElse("Unknown"),
-                    imageName = containerInfo.image,
-                    state = K8sContainerState.all
-                      .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
-                      .getOrElse(K8sContainerState.UNKNOWN)
-                      .name,
-                    kind = K8S_KIND_NAME,
-                    size = -1,
-                    name = pod.metadata.name,
-                    portMappings = containerInfo.ports
-                      .getOrElse(Seq.empty)
-                      .map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
-                    environments = containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
-                    hostname = spec.hostname
-                  )
-                })
+                podList.items
+                // filter out the k8s containers which are NOT created by ohara k8s
+                  .filter(_.metadata.labels.exists(_.get(LABEL_KEY).exists(_ == LABEL_VALUE)))
+                  .map(pod => {
+                    val spec: PodSpec = pod.spec
+                      .getOrElse(throw new RuntimeException(s"the container doesn't have spec : ${pod.metadata.name}"))
+                    val containerInfo: Container = spec.containers.head
+                    val phase                    = pod.status.map(_.phase).getOrElse("Unknown")
+                    val hostIP                   = pod.status.fold("Unknown")(_.hostIP.getOrElse("Unknown"))
+                    ContainerInfo(
+                      nodeName = spec.nodeName.getOrElse("Unknown"),
+                      id = pod.metadata.uid.getOrElse("Unknown"),
+                      imageName = containerInfo.image,
+                      state = K8sContainerState.all
+                        .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
+                        .getOrElse(K8sContainerState.UNKNOWN)
+                        .name,
+                      kind = K8S_KIND_NAME,
+                      size = -1,
+                      name = pod.metadata.name,
+                      portMappings = containerInfo.ports
+                        .getOrElse(Seq.empty)
+                        .map(x => PortMapping(hostIP, x.hostPort, x.containerPort)),
+                      environments = containerInfo.env.getOrElse(Seq()).map(x => x.name -> x.value.getOrElse("")).toMap,
+                      hostname = spec.hostname
+                    )
+                  })
             )
 
         override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
@@ -252,8 +264,8 @@ object K8SClient {
             private[this] var imageName: String                = _
             private[this] var hostname: String                 = CommonUtils.randomString(10)
             private[this] var nodeName: String                 = _
-            private[this] var domainName: String               = K8S_DOMAIN_NAME
-            private[this] var labelName: String                = OHARA_LABEL
+            private[this] val domainName: String               = "default"
+            private[this] val labelName: String                = "ohara"
             private[this] var envs: Map[String, String]        = Map.empty
             private[this] var ports: Map[Int, Int]             = Map.empty
             private[this] var routes: Map[String, String]      = Map.empty
@@ -294,16 +306,6 @@ object K8SClient {
 
             override def nodeName(nodeName: String): ContainerCreator = {
               this.nodeName = CommonUtils.requireNonEmpty(nodeName)
-              this
-            }
-
-            override def domainName(domainName: String): ContainerCreator = {
-              this.domainName = CommonUtils.requireNonEmpty(domainName)
-              this
-            }
-
-            override def labelName(labelName: String): ContainerCreator = {
-              this.labelName = CommonUtils.requireNonEmpty(labelName)
               this
             }
 
@@ -369,7 +371,8 @@ object K8SClient {
                   )
                 }
                 .flatMap(podSpec => { //name is pod name
-                  val request = Pod(Metadata(None, name, Some(Label(labelName)), None), Some(podSpec), None)
+                  val request =
+                    Pod(Metadata(None, name, Some(Map(LABEL_KEY -> LABEL_VALUE)), None), Some(podSpec), None)
                   HttpExecutor.SINGLETON
                     .post[Pod, Pod, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$k8sNamespace/pods", request)
                 })
@@ -471,10 +474,6 @@ object K8SClient {
     def threadPool(executionContext: ExecutionContext): ContainerCreator
 
     override def create(): Future[Option[ContainerInfo]]
-
-    def domainName(domainName: String): ContainerCreator
-
-    def labelName(labelName: String): ContainerCreator
 
     def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator
 

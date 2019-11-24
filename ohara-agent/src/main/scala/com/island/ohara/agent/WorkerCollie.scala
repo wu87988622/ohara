@@ -105,7 +105,7 @@ trait WorkerCollie extends Collie {
                 // other, it will be filtered later ...
                 state = ContainerState.RUNNING.name,
                 kind = Collie.UNKNOWN,
-                name = Collie.containerName(prefixKey, creation.group, creation.name, serviceName),
+                name = Collie.containerName(creation.group, creation.name, serviceName),
                 size = -1,
                 portMappings = creation.ports
                   .map(
@@ -128,7 +128,7 @@ trait WorkerCollie extends Collie {
                   "WORKER_PLUGIN_URLS"     -> pluginInfos.map(_.url.get.toURI.toASCIIString).mkString(","),
                   "WORKER_SHARED_JAR_URLS" -> sharedJarInfos.map(_.url.get.toURI.toASCIIString).mkString(",")
                 ),
-                hostname = Collie.containerHostName(prefixKey, creation.group, creation.name, serviceName)
+                hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
               )
 
               /**
@@ -188,11 +188,6 @@ trait WorkerCollie extends Collie {
   }
 
   protected def dataCollie: DataCollie
-
-  /**
-    * Implement prefix name for paltform
-    */
-  protected def prefixKey: String
 
   /**
     * there is new route to the node. the sub class can update the running container to apply new route.

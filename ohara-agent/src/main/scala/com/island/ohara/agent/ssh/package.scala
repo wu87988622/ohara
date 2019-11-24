@@ -23,18 +23,6 @@ package object ssh {
   private[ssh] val LOG = Logger(classOf[ServiceCollieImpl])
 
   /**
-    * We need this prefix in order to distinguish our containers from others.
-    * DON'T change this constant string. Otherwise, it will break compatibility.
-    * We don't use a complex string since docker limit the length of name...
-    */
-  private[ssh] val PREFIX_KEY = "occl"
-
-  /**
-    * used to distinguish the cluster name and service name
-    */
-  private[ssh] val DIVIDER: String = Collie.DIVIDER
-
-  /**
     * In ssh mode we use host driver to mount /etc/hosts from container host.
     */
   private[ssh] val NETWORK_DRIVER: NetworkDriver = NetworkDriver.HOST

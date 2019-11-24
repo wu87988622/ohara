@@ -70,6 +70,4 @@ private class ZookeeperCollieImpl(
     clusterStatus: ClusterStatus
   ): Unit =
     clusterCache.put(clusterStatus)
-
-  override protected def prefixKey: String = PREFIX_KEY
 }

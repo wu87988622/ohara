@@ -86,11 +86,7 @@ private[this] abstract class K8SBasicCollieImpl(
           k8sClient
             .containers()
             .map(
-              _.filter(_.name.split(DIVIDER).length >= 4) //Container name format is PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
-                .filter { container =>
-                  container.nodeName.equals(node.name) && container.name
-                    .startsWith(PREFIX_KEY) && container.name.split(DIVIDER)(3).equals(serviceName)
-                }
+              _.filter(container => Collie.matched(container.name, serviceName))
             )
         }
       )

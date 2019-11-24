@@ -48,8 +48,6 @@ private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SC
         * passed to this method is legal to k8s/docker. Hence, assigning the hostname is very safe to you :)
         */
       .hostname(containerInfo.hostname)
-      .labelName(OHARA_LABEL)
-      .domainName(K8S_DOMAIN_NAME)
       .envs(containerInfo.environments)
       .name(containerInfo.name)
       .arguments(arguments)
@@ -62,6 +60,4 @@ private class K8SZookeeperCollieImpl(val dataCollie: DataCollie, k8sClient: K8SC
       }
       .map(_ => Unit)
   }
-
-  override protected def prefixKey: String = PREFIX_KEY
 }
