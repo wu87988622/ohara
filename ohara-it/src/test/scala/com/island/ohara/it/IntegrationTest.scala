@@ -86,7 +86,7 @@ abstract class IntegrationTest {
 }
 
 object IntegrationTest {
-  private[this] val TIMEOUT = 1 minutes
+  private[this] val TIMEOUT = 2 minutes
 
   def result[T](f: Future[T]): T = Await.result(f, TIMEOUT)
 
