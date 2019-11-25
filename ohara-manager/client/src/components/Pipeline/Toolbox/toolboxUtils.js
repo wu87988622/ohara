@@ -37,10 +37,10 @@ export const createToolboxList = ({
   sinkGraph,
   searchResults,
 }) => {
-  const sourceIcon = renderToString(<FlightTakeoffIcon />);
-  const sinkIcon = renderToString(<FlightLandIcon />);
-  const streamIcon = renderToString(<WavesIcon />);
-  const AddPrivateTopic = renderToString(<StorageIcon />);
+  const sourceIcon = renderToString(<FlightTakeoffIcon color="action" />);
+  const sinkIcon = renderToString(<FlightLandIcon color="action" />);
+  const streamIcon = renderToString(<WavesIcon color="action" />);
+  const AddPrivateTopic = renderToString(<StorageIcon color="action" />);
   const AddPublicTopic = renderToString(
     <AddPublicTopicIcon className="public-topic" width={23} height={22} />,
   );

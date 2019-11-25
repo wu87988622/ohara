@@ -163,6 +163,10 @@ const MuiTheme = createMuiTheme({
       textTransform: 'uppercase',
     },
   },
+  zIndex: {
+    toolbox: 1210,
+    flyingPaper: 1220,
+  },
 });
 
 export default MuiTheme;

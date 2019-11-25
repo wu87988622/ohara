@@ -42,8 +42,8 @@ const StyledDiv = styled.div(
 const StyledToolbar = styled(Toolbar)(
   ({ theme }) => css`
     min-height: ${theme.spacing(5)}px;
-    padding-left: 0px;
-    padding-right: 0px;
+    padding-left: 0;
+    padding-right: 0;
     margin-bottom: ${theme.spacing(1)}px;
   `,
 );

@@ -74,7 +74,7 @@ const FullScreenDialog = props => {
             >
               <KeyboardBackspaceIcon />
             </StyledIconButton>
-            <StyledTypography variant="h6">{title}</StyledTypography>
+            <StyledTypography variant="h4">{title}</StyledTypography>
             {hasSave && (
               <Button autoFocus color="inherit" onClick={handleSave}>
                 save

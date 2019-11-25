@@ -32,6 +32,19 @@ const WorkspaceCard = props => {
       align-items: center;
       justify-content: center;
       height: ${sm ? theme.spacing(25) : 240}px;
+
+      .MuiCardContent-root {
+        display: flex;
+      }
+
+      .action-icon {
+        font-size: 50px;
+        margin-right: ${theme.spacing(2)}px;
+      }
+
+      .title {
+        margin-bottom: ${theme.spacing(1)}px;
+      }
     `,
   );
 
@@ -44,33 +57,16 @@ const WorkspaceCard = props => {
     `,
   );
 
-  const StyledStorageIcon = styled(StorageIcon)`
-    font-size: 50px;
-    float: left;
-  `;
-
-  const StyledTitle = styled(Typography)`
-    float: left;
-    margin: 4px 0 0 10px;
-  `;
-
-  const StyledContent = styled(Typography)(
-    ({ theme }) => css`
-      font-size: 12px;
-      float: left;
-      margin-left: 10px;
-      width: ${theme.spacing(16)}px;
-    `,
-  );
-
   return (
     <StyledCardActionArea onClick={() => onClick(true)}>
       <StyledNodeCard>
         <CardContent>
-          <StyledStorageIcon />
-          <div>
-            <StyledTitle>{title}</StyledTitle>
-            <StyledContent>{content}</StyledContent>
+          <StorageIcon className="action-icon" color="action" />
+          <div className="action-description">
+            <Typography variant="h5" className="title">
+              {title}
+            </Typography>
+            <Typography variant="body2">{content}</Typography>
           </div>
         </CardContent>
       </StyledNodeCard>

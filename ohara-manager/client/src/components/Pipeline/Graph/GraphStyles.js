@@ -27,7 +27,7 @@ export const Paper = styled.div(
       display: flex;
       align-items: center;
       opacity: 0.85;
-      z-index: ${theme.zIndex.tooltip};
+      z-index: ${theme.zIndex.flyingPaper};
       padding: ${theme.spacing(0, 2)};
 
       .item {

@@ -301,8 +301,7 @@ const WorkspaceQuick = props => {
                 {WorkspaceCard({
                   onClick: setIsNodeDialogOpen,
                   title: 'Select nodes',
-                  content:
-                    'Drop files here or click browse thorough your machine',
+                  content: 'Click here to select nodes',
                   sm: true,
                 })}
                 {selected.map(node => {
@@ -317,8 +316,7 @@ const WorkspaceQuick = props => {
                 {WorkspaceCard({
                   onClick: setIsNodeDialogOpen,
                   title: 'Select nodes',
-                  content:
-                    'Drop files here or click browse thorough your machine',
+                  content: 'Click here to select nodes',
                 })}
               </CardContent>
             )}
@@ -333,8 +331,7 @@ const WorkspaceQuick = props => {
                 {FileCard({
                   handelDrop: onDrop,
                   title: 'Add worker plugins',
-                  content:
-                    'Drop files here or click browse thorough your machine',
+                  content: 'Drop files here or click to select files to upload',
                   sm: true,
                   values,
                 })}
@@ -351,8 +348,7 @@ const WorkspaceQuick = props => {
                 {FileCard({
                   handelDrop: onDrop,
                   title: 'Add worker plugins',
-                  content:
-                    'Drop files here or click browse thorough your machine',
+                  content: 'Drop files here or click to select files to upload',
                   values,
                 })}
               </CardContent>

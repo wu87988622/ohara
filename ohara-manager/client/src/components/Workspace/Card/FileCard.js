@@ -33,6 +33,23 @@ const FileCard = props => {
       align-items: center;
       justify-content: center;
       height: ${sm ? theme.spacing(25) : 240}px;
+
+      .MuiCardContent-root {
+        display: flex;
+      }
+
+      .action-icon {
+        font-size: 50px;
+        margin-right: ${theme.spacing(2)}px;
+      }
+
+      .title {
+        margin-bottom: ${theme.spacing(1)}px;
+      }
+
+      .action-description {
+        width: 145px;
+      }
     `,
   );
 
@@ -45,25 +62,6 @@ const FileCard = props => {
     `,
   );
 
-  const StyledPluginsIcon = styled(PowerIcon)`
-    font-size: 50px;
-    float: left;
-  `;
-
-  const StyledPluginsTitle = styled(Typography)`
-    float: left;
-    margin: 4px 0 0 10px;
-  `;
-
-  const StyledPluginsContent = styled(Typography)(
-    ({ theme }) => css`
-      font-size: 12px;
-      float: left;
-      margin-left: 10px;
-      width: ${theme.spacing(16)}px;
-    `,
-  );
-
   return (
     <StyledCardActionArea>
       <Dropzone onDrop={file => handelDrop(file, values)}>
@@ -73,10 +71,12 @@ const FileCard = props => {
               <input {...getInputProps()} />
               <StyledPluginsCard>
                 <CardContent>
-                  <StyledPluginsIcon />
-                  <div>
-                    <StyledPluginsTitle>{title}</StyledPluginsTitle>
-                    <StyledPluginsContent>{content}</StyledPluginsContent>
+                  <PowerIcon color="action" className="action-icon" />
+                  <div className="action-description">
+                    <Typography variant="h5" className="title">
+                      {title}
+                    </Typography>
+                    <Typography variant="body2">{content}</Typography>
                   </div>
                 </CardContent>
               </StyledPluginsCard>

@@ -86,6 +86,7 @@
       "object-shorthand": "warn",
       "react/prop-types": "warn",
       "react/no-unused-prop-types": "warn",
+      "react/no-unknown-property": "warn",
       "camelcase": [
         "warn",
         {

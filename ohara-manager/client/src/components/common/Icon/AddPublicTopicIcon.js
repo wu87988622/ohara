@@ -49,6 +49,7 @@ export const AddPublicTopicIcon = ({
             <g fillRule="nonzero"></g>
             <rect
               fill="#000000"
+              fillOpacity="0.54"
               mask="url(#mask-2)"
               x="-2"
               y="0"

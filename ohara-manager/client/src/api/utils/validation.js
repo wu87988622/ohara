@@ -137,7 +137,7 @@ export const getType = params => {
     params = [];
   }
   const type = params.filter(param =>
-    [string, number, array, object, boolean].includes(param),
+    [string, number, array, positiveNumber, object, boolean].includes(param),
   )[0];
   if (type) return type;
   return object;
