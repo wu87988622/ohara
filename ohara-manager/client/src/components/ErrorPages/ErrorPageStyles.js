@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import Typography from '@material-ui/core/Typography';
+import styled from 'styled-components';
 
-const NotFoundPage = () => {
-  return <Typography variant="h2">Ooooops, page not found!</Typography>;
-};
+export const Wrapper = styled.div`
+  padding: ${props => props.theme.spacing(4)}px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  flex-direction: column;
+  background-color: ${props => props.theme.palette.grey[100]};
 
-export default NotFoundPage;
+  svg {
+    margin: ${props => props.theme.spacing(2)}px;
+  }
+`;

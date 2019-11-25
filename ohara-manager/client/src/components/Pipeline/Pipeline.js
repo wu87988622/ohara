@@ -76,6 +76,7 @@ const Pipeline = () => {
 
     // If the `current` pipeline is not found in the list but the
     // list is not empty, let's display the first pipeline
+
     if (current === undefined && hasPipeline) {
       history.push(`/${workspaceName}/${pipelines[0].name}`);
     }
@@ -134,10 +135,10 @@ const Pipeline = () => {
               <Toolbar
                 isToolboxOpen={isToolboxOpen}
                 handleToolboxOpen={() => setIsToolboxOpen(true)}
-                handleToolboxClick={panel => {
+                handleToolboxClick={panel =>
                   // Open a particular panel
-                  setToolboxExpanded({ ...initialState, [panel]: true });
-                }}
+                  setToolboxExpanded({ ...initialState, [panel]: true })
+                }
               />
               <GraphWrapper>
                 <Graph

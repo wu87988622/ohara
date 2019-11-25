@@ -220,11 +220,7 @@ const Toolbox = props => {
           setToolboxExpanded={setToolboxExpanded}
         />
         <div className="toolbox-body">
-          <ExpansionPanel
-            square
-            expanded={expanded.source}
-            defaultExpanded={true}
-          >
+          <ExpansionPanel square expanded={expanded.source}>
             <ExpansionPanelSummary
               expandIcon={<ExpandMoreIcon />}
               onClick={() => handleClick('source')}

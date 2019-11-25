@@ -20,8 +20,8 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
 import AppBar from 'components/Layout/AppBar';
+import { NotFoundPage, NotImplementedPage } from 'components/ErrorPages';
 import { DevToolDialog, TopicDataWindow } from 'components/DevTool';
-import NotFoundPage from 'components/NotFoundPage';
 import { Pipeline, Navigator } from 'components/Pipeline';
 
 // We need joint's CSS
@@ -47,10 +47,15 @@ const Main = styled.main`
 const App = () => {
   return (
     <Router>
+      <GlobalStyle />
       <Switch>
+        <Route
+          exact
+          path="/501-page-not-implemented"
+          component={NotImplementedPage}
+        />
         <Route exact path="/:workspaceName/view" component={TopicDataWindow} />
         <Container className="container">
-          <GlobalStyle />
           <Route
             exact
             path="/:workspaceName?/:pipelineName?"
@@ -66,6 +71,7 @@ const App = () => {
             path="/:workspaceName/:pipelineName?"
             component={Navigator}
           />
+
           <Main>
             <Switch>
               <Route

@@ -23,7 +23,7 @@ import {
 } from '@material-ui/styles';
 
 import MuiTheme from './theme/muiTheme';
-
+import { ErrorBoundary } from 'components/ErrorPages';
 import { DialogProvider, WorkspaceProvider, TopicProvider } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { PipelineProvider } from './context/PipelineContext';
@@ -46,6 +46,7 @@ const AppProviders = ({ children }) => {
         <StylesProvider injectFirst children={children} />,
         <MuiThemeProvider theme={MuiTheme} children={children} />,
         <ThemeProvider theme={MuiTheme} children={children} />,
+        <ErrorBoundary children={children} />,
         <DialogProvider children={children} />,
         <SnackbarProvider children={children} />,
         <NewWorkspaceProvider children={children} />,
