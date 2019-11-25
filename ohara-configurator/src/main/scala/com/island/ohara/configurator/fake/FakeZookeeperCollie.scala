@@ -23,7 +23,9 @@ import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeZookeeperCollie(node: DataCollie) extends FakeCollie(node) with ZookeeperCollie {
+private[configurator] class FakeZookeeperCollie(dataCollie: DataCollie)
+    extends FakeCollie(dataCollie)
+    with ZookeeperCollie {
   override def creator: ZookeeperCollie.ClusterCreator =
     (_, creation) =>
       if (clusterCache.asScala.exists(_._1 == creation.key))
@@ -50,6 +52,4 @@ private[configurator] class FakeZookeeperCollie(node: DataCollie) extends FakeCo
     arguments: Seq[String]
   ): Future[Unit] =
     throw new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
-
-  override protected def dataCollie: DataCollie = node
 }

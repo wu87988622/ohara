@@ -28,7 +28,7 @@ import com.island.ohara.metrics.basic.{Counter, CounterMBean}
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeStreamCollie(node: DataCollie) extends FakeCollie(node) with StreamCollie {
+private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends FakeCollie(dataCollie) with StreamCollie {
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
     // we fake counters since stream is not really running in fake collie mode
     Seq(
@@ -65,6 +65,4 @@ private[configurator] class FakeStreamCollie(node: DataCollie) extends FakeColli
     route: Map[String, String],
     arguments: Seq[String]
   ): Future[Unit] = Future.unit
-
-  override protected def dataCollie: DataCollie = node
 }

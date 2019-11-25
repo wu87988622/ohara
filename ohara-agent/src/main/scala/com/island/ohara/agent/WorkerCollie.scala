@@ -19,6 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -34,8 +35,8 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait WorkerCollie extends Collie {
-  protected val log                = Logger(classOf[WorkerCollie])
-  override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
+  protected val log       = Logger(classOf[WorkerCollie])
+  override val kind: Kind = Kind.WORKER
 
   // TODO: remove this hard code (see #2957)
   private[this] val homeFolder: String = WorkerApi.WORKER_HOME_FOLDER
@@ -105,7 +106,7 @@ trait WorkerCollie extends Collie {
                 // other, it will be filtered later ...
                 state = ContainerState.RUNNING.name,
                 kind = Collie.UNKNOWN,
-                name = Collie.containerName(creation.group, creation.name, serviceName),
+                name = Collie.containerName(creation.group, creation.name, kind),
                 size = -1,
                 portMappings = creation.ports
                   .map(
@@ -128,7 +129,7 @@ trait WorkerCollie extends Collie {
                   "WORKER_PLUGIN_URLS"     -> pluginInfos.map(_.url.get.toURI.toASCIIString).mkString(","),
                   "WORKER_SHARED_JAR_URLS" -> sharedJarInfos.map(_.url.get.toURI.toASCIIString).mkString(",")
                 ),
-                hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
+                hostname = Collie.containerHostName(creation.group, creation.name, kind)
               )
 
               /**
@@ -186,8 +187,6 @@ trait WorkerCollie extends Collie {
         }
     }
   }
-
-  protected def dataCollie: DataCollie
 
   /**
     * there is new route to the node. the sub class can update the running container to apply new route.

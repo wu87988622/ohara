@@ -19,23 +19,21 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
+import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.metrics.BeanChannel
-import com.island.ohara.metrics.kafka.TopicMeter
 import com.typesafe.scalalogging.Logger
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie {
   protected val log = Logger(classOf[BrokerCollie])
 
-  override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
+  override val kind: Kind = Kind.BROKER
 
   // TODO: remove this hard code (see #2957)
   private[this] val homeFolder: String = BrokerApi.BROKER_HOME_FOLDER
@@ -96,7 +94,7 @@ trait BrokerCollie extends Collie {
                 // other, it will be filtered later ...
                 state = ContainerState.RUNNING.name,
                 kind = Collie.UNKNOWN,
-                name = Collie.containerName(creation.group, creation.name, serviceName),
+                name = Collie.containerName(creation.group, creation.name, kind),
                 size = -1,
                 portMappings = creation.ports
                   .map(
@@ -116,7 +114,7 @@ trait BrokerCollie extends Collie {
                     s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
                     s" -Djava.rmi.server.hostname=${newNode.hostname}")
                 ),
-                hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
+                hostname = Collie.containerHostName(creation.group, creation.name, kind)
               )
 
               /**
@@ -165,8 +163,6 @@ trait BrokerCollie extends Collie {
     }
   }
 
-  protected def dataCollie: DataCollie
-
   /**
     * Update exist node info
     * @param node node object
@@ -210,16 +206,6 @@ trait BrokerCollie extends Collie {
     brokerClusterInfo: BrokerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
     cluster(brokerClusterInfo.key).map(_ => TopicAdmin(brokerClusterInfo.connectionProps))
-
-  /**
-    * Get all meter beans from specific broker cluster
-    * @param cluster cluster
-    * @return meter beans
-    */
-  def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
-    cluster.nodeNames.flatMap { node =>
-      BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
-    }.toSeq
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext

@@ -30,8 +30,8 @@ import com.island.ohara.metrics.basic.CounterMBean
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps: String)
-    extends FakeCollie(node)
+private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectionProps: String)
+    extends FakeCollie(dataCollie)
     with WorkerCollie {
   override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
     // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
@@ -80,6 +80,4 @@ private[configurator] class FakeWorkerCollie(node: DataCollie, wkConnectionProps
     arguments: Seq[String]
   ): Future[Unit] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
-
-  override protected def dataCollie: DataCollie = node
 }

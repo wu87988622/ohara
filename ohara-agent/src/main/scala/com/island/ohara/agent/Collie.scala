@@ -19,12 +19,22 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ClusterRequest, ClusterStatus}
+import com.island.ohara.client.configurator.v0.MetricsApi.Meter
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest, ClusterStatus}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.basic.CounterMBean
+import com.island.ohara.metrics.kafka.TopicMeter
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -119,7 +129,7 @@ trait Collie {
   def cluster(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterStatus] =
     clusters().map(
       _.find(_.key == key)
-        .getOrElse(throw new NoSuchClusterException(s"$serviceName cluster with objectKey [$key] is not running"))
+        .getOrElse(throw new NoSuchClusterException(s"$kind cluster with objectKey [$key] is not running"))
     )
 
   /**
@@ -183,11 +193,87 @@ trait Collie {
   protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState]
 
   /**
-    * return the short service name
+    * all ssh collies share the single cache, and we need a way to distinguish the difference status from different
+    * services. Hence, this implicit field is added to cache to find out the cached data belonging to this collie.
     * @return service name
     */
-  def serviceName: String
+  def kind: Kind
 
+  /**
+    * the store used by this colle.
+    * @return data collie
+    */
+  def dataCollie: DataCollie
+
+  /**
+    * the fake mode take the metrics from local jvm.
+    */
+  protected def topicMeters(cluster: ClusterInfo): Seq[TopicMeter] = cluster match {
+    case _: BrokerClusterInfo =>
+      cluster.aliveNodes.flatMap { hostname =>
+        BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().topicMeters().asScala
+      }.toSeq
+    case _ => Seq.empty
+  }
+
+  /**
+    * the fake mode take the metrics from local jvm.
+    */
+  protected def counterMBeans(cluster: ClusterInfo): Seq[CounterMBean] = cluster match {
+    case _: BrokerClusterInfo =>
+      /**
+        * the metrics we fetch from kafka are only topic metrics so we skip the other beans
+        */
+      Seq.empty
+    case _ =>
+      cluster.aliveNodes.flatMap { hostname =>
+        BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().counterMBeans().asScala
+      }.toSeq
+  }
+
+  /**
+    * Get all counter beans from cluster
+    * @param key cluster key
+    * @return counter beans. the key is mapped to the instance name and value is the meter
+    */
+  final def counters(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[String, List[Meter]]] =
+    cluster(key)
+      .flatMap { status =>
+        (status.kind match {
+          case Kind.ZOOKEEPER => dataCollie.value[ZookeeperClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case Kind.BROKER    => dataCollie.value[BrokerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case Kind.WORKER    => dataCollie.value[WorkerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case Kind.STREAM    => dataCollie.value[StreamClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+        }).map { clusterInfo =>
+          counterMBeans(clusterInfo)
+            .groupBy(_.group())
+            .map {
+              case (group, counters) =>
+                group -> counters.map { counter =>
+                  Meter(
+                    value = counter.getValue,
+                    unit = counter.getUnit,
+                    document = counter.getDocument,
+                    queryTime = counter.getQueryTime,
+                    startTime = Some(counter.getStartTime)
+                  )
+                }.toList // convert to serializable collection
+            } ++ topicMeters(clusterInfo)
+            .groupBy(_.topicName())
+            .map {
+              case (topicName, counters) =>
+                topicName -> counters.map { counter =>
+                  Meter(
+                    value = counter.count(),
+                    unit = s"${counter.eventType()} / ${counter.rateUnit().name()}",
+                    document = counter.catalog.name(),
+                    queryTime = counter.queryTime(),
+                    startTime = None
+                  )
+                }.toList // convert to serializable collection
+            }
+        }
+      }
   //---------------------------[helper methods]---------------------------//
 
   /**
@@ -236,10 +322,10 @@ object Collie {
     * It can be used in setting container's hostname and name
     * @param group cluster group
     * @param clusterName cluster name
-    * @param serviceName the service type name for current cluster
+    * @param kind the service type name for current cluster
     * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
     */
-  def containerName(group: String, clusterName: String, serviceName: String): String = {
+  def containerName(group: String, clusterName: String, kind: Kind): String = {
     def rejectDivider(s: String): String =
       if (s.contains(DIVIDER))
         throw new IllegalArgumentException(s"$DIVIDER is protected word!!! input:$s")
@@ -248,7 +334,7 @@ object Collie {
     Seq(
       rejectDivider(group),
       rejectDivider(clusterName),
-      rejectDivider(serviceName),
+      rejectDivider(kind.toString.toLowerCase()),
       CommonUtils.randomString(LENGTH_OF_CONTAINER_HASH)
     ).mkString(DIVIDER)
   }
@@ -259,11 +345,11 @@ object Collie {
     * The main difference is that the length of hostname is shorter as the limit of hostname.
     * @param group cluster group
     * @param clusterName cluster name
-    * @param serviceName the service type name for current cluster
+    * @param kind the service type name for current cluster
     * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
     */
-  def containerHostName(group: String, clusterName: String, serviceName: String): String = {
-    val name = containerName(group, clusterName, serviceName)
+  def containerHostName(group: String, clusterName: String, kind: Kind): String = {
+    val name = containerName(group, clusterName, kind)
     if (name.length > LENGTH_OF_CONTAINER_HOSTNAME) {
       val rval = name.substring(name.length - LENGTH_OF_CONTAINER_HOSTNAME)
       // avoid creating name starting with "DIVIDER"
@@ -275,13 +361,13 @@ object Collie {
   /**
     * check whether the container has legal name and related to specific service
     * @param containerName container name
-    * @param service service name
+    * @param kind service name
     * @return true if it is legal. otherwise, false
     */
-  private[agent] def matched(containerName: String, service: String): Boolean =
-    // form: GROUP-NAME-SERVICE-HASH
+  private[agent] def matched(containerName: String, kind: Kind): Boolean =
+    // form: GROUP-NAME-KIND-HASH
     containerName.split(DIVIDER).length == 4 &&
-      containerName.split(DIVIDER)(2) == service
+      containerName.split(DIVIDER)(2).toLowerCase == kind.toString.toLowerCase()
 
   /**
     * a helper method to fetch the cluster key from container name.
@@ -289,7 +375,7 @@ object Collie {
     * @param containerName the container runtime name
     */
   private[agent] def objectKeyOfContainerName(containerName: String): ObjectKey =
-    // form: GROUP-NAME-SERVICE-HASH
+    // form: GROUP-NAME-KIND-HASH
     ObjectKey.of(containerName.split(DIVIDER)(0), containerName.split(DIVIDER)(1))
 
   /**

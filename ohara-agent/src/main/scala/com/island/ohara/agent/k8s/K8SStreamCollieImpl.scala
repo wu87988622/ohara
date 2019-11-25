@@ -23,7 +23,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class K8SStreamCollieImpl(val dataCollie: DataCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
+private class K8SStreamCollieImpl(dataCollie: DataCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl(dataCollie, k8sClient)
     with StreamCollie {
   private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])

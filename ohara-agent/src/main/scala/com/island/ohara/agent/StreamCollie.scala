@@ -20,6 +20,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -92,7 +93,7 @@ trait StreamCollie extends Collie {
                     // other, it will be filtered later ...
                     state = ContainerState.RUNNING.name,
                     kind = Collie.UNKNOWN,
-                    name = Collie.containerName(creation.group, creation.name, serviceName),
+                    name = Collie.containerName(creation.group, creation.name, kind),
                     size = -1,
                     portMappings = creation.ports
                       .map(
@@ -111,7 +112,7 @@ trait StreamCollie extends Collie {
                       "STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString
                     ),
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
-                    hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
+                    hostname = Collie.containerHostName(creation.group, creation.name, kind)
                   )
 
                   val arguments =
@@ -180,9 +181,7 @@ trait StreamCollie extends Collie {
       )
     )
 
-  protected def dataCollie: DataCollie
-
-  override val serviceName: String = StreamApi.STREAM_SERVICE_NAME
+  override val kind: Kind = Kind.STREAM
 
   protected def doCreator(
     executionContext: ExecutionContext,

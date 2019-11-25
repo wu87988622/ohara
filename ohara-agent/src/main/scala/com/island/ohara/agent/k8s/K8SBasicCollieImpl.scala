@@ -19,15 +19,11 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent.{Collie, DataCollie, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private[this] abstract class K8SBasicCollieImpl(
-  dataCollie: DataCollie,
-  k8sClient: K8SClient
-) extends Collie {
+private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sClient: K8SClient) extends Collie {
   override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Boolean] =
@@ -38,22 +34,15 @@ private[this] abstract class K8SBasicCollieImpl(
   ): Future[Boolean] =
     Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_.nonEmpty)
 
-  override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
+  override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerInfo, String]] =
-    dataCollie
-      .values[Node]()
-      .flatMap(
-        nodes => filterContainerService(nodes)
-      )
+    cluster(key)
+      .map(_.containers)
       .flatMap(
         cs =>
           Future.sequence(
-            cs.filter(
-                container =>
-                  Collie.objectKeyOfContainerName(container.name) == objectKey && container.name.contains(serviceName)
-              )
-              .map(container => k8sClient.log(container.name, sinceSeconds).map(container -> _))
+            cs.map(container => k8sClient.log(container.name, sinceSeconds).map(container -> _))
           )
       )
       .map(_.toMap)
@@ -61,9 +50,9 @@ private[this] abstract class K8SBasicCollieImpl(
   override def clusters()(
     implicit executionContext: ExecutionContext
   ): Future[Seq[ClusterStatus]] =
-    dataCollie
-      .values[Node]()
-      .flatMap(filterContainerService)
+    k8sClient
+      .containers()
+      .map(_.filter(container => Collie.matched(container.name, kind)))
       .map(
         _.map(container => Collie.objectKeyOfContainerName(container.name) -> container)
           .groupBy(_._1)
@@ -76,21 +65,6 @@ private[this] abstract class K8SBasicCollieImpl(
           .toSeq
       )
       .flatMap(Future.sequence(_))
-
-  private[this] def filterContainerService(
-    nodes: Seq[Node]
-  )(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    Future
-      .sequence(
-        nodes.map { node =>
-          k8sClient
-            .containers()
-            .map(
-              _.filter(container => Collie.matched(container.name, serviceName))
-            )
-        }
-      )
-      .map(_.flatten)
 
   override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
     if (containers.isEmpty) None

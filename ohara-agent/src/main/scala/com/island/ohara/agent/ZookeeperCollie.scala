@@ -18,6 +18,7 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{
@@ -48,7 +49,7 @@ trait ZookeeperCollie extends Collie {
   private[this] val dataFolder: String = s"$homeFolder/data"
   private[this] val myIdPath: String   = s"$dataFolder/myid"
 
-  override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
+  override val kind: Kind = ClusterStatus.Kind.ZOOKEEPER
 
   /**
     * This is a complicated process. We must address following issues.
@@ -91,7 +92,7 @@ trait ZookeeperCollie extends Collie {
             // ssh connection is slow so we submit request by multi-thread
             Future.sequence(newNodes.zipWithIndex.map {
               case (newNode, nodeIndex) =>
-                val hostname = Collie.containerHostName(creation.group, creation.name, serviceName)
+                val hostname = Collie.containerHostName(creation.group, creation.name, kind)
                 val zkServers = newNodes
                   .map(_.name)
                   .zipWithIndex
@@ -120,7 +121,7 @@ trait ZookeeperCollie extends Collie {
                   // other, it will be filtered later ...
                   state = ContainerState.RUNNING.name,
                   kind = Collie.UNKNOWN,
-                  name = Collie.containerName(creation.group, creation.name, serviceName),
+                  name = Collie.containerName(creation.group, creation.name, kind),
                   size = -1,
                   portMappings = creation.ports
                     .map(
@@ -190,8 +191,6 @@ trait ZookeeperCollie extends Collie {
         }
       }
   }
-
-  protected def dataCollie: DataCollie
 
   protected def doCreator(
     executionContext: ExecutionContext,

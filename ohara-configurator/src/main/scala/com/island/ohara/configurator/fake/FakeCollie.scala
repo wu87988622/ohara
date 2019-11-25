@@ -21,15 +21,21 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{Collie, DataCollie, NoSuchClusterException, ServiceState}
-import com.island.ohara.client.configurator.v0.ClusterStatus
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.StreamRoute
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.basic.{Counter, CounterMBean}
+import com.island.ohara.metrics.kafka.TopicMeter
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-private[configurator] abstract class FakeCollie(dataCollie: DataCollie) extends Collie {
+private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) extends Collie {
   @VisibleForTesting
   protected[configurator] val clusterCache = new ConcurrentSkipListMap[ObjectKey, ClusterStatus]()
 
@@ -115,4 +121,32 @@ private[configurator] abstract class FakeCollie(dataCollie: DataCollie) extends 
     Some(ServiceState.RUNNING)
 
   def forceRemoveCount: Int = _forceRemoveCount.get()
+
+  override protected def topicMeters(cluster: ClusterInfo): Seq[TopicMeter] = cluster match {
+    case _: BrokerClusterInfo =>
+      // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
+      BeanChannel.local().topicMeters().asScala
+    case _ => Seq.empty
+  }
+
+  override protected def counterMBeans(cluster: ClusterInfo): Seq[CounterMBean] = cluster match {
+    case _: BrokerClusterInfo =>
+      /**
+        * the metrics we fetch from kafka are only topic metrics so we skip the other beans
+        */
+      Seq.empty
+    case _: StreamClusterInfo =>
+      // we fake counters since stream is not really running in fake collie mode
+      Seq(
+        Counter
+          .builder()
+          .group(StreamRoute.STREAM_GROUP)
+          .name("fakeCounter")
+          .value(CommonUtils.randomInteger().toLong)
+          .build()
+      )
+    case _ =>
+      // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
+      BeanChannel.local().counterMBeans().asScala
+  }
 }

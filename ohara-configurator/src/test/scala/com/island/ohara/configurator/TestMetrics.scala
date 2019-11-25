@@ -55,7 +55,7 @@ class TestMetrics extends WithBrokerWorker {
 
   private[this] val nodeNames = workerClusterInfo.nodeNames
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 15 seconds)
 
   private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
     CommonUtils.await(

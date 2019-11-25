@@ -32,6 +32,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Mode
@@ -132,106 +133,53 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
       .result()
 
   private[this] implicit val meterCache: MeterCache = {
-    def swallow(
-      f: () => (ClusterInfo, Map[String, Seq[Meter]]),
-      serviceName: String
-    ): Option[(ClusterInfo, Map[String, Seq[Meter]])] =
-      try Some(f())
-      catch {
-        case e: Throwable =>
-          log.error(s"failed to get metrics of service:$serviceName", e)
-          None
-      }
-    def brokerToMeters(clusterInfos: Seq[BrokerClusterInfo]): Map[ClusterInfo, Map[String, Seq[Meter]]] =
-      clusterInfos.flatMap { clusterInfo =>
-        swallow(
-          () =>
-            clusterInfo -> brokerCollie.topicMeters(clusterInfo).groupBy(_.topicName()).map {
-              case (topicName, topicMeters) =>
-                topicName -> topicMeters.map { meter =>
-                  Meter(
-                    value = meter.count(),
-                    unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
-                    document = meter.catalog.name(),
-                    queryTime = meter.queryTime(),
-                    startTime = None
-                  )
-                }.toList // convert to serializable collection
-            },
-          clusterInfo.name
-        )
-      }.toMap
-
-    def workerToMeters(clusterInfos: Seq[WorkerClusterInfo]): Map[ClusterInfo, Map[String, Seq[Meter]]] =
-      clusterInfos.flatMap { clusterInfo =>
-        swallow(
-          () =>
-            clusterInfo -> workerCollie
-              .counters(clusterInfo)
-              .groupBy(_.group())
-              .map {
-                case (connectorId, counters) =>
-                  connectorId -> counters.map { counter =>
-                    Meter(
-                      value = counter.getValue,
-                      unit = counter.getUnit,
-                      document = counter.getDocument,
-                      queryTime = counter.getQueryTime,
-                      startTime = Some(counter.getStartTime)
-                    )
-                  }.toList // convert to serializable collection
-              },
-          clusterInfo.name
-        )
-      }.toMap
-
-    def streamToMeters(clusterInfos: Seq[StreamClusterInfo]): Map[ClusterInfo, Map[String, Seq[Meter]]] =
-      clusterInfos.flatMap { clusterInfo =>
-        swallow(
-          () =>
-            clusterInfo -> streamCollie
-              .counters(clusterInfo)
-              .groupBy(_.group())
-              .map {
-                case (group, counters) =>
-                  group -> counters.map { counter =>
-                    Meter(
-                      value = counter.getValue,
-                      unit = counter.getUnit,
-                      document = counter.getDocument,
-                      queryTime = counter.getQueryTime,
-                      startTime = Some(counter.getStartTime)
-                    )
-                  }.toList // convert to serializable collection
-              },
-          clusterInfo.name
-        )
-      }.toMap
+    def metrics(collie: Collie, clusterInfos: Seq[ClusterInfo]): Future[Map[ClusterInfo, Map[String, Seq[Meter]]]] =
+      Future
+        .sequence(clusterInfos.map { clusterInfo =>
+          collie
+            .counters(clusterInfo.key)
+            .map(m => Some(clusterInfo -> m))
+            .recover {
+              case e: Throwable =>
+                log.error(
+                  s"failed to get metrics of service:${clusterInfo.key} from ${collie.getClass.getSimpleName}",
+                  e
+                )
+                None
+            }
+        })
+        .map(_.flatten.toMap)
 
     MeterCache.builder
       .refresher { () =>
         // we do the sync here to simplify the interface
         Await.result(
           for {
+            zks <- serviceCollie.brokerCollie
+              .clusters()
+              .map(_.map(_.key))
+              .flatMap(keys => Future.traverse(keys)(store.get[ZookeeperClusterInfo]))
+              .map(_.flatten)
+              .flatMap(clusterInfos => metrics(serviceCollie.zookeeperCollie, clusterInfos))
             bks <- serviceCollie.brokerCollie
               .clusters()
               .map(_.map(_.key))
               .flatMap(keys => Future.traverse(keys)(store.get[BrokerClusterInfo]))
               .map(_.flatten)
-              .map(brokerToMeters)
+              .flatMap(clusterInfos => metrics(serviceCollie.brokerCollie, clusterInfos))
             wks <- serviceCollie.workerCollie
               .clusters()
               .map(_.map(_.key))
               .flatMap(keys => Future.traverse(keys)(store.get[WorkerClusterInfo]))
               .map(_.flatten)
-              .map(workerToMeters)
+              .flatMap(clusterInfos => metrics(serviceCollie.workerCollie, clusterInfos))
             streams <- serviceCollie.streamCollie
               .clusters()
               .map(_.map(_.key))
               .flatMap(keys => Future.traverse(keys)(store.get[StreamClusterInfo]))
               .map(_.flatten)
-              .map(streamToMeters)
-          } yield bks ++ wks ++ streams,
+              .flatMap(clusterInfos => metrics(serviceCollie.streamCollie, clusterInfos))
+          } yield zks ++ bks ++ wks ++ streams,
           cacheTimeout * 5
         )
       }

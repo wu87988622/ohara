@@ -25,16 +25,10 @@ import com.island.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 private abstract class BasicCollieImpl(
-  dataCollie: DataCollie,
+  val dataCollie: DataCollie,
   dockerCache: DockerClientCache,
   clusterCache: ServiceCache
 ) extends Collie {
-  /**
-    * all ssh collies share the single cache, and we need a way to distinguish the difference status from different
-    * services. Hence, this implicit field is added to cache to find out the cached data belonging to this collie.
-    */
-  protected implicit val kind: ClusterStatus.Kind
-
   final override def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]] =
     Future.successful(clusterCache.snapshot.filter(_.kind == kind))
 
@@ -92,19 +86,8 @@ private abstract class BasicCollieImpl(
   override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerInfo, String]] =
-    dataCollie
-      .values[Node]()
-      .flatMap(
-        Future.traverse(_)(
-          // form: PREFIX_KEY-GROUP-CLUSTER_NAME-SERVICE-HASH
-          dockerCache.exec(
-            _,
-            _.containers()
-              .map(_.filter(container => Collie.objectKeyOfContainerName(container.name) == key))
-          )
-        )
-      )
-      .map(_.flatten)
+    cluster(key)
+      .map(_.containers)
       .flatMap { containers =>
         Future
           .sequence(containers.map { container =>

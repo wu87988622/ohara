@@ -22,11 +22,9 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 
 import scala.concurrent.{ExecutionContext, Future}
-private class StreamCollieImpl(val dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
+private class StreamCollieImpl(dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl(dataCollie, dockerCache, clusterCache)
     with StreamCollie {
-  protected implicit val kind: ClusterStatus.Kind = ClusterStatus.Kind.STREAM
-
   override protected def doCreator(
     executionContext: ExecutionContext,
     containerInfo: ContainerInfo,
