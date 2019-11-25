@@ -22,6 +22,11 @@ import {
   useDevToolDialog,
 } from 'context/dialog/DialogContext';
 import {
+  FileProvider,
+  useFileState,
+  useFileActions,
+} from 'context/file/FileContext';
+import {
   TopicProvider,
   useTopicState,
   useTopicActions,
@@ -38,6 +43,10 @@ export {
   useEditWorkspaceDialog,
   useAddTopicDialog,
   useDevToolDialog,
+  // File
+  FileProvider,
+  useFileState,
+  useFileActions,
   // Topic
   TopicProvider,
   useTopicState,

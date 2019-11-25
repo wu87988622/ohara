@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-import styled, { css } from 'styled-components';
+import QuickSearch from './QuickSearch';
 
-export const StyledActions = styled.div(
-  ({ theme }) => css`
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-bottom: ${theme.spacing(2)}px;
-
-    button {
-      margin-left: ${theme.spacing(1)}px;
-    }
-  `,
-);
+export { QuickSearch };

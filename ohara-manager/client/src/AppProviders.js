@@ -24,7 +24,12 @@ import {
 
 import MuiTheme from './theme/muiTheme';
 import { ErrorBoundary } from 'components/ErrorPages';
-import { DialogProvider, WorkspaceProvider, TopicProvider } from './context';
+import {
+  DialogProvider,
+  FileProvider,
+  TopicProvider,
+  WorkspaceProvider,
+} from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
@@ -53,6 +58,7 @@ const AppProviders = ({ children }) => {
         <WorkspaceProvider children={children} />,
         <PipelineProvider children={children} />,
         <TopicProvider children={children} />,
+        <FileProvider children={children} />,
         <NodeDialogProvider children={children} />,
       ]}
     >

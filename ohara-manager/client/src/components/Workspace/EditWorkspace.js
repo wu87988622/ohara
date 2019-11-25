@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { get } from 'lodash';
+import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
@@ -29,8 +30,9 @@ import Box from '@material-ui/core/Box';
 import { FullScreenDialog } from 'components/common/Dialog';
 import { useEditWorkspaceDialog, useAddTopicDialog } from 'context';
 import { TopicsTab } from 'components/Workspace/TopicsTab';
+import { FilesTab, FileUpload } from 'components/Workspace/File';
 import { AddTopicDialog } from 'components/Topic';
-import { StyledActions } from './Styles';
+import { Wrapper } from './EditWorkspaceStyles';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -69,6 +71,7 @@ const EditWorkspace = () => {
   };
 
   const tab = get(editWorkspaceDialogData, 'tab', 'overview');
+
   return (
     <>
       <FullScreenDialog
@@ -76,49 +79,60 @@ const EditWorkspace = () => {
         open={isEditWorkspaceDialogOpen}
         handleClose={closeEditWorkspaceDialog}
       >
-        <StyledActions>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={openAddTopicDialog}
+        <Wrapper>
+          <Grid
+            container
+            justify="flex-end"
+            alignItems="center"
+            className="actions"
           >
-            ADD TOPIC
-          </Button>
-          <Button variant="outlined" color="primary">
-            UPLOAD FILE
-          </Button>
-          <IconButton
-            aria-label="display more actions"
-            edge="end"
-            color="inherit"
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={openAddTopicDialog}
+              className="button"
+            >
+              ADD TOPIC
+            </Button>
+            <FileUpload>
+              <Button variant="outlined" color="primary" className="button">
+                UPLOAD FILE
+              </Button>
+            </FileUpload>
+
+            <IconButton
+              aria-label="display more actions"
+              edge="end"
+              color="inherit"
+            >
+              <MoreIcon />
+            </IconButton>
+          </Grid>
+          <Tabs
+            value={tab}
+            onChange={handleChange}
+            indicatorColor="primary"
+            textColor="primary"
           >
-            <MoreIcon />
-          </IconButton>
-        </StyledActions>
-        <Tabs
-          value={tab}
-          onChange={handleChange}
-          indicatorColor="primary"
-          textColor="primary"
-        >
-          <Tab label="Overview" value="overview" />
-          <Tab label="Topics" value="topics" />
-          <Tab label="Files" value="files" />
-          <Tab label="Settings" value="settings" />
-        </Tabs>
-        <Divider />
-        <TabPanel value={tab} index={'overview'}>
-          Overview
-        </TabPanel>
-        <TabPanel value={tab} index={'topics'}>
-          <TopicsTab />
-        </TabPanel>
-        <TabPanel value={tab} index={'files'}>
-          Files
-        </TabPanel>
-        <TabPanel value={tab} index={'settings'}>
-          Settings
-        </TabPanel>
+            <Tab label="Overview" value="overview" />
+            <Tab label="Topics" value="topics" />
+            <Tab label="Files" value="files" />
+            <Tab label="Settings" value="settings" />
+          </Tabs>
+          <Divider />
+          <TabPanel value={tab} index={'overview'}>
+            Overview
+          </TabPanel>
+          <TabPanel value={tab} index={'topics'}>
+            <TopicsTab />
+          </TabPanel>
+          <TabPanel value={tab} index={'files'}>
+            <FilesTab />
+          </TabPanel>
+          <TabPanel value={tab} index={'settings'}>
+            Settings
+          </TabPanel>
+        </Wrapper>
       </FullScreenDialog>
       <AddTopicDialog />
     </>
