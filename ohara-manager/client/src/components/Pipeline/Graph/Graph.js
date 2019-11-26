@@ -17,6 +17,7 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
+import MuiTheme from 'theme/muiTheme';
 
 import Toolbox from '../Toolbox';
 import { Paper } from './GraphStyles';
@@ -55,6 +56,60 @@ const Graph = props => {
         cellViewNamespace: joint.shapes,
         restrictTranslate: true,
       });
+
+      paper.current.on('cell:pointerclick', function(elementView) {
+        if (!elementView.$box) return;
+        resetAll(this);
+        elementView.$box.css(
+          'boxShadow',
+          `0 0 0 2px ${MuiTheme.palette.primary[500]}`,
+        );
+        elementView.model.attributes.menuDisplay = 'block';
+        elementView.updateBox();
+        const links = graph.current.getLinks();
+        if (links.length > 0) {
+          if (!links[0].attributes.target.id) {
+            links[0].target({ id: elementView.model.id });
+          }
+        }
+      });
+
+      paper.current.on('blank:pointerclick', function() {
+        resetAll(this);
+      });
+
+      paper.current.on('cell:mouseenter', function(elementView) {
+        if (!elementView.$box) return;
+        elementView.$box.css(
+          'boxShadow',
+          `0 0 0 2px ${MuiTheme.palette.primary[500]}`,
+        );
+      });
+
+      paper.current.on('cell:mouseleave', function(elementView) {
+        if (!elementView.$box) return;
+        if (elementView.model.attributes.menuDisplay === 'none') {
+          elementView.$box.css('boxShadow', '');
+        }
+      });
+
+      const resetAll = paper => {
+        const views = paper._views;
+        paper.model.getElements().forEach(element => {
+          element.attributes.menuDisplay = 'none';
+        });
+        Object.keys(paper._views).forEach(key => {
+          if (!views[key].$box) return;
+          views[key].updateBox();
+          views[key].$box.css('boxShadow', '');
+        });
+        const links = graph.current.getLinks();
+        if (links.length > 0) {
+          if (!links[0].attributes.target.id) {
+            links[0].remove();
+          }
+        }
+      };
     };
 
     renderGraph();
