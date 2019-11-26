@@ -83,6 +83,10 @@ const ConnectorGraph = params => {
         .find('button#remove')
         .on('click', _.bind(this.model.remove, this.model));
 
+      //Click the connect button to generate SVG's link object,
+      //starting from its own box,
+      //but we don't want to let users see it at the beginning,
+      //so adjust the attributes and display it later
       this.$box.find('button#link').on('mousedown', function() {
         linkLine = new joint.dia.Link();
         linkLine.source({ id: modelId });
@@ -92,11 +96,6 @@ const ConnectorGraph = params => {
         linkLine.addTo(graph);
       });
 
-      if (this.paper) {
-        this.paper.$document.on('mousemove', function(evt) {
-          linkLine.target({ x: evt.paperX, y: evt.paperY });
-        });
-      }
       this.updateBox();
     },
     render() {

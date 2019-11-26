@@ -19,10 +19,8 @@ import { css } from 'styled-components';
 export const connector = ({ theme }) => css`
   background-color: white;
   position: absolute;
-  border-style: solid;
-  border-radius: ${theme.shape.borderRadius}px;
   border-color: ${theme.palette.divider};
-  border-width: 1px;
+  border: 1px solid ${theme.palette.divider};
   pointer-events: none;
 
   &:hover {

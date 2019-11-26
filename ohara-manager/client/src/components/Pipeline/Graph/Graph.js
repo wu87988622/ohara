@@ -103,6 +103,12 @@ const Graph = props => {
           views[key].updateBox();
           views[key].$box.css('boxShadow', '');
         });
+        const links = graph.current.getLinks();
+        if (links.length > 0) {
+          if (!links[0].attributes.target.id) {
+            links[0].remove();
+          }
+        }
       };
     };
 
