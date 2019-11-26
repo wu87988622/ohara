@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import { isEmpty } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
-import * as validateApi from 'api/validateApi';
 import * as nodeApi from 'api/nodeApi';
 import { useSnackbar } from 'context/SnackbarContext';
 import { InputField } from 'components/common/Form';
@@ -45,13 +44,6 @@ const AddNodeDialog = props => {
       ...rest,
     };
 
-    const nodes = await validateApi.validateNode(params);
-    const isPassed = nodes.every(node => node.pass);
-    if (!isPassed) {
-      showMessage('Test passed!');
-      return;
-    }
-
     const response = await nodeApi.create(params);
     const isSuccess = !isEmpty(response);
     if (isSuccess) {
@@ -59,6 +51,9 @@ const AddNodeDialog = props => {
       showMessage(`Successfully created node ${hostname}`);
       await fetchNodes();
       handleClose();
+    } else {
+      showMessage('Test failed!');
+      return;
     }
   };
 

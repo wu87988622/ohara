@@ -22,9 +22,23 @@ import * as waitUtil from './utils/waitUtils';
 
 const url = URL.NODE_URL;
 
+export const state = {
+  available: 'AVAILABLE',
+  unavailable: 'UNAVAILABLE',
+};
+
 export const create = async (params = {}) => {
   const requestBody = requestUtil(params, node);
   const res = await axiosInstance.post(url, requestBody);
+  // this is a workaround to handle "failed creation"
+  // we should refactor this in #3124
+  if (
+    responseUtil(res, node) &&
+    responseUtil(res, node).state === state.unavailable
+  ) {
+    await remove(params);
+    return {};
+  }
   return responseUtil(res, node);
 };
 

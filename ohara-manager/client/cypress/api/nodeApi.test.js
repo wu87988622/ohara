@@ -41,6 +41,8 @@ describe('Node API', () => {
       lastModified,
       tags,
       services,
+      state,
+      resources,
     } = await nodeApi.create(params);
 
     expect(hostname).to.be.a('string');
@@ -56,6 +58,11 @@ describe('Node API', () => {
     expect(password).to.eq(params.password);
 
     expect(services).to.be.an('array');
+
+    expect(state).to.be.a('string');
+    expect(state).to.eq(nodeApi.state.available);
+
+    expect(resources).to.be.an('array');
 
     expect(lastModified).to.be.a('number');
 
@@ -119,6 +126,8 @@ describe('Node API', () => {
       lastModified,
       tags,
       services,
+      state,
+      resources,
     } = await nodeApi.get(params);
 
     expect(hostname).to.be.a('string');
@@ -134,6 +143,11 @@ describe('Node API', () => {
     expect(password).to.eq(params.password);
 
     expect(services).to.be.an('array');
+
+    expect(state).to.be.a('string');
+    expect(state).to.eq(nodeApi.state.available);
+
+    expect(resources).to.be.an('array');
 
     expect(lastModified).to.be.a('number');
 

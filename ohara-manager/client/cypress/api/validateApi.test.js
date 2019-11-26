@@ -71,59 +71,17 @@ const generateValidation = async () => {
 describe('Validate API', () => {
   beforeEach(() => deleteAllServices());
 
-  it('validateHdfs', async () => {
-    const { validation: hdfs } = await generateValidation();
-    const result = await validateApi.validateHdfs(hdfs);
-
-    result.forEach(report => {
-      expect(report.hostname).to.be.a('string');
-      expect(report.message).to.be.a('string');
-      expect(report.lastModified).to.be.a('number');
-      expect(report.pass).to.be.true;
-    });
-  });
-
-  it('validateRdb', async () => {
-    const { validation: rdb } = await generateValidation();
-    const result = await validateApi.validateRdb(rdb);
-
-    result.forEach(report => {
-      expect(report.hostname).to.be.a('string');
-      expect(report.message).to.be.a('string');
-      expect(report.rdbInfo).to.be.an('object');
-      expect(report.pass).to.be.true;
-    });
-  });
-
-  it('validateFtp', async () => {
-    const { validation: ftp } = await generateValidation();
-    const result = await validateApi.validateFtp(ftp);
-
-    result.forEach(report => {
-      expect(report.hostname).to.be.a('string');
-      expect(report.message).to.be.a('string');
-      expect(report.lastModified).to.be.a('number');
-      expect(report.pass).to.be.true;
-    });
-  });
-
-  it('validateNode', async () => {
-    const { validation: node } = await generateValidation();
-    const result = await validateApi.validateNode(node);
-
-    result.forEach(report => {
-      expect(report.hostname).to.be.a('string');
-      expect(report.message).to.be.a('string');
-      expect(report.lastModified).to.be.a('number');
-      expect(report.pass).to.be.true;
-    });
-  });
-
   it('validateConnector', async () => {
     const { connector } = await generateValidation();
     const result = await validateApi.validateConnector(connector);
 
-    result.settings.forEach(report => {
+    const { errorCount, settings } = result;
+
+    expect(errorCount).to.eq(0);
+
+    expect(settings.length > 0).to.be.true;
+
+    settings.forEach(report => {
       const { definition, value } = report;
       expect(definition).to.be.an('object');
 

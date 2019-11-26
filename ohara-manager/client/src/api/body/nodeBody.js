@@ -42,5 +42,17 @@ export const response = () => {
       },
     ],
   };
-  return { hostname, port, user, password, lastModified, tags, services };
+  const state = [string];
+  const resources = [array];
+  return {
+    hostname,
+    port,
+    user,
+    password,
+    lastModified,
+    tags,
+    services,
+    state,
+    resources,
+  };
 };

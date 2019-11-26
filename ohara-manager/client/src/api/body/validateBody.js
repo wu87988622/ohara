@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-import { string, number } from '../utils/validation';
+import { array, number } from '../utils/validation';
 
 export const response = () => {
-  const hostname = [string];
-  const message = [string];
-  const pass = [string];
-  const lastModified = [number];
+  const errorCount = [number];
+  const settings = [array];
 
   return {
-    hostname,
-    message,
-    pass,
-    lastModified,
+    errorCount,
+    settings,
   };
 };
