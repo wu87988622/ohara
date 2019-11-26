@@ -23,10 +23,13 @@ const PipelineContext = createContext();
 
 const PipelineProvider = ({ children }) => {
   const [pipelines, setPipelines] = useState([]);
+  const [isFetching, setIsFetching] = useState(false);
 
   const fetchPipelines = useCallback(async workspaceName => {
+    setIsFetching(true);
     const response = await pipelineApi.getAll({ group: workspaceName });
     const pipelines = response.sort((a, b) => a.name.localeCompare(b.name));
+    setIsFetching(false);
     setPipelines(pipelines);
   }, []);
 
@@ -35,6 +38,7 @@ const PipelineProvider = ({ children }) => {
       value={{
         pipelines,
         doFetch: fetchPipelines,
+        isFetching,
       }}
     >
       {children}

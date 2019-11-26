@@ -36,7 +36,7 @@ const GraphWrapper = styled.div`
 
 const Pipeline = () => {
   const history = useHistory();
-  const { workspaces, isFetching: isFetchingWorkspace } = useWorkspace();
+  const { workspaces, isFetching: isFetchingWorkspaces } = useWorkspace();
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
   const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
@@ -61,6 +61,32 @@ const Pipeline = () => {
     });
   };
 
+  const hasWorkspace = workspaces.length > 0;
+  let currentWorkspace;
+
+  if (workspaceName && isFetchingWorkspaces === false) {
+    const current = workspaces.find(
+      workspace => workspace.settings.name === workspaceName,
+    );
+
+    // If the `current` pipeline is found in the pipeline list
+    if (current) currentWorkspace = current;
+
+    // If the `current` workspace is not found in the list but the
+    // list is not empty, let's display the first workspace
+    if (current === undefined && hasWorkspace) {
+      history.push(`/${workspaces[0].settings.name}`);
+    }
+  }
+
+  useEffect(() => {
+    if (hasWorkspace) {
+      setIsNewWorkspaceDialogOpen(false);
+    } else {
+      setIsNewWorkspaceDialogOpen(true);
+    }
+  }, [hasWorkspace, setIsNewWorkspaceDialogOpen]);
+
   useEffect(() => {
     fetchPipelines(workspaceName);
   }, [fetchPipelines, workspaceName]);
@@ -80,8 +106,10 @@ const Pipeline = () => {
     if (current === undefined && hasPipeline) {
       history.push(`/${workspaceName}/${pipelines[0].name}`);
     }
-  } else if (hasPipeline) {
-    history.push(`/${workspaceName}/${pipelines[0].name}`);
+  } else {
+    if (hasWorkspace && hasPipeline) {
+      history.push(`/${workspaceName}/${pipelines[0].name}`);
+    }
   }
 
   const prevPipeline = usePrevious(currentPipeline);
@@ -96,35 +124,6 @@ const Pipeline = () => {
       setToolboxKey(prevKey => prevKey + 1);
     }
   }, [currentPipeline, initialState, prevPipeline]);
-
-  const hasWorkspace = workspaces.length > 0;
-
-  let currentWorkspace;
-  if (workspaceName) {
-    const current = workspaces.find(
-      workspace => workspace.settings.name === workspaceName,
-    );
-
-    // If the `current` workspace is found in the workspace list
-    if (current) currentWorkspace = current;
-
-    // If the `current` workspace is not found in the list but the
-    // list is not empty, let's display the first workspace
-    if (current === undefined && hasWorkspace) {
-      history.push(`/${workspaces[0].settings.name}`);
-    }
-  } else if (hasWorkspace) {
-    // Display the first workspace as the fallback
-    history.push(`/${workspaces[0].settings.name}`);
-  }
-
-  useEffect(() => {
-    if (hasWorkspace) {
-      setIsNewWorkspaceDialogOpen(false);
-    } else {
-      setIsNewWorkspaceDialogOpen(true);
-    }
-  }, [hasWorkspace, setIsNewWorkspaceDialogOpen]);
 
   return (
     <>
@@ -158,7 +157,7 @@ const Pipeline = () => {
         </>
       )}
 
-      {!isFetchingWorkspace && <IntroDialog />}
+      {!isFetchingWorkspaces && <IntroDialog />}
       <NodeDialog />
     </>
   );
