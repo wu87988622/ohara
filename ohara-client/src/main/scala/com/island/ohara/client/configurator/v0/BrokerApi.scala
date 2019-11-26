@@ -201,8 +201,7 @@ object BrokerApi {
     aliveNodes: Set[String],
     lastModified: Long,
     state: Option[String],
-    error: Option[String],
-    topicDefinition: TopicDefinition
+    error: Option[String]
   ) extends ClusterInfo {
     /**
       * reuse the parser from Creation.
@@ -240,7 +239,7 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat6(
+  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat5(
     BrokerClusterInfo
   )
 

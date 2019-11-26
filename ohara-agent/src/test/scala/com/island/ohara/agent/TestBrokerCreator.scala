@@ -41,8 +41,7 @@ class TestBrokerCreator extends OharaTest {
           aliveNodes = creation.nodeNames,
           state = None,
           error = None,
-          lastModified = 0,
-          topicDefinition = BrokerApi.TOPIC_DEFINITION
+          lastModified = 0
         )
       )
     }
@@ -134,8 +133,7 @@ class TestBrokerCreator extends OharaTest {
       aliveNodes = nodeNames,
       state = None,
       error = None,
-      lastModified = 0,
-      topicDefinition = BrokerApi.TOPIC_DEFINITION
+      lastModified = 0
     )
 
     // pass

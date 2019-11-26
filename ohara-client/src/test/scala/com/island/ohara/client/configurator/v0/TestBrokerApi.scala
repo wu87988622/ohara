@@ -38,8 +38,7 @@ class TestBrokerApi extends OharaTest {
       aliveNodes = Set.empty,
       state = None,
       error = None,
-      lastModified = CommonUtils.current(),
-      topicDefinition = BrokerApi.TOPIC_DEFINITION
+      lastModified = CommonUtils.current()
     )
     brokerClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
   }
@@ -570,8 +569,7 @@ class TestBrokerApi extends OharaTest {
         aliveNodes = Set.empty,
         state = None,
         error = None,
-        lastModified = CommonUtils.current(),
-        topicDefinition = BrokerApi.TOPIC_DEFINITION
+        lastModified = CommonUtils.current()
       )
     )
     // serialize to json should see the object key (group, name)
@@ -616,8 +614,7 @@ class TestBrokerApi extends OharaTest {
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
-      lastModified = CommonUtils.current(),
-      topicDefinition = BrokerApi.TOPIC_DEFINITION
+      lastModified = CommonUtils.current()
     )
     cluster.deadNodes shouldBe Set("n1")
     cluster.copy(state = None).deadNodes shouldBe Set.empty
@@ -634,8 +631,7 @@ class TestBrokerApi extends OharaTest {
       aliveNodes = Set("nn"),
       state = Some("running"),
       error = None,
-      lastModified = CommonUtils.current(),
-      topicDefinition = BrokerApi.TOPIC_DEFINITION
+      lastModified = CommonUtils.current()
     )
     cluster.connectionProps should not include "nn"
   }
@@ -654,7 +650,6 @@ class TestBrokerApi extends OharaTest {
         .zookeeperClusterKey(ObjectKey.of("g", "n"))
         .creation
         .settings,
-      topicDefinition = BrokerApi.TOPIC_DEFINITION,
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,

@@ -151,8 +151,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ServiceState.RUNNING.name),
           error = None,
-          lastModified = CommonUtils.current(),
-          topicDefinition = BrokerApi.TOPIC_DEFINITION
+          lastModified = CommonUtils.current()
         )
       }
       val wkCluster = {
@@ -289,7 +288,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             BrokerClusterInfo(
               settings = creation.settings,
               // TODO: we should check the supported arguments by the running broker images
-              topicDefinition = BrokerApi.TOPIC_DEFINITION,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ServiceState.RUNNING.name),

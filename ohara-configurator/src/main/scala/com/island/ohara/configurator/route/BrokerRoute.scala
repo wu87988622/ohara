@@ -42,8 +42,7 @@ object BrokerRoute {
           aliveNodes = Set.empty,
           state = None,
           error = None,
-          lastModified = CommonUtils.current(),
-          topicDefinition = BrokerApi.TOPIC_DEFINITION
+          lastModified = CommonUtils.current()
         )
     }
 

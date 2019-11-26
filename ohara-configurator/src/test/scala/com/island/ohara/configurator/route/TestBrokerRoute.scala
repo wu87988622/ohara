@@ -391,15 +391,6 @@ class TestBrokerRoute extends OharaTest {
   }
 
   @Test
-  def testTopicSettingDefinitions(): Unit = {
-    result(
-      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
-    )
-    result(brokerApi.list()).size should not be 0
-    result(brokerApi.list()).foreach(_.topicDefinition.settingDefinitions.size should not be 0)
-  }
-
-  @Test
   def testIdempotentStart(): Unit = {
     val bk = result(
       brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterKey(zkKey).create()
