@@ -674,6 +674,11 @@ The post-installation for all docker nodes are listed below.
 #. `create a user account which can access docker without sudo <https://docs.docker.com/install/linux/linux-postinstall/>`__ —
     Ohara Configurator may use ssh to control docker of remote node.
 
+.. note::
+  all containers created by Ohara, which is on docker mode, have a specific label - createdByOhara - this label enables
+  Ohara to ignore the unrelated containers. For examples, You request Ohara Configurator (of course, it is on docker mode)
+  to create a zookeeper service. The container of zookeeper service will have label - createdByOhara=docker.
+
 --------------
 
 .. _userguide-k8s:
@@ -697,6 +702,11 @@ broker, and connect-worker. These services can be run and controlled
 through Kubernets and making container management a lot easier. Before
 running any Ohara containers, you need to install Kubernets first.
 We’ll walk you through this process with a few k8s commands:
+
+.. note::
+  all containers created by Ohara, which is on k8s mode, have a specific label - createdByOhara - this label enables
+  Ohara to ignore the unrelated containers. For examples, You request Ohara Configurator (of course, it is on k8s mode)
+  to create a zookeeper service. The container of zookeeper service will have label - createdByOhara=k8s.
 
 Install distribute mode for Kubernetes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
