@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-import EditWorkspace from './EditWorkspace';
+import SettingsTab from './SettingsTab';
 
-const Tabs = {
-  OVERVIEW: 'overview',
-  TOPICS: 'topics',
-  FILES: 'files',
-  SETTINGS: 'settings',
+const SubTabs = {
+  SETTINGS: Symbol(),
+  PLUGINS: Symbol(),
+  NODES: Symbol(),
+  NONE: Symbol(),
 };
 
-export { EditWorkspace, Tabs };
+const Segments = {
+  WORKER: Symbol(),
+  BROKER: Symbol(),
+  ZOOKEEPER: Symbol(),
+  NONE: Symbol(),
+};
+
+export { SettingsTab, SubTabs, Segments };

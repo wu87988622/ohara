@@ -31,7 +31,7 @@ import { usePipeline } from 'context/PipelineContext';
 import { useWorkspace, useEditWorkspaceDialog } from 'context';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
-import { EditWorkspace } from 'components/Workspace';
+import { EditWorkspace, Tabs as EditWorkspaceTabs } from 'components/Workspace';
 import {
   required,
   validServiceName,
@@ -68,9 +68,9 @@ const Navigator = () => {
     setAnchorEl(null);
   };
 
-  const handleMenuItemClick = key => () => {
+  const handleMenuItemClick = tab => () => {
     openEditWorkspaceDialog();
-    setEditWorkspaceDialogData({ tab: key });
+    setEditWorkspaceDialogData({ tab });
     handleClose();
   };
 
@@ -111,16 +111,28 @@ const Navigator = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem key="overview" onClick={handleMenuItemClick('overview')}>
+        <MenuItem
+          key={EditWorkspaceTabs.OVERVIEW}
+          onClick={handleMenuItemClick(EditWorkspaceTabs.OVERVIEW)}
+        >
           Overview
         </MenuItem>
-        <MenuItem key="topics" onClick={handleMenuItemClick('topics')}>
+        <MenuItem
+          key={EditWorkspaceTabs.TOPICS}
+          onClick={handleMenuItemClick(EditWorkspaceTabs.TOPICS)}
+        >
           Topics
         </MenuItem>
-        <MenuItem key="files" onClick={handleMenuItemClick('files')}>
+        <MenuItem
+          key={EditWorkspaceTabs.FILES}
+          onClick={handleMenuItemClick(EditWorkspaceTabs.FILES)}
+        >
           Files
         </MenuItem>
-        <MenuItem key="settings" onClick={handleMenuItemClick('settings')}>
+        <MenuItem
+          key={EditWorkspaceTabs.SETTINGS}
+          onClick={handleMenuItemClick(EditWorkspaceTabs.SETTINGS)}
+        >
           Settings
         </MenuItem>
       </Menu>

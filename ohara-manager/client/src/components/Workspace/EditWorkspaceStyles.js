@@ -25,5 +25,8 @@ export const Wrapper = styled.div(
         margin-left: ${theme.spacing(1)}px;
       }
     }
+    .tab-panel {
+      margin-top: ${theme.spacing(3)}px;
+    }
   `,
 );

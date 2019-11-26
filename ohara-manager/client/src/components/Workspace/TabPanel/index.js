@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-import EditWorkspace from './EditWorkspace';
+import TabPanel from './TabPanel';
 
-const Tabs = {
-  OVERVIEW: 'overview',
-  TOPICS: 'topics',
-  FILES: 'files',
-  SETTINGS: 'settings',
-};
-
-export { EditWorkspace, Tabs };
+export default TabPanel;
