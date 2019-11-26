@@ -45,6 +45,7 @@ import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
 import { useConnectors, useFiles } from './ToolboxHooks';
 import { enableDragAndDrop, createToolboxList } from './toolboxUtils';
+import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 
 const Toolbox = props => {
   const {
@@ -65,6 +66,9 @@ const Toolbox = props => {
   const { open: openAddTopicDialog } = useAddTopicDialog();
   const [isOpen, setIsOpen] = useState(false);
   const [graphType, setGraphType] = useState('');
+  const [connectorType, setConnectorType] = useState('');
+  const [icon, setIcon] = useState('');
+  const [zIndex, setZIndex] = useState(2);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [searchResults, setSearchResults] = useState(null);
 
@@ -116,14 +120,15 @@ const Toolbox = props => {
 
   const handleAddGraph = newGraph => {
     if (newGraph) {
+      setZIndex(zIndex + 1);
       graph.addCell(
-        new joint.shapes.basic.Rect({
+        ConnectorGraph({
           position,
-          size: { width: 100, height: 40 },
-          attrs: {
-            text: { text: newGraph },
-            rect: { magnet: true },
-          },
+          value: newGraph,
+          type: connectorType,
+          icon,
+          zIndex,
+          graph,
         }),
       );
     }
@@ -196,7 +201,9 @@ const Toolbox = props => {
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
         paper, // main paper
         setGraphType,
+        setConnectorType,
         setPosition,
+        setIcon,
         setIsOpen,
       });
     };

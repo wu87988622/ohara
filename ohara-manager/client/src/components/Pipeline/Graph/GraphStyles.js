@@ -15,6 +15,16 @@
  */
 
 import styled, { css } from 'styled-components';
+import {
+  connector,
+  circle,
+  title,
+  type,
+  status,
+  left,
+  right,
+  menu,
+} from './Connector/styles';
 
 export const Paper = styled.div(
   ({ theme }) => css`
@@ -43,6 +53,52 @@ export const Paper = styled.div(
         .display-name {
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+      }
+    }
+    svg .link {
+      z-index: 2;
+    }
+    .connector {
+      ${connector}
+    }
+    .circle {
+      ${circle}
+
+      svg {
+        color: white;
+      }
+    }
+    .title {
+      ${title}
+    }
+    .type {
+      ${type}
+    }
+    .status {
+      ${status}
+      .left {
+        ${left}
+      }
+      .right {
+        ${right}
+      }
+    }
+    .menu {
+      ${menu}
+
+      button {
+        pointer-events: auto;
+        background-color: transparent;
+        border: 0;
+        padding: 0;
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.08);
+        }
+
+        &:focus {
+          outline: 0;
         }
       }
     }

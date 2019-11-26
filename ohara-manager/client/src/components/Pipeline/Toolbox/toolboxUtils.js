@@ -157,6 +157,8 @@ export const enableDragAndDrop = ({
   paper,
   setGraphType,
   setPosition,
+  setConnectorType,
+  setIcon,
   setIsOpen: openAddConnectorDialog,
 }) => {
   toolPapers.forEach(toolPaper => {
@@ -191,6 +193,8 @@ export const enableDragAndDrop = ({
         y: y - pos.y,
       };
       setGraphType(cellView.model.get('classType'));
+      setConnectorType(cellView.model.get('displayName'));
+      setIcon(cellView.model.get('icon'));
 
       flyingShape.position(0, 0);
       flyingGraph.addCell(flyingShape);
