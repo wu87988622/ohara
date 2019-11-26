@@ -159,7 +159,6 @@ object DockerClient {
         imageName: String,
         name: String,
         command: String,
-        removeContainerOnExit: Boolean,
         ports: Map[Int, Int],
         envs: Map[String, String],
         route: Map[String, String],
@@ -175,7 +174,6 @@ object DockerClient {
                 case (host, ip) => s"--add-host $host:$ip"
               }
               .mkString(" "),
-            if (removeContainerOnExit) "--rm" else "",
             s"--name ${Objects.requireNonNull(name)}",
             ports
               .map {
@@ -421,7 +419,6 @@ object DockerClient {
     private[this] var imageName: String                  = _
     private[this] var name: String                       = CommonUtils.randomString()
     private[this] var command: String                    = ""
-    private[this] var _removeContainerOnExit: Boolean    = false
     private[this] var ports: Map[Int, Int]               = Map.empty
     private[this] var envs: Map[String, String]          = Map.empty
     private[this] var route: Map[String, String]         = Map.empty
@@ -436,7 +433,6 @@ object DockerClient {
       imageName = CommonUtils.requireNonEmpty(imageName),
       name = CommonUtils.requireNonEmpty(name),
       command = command,
-      removeContainerOnExit = _removeContainerOnExit,
       ports = ports,
       envs = envs,
       route = route,
@@ -449,7 +445,6 @@ object DockerClient {
       imageName: String,
       name: String,
       command: String,
-      removeContainerOnExit: Boolean,
       ports: Map[Int, Int],
       envs: Map[String, String],
       route: Map[String, String],
@@ -543,17 +538,6 @@ object DockerClient {
     @Optional("default is NetworkDriver.BRIDGE")
     def networkDriver(networkDriver: NetworkDriver): Creator = {
       this.networkDriver = Objects.requireNonNull(networkDriver)
-      this
-    }
-
-    /**
-      * set true if you want to clean up the dead container automatically
-      *
-      * @return executor
-      */
-    @Optional("default is false")
-    def removeContainerOnExit(): Creator = {
-      this._removeContainerOnExit = true
       this
     }
 

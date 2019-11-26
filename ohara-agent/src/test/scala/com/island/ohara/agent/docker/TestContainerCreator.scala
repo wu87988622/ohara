@@ -30,7 +30,6 @@ class TestContainerCreator extends OharaTest {
       imageName: String,
       name: String,
       command: String,
-      removeContainerOnExit: Boolean,
       ports: Map[Int, Int],
       envs: Map[String, String],
       route: Map[String, String],

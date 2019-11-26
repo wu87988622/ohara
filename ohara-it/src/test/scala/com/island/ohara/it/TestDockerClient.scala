@@ -39,6 +39,8 @@ class TestDockerClient extends IntegrationTest {
 
   private[this] val imageName = "centos:7"
 
+  private[this] val name = CommonUtils.randomString(10)
+
   @Before
   def setup(): Unit =
     EnvTestingUtils.dockerNodes().headOption.foreach { node =>
@@ -59,53 +61,30 @@ class TestDockerClient extends IntegrationTest {
 
   @Test
   def testLog(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(10)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try client.log(name, None).contains(webHost) shouldBe true
-    finally client.forceRemove(name)
+    client.log(name, None).contains(webHost) shouldBe true
   }
 
   @Test
   def testList(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(10)
     client.containerNames().map(_.name).contains(name) shouldBe false
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
     val container = result(client.containers()).find(_.name == name).get
-    try client.containerNames().map(_.name).contains(container.name) shouldBe true
-    finally client.forceRemove(container.name)
-    client.containerNames().map(_.name).contains(container.name) shouldBe false
-  }
-
-  @Test
-  def testCleanup(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
-    // ping google 3 times
-    client
-      .containerCreator()
-      .name(name)
-      .imageName(imageName)
-      .removeContainerOnExit()
-      .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
-      .create()
-    TimeUnit.SECONDS.sleep(2)
-    await(() => !client.containerNames().exists(_.name == name))
+    client.containerNames().map(_.name).contains(container.name) shouldBe true
   }
 
   @Test
   def testNonCleanup(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
     // ping google 3 times
     client
       .containerCreator()
@@ -113,11 +92,9 @@ class TestDockerClient extends IntegrationTest {
       .imageName(imageName)
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
       .create()
-    try {
-      client.containerNames().map(_.name).contains(name) shouldBe true
-      TimeUnit.SECONDS.sleep(3)
-      result(client.containers()).find(_.name == name).get.state.toUpperCase shouldBe ContainerState.EXITED.name
-    } finally client.forceRemove(name)
+    client.containerNames().map(_.name).contains(name) shouldBe true
+    TimeUnit.SECONDS.sleep(3)
+    result(client.containers()).find(_.name == name).get.state.toUpperCase shouldBe ContainerState.EXITED.name
   }
 
   @Test
@@ -125,109 +102,91 @@ class TestDockerClient extends IntegrationTest {
 
   @Test
   def testRoute(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .route(Map("ABC" -> "192.168.123.123"))
       .imageName(imageName)
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try {
-      val hostFile = client.containerInspector(name).cat("/etc/hosts").get
-      hostFile.contains("192.168.123.123") shouldBe true
-      hostFile.contains("ABC") shouldBe true
-    } finally client.forceRemove(name)
+    val hostFile = client.containerInspector(name).cat("/etc/hosts").get
+    hostFile.contains("192.168.123.123") shouldBe true
+    hostFile.contains("ABC") shouldBe true
   }
 
   @Test
   def testPortMapping(): Unit = runTest { client =>
     val availablePort = CommonUtils.availablePort()
-    val name          = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
       .portMappings(Map(availablePort -> availablePort))
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try {
-      val container = result(client.containers()).find(_.name == name).get
-      container.portMappings.size shouldBe 1
-      container.portMappings.size shouldBe 1
-      container.portMappings.head.hostPort shouldBe availablePort
-      container.portMappings.head.containerPort shouldBe availablePort
-    } finally client.forceRemove(name)
+
+    val container = result(client.containers()).find(_.name == name).get
+    container.portMappings.size shouldBe 1
+    container.portMappings.size shouldBe 1
+    container.portMappings.head.hostPort shouldBe availablePort
+    container.portMappings.head.containerPort shouldBe availablePort
   }
 
   @Test
   def testSetEnv(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
       .envs(Map("abc" -> "123", "ccc" -> "ttt"))
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try {
-      val container = result(client.containers()).find(_.name == name).get
-      container.environments("abc") shouldBe "123"
-      container.environments("ccc") shouldBe "ttt"
-    } finally client.forceRemove(name)
+    val container = result(client.containers()).find(_.name == name).get
+    container.environments("abc") shouldBe "123"
+    container.environments("ccc") shouldBe "ttt"
   }
 
   @Test
   def testHostname(): Unit = runTest { client =>
-    val name     = CommonUtils.randomString(5)
     val hostname = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
       .hostname(hostname)
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try result(client.containers()).find(_.name == name).get.hostname shouldBe hostname
-    finally client.forceRemove(name)
+    result(client.containers()).find(_.name == name).get.hostname shouldBe hostname
   }
 
   @Test
   def testNodeName(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try result(client.containers()).find(_.name == name).get.nodeName shouldBe remoteHostname
-    finally client.forceRemove(name)
+    result(client.containers()).find(_.name == name).get.nodeName shouldBe remoteHostname
   }
 
   @Test
   def testAppend(): Unit = runTest { client =>
-    val name = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
-      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    try {
-      val container = result(client.containers()).find(_.name == name).get
-      client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
-      client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
-      client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
-    } finally client.forceRemove(name)
+    val container = result(client.containers()).find(_.name == name).get
+    client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
+    client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
+    client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
   }
 
   @After
-  def tearDown(): Unit = Releasable.close(client)
+  def tearDown(): Unit = {
+    Releasable.close(() => client.forceRemove(name))
+    Releasable.close(client)
+  }
 }
