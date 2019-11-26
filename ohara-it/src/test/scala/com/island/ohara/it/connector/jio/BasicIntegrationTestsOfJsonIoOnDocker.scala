@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * initialize the configurator on ssh mode.
   */
 abstract class BasicIntegrationTestsOfJsonIoOnDocker extends BasicIntegrationTestsOfJsonIo {
-  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
   override protected val configurator: Configurator = {
     val configurator = Configurator.builder.build()
     val nodeApi      = NodeApi.access.hostname(configurator.hostname).port(configurator.port)

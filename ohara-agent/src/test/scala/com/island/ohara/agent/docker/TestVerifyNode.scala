@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.ssh
+package com.island.ohara.agent.docker
 
 import java.util
 
@@ -73,7 +73,7 @@ class TestVerifyNode extends OharaTest {
     tags = Map.empty
   )
 
-  private[this] val collie = ServiceCollie.builderOfSsh.dataCollie(DataCollie(Seq(node))).build
+  private[this] val collie = ServiceCollie.dockerModeBuilder.dataCollie(DataCollie(Seq(node))).build
 
   @Test
   def happyCase(): Unit = Await.result(collie.verifyNode(node), 30 seconds)

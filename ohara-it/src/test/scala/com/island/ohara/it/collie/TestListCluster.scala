@@ -30,13 +30,13 @@ import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[CollieGroup]))
 class TestListCluster extends IntegrationTest {
-  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
   private[this] val nameHolder       = ClusterNameHolder(nodes)
 
   private[this] val dataCollie: DataCollie = DataCollie(nodes)
 
   private[this] val serviceCollie: ServiceCollie =
-    ServiceCollie.builderOfSsh.dataCollie(dataCollie).build()
+    ServiceCollie.dockerModeBuilder.dataCollie(dataCollie).build()
 
   @Before
   def setup(): Unit =

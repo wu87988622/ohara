@@ -29,7 +29,7 @@ class TestSshOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnecto
     .port(EnvTestingUtils.configuratorHostPort())
     .build()
 
-  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.sshNodes()
+  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.dockerNodes()
 
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 }

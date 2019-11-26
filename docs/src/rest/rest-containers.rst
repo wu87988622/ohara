@@ -108,7 +108,7 @@ Example Response
              "nodeName": "node00",
              "imageName": "oharastream/zookeeper:$|version|",
              "id": "22169c48646c",
-             "kind": "SSH",
+             "kind": "DOCKER",
              "created": "2019-04-12 03:30:56 -0400 EDT"
            }
          ]

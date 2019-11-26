@@ -25,7 +25,7 @@ import org.junit.After
 
 class TestLogOnDocker extends BasicTests4Log {
   private[this] val name       = CommonUtils.randomString(10)
-  private[this] val node: Node = EnvTestingUtils.sshNodes().head
+  private[this] val node: Node = EnvTestingUtils.dockerNodes().head
   private[this] val dockerClient = DockerClient(
     Agent.builder.hostname(node.hostname).port(node.port.get).user(node.user.get).password(node.password.get).build
   )

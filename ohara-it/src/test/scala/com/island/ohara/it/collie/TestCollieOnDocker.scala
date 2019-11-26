@@ -28,7 +28,7 @@ import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[CollieGroup]))
 class TestCollieOnDocker extends BasicTests4Collie {
-  override protected val nodes: Seq[Node]           = EnvTestingUtils.sshNodes()
+  override protected val nodes: Seq[Node]           = EnvTestingUtils.dockerNodes()
   override protected val nameHolder                 = ClusterNameHolder(nodes)
   override protected val configurator: Configurator = Configurator.builder.build()
 

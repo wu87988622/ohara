@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.ssh
+package com.island.ohara.agent.docker
 
-import com.island.ohara.agent.{DataCollie, WorkerCollie}
+import com.island.ohara.agent.{DataCollie, StreamCollie}
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
 
 import scala.concurrent.{ExecutionContext, Future}
-
-private class WorkerCollieImpl(dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
+private class StreamCollieImpl(dataCollie: DataCollie, dockerCache: DockerClientCache, clusterCache: ServiceCache)
     extends BasicCollieImpl(dataCollie, dockerCache, clusterCache)
-    with WorkerCollie {
-  override protected def postCreate(
-    workerClusterStatus: ClusterStatus
-  ): Unit =
-    clusterCache.put(workerClusterStatus)
-
+    with StreamCollie {
   override protected def doCreator(
     executionContext: ExecutionContext,
     containerInfo: ContainerInfo,
-    node: NodeApi.Node,
+    node: Node,
     route: Map[String, String],
     arguments: Seq[String]
   ): Future[Unit] =
@@ -43,23 +37,13 @@ private class WorkerCollieImpl(dataCollie: DataCollie, dockerCache: DockerClient
         node,
         _.containerCreator()
           .imageName(containerInfo.imageName)
-          // In --network=host mode, we don't need to export port for containers.
-          //                          .portMappings(Map(clientPort -> clientPort))
-          .hostname(containerInfo.hostname)
+          .hostname(containerInfo.name)
           .envs(containerInfo.environments)
           .name(containerInfo.name)
-          .route(route)
-          // [Before] we use --network=host for worker cluster since the connectors run on worker cluster may need to
-          // access external system to request data. In ssh mode, dns service "may" be not deployed.
-          // In order to simplify their effort, we directly mount host's route on the container.
-          // This is not a normal case I'd say. However, we always meet special case which must be addressed
-          // by this "special" solution...
-          //.networkDriver(NETWORK_DRIVER)
-          // [AFTER] Given that we have no use case about using port in custom connectors and there is no
-          // similar case in other type (stream and k8s impl). Hence we change the network type from host to bridge
           .portMappings(
             containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
           )
+          .route(route)
           .arguments(arguments)
           .create()
       )
@@ -74,7 +58,8 @@ private class WorkerCollieImpl(dataCollie: DataCollie, dockerCache: DockerClient
         None
     })
 
-  override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
-    updateRoute(node, container.name, route)
-  }
+  override protected def postCreate(
+    clusterStatus: ClusterStatus
+  ): Unit =
+    clusterCache.put(clusterStatus)
 }

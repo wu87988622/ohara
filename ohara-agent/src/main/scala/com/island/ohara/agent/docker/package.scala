@@ -16,14 +16,8 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.agent.docker.NetworkDriver
 import com.typesafe.scalalogging.Logger
 
-package object ssh {
-  private[ssh] val LOG = Logger(classOf[ServiceCollieImpl])
-
-  /**
-    * In ssh mode we use host driver to mount /etc/hosts from container host.
-    */
-  private[ssh] val NETWORK_DRIVER: NetworkDriver = NetworkDriver.HOST
+package object docker {
+  private[docker] val LOG = Logger(classOf[ServiceCollieImpl])
 }

@@ -38,7 +38,7 @@ class TestK8SClientVerify extends OharaTest {
   def testMockK8sClientVerifyNode1(): Unit = {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(true, "")), "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.k8sModeBuilder.dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     Await.result(
       serviceCollie.verifyNode(node),
       30 seconds
@@ -49,7 +49,7 @@ class TestK8SClientVerify extends OharaTest {
   def testMockK8sClientVerifyNode2(): Unit = {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(false, "node failed.")), "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.k8sModeBuilder.dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
@@ -62,7 +62,7 @@ class TestK8SClientVerify extends OharaTest {
   def testMockK8sClientVerifyNode3(): Unit = {
     val fakeK8SClient = new FakeK8SClient(false, Option(K8SStatusInfo(false, "failed")), "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.k8sModeBuilder.dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
@@ -75,7 +75,7 @@ class TestK8SClientVerify extends OharaTest {
   def testMockK8SClientVerifyNode4(): Unit = {
     val fakeK8SClient = new FakeK8SClient(false, None, "")
     val serviceCollie: ServiceCollie =
-      ServiceCollie.builderOfK8s().dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
+      ServiceCollie.k8sModeBuilder.dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),

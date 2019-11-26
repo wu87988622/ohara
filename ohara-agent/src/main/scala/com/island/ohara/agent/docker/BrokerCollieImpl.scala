@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.ssh
+package com.island.ohara.agent.docker
 
 import com.island.ohara.agent.{BrokerCollie, DataCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo

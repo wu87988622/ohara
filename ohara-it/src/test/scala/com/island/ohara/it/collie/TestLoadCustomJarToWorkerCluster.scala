@@ -38,7 +38,7 @@ import scala.concurrent.Future
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 
-  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
 
   private[this] val invalidHostname = "unknown"
 

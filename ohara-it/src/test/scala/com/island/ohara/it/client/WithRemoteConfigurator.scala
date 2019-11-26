@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * this stuff is also in charge of releasing the configurator after testing.
   */
 abstract class WithRemoteConfigurator extends IntegrationTest {
-  private[this] val nodes                    = EnvTestingUtils.sshNodes()
+  private[this] val nodes                    = EnvTestingUtils.dockerNodes()
   private[this] val node                     = nodes.head
   private[this] val clusterNameHolder        = ClusterNameHolder(nodes)
   private[this] val configuratorContainerKey = clusterNameHolder.generateClusterKey()

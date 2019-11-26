@@ -305,7 +305,7 @@ object DockerClient {
             // we prefer to use enum to list the finite state and the constant strings are all upper case
             // hence, we convert the string to upper case here.
             state = details.State.Status.toUpperCase,
-            kind = "SSH",
+            kind = "DOCKER",
             name = name,
             portMappings = details.NetworkSettings.Ports
               .filter(_._1.contains("/tcp"))

@@ -29,7 +29,7 @@ class TestSshPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSource
     .port(EnvTestingUtils.configuratorHostPort())
     .build()
 
-  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.sshNodes()
+  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.dockerNodes()
 
   override protected val nameHolder = ClusterNameHolder(nodes)
 }

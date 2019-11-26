@@ -152,7 +152,7 @@ object NodeApi {
   ) extends Data {
     // Node does not support to define group
     override def group: String                 = GROUP_DEFAULT
-    private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in ssh mode"
+    private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in docker mode"
     def _port: Int                             = port.getOrElse(throw new NoSuchElementException(msg("port")))
     def _user: String                          = user.getOrElse(throw new NoSuchElementException(msg("user")))
     def _password: String                      = password.getOrElse(throw new NoSuchElementException(msg("password")))

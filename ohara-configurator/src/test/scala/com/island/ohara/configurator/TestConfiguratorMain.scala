@@ -58,10 +58,10 @@ class TestConfiguratorMain extends OharaTest {
     )
 
   @Test
-  def testSshMode(): Unit =
+  def testDockerMode(): Unit =
     runMain(
       Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0"),
-      configurator => configurator.mode shouldBe Mode.SSH
+      configurator => configurator.mode shouldBe Mode.DOCKER
     )
 
   private[this] def runMain(args: Array[String], action: Configurator => Unit): Unit = {

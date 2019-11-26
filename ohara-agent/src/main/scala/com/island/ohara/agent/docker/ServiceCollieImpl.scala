@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.ssh
+package com.island.ohara.agent.docker
 
 import java.util.concurrent.ExecutorService
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.container.ContainerName
-import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo

@@ -26,6 +26,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
+import com.island.ohara.agent.docker.ServiceCollieImpl
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -99,7 +100,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[this] implicit val objectChecker: ObjectChecker     = ObjectChecker()
 
   def mode: Mode = serviceCollie match {
-    case _: com.island.ohara.agent.ssh.ServiceCollieImpl         => Mode.SSH
+    case _: ServiceCollieImpl                                    => Mode.DOCKER
     case _: com.island.ohara.agent.k8s.K8SServiceCollieImpl      => Mode.K8S
     case _: com.island.ohara.configurator.fake.FakeServiceCollie => Mode.FAKE
     case _                                                       => throw new IllegalArgumentException(s"unknown cluster collie: ${serviceCollie.getClass.getName}")
@@ -413,8 +414,8 @@ object Configurator {
     /**
       * No extra services are running. Configurator fake all content of response for all requests. This mode is useful to test only the APIs
       */
-    case object FAKE extends Mode
-    case object SSH  extends Mode
-    case object K8S  extends Mode
+    case object FAKE   extends Mode
+    case object DOCKER extends Mode
+    case object K8S    extends Mode
   }
 }

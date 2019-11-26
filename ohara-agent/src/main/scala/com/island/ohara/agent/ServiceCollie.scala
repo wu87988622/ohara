@@ -21,8 +21,8 @@ import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
 import com.island.ohara.agent.container.ContainerName
+import com.island.ohara.agent.docker.ServiceCollieImpl
 import com.island.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
-import com.island.ohara.agent.ssh.ServiceCollieImpl
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import com.island.ohara.client.configurator.v0.InspectApi.FileContent
@@ -242,28 +242,28 @@ object ServiceCollie {
     * node-1 => workercluster-worker-1
     * node-2 => workercluster-worker-2
     */
-  def builderOfSsh: SshBuilder = new SshBuilder
+  def dockerModeBuilder: DockerModeBuilder = new DockerModeBuilder
 
   import scala.concurrent.duration._
 
-  class SshBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
+  class DockerModeBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
     private[this] var dataCollie: DataCollie           = _
     private[this] var cacheTimeout: Duration           = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
 
-    def dataCollie(dataCollie: DataCollie): SshBuilder = {
+    def dataCollie(dataCollie: DataCollie): DockerModeBuilder = {
       this.dataCollie = Objects.requireNonNull(dataCollie)
       this
     }
 
     @Optional("default is 3 seconds")
-    def cacheTimeout(cacheTimeout: Duration): SshBuilder = {
+    def cacheTimeout(cacheTimeout: Duration): DockerModeBuilder = {
       this.cacheTimeout = Objects.requireNonNull(cacheTimeout)
       this
     }
 
     @Optional("The initial size of default pool is equal with number of cores")
-    def cacheThreadPool(cacheThreadPool: ExecutorService): SshBuilder = {
+    def cacheThreadPool(cacheThreadPool: ExecutorService): DockerModeBuilder = {
       this.cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
       this
     }
@@ -286,18 +286,18 @@ object ServiceCollie {
     * Currently, the nodes in node collie must be equal to nodes which is controllable to k8s client.
     * @return builder for k8s implementation
     */
-  def builderOfK8s(): K8shBuilder = new K8shBuilder
+  def k8sModeBuilder: K8sModeBuilder = new K8sModeBuilder
 
-  class K8shBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
+  class K8sModeBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
     private[this] var dataCollie: DataCollie = _
     private[this] var k8sClient: K8SClient   = _
 
-    def dataCollie(dataCollie: DataCollie): K8shBuilder = {
+    def dataCollie(dataCollie: DataCollie): K8sModeBuilder = {
       this.dataCollie = Objects.requireNonNull(dataCollie)
       this
     }
 
-    def k8sClient(k8sClient: K8SClient): K8shBuilder = {
+    def k8sClient(k8sClient: K8SClient): K8sModeBuilder = {
       this.k8sClient = Objects.requireNonNull(k8sClient)
       this
     }

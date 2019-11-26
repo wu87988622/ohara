@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[CollieGroup]))
 class TestGetNodeWithRunningCluster extends IntegrationTest {
-  private[this] val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
 
   private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 

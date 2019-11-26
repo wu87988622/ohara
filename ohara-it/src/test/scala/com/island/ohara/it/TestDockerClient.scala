@@ -41,7 +41,7 @@ class TestDockerClient extends IntegrationTest {
 
   @Before
   def setup(): Unit =
-    EnvTestingUtils.sshNodes().headOption.foreach { node =>
+    EnvTestingUtils.dockerNodes().headOption.foreach { node =>
       client = DockerClient(
         Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       )

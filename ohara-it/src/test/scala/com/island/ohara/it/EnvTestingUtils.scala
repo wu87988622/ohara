@@ -79,11 +79,11 @@ object EnvTestingUtils {
     * form: user:password@hostname:port.
     * NOTED: this key need to be matched with another key value in ohara-it/build.gradle
     */
-  private[this] val SSH_NODES_KEY = "ohara.it.docker"
+  private[this] val DOCKER_NODES_KEY = "ohara.it.docker"
 
-  def sshNodes(): Seq[Node] =
+  def dockerNodes(): Seq[Node] =
     sys.env
-      .get(SSH_NODES_KEY)
+      .get(DOCKER_NODES_KEY)
       .map(_.split(",").map { nodeInfo =>
         val user     = nodeInfo.split(":").head
         val password = nodeInfo.split("@").head.split(":").last
@@ -102,5 +102,5 @@ object EnvTestingUtils {
           tags = Map.empty
         )
       }.toSeq)
-      .getOrElse(throw new AssumptionViolatedException(s"$SSH_NODES_KEY does not exists!!!"))
+      .getOrElse(throw new AssumptionViolatedException(s"$DOCKER_NODES_KEY does not exists!!!"))
 }

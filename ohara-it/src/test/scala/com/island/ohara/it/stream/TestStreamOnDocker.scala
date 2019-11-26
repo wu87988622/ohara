@@ -25,7 +25,7 @@ import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[StreamGroup]))
 class TestStreamOnDocker extends BasicTests4Stream {
-  override protected val nodes: Seq[Node] = EnvTestingUtils.sshNodes()
+  override protected val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
 
   override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
 

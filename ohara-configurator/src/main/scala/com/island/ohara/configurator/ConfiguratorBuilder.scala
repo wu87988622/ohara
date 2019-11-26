@@ -323,7 +323,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     }
 
   @VisibleForTesting
-  @Optional("default is implemented by ssh")
+  @Optional("default is implemented by docker")
   private[configurator] def serviceCollie(serviceCollie: ServiceCollie): ConfiguratorBuilder = doOrReleaseObjects {
     if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
     this.serviceCollie = Objects.requireNonNull(serviceCollie)
@@ -451,8 +451,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] def getOrCreateCollie(): ServiceCollie =
     if (serviceCollie == null) {
       this.serviceCollie =
-        if (k8sClient == null) ServiceCollie.builderOfSsh.dataCollie(createCollie()).build
-        else ServiceCollie.builderOfK8s().dataCollie(createCollie()).k8sClient(k8sClient).build()
+        if (k8sClient == null) ServiceCollie.dockerModeBuilder.dataCollie(createCollie()).build
+        else ServiceCollie.k8sModeBuilder.dataCollie(createCollie()).k8sClient(k8sClient).build()
       serviceCollie
     } else serviceCollie
 

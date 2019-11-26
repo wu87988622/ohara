@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.ssh
+package com.island.ohara.agent.docker
 
 import java.util.Objects
 
