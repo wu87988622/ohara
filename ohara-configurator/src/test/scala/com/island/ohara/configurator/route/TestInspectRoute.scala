@@ -47,59 +47,101 @@ class TestInspectRoute extends OharaTest {
   private[this] def inspectApi = InspectApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
-  def testQueryDb(): Unit = {
+  def testQueryIncorrectPassword(): Unit = an[IllegalArgumentException] should be thrownBy result(
+    inspectApi.rdbRequest
+      .jdbcUrl(db.url())
+      .user(db.user())
+      .password(CommonUtils.randomString(10))
+      .catalogPattern(db.databaseName)
+      .workerClusterKey(workerClusterInfo.key)
+      .query()
+  )
+
+  @Test
+  def testQueryNonexistentTable(): Unit =
+    result(
+      inspectApi.rdbRequest
+        .jdbcUrl(db.url())
+        .user(db.user())
+        .password(db.password())
+        .catalogPattern(db.databaseName)
+        .tableName(CommonUtils.randomString(10))
+        .workerClusterKey(workerClusterInfo.key)
+        .query()
+    ).tables shouldBe Seq.empty
+
+  private[this] def createTable(): (DatabaseClient, String, Seq[String], Seq[String]) = {
+    val client    = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
     val tableName = CommonUtils.randomString(10)
-    val dbClient  = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
-    try {
-      val r = result(
+    val cfNames   = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val pkNames   = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    client.createTable(
+      tableName,
+      pkNames.map(cfName => RdbColumn(cfName, "INTEGER", true)) ++ cfNames.map(
+        cfName => RdbColumn(cfName, "INTEGER", false)
+      )
+    )
+    (client, tableName, pkNames, cfNames)
+  }
+
+  private[this] def verify(info: RdbInfo, tableName: String, pkNames: Seq[String], cfNames: Seq[String]): Unit = {
+    info.tables.count(_.name == tableName) shouldBe 1
+    val table = info.tables.filter(_.name == tableName).head
+    table.columns.size shouldBe (pkNames.size + cfNames.size)
+    pkNames.foreach { cfName =>
+      table.columns.map(_.name) should contain(cfName)
+      table.columns.find(_.name == cfName).get.pk shouldBe true
+    }
+    cfNames.foreach { cfName =>
+      table.columns.map(_.name) should contain(cfName)
+      table.columns.find(_.name == cfName).get.pk shouldBe false
+    }
+  }
+
+  @Test
+  def testQueryTable(): Unit = {
+    val (client, tableName, pkNames, cfNames) = createTable()
+    try verify(
+      info = result(
+        inspectApi.rdbRequest
+          .jdbcUrl(db.url())
+          .user(db.user())
+          .password(db.password())
+          .catalogPattern(db.databaseName)
+          .tableName(tableName)
+          .workerClusterKey(workerClusterInfo.key)
+          .query()
+      ),
+      tableName = tableName,
+      pkNames = pkNames,
+      cfNames = cfNames
+    )
+    finally {
+      client.dropTable(tableName)
+      client.close()
+    }
+  }
+
+  @Test
+  def testQueryAllTables(): Unit = {
+    val (client, tableName, pkNames, cfNames) = createTable()
+    try verify(
+      info = result(
         inspectApi.rdbRequest
           .jdbcUrl(db.url())
           .user(db.user())
           .password(db.password())
           .workerClusterKey(workerClusterInfo.key)
           .query()
-      )
-      r.name shouldBe "mysql"
-      r.tables.isEmpty shouldBe true
-
-      val cf0 = RdbColumn("cf0", "INTEGER", true)
-      val cf1 = RdbColumn("cf1", "INTEGER", false)
-      def verify(info: RdbInfo): Unit = {
-        info.tables.count(_.name == tableName) shouldBe 1
-        val table = info.tables.filter(_.name == tableName).head
-        table.columns.size shouldBe 2
-        table.columns.count(_.name == cf0.name) shouldBe 1
-        table.columns.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
-        table.columns.count(_.name == cf1.name) shouldBe 1
-        table.columns.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
-      }
-      dbClient.createTable(tableName, Seq(cf0, cf1))
-
-      verify(
-        result(
-          inspectApi.rdbRequest
-            .jdbcUrl(db.url())
-            .user(db.user())
-            .password(db.password())
-            .workerClusterKey(workerClusterInfo.key)
-            .query()
-        )
-      )
-
-      verify(
-        result(
-          inspectApi.rdbRequest
-            .jdbcUrl(db.url())
-            .user(db.user())
-            .password(db.password())
-            .catalogPattern(db.databaseName)
-            .tableName(tableName)
-            .workerClusterKey(workerClusterInfo.key)
-            .query()
-        )
-      )
-      dbClient.dropTable(tableName)
-    } finally dbClient.close()
+      ),
+      tableName = tableName,
+      pkNames = pkNames,
+      cfNames = cfNames
+    )
+    finally {
+      client.dropTable(tableName)
+      client.close()
+    }
   }
 
   @Test

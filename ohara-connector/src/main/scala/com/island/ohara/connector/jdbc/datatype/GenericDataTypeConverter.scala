@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.jdbc.datatype
-import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 
 class GenericDataTypeConverter extends RDBDataTypeConverter {
   private[this] val TYPE_NAME_BOOLEAN: String     = "BOOLEAN"
@@ -35,7 +35,7 @@ class GenericDataTypeConverter extends RDBDataTypeConverter {
 
   override protected[datatype] def dataBaseProductName: String = "generic"
 
-  override protected[datatype] def converterDataType(column: DatabaseClient.Column): DataTypeEnum = {
+  override protected[datatype] def converterDataType(column: RdbColumn): DataTypeEnum = {
     val typeName: String = column.dataType.toUpperCase
     typeName match {
       case TYPE_NAME_INTEGER | TYPE_NAME_NUMBER =>

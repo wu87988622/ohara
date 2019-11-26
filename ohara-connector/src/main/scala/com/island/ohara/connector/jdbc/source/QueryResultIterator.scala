@@ -18,14 +18,14 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.ResultSet
 
-import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 
 class QueryResultIterator(
   rdbDataTypeConverter: RDBDataTypeConverter,
   var resultSet: ResultSet,
-  columns: Seq[DatabaseClient.Column]
+  columns: Seq[RdbColumn]
 ) extends Iterator[Seq[ColumnInfo[_]]] {
   private[this] var cache: Seq[ColumnInfo[_]] = _
 

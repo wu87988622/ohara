@@ -42,6 +42,21 @@ object InspectApi {
 
   val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
+  //-------------[rdb]-------------//
+  /**
+    * this key points to the settings passed by user. Those settings are converted to a "single" string and then it is
+    * submitted to kafka to run the Validator. Kafka doesn't support various type of json so we have to transfer data
+    * via pure string.
+    */
+  val SETTINGS_KEY = "settings"
+  val TARGET_KEY   = "target"
+  // TODO: We should use a temporary topic instead of fixed topic...by chia
+  val INTERNAL_TOPIC_KEY: TopicKey = TopicKey.of(GROUP_DEFAULT, "_Validator_topic")
+
+  /**
+    * add this to setting and then the key pushed to topic will be same with the value
+    */
+  val REQUEST_ID = "requestId"
   //-------------[image]-------------//
   val ZOOKEEPER_PREFIX_PATH: String = "zookeeper"
   val BROKER_PREFIX_PATH: String    = "broker"

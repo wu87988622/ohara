@@ -19,7 +19,7 @@ package com.island.ohara.connector.jdbc.datatype
 import java.sql.{Date, ResultSet, Time, Timestamp}
 import java.util.Optional
 
-import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 
 trait RDBDataTypeConverter {
@@ -29,7 +29,7 @@ trait RDBDataTypeConverter {
     * @param column
     * @return data type object
     */
-  def converterValue(resultSet: ResultSet, column: DatabaseClient.Column): Any = {
+  def converterValue(resultSet: ResultSet, column: RdbColumn): Any = {
     val columnName             = column.name
     val typeName               = column.dataType.toUpperCase
     val dataType: DataTypeEnum = converterDataType(column)
@@ -66,5 +66,5 @@ trait RDBDataTypeConverter {
   }
   protected[datatype] def dataBaseProductName: String
 
-  protected[datatype] def converterDataType(column: DatabaseClient.Column): DataTypeEnum
+  protected[datatype] def converterDataType(column: RdbColumn): DataTypeEnum
 }

@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
@@ -48,107 +48,6 @@ class TestValidationRoute extends OharaTest {
         .verify()
     )
     response.className.get() shouldBe className
-  }
-
-  @Test
-  def validateHdfs(): Unit = {
-    val report = result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .hdfsRequest
-        .uri("file:///tmp")
-        .workerClusterKey(wkCluster.key)
-        .verify()
-    )
-    report.isEmpty shouldBe false
-    report.foreach(_.pass shouldBe true)
-  }
-
-  @Test
-  def validateHdfsOnNonexistentWorkerCluster(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .hdfsRequest
-        .uri("file:///tmp")
-        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-        .verify()
-    )
-
-  @Test
-  def validateRdb(): Unit = {
-    val report = result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .rdbRequest
-        .jdbcUrl("fake_url")
-        .user("fake_user")
-        .password("fake_password")
-        .workerClusterKey(wkCluster.key)
-        .verify()
-    )
-    report.isEmpty shouldBe false
-    report.foreach(_.pass shouldBe true)
-    report.foreach(_.rdbInfo.get.tables.isEmpty shouldBe false)
-  }
-
-  @Test
-  def validateRbdOnNonexistentWorkerCluster(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .rdbRequest
-        .jdbcUrl("fake_url")
-        .user("fake_user")
-        .password("fake_password")
-        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-        .verify()
-    )
-
-  @Test
-  def validateFtp(): Unit = {
-    val report = result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .ftpRequest
-        .hostname("fake_server")
-        .port(22)
-        .user("fake_user")
-        .password("fake_password")
-        .workerClusterKey(wkCluster.key)
-        .verify()
-    )
-    report.isEmpty shouldBe false
-    report.foreach(_.pass shouldBe true)
-  }
-
-  @Test
-  def validateFtpOnNonexistentWorkerCluster(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      ValidationApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .ftpRequest
-        .hostname("fake_server")
-        .port(22)
-        .user("fake_user")
-        .password("fake_password")
-        .workerClusterKey(ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-        .verify()
-    )
-
-  @Test
-  def testFakeReport(): Unit = result(ValidationRoute.fakeReport()).foreach(_.pass shouldBe true)
-
-  @Test
-  def testFakeJdbcReport(): Unit = result(ValidationRoute.fakeJdbcReport()).foreach { report =>
-    report.pass shouldBe true
-    report.rdbInfo.get.tables.isEmpty shouldBe false
   }
 
   @After

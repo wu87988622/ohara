@@ -23,12 +23,20 @@ import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
 import com.island.ohara.client.configurator.v0.InspectApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, TopicApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{
+  BrokerApi,
+  ErrorApi,
+  InspectApi,
+  StreamApi,
+  TopicApi,
+  WorkerApi,
+  ZookeeperApi
+}
 import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.configurator.fake.FakeWorkerClient
@@ -38,7 +46,7 @@ import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.{Consumer, Header}
 import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
-import spray.json.{DeserializationException, JsObject}
+import spray.json.{DeserializationException, JsNull, JsObject}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -99,55 +107,27 @@ private[configurator] object InspectRoute {
       post {
         entity(as[RdbQuery]) { query =>
           complete(both(query.workerClusterKey).flatMap {
-            case (_, topicAdmin, workerCluster, workerClient) =>
+            case (_, topicAdmin, _, workerClient) =>
               workerClient match {
                 case _: FakeWorkerClient =>
                   val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
                   try Future.successful(
                     RdbInfo(
-                      client.databaseType,
-                      client.tableQuery
-                        .catalog(query.catalogPattern.orNull)
-                        .schema(query.schemaPattern.orNull)
-                        .tableName(query.tableName.orNull)
+                      name = client.databaseType,
+                      tables = client.tableQuery
+                        .catalog(query.catalogPattern)
+                        .schema(query.schemaPattern)
+                        .tableName(query.tableName)
                         .execute()
-                        .map { table =>
-                          RdbTable(
-                            catalogPattern = table.catalogPattern,
-                            schemaPattern = table.schemaPattern,
-                            name = table.name,
-                            columns = table.columns.map { column =>
-                              RdbColumn(
-                                name = column.name,
-                                dataType = column.dataType,
-                                pk = column.pk
-                              )
-                            }
-                          )
-                        }
                     )
                   )
                   finally client.close()
                 case _ =>
-                  ValidationUtils
-                    .run(
-                      workerClient,
-                      topicAdmin,
-                      RdbValidation(
-                        url = query.url,
-                        user = query.user,
-                        password = query.password,
-                        workerClusterKey = workerCluster.key
-                      ),
-                      1
-                    )
-                    .map { reports =>
-                      if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
-                      reports
-                        .find(_.rdbInfo.isDefined)
-                        .map(_.rdbInfo.get)
-                        .getOrElse(throw new IllegalStateException("failed to query table via ohara.Validator"))
-                    }
+                  rdbInfo(
+                    workerClient,
+                    topicAdmin,
+                    query
+                  )
               }
           })
         }
@@ -307,5 +287,69 @@ private[configurator] object InspectRoute {
         )
       }
     }
+  }
+
+  /**
+    * create a connector to query the DB.
+    * Noted: we don't query the db via Configurator since the connection to DB requires specific drvier and it is not
+    * available on Configurator. By contrast, the worker cluster which will be used to run Connector should have been
+    * deployed the driver so we use our specific connector to query DB.
+    * @return rdb information
+    */
+  private def rdbInfo(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbQuery)(
+    implicit executionContext: ExecutionContext
+  ): Future[RdbInfo] = {
+    val requestId: String = CommonUtils.randomString()
+    val connectorKey      = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
+    workerClient
+      .connectorCreator()
+      .connectorKey(connectorKey)
+      .className("com.island.ohara.connector.validation.Validator")
+      .numberOfTasks(1)
+      .topicKey(InspectApi.INTERNAL_TOPIC_KEY)
+      .settings(
+        Map(
+          InspectApi.SETTINGS_KEY -> JsObject(InspectApi.RDB_QUERY_JSON_FORMAT.write(request).asJsObject.fields.filter {
+            case (_, value) =>
+              value match {
+                case JsNull => false
+                case _      => true
+              }
+          }).toString(),
+          InspectApi.REQUEST_ID -> requestId,
+          InspectApi.TARGET_KEY -> InspectApi.RDB_PREFIX_PATH
+        )
+      )
+      .threadPool(executionContext)
+      .create()
+      .map { _ =>
+        // TODO: receiving all messages may be expensive...by chia
+        val client = Consumer
+          .builder()
+          .connectionProps(topicAdmin.connectionProps)
+          .offsetFromBegin()
+          .topicName(InspectApi.INTERNAL_TOPIC_KEY.topicNameOnKafka)
+          .keySerializer(Serializer.STRING)
+          .valueSerializer(Serializer.OBJECT)
+          .build()
+
+        try client
+          .poll(java.time.Duration.ofMillis(30 * 1000), 1)
+          .asScala
+          .filter(_.key().isPresent)
+          .filter(_.key().get.equals(requestId))
+          .filter(_.value().isPresent)
+          .map(_.value().get())
+          .filter {
+            case _: RdbInfo => true
+            case e: ErrorApi.Error =>
+              throw new IllegalArgumentException(e.message)
+            case _ => false
+          }
+          .map(_.asInstanceOf[RdbInfo])
+          .head
+        finally Releasable.close(client)
+      }
+      .flatMap(r => workerClient.delete(connectorKey).map(_ => r))
   }
 }

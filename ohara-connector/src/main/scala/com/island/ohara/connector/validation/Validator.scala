@@ -18,7 +18,7 @@ package com.island.ohara.connector.validation
 
 import java.util
 
-import com.island.ohara.client.configurator.v0.ValidationApi
+import com.island.ohara.client.configurator.v0.InspectApi
 import com.island.ohara.common.util.VersionUtils
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -50,5 +50,5 @@ class Validator extends SourceConnector {
     // do nothing
   }
   override def config(): ConfigDef =
-    new ConfigDef().define(ValidationApi.TARGET_KEY, Type.STRING, null, Importance.HIGH, "target type")
+    new ConfigDef().define(InspectApi.TARGET_KEY, Type.STRING, null, Importance.HIGH, "target type")
 }

@@ -18,7 +18,7 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.{ResultSet, Time, Timestamp}
 
-import com.island.ohara.client.database.DatabaseClient
+import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.connector.jdbc.datatype.{MySQLDataTypeConverter, RDBDataTypeConverter}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
@@ -42,9 +42,9 @@ class TestResultSetDataConverter extends OharaTest with MockitoSugar {
     when(resultSet.getInt("column3")).thenReturn(10)
 
     val columnList = Seq(
-      new DatabaseClient.Column("column1", TIMESTAMP, true),
-      new DatabaseClient.Column("column2", VARCHAR, false),
-      new DatabaseClient.Column("column3", INT, false)
+      RdbColumn("column1", TIMESTAMP, true),
+      RdbColumn("column2", VARCHAR, false),
+      RdbColumn("column3", INT, false)
     )
     val dataTypeConverter: RDBDataTypeConverter = new MySQLDataTypeConverter()
     val result: Seq[ColumnInfo[_]]              = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)
@@ -70,10 +70,10 @@ class TestResultSetDataConverter extends OharaTest with MockitoSugar {
     when(resultSet.getTime("column4")).thenReturn(null)
 
     val columnList = Seq(
-      new DatabaseClient.Column("column1", TIMESTAMP, true),
-      new DatabaseClient.Column("column2", VARCHAR, false),
-      new DatabaseClient.Column("column3", DATE, false),
-      new DatabaseClient.Column("column4", TIME, false)
+      RdbColumn("column1", TIMESTAMP, true),
+      RdbColumn("column2", VARCHAR, false),
+      RdbColumn("column3", DATE, false),
+      RdbColumn("column4", TIME, false)
     )
     val dataTypeConverter: RDBDataTypeConverter = new MySQLDataTypeConverter()
     val result: Seq[ColumnInfo[_]]              = ResultSetDataConverter.converterRecord(dataTypeConverter, resultSet, columnList)

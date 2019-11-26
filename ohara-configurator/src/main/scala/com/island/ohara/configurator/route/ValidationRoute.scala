@@ -19,125 +19,24 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
-import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
+import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
-import com.island.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
-import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.store.DataStore
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, RootJsonFormat}
+import spray.json.JsObject
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
-  private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
-
-  private[this] def verifyRoute[Req, Report](
-    root: String,
-    verify: Req => Future[Seq[Report]]
-  )(implicit rm: RootJsonFormat[Req], rm2: RootJsonFormat[Report], executionContext: ExecutionContext): server.Route =
-    path(root) {
-      put {
-        entity(as[Req])(
-          req =>
-            complete(verify(req).map { reports =>
-              if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run verification on $root")
-              else reports
-            })
-        )
-      }
-    }
-
-  @VisibleForTesting
-  private[route] def fakeReport(): Future[Seq[ValidationReport]] =
-    Future.successful(
-      (0 until DEFAULT_NUMBER_OF_VALIDATION).map(
-        _ =>
-          ValidationReport(
-            hostname = CommonUtils.hostname,
-            message = "a fake report",
-            pass = true,
-            lastModified = CommonUtils.current()
-          )
-      )
-    )
-
-  @VisibleForTesting
-  private[route] def fakeJdbcReport(): Future[Seq[RdbValidationReport]] =
-    Future.successful(
-      (0 until DEFAULT_NUMBER_OF_VALIDATION).map(
-        _ =>
-          RdbValidationReport(
-            hostname = CommonUtils.hostname,
-            message = "a fake report",
-            pass = true,
-            rdbInfo = Some(
-              RdbInfo(
-                name = "fake database",
-                tables = Seq(
-                  RdbTable(
-                    catalogPattern = None,
-                    schemaPattern = None,
-                    name = "fake table",
-                    columns = Seq(
-                      RdbColumn(
-                        name = "fake column",
-                        dataType = "fake type",
-                        pk = true
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-      )
-    )
-
   def apply(
-    implicit brokerCollie: BrokerCollie,
-    dataStore: DataStore,
-    adminCleaner: AdminCleaner,
+    implicit dataStore: DataStore,
     workerCollie: WorkerCollie,
     executionContext: ExecutionContext
   ): server.Route =
     pathPrefix(VALIDATION_PREFIX_PATH) {
-      verifyRoute(
-        root = VALIDATION_HDFS_PREFIX_PATH,
-        verify = (req: HdfsValidation) => {
-          both(req.workerClusterKey).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient => fakeReport()
-                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-              }
-          }
-        }
-      ) ~ verifyRoute(
-        root = VALIDATION_RDB_PREFIX_PATH,
-        verify = (req: RdbValidation) =>
-          both(req.workerClusterKey).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient => fakeJdbcReport()
-                case _ =>
-                  ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-              }
-          }
-      ) ~ verifyRoute(
-        root = VALIDATION_FTP_PREFIX_PATH,
-        verify = (req: FtpValidation) =>
-          both(req.workerClusterKey).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient => fakeReport()
-                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-              }
-          }
-      ) ~ path("node") {
+      path("node") {
         put {
           entity(as[JsObject])(
             obj =>
