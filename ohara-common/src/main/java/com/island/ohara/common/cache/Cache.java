@@ -34,9 +34,9 @@ import java.util.function.Function;
  * A wrap of google guava.Caching. Guava offers a powerful local cache, which is good to ohara to
  * speed up some slow data access. However, using guava cache in whole ohara is overkill so we wrap
  * it to offer a more simple version to other modules. In this wrap, we offer two kind of behavior
- * of getting data from cache. The first is **blockingOnGet** which will block all get when the
- * associated key-value is timeout. Another is non-blocking on get which only blocks the first call
- * when the associated key-value is timeout, and the other call will get out-of-date value.
+ * of getting data from cache.
+ *
+ * <p>Noted: the getter facing the expired data first is blocked until the data is refreshed
  *
  * @param <K> key type
  * @param <V> value type
@@ -45,8 +45,6 @@ public interface Cache<K, V> {
 
   /**
    * return the value associated to the input key. The loading will happen if there is no value.
-   * Noted that the call will be blocked when the value is timeout if you enable the {@link
-   * Builder#blockingOnGet}
    *
    * @param key key
    * @return value
@@ -90,7 +88,6 @@ public interface Cache<K, V> {
   class Builder<K, V> implements com.island.ohara.common.pattern.Builder<Cache<K, V>> {
     private int maxSize = 1000;
     private Duration timeout = Duration.ofSeconds(5);
-    private boolean blockingOnGet = false;
     private Function<K, V> fetcher = null;
 
     private Builder() {}
@@ -107,25 +104,6 @@ public interface Cache<K, V> {
       return this;
     }
 
-    @Optional("Default value is false")
-    public Builder<K, V> blockingOnGet() {
-      this.blockingOnGet = true;
-      return this;
-    }
-
-    /**
-     * Some callers prefer to wrap this builder in their custom fluent pattern, so we provide this
-     * method to accept value to help them to complete their pattern.
-     *
-     * @param blockingOnGet blockingOnGet
-     * @return this builder
-     */
-    @Optional("Default value is false")
-    public Builder<K, V> blockingOnGet(boolean blockingOnGet) {
-      this.blockingOnGet = blockingOnGet;
-      return this;
-    }
-
     public Builder<K, V> fetcher(Function<K, V> fetcher) {
       this.fetcher = Objects.requireNonNull(fetcher);
       return this;
@@ -136,27 +114,16 @@ public interface Cache<K, V> {
       Objects.requireNonNull(fetcher);
       return new Cache<K, V>() {
         private final LoadingCache<K, V> cache =
-            blockingOnGet
-                ? CacheBuilder.newBuilder()
-                    .maximumSize(maxSize)
-                    .expireAfterWrite(timeout.toMillis(), TimeUnit.MILLISECONDS)
-                    .build(
-                        new CacheLoader<K, V>() {
-                          @Override
-                          public V load(K key) {
-                            return fetcher.apply(key);
-                          }
-                        })
-                : CacheBuilder.newBuilder()
-                    .maximumSize(maxSize)
-                    .refreshAfterWrite(timeout.toMillis(), TimeUnit.MILLISECONDS)
-                    .build(
-                        new CacheLoader<K, V>() {
-                          @Override
-                          public V load(K key) {
-                            return fetcher.apply(key);
-                          }
-                        });
+            CacheBuilder.newBuilder()
+                .maximumSize(maxSize)
+                .refreshAfterWrite(timeout.toMillis(), TimeUnit.MILLISECONDS)
+                .build(
+                    new CacheLoader<K, V>() {
+                      @Override
+                      public V load(K key) {
+                        return fetcher.apply(key);
+                      }
+                    });
 
         @Override
         public V get(K key) {

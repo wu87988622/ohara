@@ -105,16 +105,8 @@ public class TestCache extends OharaTest {
   }
 
   @Test
-  public void getBlockingOnGet() throws InterruptedException {
-    testGet(true);
-  }
-
-  @Test
   public void getNonBlockingOnGet() throws InterruptedException {
-    testGet(false);
-  }
-
-  private void testGet(boolean blockingOnGet) throws InterruptedException {
+    String key = CommonUtils.randomString();
     String value = CommonUtils.randomString();
     CountDownLatch latch = new CountDownLatch(1);
     // in first call we don't do blocking action.
@@ -122,9 +114,8 @@ public class TestCache extends OharaTest {
     Cache<String, String> cache =
         Cache.<String, String>builder()
             .timeout(Duration.ofSeconds(2))
-            .blockingOnGet(blockingOnGet)
             .fetcher(
-                key -> {
+                inputKey -> {
                   if (count.getAndIncrement() == 0) return value;
                   try {
                     latch.await();
@@ -136,38 +127,40 @@ public class TestCache extends OharaTest {
             .build();
     ExecutorService service = Executors.newFixedThreadPool(2);
     try {
-      Assert.assertEquals(value, cache.get("key"));
+      Assert.assertEquals(value, cache.get(key));
       // sleep until the timeout
       TimeUnit.SECONDS.sleep(3);
-      AtomicBoolean secondCall = new AtomicBoolean(false);
+      AtomicBoolean firstGet = new AtomicBoolean(false);
       // this thread should be blocked since the latch
       service.execute(
           () -> {
             try {
-              cache.get("key");
+              cache.get(key);
             } finally {
-              secondCall.set(true);
+              firstGet.set(true);
             }
           });
-      AtomicBoolean thirdCall = new AtomicBoolean(false);
-      // this thread should be blocked as well since the latch
+      TimeUnit.SECONDS.sleep(2);
+      // the getter is blocked since it faces the expired data. It is blocked until the data is
+      // updated.
+      Assert.assertFalse(firstGet.get());
+      AtomicBoolean secondGet = new AtomicBoolean(false);
+      // this thread should be blocked since the latch
       service.execute(
           () -> {
             try {
-              cache.get("key");
+              cache.get(key);
             } finally {
-              thirdCall.set(true);
+              secondGet.set(true);
             }
           });
       TimeUnit.SECONDS.sleep(2);
-      Assert.assertFalse(secondCall.get());
-      if (blockingOnGet) Assert.assertFalse(thirdCall.get());
-      // there is already a old value for "key" so the third call should not be blocked
-      else Assert.assertTrue(thirdCall.get());
+      // this getter is NOT blocked since the first get is updating data and this one get the older
+      // stuff.
+      Assert.assertTrue(secondGet.get());
       latch.countDown();
       TimeUnit.SECONDS.sleep(2);
-      Assert.assertTrue(secondCall.get());
-      Assert.assertTrue(thirdCall.get());
+      Assert.assertTrue(firstGet.get());
     } finally {
       service.shutdownNow();
       Assert.assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
