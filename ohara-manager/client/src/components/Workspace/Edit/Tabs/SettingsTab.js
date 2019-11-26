@@ -18,13 +18,12 @@ import React from 'react';
 import Grid from '@material-ui/core/Grid';
 
 import { useEditWorkspaceDialog } from 'context';
-import TabPanel from 'components/Workspace/TabPanel';
-
-import { SubTabs } from '.';
-import SettingsMenu from './SettingsMenu';
+import { SubTabs } from 'components/Workspace/Edit';
+import { SettingsMenu } from 'components/Workspace/Edit/Settings';
+import TabPanel from './TabPanel';
 
 function SettingsTab() {
-  const { data } = useEditWorkspaceDialog();
+  const { data = {} } = useEditWorkspaceDialog();
   const { subTab = SubTabs.NONE } = data;
 
   return (

@@ -22,11 +22,11 @@ import ListItemText from '@material-ui/core/ListItemText';
 
 import { useEditWorkspaceDialog } from 'context';
 
-import { SubTabs, Segments } from '.';
+import { SubTabs, Segments } from 'components/Workspace/Edit';
 import { Wrapper } from './SettingsMenuStyles';
 
 function SettingsMenu() {
-  const { data, setData } = useEditWorkspaceDialog();
+  const { data = {}, setData } = useEditWorkspaceDialog();
   const { subTab = SubTabs.NONE, segment = Segments.NONE } = data;
 
   const handleClick = (clickedTab, clickedSegment) => () => {

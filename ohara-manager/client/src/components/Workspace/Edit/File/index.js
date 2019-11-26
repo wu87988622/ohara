@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
-import TopicsTab from './TopicsTab';
+import FileTable from './FileTable';
+import FileActionsMenu from './FileActionsMenu';
+import FileUpload from './FileUpload';
+import FileDownload from './FileDownload';
 
-export { TopicsTab };
+export { FileTable, FileActionsMenu, FileUpload, FileDownload };

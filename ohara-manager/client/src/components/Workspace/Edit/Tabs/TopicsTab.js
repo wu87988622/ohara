@@ -23,7 +23,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import InputBase from '@material-ui/core/InputBase';
 
 import { TopicTable } from 'components/Topic';
-import { StyledActions, StyledActionItem } from './Styles';
+import { StyledActions, StyledActionItem } from './TopicsTabStyles';
 
 function TopicActions() {
   return (

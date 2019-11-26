@@ -29,10 +29,8 @@ import { AddTopicDialog } from 'components/Topic';
 import { useEditWorkspaceDialog, useAddTopicDialog } from 'context';
 
 import { Tabs as WorkspaceTabs } from '.';
-import TabPanel from './TabPanel';
-import { TopicsTab } from './TopicsTab';
-import { FilesTab, FileUpload } from './File';
-import { SettingsTab } from './Settings';
+import { FileUpload } from './File';
+import { TabPanel, SettingsTab, FilesTab, TopicsTab } from './Tabs';
 import { Wrapper } from './EditWorkspaceStyles';
 
 const EditWorkspace = () => {

@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import EditWorkspace from './EditWorkspace';
+import WorkspaceQuick from './WorkspaceQuick';
+import { EditWorkspace } from './Edit';
 
-const Tabs = {
-  OVERVIEW: 'overview',
-  TOPICS: 'topics',
-  FILES: 'files',
-  SETTINGS: 'settings',
-};
-
-export { EditWorkspace, Tabs };
+export { WorkspaceQuick, EditWorkspace };

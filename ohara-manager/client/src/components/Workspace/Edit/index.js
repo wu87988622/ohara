@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import FileTable from './FileTable';
+import EditWorkspace from './EditWorkspace';
 
-function FilesTab() {
-  return (
-    <>
-      <FileTable />
-    </>
-  );
-}
+const Tabs = {
+  OVERVIEW: 'overview',
+  TOPICS: 'topics',
+  FILES: 'files',
+  SETTINGS: 'settings',
+};
 
-export default FilesTab;
+const SubTabs = {
+  SETTINGS: Symbol(),
+  PLUGINS: Symbol(),
+  NODES: Symbol(),
+  NONE: Symbol(),
+};
+
+const Segments = {
+  WORKER: Symbol(),
+  BROKER: Symbol(),
+  ZOOKEEPER: Symbol(),
+  NONE: Symbol(),
+};
+
+export { EditWorkspace, Tabs, SubTabs, Segments };

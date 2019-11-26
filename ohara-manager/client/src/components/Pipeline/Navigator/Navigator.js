@@ -31,7 +31,10 @@ import { usePipeline } from 'context/PipelineContext';
 import { useWorkspace, useEditWorkspaceDialog } from 'context';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
-import { EditWorkspace, Tabs as EditWorkspaceTabs } from 'components/Workspace';
+import {
+  EditWorkspace,
+  Tabs as EditWorkspaceTabs,
+} from 'components/Workspace/Edit';
 import {
   required,
   validServiceName,

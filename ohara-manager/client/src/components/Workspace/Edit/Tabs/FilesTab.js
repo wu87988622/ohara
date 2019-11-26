@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
-import TabPanel from './TabPanel';
+import React from 'react';
+import { FileTable } from 'components/Workspace/Edit/File';
 
-export default TabPanel;
+function FilesTab() {
+  return (
+    <>
+      <FileTable />
+    </>
+  );
+}
+
+export default FilesTab;

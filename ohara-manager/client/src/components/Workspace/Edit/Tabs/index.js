@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
+import TabPanel from './TabPanel';
+import TopicsTab from './TopicsTab';
+import FilesTab from './FilesTab';
 import SettingsTab from './SettingsTab';
 
-const SubTabs = {
-  SETTINGS: Symbol(),
-  PLUGINS: Symbol(),
-  NODES: Symbol(),
-  NONE: Symbol(),
-};
-
-const Segments = {
-  WORKER: Symbol(),
-  BROKER: Symbol(),
-  ZOOKEEPER: Symbol(),
-  NONE: Symbol(),
-};
-
-export { SettingsTab, SubTabs, Segments };
+export { TabPanel, TopicsTab, FilesTab, SettingsTab };

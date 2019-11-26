@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-import FilesTab from './FilesTab';
-import FileTable from './FileTable';
-import FileActionsMenu from './FileActionsMenu';
-import FileUpload from './FileUpload';
-import FileDownload from './FileDownload';
+import SettingsMenu from './SettingsMenu';
 
-export { FilesTab, FileTable, FileActionsMenu, FileUpload, FileDownload };
+export { SettingsMenu };
