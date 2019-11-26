@@ -17,8 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.SettingInfo
-import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{RootJsonFormat, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
@@ -26,11 +25,7 @@ object ValidationApi {
 
   val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"
 
-  final case class ValidationReport(hostname: String, message: String, pass: Boolean, lastModified: Long)
-  implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat4(ValidationReport)
-
   private[this] implicit val SETTING_INFO_JSON_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
-    import spray.json._
     override def write(obj: SettingInfo): JsValue = obj.toJsonString.parseJson
 
     override def read(json: JsValue): SettingInfo = SettingInfo.ofJson(json.toString())

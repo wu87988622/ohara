@@ -22,10 +22,7 @@ import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPre
 import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
 import com.island.ohara.client.configurator.v0.ValidationApi._
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
-import spray.json.DefaultJsonProtocol._
-import spray.json.JsObject
 
 import scala.concurrent.ExecutionContext
 
@@ -36,23 +33,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     executionContext: ExecutionContext
   ): server.Route =
     pathPrefix(VALIDATION_PREFIX_PATH) {
-      path("node") {
-        put {
-          entity(as[JsObject])(
-            obj =>
-              complete(
-                Seq(
-                  ValidationReport(
-                    hostname = obj.fields.get("hostname").map(_.convertTo[String]).getOrElse("unknown"),
-                    message = "this is deprecated",
-                    pass = true,
-                    lastModified = CommonUtils.current()
-                  )
-                )
-              )
-          )
-        }
-      } ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
+      path(VALIDATION_CONNECTOR_PREFIX_PATH) {
         put {
           entity(as[Creation])(
             req =>
