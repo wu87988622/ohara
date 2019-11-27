@@ -427,7 +427,7 @@ public class TestCommonUtils extends OharaTest {
 
   @Test
   public void availablePortShouldBeBiggerThan1024() {
-    for (int i = 0; i != 10; ++i) {
+    for (int i = 0; i != 100; ++i) {
       Assert.assertTrue(CommonUtils.availablePort() > 1024);
     }
   }
