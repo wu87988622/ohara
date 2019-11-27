@@ -44,6 +44,9 @@ import spray.json.DeserializationException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.TimeoutException
+
+import scala.util.control.Breaks._
 
 /**
   * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
@@ -66,8 +69,28 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
     value
   }
 
-  private[this] val threadPool       = Executors.newFixedThreadPool(threadMax)
-  private[this] val checkK8SNodePool = Executors.newSingleThreadExecutor()
+  private[this] val threadPool = Executors.newFixedThreadPool(threadMax)
+
+  private[this] val loopOfUpdatingNode: Releasable = {
+    val pool = if (k8sClient.nonEmpty) Executors.newSingleThreadExecutor() else null
+    if (pool != null) pool.execute(() => {
+      while (!Thread.currentThread().isInterrupted()) {
+        try {
+          TimeUnit.SECONDS.sleep(5)
+          Await.result(addK8SNodes(), 5 seconds)
+        } catch {
+          case timeoutException: TimeoutException => log.error("timeout exception", timeoutException)
+          case interrupException: InterruptedException => {
+            log.error("interrup exception", interrupException)
+            break
+          }
+          case e: Throwable => throw e
+        }
+      }
+    })
+
+    () => if (pool != null) pool.shutdownNow()
+  }
 
   private[this] implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(threadPool)
 
@@ -188,10 +211,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
       .build
   }
 
-  private[configurator] def executeAddK8SNodes[T](timeout: Long): Unit = {
-    checkK8SNodePool.execute(loopRunning(addK8SNodes(), timeout))
-  }
-
   private[configurator] def addK8SNodes(): Future[Seq[NodeApi.Node]] = {
     log.info("Running check Kubernetes node")
     val nodeApi           = NodeApi.access.hostname(hostname).port(port)
@@ -211,15 +230,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
           })
       )
       .flatMap(x => Future.sequence(x.flatten))
-  }
-
-  private[this] def loopRunning(future: => Unit, timeout: Long): Runnable = new Runnable() {
-    def run(): Unit = {
-      while (true) {
-        TimeUnit.SECONDS.sleep(timeout)
-        future
-      }
-    }
   }
 
   /**
@@ -300,11 +310,8 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
       if (!threadPool.awaitTermination(terminateTimeout.toMillis, TimeUnit.MILLISECONDS))
         log.error("failed to terminate all running threads!!!")
     }
-    if (checkK8SNodePool != null) {
-      checkK8SNodePool.shutdownNow()
-      if (!checkK8SNodePool.awaitTermination(terminateTimeout.toMillis, TimeUnit.MILLISECONDS))
-        log.error("failed to terminate a running threads!!!")
-    }
+
+    Releasable.close(loopOfUpdatingNode)
     Releasable.close(serviceCollie)
     Releasable.close(store)
     Releasable.close(adminCleaner)
@@ -371,10 +378,6 @@ object Configurator {
         s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}"
       )
       LOG.info("enter ctrl+c to terminate the configurator")
-
-      val intervalAddK8SNodeTime = 5
-      if (GLOBAL_CONFIGURATOR.k8sClient.nonEmpty)
-        GLOBAL_CONFIGURATOR.executeAddK8SNodes(intervalAddK8SNodeTime)
 
       while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
         TimeUnit.SECONDS.sleep(2)
