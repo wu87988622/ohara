@@ -19,21 +19,24 @@ import { renderToString } from 'react-dom/server';
 import * as joint from 'jointjs';
 import * as $ from 'jquery';
 import * as _ from 'lodash';
+import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
 import AccountTreeIcon from '@material-ui/icons/AccountTree';
-import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import StopIcon from '@material-ui/icons/Stop';
 import BuildIcon from '@material-ui/icons/Build';
 import ClearIcon from '@material-ui/icons/Clear';
 
-const ConnectorGraph = params => {
-  const { value, position, type, icon, zIndex, graph } = params;
+const TopicGraph = params => {
+  const { value, position, zIndex, graph, type } = params;
 
-  const start = renderToString(<PlayArrowIcon />);
-  const stop = renderToString(<StopIcon />);
+  const privateIcon = renderToString(
+    <PrivateTopicIcon width={56} height={56} />,
+  );
+  const pulibcIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
   const setting = renderToString(<BuildIcon />);
   const link = renderToString(<AccountTreeIcon />);
   const remove = renderToString(<ClearIcon />);
   let linkLine;
+  const height = type !== 'public' ? 0 : 22;
+  const topicValue = type === 'public' ? value : '';
 
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -49,18 +52,11 @@ const ConnectorGraph = params => {
   });
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: [
-      '<div class="connector">',
-      `<div class="circle">${icon}</div>`,
+      '<div class="topic">',
+      `${type === 'public' ? pulibcIcon : privateIcon}`,
       `<div class="title"></div>`,
-      `<div class="type">${type === 'Pipeline Only' ? 'Topic' : type}</div>`,
-      `<div class="status">`,
-      `<div class="left">${'Status'}</div>`,
-      `<div class="right">${'pending'}</div>`,
-      `</div>`,
-      `<div class="connectorMenu">`,
+      `<div class="topicMenu">`,
       `<Button id="link">${link}</Button>`,
-      `<Button id="start">${start}</Button>`,
-      `<Button id="stop">${stop}</Button>`,
       `<Button id="setting">${setting}</Button>`,
       `<Button id="remove">${remove}</Button> `,
       `</div>`,
@@ -118,7 +114,7 @@ const ConnectorGraph = params => {
       });
       this.$box.find('.title').text(this.model.get('title'));
       this.$box
-        .find('.connectorMenu')
+        .find('.topicMenu')
         .attr('style', `display:${this.model.get('menuDisplay')};`);
       if (this.paper) {
         this.paper.$document.on('mousemove', function(evt) {
@@ -138,10 +134,10 @@ const ConnectorGraph = params => {
 
   let el = new joint.shapes.html.Element({
     position: { x: position.x, y: position.y },
-    size: { width: 240, height: 100 },
-    title: value,
+    size: { width: 56, height: 56 + height },
+    title: topicValue,
     menuDisplay: 'none',
   });
   return el;
 };
-export default ConnectorGraph;
+export default TopicGraph;

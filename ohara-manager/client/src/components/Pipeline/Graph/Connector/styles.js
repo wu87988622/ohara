@@ -67,7 +67,7 @@ export const right = css`
   float: right;
 `;
 
-export const menu = ({ theme }) => css`
+export const connectorMenu = ({ theme }) => css`
   width: 24px;
   position: absolute;
   top: ${theme.spacing(1)}px;

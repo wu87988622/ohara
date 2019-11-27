@@ -18,13 +18,14 @@ import styled, { css } from 'styled-components';
 import {
   connector,
   circle,
-  title,
+  title as connectorTitle,
   type,
   status,
   left,
   right,
-  menu,
+  connectorMenu,
 } from './Connector/styles';
+import { topic, topicMenu, title as topicTitle } from './Topic/styles';
 
 export const Paper = styled.div(
   ({ theme }) => css`
@@ -61,44 +62,70 @@ export const Paper = styled.div(
     }
     .connector {
       ${connector}
-    }
-    .circle {
-      ${circle}
 
-      svg {
-        color: white;
-      }
-    }
-    .title {
-      ${title}
-    }
-    .type {
-      ${type}
-    }
-    .status {
-      ${status}
-      .left {
-        ${left}
-      }
-      .right {
-        ${right}
-      }
-    }
-    .menu {
-      ${menu}
+      .connectorMenu {
+        ${connectorMenu}
 
-      button {
-        pointer-events: auto;
-        background-color: transparent;
-        border: 0;
-        padding: 0;
+        button {
+          pointer-events: auto;
+          background-color: transparent;
+          border: 0;
+          padding: 0;
 
-        &:hover {
-          background-color: rgba(0, 0, 0, 0.08);
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.08);
+          }
+
+          &:focus {
+            outline: 0;
+          }
         }
+      }
 
-        &:focus {
-          outline: 0;
+      .circle {
+        ${circle}
+
+        svg {
+          color: white;
+        }
+      }
+      .title {
+        ${connectorTitle}
+      }
+      .type {
+        ${type}
+      }
+      .status {
+        ${status}
+        .left {
+          ${left}
+        }
+        .right {
+          ${right}
+        }
+      }
+    }
+    .topic {
+      ${topic}
+      .title {
+        ${topicTitle}
+      }
+      .topicMenu {
+        ${topicMenu}
+
+        button {
+          pointer-events: auto;
+          background-color: transparent;
+          border: 0;
+          padding: 0;
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.08);
+          }
+
+          &:focus {
+            outline: 0;
+          }
         }
       }
     }
