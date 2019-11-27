@@ -26,7 +26,7 @@ import BuildIcon from '@material-ui/icons/Build';
 import ClearIcon from '@material-ui/icons/Clear';
 
 const ConnectorGraph = params => {
-  const { value, position, type, icon, zIndex, graph } = params;
+  const { value, position, type, icon, graph, paper } = params;
 
   const start = renderToString(<PlayArrowIcon />);
   const stop = renderToString(<StopIcon />);
@@ -50,12 +50,14 @@ const ConnectorGraph = params => {
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: [
       '<div class="connector">',
-      `<div class="circle">${icon}</div>`,
-      `<div class="title"></div>`,
-      `<div class="type">${type === 'Pipeline Only' ? 'Topic' : type}</div>`,
+      `<div class="header"><div class="circle">${icon}</div>`,
+      `<div class="title-wrapper"><div class="title"></div>`,
+      `<div class="type">${
+        type === 'Pipeline Only' ? 'Topic' : type
+      }</div></div></div>`,
       `<div class="status">`,
-      `<div class="left">${'Status'}</div>`,
-      `<div class="right">${'pending'}</div>`,
+      `<span>${'Status'}</span>`,
+      `<span>${'Stopped'}</span>`,
       `</div>`,
       `<div class="connectorMenu">`,
       `<Button id="link">${link}</Button>`,
@@ -66,27 +68,25 @@ const ConnectorGraph = params => {
       `</div>`,
       '</div>',
     ].join(''),
-    initialize() {
-      _.bindAll(this, 'updateBox');
-      joint.dia.ElementView.prototype.initialize.apply(this, arguments);
 
-      this.$box = $(_.template(this.template)());
+    init() {
+      this.listenTo(this.model, 'change', this.updateBox);
+    },
+    onRender() {
+      if (this.$box) this.$box.remove();
 
-      // Update the box position whenever the underlying model changes.
-      this.model.on('change', this.updateBox, this);
-      // Remove the box when the model gets removed from the graph.
-      this.model.on('remove', this.removeBox, this);
+      const boxMarkup = joint.util.template(this.template)();
+      const $box = (this.$box = $(boxMarkup));
+      this.listenTo(this.paper, 'scale translate', this.updateBox);
 
-      const modelId = this.model.id;
+      $box.appendTo(this.paper.el);
 
+      // Bind remove event to our custom icon
       this.$box
         .find('button#remove')
         .on('click', _.bind(this.model.remove, this.model));
 
-      //Click the connect button to generate SVG's link object,
-      //starting from its own box,
-      //but we don't want to let users see it at the beginning,
-      //so adjust the attributes and display it later
+      const modelId = this.model.id;
       this.$box.find('button#link').on('mousedown', function() {
         linkLine = new joint.shapes.standard.Link();
         linkLine.source({ id: modelId });
@@ -96,30 +96,27 @@ const ConnectorGraph = params => {
       });
 
       this.updateBox();
-    },
-    render() {
-      joint.dia.ElementView.prototype.render.apply(this, arguments);
-      this.paper.$el.prepend(this.$box);
-      this.updateBox();
       return this;
     },
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
-      var bbox = this.model.getBBox();
+      const bbox = this.getBBox({ useModelGeometry: true });
+      const scale = paper.scale();
 
-      // Example of updating the HTML with a data stored in the cell model.
       this.$box.css({
-        width: bbox.width,
-        height: bbox.height,
+        transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
+        transformOrigin: '0 0',
+        width: bbox.width / scale.sx,
+        height: bbox.height / scale.sy,
         left: bbox.x,
         top: bbox.y,
-        transform: 'rotate(' + (this.model.get('angle') || 0) + 'deg)',
-        'z-index': zIndex,
       });
+
       this.$box.find('.title').text(this.model.get('title'));
       this.$box
         .find('.connectorMenu')
         .attr('style', `display:${this.model.get('menuDisplay')};`);
+
       if (this.paper) {
         this.paper.$document.on('mousemove', function(evt) {
           if (linkLine) {
@@ -131,7 +128,7 @@ const ConnectorGraph = params => {
         });
       }
     },
-    removeBox() {
+    onRemove() {
       this.$box.remove();
     },
   });

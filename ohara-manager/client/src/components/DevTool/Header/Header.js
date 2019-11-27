@@ -69,7 +69,7 @@ const DialogSelect = props => {
     disabled = false,
   } = props;
   return (
-    <Typography hidden={index !== currentTab}>
+    <Typography component="div" hidden={index !== currentTab}>
       <FormControl disabled={disabled}>
         <Select
           value={value}
@@ -280,7 +280,7 @@ const Header = props => {
             anchor={selectAnchor}
           />
           <RefreshIcon className="item" onClick={handleRefresh} />
-          <SearchIcon className="item" onClick={handleSearchClick} />
+          <SearchIcon className="item" onClick={handleSearchClick} /> */}
           <Popover
             open={Boolean(searchAnchor)}
             anchorEl={searchAnchor}
@@ -392,7 +392,6 @@ const Header = props => {
               </StyledSearchBody>
             )}
           </Popover>
-
           <OpenInNewIcon className="item" onClick={handleOpenNewWindow} />
           <CloseIcon className="item" onClick={closeDialog} />
         </div>

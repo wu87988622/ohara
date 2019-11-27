@@ -19,16 +19,6 @@ import { createGlobalStyle } from 'styled-components';
 export default createGlobalStyle`
   @import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap');
   
-  *, *:before, *:after {
-    box-sizing: border-box;
-  }
-
-  body {
-    padding: 0;
-    margin: 0;
-    font-family: Roboto, Helvetica, Arial, sans-serif;
-  }
-  
   ul, li {
     margin: 0;
     padding: 0;

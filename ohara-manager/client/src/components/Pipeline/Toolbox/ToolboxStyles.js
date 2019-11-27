@@ -116,6 +116,11 @@ export const StyledToolbox = styled.div(
         padding: ${theme.spacing(1, 2)};
         color: ${theme.palette.text.primary};
 
+        .display-name {
+          font-size: ${theme.typography.h6.fontSize};
+          color: ${theme.palette.text.primary};
+        }
+
         .icon {
           display: flex;
         }

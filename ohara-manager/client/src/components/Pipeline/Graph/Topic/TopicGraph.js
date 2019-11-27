@@ -25,12 +25,12 @@ import BuildIcon from '@material-ui/icons/Build';
 import ClearIcon from '@material-ui/icons/Clear';
 
 const TopicGraph = params => {
-  const { value, position, zIndex, graph, type } = params;
+  const { value, position, paper, graph, type } = params;
 
   const privateIcon = renderToString(
     <PrivateTopicIcon width={56} height={56} />,
   );
-  const pulibcIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
+  const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
   const setting = renderToString(<BuildIcon />);
   const link = renderToString(<AccountTreeIcon />);
   const remove = renderToString(<ClearIcon />);
@@ -53,7 +53,7 @@ const TopicGraph = params => {
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: [
       '<div class="topic">',
-      `${type === 'public' ? pulibcIcon : privateIcon}`,
+      `${type === 'public' ? publicIcon : privateIcon}`,
       `<div class="title"></div>`,
       `<div class="topicMenu">`,
       `<Button id="link">${link}</Button>`,
@@ -62,27 +62,23 @@ const TopicGraph = params => {
       `</div>`,
       '</div>',
     ].join(''),
-    initialize() {
-      _.bindAll(this, 'updateBox');
-      joint.dia.ElementView.prototype.initialize.apply(this, arguments);
+    init() {
+      this.listenTo(this.model, 'change', this.updateBox);
+    },
+    onRender() {
+      if (this.$box) this.$box.remove();
+      const boxMarkup = joint.util.template(this.template)();
+      const $box = (this.$box = $(boxMarkup));
+      this.listenTo(this.paper, 'scale translate', this.updateBox);
 
-      this.$box = $(_.template(this.template)());
+      $box.appendTo(this.paper.el);
 
-      // Update the box position whenever the underlying model changes.
-      this.model.on('change', this.updateBox, this);
-      // Remove the box when the model gets removed from the graph.
-      this.model.on('remove', this.removeBox, this);
-
-      const modelId = this.model.id;
-
+      // Bind remove event to our custom icon
       this.$box
         .find('button#remove')
         .on('click', _.bind(this.model.remove, this.model));
 
-      //Click the connect button to generate SVG's link object,
-      //starting from its own box,
-      //but we don't want to let users see it at the beginning,
-      //so adjust the attributes and display it later
+      const modelId = this.model.id;
       this.$box.find('button#link').on('mousedown', function() {
         linkLine = new joint.shapes.standard.Link();
         linkLine.source({ id: modelId });
@@ -92,26 +88,22 @@ const TopicGraph = params => {
       });
 
       this.updateBox();
-    },
-    render() {
-      joint.dia.ElementView.prototype.render.apply(this, arguments);
-      this.paper.$el.prepend(this.$box);
-      this.updateBox();
       return this;
     },
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
-      var bbox = this.model.getBBox();
+      const bbox = this.getBBox({ useModelGeometry: true });
+      const scale = paper.scale();
 
-      // Example of updating the HTML with a data stored in the cell model.
       this.$box.css({
-        width: bbox.width,
-        height: bbox.height,
+        transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
+        transformOrigin: '0 0',
+        width: bbox.width / scale.sx,
+        height: bbox.height / scale.sy,
         left: bbox.x,
         top: bbox.y,
-        transform: 'rotate(' + (this.model.get('angle') || 0) + 'deg)',
-        'z-index': zIndex,
       });
+
       this.$box.find('.title').text(this.model.get('title'));
       this.$box
         .find('.topicMenu')
@@ -127,7 +119,7 @@ const TopicGraph = params => {
         });
       }
     },
-    removeBox() {
+    onRemove() {
       this.$box.remove();
     },
   });

@@ -122,25 +122,26 @@ const Toolbox = props => {
   const handleAddGraph = newGraph => {
     if (newGraph) {
       setZIndex(zIndex + 1);
+
       switch (graphType) {
         case 'topic':
           if (connectorType === 'Pipeline Only') {
             graph.addCell(
               TopicGraph({
                 position,
-                zIndex,
                 graph,
                 type: 'private',
+                paper,
               }),
             );
           } else {
             graph.addCell(
               TopicGraph({
                 position,
-                zIndex,
                 graph,
                 value: newGraph,
                 type: 'public',
+                paper,
               }),
             );
           }
@@ -152,8 +153,8 @@ const Toolbox = props => {
               value: newGraph,
               type: connectorType,
               icon,
-              zIndex,
               graph,
+              paper,
             }),
           );
           break;

@@ -16,6 +16,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import CssBaseline from '@material-ui/core/CssBaseline';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
@@ -46,49 +47,52 @@ const Main = styled.main`
 
 const App = () => {
   return (
-    <Router>
+    <>
       <GlobalStyle />
-      <Switch>
-        <Route
-          exact
-          path="/501-page-not-implemented"
-          component={NotImplementedPage}
-        />
-        <Route
-          exact
-          path="/:workspaceName?/:pipelineName?/view"
-          component={DataWindow}
-        />
-        <Container className="container">
+      <CssBaseline />
+      <Router>
+        <Switch>
           <Route
             exact
-            path="/:workspaceName?/:pipelineName?"
-            component={AppBar}
+            path="/501-page-not-implemented"
+            component={NotImplementedPage}
           />
           <Route
             exact
-            path="/:workspaceName?/:pipelineName?"
-            component={DevToolDialog}
+            path="/:workspaceName?/:pipelineName?/view"
+            component={DataWindow}
           />
-          <Route
-            exact
-            path="/:workspaceName/:pipelineName?"
-            component={Navigator}
-          />
+          <Container className="container">
+            <Route
+              exact
+              path="/:workspaceName?/:pipelineName?"
+              component={AppBar}
+            />
+            <Route
+              exact
+              path="/:workspaceName?/:pipelineName?"
+              component={DevToolDialog}
+            />
+            <Route
+              exact
+              path="/:workspaceName/:pipelineName?"
+              component={Navigator}
+            />
 
-          <Main>
-            <Switch>
-              <Route
-                exact
-                path="/:workspaceName?/:pipelineName?"
-                component={Pipeline}
-              />
-              <Route path="*" component={NotFoundPage} />
-            </Switch>
-          </Main>
-        </Container>
-      </Switch>
-    </Router>
+            <Main>
+              <Switch>
+                <Route
+                  exact
+                  path="/:workspaceName?/:pipelineName?"
+                  component={Pipeline}
+                />
+                <Route path="*" component={NotFoundPage} />
+              </Switch>
+            </Main>
+          </Container>
+        </Switch>
+      </Router>
+    </>
   );
 };
 

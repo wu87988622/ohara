@@ -36,7 +36,14 @@ import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 
 const Toolbar = props => {
-  const { handleToolboxOpen, handleToolboxClick, isToolboxOpen } = props;
+  const {
+    paperScale,
+    handleToolboxOpen,
+    handleToolbarClick,
+    isToolboxOpen,
+    setZoom,
+  } = props;
+
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
   const [isMetricsDisplayed, setIsMetricsDisplayed] = React.useState(true);
@@ -47,6 +54,11 @@ const Toolbar = props => {
 
   const handleZoomClose = () => {
     setZoomAnchorEl(null);
+  };
+
+  const handleZoomItemClick = newScale => () => {
+    setZoom(newScale);
+    handleZoomClose();
   };
 
   const handlePipelineControlsClick = event => {
@@ -61,7 +73,12 @@ const Toolbar = props => {
     // If the Toolbox is not "open", we should open it before opening
     // the expansion panel
     if (!isToolboxOpen) handleToolboxOpen();
-    handleToolboxClick(panel);
+    handleToolbarClick(panel);
+  };
+
+  const getZoomDisplayedValue = value => {
+    const percentage = value * 100;
+    return `${Math.trunc(percentage)}%`;
   };
 
   return (
@@ -86,7 +103,10 @@ const Toolbar = props => {
       <div className="paper-controls">
         <div className="zoom">
           <ButtonGroup size="small">
-            <Button>
+            <Button
+              onClick={() => setZoom(paperScale / 2)}
+              disabled={paperScale <= 0.02}
+            >
               <RemoveIcon color="action" />
             </Button>
             <Button
@@ -95,9 +115,12 @@ const Toolbar = props => {
               color="default"
               size="small"
             >
-              100%
+              {getZoomDisplayedValue(paperScale)}
             </Button>
-            <Button>
+            <Button
+              onClick={() => setZoom(paperScale * 2)}
+              disabled={paperScale >= 2}
+            >
               <AddIcon color="action" />
             </Button>
           </ButtonGroup>
@@ -109,14 +132,19 @@ const Toolbar = props => {
             open={Boolean(zoomAnchorEl)}
             onClose={handleZoomClose}
           >
-            <MenuItem onClick={handleZoomClose}>50%</MenuItem>
-            <MenuItem onClick={handleZoomClose}>100%</MenuItem>
-            <MenuItem onClick={handleZoomClose}>200%</MenuItem>
+            <MenuItem onClick={handleZoomItemClick(0.5)}>50%</MenuItem>
+            <MenuItem onClick={handleZoomItemClick(1)}>100%</MenuItem>
+            <MenuItem onClick={handleZoomItemClick(2)}>200%</MenuItem>
           </Menu>
         </div>
 
         <div className="fit">
-          <Button variant="outlined" color="default" size="small">
+          <Button
+            onClick={() => setZoom('fit')}
+            variant="outlined"
+            color="default"
+            size="small"
+          >
             <FullscreenIcon color="action" />
           </Button>
           <Typography variant="body2">Fit</Typography>
@@ -179,8 +207,10 @@ const Toolbar = props => {
 
 Toolbar.propTypes = {
   handleToolboxOpen: PropTypes.func.isRequired,
-  handleToolboxClick: PropTypes.func.isRequired,
+  handleToolbarClick: PropTypes.func.isRequired,
   isToolboxOpen: PropTypes.bool.isRequired,
+  paperScale: PropTypes.number.isRequired,
+  setZoom: PropTypes.func,
 };
 
 export default Toolbar;

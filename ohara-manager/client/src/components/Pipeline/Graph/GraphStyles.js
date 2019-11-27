@@ -15,22 +15,24 @@
  */
 
 import styled, { css } from 'styled-components';
-import {
-  connector,
-  circle,
-  title as connectorTitle,
-  type,
-  status,
-  left,
-  right,
-  connectorMenu,
-} from './Connector/styles';
 import { topic, topicMenu, title as topicTitle } from './Topic/styles';
+
+export const PaperWrapper = styled.div`
+  position: relative;
+
+  /* Subtract the height of Toolbar  */
+  height: calc(100vh - 72px);
+`;
 
 export const Paper = styled.div(
   ({ theme }) => css`
-    border: ${theme.spacing(1)}px solid #fff;
+    border: ${theme.spacing(1)}px solid ${theme.palette.common.white};
     overflow: hidden;
+
+    rect {
+      fill: red !important;
+      fill-opacity: 1 !important;
+    }
 
     .flying-paper {
       border: 1px dashed ${theme.palette.grey[400]};
@@ -57,14 +59,31 @@ export const Paper = styled.div(
         }
       }
     }
+
     svg .link {
       z-index: 2;
     }
+
     .connector {
-      ${connector}
+      background-color: white;
+      position: absolute;
+      border: 1px solid ${theme.palette.divider};
+      border-radius: ${theme.shape.borderRadius}px;
+      pointer-events: none;
+
+      &:hover {
+        box-shadow: 0 0 0 2px ${theme.palette.primary};
+      }
 
       .connectorMenu {
-        ${connectorMenu}
+        width: 24px;
+        position: absolute;
+        top: ${theme.spacing(1)}px;
+        left: 245px;
+
+        svg {
+          color: ${theme.palette.grey[500]};
+        }
 
         button {
           pointer-events: auto;
@@ -82,29 +101,43 @@ export const Paper = styled.div(
         }
       }
 
+      .header {
+        display: flex;
+      }
+
       .circle {
-        ${circle}
+        width: 40px;
+        height: 40px;
+        border-radius: 999em;
+        background-color: ${theme.palette.grey[500]};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: ${theme.spacing(2)}px;
 
         svg {
           color: white;
         }
       }
       .title {
-        ${connectorTitle}
+        ${theme.typography.h5}
+        color:${theme.palette.text.primary};
+        margin-top: ${theme.spacing(2)}px;
       }
+
       .type {
-        ${type}
+        ${theme.typography.body2}
+        color:${theme.palette.text.secondary};
       }
       .status {
-        ${status}
-        .left {
-          ${left}
-        }
-        .right {
-          ${right}
-        }
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid ${theme.palette.divider};
+        width: 100%;
+        padding: ${theme.spacing(0.5, 2, 0, 2)};
       }
     }
+
     .topic {
       ${topic}
       .title {

@@ -15,24 +15,15 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
 import { useHistory, useParams } from 'react-router-dom';
 
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
-import Toolbar from './Toolbar';
 import Graph from './Graph';
 import { useWorkspace } from 'context';
 import { usePipeline } from 'context/PipelineContext';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
-
-const GraphWrapper = styled.div`
-  position: relative;
-
-  /* Subtract the height of Toolbar  */
-  height: calc(100vh - 72px);
-`;
 
 const Pipeline = () => {
   const history = useHistory();
@@ -77,6 +68,8 @@ const Pipeline = () => {
     if (current === undefined && hasWorkspace) {
       history.push(`/${workspaces[0].settings.name}`);
     }
+  } else if (hasWorkspace) {
+    history.push(`/${workspaces[0].settings.name}`);
   }
 
   useEffect(() => {
@@ -130,29 +123,22 @@ const Pipeline = () => {
       {currentWorkspace && (
         <>
           {currentPipeline && (
-            <>
-              <Toolbar
-                isToolboxOpen={isToolboxOpen}
-                handleToolboxOpen={() => setIsToolboxOpen(true)}
-                handleToolboxClick={panel =>
-                  // Open a particular panel
-                  setToolboxExpanded({ ...initialState, [panel]: true })
-                }
-              />
-              <GraphWrapper>
-                <Graph
-                  isToolboxOpen={isToolboxOpen}
-                  toolboxExpanded={toolboxExpanded}
-                  handleToolboxClick={handleToolboxClick}
-                  handleToolboxClose={() => {
-                    setIsToolboxOpen(false);
-                    setToolboxExpanded(initialState);
-                  }}
-                  toolboxKey={toolboxKey}
-                  setToolboxExpanded={setToolboxExpanded}
-                />
-              </GraphWrapper>
-            </>
+            <Graph
+              isToolboxOpen={isToolboxOpen}
+              toolboxExpanded={toolboxExpanded}
+              handleToolbarClick={panel =>
+                // Open a particular panel
+                setToolboxExpanded({ ...initialState, [panel]: true })
+              }
+              handleToolboxOpen={() => setIsToolboxOpen(true)}
+              handleToolboxClick={handleToolboxClick}
+              handleToolboxClose={() => {
+                setIsToolboxOpen(false);
+                setToolboxExpanded(initialState);
+              }}
+              toolboxKey={toolboxKey}
+              setToolboxExpanded={setToolboxExpanded}
+            />
           )}
         </>
       )}

@@ -26,21 +26,25 @@ import * as joint from 'jointjs';
 
 import { AddPublicTopicIcon } from 'components/common/Icon';
 
-export const createToolboxList = ({
-  sources,
-  sinks,
-  streams,
-  topics,
-  sourceGraph,
-  topicGraph,
-  streamGraph,
-  sinkGraph,
-  searchResults,
-}) => {
+export const createToolboxList = params => {
+  const {
+    sources,
+    sinks,
+    streams,
+    topics,
+    sourceGraph,
+    topicGraph,
+    streamGraph,
+    sinkGraph,
+    searchResults,
+  } = params;
+
   const sourceIcon = renderToString(<FlightTakeoffIcon color="action" />);
   const sinkIcon = renderToString(<FlightLandIcon color="action" />);
   const streamIcon = renderToString(<WavesIcon color="action" />);
   const AddPrivateTopic = renderToString(<StorageIcon color="action" />);
+
+  // Custom icon, so we need to pass some props...
   const AddPublicTopic = renderToString(
     <AddPublicTopicIcon className="public-topic" width={23} height={22} />,
   );
@@ -98,8 +102,8 @@ export const createToolboxList = ({
   displaySources.forEach((source, index) => {
     sourceGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 44 },
-        size: { width: 272 - 8 * 2, height: 44 },
+        position: { x: 10, y: index * 40 },
+        size: { width: 272 - 8 * 2, height: 40 },
         displayName: source.displayName,
         classType: source.classType,
         icon: sourceIcon,
@@ -112,8 +116,8 @@ export const createToolboxList = ({
   displayTopics.forEach((topic, index) => {
     topicGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 44 },
-        size: { width: 272 - 8 * 2, height: 44 },
+        position: { x: 10, y: index * 40 },
+        size: { width: 272 - 8 * 2, height: 40 },
         displayName: topic.displayName,
         classType: topic.classType,
         icon: index === 0 ? AddPrivateTopic : AddPublicTopic,
@@ -128,8 +132,8 @@ export const createToolboxList = ({
   displayStreams.forEach((stream, index) => {
     streamGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 44 },
-        size: { width: 272 - 8 * 2, height: 44 },
+        position: { x: 10, y: index * 40 },
+        size: { width: 272 - 8 * 2, height: 40 },
         displayName: stream.displayName,
         classType: stream.classType,
         icon: streamIcon,
@@ -142,8 +146,8 @@ export const createToolboxList = ({
   displaySinks.forEach((sink, index) => {
     sinkGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 44 },
-        size: { width: 272 - 8 * 2, height: 44 },
+        position: { x: 10, y: index * 40 },
+        size: { width: 272 - 8 * 2, height: 40 },
         displayName: sink.displayName,
         classType: sink.classType,
         icon: sinkIcon,
@@ -152,15 +156,17 @@ export const createToolboxList = ({
   });
 };
 
-export const enableDragAndDrop = ({
-  toolPapers,
-  paper,
-  setGraphType,
-  setPosition,
-  setConnectorType,
-  setIcon,
-  setIsOpen: openAddConnectorDialog,
-}) => {
+export const enableDragAndDrop = params => {
+  const {
+    toolPapers,
+    paper,
+    setGraphType,
+    setPosition,
+    setConnectorType,
+    setIcon,
+    setIsOpen: openAddConnectorDialog,
+  } = params;
+
   toolPapers.forEach(toolPaper => {
     // Add "hover" state in items, I cannot figure out how to do
     // this when initializing the HTML elements...

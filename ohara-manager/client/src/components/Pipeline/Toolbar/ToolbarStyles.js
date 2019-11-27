@@ -25,24 +25,36 @@ export const StyledToolbar = styled.div(
     display: flex;
     align-items: center;
 
+    .toolbox-controls,
+    .paper-controls {
+      /* Customize button pseudo states  */
+      button {
+        background-color: ${theme.palette.common.white};
+
+        &:hover {
+          background-color: ${theme.palette.action.hover};
+        }
+
+        &.Mui-disabled {
+          background-color: ${theme.palette.action.disabledBackground};
+        }
+      }
+    }
+
     .toolbox-controls {
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-right: ${theme.spacing(10)}px;
-
-      .MuiButtonGroup-root {
-        background-color: ${theme.palette.common.white};
-      }
     }
 
     .paper-controls {
       display: flex;
       margin-right: ${theme.spacing(10)}px;
 
-      /* Use the :not selector here to prevent overriding Mui's default hover state */
-      .MuiButtonBase-root:not(:hover) {
-        background-color: ${theme.palette.common.white};
+      /* Remove border between buttons */
+      button:not(:first-child) {
+        border-left: none;
       }
 
       .zoom,
@@ -63,13 +75,10 @@ export const StyledToolbar = styled.div(
       display: flex;
       flex-direction: column;
       align-items: center;
-
-      .MuiButtonBase-root:not(:hover) {
-        background-color: ${theme.palette.common.white};
-      }
     }
 
     .metrics-controls {
+      /* Move this to the very right */
       margin-left: auto;
     }
   `,
