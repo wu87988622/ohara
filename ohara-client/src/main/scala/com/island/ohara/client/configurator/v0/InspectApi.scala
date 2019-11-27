@@ -188,8 +188,14 @@ object InspectApi {
     def zookeeperInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
       exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$ZOOKEEPER_PREFIX_PATH")
 
+    def zookeeperInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(ZOOKEEPER_PREFIX_PATH).key(key).build())
+
     def brokerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
       exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$BROKER_PREFIX_PATH")
+
+    def brokerInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(BROKER_PREFIX_PATH).key(key).build())
 
     def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
       exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$WORKER_PREFIX_PATH")

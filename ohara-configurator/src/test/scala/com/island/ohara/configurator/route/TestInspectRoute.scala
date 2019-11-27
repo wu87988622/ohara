@@ -40,6 +40,14 @@ class TestInspectRoute extends OharaTest {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
+  private[this] val zookeeperClusterInfo = result(
+    ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
+
+  private[this] val brokerClusterInfo = result(
+    BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()
+  ).head
+
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
   ).head
@@ -208,6 +216,10 @@ class TestInspectRoute extends OharaTest {
   }
 
   @Test
+  def testZookeeperInfoWithKey(): Unit =
+    result(inspectApi.zookeeperInfo()) shouldBe result(inspectApi.zookeeperInfo(zookeeperClusterInfo.key))
+
+  @Test
   def testBrokerInfo(): Unit = {
     val info = result(inspectApi.brokerInfo())
     info.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
@@ -219,6 +231,10 @@ class TestInspectRoute extends OharaTest {
     info.classInfos.head.classType shouldBe "topic"
     info.classInfos.head.settingDefinitions.size shouldBe TopicApi.DEFINITIONS.size
   }
+
+  @Test
+  def testBrokerInfoWithKey(): Unit =
+    result(inspectApi.brokerInfo()) shouldBe result(inspectApi.brokerInfo(brokerClusterInfo.key))
 
   @Test
   def testWorkerInfo(): Unit = {

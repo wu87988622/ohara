@@ -20,10 +20,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
 import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
 import com.island.ohara.client.configurator.v0.InspectApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{
   BrokerApi,
   ErrorApi,
@@ -93,6 +95,24 @@ private[configurator] object InspectRoute {
             }
         }
     )
+
+  private[this] val zookeeperDefinition = ServiceDefinition(
+    imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
+    settingDefinitions = ZookeeperApi.DEFINITIONS,
+    classInfos = Seq.empty
+  )
+
+  private[this] val brokerDefinition = ServiceDefinition(
+    imageName = BrokerApi.IMAGE_NAME_DEFAULT,
+    settingDefinitions = BrokerApi.DEFINITIONS,
+    classInfos = Seq(
+      ClassInfo(
+        className = "N/A",
+        classType = "topic",
+        settingDefinitions = TopicApi.DEFINITIONS
+      )
+    )
+  )
 
   def apply(mode: Mode)(
     implicit brokerCollie: BrokerCollie,
@@ -230,28 +250,30 @@ private[configurator] object InspectRoute {
           )
         )
       }
-    } ~ path(BROKER_PREFIX_PATH) {
-      complete(
-        ServiceDefinition(
-          imageName = BrokerApi.IMAGE_NAME_DEFAULT,
-          settingDefinitions = BrokerApi.DEFINITIONS,
-          classInfos = Seq(
-            ClassInfo(
-              className = "N/A",
-              classType = "topic",
-              settingDefinitions = TopicApi.DEFINITIONS
-            )
+    } ~ pathPrefix(BROKER_PREFIX_PATH) {
+      path(Segment) { name =>
+        parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          complete(
+            dataStore
+              .value[BrokerClusterInfo](ObjectKey.of(group, name))
+              .map(_ => brokerDefinition)
           )
-        )
-      )
-    } ~ path(ZOOKEEPER_PREFIX_PATH) {
-      complete(
-        ServiceDefinition(
-          imageName = ZookeeperApi.IMAGE_NAME_DEFAULT,
-          settingDefinitions = ZookeeperApi.DEFINITIONS,
-          classInfos = Seq.empty
-        )
-      )
+        }
+      } ~ pathEnd {
+        complete(brokerDefinition)
+      }
+    } ~ pathPrefix(ZOOKEEPER_PREFIX_PATH) {
+      path(Segment) { name =>
+        parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
+          complete(
+            dataStore
+              .value[ZookeeperClusterInfo](ObjectKey.of(group, name))
+              .map(_ => zookeeperDefinition)
+          )
+        }
+      } ~ pathEnd {
+        complete(zookeeperDefinition)
+      }
     } ~ pathPrefix(STREAM_PREFIX_PATH) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
