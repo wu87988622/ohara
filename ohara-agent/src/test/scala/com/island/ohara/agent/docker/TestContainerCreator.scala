@@ -30,21 +30,20 @@ class TestContainerCreator extends OharaTest {
       imageName: String,
       name: String,
       command: String,
+      arguments: Seq[String],
       ports: Map[Int, Int],
       envs: Map[String, String],
-      route: Map[String, String],
-      volumeMapping: Map[String, String],
-      networkDriver: NetworkDriver
+      route: Map[String, String]
     ) => {
       // we check only the required arguments
       CommonUtils.requireNonEmpty(hostname)
       CommonUtils.requireNonEmpty(imageName)
       CommonUtils.requireNonEmpty(name)
+      Objects.requireNonNull(command)
       Objects.requireNonNull(ports)
       Objects.requireNonNull(envs)
       Objects.requireNonNull(route)
-      Objects.requireNonNull(volumeMapping)
-      Objects.requireNonNull(networkDriver)
+      Objects.requireNonNull(arguments)
     }
 
   @Test
@@ -90,13 +89,10 @@ class TestContainerCreator extends OharaTest {
   def emptyRoute(): Unit = fake().route(Map.empty)
 
   @Test
-  def nullVolumeMapping(): Unit = an[NullPointerException] should be thrownBy fake().volumeMapping(null)
+  def nullArguments(): Unit = an[NullPointerException] should be thrownBy fake().arguments(null)
 
   @Test
-  def emptyVolumeMapping(): Unit = fake().volumeMapping(Map.empty)
-
-  @Test
-  def nullNetworkDriver(): Unit = an[NullPointerException] should be thrownBy fake().command(null)
+  def emptyArguments(): Unit = fake().arguments(Seq.empty)
 
   @Test
   def testExecuteNormalCases(): Unit = {
@@ -110,8 +106,7 @@ class TestContainerCreator extends OharaTest {
   }
 
   @Test
-  def testExecuteWithoutRequireArguments(): Unit = {
+  def testExecuteWithoutRequireArguments(): Unit =
     // At least assign imageName
     an[NullPointerException] should be thrownBy fake().create()
-  }
 }

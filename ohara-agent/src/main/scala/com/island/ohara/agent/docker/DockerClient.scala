@@ -29,8 +29,8 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * An interface used to control remote node's docker service.
@@ -153,11 +153,10 @@ object DockerClient {
         imageName: String,
         name: String,
         command: String,
+        arguments: Seq[String],
         ports: Map[Int, Int],
         envs: Map[String, String],
-        route: Map[String, String],
-        volumeMapping: Map[String, String],
-        networkDriver: NetworkDriver
+        route: Map[String, String]
       ) =>
         agent.execute(
           Seq(
@@ -179,19 +178,11 @@ object DockerClient {
                 case (key, value) => s"""-e \"$key=$value\""""
               }
               .mkString(" "),
-            volumeMapping
-              .map {
-                case (key, value) => s"""-v \"$key:$value\""""
-              }
-              .mkString(" "),
-            networkDriver match {
-              case NetworkDriver.HOST   => "--network=host"
-              case NetworkDriver.BRIDGE => "--network=bridge"
-            },
             // add label so we can distinguish the containers from others
             s"--label $LABEL_KEY=$LABEL_VALUE",
             Objects.requireNonNull(imageName),
-            if (command == null) "" else command
+            if (command == null) "" else command,
+            arguments.map(arg => s"""\"$arg\"""").mkString(" ")
           ).filter(_.nonEmpty).mkString(" ")
         )
 
@@ -420,15 +411,14 @@ object DockerClient {
     * A interface used to run a docker container on remote node
     */
   trait Creator extends com.island.ohara.common.pattern.Creator[Unit] {
-    private[this] var hostname: String                   = CommonUtils.randomString()
-    private[this] var imageName: String                  = _
-    private[this] var name: String                       = CommonUtils.randomString()
-    private[this] var command: String                    = ""
-    private[this] var ports: Map[Int, Int]               = Map.empty
-    private[this] var envs: Map[String, String]          = Map.empty
-    private[this] var route: Map[String, String]         = Map.empty
-    private[this] var volumeMapping: Map[String, String] = Map.empty
-    private[this] var networkDriver: NetworkDriver       = NetworkDriver.BRIDGE
+    private[this] var hostname: String           = CommonUtils.randomString()
+    private[this] var imageName: String          = _
+    private[this] var name: String               = CommonUtils.randomString()
+    private[this] var command: String            = ""
+    private[this] var arguments: Seq[String]     = Seq.empty
+    private[this] var ports: Map[Int, Int]       = Map.empty
+    private[this] var envs: Map[String, String]  = Map.empty
+    private[this] var route: Map[String, String] = Map.empty
 
     /**
       * execute the docker container on background.
@@ -438,11 +428,10 @@ object DockerClient {
       imageName = CommonUtils.requireNonEmpty(imageName),
       name = CommonUtils.requireNonEmpty(name),
       command = command,
+      arguments = arguments,
       ports = ports,
       envs = envs,
-      route = route,
-      volumeMapping = volumeMapping,
-      networkDriver = networkDriver
+      route = route
     )
 
     protected def doCreate(
@@ -450,11 +439,10 @@ object DockerClient {
       imageName: String,
       name: String,
       command: String,
+      arguments: Seq[String],
       ports: Map[Int, Int],
       envs: Map[String, String],
-      route: Map[String, String],
-      volumeMapping: Map[String, String],
-      networkDriver: NetworkDriver
+      route: Map[String, String]
     ): Unit
 
     /**
@@ -524,36 +512,16 @@ object DockerClient {
     }
 
     /**
-      * docker -v
-      *
-      * @return process information
-      */
-    @Optional("default is empty")
-    def volumeMapping(volumeMapping: Map[String, String]): Creator = {
-      this.volumeMapping = Objects.requireNonNull(volumeMapping)
-      this
-    }
-
-    /**
-      * set docker container's network driver. implement by --network={value}
-      *
-      * @param networkDriver network driver
-      * @return this builder
-      */
-    @Optional("default is NetworkDriver.BRIDGE")
-    def networkDriver(networkDriver: NetworkDriver): Creator = {
-      this.networkDriver = Objects.requireNonNull(networkDriver)
-      this
-    }
-
-    /**
       * the arguments passed to docker container
       *
       * @param arguments arguments
       * @return this builder
       */
     @Optional("default is empty")
-    def arguments(arguments: Seq[String]): Creator = command(arguments.map(arg => s"""\"$arg\"""").mkString(" "))
+    def arguments(arguments: Seq[String]): Creator = {
+      this.arguments = Objects.requireNonNull(arguments)
+      this
+    }
 
     /**
       * the command passed to docker container
