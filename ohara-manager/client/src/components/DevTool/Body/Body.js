@@ -16,81 +16,29 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 
-import { List } from 'react-virtualized/dist/commonjs/List';
-import { AutoSizer } from 'react-virtualized/dist/commonjs/AutoSizer';
-
-import { TableLoader } from 'components/common/Loader';
-import TopicDataTable from './TopicDataTable';
+import DataTable from './DataTable';
 import { tabName } from '../DevToolDialog';
 
-const TabPanel = props => {
-  const { children, value, index } = props;
-  return (
-    <div id="tab-body" hidden={value !== index}>
-      {children}
-    </div>
-  );
-};
-TabPanel.propTypes = {
-  children: PropTypes.node.isRequired,
-  index: PropTypes.string.isRequired,
-  value: PropTypes.node.isRequired,
-};
+const TabPanel = styled.div`
+  display: ${props => (props.value !== props.index ? 'none' : 'block')};
+  width: 100%;
+  height: calc(100% - 48px);
+  overflow: auto;
+`;
 
 const Body = props => {
   const { tabIndex, ...others } = props;
-  const { dialogEl, data } = others;
-
-  const renderedRow = ({ index, key, style }) => {
-    return (
-      <div key={key} style={style}>
-        {data.hostLog[index]}
-      </div>
-    );
-  };
-  renderedRow.propTypes = {
-    index: PropTypes.number.isRequired,
-    key: PropTypes.string.isRequired,
-    style: PropTypes.object.isRequired,
-  };
-
-  const getRowHeight = ({ index }) => {
-    const { width } = dialogEl.getBoundingClientRect();
-    // calculate the row height by current row length and dialog width
-    // ex:
-    // data length = 100
-    // dialog length = 500
-    // the row height will be (100 / (500 / 10)) * 30 = 60
-    // Note: the percentage of the "height" is controlled by the fraction number (6)
-    return Math.ceil(data.hostLog[index].length / (width / 5)) * 40;
-  };
+  const { data, cache } = others;
 
   return (
     <>
       <TabPanel value={tabIndex} index={tabName.topic}>
-        <TopicDataTable
-          topicData={data.topicData}
-          isLoadedTopic={data.isLoading}
-        />
+        <DataTable data={data} type={tabName.topic} />
       </TabPanel>
       <TabPanel value={tabIndex} index={tabName.log}>
-        <AutoSizer>
-          {({ width, height }) =>
-            data.isLoading ? (
-              <TableLoader />
-            ) : (
-              <List
-                height={height}
-                overscanRowCount={10}
-                rowCount={data.hostLog.length}
-                rowHeight={getRowHeight}
-                rowRenderer={renderedRow}
-                width={width}
-              />
-            )
-          }
-        </AutoSizer>
+        <DataTable data={data} type={tabName.log} cache={cache} />
       </TabPanel>
     </>
   );

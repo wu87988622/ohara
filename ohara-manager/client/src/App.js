@@ -21,7 +21,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import GlobalStyle from 'theme/globalStyle';
 import AppBar from 'components/Layout/AppBar';
 import { NotFoundPage, NotImplementedPage } from 'components/ErrorPages';
-import { DevToolDialog, TopicDataWindow } from 'components/DevTool';
+import { DevToolDialog, DataWindow } from 'components/DevTool';
 import { Pipeline, Navigator } from 'components/Pipeline';
 
 // We need joint's CSS
@@ -54,7 +54,11 @@ const App = () => {
           path="/501-page-not-implemented"
           component={NotImplementedPage}
         />
-        <Route exact path="/:workspaceName/view" component={TopicDataWindow} />
+        <Route
+          exact
+          path="/:workspaceName?/:pipelineName?/view"
+          component={DataWindow}
+        />
         <Container className="container">
           <Route
             exact

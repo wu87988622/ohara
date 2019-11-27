@@ -15,19 +15,11 @@
  */
 
 import styled from 'styled-components';
-import { TableRow } from '@material-ui/core';
 
 export const StyledTopicView = styled.div`
   textarea {
     width: 100%;
     height: 200px;
     resize: none;
-  }
-`;
-
-export const StyledFooter = styled(TableRow)`
-  td {
-    padding: 1px;
-    height: 26px;
   }
 `;

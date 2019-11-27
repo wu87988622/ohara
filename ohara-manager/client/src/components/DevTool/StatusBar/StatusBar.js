@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-import DevToolDialog from './DevToolDialog';
-import DataWindow from './Body/DataWindow';
+import React from 'react';
+import PropTypes from 'prop-types';
 
-export { DevToolDialog, DataWindow };
+import { StyledStatusBar } from './StatusBarStyles';
+
+const StatusBar = props => {
+  const { statusText } = props;
+
+  return <StyledStatusBar>{statusText}</StyledStatusBar>;
+};
+
+StatusBar.propTypes = {
+  statusText: PropTypes.string.isRequired,
+};
+
+export default StatusBar;

@@ -24,16 +24,15 @@ export const StyledHeader = styled(Grid)(
     width: 100%;
     height: 48px;
     z-index: ${theme.zIndex.appBar};
-    background-color: ${theme.palette.grey[50]};
-
-    .hidden {
-      display: none;
-    }
+    background-color: ${theme.palette.common.white};
+    border: 1px solid ${theme.palette.grey[200]};
 
     .items {
       display: flex;
+      height: 48px;
       flex-direction: row;
       justify-content: flex-end;
+      align-items: center;
 
       .item {
         width: 24px;
@@ -51,7 +50,7 @@ export const StyledHeader = styled(Grid)(
 );
 
 export const StyledSearchBody = styled.div`
-  width: 235px;
+  width: 280px;
   height: ${props => (props.tab === tabName.topic ? '208px' : '433px')};
   display: flex;
   flex-direction: column;

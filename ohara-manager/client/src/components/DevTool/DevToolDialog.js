@@ -15,23 +15,21 @@
  */
 
 import { isEmpty } from 'lodash';
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useReducer,
-  useRef,
-} from 'react';
+import moment from 'moment';
+import React, { useEffect, useState, useCallback, useReducer } from 'react';
 import styled, { css } from 'styled-components';
 import { useParams } from 'react-router-dom';
 
-import { useDevToolDialog, useTopicState, useTopicActions } from 'context';
+import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
+
+import { useDevToolDialog, useTopicState } from 'context';
 import * as inspectApi from 'api/inspectApi';
 import * as logApi from 'api/logApi';
 import * as brokerApi from 'api/brokerApi';
 import * as streamApi from 'api/streamApi';
 import Header from './Header';
 import Body from './Body';
+import StatusBar from './StatusBar';
 
 const StyledDevTool = styled.div(
   ({ theme }) => css`
@@ -40,7 +38,8 @@ const StyledDevTool = styled.div(
     width: calc(100% - 70px);
     min-width: 956px;
     height: 468px;
-    bottom: 0;
+    /* We need to leave some space for StatusBar */
+    bottom: 26px;
     z-index: ${theme.zIndex.modal};
     background-color: ${theme.palette.common.white};
 
@@ -64,20 +63,21 @@ export const tabName = {
 const initialState = {
   type: tabName.topic,
   isLoading: false,
-  // topics tab
+  /* topics tab */
   topicName: '',
   topicLimit: 10,
   topicData: [],
-  // logs tab
+  /* logs tab */
   service: '',
-  hostname: '',
-  hostLog: [],
-  logs: [],
-  stream: '',
   streams: [],
-  startTime: null,
-  endTime: null,
+  hosts: [],
+  hostname: '',
+  stream: '',
+  hostLog: [],
+  timeGroup: 'latest',
   timeRange: 10,
+  startTime: '',
+  endTime: '',
 };
 
 const reducer = (state, action) => {
@@ -92,29 +92,50 @@ const reducer = (state, action) => {
       return ref;
     case tabName.log:
       if (action.service) ref.service = action.service;
-      if (action.logs) ref.logs = action.logs;
+      if (action.streams) ref.streams = action.streams;
+      if (action.hosts) ref.hosts = action.hosts;
       if (action.hostname) ref.hostname = action.hostname;
       if (action.hostLog) ref.hostLog = action.hostLog;
       if (action.stream) ref.stream = action.stream;
-      if (action.streams) ref.streams = action.streams;
+      if (action.timeGroup) ref.timeGroup = action.timeGroup;
+      if (action.timeRange) ref.timeRange = action.timeRange;
       if (action.startTime) ref.startTime = action.startTime;
       if (action.endTime) ref.endTime = action.endTime;
-      if (action.timeRange) ref.timeRange = action.timeRange;
       return ref;
     default:
   }
 };
 
+// the react-virtualized <List> cached row style
+const listCache = new CellMeasurerCache({
+  defaultHeight: 20,
+  fixedWidth: true,
+});
+
 const DevToolDialog = () => {
   const { pipelineName } = useParams();
   const { workspace, data: topics } = useTopicState();
-  const { fetchTopics } = useTopicActions();
 
   const [tabIndex, setTabIndex] = useState('topics');
   const { isOpen, close: closeDialog } = useDevToolDialog();
 
   const [data, setDataDispatch] = useReducer(reducer, initialState);
-  const devEl = useRef(null);
+
+  useEffect(() => {
+    const isClient = typeof window === 'object';
+    if (!isClient) {
+      return false;
+    }
+
+    function handleResize() {
+      // when window resize, we force re-render the log data height
+      // give it a little delay to avoid performance issue
+      setTimeout(listCache.clearAll(), 500);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []); // Empty array ensures that effect is only run on mount and unmount
 
   const fetchTopicData = useCallback(
     async (topicLimit = 10) => {
@@ -145,52 +166,78 @@ const DevToolDialog = () => {
     fetchTopicData();
   }, [data.topicName, workspace, fetchTopicData]);
 
-  const fetchLogs = useCallback(async () => {
-    let response = {};
-    setDataDispatch({ isLoading: true });
-    switch (data.service) {
-      case 'configurator':
-        response = await logApi.getConfiguratorLog();
-        break;
-      case 'zookeeper':
-        const bkInfo = await brokerApi.get(workspace.settings.brokerClusterKey);
-        response = await logApi.getZookeeperLog(
-          bkInfo.settings.zookeeperClusterKey,
-        );
-        break;
-      case 'broker':
-        response = await logApi.getBrokerLog(
-          workspace.settings.brokerClusterKey,
-        );
-        break;
-      case 'worker':
-        response = await logApi.getWorkerLog({
-          name: workspace.settings.name,
-          group: workspace.settings.group,
-        });
-        break;
-      case 'stream':
-        if (!isEmpty(data.stream) && !isEmpty(pipelineName)) {
-          response = await logApi.getStreamLog({
-            name: data.stream,
-            group: workspace.settings.name + pipelineName,
+  const fetchLogs = useCallback(
+    async (timeSeconds = 600, hostname = '') => {
+      let response = {};
+      setDataDispatch({ isLoading: true });
+      switch (data.service) {
+        case 'configurator':
+          response = await logApi.getConfiguratorLog({
+            sinceSeconds: timeSeconds,
           });
-        }
-        break;
-      default:
-    }
-    if (!isEmpty(response)) {
-      setDataDispatch({ logs: response.logs });
-      setDataDispatch({ hostname: response.logs[0].hostname });
-      const log = response.logs.find(
-        log => log.hostname === response.logs[0].hostname,
-      );
-      if (log) {
-        setDataDispatch({ hostLog: log.value.split('\n') });
+          break;
+        case 'zookeeper':
+          const bkInfo = await brokerApi.get(
+            workspace.settings.brokerClusterKey,
+          );
+          response = await logApi.getZookeeperLog({
+            name: bkInfo.settings.zookeeperClusterKey.name,
+            group: bkInfo.settings.zookeeperClusterKey.group,
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'broker':
+          response = await logApi.getBrokerLog({
+            name: workspace.settings.brokerClusterKey.name,
+            group: workspace.settings.brokerClusterKey.group,
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'worker':
+          response = await logApi.getWorkerLog({
+            name: workspace.settings.name,
+            group: workspace.settings.group,
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'stream':
+          if (!isEmpty(data.stream) && !isEmpty(pipelineName)) {
+            response = await logApi.getStreamLog({
+              name: data.stream,
+              group: workspace.settings.name + pipelineName,
+              sinceSeconds: timeSeconds,
+            });
+          }
+          break;
+        default:
       }
-    }
-    setDataDispatch({ isLoading: false });
-  }, [data.service, data.stream, workspace, pipelineName]);
+      if (!isEmpty(response)) {
+        setDataDispatch({ hosts: response.logs.map(log => log.hostname) });
+
+        let logData = null;
+        if (isEmpty(hostname)) {
+          if (response.logs.length > 0) {
+            setDataDispatch({ hostname: response.logs[0].hostname });
+            logData = response.logs.find(
+              log => log.hostname === response.logs[0].hostname,
+            );
+          }
+        } else {
+          logData = response.logs.find(log => log.hostname === hostname);
+        }
+
+        if (logData) {
+          setDataDispatch({ hostLog: logData.value.split('\n') });
+          // when log data updated, we force re-render the log data height
+          listCache.clearAll();
+        } else {
+          setDataDispatch({ hostLog: [] });
+        }
+      }
+      setDataDispatch({ isLoading: false });
+    },
+    [data.service, data.stream, workspace, pipelineName],
+  );
 
   const fetchStreams = useCallback(async () => {
     if (!isEmpty(workspace) && !isEmpty(pipelineName)) {
@@ -202,31 +249,47 @@ const DevToolDialog = () => {
   }, [workspace, pipelineName]);
 
   useEffect(() => {
+    if (isEmpty(workspace)) return;
     if (!isEmpty(data.service)) {
       fetchLogs();
       if (data.service === 'stream') {
         fetchStreams();
       }
     }
-  }, [data.service, fetchLogs, fetchStreams]);
-
-  useEffect(() => {
-    if (isEmpty(workspace)) return;
-    if (tabIndex === 'topics') {
-      fetchTopics(workspace.settings.name);
-    }
-  }, [fetchTopics, workspace, tabIndex]);
+  }, [workspace, data.service, fetchLogs, fetchStreams]);
 
   const handleTabChange = (event, currentTab) => {
-    if (workspace && currentTab === tabName.topic)
-      fetchTopics(workspace.settings.name);
-
     setTabIndex(currentTab);
     setDataDispatch({ type: currentTab });
   };
 
+  const getStatusText = () => {
+    if (tabIndex === tabName.topic) {
+      if (isEmpty(data.topicData)) {
+        return 'No topic data';
+      } else {
+        return `${data.topicData.length} rows per query`;
+      }
+    } else {
+      if (isEmpty(data.hostLog)) {
+        return 'No log data';
+      } else {
+        switch (data.timeGroup) {
+          case 'latest':
+            return `Latest ${data.timeRange} minutes`;
+          case 'customize':
+            return `Customize from ${moment(data.startTime).format(
+              'YYYY/MM/DD hh:mm',
+            )} to ${moment(data.endTime).format('YYYY/MM/DD hh:mm')}`;
+          default:
+            return 'Unexpected time format';
+        }
+      }
+    }
+  };
+
   return (
-    <StyledDevTool className={isOpen ? '' : 'is-close'} ref={devEl}>
+    <StyledDevTool className={isOpen ? '' : 'is-close'}>
       <Header
         tabIndex={tabIndex}
         topics={topics}
@@ -236,8 +299,10 @@ const DevToolDialog = () => {
         data={data}
         fetchTopicData={fetchTopicData}
         fetchLogs={fetchLogs}
+        pipelineName={pipelineName}
       />
-      <Body tabIndex={tabIndex} data={data} dialogEl={devEl.current}></Body>
+      <Body tabIndex={tabIndex} data={data} cache={listCache}></Body>
+      <StatusBar tabIndex={tabIndex} statusText={getStatusText()} />
     </StyledDevTool>
   );
 };

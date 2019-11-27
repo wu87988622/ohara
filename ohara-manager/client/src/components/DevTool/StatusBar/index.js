@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import DevToolDialog from './DevToolDialog';
-import DataWindow from './Body/DataWindow';
+import StatusBar from './StatusBar';
 
-export { DevToolDialog, DataWindow };
+export default StatusBar;

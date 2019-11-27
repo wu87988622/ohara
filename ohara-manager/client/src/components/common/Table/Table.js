@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { isEmpty } from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
@@ -29,9 +30,10 @@ import Typography from '@material-ui/core/Typography';
 import { TableLoader } from 'components/common/Loader';
 
 const Wrapper = styled.div`
+  /* to make this table fit the parent width */
+  display: table-cell;
   border: 1px solid ${props => props.theme.palette.grey[300]};
   border-radius: ${props => props.theme.shape.borderRadius}px;
-  overflow: hidden;
 
   &.has-title {
     h6 {
@@ -39,10 +41,27 @@ const Wrapper = styled.div`
       border-bottom: 1px solid ${props => props.theme.palette.grey[300]};
     }
   }
+
+  .MuiTableCell-stickyHeader {
+    /* we need to explicit define the background-color since 
+       "sticky header" will overwrite our header color...
+    */
+    background-color: ${props => props.theme.palette.grey[100]};
+  }
 `;
 
 const StyledTableHead = styled(TableHead)`
   background-color: ${props => props.theme.palette.grey[100]};
+
+  th {
+    min-width: 120px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .empty-cell {
+    min-width: 60px;
+  }
 `;
 
 const StyledFooter = styled(TableFooter)`
@@ -50,7 +69,14 @@ const StyledFooter = styled(TableFooter)`
 `;
 
 const MuiTable = props => {
-  const { headers, title = '', isLoading = false, children, footer } = props;
+  const {
+    headers,
+    fixedHeader = false,
+    title = '',
+    isLoading = false,
+    children,
+    footer,
+  } = props;
   const lastIdx = headers.length - 1; // Make sure we have the same length as idx
 
   const hasTitle = title.length > 0 ? true : false;
@@ -62,13 +88,19 @@ const MuiTable = props => {
     <Wrapper className={`${titleClass}`}>
       <Paper elevation={1}>
         {hasTitle && <Typography variant="h6">{title}</Typography>}
-        <Table>
+        <Table stickyHeader={fixedHeader} size="small">
           <StyledTableHead>
             <TableRow>
               {headers.map((header, idx) => {
                 // The last table cell should be aligned to right
                 const align = idx === lastIdx ? 'right' : 'left';
-                return (
+                return isEmpty(header) ? (
+                  <TableCell
+                    className="empty-cell"
+                    align={align}
+                    key={header}
+                  />
+                ) : (
                   <TableCell align={align} key={header}>
                     {header}
                   </TableCell>
@@ -77,7 +109,7 @@ const MuiTable = props => {
             </TableRow>
           </StyledTableHead>
           <TableBody>{children}</TableBody>
-          {footer ? <StyledFooter>{footer}</StyledFooter> : <StyledFooter />}
+          {footer ? <StyledFooter>{footer}</StyledFooter> : null}
         </Table>
       </Paper>
     </Wrapper>
@@ -90,6 +122,7 @@ MuiTable.propTypes = {
   title: PropTypes.string,
   isLoading: PropTypes.bool,
   footer: PropTypes.any,
+  fixedHeader: PropTypes.bool,
 };
 
 export default MuiTable;

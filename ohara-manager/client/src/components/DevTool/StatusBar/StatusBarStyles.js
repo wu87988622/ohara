@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-import DevToolDialog from './DevToolDialog';
-import DataWindow from './Body/DataWindow';
+import styled, { css } from 'styled-components';
 
-export { DevToolDialog, DataWindow };
+export const StyledStatusBar = styled.div(
+  ({ theme }) => css`
+    width: 100%;
+    line-height: 26px;
+    padding-left: ${theme.spacing(1)}px;
+    height: 26px;
+    z-index: ${theme.zIndex.appBar};
+    background-color: ${props => props.theme.palette.grey[50]};
+    color: ${props => props.theme.palette.text.disabled};
+    border: 1px;
+    border-color: ${theme.palette.grey[200]};
+    border-style: solid;
+  `,
+);
