@@ -68,14 +68,18 @@ const Graph = props => {
         elementView.updateBox();
         const links = graph.current.getLinks();
         if (links.length > 0) {
-          if (!links[0].attributes.target.id) {
-            links[0].target({ id: elementView.model.id });
+          const disConnectLink = links.filter(
+            link => !link.attributes.target.id,
+          );
+          if (disConnectLink.length > 0) {
+            disConnectLink[0].target({ id: elementView.model.id });
           }
         }
       });
 
       paper.current.on('blank:pointerclick', function() {
         resetAll(this);
+        resetLink();
       });
 
       paper.current.on('cell:mouseenter', function(elementView) {
@@ -103,13 +107,17 @@ const Graph = props => {
           views[key].updateBox();
           views[key].$box.css('boxShadow', '');
         });
-        const links = graph.current.getLinks();
-        if (links.length > 0) {
-          if (!links[0].attributes.target.id) {
-            links[0].remove();
-          }
-        }
       };
+    };
+
+    const resetLink = () => {
+      const links = graph.current.getLinks();
+      if (links.length > 0) {
+        const disConnectLink = links.filter(link => !link.attributes.target.id);
+        if (disConnectLink.length > 0) {
+          disConnectLink[0].remove();
+        }
+      }
     };
 
     renderGraph();

@@ -46,6 +46,7 @@ import { AddTopicDialog } from 'components/Topic';
 import { useConnectors, useFiles } from './ToolboxHooks';
 import { enableDragAndDrop, createToolboxList } from './toolboxUtils';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
+import { TopicGraph } from '../Graph/Topic';
 
 const Toolbox = props => {
   const {
@@ -121,16 +122,42 @@ const Toolbox = props => {
   const handleAddGraph = newGraph => {
     if (newGraph) {
       setZIndex(zIndex + 1);
-      graph.addCell(
-        ConnectorGraph({
-          position,
-          value: newGraph,
-          type: connectorType,
-          icon,
-          zIndex,
-          graph,
-        }),
-      );
+      switch (graphType) {
+        case 'topic':
+          if (connectorType === 'Pipeline Only') {
+            graph.addCell(
+              TopicGraph({
+                position,
+                zIndex,
+                graph,
+                type: 'private',
+              }),
+            );
+          } else {
+            graph.addCell(
+              TopicGraph({
+                position,
+                zIndex,
+                graph,
+                value: newGraph,
+                type: 'public',
+              }),
+            );
+          }
+          break;
+        default:
+          graph.addCell(
+            ConnectorGraph({
+              position,
+              value: newGraph,
+              type: connectorType,
+              icon,
+              zIndex,
+              graph,
+            }),
+          );
+          break;
+      }
     }
 
     showMessage(`${newGraph} has been added`);
