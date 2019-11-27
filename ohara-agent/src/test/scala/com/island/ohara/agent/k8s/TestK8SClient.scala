@@ -37,6 +37,49 @@ import scala.concurrent.duration._
 class TestK8SClient extends OharaTest {
   private[this] val namespace: String = K8SClient.NAMESPACE_DEFAULT_VALUE
 
+  private[this] val podsInfo = s"""
+                    |{"items": [
+                    |    {
+                    |      "metadata": {
+                    |        "name": "057aac6a97-bk-c720992",
+                    |        "labels": {
+                    |          "createdByOhara": "k8s"
+                    |        },
+                    |        "uid": "0f7200b8-c3c1-11e9-8e80-8ae0e3c47d1e",
+                    |        "creationTimestamp": "2019-08-21T03:09:16Z"
+                    |      },
+                    |      "spec": {
+                    |        "containers": [
+                    |          {
+                    |            "name": "ohara",
+                    |            "image": "oharastream/broker:0.9.0-SNAPSHOT",
+                    |            "ports": [
+                    |              {
+                    |                "hostPort": 43507,
+                    |                "containerPort": 43507,
+                    |                "protocol": "TCP"
+                    |              }]
+                    |          }
+                    |        ],
+                    |        "nodeName": "ohara-jenkins-it-00",
+                    |        "hostname": "057aac6a97-bk-c720992-ohara-jenkins-it-00"
+                    |      },
+                    |      "status": {
+                    |        "phase": "Running",
+                    |        "conditions": [
+                    |          {
+                    |            "type": "Ready",
+                    |            "status": "True",
+                    |            "lastProbeTime": null,
+                    |            "lastTransitionTime": "2019-08-21T03:09:18Z"
+                    |          }
+                    |        ]
+                    |      }
+                    |    }
+                    |  ]
+                    |}
+       """.stripMargin
+
   @Test
   def testApiServerURLNull(): Unit = {
     an[IllegalArgumentException] should be thrownBy {
@@ -258,7 +301,7 @@ class TestK8SClient extends OharaTest {
 
   @Test
   def testLog(): Unit = {
-    val podName = "broker-pod"
+    val podName = "057aac6a97-bk-c720992"
     val s       = log(podName)
     try {
       val client         = K8SClient.builder.apiServerURL(s.url).build()
@@ -626,7 +669,11 @@ class TestK8SClient extends OharaTest {
   private[this] def log(podName: String): SimpleServer = {
     val logMessage = "start pods ......."
     toServer {
-      path("namespaces" / namespace / "pods" / podName / "log") {
+      path("namespaces" / namespace / "pods") {
+        get {
+          complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, podsInfo)))
+        }
+      } ~ path("namespaces" / namespace / "pods" / podName / "log") {
         get {
           complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, logMessage)))
         }
@@ -706,49 +753,6 @@ class TestK8SClient extends OharaTest {
   }
 
   private[this] def forceRemovePodURL(podName: String): SimpleServer = {
-    val podsInfo = s"""
-                        |{"items": [
-                        |    {
-                        |      "metadata": {
-                        |        "name": "057aac6a97-bk-c720992",
-                        |        "labels": {
-                        |          "createdByOhara": "k8s"
-                        |        },
-                        |        "uid": "0f7200b8-c3c1-11e9-8e80-8ae0e3c47d1e",
-                        |        "creationTimestamp": "2019-08-21T03:09:16Z"
-                        |      },
-                        |      "spec": {
-                        |        "containers": [
-                        |          {
-                        |            "name": "ohara",
-                        |            "image": "oharastream/broker:0.9.0-SNAPSHOT",
-                        |            "ports": [
-                        |              {
-                        |                "hostPort": 43507,
-                        |                "containerPort": 43507,
-                        |                "protocol": "TCP"
-                        |              }]
-                        |          }
-                        |        ],
-                        |        "nodeName": "ohara-jenkins-it-00",
-                        |        "hostname": "057aac6a97-bk-c720992-ohara-jenkins-it-00"
-                        |      },
-                        |      "status": {
-                        |        "phase": "Running",
-                        |        "conditions": [
-                        |          {
-                        |            "type": "Ready",
-                        |            "status": "True",
-                        |            "lastProbeTime": null,
-                        |            "lastTransitionTime": "2019-08-21T03:09:18Z"
-                        |          }
-                        |        ]
-                        |      }
-                        |    }
-                        |  ]
-                        |}
-       """.stripMargin
-
     // test communication
     toServer {
       path("namespaces" / namespace / "pods") {

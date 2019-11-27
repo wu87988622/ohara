@@ -34,7 +34,8 @@ private abstract class BasicCollieImpl(
   protected def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
     dockerCache.exec(
       node,
-      _.containerInspector(containerName)
+      _.containerInspector
+        .name(containerName)
         .asRoot()
         .append("/etc/hosts", route.map {
           case (hostname, ip) => s"$ip $hostname"

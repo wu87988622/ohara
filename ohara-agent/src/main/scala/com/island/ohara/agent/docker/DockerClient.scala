@@ -75,12 +75,6 @@ trait DockerClient extends Releasable {
   def forceRemove(name: String): Unit
 
   /**
-    * check whether the remote node is capable of running docker.
-    * @return true if remote node succeed to run hello-world container. otherwise, false.
-    */
-  def verify(): Boolean
-
-  /**
     * get the console log from the container since a related time.
     * @param name container's name
     * @return log
@@ -89,7 +83,7 @@ trait DockerClient extends Releasable {
 
   def imageNames(): Seq[String]
 
-  def containerInspector(containerName: String): Inspector
+  def containerInspector: Inspector
 
   def resources(): Seq[Resource]
 }
@@ -202,14 +196,6 @@ object DockerClient {
         )
 
     override def containerNames(): Seq[ContainerName] =
-      containerNamesAndLabels()
-        .filter {
-          case (_, labels) => labels.get(LABEL_KEY).contains(LABEL_VALUE)
-        }
-        .keys
-        .toSeq
-
-    private[this] def containerNamesAndLabels(): Map[ContainerName, Map[String, String]] =
       agent
         .execute("docker ps -a --format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\"")
         .map(_.split("\n").toSeq)
@@ -230,46 +216,61 @@ object DockerClient {
         })
         .map(_.toMap)
         .getOrElse(Map.empty)
+        .filter {
+          case (_, labels) => labels.get(LABEL_KEY).contains(LABEL_VALUE)
+        }
+        .keys
+        .toSeq
 
-    override def stop(name: String): Unit = agent.execute(s"docker stop $name")
+    private[this] def containerName(name: String): ContainerName =
+      containerNames()
+        .find(_.name == CommonUtils.requireNonEmpty(name))
+        .getOrElse(throw new NoSuchElementException(s"$name does not exists!!!"))
 
-    override def remove(name: String): Unit = agent.execute(s"docker rm $name")
+    override def stop(name: String): Unit = agent.execute(s"docker stop ${containerName(name).id}")
 
-    override def forceRemove(name: String): Unit = agent.execute(s"docker rm -f $name")
+    override def remove(name: String): Unit = agent.execute(s"docker rm ${containerName(name).id}")
 
-    override def verify(): Boolean =
-      agent.execute("docker run --rm hello-world").exists(_.contains("Hello from Docker!"))
+    override def forceRemove(name: String): Unit = agent.execute(s"docker rm -f ${containerName(name).id}")
 
     override def log(name: String, sinceSeconds: Option[Long]): String =
       agent
-        .execute(s"docker container logs $name ${sinceSeconds.map(seconds => s"--since=${seconds}s").getOrElse("")}")
+        .execute(
+          s"docker container logs ${containerName(name).id} ${sinceSeconds.map(seconds => s"--since=${seconds}s").getOrElse("")}"
+        )
         .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
         .getOrElse(throw new IllegalArgumentException(s"no response from ${agent.hostname}"))
 
-    override def containerInspector(containerName: String): Inspector =
-      containerInspector(containerName, false)
+    override def containerInspector: Inspector =
+      containerInspector(null, false)
 
-    private[this] def containerInspector(containerName: String, beRoot: Boolean): Inspector =
+    private[this] def containerInspector(_name: String, beRoot: Boolean): Inspector =
       new Inspector {
         private[this] def rootConfig: String = if (beRoot) "-u root" else ""
+        private[this] var name: String       = _name
+        override def name(name: String): Inspector = {
+          this.name = CommonUtils.requireNonEmpty(name)
+          this
+        }
 
         override def cat(path: String): Option[String] =
-          agent.execute(s"""docker exec $rootConfig $containerName /bin/bash -c \"cat $path\"""")
+          agent.execute(s"""docker exec $rootConfig ${containerName(name).id} /bin/bash -c \"cat $path\"""")
 
         override def append(path: String, content: Seq[String]): String = {
-          agent.execute(s"""docker exec $rootConfig $containerName /bin/bash -c \"echo \\"${content
+          agent.execute(s"""docker exec $rootConfig ${containerName(name).id} /bin/bash -c \"echo \\"${content
             .mkString("\n")}\\" >> $path\"""")
           cat(path).get
         }
 
         override def write(path: String, content: Seq[String]): String = {
           agent.execute(
-            s"""docker exec $rootConfig $containerName /bin/bash -c \"echo \\"${content.mkString("\n")}\\" > $path\""""
+            s"""docker exec $rootConfig ${containerName(name).id} /bin/bash -c \"echo \\"${content
+              .mkString("\n")}\\" > $path\""""
           )
           cat(path).get
         }
 
-        override def asRoot(): Inspector = containerInspector(containerName, true)
+        override def asRoot(): Inspector = containerInspector(name, true)
       }
 
     override def toString: String = agent.toString
@@ -278,59 +279,61 @@ object DockerClient {
       Future
         .sequence(
           containerNames()
-            .map(_.name)
             .map(
-              name =>
-                Future { Some(container(name)) }.recover {
+              containerName =>
+                Future {
+                  Some(
+                    agent
+                      .execute(s"docker inspect --format '{{json .}}' --size ${containerName.id}")
+                      .map(_.parseJson)
+                      .map(DETAILS_FORMAT.read)
+                      .map {
+                        details =>
+                          ContainerInfo(
+                            nodeName = agent.hostname,
+                            id = details.Id,
+                            imageName = details.Config.Image,
+                            // we prefer to use enum to list the finite state and the constant strings are all upper case
+                            // hence, we convert the string to upper case here.
+                            state = details.State.Status.toUpperCase,
+                            kind = "DOCKER",
+                            name = containerName.name,
+                            portMappings = details.NetworkSettings.Ports
+                              .filter(_._1.contains("/tcp"))
+                              .flatMap {
+                                case (portAndProtocol, hostIpAndPort) =>
+                                  hostIpAndPort
+                                    .map(_.HostPort.toInt)
+                                    .map(
+                                      hostPort =>
+                                        PortMapping(
+                                          hostIp = agent.hostname,
+                                          hostPort = hostPort,
+                                          containerPort = portAndProtocol.replace("/tcp", "").toInt
+                                        )
+                                    )
+                              }
+                              .toSeq,
+                            size = details.SizeRw,
+                            environments = details.Config.Env.flatMap { line =>
+                              val index = line.indexOf("=")
+                              if (index != 0 && index != line.length - 1)
+                                Some(line.substring(0, index) -> line.substring(index + 1))
+                              else None
+                            }.toMap,
+                            hostname = details.Config.Hostname
+                          )
+                      }
+                      .getOrElse(throw new IllegalArgumentException(s"no response from ${agent.hostname}"))
+                  )
+                }.recover {
                   case e: Throwable =>
-                    DockerClient.LOG.error(s"fail to inspect docker:$name", e)
+                    DockerClient.LOG.error(s"fail to inspect docker:${containerName.name}", e)
                     None
                 }
             )
         )
         .map(_.flatten)
-
-    private[this] def container(name: String): ContainerInfo =
-      agent
-        .execute(s"docker inspect --format '{{json .}}' --size $name")
-        .map(_.parseJson)
-        .map(DETAILS_FORMAT.read)
-        .map { details =>
-          ContainerInfo(
-            nodeName = agent.hostname,
-            id = details.Id,
-            imageName = details.Config.Image,
-            // we prefer to use enum to list the finite state and the constant strings are all upper case
-            // hence, we convert the string to upper case here.
-            state = details.State.Status.toUpperCase,
-            kind = "DOCKER",
-            name = name,
-            portMappings = details.NetworkSettings.Ports
-              .filter(_._1.contains("/tcp"))
-              .flatMap {
-                case (portAndProtocol, hostIpAndPort) =>
-                  hostIpAndPort
-                    .map(_.HostPort.toInt)
-                    .map(
-                      hostPort =>
-                        PortMapping(
-                          hostIp = agent.hostname,
-                          hostPort = hostPort,
-                          containerPort = portAndProtocol.replace("/tcp", "").toInt
-                        )
-                    )
-              }
-              .toSeq,
-            size = details.SizeRw,
-            environments = details.Config.Env.flatMap { line =>
-              val index = line.indexOf("=")
-              if (index != 0 && index != line.length - 1) Some(line.substring(0, index) -> line.substring(index + 1))
-              else None
-            }.toMap,
-            hostname = details.Config.Hostname
-          )
-        }
-        .getOrElse(throw new IllegalArgumentException(s"no response from ${agent.hostname}"))
 
     override def imageNames(): Seq[String] =
       agent
@@ -359,6 +362,8 @@ object DockerClient {
     * used to "touch" a running container. For example, you can cat a file from a running container
     */
   sealed trait Inspector {
+    def name(name: String): Inspector
+
     /**
       * convert the user to root. If the files accessed by inspect requires the root permission, you can run this method
       * before doing inspect action.

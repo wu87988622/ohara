@@ -140,6 +140,10 @@ object K8SClient {
                   })
             )
 
+        private[this] def container(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+          containers()
+            .map(_.find(_.name == name).getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist")))
+
         override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
           HttpExecutor.SINGLETON
             .get[NodeItems, K8SErrorResponse](s"$k8sApiServerURL/nodes/$nodeName")
@@ -175,13 +179,16 @@ object K8SClient {
         override def log(name: String, sinceSeconds: Option[Long])(
           implicit executionContext: ExecutionContext
         ): Future[String] =
-          HttpExecutor.SINGLETON
-            .getOnlyMessage(
-              sinceSeconds
-                .map(seconds => s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log?sinceSeconds=$seconds")
-                .getOrElse(s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log")
-            )
-            .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
+          container(name)
+            .flatMap { _ =>
+              HttpExecutor.SINGLETON
+                .getOnlyMessage(
+                  sinceSeconds
+                    .map(seconds => s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log?sinceSeconds=$seconds")
+                    .getOrElse(s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log")
+                )
+                .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
+            }
 
         override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]] =
           HttpExecutor.SINGLETON
@@ -401,8 +408,7 @@ object K8SClient {
         private[this] def removePod(name: String, isForce: Boolean)(
           implicit executionContext: ExecutionContext
         ): Future[ContainerInfo] =
-          containers()
-            .map(_.find(_.name == name).getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist")))
+          container(name)
             .flatMap(container => {
               if (isForce)
                 HttpExecutor.SINGLETON.delete[K8SErrorResponse](

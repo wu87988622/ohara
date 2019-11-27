@@ -98,9 +98,6 @@ class TestDockerClient extends IntegrationTest {
   }
 
   @Test
-  def testVerify(): Unit = runTest(_.verify() shouldBe true)
-
-  @Test
   def testRoute(): Unit = runTest { client =>
     client
       .containerCreator()
@@ -109,7 +106,7 @@ class TestDockerClient extends IntegrationTest {
       .imageName(imageName)
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
-    val hostFile = client.containerInspector(name).cat("/etc/hosts").get
+    val hostFile = client.containerInspector.name(name).cat("/etc/hosts").get
     hostFile.contains("192.168.123.123") shouldBe true
     hostFile.contains("ABC") shouldBe true
   }
@@ -179,9 +176,9 @@ class TestDockerClient extends IntegrationTest {
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .create()
     val container = result(client.containers()).find(_.name == name).get
-    client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
-    client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
-    client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
+    client.containerInspector.name(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
+    client.containerInspector.name(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
+    client.containerInspector.name(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
   }
 
   @After
