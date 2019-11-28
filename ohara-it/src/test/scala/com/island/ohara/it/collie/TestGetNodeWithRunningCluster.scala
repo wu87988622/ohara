@@ -16,14 +16,14 @@
 
 package com.island.ohara.it.collie
 
-import com.island.ohara.agent.Agent
+import com.island.ohara.agent.DataCollie
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.category.CollieGroup
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
@@ -34,23 +34,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestGetNodeWithRunningCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
 
-  private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
+  private[this] val nameHolder: ServiceNameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
 
   private[this] val configurator: Configurator = Configurator.builder.build()
 
   @Before
   def setup(): Unit = {
-    nodes.foreach { node =>
-      val dockerClient =
-        DockerClient(
-          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-        )
-      try {
+    val client = DockerClient(DataCollie(nodes))
+    try {
+      val images = result(client.imageNames())
+      nodes.foreach { node =>
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true
+          images(node.hostname) should contain(ZookeeperApi.IMAGE_NAME_DEFAULT)
         )
-      } finally dockerClient.close()
-    }
+      }
+    } finally client.close()
+
     nodes.foreach { node =>
       result(
         NodeApi.access

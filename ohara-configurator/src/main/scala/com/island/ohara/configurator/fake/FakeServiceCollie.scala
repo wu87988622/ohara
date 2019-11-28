@@ -50,7 +50,7 @@ private[configurator] class FakeServiceCollie(
     // do nothing
   }
 
-  override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+  override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     dataCollie.values[Node]().map { nodes =>
       nodes
         .map(
@@ -70,7 +70,7 @@ private[configurator] class FakeServiceCollie(
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
     Future.successful(Seq.empty)
 
-  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
     dataCollie
       .values[Node]()
       .map(
@@ -79,14 +79,14 @@ private[configurator] class FakeServiceCollie(
             .map(node => {
               val cpuResource    = Resource.cpu(32, Option(positiveValue(CommonUtils.randomDouble())))
               val memoryResource = Resource.memory(137438953472L, Option(positiveValue(CommonUtils.randomDouble())))
-              (node, Seq(cpuResource, memoryResource))
+              (node.hostname, Seq(cpuResource, memoryResource))
             })
             .toMap
       )
 
   private[this] def positiveValue(value: Double): Double = Math.abs(value)
 
-  override def log(name: String, sinceSeconds: Option[Long])(
+  override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[(ContainerName, String)] =
     Future.failed(new NoSuchElementException)

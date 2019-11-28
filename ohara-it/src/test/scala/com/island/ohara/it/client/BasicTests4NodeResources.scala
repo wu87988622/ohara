@@ -20,8 +20,7 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.{IntegrationTest, ServiceNameHolder}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
@@ -30,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 abstract class BasicTests4NodeResources extends IntegrationTest {
   protected def nodes: Seq[Node]
   protected def configurator: Configurator
-  protected def nameHolder: ClusterNameHolder
+  protected def nameHolder: ServiceNameHolder
 
   private[this] def nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
 

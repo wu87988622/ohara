@@ -16,12 +16,13 @@
 
 package com.island.ohara.it.connector.jio
 
+import com.island.ohara.agent.DataCollie
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -36,7 +37,7 @@ abstract class BasicIntegrationTestsOfJsonIoOnDocker extends BasicIntegrationTes
     nodes.foreach(node => result(nodeApi.request.node(node).create()))
     configurator
   }
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes)
+  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
 
   /**
     * we initialize the clusters in setup phase so there is nothing in construction .

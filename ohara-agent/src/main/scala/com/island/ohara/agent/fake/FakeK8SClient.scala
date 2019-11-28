@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent.fake
 
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.k8s._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
@@ -23,9 +24,9 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, Z
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], containerName: String) extends K8SClient {
-  override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
+  override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]] =
     Future.successful {
-      Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT)
+      Map("node1" -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT))
     }
 
   override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] =
@@ -51,26 +52,30 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
       )
     }
 
-  override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
-    throw new UnsupportedOperationException("FakeK8SClient not support remove function")
+  override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    Future.failed(new UnsupportedOperationException("FakeK8SClient not support remove function"))
 
   override def log(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[String] =
-    Future.successful(s"fake k8s log for $name")
+  ): Future[(ContainerName, String)] =
+    containerName(name).map(_ -> s"fake k8s log for $name")
 
   override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] =
     Future.successful(Seq.empty)
 
-  override def containerCreator()(implicit executionContext: ExecutionContext): K8SClient.ContainerCreator =
+  override def containerCreator: K8SClient.ContainerCreator =
     throw new UnsupportedOperationException("FakeK8SClient not support containerCreator function")
 
-  override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
-    throw new UnsupportedOperationException("FakeK8SClient not support force remove function")
+  override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    Future.failed(new UnsupportedOperationException("FakeK8SClient not support force remove function"))
 
   override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]] =
     throw new UnsupportedOperationException("FakeK8SClient not support force nodes function")
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[NodeApi.Resource]]] =
     Future.successful(Map.empty)
+
+  override def close(): Unit = {
+    // do nothing
+  }
 }

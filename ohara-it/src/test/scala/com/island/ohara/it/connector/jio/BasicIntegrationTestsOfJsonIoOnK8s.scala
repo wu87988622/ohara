@@ -20,8 +20,7 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -36,7 +35,7 @@ abstract class BasicIntegrationTestsOfJsonIoOnK8s extends BasicIntegrationTestsO
     nodes.foreach(node => result(nodeApi.request.node(node).create()))
     configurator
   }
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(EnvTestingUtils.k8sClient())
 
   /**
     * we initialize the clusters in setup phase so there is nothing in construction .

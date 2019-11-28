@@ -70,19 +70,15 @@ trait BrokerCollie extends Collie {
 
     resolveRequiredInfos.flatMap {
       case (existentNodes, newNodes, zookeeperClusterInfo) =>
+        val routes = resolveHostNames(
+          (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet
+        )
         val successfulContainersFuture =
           if (newNodes.isEmpty) Future.successful(Seq.empty)
           else {
             val zookeepers = zookeeperClusterInfo.nodeNames
               .map(nodeName => s"$nodeName:${zookeeperClusterInfo.clientPort}")
               .mkString(",")
-
-            val route = resolveHostNames(
-              (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet
-            )
-            existentNodes.foreach {
-              case (node, container) => hookOfNewRoute(node, container, route)
-            }
 
             // ssh connection is slow so we submit request by multi-thread
             Future.sequence(newNodes.map { newNode =>
@@ -138,7 +134,7 @@ trait BrokerCollie extends Collie {
                 .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
                 .done
                 .build
-              doCreator(executionContext, containerInfo, newNode, route, arguments)
+              doCreator(executionContext, containerInfo, newNode, routes, arguments)
                 .map(_ => Some(containerInfo))
                 .recover {
                   case e: Throwable =>
@@ -147,53 +143,22 @@ trait BrokerCollie extends Collie {
                 }
             })
           }
-        successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
+        successfulContainersFuture.map(_.flatten.toSeq).flatMap { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
           postCreate(
-            ClusterStatus(
+            clusterStatus = ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
               kind = ClusterStatus.Kind.BROKER,
               state = toClusterState(aliveContainers).map(_.name),
               error = None
-            )
+            ),
+            existentNodes = existentNodes,
+            routes = routes
           )
         }
     }
-  }
-
-  /**
-    * Update exist node info
-    * @param node node object
-    * @param container container information
-    * @param route ip-host mapping list
-    */
-  protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
-    //Nothing
-  }
-
-  /**
-    * Please implement this function to create the container to a different platform
-    * @param executionContext execution context
-    * @param containerInfo container information
-    * @param node node object
-    * @param route ip-host mapping
-    */
-  protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit]
-
-  /**
-    * After creating the broker, need to processor other things
-    * @param clusterStatus broker cluster information
-    */
-  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
-    //Default Nothing
   }
 
   /**
@@ -221,13 +186,6 @@ trait BrokerCollie extends Collie {
         error = None
       )
     )
-
-  /**
-    * there is new route to the node. the sub class can update the running container to apply new route.
-    */
-  protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
-    //Nothing
-  }
 }
 
 object BrokerCollie {

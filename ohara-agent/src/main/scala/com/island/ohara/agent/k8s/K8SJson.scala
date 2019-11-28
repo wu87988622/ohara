@@ -16,7 +16,6 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
 import com.island.ohara.client.HttpExecutor
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
@@ -44,11 +43,10 @@ object K8SJson {
     ports: Option[Seq[ContainerPort]],
     env: Option[Seq[EnvVar]],
     imagePullPolicy: Option[ImagePullPolicy],
-    volumeMounts: Option[Seq[VolumeMount]],
     command: Option[Seq[String]],
     args: Option[Seq[String]]
   )
-  implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat8(Container)
+  implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat7(Container)
 
   final case class ConfigMapVolumeSource(name: String)
   implicit val CONFIGMAP_VOLUME_SOURCE_JSON_FORMAT: RootJsonFormat[ConfigMapVolumeSource] = jsonFormat1(

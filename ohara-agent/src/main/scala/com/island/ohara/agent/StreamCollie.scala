@@ -74,15 +74,15 @@ trait StreamCollie extends Collie {
         }
         .flatMap {
           case (newNodes, brokerClusterInfo, fileInfo) =>
+            val routes = resolveHostNames(
+              (newNodes.map(_.hostname)
+                ++ brokerClusterInfo.nodeNames
+              // make sure the stream can connect to configurator
+                ++ Seq(fileInfo.url.get.getHost)).toSet
+            )
             val successfulContainersFuture =
               if (newNodes.isEmpty) Future.successful(Seq.empty)
               else {
-                val route = resolveHostNames(
-                  (newNodes.map(_.hostname)
-                    ++ brokerClusterInfo.nodeNames
-                  // make sure the stream can connect to configurator
-                    ++ Seq(fileInfo.url.get.getHost)).toSet
-                )
                 // ssh connection is slow so we submit request by multi-thread
                 Future.sequence(newNodes.map { newNode =>
                   val containerInfo = ContainerInfo(
@@ -132,7 +132,7 @@ trait StreamCollie extends Collie {
                         case (k, v) => s"$k=$v"
                       }
 
-                  doCreator(executionContext, containerInfo, newNode, route, arguments)
+                  doCreator(executionContext, containerInfo, newNode, routes, arguments)
                     .map(_ => Some(containerInfo))
                     .recover {
                       case e: Throwable =>
@@ -142,16 +142,18 @@ trait StreamCollie extends Collie {
                 })
               }
 
-            successfulContainersFuture.map(_.flatten.toSeq).map { aliveContainers =>
+            successfulContainersFuture.map(_.flatten.toSeq).flatMap { aliveContainers =>
               postCreate(
-                ClusterStatus(
+                clusterStatus = ClusterStatus(
                   group = creation.group,
                   name = creation.name,
                   containers = aliveContainers,
                   kind = ClusterStatus.Kind.STREAM,
                   state = toClusterState(aliveContainers).map(_.name),
                   error = None
-                )
+                ),
+                existentNodes = Map.empty,
+                routes = routes
               )
             }
         }
@@ -182,18 +184,6 @@ trait StreamCollie extends Collie {
     )
 
   override val kind: Kind = Kind.STREAM
-
-  protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit]
-
-  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
-    //Default do nothing
-  }
 }
 
 object StreamCollie {

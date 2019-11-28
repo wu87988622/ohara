@@ -20,8 +20,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, Z
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.{IntegrationTest, ServiceNameHolder}
 import org.junit.{After, Before}
 import org.scalatest.Matchers._
 
@@ -33,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
   protected def configurator: Configurator
-  protected def nameHolder: ClusterNameHolder
+  protected def nameHolder: ServiceNameHolder
   protected val freePort: Int = CommonUtils.availablePort()
 
   private[this] def zkApi: ZookeeperApi.Access =

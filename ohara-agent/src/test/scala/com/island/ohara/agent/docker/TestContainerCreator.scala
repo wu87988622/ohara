@@ -23,28 +23,34 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 class TestContainerCreator extends OharaTest {
-  private[this] def fake(): DockerClient.Creator =
+  private[this] def fake(): DockerClient.ContainerCreator =
     (
+      nodeName: String,
       hostname: String,
       imageName: String,
       name: String,
-      command: String,
+      command: Option[String],
       arguments: Seq[String],
       ports: Map[Int, Int],
       envs: Map[String, String],
-      route: Map[String, String]
-    ) => {
-      // we check only the required arguments
-      CommonUtils.requireNonEmpty(hostname)
-      CommonUtils.requireNonEmpty(imageName)
-      CommonUtils.requireNonEmpty(name)
-      Objects.requireNonNull(command)
-      Objects.requireNonNull(ports)
-      Objects.requireNonNull(envs)
-      Objects.requireNonNull(route)
-      Objects.requireNonNull(arguments)
-    }
+      routes: Map[String, String],
+      executionContext: ExecutionContext
+    ) =>
+      Future.successful {
+        // we check only the required arguments
+        CommonUtils.requireNonEmpty(nodeName)
+        CommonUtils.requireNonEmpty(hostname)
+        CommonUtils.requireNonEmpty(imageName)
+        CommonUtils.requireNonEmpty(name)
+        Objects.requireNonNull(command)
+        Objects.requireNonNull(ports)
+        Objects.requireNonNull(envs)
+        Objects.requireNonNull(routes)
+        Objects.requireNonNull(arguments)
+      }
 
   @Test
   def nullHostname(): Unit = an[NullPointerException] should be thrownBy fake().hostname(null)
@@ -83,27 +89,16 @@ class TestContainerCreator extends OharaTest {
   def emptyEnvs(): Unit = fake().envs(Map.empty)
 
   @Test
-  def nullRoute(): Unit = an[NullPointerException] should be thrownBy fake().route(null)
+  def nullRoute(): Unit = an[NullPointerException] should be thrownBy fake().routes(null)
 
   @Test
-  def emptyRoute(): Unit = fake().route(Map.empty)
+  def emptyRoute(): Unit = fake().routes(Map.empty)
 
   @Test
   def nullArguments(): Unit = an[NullPointerException] should be thrownBy fake().arguments(null)
 
   @Test
   def emptyArguments(): Unit = fake().arguments(Seq.empty)
-
-  @Test
-  def testExecuteNormalCases(): Unit = {
-    fake().imageName(CommonUtils.randomString(5)).create()
-    fake().name(CommonUtils.randomString()).imageName(CommonUtils.randomString(5)).create()
-    fake()
-      .name(CommonUtils.randomString())
-      .hostname(CommonUtils.randomString(5))
-      .imageName(CommonUtils.randomString(5))
-      .create()
-  }
 
   @Test
   def testExecuteWithoutRequireArguments(): Unit =

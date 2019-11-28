@@ -24,19 +24,19 @@ import scala.concurrent.{ExecutionContext, Future}
 
 // accessible to configurator
 private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient) extends ServiceCollie {
-  override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(dataCollie, k8sClient)
+  override val zookeeperCollie: ZookeeperCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with ZookeeperCollie
 
-  override val brokerCollie: BrokerCollie = new K8SBrokerCollieImpl(dataCollie, zookeeperCollie, k8sClient)
+  override val brokerCollie: BrokerCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with BrokerCollie
 
-  override val workerCollie: WorkerCollie = new K8SWorkerCollieImpl(dataCollie, brokerCollie, k8sClient)
+  override val workerCollie: WorkerCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with WorkerCollie
 
-  override val streamCollie: StreamCollie = new K8SStreamCollieImpl(dataCollie, brokerCollie, k8sClient)
+  override val streamCollie: StreamCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with StreamCollie
 
-  override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+  override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     dataCollie.values[Node]().flatMap { nodes =>
       Future
         .traverse(nodes) { node =>
-          k8sClient.images(node.name).map(images => node -> images)
+          k8sClient.imageNames(node.name).map(images => node -> images)
         }
         .map(_.toMap)
     }
@@ -52,41 +52,15 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
       })
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
-    k8sClient
-      .containers()
-      .map(
-        _.map(
-          container =>
-            new ContainerName(
-              id = container.id,
-              name = container.name,
-              imageName = container.imageName,
-              nodeName = container.nodeName
-            )
-        )
-      )
+    k8sClient.containerNames()
 
-  override def log(name: String, sinceSeconds: Option[Long])(
+  override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[(ContainerName, String)] =
-    containerNames()
-      .map(_.find(_.name == name).getOrElse(throw new NoSuchElementException(s"$name does not exist")))
-      .flatMap(containerName => k8sClient.log(containerName.name, sinceSeconds).map(containerName -> _))
+    k8sClient.log(containerName, sinceSeconds)
 
-  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] = {
-    k8sClient
-      .resources()
-      .flatMap(
-        k8sNodeResource =>
-          dataCollie.values[Node]().map {
-            _.flatMap(
-              node =>
-                if (k8sNodeResource.contains(node.hostname)) Seq(node -> k8sNodeResource(node.hostname))
-                else Seq.empty
-            ).toMap
-          }
-      )
-  }
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
+    k8sClient.resources()
 
   override def close(): Unit = {
     // do nothing

@@ -26,8 +26,7 @@ import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.{IntegrationTest, ServiceNameHolder}
 import com.island.ohara.kafka.Producer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
@@ -45,7 +44,7 @@ abstract class BasicTests4Stream extends IntegrationTest {
   private[this] val port             = publicPort.getOrElse(invalidPort)
 
   protected val nodes: Seq[Node]
-  protected val nameHolder: ClusterNameHolder
+  protected val nameHolder: ServiceNameHolder
 
   protected def createConfigurator(hostname: String, port: Int): Configurator
 

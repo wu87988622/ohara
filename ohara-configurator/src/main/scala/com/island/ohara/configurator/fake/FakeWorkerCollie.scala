@@ -19,8 +19,7 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentSkipListMap
 
 import com.island.ohara.agent.{DataCollie, NoSuchClusterException, WorkerCollie}
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
@@ -71,13 +70,4 @@ private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectio
       Future.successful(if (r == null) fake else r)
     } else
       Future.failed(new NoSuchClusterException(s"cluster:${cluster.key} is not running"))
-
-  override protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: NodeApi.Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit] =
-    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
 }

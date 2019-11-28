@@ -19,7 +19,7 @@ package com.island.ohara.it.collie
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.EnvTestingUtils
+import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
 import com.island.ohara.it.category.CollieGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
@@ -31,7 +31,7 @@ class TestCollieOnK8s extends BasicTests4Collie {
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
   override protected val configurator: Configurator =
     Configurator.builder.k8sClient(EnvTestingUtils.k8sClient()).build()
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(EnvTestingUtils.k8sClient())
 
   @Before
   final def setup(): Unit =

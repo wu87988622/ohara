@@ -18,33 +18,27 @@ package com.island.ohara.agent.k8s
 
 import java.util.Objects
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import com.island.ohara.agent.container.{ContainerClient, ContainerName}
 import com.island.ohara.agent.k8s.K8SClient.ContainerCreator
 import com.island.ohara.agent.k8s.K8SJson._
+import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.NodeApi.Resource
-import com.island.ohara.client.{Enum, HttpExecutor}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-import com.island.ohara.common.pattern.Builder
 
 case class K8SStatusInfo(isHealth: Boolean, message: String)
-case class K8SNodeReport(nodeName: String)
+case class K8SNodeReport(nodeName: String, imageNames: Seq[String])
 case class Report(nodeName: String, isK8SNode: Boolean, statusInfo: Option[K8SStatusInfo])
 
-trait K8SClient {
-  def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
-  def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
-  def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
-  def log(name: String, sinceSeconds: Option[Long])(implicit executionContext: ExecutionContext): Future[String]
+trait K8SClient extends ContainerClient {
+  override def containerCreator: ContainerCreator
   def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
-  def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
-  def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
   def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report]
   def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]]
-  def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]]
 }
 
 object K8SClient {
@@ -80,7 +74,7 @@ object K8SClient {
       */
     @Optional("default value is default")
     def namespace(k8sNamespace: String): K8SClientBuilder = {
-      if (k8sNamespace == null || k8sNamespace.isEmpty) this.k8sNamespace = NAMESPACE_DEFAULT_VALUE
+      if (CommonUtils.isEmpty(k8sNamespace)) this.k8sNamespace = NAMESPACE_DEFAULT_VALUE
       else this.k8sNamespace = k8sNamespace
       this
     }
@@ -101,11 +95,10 @@ object K8SClient {
       * @return K8SClient object
       */
     def build(): K8SClient = {
-      if (k8sApiServerURL == null || k8sApiServerURL.isEmpty)
-        throw new IllegalArgumentException(s"invalid kubernetes api:$k8sApiServerURL")
-      if (k8sNamespace == null) k8sNamespace = NAMESPACE_DEFAULT_VALUE
+      CommonUtils.requireNonEmpty(k8sApiServerURL)
+      CommonUtils.requireNonEmpty(k8sNamespace)
 
-      new K8SClient() with SprayJsonSupport {
+      new K8SClient() {
         override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
           HttpExecutor.SINGLETON
             .get[PodList, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$k8sNamespace/pods")
@@ -140,16 +133,11 @@ object K8SClient {
                   })
             )
 
-        private[this] def container(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
-          containers()
-            .map(_.find(_.name == name).getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist")))
-
-        override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
-          HttpExecutor.SINGLETON
-            .get[NodeItems, K8SErrorResponse](s"$k8sApiServerURL/nodes/$nodeName")
-            .map(x => {
-              x.status.images.flatMap(_.names)
-            })
+        override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]] =
+          nodes()
+            .map(_.map { node =>
+              node.nodeName -> node.imageNames
+            }.toMap)
 
         override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] =
           HttpExecutor.SINGLETON.get[K8SNodeInfo, K8SErrorResponse](s"$k8sApiServerURL/nodes").map { r =>
@@ -170,24 +158,26 @@ object K8SClient {
             Report(nodeName, isK8SNode, statusInfo)
           }
 
-        override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+        override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
           removePod(name, true)
 
-        override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+        override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
           removePod(name, false)
 
         override def log(name: String, sinceSeconds: Option[Long])(
           implicit executionContext: ExecutionContext
-        ): Future[String] =
-          container(name)
-            .flatMap { _ =>
+        ): Future[(ContainerName, String)] =
+          containerName(name)
+            .flatMap { containerName =>
               HttpExecutor.SINGLETON
                 .getOnlyMessage(
                   sinceSeconds
                     .map(seconds => s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log?sinceSeconds=$seconds")
                     .getOrElse(s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log")
                 )
-                .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
+                .map(
+                  msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else containerName -> msg
+                )
             }
 
         override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]] =
@@ -260,61 +250,20 @@ object K8SClient {
         override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]] = {
           HttpExecutor.SINGLETON
             .get[K8SNodeInfo, K8SErrorResponse](s"$k8sApiServerURL/nodes")
-            .map(nodeInfo => nodeInfo.items.map(item => K8SNodeReport(item.metadata.name)))
+            .map(
+              nodeInfo =>
+                nodeInfo.items.map(
+                  item => K8SNodeReport(nodeName = item.metadata.name, imageNames = item.status.images.flatMap(_.names))
+                )
+            )
         }
 
-        override def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator =
+        override def containerCreator: ContainerCreator =
           new ContainerCreator() {
-            private[this] var name: String                     = CommonUtils.randomString()
             private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
             private[this] var restartPolicy: RestartPolicy     = RestartPolicy.Never
-            private[this] var imageName: String                = _
-            private[this] var hostname: String                 = CommonUtils.randomString(10)
-            private[this] var nodeName: String                 = _
             private[this] val domainName: String               = "default"
             private[this] val labelName: String                = "ohara"
-            private[this] var envs: Map[String, String]        = Map.empty
-            private[this] var ports: Map[Int, Int]             = Map.empty
-            private[this] var routes: Map[String, String]      = Map.empty
-            private[this] var command: Seq[String]             = Seq.empty
-            private[this] var args: Seq[String]                = Seq.empty
-            private[this] implicit var executionContext: ExecutionContext =
-              scala.concurrent.ExecutionContext.Implicits.global
-
-            override def name(name: String): ContainerCreator = {
-              this.name = CommonUtils.requireNonEmpty(name)
-              this
-            }
-
-            override def imageName(imageName: String): ContainerCreator = {
-              this.imageName = CommonUtils.requireNonEmpty(imageName)
-              this
-            }
-
-            override def hostname(hostname: String): ContainerCreator = {
-              this.hostname = CommonUtils.requireNonEmpty(hostname)
-              this
-            }
-
-            override def envs(envs: Map[String, String]): ContainerCreator = {
-              this.envs = Objects.requireNonNull(envs)
-              this
-            }
-
-            override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-              this.ports = Objects.requireNonNull(ports)
-              this
-            }
-
-            override def routes(routes: Map[String, String]): ContainerCreator = {
-              this.routes = Objects.requireNonNull(routes)
-              this
-            }
-
-            override def nodeName(nodeName: String): ContainerCreator = {
-              this.nodeName = CommonUtils.requireNonEmpty(nodeName)
-              this
-            }
 
             @Optional
             override def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator = {
@@ -328,31 +277,22 @@ object K8SClient {
               this
             }
 
-            @Optional("default is empty")
-            override def command(command: Seq[String]): ContainerCreator = {
-              this.command = Objects.requireNonNull(command)
-              this
-            }
-
-            @Optional("default is empty")
-            override def arguments(args: Seq[String]): ContainerCreator = {
-              this.args = Objects.requireNonNull(args)
-              this
-            }
-
-            override def threadPool(executionContext: ExecutionContext): ContainerCreator = {
-              this.executionContext = Objects.requireNonNull(executionContext)
-              this
-            }
-
-            override def create(): Future[Option[ContainerInfo]] = {
+            override protected def doCreate(
+              nodeName: String,
+              hostname: String,
+              imageName: String,
+              name: String,
+              command: Option[String],
+              arguments: Seq[String],
+              ports: Map[Int, Int],
+              envs: Map[String, String],
+              routes: Map[String, String],
+              executionContext: ExecutionContext
+            ): Future[Unit] = {
               // required fields
-              CommonUtils.requireNonEmpty(nodeName)
-              CommonUtils.requireNonEmpty(hostname)
               CommonUtils.requireNonEmpty(domainName)
-              CommonUtils.requireNonEmpty(imageName)
               CommonUtils.requireNonEmpty(labelName)
-
+              implicit val pool: ExecutionContext = executionContext
               nodeNameIPInfo
                 .map { ipInfo =>
                   PodSpec(
@@ -367,9 +307,8 @@ object K8SClient {
                         env = if (envs.isEmpty) None else Some(envs.map(x => EnvVar(x._1, Some(x._2))).toSeq),
                         ports = if (ports.isEmpty) None else Some(ports.map(x => ContainerPort(x._1, x._2)).toSeq),
                         imagePullPolicy = Some(imagePullPolicy),
-                        volumeMounts = None,
-                        command = if (command.isEmpty) None else Some(command),
-                        args = if (args.isEmpty) None else Some(args)
+                        command = command.map(Seq(_)),
+                        args = if (arguments.isEmpty) None else Some(arguments)
                       )
                     ),
                     restartPolicy = Some(restartPolicy),
@@ -377,37 +316,21 @@ object K8SClient {
                     volumes = None
                   )
                 }
-                .flatMap(podSpec => { //name is pod name
-                  val request =
-                    Pod(Metadata(None, name, Some(Map(LABEL_KEY -> LABEL_VALUE)), None), Some(podSpec), None)
-                  HttpExecutor.SINGLETON
-                    .post[Pod, Pod, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$k8sNamespace/pods", request)
-                })
-                .map(pod => {
-                  Option(
-                    ContainerInfo(
-                      nodeName = nodeName,
-                      id = pod.metadata.uid.getOrElse("Unknown"),
-                      imageName = imageName,
-                      state = K8sContainerState.all
-                        .find(s => pod.status.fold(false)(_.phase.toLowerCase.contains(s.name.toLowerCase)))
-                        .getOrElse(K8sContainerState.UNKNOWN)
-                        .name,
-                      kind = K8S_KIND_NAME,
-                      name = pod.metadata.name,
-                      size = -1,
-                      portMappings = ports.map(x => PortMapping(hostname, x._1, x._2)).toSeq,
-                      environments = envs,
-                      hostname = hostname
-                    )
-                  )
-                })
+                .flatMap(
+                  podSpec =>
+                    HttpExecutor.SINGLETON
+                      .post[Pod, Pod, K8SErrorResponse](
+                        s"$k8sApiServerURL/namespaces/$k8sNamespace/pods",
+                        Pod(Metadata(None, name, Some(Map(LABEL_KEY -> LABEL_VALUE)), None), Some(podSpec), None)
+                      )
+                )
+                .map(_ => Unit)
             }
           }
 
         private[this] def removePod(name: String, isForce: Boolean)(
           implicit executionContext: ExecutionContext
-        ): Future[ContainerInfo] = {
+        ): Future[Unit] = {
           val isForceRemovePod: String = if (isForce) "?gracePeriodSeconds=0" else ""
           container(name)
             .flatMap(
@@ -416,9 +339,13 @@ object K8SClient {
                   .delete[K8SErrorResponse](
                     s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/${container.name}${isForceRemovePod}"
                   )
-                  .map(_ => container)
               }
             )
+            .map(_ => Unit)
+        }
+
+        override def close(): Unit = {
+          // do nothing
         }
       }
     }
@@ -456,65 +383,8 @@ object K8SClient {
       throw new IllegalArgumentException(s"The memory used value ${usedValue} doesn't converter double type")
   }
 
-  trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Future[Option[ContainerInfo]]] {
-    def name(name: String): ContainerCreator
-
-    def imageName(imageName: String): ContainerCreator
-
-    def hostname(hostname: String): ContainerCreator
-
-    def envs(envs: Map[String, String]): ContainerCreator
-
-    def portMappings(ports: Map[Int, Int]): ContainerCreator
-
-    def routes(routes: Map[String, String]): ContainerCreator
-
-    def nodeName(nodeName: String): ContainerCreator
-
-    /**
-      * set the thread pool used to execute request
-      * @param executionContext thread pool
-      * @return this creator
-      */
-    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
-    def threadPool(executionContext: ExecutionContext): ContainerCreator
-
-    override def create(): Future[Option[ContainerInfo]]
-
+  trait ContainerCreator extends ContainerClient.ContainerCreator {
     def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator
-
     def restartPolicy(restartPolicy: RestartPolicy): ContainerCreator
-
-    def command(command: Seq[String]): ContainerCreator
-
-    def arguments(arguments: Seq[String]): ContainerCreator
-  }
-
-  sealed abstract class ImagePullPolicy
-  object ImagePullPolicy extends Enum[ImagePullPolicy] {
-    case object ALWAYS extends ImagePullPolicy {
-      override def toString: String = "Always"
-    }
-    case object NEVER extends ImagePullPolicy {
-      override def toString: String = "Never"
-    }
-    case object IFNOTPRESENT extends ImagePullPolicy {
-      override def toString: String = "IfNotPresent"
-    }
-  }
-
-  sealed abstract class RestartPolicy
-  object RestartPolicy extends Enum[RestartPolicy] {
-    case object Always extends RestartPolicy {
-      override def toString: String = "Always"
-    }
-
-    case object OnFailure extends RestartPolicy {
-      override def toString: String = "OnFailure"
-    }
-
-    case object Never extends RestartPolicy {
-      override def toString: String = "Never"
-    }
   }
 }

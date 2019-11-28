@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent.docker
 
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.{Collie, DataCollie, ServiceState}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -25,82 +26,62 @@ import com.island.ohara.common.setting.ObjectKey
 import scala.concurrent.{ExecutionContext, Future}
 private abstract class BasicCollieImpl(
   val dataCollie: DataCollie,
-  dockerCache: DockerClientCache,
+  dockerClient: DockerClient,
   clusterCache: ServiceCache
 ) extends Collie {
   final override def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]] =
     Future.successful(clusterCache.snapshot.filter(_.kind == kind))
 
-  protected def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
-    dockerCache.exec(
-      node,
-      _.containerInspector
-        .name(containerName)
-        .asRoot()
-        .append("/etc/hosts", route.map {
-          case (hostname, ip) => s"$ip $hostname"
-        }.toSeq)
-    )
+  protected def updateRoute(existentNodes: Map[Node, ContainerInfo], routes: Map[String, String])(
+    implicit executionContext: ExecutionContext
+  ): Future[Unit] =
+    Future
+      .traverse(existentNodes.values.map(_.name))(
+        name =>
+          dockerClient.containerInspector
+            .name(name)
+            .asRoot()
+            .append("/etc/hosts", routes.map {
+              case (hostname, ip) => s"$ip $hostname"
+            }.toSeq)
+      )
+      .map(_ => Unit)
 
   override protected def doForceRemove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
+  ): Future[Unit] =
     remove(clusterInfo, beRemovedContainers, true)
 
   override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
+  ): Future[Unit] =
     remove(clusterInfo, beRemovedContainers, false)
 
   private[this] def remove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo], force: Boolean)(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
+  ): Future[Unit] =
     Future
-      .traverse(beRemovedContainers) { containerInfo =>
-        dataCollie
-          .value[Node](containerInfo.nodeName)
-          .map(
-            node =>
-              dockerCache.exec(
-                node,
-                client =>
-                  if (force) client.forceRemove(containerInfo.name)
-                  else {
-                    // by default, docker will try to stop container for 10 seconds
-                    // after that, docker will issue a kill signal to the container
-                    client.stop(containerInfo.name)
-                    client.remove(containerInfo.name)
-                  }
-              )
-          )
-      }
+      .traverse(beRemovedContainers)(
+        containerInfo =>
+          if (force) dockerClient.forceRemove(containerInfo.name)
+          else dockerClient.remove(containerInfo.name)
+      )
       .map { _ =>
         val newContainers =
           clusterInfo.containers.filterNot(container => beRemovedContainers.exists(_.name == container.name))
         if (newContainers.isEmpty) clusterCache.remove(clusterInfo)
         else clusterCache.put(clusterInfo.copy(containers = newContainers))
-        // return true if it does remove something
-        newContainers.size != clusterInfo.containers.size
       }
 
   override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerInfo, String]] =
+  ): Future[Map[ContainerName, String]] =
     cluster(key)
       .map(_.containers)
       .flatMap { containers =>
         Future
           .sequence(containers.map { container =>
-            dataCollie.value[Node](container.nodeName).map { node =>
-              container -> dockerCache.exec(
-                node,
-                client =>
-                  try client.log(container.name, sinceSeconds)
-                  catch {
-                    case _: Throwable => s"failed to get log from ${container.name}"
-                  }
-              )
-            }
+            dockerClient.log(container.name, sinceSeconds)
           })
           .map(_.toMap)
       }
@@ -121,4 +102,37 @@ private abstract class BasicCollieImpl(
       // since there are too many cases that we could not handle for now, we should open the door for whitelist only
       else Some(ServiceState.FAILED)
     }
+
+  //----------------------------[override helper methods]----------------------------//
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    routes: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
+    dockerClient.containerCreator
+      .imageName(containerInfo.imageName)
+      .portMappings(
+        containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap
+      )
+      .hostname(containerInfo.hostname)
+      .envs(containerInfo.environments)
+      .name(containerInfo.name)
+      .routes(routes)
+      .arguments(arguments)
+      .nodeName(node.hostname)
+      .threadPool(executionContext)
+      .create()
+
+  override protected def postCreate(
+    clusterStatus: ClusterStatus,
+    existentNodes: Map[Node, ContainerInfo],
+    routes: Map[String, String]
+  )(implicit executionContext: ExecutionContext): Future[Unit] =
+    updateRoute(existentNodes, routes)
+      .map { _ =>
+        clusterCache.put(clusterStatus)
+        Unit
+      }
 }

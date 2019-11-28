@@ -18,15 +18,13 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{DataCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
 import com.island.ohara.metrics.basic.{Counter, CounterMBean}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends FakeCollie(dataCollie) with StreamCollie {
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
@@ -57,12 +55,4 @@ private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends Fak
             ports = creation.ports
           )
         )
-
-  override protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit] = Future.unit
 }

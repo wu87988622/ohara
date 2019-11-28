@@ -47,16 +47,16 @@ class TestK8SServiceCollieImpl extends OharaTest {
         }
     }
 
-    val k8sServiceCollieImpl               = new K8SServiceCollieImpl(dataCollie, k8sClient)
-    val resource: Map[Node, Seq[Resource]] = result(k8sServiceCollieImpl.resources())
+    val k8sServiceCollieImpl = new K8SServiceCollieImpl(dataCollie, k8sClient)
+    val resource             = result(k8sServiceCollieImpl.resources())
     resource.size shouldBe 3
-    val nodeNames = resource.map(_._1.hostname).toSeq
+    val nodeNames = resource.keys.toSeq
     nodeNames(0) shouldBe "node1"
     nodeNames(1) shouldBe "node2"
     nodeNames(2) shouldBe "node3"
 
     val node1Resource: Seq[Resource] =
-      resource.map(x => (x._1.hostname, x._2)).filter(x => x._1 == "node1").flatMap(x => x._2).toSeq
+      resource.filter(x => x._1 == "node1").flatMap(x => x._2).toSeq
 
     node1Resource(0).name shouldBe "CPU"
     node1Resource(0).unit shouldBe "cores"
@@ -81,8 +81,8 @@ class TestK8SServiceCollieImpl extends OharaTest {
         Future.successful(Map.empty)
     }
 
-    val k8sServiceCollieImpl               = new K8SServiceCollieImpl(dataCollie, k8sClient)
-    val resource: Map[Node, Seq[Resource]] = result(k8sServiceCollieImpl.resources())
+    val k8sServiceCollieImpl = new K8SServiceCollieImpl(dataCollie, k8sClient)
+    val resource             = result(k8sServiceCollieImpl.resources())
     resource.size shouldBe 0
   }
 

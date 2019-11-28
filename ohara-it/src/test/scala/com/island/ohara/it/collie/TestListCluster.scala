@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.category.CollieGroup
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[CollieGroup]))
 class TestListCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
-  private[this] val nameHolder       = ClusterNameHolder(nodes)
+  private[this] val nameHolder       = ServiceNameHolder(DockerClient(DataCollie(nodes)))
 
   private[this] val dataCollie: DataCollie = DataCollie(nodes)
 
@@ -41,24 +41,24 @@ class TestListCluster extends IntegrationTest {
   @Before
   def setup(): Unit =
     if (nodes.size < 2) skipTest("please buy more servers to run this test")
-    else
-      nodes.foreach { node =>
-        val dockerClient =
-          DockerClient(
-            Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-          )
-        try {
-          withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-            dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true
-          )
-          withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
-            dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true
-          )
-          withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
-            dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true
-          )
-        } finally dockerClient.close()
+    else {
+      val images = {
+        val dockerClient = DockerClient(DataCollie(nodes))
+        try result(dockerClient.imageNames())
+        finally dockerClient.close()
       }
+      nodes.foreach { node =>
+        withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
+          images(node.hostname) should contain(ZookeeperApi.IMAGE_NAME_DEFAULT)
+        )
+        withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
+          images(node.hostname) should contain(BrokerApi.IMAGE_NAME_DEFAULT)
+        )
+        withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
+          images(node.hostname) should contain(WorkerApi.IMAGE_NAME_DEFAULT)
+        )
+      }
+    }
 
   @Test
   def deadContainerAndClusterShouldDisappear(): Unit = {

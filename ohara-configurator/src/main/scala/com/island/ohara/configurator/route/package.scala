@@ -253,7 +253,7 @@ package object route {
       )
       // check the docker images
       .flatMap { clusters =>
-        serviceCollie.images().map { nodesImages =>
+        serviceCollie.imageNames().map { nodesImages =>
           req.nodeNames.foreach { nodeName =>
             val images = nodesImages.find(_._1.hostname == nodeName).map(_._2).getOrElse(Seq.empty)
             if (!images.contains(req.imageName))

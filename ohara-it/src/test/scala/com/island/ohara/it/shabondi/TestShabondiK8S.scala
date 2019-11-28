@@ -50,9 +50,8 @@ class TestShabondiK8S extends IntegrationTest with Inside {
   @Test
   def testCreatAndRemovePod(): Unit = {
     // create pod
-    val containerCreator = k8sClient.containerCreator()
-    val containerInfoOpt = awaitResult {
-      containerCreator
+    val containerInfo = awaitResult {
+      k8sClient.containerCreator
         .imageName(ShabondiApi.IMAGE_NAME_DEFAULT)
         .portMappings(
           Map(
@@ -63,9 +62,9 @@ class TestShabondiK8S extends IntegrationTest with Inside {
         .hostname(podHostname)
         .name(hostname)
         .create()
+        .flatMap(_ => k8sClient.container(hostname))
     }
 
-    val containerInfo = containerInfoOpt.get
     containerInfo.portMappings should have size 1
     containerInfo.portMappings.foreach { portMapping =>
       portMapping.hostIp shouldBe podHostname

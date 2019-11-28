@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.connector
-import com.island.ohara.client.configurator.v0.NodeApi
+package com.island.ohara.it.connector.jdbc
+
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.collie.ClusterNameHolder
 import com.island.ohara.it.category.ConnectorGroup
+import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[ConnectorGroup]))
-class TestSshPostgresqlJDBCSourceConnector extends BasicTestPostgresqlJDBCSourceConnector {
+class TestPostgreSQLSourceConnectorOnK8s extends BasicTestPostgresqlJDBCSourceConnector {
   override val configurator: Configurator = Configurator.builder
     .hostname(EnvTestingUtils.configuratorHostName())
-    .port(EnvTestingUtils.configuratorHostPort())
+    .port(EnvTestingUtils.configuratorHostPort)
+    .k8sClient(EnvTestingUtils.k8sClient())
     .build()
 
-  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.dockerNodes()
+  override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
 
-  override protected val nameHolder = ClusterNameHolder(nodes)
+  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(EnvTestingUtils.k8sClient())
 }

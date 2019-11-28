@@ -107,7 +107,7 @@ object NodeRoute {
       .map(
         rs =>
           nodes.map { node =>
-            node.copy(resources = rs.find(_._1.hostname == node.hostname).map(_._2).getOrElse(Seq.empty))
+            node.copy(resources = rs.getOrElse(node.hostname, Seq.empty))
           }
       )
 

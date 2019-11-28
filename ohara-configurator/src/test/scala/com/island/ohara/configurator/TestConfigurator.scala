@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers._
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -31,7 +32,13 @@ class TestConfigurator extends OharaTest {
   def testK8SNodes(): Unit = {
     val k8sClient = new FakeK8SClient(true, None, "") {
       override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]] =
-        Future.successful(Seq(K8SNodeReport("node1"), K8SNodeReport("node2"), K8SNodeReport("node3")))
+        Future.successful(
+          Seq(
+            K8SNodeReport("node1", Seq("image")),
+            K8SNodeReport("node2", Seq("image")),
+            K8SNodeReport("node3", Seq("image"))
+          )
+        )
     }
     val configurator = Configurator.builder.k8sClient(k8sClient).build()
 

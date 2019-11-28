@@ -22,9 +22,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusC
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
 import com.island.ohara.agent.k8s.K8SJson._
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -81,12 +79,11 @@ class TestK8SClient extends OharaTest {
        """.stripMargin
 
   @Test
-  def testApiServerURLNull(): Unit = {
-    an[IllegalArgumentException] should be thrownBy {
+  def testApiServerURLNull(): Unit =
+    an[NullPointerException] should be thrownBy {
       K8SClient.builder
         .build()
     }
-  }
 
   @Test
   def testApiServerURLEmpty(): Unit = {
@@ -132,9 +129,8 @@ class TestK8SClient extends OharaTest {
     val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      val result: Option[ContainerInfo] = Await.result(
-        client
-          .containerCreator()
+      Await.result(
+        client.containerCreator
           .name(podName)
           .imageName("hello world")
           .hostname("test1")
@@ -143,9 +139,6 @@ class TestK8SClient extends OharaTest {
           .create(),
         30 seconds
       )
-      result.get.name shouldBe podName
-      result.get.environments shouldBe Map.empty
-      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -156,9 +149,8 @@ class TestK8SClient extends OharaTest {
     val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      val result: Option[ContainerInfo] = Await.result(
-        client
-          .containerCreator()
+      Await.result(
+        client.containerCreator
           .name(podName)
           .imageName("hello world")
           .hostname("test1")
@@ -167,9 +159,6 @@ class TestK8SClient extends OharaTest {
           .create(),
         30 seconds
       )
-      result.get.name shouldBe podName
-      result.get.environments shouldBe Map.empty
-      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -180,9 +169,8 @@ class TestK8SClient extends OharaTest {
     val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.ALWAYS)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      val result: Option[ContainerInfo] = Await.result(
-        client
-          .containerCreator()
+      Await.result(
+        client.containerCreator
           .name(podName)
           .imageName("hello world")
           .hostname("test1")
@@ -191,9 +179,6 @@ class TestK8SClient extends OharaTest {
           .create(),
         30 seconds
       )
-      result.get.name shouldBe podName
-      result.get.environments shouldBe Map.empty
-      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -204,9 +189,8 @@ class TestK8SClient extends OharaTest {
     val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.NEVER)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      val result: Option[ContainerInfo] = Await.result(
-        client
-          .containerCreator()
+      Await.result(
+        client.containerCreator
           .name(podName)
           .imageName("hello world")
           .hostname("test1")
@@ -215,9 +199,6 @@ class TestK8SClient extends OharaTest {
           .create(),
         30 seconds
       )
-      result.get.name shouldBe podName
-      result.get.environments shouldBe Map.empty
-      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -228,9 +209,8 @@ class TestK8SClient extends OharaTest {
     val s        = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      val result: Option[ContainerInfo] = Await.result(
-        client
-          .containerCreator()
+      Await.result(
+        client.containerCreator
           .name(podName)
           .imageName("hello world")
           .hostname("test1")
@@ -238,9 +218,6 @@ class TestK8SClient extends OharaTest {
           .create(),
         30 seconds
       )
-      result.get.name shouldBe podName
-      result.get.environments shouldBe Map.empty
-      result.get.nodeName shouldBe nodeName
     } finally s.close()
   }
 
@@ -250,39 +227,36 @@ class TestK8SClient extends OharaTest {
     val images = Seq(CommonUtils.randomString(), CommonUtils.randomString())
     val plain  = s"""
                  |{
-                 |  "status": {
-                 |    "addresses": [],
-                 |    "images": [
-                 |      {
-                 |        "names": [${images.map(s => "\"" + s + "\"").mkString(",")}]
+                 |  "items": [
+                 |    {
+                 |      "status": {
+                 |        "addresses": [],
+                 |        "images": [
+                 |          {
+                 |            "names": [${images.map(s => "\"" + s + "\"").mkString(",")}]
+                 |          }
+                 |        ],
+                 |        "conditions": []
+                 |      },
+                 |      "metadata": {
+                 |        "name": "$node"
                  |      }
-                 |    ],
-                 |    "conditions": []
-                 |  },
-                 |  "metadata": {
-                 |    "name": "${CommonUtils.randomString()}"
-                 |  }
+                 |    }
+                 |  ]
                  |}
                """.stripMargin
 
-    // test json serialization
-    val nodeItems: NodeItems = NODEITEMS_JSON_FORMAT.read(plain.parseJson)
-    nodeItems.status.images.flatMap(_.names) shouldBe images
-    nodeItems.status.addresses shouldBe Seq.empty
-    nodeItems.status.conditions shouldBe Seq.empty
-
     // test communication
     val s = toServer {
-      path("nodes" / Segment) { passedNode =>
+      path("nodes") {
         get {
-          if (passedNode != node) complete(new IllegalArgumentException)
-          else complete(nodeItems)
+          complete(plain.parseJson)
         }
       }
     }
     try {
       val client           = K8SClient.builder.apiServerURL(s.url).build()
-      val imagesFromServer = Await.result(client.images(node), 30 seconds)
+      val imagesFromServer = Await.result(client.imageNames(node), 30 seconds)
       imagesFromServer shouldBe images
     } finally s.close()
   }
@@ -291,12 +265,8 @@ class TestK8SClient extends OharaTest {
   def testForceRemovePod(): Unit = {
     val s         = forceRemovePodURL("057aac6a97-bk-c720992")
     val k8sClient = K8SClient.builder.apiServerURL(s.url).build()
-    try {
-      val result: ContainerInfo = Await.result(k8sClient.forceRemove("057aac6a97-bk-c720992"), 30 seconds)
-      result.name shouldBe "057aac6a97-bk-c720992"
-      result.hostname shouldBe "057aac6a97-bk-c720992-ohara-jenkins-it-00"
-      result.nodeName shouldBe "ohara-jenkins-it-00"
-    } finally s.close()
+    try Await.result(k8sClient.forceRemove("057aac6a97-bk-c720992"), 30 seconds)
+    finally s.close()
   }
 
   @Test
@@ -304,9 +274,8 @@ class TestK8SClient extends OharaTest {
     val podName = "057aac6a97-bk-c720992"
     val s       = log(podName)
     try {
-      val client         = K8SClient.builder.apiServerURL(s.url).build()
-      val result: String = Await.result(client.log(podName, None), 5 seconds)
-      result shouldBe "start pods ......."
+      val client = K8SClient.builder.apiServerURL(s.url).build()
+      Await.result(client.log(podName, None), 5 seconds)
     } finally s.close()
   }
 
@@ -317,8 +286,7 @@ class TestK8SClient extends OharaTest {
       val client = K8SClient.builder.apiServerURL(s.url).build()
       intercept[IllegalArgumentException] {
         Await.result(
-          client
-            .containerCreator()
+          client.containerCreator
             .name("is-land.hsinchu")
             .imageName("hello world")
             .hostname("test1")

@@ -19,6 +19,8 @@ package com.island.ohara.it.collie
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.agent.DataCollie
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.kafka.WorkerClient
@@ -27,7 +29,7 @@ import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.category.CollieGroup
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
 import com.typesafe.scalalogging.Logger
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
@@ -61,7 +63,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
 
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val nameHolder = ClusterNameHolder(nodes)
+  private[this] val nameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
 
   @Before
   def setup(): Unit =

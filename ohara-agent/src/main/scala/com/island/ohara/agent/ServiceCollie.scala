@@ -87,7 +87,7 @@ abstract class ServiceCollie extends Releasable {
     * list the docker images hosted by nodes
     * @return the images stored by each node
     */
-  def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]]
+  def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]]
 
   /**
     * Verify the node are available to be used in collie.
@@ -144,11 +144,11 @@ abstract class ServiceCollie extends Releasable {
 
   /**
     * get the log of specific container name
-    * @param name container name
+    * @param containerName container name
     * @param executionContext thread pool
     * @return log or NoSuchElementException
     */
-  def log(name: String, sinceSeconds: Option[Long])(
+  def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[(ContainerName, String)]
 
@@ -160,7 +160,7 @@ abstract class ServiceCollie extends Releasable {
     * @param executionContext thread pool
     * @return hardware resources of all hosted nodes
     */
-  def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]]
+  def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]]
 
   /**
     * load the connectors class and stream classes from specific urls

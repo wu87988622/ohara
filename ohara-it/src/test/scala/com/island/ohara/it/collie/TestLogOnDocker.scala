@@ -16,33 +16,32 @@
 
 package com.island.ohara.it.collie
 
-import com.island.ohara.agent.Agent
+import com.island.ohara.agent.DataCollie
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.EnvTestingUtils
 import org.junit.After
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestLogOnDocker extends BasicTests4Log {
-  private[this] val name       = CommonUtils.randomString(10)
-  private[this] val node: Node = EnvTestingUtils.dockerNodes().head
-  private[this] val dockerClient = DockerClient(
-    Agent.builder.hostname(node.hostname).port(node.port.get).user(node.user.get).password(node.password.get).build
-  )
+  private[this] val name         = CommonUtils.randomString(10)
+  private[this] val node         = EnvTestingUtils.dockerNodes().head
+  private[this] val dockerClient = DockerClient(DataCollie(EnvTestingUtils.dockerNodes()))
 
   override protected def createBusyBox(imageName: String, arguments: Seq[String]): Unit =
-    dockerClient
-      .containerCreator()
-      .name(name)
-      .imageName(imageName)
-      .arguments(arguments)
-      .create()
+    result(
+      dockerClient.containerCreator
+        .nodeName(node.hostname)
+        .name(name)
+        .imageName(imageName)
+        .arguments(arguments)
+        .create()
+    )
 
-  override protected def log(sinceSeconds: Option[Long]): String = dockerClient.log(name, sinceSeconds)
+  override protected def log(sinceSeconds: Option[Long]): String = result(dockerClient.log(name, sinceSeconds))._2
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(() => dockerClient.forceRemove(name))
+    Releasable.close(() => result(dockerClient.forceRemove(name)))
     Releasable.close(dockerClient)
   }
 }

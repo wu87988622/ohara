@@ -33,7 +33,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 // accessible to configurator
 private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataCollie, cacheThreadPool: ExecutorService)
     extends ServiceCollie {
-  private[this] val dockerCache = DockerClientCache()
+  private[this] val dockerClient = DockerClient(dataCollie)
 
   private[this] val clusterCache: ServiceCache = ServiceCache.builder
     .frequency(cacheTimeout)
@@ -43,29 +43,20 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     .lazyRemove(cacheTimeout)
     .build()
 
-  override val zookeeperCollie: ZookeeperCollie = new ZookeeperCollieImpl(dataCollie, dockerCache, clusterCache)
-  override val brokerCollie: BrokerCollie       = new BrokerCollieImpl(dataCollie, dockerCache, clusterCache)
-  override val workerCollie: WorkerCollie       = new WorkerCollieImpl(dataCollie, dockerCache, clusterCache)
-  override val streamCollie: StreamCollie       = new StreamCollieImpl(dataCollie, dockerCache, clusterCache)
+  override val zookeeperCollie: ZookeeperCollie = new BasicCollieImpl(dataCollie, dockerClient, clusterCache)
+    with ZookeeperCollie
+  override val brokerCollie: BrokerCollie = new BasicCollieImpl(dataCollie, dockerClient, clusterCache)
+    with BrokerCollie
+  override val workerCollie: WorkerCollie = new BasicCollieImpl(dataCollie, dockerClient, clusterCache)
+    with WorkerCollie
+  override val streamCollie: StreamCollie = new BasicCollieImpl(dataCollie, dockerClient, clusterCache)
+    with StreamCollie
 
   private[this] def doClusters(
     implicit executionContext: ExecutionContext
   ): Future[Seq[ClusterStatus]] =
-    dataCollie
-      .values[Node]()
-      .flatMap(
-        Future
-          .traverse(_) { node =>
-            // multi-thread to seek all containers from multi-nodes
-            // Note: we fetch all containers (include exited and running) here
-            dockerCache.exec(node, _.containers()).recover {
-              case e: Throwable =>
-                LOG.error(s"failed to get active containers from $node", e)
-                Seq.empty
-            }
-          }
-          .map(_.flatten)
-      )
+    dockerClient
+      .containers()
       .flatMap { allContainers =>
         def parse(
           kind: Kind,
@@ -95,14 +86,18 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
       }
 
   override def close(): Unit = {
-    Releasable.close(dockerCache)
+    Releasable.close(dockerClient)
     Releasable.close(clusterCache)
     Releasable.close(() => cacheThreadPool.shutdownNow())
   }
 
-  override def images()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+  override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     dataCollie.values[Node]().flatMap { nodes =>
-      Future.traverse(nodes)(node => Future(dockerCache.exec(node, node -> _.imageNames()))).map(_.toMap)
+      Future
+        .traverse(nodes) { node =>
+          dockerClient.imageNames(node.name).map(images => node -> images)
+        }
+        .map(_.toMap)
     }
 
   /**
@@ -111,56 +106,20 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     * 2) check existence of hello-world
     */
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[String] =
-    Future {
-      val dockerClient =
-        DockerClient(
-          Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-        )
-      try if (dockerClient.resources().isEmpty)
-        throw new IllegalStateException(s"the docker on ${node.hostname} is unavailable")
-      else s"succeed to check the docker resources on ${node.name}"
-      finally Releasable.close(dockerClient)
-    }.recover {
-      case e: IllegalStateException => throw e
-      case e: Throwable =>
-        e.printStackTrace()
-        throw new IllegalStateException(s"failed to verify ${node.hostname} since ${e.getMessage}", e)
-    }
+    dockerClient
+      .resources()
+      .map { resources =>
+        if (resources.contains(node.hostname)) s"succeed to check the docker resources on ${node.name}"
+        else throw new IllegalStateException(s"the docker on ${node.hostname} is unavailable")
+      }
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
-    dataCollie.values[Node]().map(_.flatMap(dockerCache.exec(_, _.containerNames())))
+    dockerClient.containerNames()
 
-  override def log(name: String, sinceSeconds: Option[Long])(
+  override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)] =
-    dataCollie
-      .values[Node]()
-      .map(
-        _.flatMap(
-          node =>
-            dockerCache.exec(
-              node,
-              client =>
-                client.containerNames().filter(_.name == name).flatMap { containerName =>
-                  try Some((containerName, client.log(containerName.name, sinceSeconds)))
-                  catch {
-                    case _: Throwable => None
-                  }
-                }
-            )
-        ).head
-      )
+  ): Future[(ContainerName, String)] = dockerClient.log(containerName, sinceSeconds)
 
-  override def resources()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[Resource]]] =
-    dataCollie
-      .values[Node]()
-      .map(
-        _.map(
-          node =>
-            node -> dockerCache.exec(
-              node,
-              _.resources()
-            )
-        ).toMap
-      )
+  override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
+    dockerClient.resources()
 }

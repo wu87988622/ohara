@@ -17,13 +17,13 @@
 package com.island.ohara.agent.docker
 
 import java.util.Objects
+import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.agent.Agent
-import com.island.ohara.agent.container.ContainerName
-import com.island.ohara.agent.docker.DockerClient.{Creator, Inspector}
+import com.island.ohara.agent.container.{ContainerClient, ContainerName}
+import com.island.ohara.agent.docker.DockerClient.{ContainerCreator, Inspector}
+import com.island.ohara.agent.{Agent, DataCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import com.island.ohara.client.configurator.v0.NodeApi.Resource
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
@@ -37,55 +37,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * the default implementation is based on ssh client.
   * NOTED: All containers are executed background so as to avoid blocking call.
   */
-trait DockerClient extends Releasable {
-  /**
-    * @return all containers' name
-    */
-  def containerNames(): Seq[ContainerName]
-
-  /**
-    * @return a collection of docker containers
-    */
-  def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
-
-  /**
-    * build a docker container.
-    * @return a container builder
-    */
-  def containerCreator(): Creator
-
-  /**
-    * stop a running container. If the container doesn't exist, exception will be thrown.
-    * @param name container's name
-    */
-  def stop(name: String): Unit
-
-  /**
-    * remove a stopped container. If the container doesn't exist, exception will be thrown.
-    * Noted: you should call stop() first. Otherwise, you will get a exception
-    * @param name container's name
-    */
-  def remove(name: String): Unit
-
-  /**
-    * remove a container. If the container doesn't exist, exception will be thrown.
-    * Noted. this method is going to kill container straightaway without graceful shutdown!
-    * @param name container's name
-    */
-  def forceRemove(name: String): Unit
-
-  /**
-    * get the console log from the container since a related time.
-    * @param name container's name
-    * @return log
-    */
-  def log(name: String, sinceSeconds: Option[Long]): String
-
-  def imageNames(): Seq[String]
-
+trait DockerClient extends ContainerClient {
+  override def containerCreator: ContainerCreator
   def containerInspector: Inspector
-
-  def resources(): Seq[Resource]
 }
 
 object DockerClient {
@@ -121,9 +75,13 @@ object DockerClient {
     HostIp: String,
     HostPort: String
   )
+
   private[this] implicit val ADDRESS_FORMAT: RootJsonFormat[Address] = jsonFormat2(Address)
+
   private[this] case class ContainerNetwork(Ports: Map[String, Seq[Address]], IPAddress: String, Gateway: String)
+
   private[this] implicit val NETWORK_FORMAT: RootJsonFormat[ContainerNetwork] = jsonFormat3(ContainerNetwork)
+
   private[this] case class Details(
     Id: String,
     Created: String,
@@ -133,9 +91,11 @@ object DockerClient {
     Config: Config,
     NetworkSettings: ContainerNetwork
   )
+
   private[this] implicit val DETAILS_FORMAT: RootJsonFormat[Details] = jsonFormat7(Details)
 
   private[this] case class Info(NCPU: Int, MemTotal: Long)
+
   private[this] implicit val INFO_FORMAT: RootJsonFormat[Info] = jsonFormat2(Info)
 
   /**
@@ -143,94 +103,149 @@ object DockerClient {
     */
   private[this] val LABEL_KEY   = "createdByOhara"
   private[this] val LABEL_VALUE = "docker"
-  //-----------------------------[constructor]-----------------------------//
-  def apply(agent: Agent): DockerClient = new DockerClient {
-    override def close(): Unit = Releasable.close(agent)
 
-    override def containerCreator(): Creator =
+  //-----------------------------[constructor]-----------------------------//
+  def apply(dataCollie: DataCollie): DockerClient = new DockerClient {
+    private[this] val agentCache = new ConcurrentHashMap[Node, Agent]()
+
+    private[this] def agent(hostname: String)(implicit executionContext: ExecutionContext): Future[Agent] =
+      dataCollie.value[Node](hostname).map(agent)
+
+    private[this] def agents()(implicit executionContext: ExecutionContext): Future[Seq[Agent]] =
+      dataCollie
+        .values[Node]()
+        .map(_.map(agent))
+
+    private[this] def agent(node: Node): Agent = {
+      var agent: Agent = null
+      do {
+        agent = agentCache.compute(
+          node,
+          (node, previous) =>
+            if (previous == null || !previous.isOpen)
+              Agent.builder
+                .hostname(node.hostname)
+                .port(node._port)
+                .user(node._user)
+                .password(node._password)
+                .build
+            else previous
+        )
+      } while (agent == null || !agent.isOpen)
+      agent
+    }
+
+    override def close(): Unit =
+      agentCache.keys().asScala.foreach(node => Releasable.close(agentCache.remove(node)))
+
+    override def containerCreator: ContainerCreator =
       (
+        nodeName: String,
         hostname: String,
         imageName: String,
         name: String,
-        command: String,
+        command: Option[String],
         arguments: Seq[String],
         ports: Map[Int, Int],
         envs: Map[String, String],
-        route: Map[String, String]
-      ) =>
-        agent.execute(
-          Seq(
-            "docker run -d ",
-            if (hostname == null) "" else s"-h $hostname",
-            route
-              .map {
-                case (host, ip) => s"--add-host $host:$ip"
-              }
-              .mkString(" "),
-            s"--name ${Objects.requireNonNull(name)}",
-            ports
-              .map {
-                case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
-              }
-              .mkString(" "),
-            envs
-              .map {
-                case (key, value) => s"""-e \"$key=$value\""""
-              }
-              .mkString(" "),
-            // add label so we can distinguish the containers from others
-            s"--label $LABEL_KEY=$LABEL_VALUE",
-            Objects.requireNonNull(imageName),
-            if (command == null) "" else command,
-            arguments.map(arg => s"""\"$arg\"""").mkString(" ")
-          ).filter(_.nonEmpty).mkString(" ")
+        routes: Map[String, String],
+        executionContext: ExecutionContext
+      ) => {
+        implicit val pool: ExecutionContext = executionContext
+        agent(nodeName).map(
+          _.execute(
+            Seq(
+              "docker run -d ",
+              if (hostname == null) "" else s"-h $hostname",
+              routes
+                .map {
+                  case (host, ip) => s"--add-host $host:$ip"
+                }
+                .mkString(" "),
+              s"--name ${Objects.requireNonNull(name)}",
+              ports
+                .map {
+                  case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
+                }
+                .mkString(" "),
+              envs
+                .map {
+                  case (key, value) => s"""-e \"$key=$value\""""
+                }
+                .mkString(" "),
+              // add label so we can distinguish the containers from others
+              s"--label $LABEL_KEY=$LABEL_VALUE",
+              Objects.requireNonNull(imageName),
+              command.getOrElse(""),
+              arguments.map(arg => s"""\"$arg\"""").mkString(" ")
+            ).filter(_.nonEmpty).mkString(" ")
+          ).map(_ => Unit)
         )
+      }
 
-    override def containerNames(): Seq[ContainerName] =
-      agent
-        .execute("docker ps -a --format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\"")
-        .map(_.split("\n").toSeq)
-        .map(_.map { line =>
-          val items = line.split("\t")
-          if (items.size < 3)
-            throw new IllegalArgumentException(
-              s"""invalid format:$line from docker with format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\""""
-            )
-          else
-            new ContainerName(
-              id = items(0),
-              name = items(1),
-              imageName = items(2),
-              nodeName = agent.hostname
-            ) -> (if (items.size < 4) Map.empty[String, String] // no labels
-                  else CommonUtils.parse(items(3).split(",").toSeq.asJava).asScala.toMap)
-        })
-        .map(_.toMap)
-        .getOrElse(Map.empty)
-        .filter {
-          case (_, labels) => labels.get(LABEL_KEY).contains(LABEL_VALUE)
-        }
-        .keys
-        .toSeq
-
-    private[this] def containerName(name: String): ContainerName =
-      containerNames()
-        .find(_.name == CommonUtils.requireNonEmpty(name))
-        .getOrElse(throw new NoSuchElementException(s"$name does not exists!!!"))
-
-    override def stop(name: String): Unit = agent.execute(s"docker stop ${containerName(name).id}")
-
-    override def remove(name: String): Unit = agent.execute(s"docker rm ${containerName(name).id}")
-
-    override def forceRemove(name: String): Unit = agent.execute(s"docker rm -f ${containerName(name).id}")
-
-    override def log(name: String, sinceSeconds: Option[Long]): String =
-      agent
-        .execute(
-          s"docker container logs ${containerName(name).id} ${sinceSeconds.map(seconds => s"--since=${seconds}s").getOrElse("")}"
+    override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
+      agents().map(
+        _.flatMap(
+          agent =>
+            try agent
+              .execute("docker ps -a --format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\"")
+              .map(_.split("\n").toSeq)
+              .map(_.map { line =>
+                val items = line.split("\t")
+                if (items.size < 3)
+                  throw new IllegalArgumentException(
+                    s"""invalid format:$line from docker with format \"{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Labels}}\""""
+                  )
+                else
+                  new ContainerName(
+                    id = items(0),
+                    name = items(1),
+                    imageName = items(2),
+                    nodeName = agent.hostname
+                  ) -> (if (items.size < 4) Map.empty[String, String] // no labels
+                        else CommonUtils.parse(items(3).split(",").toSeq.asJava).asScala.toMap)
+              })
+              .map(_.toMap)
+              .getOrElse(Map.empty)
+              .filter {
+                case (_, labels) => labels.get(LABEL_KEY).contains(LABEL_VALUE)
+              }
+              .keys
+              .toSeq
+            catch {
+              case e: Throwable =>
+                LOG.error(s"failed to get container names from ${agent.hostname}", e)
+                Seq.empty
+            }
         )
-        .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
-        .getOrElse(throw new IllegalArgumentException(s"no response from ${agent.hostname}"))
+      )
+
+    override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      containerName(name)
+        .flatMap(
+          container =>
+            agent(container.nodeName)
+              .map { agent =>
+                agent.execute(s"docker stop ${container.id}")
+                agent.execute(s"docker rm ${container.id}")
+              }
+        )
+        .map(_ => Unit)
+
+    override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      containerName(name)
+        .flatMap(container => agent(container.nodeName).map(_.execute(s"docker rm -f ${container.id}")))
+        .map(_ => Unit)
+
+    override def log(name: String, sinceSeconds: Option[Long])(
+      implicit executionContext: ExecutionContext
+    ): Future[(ContainerName, String)] =
+      containerName(name).flatMap { containerName =>
+        agent(containerName.nodeName)
+          .map(_.execute(s"docker container logs ${containerName.id}"))
+          .map(_.getOrElse(throw new IllegalArgumentException(s"no response from $name")))
+          .map(containerName -> _)
+      }
 
     override def containerInspector: Inspector =
       containerInspector(null, false)
@@ -238,115 +253,135 @@ object DockerClient {
     private[this] def containerInspector(_name: String, beRoot: Boolean): Inspector =
       new Inspector {
         private[this] def rootConfig: String = if (beRoot) "-u root" else ""
-        private[this] var name: String       = _name
+
+        private[this] var name: String = _name
+
         override def name(name: String): Inspector = {
           this.name = CommonUtils.requireNonEmpty(name)
           this
         }
 
-        override def cat(path: String): Option[String] =
-          agent.execute(s"""docker exec $rootConfig ${containerName(name).id} /bin/bash -c \"cat $path\"""")
+        override def cat(path: String)(implicit executionContext: ExecutionContext): Future[Option[String]] =
+          containerName(name).flatMap { containerName =>
+            agent(containerName.nodeName)
+              .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"cat $path\""""))
+          }
 
-        override def append(path: String, content: Seq[String]): String = {
-          agent.execute(s"""docker exec $rootConfig ${containerName(name).id} /bin/bash -c \"echo \\"${content
-            .mkString("\n")}\\" >> $path\"""")
-          cat(path).get
-        }
+        override def append(path: String, content: Seq[String])(
+          implicit executionContext: ExecutionContext
+        ): Future[String] =
+          containerName(name).flatMap { containerName =>
+            agent(containerName.nodeName)
+              .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"echo \\"${content
+                .mkString("\n")}\\" >> $path\""""))
+              .flatMap(_ => cat(path))
+              .map(_.get)
+          }
 
-        override def write(path: String, content: Seq[String]): String = {
-          agent.execute(
-            s"""docker exec $rootConfig ${containerName(name).id} /bin/bash -c \"echo \\"${content
-              .mkString("\n")}\\" > $path\""""
-          )
-          cat(path).get
-        }
+        override def write(path: String, content: Seq[String])(
+          implicit executionContext: ExecutionContext
+        ): Future[String] =
+          containerName(name).flatMap { containerName =>
+            agent(containerName.nodeName)
+              .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"echo \\"${content
+                .mkString("\n")}\\" > $path\""""))
+              .flatMap(_ => cat(path))
+              .map(_.get)
+          }
 
         override def asRoot(): Inspector = containerInspector(name, true)
       }
 
-    override def toString: String = agent.toString
-
     override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-      Future
-        .sequence(
-          containerNames()
-            .map(
-              containerName =>
-                Future {
+      containerNames()
+        .flatMap { containerNames =>
+          Future.sequence(containerNames.map { containerName =>
+            agent(containerName.nodeName)
+              .map {
+                agent =>
                   Some(
                     agent
                       .execute(s"docker inspect --format '{{json .}}' --size ${containerName.id}")
                       .map(_.parseJson)
                       .map(DETAILS_FORMAT.read)
-                      .map {
-                        details =>
-                          ContainerInfo(
-                            nodeName = agent.hostname,
-                            id = details.Id,
-                            imageName = details.Config.Image,
-                            // we prefer to use enum to list the finite state and the constant strings are all upper case
-                            // hence, we convert the string to upper case here.
-                            state = details.State.Status.toUpperCase,
-                            kind = "DOCKER",
-                            name = containerName.name,
-                            portMappings = details.NetworkSettings.Ports
-                              .filter(_._1.contains("/tcp"))
-                              .flatMap {
-                                case (portAndProtocol, hostIpAndPort) =>
-                                  hostIpAndPort
-                                    .map(_.HostPort.toInt)
-                                    .map(
-                                      hostPort =>
-                                        PortMapping(
-                                          hostIp = agent.hostname,
-                                          hostPort = hostPort,
-                                          containerPort = portAndProtocol.replace("/tcp", "").toInt
-                                        )
-                                    )
-                              }
-                              .toSeq,
-                            size = details.SizeRw,
-                            environments = details.Config.Env.flatMap { line =>
-                              val index = line.indexOf("=")
-                              if (index != 0 && index != line.length - 1)
-                                Some(line.substring(0, index) -> line.substring(index + 1))
-                              else None
-                            }.toMap,
-                            hostname = details.Config.Hostname
-                          )
+                      .map { details =>
+                        ContainerInfo(
+                          nodeName = agent.hostname,
+                          id = details.Id,
+                          imageName = details.Config.Image,
+                          // we prefer to use enum to list the finite state and the constant strings are all upper case
+                          // hence, we convert the string to upper case here.
+                          state = details.State.Status.toUpperCase,
+                          kind = "DOCKER",
+                          name = containerName.name,
+                          portMappings = details.NetworkSettings.Ports
+                            .filter(_._1.contains("/tcp"))
+                            .flatMap {
+                              case (portAndProtocol, hostIpAndPort) =>
+                                hostIpAndPort
+                                  .map(_.HostPort.toInt)
+                                  .map(
+                                    hostPort =>
+                                      PortMapping(
+                                        hostIp = agent.hostname,
+                                        hostPort = hostPort,
+                                        containerPort = portAndProtocol.replace("/tcp", "").toInt
+                                      )
+                                  )
+                            }
+                            .toSeq,
+                          size = details.SizeRw,
+                          environments = details.Config.Env.flatMap { line =>
+                            val index = line.indexOf("=")
+                            if (index != 0 && index != line.length - 1)
+                              Some(line.substring(0, index) -> line.substring(index + 1))
+                            else None
+                          }.toMap,
+                          hostname = details.Config.Hostname
+                        )
                       }
                       .getOrElse(throw new IllegalArgumentException(s"no response from ${agent.hostname}"))
                   )
-                }.recover {
-                  case e: Throwable =>
-                    DockerClient.LOG.error(s"fail to inspect docker:${containerName.name}", e)
-                    None
-                }
-            )
-        )
-        .map(_.flatten)
-
-    override def imageNames(): Seq[String] =
-      agent
-        .execute("docker images --format {{.Repository}}:{{.Tag}}")
-        .map(_.split("\n").toSeq)
-        .filter(_.nonEmpty)
-        .getOrElse(Seq.empty)
-
-    override def resources(): Seq[Resource] =
-      agent
-        .execute("docker info --format '{{json .}}'")
-        .map(_.parseJson)
-        .map(INFO_FORMAT.read)
-        .map { info =>
-          Seq(
-            Resource.cpu(info.NCPU, None),
-            Resource.memory(info.MemTotal, None)
-          )
+              }
+              .recover {
+                case e: Throwable =>
+                  DockerClient.LOG.error(s"fail to inspect docker:${containerName.name}", e)
+                  None
+              }
+          })
         }
-        .getOrElse(Seq.empty)
-  }
+        .map(_.flatten.toSeq)
 
+    override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]] =
+      agents()
+        .map(
+          _.map(
+            agent =>
+              agent.hostname -> agent
+                .execute("docker images --format {{.Repository}}:{{.Tag}}")
+                .map(_.split("\n").toSeq)
+                .filter(_.nonEmpty)
+                .getOrElse(Seq.empty)
+          )
+        )
+        .map(_.toMap)
+
+    override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
+      agents()
+        .map(_.map { agent =>
+          agent.hostname -> agent
+            .execute("docker info --format '{{json .}}'")
+            .map(_.parseJson)
+            .map(INFO_FORMAT.read)
+            .map { info =>
+              Seq(
+                Resource.cpu(info.NCPU, None),
+                Resource.memory(info.MemTotal, None)
+              )
+            }
+            .getOrElse(Seq.empty)
+        }.toMap)
+  }
   //-----------------------------[Inspector]-----------------------------//
 
   /**
@@ -370,7 +405,7 @@ object DockerClient {
       * @param path file path
       * @return content of file
       */
-    def cat(path: String): Option[String]
+    def cat(path: String)(implicit executionContext: ExecutionContext): Future[Option[String]]
 
     /**
       * append something to the file of a running container
@@ -378,7 +413,8 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def append(path: String, content: String): String = append(path, Seq(content))
+    def append(path: String, content: String)(implicit executionContext: ExecutionContext): Future[String] =
+      append(path, Seq(content))
 
     /**
       * append something to the file of a running container
@@ -386,7 +422,7 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def append(path: String, content: Seq[String]): String
+    def append(path: String, content: Seq[String])(implicit executionContext: ExecutionContext): Future[String]
 
     /**
       * clear and write something to the file of a running container
@@ -394,7 +430,8 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def write(path: String, content: String): String = write(path, Seq(content))
+    def write(path: String, content: String)(implicit executionContext: ExecutionContext): Future[String] =
+      write(path, Seq(content))
 
     /**
       * clear and write something to the file of a running container
@@ -402,7 +439,7 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def write(path: String, content: Seq[String]): String
+    def write(path: String, content: Seq[String])(implicit executionContext: ExecutionContext): Future[String]
   }
 
   //-----------------------------[Creator]-----------------------------//
@@ -410,129 +447,5 @@ object DockerClient {
   /**
     * A interface used to run a docker container on remote node
     */
-  trait Creator extends com.island.ohara.common.pattern.Creator[Unit] {
-    private[this] var hostname: String           = CommonUtils.randomString()
-    private[this] var imageName: String          = _
-    private[this] var name: String               = CommonUtils.randomString()
-    private[this] var command: String            = ""
-    private[this] var arguments: Seq[String]     = Seq.empty
-    private[this] var ports: Map[Int, Int]       = Map.empty
-    private[this] var envs: Map[String, String]  = Map.empty
-    private[this] var route: Map[String, String] = Map.empty
-
-    /**
-      * execute the docker container on background.
-      */
-    override def create(): Unit = doCreate(
-      hostname = CommonUtils.requireNonEmpty(hostname),
-      imageName = CommonUtils.requireNonEmpty(imageName),
-      name = CommonUtils.requireNonEmpty(name),
-      command = command,
-      arguments = arguments,
-      ports = ports,
-      envs = envs,
-      route = route
-    )
-
-    protected def doCreate(
-      hostname: String,
-      imageName: String,
-      name: String,
-      command: String,
-      arguments: Seq[String],
-      ports: Map[Int, Int],
-      envs: Map[String, String],
-      route: Map[String, String]
-    ): Unit
-
-    /**
-      * set container's name. default is a random string
-      *
-      * @param name container name
-      * @return this builder
-      */
-    @Optional("default is random string")
-    def name(name: String): Creator = {
-      this.name = CommonUtils.requireNonEmpty(name)
-      this
-    }
-
-    /**
-      * set target image
-      *
-      * @param imageName docker image
-      * @return this builder
-      */
-    def imageName(imageName: String): Creator = {
-      this.imageName = CommonUtils.requireNonEmpty(imageName)
-      this
-    }
-
-    /**
-      * @param hostname the hostname of container
-      * @return this builder
-      */
-    @Optional("default is random string")
-    def hostname(hostname: String): Creator = {
-      this.hostname = CommonUtils.requireNonEmpty(hostname)
-      this
-    }
-
-    /**
-      * @param envs the env variables exposed to container
-      * @return this builder
-      */
-    @Optional("default is empty")
-    def envs(envs: Map[String, String]): Creator = {
-      this.envs = Objects.requireNonNull(envs)
-      this
-    }
-
-    /**
-      * @param route the pre-defined route to container. hostname -> ip
-      * @return this builder
-      */
-    @Optional("default is empty")
-    def route(route: Map[String, String]): Creator = {
-      this.route = Objects.requireNonNull(route)
-      this
-    }
-
-    /**
-      * forward the port from host to container.
-      * NOTED: currently we don't support to specify the network interface so the forwarded port is bound on all network adapters.
-      *
-      * @param ports port mapping (host's port -> container's port)
-      * @return this builder
-      */
-    @Optional("default is empty")
-    def portMappings(ports: Map[Int, Int]): Creator = {
-      this.ports = Objects.requireNonNull(ports)
-      this
-    }
-
-    /**
-      * the arguments passed to docker container
-      *
-      * @param arguments arguments
-      * @return this builder
-      */
-    @Optional("default is empty")
-    def arguments(arguments: Seq[String]): Creator = {
-      this.arguments = Objects.requireNonNull(arguments)
-      this
-    }
-
-    /**
-      * the command passed to docker container
-      *
-      * @param command command
-      * @return this builder
-      */
-    @Optional("default is empty")
-    def command(command: String): Creator = {
-      this.command = Objects.requireNonNull(command)
-      this
-    }
-  }
+  trait ContainerCreator extends ContainerClient.ContainerCreator
 }

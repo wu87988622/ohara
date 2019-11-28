@@ -19,10 +19,12 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -52,6 +54,7 @@ trait Collie {
   final def remove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters().flatMap(_.find(_.key == key).fold(Future.successful(false)) { cluster =>
       doRemove(cluster, cluster.containers)
+        .map(_ => true)
     })
 
   /**
@@ -63,7 +66,7 @@ trait Collie {
     */
   protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean]
+  ): Future[Unit]
 
   /**
     * This method open a door to sub class to implement a force remove which kill whole cluster without graceful shutdown.
@@ -75,6 +78,7 @@ trait Collie {
   final def forceRemove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters().flatMap(_.find(_.key == key).fold(Future.successful(false)) { cluster =>
       doForceRemove(cluster, cluster.containers)
+        .map(_ => true)
     })
 
   /**
@@ -86,7 +90,7 @@ trait Collie {
     */
   protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] = doRemove(clusterInfo, containerInfos)
+  ): Future[Unit] = doRemove(clusterInfo, containerInfos)
 
   /**
     * get logs from all containers.
@@ -96,7 +100,7 @@ trait Collie {
     */
   def logs(key: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerInfo, String]]
+  ): Future[Map[ContainerName, String]]
 
   /**
     * create a cluster creator. The subclass should have following rules.
@@ -111,6 +115,39 @@ trait Collie {
     * @return creator of cluster
     */
   def creator: ClusterCreator
+
+  /**
+    * the actual method to prcess the creation.
+    * Noted the input arguments are checked
+    * @param executionContext thread pool
+    * @param containerInfo expected container info
+    * @param node node
+    * @param routes routes
+    * @param arguments argument
+    * @return async call
+    */
+  protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: Node,
+    routes: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit]
+
+  /**
+    * invoked after all containers are created.
+    * It is useful to commit something to collie impl. for example, update cache
+    * @param clusterStatus current cluster status
+    * @param existentNodes the origin nodes
+    * @param routes new routes
+    * @param executionContext thread pool
+    * @return async call
+    */
+  protected def postCreate(
+    clusterStatus: ClusterStatus,
+    existentNodes: Map[Node, ContainerInfo],
+    routes: Map[String, String]
+  )(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * fetch all clusters and belonging containers from cache.
@@ -160,7 +197,7 @@ trait Collie {
         .map { cluster =>
           cluster.containers
             .find(_.nodeName == nodeName)
-            .map(container => doRemove(cluster, Seq(container)))
+            .map(container => doRemove(cluster, Seq(container)).map(_ => true))
             .getOrElse(Future.successful(false))
         }
         .getOrElse(Future.successful(false))

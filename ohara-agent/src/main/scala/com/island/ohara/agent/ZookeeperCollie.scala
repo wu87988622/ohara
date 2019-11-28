@@ -84,11 +84,11 @@ trait ZookeeperCollie extends Collie {
           else newNodes
       }
       .flatMap { newNodes =>
+        // add route in order to make zk node can connect to each other.
+        val routes: Map[String, String] = newNodes.map(node => node.name -> CommonUtils.address(node.name)).toMap
         val successfulContainersFuture =
           if (newNodes.isEmpty) Future.successful(Seq.empty)
           else {
-            // add route in order to make zk node can connect to each other.
-            val route: Map[String, String] = newNodes.map(node => node.name -> CommonUtils.address(node.name)).toMap
             // ssh connection is slow so we submit request by multi-thread
             Future.sequence(newNodes.zipWithIndex.map {
               case (newNode, nodeIndex) =>
@@ -167,7 +167,7 @@ trait ZookeeperCollie extends Collie {
                   .append(nodeIndex)
                   .done
                   .build
-                doCreator(executionContext, containerInfo, newNode, route, arguments)
+                doCreator(executionContext, containerInfo, newNode, routes, arguments)
                   .map(_ => Some(containerInfo))
                   .recover {
                     case e: Throwable =>
@@ -177,31 +177,21 @@ trait ZookeeperCollie extends Collie {
             })
           }
 
-        successfulContainersFuture.map(_.flatten.toSeq).map { aliveContainers =>
+        successfulContainersFuture.map(_.flatten.toSeq).flatMap { aliveContainers =>
           postCreate(
-            ClusterStatus(
+            clusterStatus = ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
               kind = ClusterStatus.Kind.ZOOKEEPER,
               state = toClusterState(aliveContainers).map(_.name),
               error = None
-            )
+            ),
+            existentNodes = Map.empty,
+            routes = routes
           )
         }
       }
-  }
-
-  protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit]
-
-  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
-    //Default Nothing
   }
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(

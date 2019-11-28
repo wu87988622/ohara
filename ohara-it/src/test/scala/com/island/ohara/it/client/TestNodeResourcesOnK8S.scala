@@ -20,8 +20,7 @@ import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.collie.ClusterNameHolder
+import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
 import com.island.ohara.it.category.ClientGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
@@ -37,7 +36,7 @@ class TestNodeResourcesOnK8S extends BasicTests4NodeResources {
 
   override protected val configurator: Configurator =
     Configurator.builder.k8sClient(k8sClient).build()
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(EnvTestingUtils.k8sClient())
 
   @Before
   final def setup(): Unit =

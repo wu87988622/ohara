@@ -20,8 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 
 import com.island.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ClusterStatus, NodeApi}
+import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.VisibleForTesting
 
@@ -64,13 +63,4 @@ private[configurator] class FakeBrokerCollie(dataCollie: DataCollie, bkConnectio
       Future.successful(if (r == null) fake else r)
     } else
       Future.failed(new NoSuchClusterException(s"cluster:${brokerClusterInfo.key} is not running"))
-
-  override protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: NodeApi.Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit] =
-    throw new UnsupportedOperationException("Fake broker collie doesn't support doCreator function")
 }

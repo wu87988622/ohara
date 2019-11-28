@@ -76,25 +76,21 @@ trait WorkerCollie extends Collie {
 
     resolveRequiredInfos.flatMap {
       case (existentNodes, newNodes, brokerClusterInfo, pluginInfos, sharedJarInfos) =>
+        val routes = resolveHostNames(
+          (existentNodes.keys.map(_.hostname)
+            ++ newNodes.map(_.hostname)
+            ++ brokerClusterInfo.nodeNames).toSet
+          // make sure the worker can connect to configurator for downloading jars
+          // Normally, the jar host name should be resolvable by worker since
+          // we should add the "hostname" to configurator for most cases...
+          // This is for those configurators that have no hostname (for example, temp configurator)
+            ++ pluginInfos.map(_.url.get.getHost).toSet
+        )
         val successfulContainersFuture =
           if (newNodes.isEmpty) Future.successful(Seq.empty)
           else {
             val brokers =
               brokerClusterInfo.nodeNames.map(nodeName => s"$nodeName:${brokerClusterInfo.clientPort}").mkString(",")
-
-            val route = resolveHostNames(
-              (existentNodes.keys.map(_.hostname)
-                ++ newNodes.map(_.hostname)
-                ++ brokerClusterInfo.nodeNames).toSet
-              // make sure the worker can connect to configurator for downloading jars
-              // Normally, the jar host name should be resolvable by worker since
-              // we should add the "hostname" to configurator for most cases...
-              // This is for those configurators that have no hostname (for example, temp configurator)
-                ++ pluginInfos.map(_.url.get.getHost).toSet
-            )
-            existentNodes.foreach {
-              case (node, container) => hookOfNewRoute(node, container, route)
-            }
 
             // ssh connection is slow so we submit request by multi-thread
             Future.sequence(newNodes.map { newNode =>
@@ -163,7 +159,7 @@ trait WorkerCollie extends Collie {
                 .append("value.converter.schemas.enable", true)
                 .done
                 .build
-              doCreator(executionContext, containerInfo, newNode, route, arguments)
+              doCreator(executionContext, containerInfo, newNode, routes, arguments)
                 .map(_ => Some(containerInfo))
                 .recover {
                   case e: Throwable =>
@@ -172,49 +168,22 @@ trait WorkerCollie extends Collie {
                 }
             })
           }
-        successfulContainersFuture.map(_.flatten.toSeq).map { successfulContainers =>
+        successfulContainersFuture.map(_.flatten.toSeq).flatMap { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
           postCreate(
-            ClusterStatus(
+            clusterStatus = ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
               kind = ClusterStatus.Kind.WORKER,
               state = toClusterState(aliveContainers).map(_.name),
               error = None
-            )
+            ),
+            existentNodes = existentNodes,
+            routes = routes
           )
         }
     }
-  }
-
-  /**
-    * there is new route to the node. the sub class can update the running container to apply new route.
-    */
-  protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
-    //Nothing
-  }
-
-  /**
-    * Please implement this function to create the container to a different platform
-    * @param executionContext execution context
-    * @param containerInfo container information
-    * @param node node object
-    * @param route ip-host mapping
-    */
-  protected def doCreator(
-    executionContext: ExecutionContext,
-    containerInfo: ContainerInfo,
-    node: Node,
-    route: Map[String, String],
-    arguments: Seq[String]
-  ): Future[Unit]
-
-  /**
-    * After the worker container creates complete, you maybe need to do other things.
-    */
-  protected def postCreate(clusterStatus: ClusterStatus): Unit = {
-    //Default Nothing
   }
 
   /**

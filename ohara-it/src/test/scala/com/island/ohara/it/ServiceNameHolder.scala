@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.collie
-import com.island.ohara.agent.Agent
-import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+package com.island.ohara.it
+
+import com.island.ohara.agent.container.ContainerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
   * In agent tests we build many clusters to test. If we don't cleanup them, the resources of it nodes may be exhausted
   * and then sequential tests will be timeout.
   *
   */
-trait ClusterNameHolder extends Releasable {
-  private[this] val log = Logger(classOf[ClusterNameHolder])
+trait ServiceNameHolder extends Releasable {
+  private[this] val log = Logger(classOf[ServiceNameHolder])
 
   /**
     * store the name used to create cluster. We can remove all created cluster in the "after" phase.
@@ -95,73 +93,29 @@ trait ClusterNameHolder extends Releasable {
   protected def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean): Unit
 }
 
-object ClusterNameHolder {
+object ServiceNameHolder {
   /**
     * used to debug :)
     */
   private[this] val KEEP_CONTAINERS = sys.env.get("ohara.it.keep.containers").exists(_.toLowerCase == "true")
-  private[this] val LOG             = Logger(classOf[ClusterNameHolder])
+  private[this] val LOG             = Logger(classOf[ServiceNameHolder])
 
-  /**
-    * create a name holder based on ssh.
-    * @param nodes nodes
-    * @return name holder
-    */
-  def apply(nodes: Seq[Node]): ClusterNameHolder =
-    (clusterKey: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean) =>
-      /**
-        * Some IT need to close containers so we don't obstruct them form "releasing".
-        * However, the final close is still controlled by the global flag.
-        */
-      if (!finalClose || !KEEP_CONTAINERS)
-        nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
-          val client =
-            DockerClient(
-              Agent.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-            )
-          try client
-            .containerNames()
-            .filter(
-              containerName =>
-                clusterKey
-                  .exists(key => containerName.name.contains(key.group()) && containerName.name.contains(key.name()))
-            )
-            .foreach { containerName =>
-              try {
-                println(
-                  s"[-----------------------------------[image:${containerName.imageName}][name:${containerName.name}-----------------------------------]"
-                )
-                val containerLogs = try client.log(containerName.name, None)
-                catch {
-                  case e: Throwable =>
-                    s"failed to fetch the logs for container:${containerName.name}. caused by:${e.getMessage}"
-                }
-                println(containerLogs)
-                println("[------------------------------------------------------------------------------------]")
-                client.forceRemove(containerName.name)
-                LOG.info(s"succeed to remove container ${containerName.name}")
-              } catch {
-                case e: Throwable =>
-                  LOG.error(s"failed to remove container ${containerName.name}", e)
-              }
-            } finally client.close()
-        }
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
   /**
     * create a name holder based on k8s.
-    * @param nodes nodes
     * @param client k8s client
     * @return name holder
     */
-  def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder =
+  def apply(client: ContainerClient): ServiceNameHolder =
     (clusterKey: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean) =>
+      try
       /**
         * Some IT need to close containers so we don't obstruct them form "releasing".
         * However, the final close is still controlled by the global flag.
         */
       if (!finalClose || !KEEP_CONTAINERS)
-        Await
-          .result(client.containers(), 30 seconds)
+        result(client.containers())
           .filter(
             container =>
               clusterKey.exists(key => container.name.contains(key.group()) && container.name.contains(key.name()))
@@ -170,17 +124,17 @@ object ClusterNameHolder {
           .foreach { container =>
             try {
               println(s"[-----------------------------------${container.name}-----------------------------------]")
-              val containerLogs = try Await.result(client.log(container.name, None), 30 seconds)
+              val containerLogs = try result(client.log(container.name, None))
               catch {
                 case e: Throwable =>
                   s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"
               }
               println(containerLogs)
               println("[------------------------------------------------------------------------------------]")
-              Await.result(client.forceRemove(container.name), 30 seconds)
+              result(client.forceRemove(container.name))
             } catch {
               case e: Throwable =>
                 LOG.error(s"failed to remove container ${container.name}", e)
             }
-          }
+          } finally Releasable.close(client)
 }

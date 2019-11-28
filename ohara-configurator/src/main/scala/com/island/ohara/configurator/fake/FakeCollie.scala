@@ -19,12 +19,14 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{Collie, DataCollie, NoSuchClusterException, ServiceState}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -83,9 +85,9 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
 
   override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] = {
+  ): Future[Unit] = {
     val previous = clusterCache.get(clusterInfo.key)
-    if (previous == null) Future.successful(false)
+    if (previous == null) Future.unit
     else {
       val newContainers =
         previous.containers.filterNot(container => beRemovedContainer.exists(_.name == container.name))
@@ -98,10 +100,24 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
 
   override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerInfo, String]] =
+  ): Future[Map[ContainerName, String]] =
     exist(objectKey).flatMap(if (_) Future.successful {
-      val containers = clusterCache.asScala.find(_._1 == objectKey).get._2.containers
-      containers.map(_ -> "fake log").toMap
+      clusterCache.asScala
+        .find(_._1 == objectKey)
+        .get
+        ._2
+        .containers
+        .map(
+          container =>
+            new ContainerName(
+              id = container.id,
+              name = container.name,
+              nodeName = container.nodeName,
+              imageName = container.imageName
+            )
+        )
+        .map(_ -> "fake log")
+        .toMap
     } else Future.failed(new NoSuchClusterException(s"$objectKey doesn't exist")))
 
   override def clusters()(
@@ -112,7 +128,7 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
   private[this] val _forceRemoveCount = new AtomicInteger(0)
   override protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
-  ): Future[Boolean] =
+  ): Future[Unit] =
     try doRemove(clusterInfo, containerInfos)
     finally _forceRemoveCount.incrementAndGet()
 
@@ -149,4 +165,19 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
       BeanChannel.local().counterMBeans().asScala
   }
+
+  override protected def doCreator(
+    executionContext: ExecutionContext,
+    containerInfo: ContainerInfo,
+    node: NodeApi.Node,
+    route: Map[String, String],
+    arguments: Seq[String]
+  ): Future[Unit] =
+    throw new UnsupportedOperationException("fake collie doesn't support to doCreator function")
+
+  override def postCreate(
+    clusterStatus: ClusterStatus,
+    existentNodes: Map[Node, ContainerInfo],
+    routes: Map[String, String]
+  )(implicit executionContext: ExecutionContext): Future[Unit] = Future.unit
 }

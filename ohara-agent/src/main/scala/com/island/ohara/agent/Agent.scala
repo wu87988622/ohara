@@ -39,6 +39,11 @@ trait Agent extends Releasable {
     * @return response from remote node
     */
   def execute(command: String): Option[String]
+
+  /**
+    * @return true if this object is still available. Otherwise, all executions produce exception
+    */
+  def isOpen: Boolean
 }
 
 /**
@@ -139,6 +144,8 @@ object Agent {
       override def close(): Unit = Releasable.close(client)
 
       override def toString: String = s"$user@$hostname:$port"
+
+      override def isOpen: Boolean = client.isOpen
     }
   }
 }

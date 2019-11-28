@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.connector
+package com.island.ohara.it.connector.jdbc
 
 import com.island.ohara.common.util.CommonUtils
 

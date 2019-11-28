@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.connector
+package com.island.ohara.it.connector.jdbc
 
-import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.agent.DataCollie
+import com.island.ohara.agent.docker.DockerClient
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.EnvTestingUtils
-import com.island.ohara.it.collie.ClusterNameHolder
 import com.island.ohara.it.category.ConnectorGroup
+import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[ConnectorGroup]))
-class TestK8sOracleJDBCSourceConnector extends BasicTestOracleJDBCSourceConnector {
+class TestPostgreSQLSourceConnectorOnDocker extends BasicTestPostgresqlJDBCSourceConnector {
   override val configurator: Configurator = Configurator.builder
     .hostname(EnvTestingUtils.configuratorHostName())
-    .port(EnvTestingUtils.configuratorHostPort)
-    .k8sClient(EnvTestingUtils.k8sClient())
+    .port(EnvTestingUtils.configuratorHostPort())
     .build()
 
-  override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
+  override protected val nodes: Seq[NodeApi.Node] = EnvTestingUtils.dockerNodes()
 
-  override protected val nameHolder: ClusterNameHolder = ClusterNameHolder(nodes, EnvTestingUtils.k8sClient())
+  override protected val nameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
 }

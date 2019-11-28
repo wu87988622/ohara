@@ -19,9 +19,9 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.{NoSuchClusterException, ServiceCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi._
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.LogApi._
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.WorkerApi._
@@ -36,7 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * this is just a workaround.
   */
 object LogRoute {
-  private[this] def route(clusterKey: ObjectKey, data: Future[Map[ContainerInfo, String]])(
+  private[this] def route(clusterKey: ObjectKey, data: Future[Map[ContainerName, String]])(
     implicit executionContext: ExecutionContext
   ): server.Route =
     complete(data.map { d =>
