@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { isEmpty } from 'lodash';
 import * as inspectConfiguratorBody from './body/inspectConfiguratorBody';
 import * as inspectServiceBody from './body/inspectServiceBody';
 import * as inspectTopicBody from './body/inspectTopicBody';
@@ -40,35 +41,33 @@ export const classType = {
   source: 'source',
 };
 
+const fetchServiceInfo = async (kind, params) => {
+  const reqUrl = !isEmpty(params)
+    ? `${url}/${kind}/${params.name}?group=${params.group}`
+    : `${url}/${kind}`;
+  const res = await axiosInstance.get(reqUrl);
+  return responseUtil(res, inspectServiceBody);
+};
+
 export const getConfiguratorInfo = async () => {
   const res = await axiosInstance.get(`${url}/${kind.configurator}`);
   return responseUtil(res, inspectConfiguratorBody);
 };
 
-export const getZookeeperInfo = async () => {
-  const res = await axiosInstance.get(`${url}/${kind.zookeeper}`);
-  return responseUtil(res, inspectServiceBody);
+export const getZookeeperInfo = async (params = {}) => {
+  return fetchServiceInfo(kind.zookeeper, params);
 };
 
-export const getBrokerInfo = async () => {
-  const res = await axiosInstance.get(`${url}/${kind.broker}`);
-  return responseUtil(res, inspectServiceBody);
+export const getBrokerInfo = async (params = {}) => {
+  return fetchServiceInfo(kind.broker, params);
 };
 
-export const getWorkerInfo = async params => {
-  const workerUrl = params
-    ? `${url}/${kind.worker}/${params.name}?group=${params.group}`
-    : `${url}/${kind.worker}`;
-  const res = await axiosInstance.get(workerUrl);
-  return responseUtil(res, inspectServiceBody);
+export const getWorkerInfo = async (params = {}) => {
+  return fetchServiceInfo(kind.worker, params);
 };
 
 export const getStreamsInfo = async (params = {}) => {
-  const streamUrl = params
-    ? `${url}/${kind.stream}/${params.name}?group=${params.group}`
-    : `${url}/${kind.stream}`;
-  const res = await axiosInstance.get(streamUrl);
-  return responseUtil(res, inspectServiceBody);
+  return fetchServiceInfo(kind.stream, params);
 };
 
 export const getFileInfoWithoutUpload = async params => {

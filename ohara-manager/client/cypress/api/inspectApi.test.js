@@ -67,6 +67,35 @@ describe('Inspect API', () => {
     expectResult(inspect.kind.stream, infoStream);
   });
 
+  it('fetchServiceDefinitionByName', async () => {
+    const { zookeeper, broker, worker } = await createServices({
+      withWorker: true,
+      withBroker: true,
+      withZookeeper: true,
+      withNode: true,
+    });
+
+    function expectResult(serviceName, data) {
+      const { imageName, settingDefinitions, classInfos } = data;
+      expect(imageName).to.be.a('string');
+      expect(imageName).to.include(serviceName);
+
+      expect(settingDefinitions).to.be.an('array');
+      expect(settingDefinitions.length > 0).to.be.true;
+
+      expect(classInfos).to.be.an('array');
+    }
+
+    const infoZookeeper = await inspect.getZookeeperInfo(zookeeper);
+    expectResult(inspect.kind.zookeeper, infoZookeeper);
+
+    const infoBroker = await inspect.getBrokerInfo(broker);
+    expectResult(inspect.kind.broker, infoBroker);
+
+    const infoWorker = await inspect.getWorkerInfo(worker);
+    expectResult(inspect.kind.worker, infoWorker);
+  });
+
   it('fetchTopicDefinition', async () => {
     const infoTopic = await inspect.getBrokerInfo();
     const { imageName, settingDefinitions, classInfos } = infoTopic;
