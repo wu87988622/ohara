@@ -14,88 +14,81 @@
  * limitations under the License.
  */
 
-import { reject } from 'lodash';
+import { map, reject, sortBy, isEqualWith } from 'lodash';
 
 import {
-  initializeRoutine,
-  fetchFilesRoutine,
-  uploadFileRoutine,
-  deleteFileRoutine,
-} from './fileRoutines';
+  fetchWorkersRoutine,
+  addWorkerRoutine,
+  updateWorkerRoutine,
+  deleteWorkerRoutine,
+} from './workerRoutines';
 
 const initialState = {
-  isFetching: false,
   data: [],
+  isFetching: false,
   lastUpdated: null,
   error: null,
 };
 
-const sortedFiles = Files => Files.sort((a, b) => a.name.localeCompare(b.name));
+const sort = workers => sortBy(workers, 'settings.name');
+
+const isEqual = (object, other) =>
+  isEqualWith(object, other, ['settings.name', 'settings.group']);
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchFilesRoutine.REQUEST:
+    case fetchWorkersRoutine.REQUEST:
+    case addWorkerRoutine.REQUEST:
+    case updateWorkerRoutine.REQUEST:
+    case deleteWorkerRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
-    case fetchFilesRoutine.SUCCESS:
+    case fetchWorkersRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: action.payload,
+        data: sort(action.payload),
         lastUpdated: new Date(),
       };
-    case fetchFilesRoutine.FAILURE:
+    case addWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
-      };
-    case uploadFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: undefined,
-      };
-    case uploadFileRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sortedFiles([...state.data, action.payload]),
+        data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case uploadFileRoutine.FAILURE:
+    case updateWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        data: map(state.data, worker =>
+          isEqual(worker, action.payload) ? action.payload : worker,
+        ),
+        lastUpdated: new Date(),
       };
-    case deleteFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-    case deleteFileRoutine.SUCCESS:
+    case deleteWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, file => {
+        data: reject(state.data, worker => {
           return (
-            file.name === action.payload.name &&
-            file.group === action.payload.group
+            worker.settings.name === action.payload.name &&
+            worker.settings.group === action.payload.group
           );
         }),
         lastUpdated: new Date(),
       };
-    case deleteFileRoutine.FAILURE:
+    case fetchWorkersRoutine.FAILURE:
+    case addWorkerRoutine.FAILURE:
+    case updateWorkerRoutine.FAILURE:
+    case deleteWorkerRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        error: action.payload || true,
       };
-    case initializeRoutine.TRIGGER:
-      return initialState;
     default:
       return state;
   }

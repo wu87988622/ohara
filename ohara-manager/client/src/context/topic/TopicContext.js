@@ -16,10 +16,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty } from 'lodash';
 import { useSnackbar } from 'context/SnackbarContext';
 import { useWorkspace } from 'context';
-import { changeWorkspaceRoutine } from 'context/workspace/workspaceRoutines';
+import { initializeRoutine } from './topicRoutines';
 import {
   createFetchTopics,
   createAddTopic,
@@ -32,12 +31,11 @@ const TopicDispatchContext = React.createContext();
 
 const TopicProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaces, currentWorkspace } = useWorkspace();
+  const { workspaceName } = useWorkspace();
 
   React.useEffect(() => {
-    if (isEmpty(workspaces)) return;
-    dispatch(changeWorkspaceRoutine.trigger(currentWorkspace));
-  }, [workspaces, currentWorkspace]);
+    dispatch(initializeRoutine.trigger());
+  }, [workspaceName]);
 
   return (
     <TopicStateContext.Provider value={state}>
