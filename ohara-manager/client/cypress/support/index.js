@@ -29,6 +29,36 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
+// eslint complain we use an undef object which is cypress pre-defined object "chai"
+/* eslint-disable no-undef */
+
 import './defaultCommands';
 import './e2eCommands';
 import './retryOnFail';
+
+const customAssertions = (chai, utils) => {
+  const customMethodA = _super => {
+    return function a() {
+      utils.flag(this, 'message', '[Type Assert]');
+      _super.apply(this, arguments);
+    };
+  };
+  const customChainingA = () => {
+    return function chainA() {
+      utils.flag(this, 'object');
+    };
+  };
+
+  chai.Assertion.overwriteChainableMethod(
+    'a',
+    _super => customMethodA(_super),
+    () => customChainingA(),
+  );
+  chai.Assertion.overwriteChainableMethod(
+    'an',
+    _super => customMethodA(_super),
+    () => customChainingA(),
+  );
+};
+
+chai.use(customAssertions);

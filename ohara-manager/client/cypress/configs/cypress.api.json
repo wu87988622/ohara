@@ -3,7 +3,8 @@
   "integrationFolder": "cypress/api",
   "reporterOptions": {
     "mochaFile": "../test-reports/apiReport-[hash].xml",
-    "toConsole": true
+    "toConsole": true,
+    "jenkinsMode": true
   },
   "screenshotsFolder": "cypress/screenshots/api",
   "video": true,
