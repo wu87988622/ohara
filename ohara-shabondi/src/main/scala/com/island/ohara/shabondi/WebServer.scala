@@ -27,12 +27,12 @@ import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.duration.Duration
 import scala.concurrent._
+import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
-private class WebServer(config: Config) extends AbstractWebServer {
+private[shabondi] class WebServer(config: Config) extends AbstractWebServer {
   import DefaultDefinitions._
 
   private implicit val _system = ActorSystem("shabondi")

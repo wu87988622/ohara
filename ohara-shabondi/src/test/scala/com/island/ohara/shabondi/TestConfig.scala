@@ -24,7 +24,7 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 
-class TestConfig extends OharaTest with Matchers {
+final class TestConfig extends OharaTest with Matchers {
   import DefaultDefinitions._
 
   private def topicKey1 = TopicKey.of("default", "topic1")

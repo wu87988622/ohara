@@ -24,12 +24,12 @@ import akka.http.scaladsl.server.directives.MethodDirectives._
 import akka.http.scaladsl.server.directives.PathDirectives._
 import akka.http.scaladsl.server.directives.RouteDirectives._
 
-object SinkRoute {
+private[shabondi] object SinkRoute {
   def apply(config: Config)(implicit actorSystem: ActorSystem) =
     new SinkRoute(config)
 }
 
-class SinkRoute(config: Config)(implicit actorSystem: ActorSystem) {
+private[shabondi] class SinkRoute(config: Config)(implicit actorSystem: ActorSystem) {
   lazy private val log = Logging(actorSystem, classOf[SinkRoute])
 
   def route: Route =

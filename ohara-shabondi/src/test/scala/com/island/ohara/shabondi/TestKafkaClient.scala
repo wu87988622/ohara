@@ -21,14 +21,13 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.common.data.{Cell, Row}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestKafkaClient extends BasicShabondiTest with Matchers {
-  import KafkaClient._
+final class TestKafkaClient extends BasicShabondiTest {
+  import KafkaSupport._
 
   implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -42,14 +41,13 @@ class TestKafkaClient extends BasicShabondiTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = {
+  override def tearDown(): Unit = {
     brokerClient.deleteTopic(TOPIC_1)
-    Releasable.close(brokerClient)
   }
 
   @Test
   def testSingleProducer(): Unit = {
-    val producer = KafkaClient.newProducer(brokerProps)
+    val producer = KafkaSupport.newProducer(brokerProps)
     try {
       val row = Row.of(Cell.of("col1", 100))
       val sender = producer
@@ -72,9 +70,9 @@ class TestKafkaClient extends BasicShabondiTest with Matchers {
 
   @Test
   def testConsumer(): Unit = {
-    val producer = KafkaClient.newProducer(brokerProps)
+    val producer = newProducer(brokerProps)
     try {
-      val future = Future.sequence {
+      Future.sequence {
         (1 to 9)
           .map(i => Row.of(Cell.of(s"col-$i", i * 10)))
           .map(row => producer.sender().key(row).value(Array[Byte]()).topicName(TOPIC_1))
@@ -82,8 +80,6 @@ class TestKafkaClient extends BasicShabondiTest with Matchers {
             sender.send.toScala
           }
       }
-
-      Await.result(future, 3 seconds)
 
       val records = pollTopicOnce(brokerProps, TOPIC_1, 10, 10)
 

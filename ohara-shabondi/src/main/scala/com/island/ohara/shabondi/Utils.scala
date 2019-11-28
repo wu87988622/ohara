@@ -26,7 +26,7 @@ import spray.json.{JsObject, JsValue, RootJsonFormat}
 import scala.compat.java8.FutureConverters
 import scala.concurrent.Future
 
-object JsonSupport extends SprayJsonSupport {
+private[shabondi] object JsonSupport extends SprayJsonSupport {
   type RowData = Map[String, JsValue] // column, value
 
   implicit val rowDataFormat: RootJsonFormat[RowData] = new RootJsonFormat[RowData] {
@@ -37,7 +37,7 @@ object JsonSupport extends SprayJsonSupport {
   def toRow(obj: JsObject) = com.island.ohara.client.configurator.v0.toRow(obj)
 }
 
-object KafkaClient {
+private[shabondi] object KafkaSupport {
   def newProducer(brokers: String): Producer[Row, Array[Byte]] =
     Producer
       .builder()

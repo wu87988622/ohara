@@ -30,11 +30,12 @@ import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStreamFlow extends BasicShabondiTest {
+final class TestStreamFlow extends BasicShabondiTest {
+  import KafkaSupport._
+
   implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
-  import KafkaClient._
 
   @Test
   def testSimple(): Unit = {
@@ -52,7 +53,7 @@ class TestStreamFlow extends BasicShabondiTest {
     val singleRow = Row.of(
       (1 to 10).map(i => Cell.of(s"col-$i", i * 10)): _*
     )
-    val producer = KafkaClient.newProducer(brokerProps)
+    val producer = KafkaSupport.newProducer(brokerProps)
     try {
       singleRow.cells().size should ===(10)
       val source: Source[Row, NotUsed] = Source.single(singleRow)
@@ -81,7 +82,7 @@ class TestStreamFlow extends BasicShabondiTest {
     val topicKey1  = createTopicKey
     val topicKey2  = createTopicKey
     val topicKeys  = Seq(topicKey1, topicKey2).to[immutable.Iterable]
-    val producer   = KafkaClient.newProducer(brokerProps)
+    val producer   = newProducer(brokerProps)
     val maxRowSize = 1000
     val rows       = multipleRows(maxRowSize)
     try {
@@ -120,7 +121,7 @@ class TestStreamFlow extends BasicShabondiTest {
   @Test
   def testMultipleRow(): Unit = {
     val topicKey1  = createTopicKey
-    val producer   = KafkaClient.newProducer(brokerProps)
+    val producer   = newProducer(brokerProps)
     val maxRowSize = 100
     val rows       = multipleRows(maxRowSize)
     try {

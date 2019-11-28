@@ -23,7 +23,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
 
-class TestRowData extends OharaTest with Matchers {
+final class TestRowData extends OharaTest with Matchers {
   @Test
   def testRowData(): Unit = {
     val jsonData =

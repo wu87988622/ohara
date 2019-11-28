@@ -18,18 +18,18 @@ package com.island.ohara.shabondi
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.setting.SettingDef.Type
+import com.island.ohara.common.setting.{SettingDef, TopicKey}
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-object Config {
+private[shabondi] object Config {
   def apply(raw: Map[String, String]) =
     new Config(raw)
 }
 
-class Config(raw: Map[String, String]) {
+private[shabondi] class Config(raw: Map[String, String]) {
   import DefaultDefinitions._
 
   def serverType: String = raw(SERVER_TYPE_KEY)

@@ -20,13 +20,9 @@ import akka.http.scaladsl.model._
 import com.island.ohara.common.data.Row
 import com.island.ohara.kafka.Consumer
 import org.junit.Test
-import org.scalatest.Matchers
 import spray.json._
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
-class TestSourceRoute extends BasicShabondiTest with Matchers {
+final class TestSourceRoute extends BasicShabondiTest {
   import DefaultDefinitions._
   import DefaultJsonProtocol._
   import ShabondiRouteTestSupport._
@@ -49,7 +45,7 @@ class TestSourceRoute extends BasicShabondiTest with Matchers {
         val request = Post(uri = "/v0", entity)
 
         request ~> webServer.routes ~> check {
-          entityAs[String] should ===("success")
+          entityAs[String] should ===("")
         }
       }
 
@@ -60,39 +56,6 @@ class TestSourceRoute extends BasicShabondiTest with Matchers {
       rowsTopic1(0).key.get.cells.size should ===(6)
     } finally {
       brokerClient.deleteTopic(topicKey1.name())
-    }
-  }
-
-  @Test
-  def testSendRow(): Unit = {
-    val topicKey1 = createTopicKey
-    val topicKey2 = createTopicKey
-    val config    = defaultTestConfig(SERVER_TYPE_SOURCE, Seq(topicKey1, topicKey2))
-    try {
-      val columnSize  = 10
-      val topics      = Seq(topicKey1, topicKey2)
-      val row         = singleRow(columnSize, 1)
-      val sourceRoute = SourceRoute(config)
-
-      // Send row to two topics
-      val future = sourceRoute.sendRowFuture(topics, row)
-
-      Await.result(future, Duration.Inf)
-
-      // assertion
-      val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey1.name(), 10, columnSize)
-      rowsTopic1.size should ===(1)
-      rowsTopic1(0).key.get.cells.size should ===(columnSize)
-
-      val rowsTopic2: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey2.name(), 10, columnSize)
-
-      rowsTopic2.size should ===(1)
-      rowsTopic2(0).key.get.cells.size should ===(columnSize)
-    } finally {
-      brokerClient.deleteTopic(topicKey1.name())
-      brokerClient.deleteTopic(topicKey2.name())
     }
   }
 }

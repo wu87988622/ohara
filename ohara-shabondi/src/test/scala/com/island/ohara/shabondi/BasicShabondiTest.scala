@@ -26,6 +26,7 @@ import com.island.ohara.kafka.{BrokerClient, Consumer}
 import com.island.ohara.shabondi.DefaultDefinitions._
 import com.island.ohara.testing.WithBroker
 import com.typesafe.scalalogging.Logger
+import org.junit.After
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, Suite}
 
@@ -34,13 +35,16 @@ import scala.collection.immutable
 
 object ShabondiRouteTestSupport extends Suite with ScalaFutures with ScalatestRouteTest
 
-abstract class BasicShabondiTest extends WithBroker with Matchers {
+abstract private[shabondi] class BasicShabondiTest extends WithBroker with Matchers {
   protected val log = Logger(this.getClass())
 
   protected val brokerProps                = testUtil.brokersConnProps
   protected val brokerClient: BrokerClient = BrokerClient.of(brokerProps)
 
   protected def createTopicKey = TopicKey.of("default", CommonUtils.randomString(5))
+
+  protected def createTestTopic(topicKey: TopicKey): Unit =
+    createTestTopic(topicKey.name)
 
   protected def createTestTopic(name: String): Unit =
     brokerClient.topicCreator
@@ -79,11 +83,16 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
     timeoutSecond: Long,
     expectedSize: Int
   ): Seq[Consumer.Record[Row, Array[Byte]]] = {
-    val consumer = KafkaClient.newConsumer(brokers, topicName)
+    val consumer = KafkaSupport.newConsumer(brokers, topicName)
     try {
       consumer.poll(Duration.ofSeconds(timeoutSecond), expectedSize).asScala
     } finally {
       Releasable.close(consumer)
     }
+  }
+
+  @After
+  def tearDown(): Unit = {
+    Releasable.close(brokerClient)
   }
 }
