@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import { reject } from 'lodash';
+import { reject, get } from 'lodash';
 
+import { changeWorkspaceRoutine } from 'context/workspace/workspaceRoutines';
 import {
-  initializeRoutine,
   fetchFilesRoutine,
   uploadFileRoutine,
   deleteFileRoutine,
 } from './fileRoutines';
 
 const initialState = {
+  workspace: null,
   isFetching: false,
   data: [],
   lastUpdated: null,
@@ -94,8 +95,13 @@ const reducer = (state, action) => {
         isFetching: false,
         error: action.payload,
       };
-    case initializeRoutine.TRIGGER:
-      return initialState;
+    case changeWorkspaceRoutine.TRIGGER: {
+      if (get(state.workspace, 'name') !== get(action.payload, 'name')) {
+        return { ...initialState, workspace: action.payload };
+      } else {
+        return state;
+      }
+    }
     default:
       return state;
   }

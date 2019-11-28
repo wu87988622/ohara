@@ -16,14 +16,6 @@
 
 import { createRoutine } from 'redux-routines';
 
-const fetchZookeepersRoutine = createRoutine('FETCH_ZOOKEEPERS');
-const addZookeeperRoutine = createRoutine('ADD_ZOOKEEPER');
-const updateZookeeperRoutine = createRoutine('UPDATE_ZOOKEEPER');
-const deleteZookeeperRoutine = createRoutine('DELETE_ZOOKEEPER');
+const changeWorkspaceRoutine = createRoutine('CHANGE_WORKSPACE');
 
-export {
-  fetchZookeepersRoutine,
-  addZookeeperRoutine,
-  updateZookeeperRoutine,
-  deleteZookeeperRoutine,
-};
+export { changeWorkspaceRoutine };

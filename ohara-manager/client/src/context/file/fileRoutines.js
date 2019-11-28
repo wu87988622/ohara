@@ -16,14 +16,8 @@
 
 import { createRoutine } from 'redux-routines';
 
-const initializeRoutine = createRoutine('INITIALIZE');
 const fetchFilesRoutine = createRoutine('FETCH_FILES');
 const uploadFileRoutine = createRoutine('UPLOAD_FILE');
 const deleteFileRoutine = createRoutine('DELETE_FILE');
 
-export {
-  initializeRoutine,
-  fetchFilesRoutine,
-  uploadFileRoutine,
-  deleteFileRoutine,
-};
+export { fetchFilesRoutine, uploadFileRoutine, deleteFileRoutine };
