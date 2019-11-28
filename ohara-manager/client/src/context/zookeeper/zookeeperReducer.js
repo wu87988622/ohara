@@ -14,88 +14,81 @@
  * limitations under the License.
  */
 
-import { reject } from 'lodash';
+import { map, reject, sortBy, isEqualWith } from 'lodash';
 
 import {
-  initializeRoutine,
-  fetchFilesRoutine,
-  uploadFileRoutine,
-  deleteFileRoutine,
-} from './fileRoutines';
+  fetchZookeepersRoutine,
+  addZookeeperRoutine,
+  updateZookeeperRoutine,
+  deleteZookeeperRoutine,
+} from './zookeeperRoutines';
 
 const initialState = {
-  isFetching: false,
   data: [],
+  isFetching: false,
   lastUpdated: null,
   error: null,
 };
 
-const sortedFiles = Files => Files.sort((a, b) => a.name.localeCompare(b.name));
+const sort = zookeepers => sortBy(zookeepers, 'settings.name');
+
+const isEqual = (object, other) =>
+  isEqualWith(object, other, ['settings.name', 'settings.group']);
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchFilesRoutine.REQUEST:
+    case fetchZookeepersRoutine.REQUEST:
+    case addZookeeperRoutine.REQUEST:
+    case updateZookeeperRoutine.REQUEST:
+    case deleteZookeeperRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
-    case fetchFilesRoutine.SUCCESS:
+    case fetchZookeepersRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: action.payload,
+        data: sort(action.payload),
         lastUpdated: new Date(),
       };
-    case fetchFilesRoutine.FAILURE:
+    case addZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
-      };
-    case uploadFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: undefined,
-      };
-    case uploadFileRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sortedFiles([...state.data, action.payload]),
+        data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case uploadFileRoutine.FAILURE:
+    case updateZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        data: map(state.data, zookeeper =>
+          isEqual(zookeeper, action.payload) ? action.payload : zookeeper,
+        ),
+        lastUpdated: new Date(),
       };
-    case deleteFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-    case deleteFileRoutine.SUCCESS:
+    case deleteZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, file => {
+        data: reject(state.data, zookeeper => {
           return (
-            file.name === action.payload.name &&
-            file.group === action.payload.group
+            zookeeper.settings.name === action.payload.name &&
+            zookeeper.settings.group === action.payload.group
           );
         }),
         lastUpdated: new Date(),
       };
-    case deleteFileRoutine.FAILURE:
+    case fetchZookeepersRoutine.FAILURE:
+    case addZookeeperRoutine.FAILURE:
+    case updateZookeeperRoutine.FAILURE:
+    case deleteZookeeperRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        error: action.payload || true,
       };
-    case initializeRoutine.TRIGGER:
-      return initialState;
     default:
       return state;
   }

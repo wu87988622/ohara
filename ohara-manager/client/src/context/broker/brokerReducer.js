@@ -14,88 +14,81 @@
  * limitations under the License.
  */
 
-import { reject } from 'lodash';
+import { map, reject, sortBy, isEqualWith } from 'lodash';
 
 import {
-  initializeRoutine,
-  fetchFilesRoutine,
-  uploadFileRoutine,
-  deleteFileRoutine,
-} from './fileRoutines';
+  fetchBrokersRoutine,
+  addBrokerRoutine,
+  updateBrokerRoutine,
+  deleteBrokerRoutine,
+} from './brokerRoutines';
 
 const initialState = {
-  isFetching: false,
   data: [],
+  isFetching: false,
   lastUpdated: null,
   error: null,
 };
 
-const sortedFiles = Files => Files.sort((a, b) => a.name.localeCompare(b.name));
+const sort = brokers => sortBy(brokers, 'settings.name');
+
+const isEqual = (object, other) =>
+  isEqualWith(object, other, ['settings.name', 'settings.group']);
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchFilesRoutine.REQUEST:
+    case fetchBrokersRoutine.REQUEST:
+    case addBrokerRoutine.REQUEST:
+    case updateBrokerRoutine.REQUEST:
+    case deleteBrokerRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
-    case fetchFilesRoutine.SUCCESS:
+    case fetchBrokersRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: action.payload,
+        data: sort(action.payload),
         lastUpdated: new Date(),
       };
-    case fetchFilesRoutine.FAILURE:
+    case addBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
-      };
-    case uploadFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: undefined,
-      };
-    case uploadFileRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sortedFiles([...state.data, action.payload]),
+        data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case uploadFileRoutine.FAILURE:
+    case updateBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        data: map(state.data, broker =>
+          isEqual(broker, action.payload) ? action.payload : broker,
+        ),
+        lastUpdated: new Date(),
       };
-    case deleteFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-    case deleteFileRoutine.SUCCESS:
+    case deleteBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, file => {
+        data: reject(state.data, broker => {
           return (
-            file.name === action.payload.name &&
-            file.group === action.payload.group
+            broker.settings.name === action.payload.name &&
+            broker.settings.group === action.payload.group
           );
         }),
         lastUpdated: new Date(),
       };
-    case deleteFileRoutine.FAILURE:
+    case fetchBrokersRoutine.FAILURE:
+    case addBrokerRoutine.FAILURE:
+    case updateBrokerRoutine.FAILURE:
+    case deleteBrokerRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        error: action.payload || true,
       };
-    case initializeRoutine.TRIGGER:
-      return initialState;
     default:
       return state;
   }

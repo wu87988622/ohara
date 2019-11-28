@@ -16,14 +16,14 @@
 
 import { createRoutine } from 'redux-routines';
 
-const initializeRoutine = createRoutine('INITIALIZE');
-const fetchTopicsRoutine = createRoutine('FETCH_TOPICS');
-const addTopicRoutine = createRoutine('ADD_TOPIC');
-const deleteTopicRoutine = createRoutine('DELETE_TOPIC');
+const fetchWorkersRoutine = createRoutine('FETCH_WORKERS');
+const addWorkerRoutine = createRoutine('ADD_WORKER');
+const updateWorkerRoutine = createRoutine('UPDATE_WORKER');
+const deleteWorkerRoutine = createRoutine('DELETE_WORKER');
 
 export {
-  initializeRoutine,
-  fetchTopicsRoutine,
-  addTopicRoutine,
-  deleteTopicRoutine,
+  fetchWorkersRoutine,
+  addWorkerRoutine,
+  updateWorkerRoutine,
+  deleteWorkerRoutine,
 };

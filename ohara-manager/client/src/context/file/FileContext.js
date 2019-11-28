@@ -16,10 +16,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty } from 'lodash';
 import { useSnackbar } from 'context/SnackbarContext';
 import { useWorkspace } from 'context';
-import { changeWorkspaceRoutine } from 'context/workspace/workspaceRoutines';
+import { initializeRoutine } from './fileRoutines';
 import {
   createFetchFiles,
   createUploadFile,
@@ -31,13 +30,12 @@ const FileStateContext = React.createContext();
 const FileDispatchContext = React.createContext();
 
 const FileProvider = ({ children }) => {
-  const { workspaces, currentWorkspace } = useWorkspace();
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const { workspaceName } = useWorkspace();
 
   React.useEffect(() => {
-    if (isEmpty(workspaces)) return;
-    dispatch(changeWorkspaceRoutine.trigger(currentWorkspace));
-  }, [workspaces, currentWorkspace]);
+    dispatch(initializeRoutine.trigger());
+  }, [workspaceName]);
 
   return (
     <FileStateContext.Provider value={state}>
