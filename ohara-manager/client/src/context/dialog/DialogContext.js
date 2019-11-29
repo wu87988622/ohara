@@ -18,13 +18,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  createOpenDialog,
-  createIsDialogOpen,
-  createSetDialogData,
-  createGetDialogData,
-  createCloseDialog,
-  createClosePeakDialog,
-  createCloseAllDialog,
+  isDialogOpenCreator,
+  openDialogCreator,
+  closeDialogCreator,
+  getDialogDataCreator,
+  setDialogDataCreator,
+  closePeakDialogCreator,
+  closeAllDialogCreator,
 } from './dialogActions';
 import {
   EDIT_WORKSPACE_DIALOG,
@@ -73,13 +73,13 @@ const useDialogActions = () => {
   const state = useDialogState();
   const dispatch = useDialogDispatch();
   return {
-    isDialogOpen: createIsDialogOpen(state, dispatch),
-    openDialog: createOpenDialog(state, dispatch),
-    getDialogData: createGetDialogData(state, dispatch),
-    setDialogData: createSetDialogData(state, dispatch),
-    closeDialog: createCloseDialog(state, dispatch),
-    closePeakDialog: createClosePeakDialog(state, dispatch),
-    closeAllDialog: createCloseAllDialog(state, dispatch),
+    isDialogOpen: isDialogOpenCreator(state, dispatch),
+    openDialog: openDialogCreator(state, dispatch),
+    closeDialog: closeDialogCreator(state, dispatch),
+    getDialogData: getDialogDataCreator(state, dispatch),
+    setDialogData: setDialogDataCreator(state, dispatch),
+    closePeakDialog: closePeakDialogCreator(state, dispatch),
+    closeAllDialog: closeAllDialogCreator(state, dispatch),
   };
 };
 
@@ -87,15 +87,15 @@ const createUseDialogActions = name => () => {
   const {
     isDialogOpen,
     openDialog,
+    closeDialog,
     getDialogData,
     setDialogData,
-    closeDialog,
     closePeakDialog,
     closeAllDialog,
   } = useDialogActions();
   return {
     isOpen: isDialogOpen(name),
-    open: () => openDialog(name),
+    open: data => openDialog(name, data),
     close: () => closeDialog(name),
     data: getDialogData(name),
     setData: data => setDialogData(name, data),

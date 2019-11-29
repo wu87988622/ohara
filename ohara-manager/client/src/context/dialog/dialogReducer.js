@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { dropRight, has, reject } from 'lodash';
+import { dropRight, has, reject, some } from 'lodash';
 
 import {
   openDialogRoutine,
@@ -60,7 +60,12 @@ const reducer = (state, action) => {
         ...state,
         dialogs: [...state.dialogs, action.payload],
       };
-    case setDialogDataRoutine.TRIGGER:
+    case setDialogDataRoutine.TRIGGER: {
+      if (!some(state.dialogs, ['name', action.payload.name])) {
+        throw new Error(
+          'The dialog is not open, so the data cannot be set. Use the open(data) method instead.',
+        );
+      }
       return {
         ...state,
         dialogs: state.dialogs.map(dialog =>
@@ -69,6 +74,7 @@ const reducer = (state, action) => {
             : dialog,
         ),
       };
+    }
     case closeDialogRoutine.TRIGGER:
       return {
         ...state,

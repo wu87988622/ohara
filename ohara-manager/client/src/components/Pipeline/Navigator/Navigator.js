@@ -58,10 +58,7 @@ const Navigator = () => {
   const { findByWorkspaceName } = useWorkspace();
   const [isExpanded, setIsExpanded] = useState(true);
   const { pipelines, doFetch: fetchPipelines } = usePipeline();
-  const {
-    open: openEditWorkspaceDialog,
-    setData: setEditWorkspaceDialogData,
-  } = useEditWorkspaceDialog();
+  const { open: openEditWorkspaceDialog } = useEditWorkspaceDialog();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -72,8 +69,7 @@ const Navigator = () => {
   };
 
   const handleMenuItemClick = tab => () => {
-    openEditWorkspaceDialog();
-    setEditWorkspaceDialogData({ tab });
+    openEditWorkspaceDialog({ tab });
     handleClose();
   };
 

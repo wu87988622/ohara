@@ -24,23 +24,23 @@ import {
   closeAllDialogRoutine,
 } from './dialogRoutines';
 
-export const createOpenDialog = (_, dispatch) => name =>
-  dispatch(openDialogRoutine.trigger({ name }));
-
-export const createIsDialogOpen = state => name =>
+export const isDialogOpenCreator = state => name =>
   some(state.dialogs, { name });
 
-export const createSetDialogData = (_, dispatch) => (name, data) =>
-  dispatch(setDialogDataRoutine.trigger({ name, data }));
+export const openDialogCreator = (_, dispatch) => (name, data) =>
+  dispatch(openDialogRoutine.trigger({ name, data }));
 
-export const createGetDialogData = state => name =>
-  get(find(state.dialogs, { name }), 'data');
-
-export const createCloseDialog = (_, dispatch) => name =>
+export const closeDialogCreator = (_, dispatch) => name =>
   dispatch(closeDialogRoutine.trigger({ name }));
 
-export const createClosePeakDialog = (_, dispatch) => () =>
+export const setDialogDataCreator = (_, dispatch) => (name, data) =>
+  dispatch(setDialogDataRoutine.trigger({ name, data }));
+
+export const getDialogDataCreator = state => name =>
+  get(find(state.dialogs, { name }), 'data');
+
+export const closePeakDialogCreator = (_, dispatch) => () =>
   dispatch(closePeakDialogRoutine.trigger());
 
-export const createCloseAllDialog = (_, dispatch) => () =>
+export const closeAllDialogCreator = (_, dispatch) => () =>
   dispatch(closeAllDialogRoutine.trigger());

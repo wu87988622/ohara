@@ -30,10 +30,7 @@ import { Button } from 'components/common/Form';
 import ViewTopicDialog from './ViewTopicDialog';
 
 function TopicTable() {
-  const {
-    open: openViewTopicDialog,
-    setData: setViewTopicDialogData,
-  } = useViewTopicDialog();
+  const { open: openViewTopicDialog } = useViewTopicDialog();
 
   const { currentWorkspace } = useWorkspace();
   const { data: topics } = useTopicState();
@@ -73,8 +70,7 @@ function TopicTable() {
                 variant="outlined"
                 color="primary"
                 onClick={() => {
-                  openViewTopicDialog();
-                  setViewTopicDialogData(topic);
+                  openViewTopicDialog(topic);
                 }}
               >
                 View
