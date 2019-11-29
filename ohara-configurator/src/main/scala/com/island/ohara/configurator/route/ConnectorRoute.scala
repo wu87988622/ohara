@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi._
@@ -32,7 +31,7 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
-private[configurator] object ConnectorRoute extends SprayJsonSupport {
+private[configurator] object ConnectorRoute {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
   private[this] def creationToConnectorInfo(

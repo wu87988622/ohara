@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator.route
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
@@ -26,7 +26,7 @@ import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.ExecutionContext
 
-private[configurator] object ValidationRoute extends SprayJsonSupport {
+private[configurator] object ValidationRoute {
   def apply(
     implicit dataStore: DataStore,
     workerCollie: WorkerCollie,
@@ -40,7 +40,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
               complete(
                 workerClient(req.workerClusterKey)
                   .flatMap {
-                    case (cluster, workerClient) =>
+                    case (_, workerClient) =>
                       workerClient
                         .connectorValidator()
                         .settings(req.plain)
