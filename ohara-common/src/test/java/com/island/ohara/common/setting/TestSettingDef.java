@@ -303,6 +303,10 @@ public class TestSettingDef extends OharaTest {
     SettingDef def =
         SettingDef.builder().key(CommonUtils.randomString()).optional(duration).build();
     Assert.assertEquals(def.defaultDuration(), duration);
+    Assert.assertTrue(
+        def.toJsonString(),
+        def.toJsonString()
+            .contains("\"defaultValue\":" + "\"" + duration.toMillis() + " milliseconds\""));
   }
 
   @Test(expected = OharaConfigException.class)
