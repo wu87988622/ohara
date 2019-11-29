@@ -28,7 +28,7 @@ dependencies {
   testImplementation libs.junit
 }
 
-def exec(String[] args) {
+private String exec(String[] args) {
   def stdout = new ByteArrayOutputStream()
   exec {
     commandLine args
@@ -42,7 +42,7 @@ def exec(String[] args) {
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
-def whoami() {
+private String whoami() {
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     def fullName = exec("whoami")
     def backslash = fullName.lastIndexOf("\\")
@@ -51,7 +51,8 @@ def whoami() {
   }
   else return exec("whoami")
 }
-def user() {
+
+private String user() {
   try {
     return exec("git", "config", "user.name")
   } catch (Throwable ignored) {
@@ -60,7 +61,7 @@ def user() {
   }
 }
 
-def revision() {
+private String revision() {
   try {
     return exec("git", "log", "-1", "--pretty=format:%H")
   } catch (Throwable ignored) {
@@ -69,8 +70,35 @@ def revision() {
   }
 }
 
-def date() {
+private static String date() {
   return new Date().format('yyyy-MM-dd HH:mm:ss')
+}
+
+private static String versionInJson(String version, String revision, String branch, String user, String date) {
+  return """{\"version\":\"$version\",\"revision\":\"$revision\",\"branch\":\"$branch\",\"user\":\"$user\",\"date\":\"$date\"}"""
+}
+
+task versionFile {
+  doLast {
+    def folder = new File("$projectDir" + "/build/generated")
+    if (!folder.exists() && !folder.mkdirs())
+      throw new GradleScriptException("failed to create folder on ${folder.toString()}", null)
+    def file = new File(folder, "ohara_version")
+    if (file.exists()) file.delete()
+  String versionJson = versionInJson(
+    project.version.toString(),
+    revision(),
+    project.branch.toString(),
+    user(),
+    date()
+  )
+    def writer = new FileWriter(file)
+    try {
+      writer.write(versionJson.replaceAll("\n", System.lineSeparator()))
+    } finally {
+      writer.close()
+    }
+  }
 }
 
 task initializer {
@@ -81,9 +109,14 @@ task initializer {
     if(project.hasProperty("ohara.version")) version = project.getProperty("ohara.version")
     def file = new File("$projectDir" + "/src/main/java/com/island/ohara/common/util/VersionUtils.java")
     if (file.exists()) file.delete()
-    def writer = new FileWriter(file)
-    try {
-      def code = """package com.island.ohara.common.util;
+    String versionJson = versionInJson(
+      version.toString(),
+      revision(),
+      project.branch.toString(),
+      user(),
+      date()
+    )
+    String code = """package com.island.ohara.common.util;
 // DON'T touch this file!!! It is generated dynamically. see ohara-common/build.gradle
 public final class VersionUtils {
   public static final String VERSION = \"$version\";
@@ -93,13 +126,7 @@ public final class VersionUtils {
   public static final String DATE = \"${date()}\";
 
   public static String jsonString() {
-    return \"{\"
-      + \"\\"version\\":\" + \"\\"\" + VERSION + \"\\",\"
-      + \"\\"revision\\":\" + \"\\"\" + REVISION + \"\\",\"
-      + \"\\"branch\\":\" + \"\\"\" + BRANCH + \"\\",\"
-      + \"\\"user\\":\" + \"\\"\" + USER + \"\\",\"
-      + \"\\"date\\":\" + \"\\"\" + DATE + \"\\"\"
-      + \"}\";
+    return \"${versionJson.replaceAll("\"", "\\\\\"")}\";
   }
 
   public static void main(String[] args) {
@@ -109,6 +136,8 @@ public final class VersionUtils {
   private VersionUtils() {}
 }
 """
+    def writer = new FileWriter(file)
+    try {
       writer.write(code.replaceAll("\n", System.lineSeparator()))
     } finally {
       writer.close()
