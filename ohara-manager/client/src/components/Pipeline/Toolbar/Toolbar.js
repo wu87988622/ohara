@@ -42,6 +42,7 @@ const Toolbar = props => {
     handleToolbarClick,
     isToolboxOpen,
     setZoom,
+    setFit,
   } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
@@ -104,7 +105,7 @@ const Toolbar = props => {
         <div className="zoom">
           <ButtonGroup size="small">
             <Button
-              onClick={() => setZoom(paperScale / 2)}
+              onClick={() => setZoom(paperScale, 'out')}
               disabled={paperScale <= 0.02}
             >
               <RemoveIcon color="action" />
@@ -118,7 +119,7 @@ const Toolbar = props => {
               {getZoomDisplayedValue(paperScale)}
             </Button>
             <Button
-              onClick={() => setZoom(paperScale * 2)}
+              onClick={() => setZoom(paperScale, 'in')}
               disabled={paperScale >= 2}
             >
               <AddIcon color="action" />
@@ -140,7 +141,7 @@ const Toolbar = props => {
 
         <div className="fit">
           <Button
-            onClick={() => setZoom('fit')}
+            onClick={setFit}
             variant="outlined"
             color="default"
             size="small"
@@ -210,7 +211,8 @@ Toolbar.propTypes = {
   handleToolbarClick: PropTypes.func.isRequired,
   isToolboxOpen: PropTypes.bool.isRequired,
   paperScale: PropTypes.number.isRequired,
-  setZoom: PropTypes.func,
+  setZoom: PropTypes.func.isRequired,
+  setFit: PropTypes.func.isRequired,
 };
 
 export default Toolbar;

@@ -26,7 +26,8 @@ export const StyledToolbar = styled.div(
     align-items: center;
 
     .toolbox-controls,
-    .paper-controls {
+    .paper-controls,
+    .pipeline-controls {
       /* Customize button pseudo states  */
       button {
         background-color: ${theme.palette.common.white};
@@ -36,7 +37,9 @@ export const StyledToolbar = styled.div(
         }
 
         &.Mui-disabled {
-          background-color: ${theme.palette.action.disabledBackground};
+          .MuiSvgIcon-colorAction {
+            color: ${theme.palette.action.disabledBackground};
+          }
         }
       }
     }

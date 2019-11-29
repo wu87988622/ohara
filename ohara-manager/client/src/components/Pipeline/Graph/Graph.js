@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '@material-ui/core/styles';
-import { isNumber } from 'lodash';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
 
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
 import { Paper, PaperWrapper } from './GraphStyles';
+import { usePrevious } from 'utils/hooks';
 
 const Graph = props => {
   const { palette } = useTheme();
-  const [paperScale, setPaperScale] = React.useState(1);
+  const [paperScale, setPaperScale] = useState(1);
+  const [isFitToContent, setIsFitToContent] = useState(false);
+
   const {
     isToolboxOpen,
     toolboxExpanded,
@@ -40,7 +42,6 @@ const Graph = props => {
 
   let graph = useRef(null);
   let paper = useRef(null);
-  let setZoom = useRef(null);
   let dragStartPosition = useRef(null);
 
   useEffect(() => {
@@ -55,14 +56,14 @@ const Graph = props => {
         width: '100%',
         height: '100%',
         gridSize: 10,
-        drawGrid: { name: 'dot', args: { color: palette.grey[400] } },
+        drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
         defaultConnectionPoint: { name: 'boundary' },
         background: {
           color: palette.common.white,
         },
-        linkPinning: false,
+        linkPinning: false, // This ensures the link should always link to a valid target
         cellViewNamespace: joint.shapes,
-        restrictTranslate: true,
+        restrictTranslate: true, // prevent graph from stepping outside of the paper
       });
 
       paper.current.on('cell:pointerclick', function(elementView) {
@@ -100,9 +101,12 @@ const Graph = props => {
       });
 
       paper.current.on('blank:pointerdown', (event, x, y) => {
+        // Using the scales from paper itself instead of our
+        // paperScale state since it will cause re-render
+        // which destroy all graphs on current paper...
         dragStartPosition.current = {
-          x: x * paperScale,
-          y: y * paperScale,
+          x: x * paper.current.scale().sx,
+          y: y * paper.current.scale().sy,
         };
       });
 
@@ -124,19 +128,6 @@ const Graph = props => {
           views[key].$box.css('boxShadow', '');
         });
       };
-
-      setZoom.current = scale => {
-        if (isNumber(scale)) {
-          return setPaperScale(scale);
-        }
-
-        if (scale === 'fit') {
-          paper.current.scaleContentToFit({ padding: 30 });
-
-          // scale() returns {sx, sy}, both value are the same in our App
-          setPaperScale(paper.current.scale().sx);
-        }
-      };
     };
 
     const resetLink = () => {
@@ -150,10 +141,50 @@ const Graph = props => {
     };
 
     renderGraph();
-    // eslint-disable-next-line
   }, [palette.common.white, palette.grey, palette.primary]);
 
+  const setZoom = (scale, instruction = 'fromDropdown') => {
+    const fixedScale = Number((Math.floor(scale * 100) / 100).toFixed(2));
+    const allowedScales = [0.01, 0.03, 0.06, 0.12, 0.25, 0.5, 1.0, 2.0];
+    const isValidScale = allowedScales.includes(fixedScale);
+
+    // Prevent graph from rescaling again
+    setIsFitToContent(false);
+
+    if (isValidScale) {
+      // If the instruction is `fromDropdown`, we will use the scale it gives
+      // and update the state right alway
+      if (instruction === 'fromDropdown') return setPaperScale(scale);
+
+      // By default, the scale is multiply and divide by `2`
+      const newScale = instruction === 'in' ? fixedScale * 2 : fixedScale / 2;
+      return setPaperScale(newScale);
+    }
+
+    // Handle `none-valid` scales here
+    const defaultScales = [0.5, 1.0, 2.0];
+    const closestInScale = defaultScales.reduce((prev, curr) => {
+      return Math.abs(curr - fixedScale) < Math.abs(prev - fixedScale)
+        ? curr
+        : prev;
+    });
+
+    // The next value of the `closetInScale` is the out scale
+    const inScaleIndex = defaultScales.indexOf(closestInScale);
+    const closestOutScale = defaultScales[inScaleIndex + 1];
+
+    const newScale =
+      instruction === 'in' ? closestInScale * 2 : closestOutScale / 2;
+    setPaperScale(newScale);
+  };
+
+  const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {
+    // Prevent rescale again
+    if (prevPaperScale === paperScale) return;
+    if (isFitToContent) return;
+
+    // Update paper scale when `paperScale` updates
     const size = paper.current.getComputedSize();
     paper.current.translate(0, 0);
     paper.current.scale(
@@ -162,10 +193,28 @@ const Graph = props => {
       size.width / 2,
       size.height / 2,
     );
-  }, [paperScale]);
+  }, [isFitToContent, paperScale, prevPaperScale]);
+
+  useEffect(() => {
+    if (!isFitToContent) return;
+
+    paper.current.scaleContentToFit({
+      padding: 30,
+      maxScale: 1,
+    });
+
+    // This update is needed so the scale which displays on zoom in/out
+    // dropdown will be reflected
+    setPaperScale(paper.current.scale().sx);
+  }, [isFitToContent]);
 
   useEffect(() => {
     document.getElementById('paper').addEventListener('mousemove', event => {
+      if (isFitToContent) {
+        // Reset the state so we can call fit to content multiple times
+        setIsFitToContent(false);
+      }
+
       if (
         dragStartPosition.current &&
         dragStartPosition.current.x !== undefined &&
@@ -176,7 +225,7 @@ const Graph = props => {
           event.offsetY - dragStartPosition.current.y,
         );
     });
-  }, []);
+  }, [isFitToContent]);
 
   return (
     <>
@@ -185,7 +234,9 @@ const Graph = props => {
         handleToolboxOpen={handleToolboxOpen}
         handleToolbarClick={handleToolbarClick}
         paperScale={paperScale}
-        setZoom={setZoom.current}
+        paper={paper.current}
+        setZoom={setZoom}
+        setFit={() => setIsFitToContent(true)}
       />
       <PaperWrapper>
         <Paper id="paper"></Paper>

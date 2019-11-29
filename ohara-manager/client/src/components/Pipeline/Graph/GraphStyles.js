@@ -28,11 +28,7 @@ export const Paper = styled.div(
   ({ theme }) => css`
     border: ${theme.spacing(1)}px solid ${theme.palette.common.white};
     overflow: hidden;
-
-    rect {
-      fill: red !important;
-      fill-opacity: 1 !important;
-    }
+    cursor: grab;
 
     .flying-paper {
       border: 1px dashed ${theme.palette.grey[400]};

@@ -210,7 +210,7 @@ export const enableDragAndDrop = params => {
         top: e.pageY - offset.y,
       });
 
-      function isInsidePaper() {
+      const isInsidePaper = () => {
         const target = paper.$el.offset();
         const x = e.pageX;
         const y = e.pageY;
@@ -221,7 +221,7 @@ export const enableDragAndDrop = params => {
           y > target.top &&
           y < target.top + paper.$el.height()
         );
-      }
+      };
 
       $('#paper').on('mousemove.fly', e => {
         $('#flying-paper').offset({
@@ -244,6 +244,7 @@ export const enableDragAndDrop = params => {
           });
         }
 
+        // Clean up
         $('#paper')
           .off('mousemove.fly')
           .off('mouseup.fly');
