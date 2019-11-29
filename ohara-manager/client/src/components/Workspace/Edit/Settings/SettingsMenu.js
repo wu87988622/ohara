@@ -27,7 +27,7 @@ import { Wrapper } from './SettingsMenuStyles';
 
 function SettingsMenu() {
   const { data = {}, setData } = useEditWorkspaceDialog();
-  const { subTab = SubTabs.NONE, segment = Segments.NONE } = data;
+  const { subTab = SubTabs.SETTINGS, segment = Segments.WORKER } = data;
 
   const handleClick = (clickedTab, clickedSegment) => () => {
     if (clickedTab === SubTabs.SETTINGS && clickedSegment === Segments.NONE) {

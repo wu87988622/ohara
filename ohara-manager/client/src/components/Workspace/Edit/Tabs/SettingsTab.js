@@ -19,12 +19,17 @@ import Grid from '@material-ui/core/Grid';
 
 import { useEditWorkspaceDialog } from 'context';
 import { SubTabs } from 'components/Workspace/Edit';
-import { SettingsMenu } from 'components/Workspace/Edit/Settings';
+import {
+  SettingsMenu,
+  Nodes,
+  Plugins,
+  Settings,
+} from 'components/Workspace/Edit/Settings';
 import TabPanel from './TabPanel';
 
 function SettingsTab() {
   const { data = {} } = useEditWorkspaceDialog();
-  const { subTab = SubTabs.NONE } = data;
+  const { subTab = SubTabs.SETTINGS } = data;
 
   return (
     <>
@@ -34,13 +39,13 @@ function SettingsTab() {
         </Grid>
         <Grid item xs={9}>
           <TabPanel index={subTab} value={SubTabs.SETTINGS}>
-            Settings
+            <Settings />
           </TabPanel>
           <TabPanel index={subTab} value={SubTabs.PLUGINS}>
-            Plugins
+            <Plugins />
           </TabPanel>
           <TabPanel index={subTab} value={SubTabs.NODES}>
-            Nodes
+            <Nodes />
           </TabPanel>
         </Grid>
       </Grid>
