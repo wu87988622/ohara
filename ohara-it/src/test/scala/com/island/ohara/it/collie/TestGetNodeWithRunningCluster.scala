@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, Zookeeper
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.category.CollieGroup
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
@@ -34,7 +34,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestGetNodeWithRunningCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
 
-  private[this] val nameHolder: ServiceNameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
+  private[this] val nameHolder: ServiceKeyHolder = ServiceKeyHolder(DockerClient(DataCollie(nodes)))
 
   private[this] val configurator: Configurator = Configurator.builder.build()
 

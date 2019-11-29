@@ -31,7 +31,7 @@ import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.connector.jdbc.source.{JDBCSourceConnector, JDBCSourceConnectorConfig}
-import com.island.ohara.it.{IntegrationTest, ServiceNameHolder}
+import com.island.ohara.it.{IntegrationTest, ServiceKeyHolder}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.connector.TaskSetting
@@ -50,7 +50,7 @@ abstract class BasicTestConnectorCollie extends IntegrationTest {
 
   protected def nodes: Seq[Node]
 
-  protected def nameHolder: ServiceNameHolder
+  protected def nameHolder: ServiceKeyHolder
 
   private[this] val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
   private[this] val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))

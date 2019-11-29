@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.category.CollieGroup
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[CollieGroup]))
 class TestListCluster extends IntegrationTest {
   private[this] val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
-  private[this] val nameHolder       = ServiceNameHolder(DockerClient(DataCollie(nodes)))
+  private[this] val nameHolder       = ServiceKeyHolder(DockerClient(DataCollie(nodes)))
 
   private[this] val dataCollie: DataCollie = DataCollie(nodes)
 

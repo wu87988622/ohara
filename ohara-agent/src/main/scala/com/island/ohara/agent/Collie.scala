@@ -288,6 +288,7 @@ trait Collie {
               case (group, counters) =>
                 group -> counters.map { counter =>
                   Meter(
+                    name = counter.name,
                     value = counter.getValue,
                     unit = counter.getUnit,
                     document = counter.getDocument,
@@ -301,6 +302,7 @@ trait Collie {
               case (topicName, counters) =>
                 topicName -> counters.map { counter =>
                   Meter(
+                    name = counter.catalog().name(),
                     value = counter.count(),
                     unit = s"${counter.eventType()} / ${counter.rateUnit().name()}",
                     document = counter.catalog.name(),

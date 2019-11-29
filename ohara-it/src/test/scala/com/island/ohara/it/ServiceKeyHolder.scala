@@ -31,8 +31,8 @@ import scala.concurrent.{Await, Future}
   * and then sequential tests will be timeout.
   *
   */
-trait ServiceNameHolder extends Releasable {
-  private[this] val log = Logger(classOf[ServiceNameHolder])
+trait ServiceKeyHolder extends Releasable {
+  private[this] val log = Logger(classOf[ServiceKeyHolder])
 
   /**
     * store the name used to create cluster. We can remove all created cluster in the "after" phase.
@@ -93,12 +93,12 @@ trait ServiceNameHolder extends Releasable {
   protected def release(clusterKeys: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean): Unit
 }
 
-object ServiceNameHolder {
+object ServiceKeyHolder {
   /**
     * used to debug :)
     */
   private[this] val KEEP_CONTAINERS = sys.env.get("ohara.it.keep.containers").exists(_.toLowerCase == "true")
-  private[this] val LOG             = Logger(classOf[ServiceNameHolder])
+  private[this] val LOG             = Logger(classOf[ServiceKeyHolder])
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
@@ -107,7 +107,14 @@ object ServiceNameHolder {
     * @param client k8s client
     * @return name holder
     */
-  def apply(client: ContainerClient): ServiceNameHolder =
+  def apply(client: ContainerClient): ServiceKeyHolder = apply(client, true)
+
+  /**
+    * create a name holder based on k8s.
+    * @param client k8s client
+    * @return name holder
+    */
+  def apply(client: ContainerClient, needClose: Boolean): ServiceKeyHolder =
     (clusterKey: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean) =>
       try
       /**
@@ -136,5 +143,5 @@ object ServiceNameHolder {
               case e: Throwable =>
                 LOG.error(s"failed to remove container ${container.name}", e)
             }
-          } finally Releasable.close(client)
+          } finally if (needClose) Releasable.close(client)
 }

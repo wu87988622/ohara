@@ -266,8 +266,7 @@ object ConnectorApi {
 
     @Optional("extra settings for this connectors")
     def settings(settings: Map[String, JsValue]): BasicRequest.this.type = {
-      import scala.collection.JavaConverters._
-      this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+      this.settings ++= Objects.requireNonNull(settings)
       this
     }
 

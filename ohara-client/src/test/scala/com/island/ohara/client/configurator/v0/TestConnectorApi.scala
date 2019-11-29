@@ -288,8 +288,7 @@ class TestConnectorApi extends OharaTest {
     an[NullPointerException] should be thrownBy ConnectorApi.access.request.topicKeys(null)
 
   @Test
-  def emptySettings(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.settings(Map.empty)
+  def emptySettings(): Unit = ConnectorApi.access.request.settings(Map.empty)
 
   @Test
   def nullSettings(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.settings(null)

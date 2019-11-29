@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.client
+package com.island.ohara.it.performance
 
-import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.it.WithRemoteConfigurator
-import com.island.ohara.it.category.ClientGroup
+import com.island.ohara.common.setting.TopicKey
+import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.it.category.PerformanceGroup
 import org.junit.Test
 import org.junit.experimental.categories.Category
-import org.scalatest.Matchers._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+@Category(Array(classOf[PerformanceGroup]))
+class TestPerformance4Topic extends BasicTestPerformance {
+  private[this] val topicKey: TopicKey = TopicKey.of("benchmark", CommonUtils.randomString(5))
 
-@Category(Array(classOf[ClientGroup]))
-class TestListNode extends WithRemoteConfigurator {
   @Test
   def test(): Unit = {
-    val services = result(NodeApi.access.hostname(configuratorHostname).port(configuratorPort).list()).head.services
-    services should not be Seq.empty
-    services.find(_.name == NodeApi.CONFIGURATOR_SERVICE_NAME) should not be None
+    setupTopic(topicKey)
+    produce(topicKey)
   }
 }

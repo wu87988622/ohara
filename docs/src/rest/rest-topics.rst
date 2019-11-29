@@ -49,14 +49,15 @@ The following information are tagged by ohara.
 #. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
 #. partitionInfos (**Array(object)**) — the details of partitions.
 
-  #. index (**int**) — the index of partition
-  #. leaderNode (**String**) — the leader (node) of this partition
-  #. replicaNodes (**Array(String)**) — the nodes hosting the replica for this partition
-  #. inSyncReplicaNodes (**Array(String)**) — the nodes which have fetched the newest data from leader
-  #. beginningOffset (**long**) — the beginning offset
-  #. endOffset (**endOffset**) — the latest offset (Normally, it is the latest commit data)
+  - index (**int**) — the index of partition
+  - leaderNode (**String**) — the leader (node) of this partition
+  - replicaNodes (**Array(String)**) — the nodes hosting the replica for this partition
+  - inSyncReplicaNodes (**Array(String)**) — the nodes which have fetched the newest data from leader
+  - beginningOffset (**long**) — the beginning offset
+  - endOffset (**endOffset**) — the latest offset (Normally, it is the latest commit data)
 
 #. group (**string**) — the group value is always "default"
+#. :ref:`metrics <connector-metrics>` (**object**) — the metrics number of a running topic
 #. lastModified (**long**) — the last time to update this ftp
    information
 

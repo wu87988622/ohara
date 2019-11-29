@@ -181,6 +181,7 @@ def classOfCollieGroup = "com.island.ohara.it.category.CollieGroup"
 def classOfConnectorGroup = "com.island.ohara.it.category.ConnectorGroup"
 def classOfClientGroup = "com.island.ohara.it.category.ClientGroup"
 def classOfStreamGroup = "com.island.ohara.it.category.StreamGroup"
+def classOfPerformanceGroup = "com.island.ohara.it.category.PerformanceGroup"
 
 task collieIT(type: OharaTest) {
   useJUnit {
@@ -206,12 +207,19 @@ task streamIT(type: OharaTest) {
   }
 }
 
+task performance(type: OharaTest) {
+  useJUnit {
+    includeCategories classOfPerformanceGroup
+  }
+}
+
 task otherIT(type: OharaTest) {
   useJUnit {
     excludeCategories classOfCollieGroup,
             classOfConnectorGroup,
             classOfClientGroup,
-            classOfStreamGroup
+            classOfStreamGroup,
+            classOfPerformanceGroup
   }
 }
 

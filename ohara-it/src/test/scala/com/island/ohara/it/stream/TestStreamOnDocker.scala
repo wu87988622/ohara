@@ -20,7 +20,7 @@ import com.island.ohara.agent.DataCollie
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
+import com.island.ohara.it.{EnvTestingUtils, ServiceKeyHolder}
 import com.island.ohara.it.category.StreamGroup
 import org.junit.experimental.categories.Category
 
@@ -28,7 +28,7 @@ import org.junit.experimental.categories.Category
 class TestStreamOnDocker extends BasicTests4Stream {
   override protected val nodes: Seq[Node] = EnvTestingUtils.dockerNodes()
 
-  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
+  override protected val nameHolder: ServiceKeyHolder = ServiceKeyHolder(DockerClient(DataCollie(nodes)))
 
   override protected def createConfigurator(hostname: String, port: Int): Configurator =
     Configurator.builder.hostname(hostname).port(port).build()

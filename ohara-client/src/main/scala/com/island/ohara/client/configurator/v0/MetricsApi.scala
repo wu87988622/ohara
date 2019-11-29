@@ -22,17 +22,25 @@ import spray.json.RootJsonFormat
 object MetricsApi {
   /**
     * the metric information
+    * @param name the name of this meter
     * @param value the value of metric record
     * @param unit the unit of metric record
     * @param document the document of metric record
     * @param queryTime the time of query metrics object
     * @param startTime the time of record generated in remote machine
     */
-  final case class Meter(value: Double, unit: String, document: String, queryTime: Long, startTime: Option[Long])
-  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat5(Meter)
+  final case class Meter(
+    name: String,
+    value: Double,
+    unit: String,
+    document: String,
+    queryTime: Long,
+    startTime: Option[Long]
+  )
+  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat6(Meter)
   final case class Metrics(meters: Seq[Meter])
   object Metrics {
-    val EMPTY = Metrics(Seq.empty)
+    val EMPTY: Metrics = Metrics(Seq.empty)
   }
   implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics.apply)
 }

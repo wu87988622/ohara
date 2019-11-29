@@ -19,6 +19,7 @@ package com.island.ohara.it.client
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.configurator.v0.LogApi
+import com.island.ohara.it.WithRemoteConfigurator
 import com.island.ohara.it.category.ClientGroup
 import org.junit.Test
 import org.junit.experimental.categories.Category

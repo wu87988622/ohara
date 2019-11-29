@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.client
+package com.island.ohara.it
+
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DataCollie
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
 import org.junit.{After, Before}
 import org.scalatest.Matchers._
 
@@ -31,14 +33,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * this stuff is also in charge of releasing the configurator after testing.
   */
 abstract class WithRemoteConfigurator extends IntegrationTest {
-  private[this] val nodes                    = EnvTestingUtils.dockerNodes()
-  private[this] val dockerClient             = DockerClient(DataCollie(nodes))
-  private[this] val node                     = nodes.head
-  private[this] val clusterNameHolder        = ServiceNameHolder(DockerClient(DataCollie(nodes)))
-  private[this] val configuratorContainerKey = clusterNameHolder.generateClusterKey()
-
-  protected val configuratorHostname: String = node.hostname
-  protected val configuratorPort: Int        = CommonUtils.availablePort()
+  private[this] val nodes: Seq[Node]                = EnvTestingUtils.dockerNodes()
+  protected val nodeNames: Seq[String]              = nodes.map(_.hostname)
+  private[this] val containerClient                 = DockerClient(DataCollie(nodes))
+  protected val serviceNameHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient, false)
+  private[this] val configuratorContainerKey        = serviceNameHolder.generateClusterKey()
+  protected val configuratorHostname: String        = nodes.head.hostname
+  protected val configuratorPort: Int               = CommonUtils.availablePort()
 
   /**
     * we have to combine the group and name in order to make name holder to delete related container.
@@ -50,41 +51,38 @@ abstract class WithRemoteConfigurator extends IntegrationTest {
 
   @Before
   def setupConfigurator(): Unit = {
-    result(dockerClient.imageNames(node.hostname)) should contain(imageName)
+    result(containerClient.imageNames(configuratorHostname)) should contain(imageName)
     result(
-      dockerClient.containerCreator
-        .nodeName(node.hostname)
+      containerClient.containerCreator
+        .nodeName(configuratorHostname)
         .imageName(imageName)
         .portMappings(Map(configuratorPort -> configuratorPort))
         .command(s"--port $configuratorPort")
-        .routes(Map(node.hostname -> CommonUtils.address(node.hostname)))
+        .routes(Map(configuratorHostname -> CommonUtils.address(configuratorHostname)))
         .name(configuratorContainerName)
         .create()
     )
-    await { () =>
-      try {
-        result(
-          NodeApi.access
-            .hostname(node.hostname)
-            .port(configuratorPort)
-            .request
-            .hostname(node.hostname)
-            .port(node.port.get)
-            .user(node.user.get)
-            .password(node.password.get)
-            .create()
-        )
-        true
-      } catch {
-        // wait for the configurator container
-        case _: Throwable => false
-      }
+    // wait for configurator
+    TimeUnit.SECONDS.sleep(10)
+    nodes.foreach { node =>
+      result(
+        NodeApi.access
+          .hostname(configuratorHostname)
+          .port(configuratorPort)
+          .request
+          .hostname(node.hostname)
+          .port(node.port.get)
+          .user(node.user.get)
+          .password(node.password.get)
+          .create()
+      )
     }
   }
 
   @After
   def releaseConfigurator(): Unit = {
-    Releasable.close(dockerClient)
-    Releasable.close(clusterNameHolder)
+    Releasable.close(serviceNameHolder)
+    // the client is used by name holder so we have to close it later
+    Releasable.close(containerClient)
   }
 }

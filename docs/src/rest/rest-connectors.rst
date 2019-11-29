@@ -76,13 +76,14 @@ The following information are updated by Ohara.
 
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from a running connector
 
-   - meters (**array(object)**) — the metrics in meter type
+  - meters (**array(object)**) — the metrics in meter type
 
-     - meters[i].value (**double**) — the number stored in meter
-     - meters[i].unit (**string**) — unit for value
-     - meters[i].document (**string**) — document of this meter
-     - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-     - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+    - meters[i].name (**string**) — the number of this meter (normally, it is unique)
+    - meters[i].value (**double**) — the value in double
+    - meters[i].unit (**string**) — the unit of value
+    - meters[i].document (**string**) — human-readable description to this meter
+    - meters[i].queryTime (**Long**) — the time we query this meter from remote nodes
+    - meters[i].startTime (**Option(Long)**) — the time to start this meter (not all services offer this record)
 
 The settings from request, BTW, is a individual item in response. Hence,
 you will observe the following response after you store the settings with connector.class.

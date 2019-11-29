@@ -19,7 +19,7 @@ package com.island.ohara.it.connector.jdbc
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.category.ConnectorGroup
-import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
+import com.island.ohara.it.{EnvTestingUtils, ServiceKeyHolder}
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[ConnectorGroup]))
@@ -32,5 +32,5 @@ class TestOracleSourceConnectorOnK8s extends BasicTestOracleJDBCSourceConnector 
 
   override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
 
-  override protected val nameHolder: ServiceNameHolder = ServiceNameHolder(EnvTestingUtils.k8sClient())
+  override protected val nameHolder: ServiceKeyHolder = ServiceKeyHolder(EnvTestingUtils.k8sClient())
 }

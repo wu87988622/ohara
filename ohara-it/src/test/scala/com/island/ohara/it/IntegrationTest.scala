@@ -40,9 +40,29 @@ abstract class IntegrationTest {
     */
   protected def skipTest(message: String): Unit = throw new AssumptionViolatedException(message)
 
-  protected def result[T](f: Future[T]): T = IntegrationTest.result(f)
+  protected def result[T](f: Future[T]): T = Await.result(f, 2 minutes)
 
-  protected def await(f: () => Boolean): Unit = IntegrationTest.await(f)
+  /**
+    * await until the function return true. If the function fails, the exception is thrown.
+    * @param f verification function
+    */
+  protected def await(f: () => Boolean): Unit = await(f, false)
+
+  /**
+    * await until the function return true
+    * @param f verification function
+    * @param swallowException true if your want to swallow exception and keep running
+    */
+  protected def await(f: () => Boolean, swallowException: Boolean): Unit =
+    CommonUtils.await(
+      () =>
+        try f()
+        catch {
+          case _: Throwable if swallowException =>
+            false
+        },
+      Duration.ofMinutes(2)
+    )
 
   /**
     * the creation of cluster is async so you need to wait the cluster to build.
@@ -83,12 +103,4 @@ abstract class IntegrationTest {
     * @return public port or none
     */
   protected def publicPort: Option[Int] = sys.env.get("ohara.it.port").map(_.toInt)
-}
-
-object IntegrationTest {
-  private[this] val TIMEOUT = 2 minutes
-
-  def result[T](f: Future[T]): T = Await.result(f, TIMEOUT)
-
-  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(TIMEOUT.toSeconds))
 }

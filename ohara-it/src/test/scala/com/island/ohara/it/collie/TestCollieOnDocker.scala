@@ -21,7 +21,7 @@ import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.{EnvTestingUtils, ServiceNameHolder}
+import com.island.ohara.it.{EnvTestingUtils, ServiceKeyHolder}
 import com.island.ohara.it.category.CollieGroup
 import org.junit.Before
 import org.junit.experimental.categories.Category
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Category(Array(classOf[CollieGroup]))
 class TestCollieOnDocker extends BasicTests4Collie {
   override protected val nodes: Seq[Node]           = EnvTestingUtils.dockerNodes()
-  override protected val nameHolder                 = ServiceNameHolder(DockerClient(DataCollie(nodes)))
+  override protected val nameHolder                 = ServiceKeyHolder(DockerClient(DataCollie(nodes)))
   override protected val configurator: Configurator = Configurator.builder.build()
 
   @Before

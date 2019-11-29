@@ -53,6 +53,7 @@ class TestMeterCache extends OharaTest {
     val data = Map(
       "name" -> Seq(
         Meter(
+          name = "name",
           value = 1.1,
           unit = "unit",
           document = "document",

@@ -30,7 +30,7 @@ import com.island.ohara.common.exception.{OharaExecutionException, OharaTimeoutE
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.it.{IntegrationTest, ServiceNameHolder}
+import com.island.ohara.it.{IntegrationTest, ServiceKeyHolder}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger
@@ -56,7 +56,7 @@ abstract class BasicTests4Collie extends IntegrationTest {
   private[this] val numberOfClusters = 2
   protected def configurator: Configurator
   protected def nodes: Seq[Node]
-  protected def nameHolder: ServiceNameHolder
+  protected def nameHolder: ServiceKeyHolder
 
   private[this] def zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 

@@ -26,6 +26,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Sink
 import com.island.ohara.common.util.Releasable
 import spray.json.RootJsonFormat
 
@@ -143,7 +144,9 @@ private[ohara] object HttpExecutor {
     private[this] def unmarshal[E <: HttpExecutor.Error](
       res: HttpResponse
     )(implicit rm: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
-      if (res.status.isSuccess()) res.discardEntityBytes().future().map(_ => Unit)
+      if (res.status.isSuccess())
+        // akka bug ... see https://github.com/akka/akka-http/issues/1459
+        res.entity.dataBytes.runWith(Sink.ignore).map(_ => Unit)
       else asError(res)
 
     private[this] def unmarshal[T](res: HttpResponse)(implicit executionContext: ExecutionContext): Future[String] =

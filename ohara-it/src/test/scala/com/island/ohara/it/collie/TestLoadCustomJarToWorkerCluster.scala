@@ -29,7 +29,7 @@ import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.category.CollieGroup
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
-import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceNameHolder}
+import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
 import com.typesafe.scalalogging.Logger
 import org.junit.experimental.categories.Category
 import org.junit.{After, Before, Test}
@@ -63,7 +63,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
 
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val nameHolder = ServiceNameHolder(DockerClient(DataCollie(nodes)))
+  private[this] val nameHolder = ServiceKeyHolder(DockerClient(DataCollie(nodes)))
 
   @Before
   def setup(): Unit =
