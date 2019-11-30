@@ -18,23 +18,25 @@ package com.island.ohara.it.performance
 
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.connector.perf.PerfSource
+import com.island.ohara.connector.jio.JsonOut
 import com.island.ohara.it.category.PerformanceGroup
 import org.junit.Test
 import org.junit.experimental.categories.Category
+import spray.json.JsNumber
 
 @Category(Array(classOf[PerformanceGroup]))
-class TestPerformance4PerfSource extends BasicTestPerformance {
+class TestPerformance4JsonOut extends BasicTestPerformance {
   private[this] val connectorKey: ConnectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5))
   private[this] val topicKey: TopicKey         = TopicKey.of("benchmark", CommonUtils.randomString(5))
 
   @Test
   def test(): Unit = {
+    produce(setupTopic(topicKey).key)
     setupConnector(
       connectorKey = connectorKey,
-      topicKey = setupTopic(topicKey).key,
-      className = classOf[PerfSource].getName,
-      settings = Map.empty
+      topicKey = topicKey,
+      className = classOf[JsonOut].getName,
+      settings = Map(com.island.ohara.connector.jio.BINDING_PORT_KEY -> JsNumber(workerClusterInfo.freePorts.head))
     )
     sleepUntilEnd()
   }

@@ -16,32 +16,35 @@
 
 package com.island.ohara.it
 
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Before
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class WithRemoteWorkers extends WithRemoteConfigurator {
-  protected val zkKey: ObjectKey = serviceNameHolder.generateClusterKey()
+  private[this] val zkKey: ObjectKey = serviceNameHolder.generateClusterKey()
   private[this] def zkApi =
     ZookeeperApi.access
       .hostname(configuratorHostname)
       .port(configuratorPort)
 
-  protected val bkKey: ObjectKey = serviceNameHolder.generateClusterKey()
+  private[this] val bkKey: ObjectKey = serviceNameHolder.generateClusterKey()
   private[this] def bkApi =
     BrokerApi.access
       .hostname(configuratorHostname)
       .port(configuratorPort)
-  protected def brokerConnection: String = result(bkApi.get(bkKey)).connectionProps
+  protected def brokerClusterInfo: BrokerClusterInfo = result(bkApi.get(bkKey))
 
-  protected val wkKey: ObjectKey = serviceNameHolder.generateClusterKey()
+  private[this] val wkKey: ObjectKey = serviceNameHolder.generateClusterKey()
   private[this] def wkApi =
     WorkerApi.access
       .hostname(configuratorHostname)
       .port(configuratorPort)
-  protected def workerConnection: String = result(wkApi.get(wkKey)).connectionProps
+  protected def workerClusterInfo: WorkerClusterInfo = result(wkApi.get(wkKey))
 
   @Before
   def setupWorkers(): Unit = {
@@ -72,6 +75,7 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
         .key(wkKey)
         .brokerClusterKey(bkKey)
         .nodeNames(nodeNames.toSet)
+        .freePort(CommonUtils.availablePort())
         .create()
         .map(_.key)
         .flatMap(wkApi.start)

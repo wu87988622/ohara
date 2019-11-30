@@ -127,7 +127,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     result(
       topicApi.request
         .key(topicKey)
-        .brokerClusterKey(bkKey)
+        .brokerClusterKey(brokerClusterInfo.key)
         .numberOfPartitions(numberOfPartitions)
         .create()
     )
@@ -150,7 +150,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
         .key(connectorKey)
         .className(className)
         .topicKey(topicKey)
-        .workerClusterKey(wkKey)
+        .workerClusterKey(workerClusterInfo.key)
         .numberOfTasks(numberOfConnectorTasks)
         .create()
     )
@@ -173,7 +173,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
         val producer = Producer
           .builder()
           .keySerializer(Serializer.ROW)
-          .connectionProps(brokerConnection)
+          .connectionProps(brokerClusterInfo.connectionProps)
           .build()
         var cachedRows = 0
         try while (!closed.get()) {
