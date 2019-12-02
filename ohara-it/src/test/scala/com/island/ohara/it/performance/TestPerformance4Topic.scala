@@ -27,8 +27,6 @@ class TestPerformance4Topic extends BasicTestPerformance {
   private[this] val topicKey: TopicKey = TopicKey.of("benchmark", CommonUtils.randomString(5))
 
   @Test
-  def test(): Unit = {
+  def test(): Unit =
     setupTopic(topicKey)
-    produce(topicKey)
-  }
 }

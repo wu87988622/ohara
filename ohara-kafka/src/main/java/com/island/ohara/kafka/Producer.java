@@ -23,7 +23,6 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -168,7 +167,7 @@ public interface Producer<Key, Value> extends Releasable {
         public final Sender<Key, Value> sender() {
           return new Sender<Key, Value>() {
             @Override
-            public Future<RecordMetadata> doSend() {
+            public CompletableFuture<RecordMetadata> doSend() {
               CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
               ProducerRecord<Key, Value> record =
                   new ProducerRecord<>(
@@ -309,12 +308,12 @@ public interface Producer<Key, Value> extends Releasable {
      *
      * @return an async thread processing the request
      */
-    public Future<RecordMetadata> send() {
+    public CompletableFuture<RecordMetadata> send() {
       checkArguments();
       return doSend();
     }
 
-    protected abstract Future<RecordMetadata> doSend();
+    protected abstract CompletableFuture<RecordMetadata> doSend();
   }
 
   /** wrap from kafka RecordMetadata; */

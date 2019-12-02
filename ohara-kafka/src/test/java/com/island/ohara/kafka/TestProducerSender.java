@@ -18,14 +18,14 @@ package com.island.ohara.kafka;
 
 import com.island.ohara.common.rule.OharaTest;
 import java.util.Collections;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 
 public class TestProducerSender extends OharaTest {
 
   private static class FakeSender<K, V> extends Producer.Sender<K, V> {
     @Override
-    public Future<Producer.RecordMetadata> doSend() {
+    public CompletableFuture<Producer.RecordMetadata> doSend() {
       return null;
     }
   }

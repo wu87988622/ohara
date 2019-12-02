@@ -30,9 +30,10 @@ class TestPerformance4PerfSource extends BasicTestPerformance {
 
   @Test
   def test(): Unit = {
+    setupTopic(topicKey)
     setupConnector(
       connectorKey = connectorKey,
-      topicKey = setupTopic(topicKey).key,
+      topicKey = topicKey,
       className = classOf[PerfSource].getName,
       settings = Map.empty
     )

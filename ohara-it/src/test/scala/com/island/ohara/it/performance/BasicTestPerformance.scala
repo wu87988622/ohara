@@ -89,6 +89,16 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   private[this] val numberOfProducerThread =
     value(numberOfProducerThreadKey).map(_.toInt).getOrElse(numberOfProducerThreadDefault)
 
+  private[this] val megabytesOfInputDataKey           = "megabytesOfInputData"
+  private[this] val megabytesOfInputDataDefault: Long = 100
+  private[this] val sizeOfInputData =
+    1024L * 1024L * value(megabytesOfInputDataKey).map(_.toLong).getOrElse(megabytesOfInputDataDefault)
+
+  private[this] val durationOfTestProducingInputDataKey = "durationOfTestProducingInputData"
+  private[this] val durationOfTestProducingInputDataDefault =
+    (durationOfTestPerformanceDefault.toMillis * 10) milliseconds
+  private[this] val durationOfTestProducingInputData =
+    value(durationOfTestProducingInputDataKey).map(Duration.apply).getOrElse(durationOfTestProducingInputDataDefault)
   //------------------------------[producer properties]------------------------------//
   private[this] val numberOfPartitionsKey     = "numberOfPartitions"
   private[this] val numberOfPartitionsDefault = 1
@@ -123,7 +133,12 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     durationOfTestPerformance.toMillis
   }
 
-  protected def setupTopic(topicKey: TopicKey): TopicInfo = {
+  /**
+    * create the topic and setup the data.
+    * @param topicKey topic key
+    * @return (topic info, number of rows, size (in bytes) of all input rows)
+    */
+  protected def setupTopic(topicKey: TopicKey): (TopicInfo, Long, Long) = {
     result(
       topicApi.request
         .key(topicKey)
@@ -135,7 +150,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       result(topicApi.start(topicKey))
       true
     }, true)
-    result(topicApi.get(topicKey))
+    produce(result(topicApi.get(topicKey)))
   }
 
   protected def setupConnector(
@@ -164,40 +179,49 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     result(connectorApi.get(connectorKey))
   }
 
-  protected def produce(topicKey: TopicKey): Long = {
-    val pool   = Executors.newFixedThreadPool(numberOfProducerThread)
-    val closed = new AtomicBoolean(false)
-    val count  = new LongAdder()
-    (0 until numberOfProducerThread).foreach { _ =>
-      pool.execute(() => {
-        val producer = Producer
-          .builder()
-          .keySerializer(Serializer.ROW)
-          .connectionProps(brokerClusterInfo.connectionProps)
-          .build()
-        var cachedRows = 0
-        try while (!closed.get()) {
-          producer
-            .sender()
-            .topicName(topicKey.topicNameOnKafka())
-            .key(Row.of(cellNames.map { name =>
-              Cell.of(name, CommonUtils.randomString())
-            }.toSeq: _*))
-            .send()
-          count.add(1)
-          cachedRows += 1
-          if (cachedRows >= numberOfRowsToFlush) {
-            producer.flush()
-            cachedRows = 0
-          }
-        } finally Releasable.close(producer)
-      })
+  private[this] def produce(topicInfo: TopicInfo): (TopicInfo, Long, Long) = {
+    val pool        = Executors.newFixedThreadPool(numberOfProducerThread)
+    val closed      = new AtomicBoolean(false)
+    val count       = new LongAdder()
+    val sizeInBytes = new LongAdder()
+    try {
+      (0 until numberOfProducerThread).foreach { _ =>
+        pool.execute(() => {
+          val producer = Producer
+            .builder()
+            .keySerializer(Serializer.ROW)
+            .connectionProps(brokerClusterInfo.connectionProps)
+            .build()
+          var cachedRows = 0
+          try while (!closed.get() && sizeInBytes.longValue() <= sizeOfInputData) {
+            producer
+              .sender()
+              .topicName(topicInfo.key.topicNameOnKafka())
+              .key(Row.of(cellNames.map { name =>
+                Cell.of(name, CommonUtils.randomString())
+              }.toSeq: _*))
+              .send()
+              .whenComplete {
+                case (meta, _) =>
+                  if (meta != null) {
+                    sizeInBytes.add(meta.serializedKeySize())
+                    count.add(1)
+                  }
+              }
+            cachedRows += 1
+            if (cachedRows >= numberOfRowsToFlush) {
+              producer.flush()
+              cachedRows = 0
+            }
+          } finally Releasable.close(producer)
+        })
+      }
+    } finally {
+      pool.shutdown()
+      pool.awaitTermination(durationOfTestProducingInputData.toMillis, TimeUnit.MILLISECONDS)
+      closed.set(true)
     }
-    sleepUntilEnd()
-    closed.set(true)
-    pool.shutdown()
-    pool.awaitTermination(durationOfTestPerformance.toMillis, TimeUnit.MILLISECONDS)
-    count.longValue()
+    (topicInfo, count.longValue(), sizeInBytes.longValue())
   }
 
   //------------------------------[core functions]------------------------------//
