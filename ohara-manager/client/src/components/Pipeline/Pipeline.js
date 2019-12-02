@@ -21,14 +21,19 @@ import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
 import Graph from './Graph';
 import { useWorkspace } from 'context';
-import { usePipeline } from 'context/PipelineContext';
+import { usePipelineActions, usePipelineState } from 'context';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
 
 const Pipeline = () => {
   const history = useHistory();
-  const { workspaces, isFetching: isFetchingWorkspaces } = useWorkspace();
-  const { pipelines, doFetch: fetchPipelines } = usePipeline();
+  const {
+    workspaces,
+    isFetching: isFetchingWorkspaces,
+    currentWorkspace: currentWorker,
+  } = useWorkspace();
+  const { fetchPipelines } = usePipelineActions();
+  const { data: pipelines } = usePipelineState();
   const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
@@ -81,12 +86,12 @@ const Pipeline = () => {
   }, [hasWorkspace, setIsNewWorkspaceDialogOpen]);
 
   useEffect(() => {
-    fetchPipelines(workspaceName);
-  }, [fetchPipelines, workspaceName]);
+    if (!currentWorker) return;
+    fetchPipelines(currentWorker.settings.name);
+  }, [fetchPipelines, currentWorker, workspaceName]);
 
   const hasPipeline = pipelines.length > 0;
   let currentPipeline;
-
   if (pipelineName) {
     const current = pipelines.find(pipeline => pipeline.name === pipelineName);
 
@@ -95,8 +100,9 @@ const Pipeline = () => {
 
     // If the `current` pipeline is not found in the list but the
     // list is not empty, let's display the first pipeline
-
-    if (current === undefined && hasPipeline) {
+    if (current === undefined && !hasPipeline) {
+      history.push(`/${workspaceName}`);
+    } else if (current === undefined && hasPipeline) {
       history.push(`/${workspaceName}/${pipelines[0].name}`);
     }
   } else {

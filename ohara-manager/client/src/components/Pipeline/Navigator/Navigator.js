@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import MenuItem from '@material-ui/core/MenuItem';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -25,9 +25,7 @@ import Menu from '@material-ui/core/Menu';
 import { NavLink, useParams } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
-import * as pipelineApi from 'api/pipelineApi';
-import { useSnackbar } from 'context/SnackbarContext';
-import { usePipeline } from 'context/PipelineContext';
+import { usePipelineActions, usePipelineState } from 'context';
 import { useWorkspace, useEditWorkspaceDialog } from 'context';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
@@ -51,14 +49,14 @@ import {
 } from './NavigatorStyles';
 
 const Navigator = () => {
-  const showMessage = useSnackbar();
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const { workspaceName } = useParams();
   const { findByWorkspaceName } = useWorkspace();
   const [isExpanded, setIsExpanded] = useState(true);
-  const { pipelines, doFetch: fetchPipelines } = usePipeline();
   const { open: openEditWorkspaceDialog } = useEditWorkspaceDialog();
+  const { data: pipelines } = usePipelineState();
+  const { addPipeline } = usePipelineActions();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -74,27 +72,17 @@ const Navigator = () => {
   };
 
   const onSubmit = async ({ pipelineName }, form) => {
-    const response = await pipelineApi.create({
+    addPipeline({
       name: pipelineName,
       group: workspaceName,
       flows: [],
     });
 
-    // TODO: this logic can be simplify once #3124 is done
-    if (response && response.name === pipelineName) {
-      showMessage(`Pipeline ${pipelineName} has been added`);
-      await fetchPipelines(workspaceName);
-      setTimeout(form.reset);
-    }
-
+    setTimeout(form.reset);
     setIsOpen(false);
   };
 
   const validWorkspaceName = findByWorkspaceName(workspaceName);
-
-  useEffect(() => {
-    fetchPipelines(workspaceName);
-  }, [fetchPipelines, workspaceName]);
 
   if (!validWorkspaceName) return null;
 

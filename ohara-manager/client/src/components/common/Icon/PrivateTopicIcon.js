@@ -40,39 +40,24 @@ export const PrivateTopicIcon = ({
           id="privateTopic-1"
         ></path>
       </defs>
-      <g
-        id="Components"
-        stroke="none"
-        strokeWidth="1"
-        fill="none"
-        fillRule="evenodd"
-      >
-        <g
-          transform="translate(-389.000000, -2906.000000)"
-          id="Ohara-/-Icons-/-Topic-+-Circle"
-        >
+      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+        <g transform="translate(-389.000000, -2906.000000)">
           <g transform="translate(390.000000, 2907.000000)">
             <g>
               <circle
-                id="Oval"
                 strokeOpacity="0.54"
                 stroke="#000000"
                 cx="28"
                 cy="28"
                 r="28"
               ></circle>
-              <g id="Icon-1" transform="translate(19.000000, 21.000000)">
-                <mask id="privateTopicMask-2" fill="white">
+              <g transform="translate(19.000000, 21.000000)">
+                <mask id="d-2" fill="white">
                   <use xlinkHref="#privateTopic-1"></use>
                 </mask>
-                <g id="icon/device/storage_24px" fillRule="nonzero"></g>
-                <g
-                  id="✱-/-Color-/-Icons-/-Selected-/-On-Surface-/-Inactive"
-                  mask="url(#privateTopicMask-2)"
-                  fill="#000000"
-                  fillOpacity="0.54"
-                >
-                  <g transform="translate(-1.000000, -3.000000)" id="Rectangle">
+                <g fillRule="nonzero"></g>
+                <g mask="url(#d-2)" fill="#000000" fillOpacity="0.54">
+                  <g transform="translate(-1.000000, -3.000000)">
                     <rect x="0" y="0" width="20" height="20"></rect>
                   </g>
                 </g>

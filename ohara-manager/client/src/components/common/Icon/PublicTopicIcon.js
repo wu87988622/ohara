@@ -48,69 +48,41 @@ export const PublicTopicIcon = ({
           id="publicTopic-5"
         ></path>
       </defs>
-      <g
-        id="Components"
-        stroke="none"
-        strokeWidth="1"
-        fill="none"
-        fillRule="evenodd"
-      >
-        <g
-          transform="translate(-304.000000, -2906.000000)"
-          id="Ohara-/-Icons-/-Topic-+-Circle-+-Shared"
-        >
+      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+        <g transform="translate(-304.000000, -2906.000000)">
           <g transform="translate(305.000000, 2907.000000)">
             <g>
-              <g id="Oval-2">
-                <mask id="mask-2" fill="white">
-                  <use xlinkHref="#publicTopic-1"></use>
-                </mask>
+              <g>
                 <use
-                  id="Oval"
                   strokeOpacity="0.54"
                   stroke="#000000"
                   transform="translate(28.000000, 28.000000) scale(-1, 1) translate(-28.000000, -28.000000) "
                   xlinkHref="#publicTopic-1"
                 ></use>
               </g>
-              <g id="Icon-1" transform="translate(19.000000, 21.000000)">
+              <g transform="translate(19.000000, 21.000000)">
                 <mask id="mask-4" fill="white">
                   <use xlinkHref="#publicTopic-3"></use>
                 </mask>
-                <g id="icon/device/storage_24px" fillRule="nonzero"></g>
-                <g
-                  id="✱-/-Color-/-Icons-/-Selected-/-On-Surface-/-Inactive"
-                  mask="url(#mask-4)"
-                  fill="#000000"
-                  fillOpacity="0.54"
-                >
-                  <g transform="translate(-1.000000, -3.000000)" id="Rectangle">
+                <g fillRule="nonzero"></g>
+                <g mask="url(#mask-4)" fill="#000000" fillOpacity="0.54">
+                  <g transform="translate(-1.000000, -3.000000)">
                     <rect x="0" y="0" width="20" height="20"></rect>
                   </g>
                 </g>
               </g>
-              <g
-                id="Icon-/-Share-/-Filled"
-                transform="translate(32.000000, 32.000000)"
-              >
+              <g transform="translate(32.000000, 32.000000)">
                 <mask id="mask-6" fill="white">
                   <use xlinkHref="#publicTopic-5"></use>
                 </mask>
                 <g id="Mask" fillRule="nonzero"></g>
                 <g
-                  id="✱-/-Color-/-Icons-/-Selected-/-On-Surface-/-Inactive"
                   mask="url(#mask-6)"
                   fill="#000000"
                   fillOpacity="0.54"
                   fillRule="evenodd"
                 >
-                  <rect
-                    id="Rectangle"
-                    x="0"
-                    y="0"
-                    width="24"
-                    height="24"
-                  ></rect>
+                  <rect x="0" y="0" width="24" height="24"></rect>
                 </g>
               </g>
             </g>

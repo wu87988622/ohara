@@ -53,6 +53,12 @@ import {
   useZookeeperDispatch,
   useZookeeperActions,
 } from 'context/zookeeper/ZookeeperContext';
+import {
+  PipelineProvider,
+  usePipelineState,
+  usePipelineDispatch,
+  usePipelineActions,
+} from 'context/pipeline/PipelineContext';
 
 export {
   // Broker
@@ -87,4 +93,9 @@ export {
   useZookeeperState,
   useZookeeperDispatch,
   useZookeeperActions,
+  // Pipeline
+  PipelineProvider,
+  usePipelineState,
+  usePipelineDispatch,
+  usePipelineActions,
 };

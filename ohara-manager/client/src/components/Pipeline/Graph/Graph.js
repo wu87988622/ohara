@@ -157,7 +157,24 @@ const Graph = props => {
       if (instruction === 'fromDropdown') return setPaperScale(scale);
 
       // By default, the scale is multiply and divide by `2`
-      const newScale = instruction === 'in' ? fixedScale * 2 : fixedScale / 2;
+      let newScale = 0;
+      if (instruction === 'in') {
+        // Dealing with two edge cases here, these two
+        // values are not valid in our App
+        // 0.02 -> 0.03
+        // 0.24 -> 0.25
+        if (fixedScale * 2 === 0.02) {
+          newScale = 0.03;
+        } else if (fixedScale * 2 === 0.24) {
+          newScale = 0.25;
+        } else {
+          // Handle other scale normally
+          newScale = fixedScale * 2;
+        }
+      } else {
+        newScale = fixedScale / 2;
+      }
+
       return setPaperScale(newScale);
     }
 
@@ -173,8 +190,17 @@ const Graph = props => {
     const inScaleIndex = defaultScales.indexOf(closestInScale);
     const closestOutScale = defaultScales[inScaleIndex + 1];
 
+    let updatedInScale = closestInScale;
+    let updatedOutScale = closestOutScale;
+
+    // In case the calculation gives us the wrong scale
+    if (closestInScale >= fixedScale) {
+      updatedInScale = defaultScales[inScaleIndex - 1];
+      updatedOutScale = closestInScale;
+    }
+
     const newScale =
-      instruction === 'in' ? closestInScale * 2 : closestOutScale / 2;
+      instruction === 'in' ? updatedInScale * 2 : updatedOutScale / 2;
     setPaperScale(newScale);
   };
 
@@ -219,11 +245,12 @@ const Graph = props => {
         dragStartPosition.current &&
         dragStartPosition.current.x !== undefined &&
         dragStartPosition.current.y !== undefined
-      )
+      ) {
         paper.current.translate(
           event.offsetX - dragStartPosition.current.x,
           event.offsetY - dragStartPosition.current.y,
         );
+      }
     });
   }, [isFitToContent]);
 
@@ -234,7 +261,6 @@ const Graph = props => {
         handleToolboxOpen={handleToolboxOpen}
         handleToolbarClick={handleToolbarClick}
         paperScale={paperScale}
-        paper={paper.current}
         setZoom={setZoom}
         setFit={() => setIsFitToContent(true)}
       />
@@ -245,6 +271,7 @@ const Graph = props => {
           expanded={toolboxExpanded}
           handleClick={handleToolboxClick}
           handleClose={handleToolboxClose}
+          paperScale={paperScale}
           paper={paper.current}
           graph={graph.current}
           toolboxKey={toolboxKey}

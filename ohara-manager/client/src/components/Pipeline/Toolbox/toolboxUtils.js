@@ -179,7 +179,7 @@ export const enableDragAndDrop = params => {
     });
 
     // Create "flying papers", which enable drag and drop feature
-    toolPaper.on('cell:pointerdown', function(cellView, e, x, y) {
+    toolPaper.on('cell:pointerdown', function(cellView, event, x, y) {
       $('#paper').append('<div id="flying-paper" class="flying-paper"></div>');
 
       const flyingGraph = new joint.dia.Graph();
@@ -193,11 +193,12 @@ export const enableDragAndDrop = params => {
       });
 
       const flyingShape = cellView.model.clone();
-      const pos = cellView.model.position();
+      const position = cellView.model.position();
       const offset = {
-        x: x - pos.x,
-        y: y - pos.y,
+        x: x - position.x,
+        y: y - position.y,
       };
+
       setGraphType(cellView.model.get('classType'));
       setConnectorType(cellView.model.get('displayName'));
       setIcon(cellView.model.get('icon'));
@@ -206,14 +207,14 @@ export const enableDragAndDrop = params => {
       flyingGraph.addCell(flyingShape);
 
       $('#flying-paper').offset({
-        left: e.pageX - offset.x,
-        top: e.pageY - offset.y,
+        left: event.pageX - offset.x,
+        top: event.pageY - offset.y,
       });
 
       const isInsidePaper = () => {
         const target = paper.$el.offset();
-        const x = e.pageX;
-        const y = e.pageY;
+        const x = event.pageX;
+        const y = event.pageY;
 
         return (
           x > target.left &&
@@ -223,16 +224,16 @@ export const enableDragAndDrop = params => {
         );
       };
 
-      $('#paper').on('mousemove.fly', e => {
+      $('#paper').on('mousemove.fly', event => {
         $('#flying-paper').offset({
-          left: e.pageX - offset.x,
-          top: e.pageY - offset.y,
+          left: event.pageX - offset.x,
+          top: event.pageY - offset.y,
         });
       });
 
-      $('#paper').on('mouseup.fly', e => {
-        const x = e.pageX;
-        const y = e.pageY;
+      $('#paper').on('mouseup.fly', event => {
+        const x = event.pageX;
+        const y = event.pageY;
         const target = paper.$el.offset();
 
         // Dropped over paper ?

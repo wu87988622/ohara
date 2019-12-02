@@ -32,9 +32,9 @@ import {
   WorkerProvider,
   WorkspaceProvider,
   ZookeeperProvider,
+  PipelineProvider,
 } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
-import { PipelineProvider } from './context/PipelineContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
 import { NodeDialogProvider } from './context/NodeDialogContext';
 
