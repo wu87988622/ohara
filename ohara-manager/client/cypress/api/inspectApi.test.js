@@ -42,6 +42,25 @@ describe('Inspect API', () => {
     expect(date).to.be.a('string');
   });
 
+  // Note this API is a special route from manager, not configurator
+  // it depends on a gradle task :ohara-common:versionFile to generate version
+  // info when running in dev mode
+  it('fetchManagerInfo', async () => {
+    const {
+      branch,
+      version,
+      user,
+      revision,
+      date,
+    } = await inspect.getManagerInfo();
+
+    expect(branch).to.be.a('string');
+    expect(version).to.be.a('string');
+    expect(revision).to.be.a('string');
+    expect(user).to.be.a('string');
+    expect(date).to.be.a('string');
+  });
+
   it('fetchServiceDefinition', async () => {
     function expectResult(serviceName, data) {
       const { imageName, settingDefinitions, classInfos } = data;

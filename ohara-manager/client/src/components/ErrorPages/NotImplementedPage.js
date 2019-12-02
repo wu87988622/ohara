@@ -17,37 +17,93 @@
 import React from 'react';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import { useHistory } from 'react-router-dom';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { ReactComponent as NotImplemented } from 'images/not-implemented.svg';
 import { Wrapper } from './ErrorPageStyles';
+import * as inspectApi from 'api/inspectApi';
 
 const NotFoundPage = () => {
-  const history = useHistory();
+  const [managerVersion, setManagerVersion] = React.useState('');
+  const [configuratorVersion, setConfiguratorVersion] = React.useState('');
+
+  React.useEffect(() => {
+    const fetchConfiguratorInfo = async () => {
+      const info = await inspectApi.getConfiguratorInfo();
+      setConfiguratorVersion(info.versionInfo.version);
+    };
+    fetchConfiguratorInfo();
+  }, []);
+
+  React.useEffect(() => {
+    const fetchMangerInfo = async () => {
+      const info = await inspectApi.getManagerInfo();
+      setManagerVersion(info.version);
+    };
+
+    fetchMangerInfo();
+  }, []);
 
   return (
     <Wrapper>
       <Typography variant="h1">
         501: The version of the Ohara API is not compatible!
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body1" color="textSecondary">
         The version of the Ohara API is not compatible, please update as soon as
         possible.
       </Typography>
 
       <NotImplemented width="680" />
 
-      <Typography variant="h3">Current version of your system</Typography>
+      {configuratorVersion &&
+        (managerVersion ? (
+          <>
+            <div className="current-version-section">
+              <Typography variant="h3">
+                Current version from your system
+              </Typography>
+              <ul>
+                <li>
+                  <Typography
+                    variant="body1"
+                    color="textSecondary"
+                  >{`oharastream-configurator-${managerVersion}`}</Typography>
+                </li>
+                <li>
+                  <Typography
+                    variant="body1"
+                    color="textSecondary"
+                  >{`oharastream-manager-${configuratorVersion}`}</Typography>
+                </li>
+              </ul>
+            </div>
 
-      <Typography variant="h3">Recommended version</Typography>
+            <div className="suggestion-section">
+              <Typography variant="h5" color="textSecondary">
+                Looks like you're using different versions in your services.
+                Please use the same version across all services.
+              </Typography>
+            </div>
 
-      <Button
-        variant="outlined"
-        color="primary"
-        onClick={() => history.push('/')}
-      >
-        DOWNLOAD
-      </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() =>
+                window.open('https://github.com/oharastream/ohara/releases')
+              }
+            >
+              See available releases
+            </Button>
+          </>
+        ) : (
+          <>
+            <Typography variant="body1" color="textSecondary">
+              Loading version information from your system...
+            </Typography>
+            <CircularProgress />
+          </>
+        ))}
     </Wrapper>
   );
 };

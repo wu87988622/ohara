@@ -21,6 +21,11 @@ if [[ -z "$OHARA_OPTS" ]]; then
   export OHARA_OPTS="-Xmx4000m -XX:+UseConcMarkSweepGC"
 fi
 
+# This env is set specifically for Ohara manager
+if [[ -z "$OHARA_MANAGER_NODE_ENV" ]]; then
+  export OHARA_MANAGER_NODE_ENV="prodcution"
+fi
+
 #----------[JMX]----------#
 if [[ -z "$OHARA_JMX_OPTS" ]]; then
   export OHARA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"

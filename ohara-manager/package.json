@@ -9,8 +9,8 @@
   "scripts": {
     "preinstall": "node ./scripts/checkYarnVersion.js",
     "setup": "yarn && yarn --cwd client setup",
-    "start": "nodemon start.js --exec \"yarn lint:server && node\"",
-    "start:prod": "node start.js",
+    "start": "cross-env NODE_ENV=development nodemon start.js --exec \"yarn lint:server && node\"",
+    "start:prod": "cross-env NODE_ENV=production node start.js",
     "start:client": "yarn --cwd client start",
     "lint": "run-s lint:server lint:client",
     "lint:ci": "run-s lint:server:ci lint:client",

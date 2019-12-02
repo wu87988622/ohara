@@ -16,6 +16,7 @@
 
 import { isEmpty } from 'lodash';
 import * as inspectConfiguratorBody from './body/inspectConfiguratorBody';
+import * as inspectManagerBody from './body/inspectManagerBody';
 import * as inspectServiceBody from './body/inspectServiceBody';
 import * as inspectTopicBody from './body/inspectTopicBody';
 import * as inspectRdbBody from './body/inspectRdbBody';
@@ -30,6 +31,7 @@ export const kind = {
   broker: 'broker',
   worker: 'worker',
   stream: 'stream',
+  manager: 'manager',
   rdb: 'rdb',
   topic: 'topic',
   file: 'files',
@@ -68,6 +70,11 @@ export const getWorkerInfo = async (params = {}) => {
 
 export const getStreamsInfo = async (params = {}) => {
   return fetchServiceInfo(kind.stream, params);
+};
+
+export const getManagerInfo = async () => {
+  const res = await axiosInstance.get(`${url}/${kind.manager}`);
+  return responseUtil(res, inspectManagerBody);
 };
 
 export const getFileInfoWithoutUpload = async params => {

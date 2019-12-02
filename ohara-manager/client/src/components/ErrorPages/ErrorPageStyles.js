@@ -14,19 +14,53 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
-export const Wrapper = styled.div`
-  padding: ${props => props.theme.spacing(4)}px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
-  flex-direction: column;
-  background-color: ${props => props.theme.palette.grey[100]};
+export const Wrapper = styled.div(
+  ({ theme }) => css`
+    padding: ${theme.spacing(4)}px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    flex-direction: column;
+    background-color: ${theme.palette.grey[100]};
 
-  svg {
-    margin: ${props => props.theme.spacing(2)}px;
-  }
-`;
+    > svg {
+      margin: ${theme.spacing(2)}px;
+    }
+
+    /* 501 page specific */
+    .current-version-section,
+    .suggestion-section {
+      margin-bottom: ${theme.spacing(6)}px;
+
+      h3 {
+        margin-bottom: ${theme.spacing(2)}px;
+      }
+
+      ul {
+        text-align: center;
+
+        li:not(:last-child) {
+          margin-bottom: ${theme.spacing(1)}px;
+        }
+      }
+    }
+
+    .suggestion-section {
+      margin-bottom: ${theme.spacing(2)}px;
+
+      h5 {
+        width: 500px;
+        text-align: center;
+      }
+    }
+
+    /* Loader */
+    .MuiCircularProgress-root {
+      margin-top: ${theme.spacing(2)}px;
+    }
+  `,
+);

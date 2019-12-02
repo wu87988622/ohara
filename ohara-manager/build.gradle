@@ -88,6 +88,7 @@ task api {
     }
   }
   dependsOn(':ohara-it:jar')
+  dependsOn(':ohara-common:versionFile')
   dependsOn setup
 }
 
