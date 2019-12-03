@@ -58,7 +58,8 @@ abstract class WithRemoteConfigurator extends IntegrationTest {
         .imageName(imageName)
         .portMappings(Map(configuratorPort -> configuratorPort))
         .command(s"--port $configuratorPort")
-        .routes(Map(configuratorHostname -> CommonUtils.address(configuratorHostname)))
+        // add the routes manually since not all envs have deployed the DNS.
+        .routes(nodes.map(node => node.hostname -> CommonUtils.address(node.hostname)).toMap)
         .name(configuratorContainerName)
         .create()
     )
