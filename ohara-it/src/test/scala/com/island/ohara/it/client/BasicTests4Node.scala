@@ -26,7 +26,7 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class BasicTests4NodeResources extends IntegrationTest {
+abstract class BasicTests4Node extends IntegrationTest {
   protected def nodes: Seq[Node]
   protected def configurator: Configurator
   protected def nameHolder: ServiceKeyHolder
@@ -34,7 +34,7 @@ abstract class BasicTests4NodeResources extends IntegrationTest {
   private[this] def nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
-  def test(): Unit = {
+  def testResources(): Unit = {
     val nodes = result(nodeApi.list())
     nodes should not be Seq.empty
     nodes.foreach { node =>
@@ -46,6 +46,17 @@ abstract class BasicTests4NodeResources extends IntegrationTest {
         resource.name.isEmpty shouldBe false
         resource.unit.isEmpty shouldBe false
       }
+    }
+  }
+
+  @Test
+  def testStatus(): Unit = {
+    val nodes = result(nodeApi.list())
+    nodes should not be Seq.empty
+    nodes.foreach { node =>
+      nodes.exists(_.hostname == node.hostname) shouldBe true
+      node.state shouldBe NodeApi.State.AVAILABLE
+      node.error shouldBe None
     }
   }
 

@@ -16,8 +16,7 @@
 
 package com.island.ohara.it.client
 
-import com.island.ohara.agent.DataCollie
-import com.island.ohara.agent.docker.DockerClient
+import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.configurator.Configurator
@@ -28,11 +27,16 @@ import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
 @Category(Array(classOf[ClientGroup]))
-class TestNodeResourcesOnDocker extends BasicTests4NodeResources {
-  override protected val nodes: Seq[Node]           = EnvTestingUtils.dockerNodes()
-  override protected val nameHolder                 = ServiceKeyHolder(DockerClient(DataCollie(nodes)))
-  override protected val configurator: Configurator = Configurator.builder.build()
+class TestNodeOnK8S extends BasicTests4Node {
+  override protected val nodes: Seq[Node] = EnvTestingUtils.k8sNodes()
+
+  private[this] val k8sClient: K8SClient = EnvTestingUtils.k8sClientWithMetricsServer()
+
+  override protected val configurator: Configurator =
+    Configurator.builder.k8sClient(k8sClient).build()
+  override protected val nameHolder: ServiceKeyHolder = ServiceKeyHolder(EnvTestingUtils.k8sClient())
 
   @Before
   final def setup(): Unit =

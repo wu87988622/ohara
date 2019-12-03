@@ -118,7 +118,13 @@ object NodeRoute {
       node =>
         serviceCollie
           .verifyNode(node)
-          .map(_ => node)
+          .map(
+            _ =>
+              node.copy(
+                state = State.AVAILABLE,
+                error = None
+              )
+          )
           .recover {
             case e: Throwable =>
               node.copy(
