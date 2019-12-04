@@ -15,7 +15,12 @@
  */
 
 import * as connector from './body/connectorBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -40,15 +45,24 @@ export const connectorSinks = {
 };
 
 export const create = async params => {
-  const workerInfo = await inspectApi.getWorkerInfo(params.workerClusterKey);
-  const connectorDefinition = workerInfo.classInfos
-    .reduce((acc, cur) => acc.concat(cur), [])
-    // the "connector__class" will be convert to "connector.class" for request
-    // each connector creation must assign connector.class
-    .find(param => param.className === params.connector__class);
+  const info = await inspectApi.getWorkerInfo(params.workerClusterKey);
+  let connectorDefinition = {};
+  if (!info.errors) {
+    const connectorDefinitions = info.data.classInfos
+      .reduce((acc, cur) => acc.concat(cur), [])
+      // the "connector__class" will be convert to "connector.class" for request
+      // each connector creation must assign connector.class
+      .filter(param => param.className === params.connector__class);
+    if (connectorDefinitions.length > 0)
+      connectorDefinition = connectorDefinitions[0];
+  }
   const requestBody = requestUtil(params, connector, connectorDefinition);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, connector);
+  const result = responseUtil(res, connector);
+  result.title =
+    `Create connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const start = async params => {
@@ -58,7 +72,11 @@ export const start = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForConnectRunning,
   });
-  return responseUtil(res, connector);
+  const result = responseUtil(res, connector);
+  result.title =
+    `Start connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -67,7 +85,11 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, connector);
+  const result = responseUtil(res, connector);
+  result.title =
+    `Update connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const stop = async params => {
@@ -77,7 +99,11 @@ export const stop = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForConnectStop,
   });
-  return responseUtil(res, connector);
+  const result = responseUtil(res, connector);
+  result.title =
+    `Stop connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async params => {
@@ -88,16 +114,27 @@ export const remove = async params => {
     checkFn: waitUtil.waitForClusterNonexistent,
     paramRes: params,
   });
-  return responseUtil(res, connector);
+  const result = responseUtil(res, connector);
+  result.title =
+    `Remove connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, connector);
+  const result = responseUtil(res, connector);
+  result.title =
+    `Get connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, connector) : [];
+  const result = responseUtil(res, connector);
+  result.title =
+    `Get connector list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

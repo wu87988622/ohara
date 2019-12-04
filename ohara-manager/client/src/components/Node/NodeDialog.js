@@ -109,8 +109,8 @@ const NodeDialog = () => {
   });
 
   const fetchNodes = useCallback(async () => {
-    const data = await nodeApi.getAll();
-    setNodes(data);
+    const result = await nodeApi.getAll();
+    if (!result.errors) setNodes(result.data);
   }, []);
 
   useEffect(() => {

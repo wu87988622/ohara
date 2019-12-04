@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
+import { isEmpty } from 'lodash';
 import * as broker from './body/brokerBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -23,11 +29,19 @@ import * as inspect from './inspectApi';
 
 const url = URL.BROKER_URL;
 
-export const create = async (params, body) => {
-  body = body ? body : await inspect.getBrokerInfo();
+export const create = async (params, body = {}) => {
+  if (isEmpty(body)) {
+    const info = await inspect.getBrokerInfo();
+    if (!info.errors) body = info.data;
+  }
+
   const requestBody = requestUtil(params, broker, body);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Create broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const start = async params => {
@@ -37,7 +51,11 @@ export const start = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForRunning,
   });
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Start broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -46,7 +64,11 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Update broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const stop = async params => {
@@ -56,7 +78,11 @@ export const stop = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForStop,
   });
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Stop broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async params => {
@@ -67,18 +93,29 @@ export const remove = async params => {
     checkFn: waitUtil.waitForClusterNonexistent,
     paramRes: params,
   });
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Remove broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Get broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, broker) : [];
+  const result = responseUtil(res, broker);
+  result.title =
+    `Get broker list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const addNode = async params => {
@@ -89,7 +126,11 @@ export const addNode = async params => {
     checkFn: waitUtil.waitForNodeReady,
     paramRes: nodeName,
   });
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Add node to broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const removeNode = async params => {
@@ -100,5 +141,9 @@ export const removeNode = async params => {
     checkFn: waitUtil.waitForNodeNonexistentInCluster,
     paramRes: nodeName,
   });
-  return responseUtil(res, broker);
+  const result = responseUtil(res, broker);
+  result.title =
+    `Remove node from broker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

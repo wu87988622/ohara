@@ -280,7 +280,7 @@ const Header = props => {
             anchor={selectAnchor}
           />
           <RefreshIcon className="item" onClick={handleRefresh} />
-          <SearchIcon className="item" onClick={handleSearchClick} /> */}
+          <SearchIcon className="item" onClick={handleSearchClick} />
           <Popover
             open={Boolean(searchAnchor)}
             anchorEl={searchAnchor}

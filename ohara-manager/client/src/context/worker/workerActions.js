@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, pick, map } from 'lodash';
+import { pick, map } from 'lodash';
 
 import * as workerApi from 'api/workerApi';
 import * as inspectApi from 'api/inspectApi';
@@ -29,19 +29,20 @@ const fetchWorkersCreator = (
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(routine.request());
-  const workers = await workerApi.getAll();
+  const result = await workerApi.getAll();
+  const workers = result.data;
 
-  if (isEmpty(workers)) {
-    const error = 'failed to fetch workers';
-    dispatch(routine.failure(error));
-    showMessage(error);
+  if (result.errors) {
+    dispatch(routine.failure(result.title));
+    showMessage(result.title);
     return;
   }
 
   const workerInfos = await Promise.all(
     map(workers, async worker => {
       const params = pick(worker.settings, ['name', 'group']);
-      const workerInfo = await inspectApi.getWorkerInfo(params);
+      const result = await inspectApi.getWorkerInfo(params);
+      const workerInfo = result.errors ? {} : result.data;
       return { ...worker, ...workerInfo };
     }),
   );

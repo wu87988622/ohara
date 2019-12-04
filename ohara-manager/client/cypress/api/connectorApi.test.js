@@ -64,7 +64,9 @@ describe('Connector API', () => {
   it('createConnector', async () => {
     const connector = await generateConnector();
     const result = await connectorApi.create(connector);
-    const { metrics, lastModified, tasksStatus } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { metrics, lastModified, tasksStatus } = result.data;
     const {
       columns,
       connector__class,
@@ -75,7 +77,7 @@ describe('Connector API', () => {
       topicKeys,
       workerClusterKey,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
@@ -112,7 +114,9 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
 
     const result = await connectorApi.get(connector);
-    const { metrics, lastModified, tasksStatus } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { metrics, lastModified, tasksStatus } = result.data;
     const {
       columns,
       connector__class,
@@ -123,7 +127,7 @@ describe('Connector API', () => {
       topicKeys,
       workerClusterKey,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
@@ -163,7 +167,9 @@ describe('Connector API', () => {
     await connectorApi.create(connectorTwo);
 
     const result = await connectorApi.getAll();
-    const connectors = result.map(connector => connector.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const connectors = result.data.map(connector => connector.settings.name);
     expect(connectors.includes(connectorOne.name)).to.be.true;
     expect(connectors.includes(connectorTwo.name)).to.be.true;
   });
@@ -174,13 +180,16 @@ describe('Connector API', () => {
     // delete a non-running connector
     await connectorApi.create(connector);
     const result = await connectorApi.remove(connector);
-    const brokers = result.map(connector => connector.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const brokers = result.data.map(connector => connector.settings.name);
     expect(brokers.includes(connector.name)).to.be.false;
 
     // delete a running connector
     await connectorApi.create(connector);
     const runningRes = await connectorApi.start(connector);
-    expect(runningRes.status.state).to.eq('RUNNING');
+    expect(runningRes.errors).to.be.undefined;
+    expect(runningRes.data.status.state).to.eq('RUNNING');
 
     await connectorApi.stop(connector);
     await connectorApi.remove(connector);
@@ -197,8 +206,9 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
 
     const result = await connectorApi.update(newConnector);
+    expect(result.errors).to.be.undefined;
 
-    const { metrics, lastModified, tasksStatus } = result;
+    const { metrics, lastModified, tasksStatus } = result.data;
     const {
       columns,
       connector__class,
@@ -211,7 +221,7 @@ describe('Connector API', () => {
       perf__batch,
       tasks__max,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
@@ -254,10 +264,12 @@ describe('Connector API', () => {
 
     await connectorApi.create(connector);
     const undefinedConnectorRes = await connectorApi.get(connector);
-    expect(undefinedConnectorRes.status).to.be.undefined;
+    expect(undefinedConnectorRes.errors).to.be.undefined;
+    expect(undefinedConnectorRes.data.status).to.be.undefined;
 
     const runningConnectorRes = await connectorApi.start(connector);
-    expect(runningConnectorRes.status.state).to.eq('RUNNING');
+    expect(runningConnectorRes.errors).to.be.undefined;
+    expect(runningConnectorRes.data.status.state).to.eq('RUNNING');
   });
 
   it('stopConnector', async () => {
@@ -265,16 +277,20 @@ describe('Connector API', () => {
 
     await connectorApi.create(connector);
     const undefinedConnectorRes = await connectorApi.get(connector);
-    expect(undefinedConnectorRes.status).to.be.undefined;
+    expect(undefinedConnectorRes.errors).to.be.undefined;
+    expect(undefinedConnectorRes.data.status).to.be.undefined;
 
     const runningConnectorRes = await connectorApi.start(connector);
-    expect(runningConnectorRes.status.state).to.eq('RUNNING');
+    expect(runningConnectorRes.errors).to.be.undefined;
+    expect(runningConnectorRes.data.status.state).to.eq('RUNNING');
 
     const stopConnectorRes = await connectorApi.stop(connector);
-    expect(stopConnectorRes.status).to.be.undefined;
+    expect(stopConnectorRes.errors).to.be.undefined;
+    expect(stopConnectorRes.data.status).to.be.undefined;
 
     const result = await connectorApi.remove(connector);
-    const connectors = result.map(connector => connector.settings.name);
+    expect(result.errors).to.be.undefined;
+    const connectors = result.data.map(connector => connector.settings.name);
     expect(connectors.includes(connector.name)).to.be.false;
   });
 });

@@ -49,7 +49,9 @@ describe('Log API', () => {
 
   it('fetchConfiguratorLog', async () => {
     const result = await logApi.getConfiguratorLog();
-    const { clusterKey, logs } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { clusterKey, logs } = result.data;
 
     expect(clusterKey).to.be.an('object');
 
@@ -60,19 +62,25 @@ describe('Log API', () => {
     const { node, zookeeper, broker, worker } = await generateCluster();
 
     const logZookeeper = await logApi.getZookeeperLog(zookeeper);
-    expect(logZookeeper.clusterKey.name).to.be.eq(zookeeper.name);
-    expect(logZookeeper.clusterKey.group).to.be.eq(zookeeper.group);
-    expect(logZookeeper.logs).to.be.an('array');
+    expect(logZookeeper.errors).to.be.undefined;
+
+    expect(logZookeeper.data.clusterKey.name).to.be.eq(zookeeper.name);
+    expect(logZookeeper.data.clusterKey.group).to.be.eq(zookeeper.group);
+    expect(logZookeeper.data.logs).to.be.an('array');
 
     const logBroker = await logApi.getBrokerLog(broker);
-    expect(logBroker.clusterKey.name).to.be.eq(broker.name);
-    expect(logBroker.clusterKey.group).to.be.eq(broker.group);
-    expect(logBroker.logs).to.be.an('array');
+    expect(logBroker.errors).to.be.undefined;
+
+    expect(logBroker.data.clusterKey.name).to.be.eq(broker.name);
+    expect(logBroker.data.clusterKey.group).to.be.eq(broker.group);
+    expect(logBroker.data.logs).to.be.an('array');
 
     const logWorker = await logApi.getWorkerLog(worker);
-    expect(logWorker.clusterKey.name).to.be.eq(worker.name);
-    expect(logWorker.clusterKey.group).to.be.eq(worker.group);
-    expect(logWorker.logs).to.be.an('array');
+    expect(logWorker.errors).to.be.undefined;
+
+    expect(logWorker.data.clusterKey.name).to.be.eq(worker.name);
+    expect(logWorker.data.clusterKey.group).to.be.eq(worker.group);
+    expect(logWorker.data.logs).to.be.an('array');
 
     const topic = {
       name: generate.serviceName({ prefix: 'topic' }),
@@ -105,8 +113,10 @@ describe('Log API', () => {
     await streamApi.start(stream);
 
     const logStream = await logApi.getStreamLog(stream);
-    expect(logStream.clusterKey.name).to.be.eq(stream.name);
-    expect(logStream.clusterKey.group).to.be.eq(stream.group);
-    expect(logStream.logs).to.be.an('array');
+    expect(logStream.errors).to.be.undefined;
+
+    expect(logStream.data.clusterKey.name).to.be.eq(stream.name);
+    expect(logStream.data.clusterKey.group).to.be.eq(stream.group);
+    expect(logStream.data.logs).to.be.an('array');
   });
 });

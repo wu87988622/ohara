@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
+import { isEmpty } from 'lodash';
 import * as stream from './body/streamBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -24,21 +30,30 @@ import { classType } from './inspectApi';
 
 const url = URL.STREAM_URL;
 
-export const create = async (params, body) => {
-  if (!body) {
+export const create = async (params, body = {}) => {
+  if (isEmpty(body)) {
     // get the stream definition by the required jar file
     const result = await file.get({
       group: params.jarKey.group,
       name: params.jarKey.name,
     });
-    const { classInfos } = result;
-    // we only support one stream class right now
-    // find the first match result
-    body = classInfos.find(info => info.classType === classType.stream);
+    if (!result.errors) {
+      const { classInfos } = result.data;
+      // we only support one stream class right now
+      // find the first match result
+      const classes = classInfos.filter(
+        info => info.classType === classType.stream,
+      );
+      if (classes.length > 0) body = classes[0];
+    }
   }
   const requestBody = requestUtil(params, stream, body);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, stream);
+  const result = responseUtil(res, stream);
+  result.title =
+    `Create stream ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -47,7 +62,11 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, stream);
+  const result = responseUtil(res, stream);
+  result.title =
+    `Update stream ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async params => {
@@ -58,7 +77,11 @@ export const remove = async params => {
     checkFn: waitUtil.waitForClusterNonexistent,
     paramRes: params,
   });
-  return responseUtil(res, stream);
+  const result = responseUtil(res, stream);
+  result.title =
+    `Remove stream ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const start = async params => {
@@ -68,7 +91,11 @@ export const start = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForRunning,
   });
-  return responseUtil(res, stream);
+  const result = responseUtil(res, stream);
+  result.title =
+    `Start stream ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const stop = async params => {
@@ -78,16 +105,27 @@ export const stop = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForStop,
   });
-  return responseUtil(res, stream);
+  const result = responseUtil(res, stream);
+  result.title =
+    `Stop stream ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, stream);
+  const result = responseUtil(res, stream);
+  result.title =
+    `Get stream ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, stream) : [];
+  const result = responseUtil(res, stream);
+  result.title =
+    `Get stream list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

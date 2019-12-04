@@ -22,10 +22,9 @@ import { useParams } from 'react-router-dom';
 
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 
-import { useDevToolDialog, useTopicState } from 'context';
+import { useDevToolDialog, useWorkspace, useTopicState } from 'context';
 import * as inspectApi from 'api/inspectApi';
 import * as logApi from 'api/logApi';
-import * as brokerApi from 'api/brokerApi';
 import * as streamApi from 'api/streamApi';
 import Header from './Header';
 import Body from './Body';
@@ -114,7 +113,8 @@ const listCache = new CellMeasurerCache({
 
 const DevToolDialog = () => {
   const { pipelineName } = useParams();
-  const { workspace, data: topics } = useTopicState();
+  const { data: topics } = useTopicState();
+  const { currentWorkspace, currentBroker, currentZookeeper } = useWorkspace();
 
   const [tabIndex, setTabIndex] = useState('topics');
   const { isOpen, close: closeDialog } = useDevToolDialog();
@@ -142,13 +142,13 @@ const DevToolDialog = () => {
       setDataDispatch({ isLoading: true });
       const response = await inspectApi.getTopicData({
         name: data.topicName,
-        group: workspace.settings.name,
+        group: currentWorkspace.settings.name,
         limit: topicLimit,
         timeout: 5000,
       });
 
-      if (response) {
-        const result = response.messages.map(message => {
+      if (!response.errors) {
+        const result = response.data.messages.map(message => {
           // we don't need the "tags" field in the topic data
           if (message.value) delete message.value.tags;
           return message;
@@ -158,13 +158,13 @@ const DevToolDialog = () => {
       }
       setDataDispatch({ isLoading: false });
     },
-    [data.topicName, workspace],
+    [data.topicName, currentWorkspace],
   );
 
   useEffect(() => {
-    if (isEmpty(data.topicName) || isEmpty(workspace)) return;
+    if (isEmpty(data.topicName) || isEmpty(currentWorkspace)) return;
     fetchTopicData();
-  }, [data.topicName, workspace, fetchTopicData]);
+  }, [data.topicName, currentWorkspace, fetchTopicData]);
 
   const fetchLogs = useCallback(
     async (timeSeconds = 600, hostname = '') => {
@@ -177,26 +177,23 @@ const DevToolDialog = () => {
           });
           break;
         case 'zookeeper':
-          const bkInfo = await brokerApi.get(
-            workspace.settings.brokerClusterKey,
-          );
           response = await logApi.getZookeeperLog({
-            name: bkInfo.settings.zookeeperClusterKey.name,
-            group: bkInfo.settings.zookeeperClusterKey.group,
+            name: currentZookeeper.settings.name,
+            group: currentZookeeper.settings.group,
             sinceSeconds: timeSeconds,
           });
           break;
         case 'broker':
           response = await logApi.getBrokerLog({
-            name: workspace.settings.brokerClusterKey.name,
-            group: workspace.settings.brokerClusterKey.group,
+            name: currentBroker.settings.name,
+            group: currentBroker.settings.group,
             sinceSeconds: timeSeconds,
           });
           break;
         case 'worker':
           response = await logApi.getWorkerLog({
-            name: workspace.settings.name,
-            group: workspace.settings.group,
+            name: currentWorkspace.settings.name,
+            group: currentWorkspace.settings.group,
             sinceSeconds: timeSeconds,
           });
           break;
@@ -204,26 +201,27 @@ const DevToolDialog = () => {
           if (!isEmpty(data.stream) && !isEmpty(pipelineName)) {
             response = await logApi.getStreamLog({
               name: data.stream,
-              group: workspace.settings.name + pipelineName,
+              group: currentWorkspace.settings.name + pipelineName,
               sinceSeconds: timeSeconds,
             });
           }
           break;
         default:
       }
-      if (!isEmpty(response)) {
-        setDataDispatch({ hosts: response.logs.map(log => log.hostname) });
+      if (!response.errors) {
+        const logResponse = response.data;
+        setDataDispatch({ hosts: logResponse.logs.map(log => log.hostname) });
 
         let logData = null;
         if (isEmpty(hostname)) {
-          if (response.logs.length > 0) {
-            setDataDispatch({ hostname: response.logs[0].hostname });
-            logData = response.logs.find(
-              log => log.hostname === response.logs[0].hostname,
+          if (logResponse.logs.length > 0) {
+            setDataDispatch({ hostname: logResponse.logs[0].hostname });
+            logData = logResponse.logs.find(
+              log => log.hostname === logResponse.logs[0].hostname,
             );
           }
         } else {
-          logData = response.logs.find(log => log.hostname === hostname);
+          logData = logResponse.logs.find(log => log.hostname === hostname);
         }
 
         if (logData) {
@@ -236,27 +234,38 @@ const DevToolDialog = () => {
       }
       setDataDispatch({ isLoading: false });
     },
-    [data.service, data.stream, workspace, pipelineName],
+    [
+      data.service,
+      data.stream,
+      currentBroker,
+      currentZookeeper,
+      currentWorkspace,
+      pipelineName,
+    ],
   );
 
   const fetchStreams = useCallback(async () => {
-    if (!isEmpty(workspace) && !isEmpty(pipelineName)) {
+    if (!isEmpty(currentWorkspace) && !isEmpty(pipelineName)) {
       const streamInfos = await streamApi.getAll({
-        group: workspace.settings.name + pipelineName,
+        group: currentWorkspace.settings.name + pipelineName,
       });
-      setDataDispatch({ streams: streamInfos.map(info => info.settings.name) });
+      if (!streamInfos.errors) {
+        setDataDispatch({
+          streams: streamInfos.data.map(info => info.settings.name),
+        });
+      }
     }
-  }, [workspace, pipelineName]);
+  }, [currentWorkspace, pipelineName]);
 
   useEffect(() => {
-    if (isEmpty(workspace)) return;
+    if (isEmpty(currentWorkspace)) return;
     if (!isEmpty(data.service)) {
       fetchLogs();
       if (data.service === 'stream') {
         fetchStreams();
       }
     }
-  }, [workspace, data.service, fetchLogs, fetchStreams]);
+  }, [currentWorkspace, data.service, fetchLogs, fetchStreams]);
 
   const handleTabChange = (event, currentTab) => {
     setTabIndex(currentTab);

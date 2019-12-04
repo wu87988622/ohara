@@ -22,9 +22,10 @@ import {
   isBoolean,
   isFunction,
 } from 'lodash';
-import * as generate from './generate';
+import * as generate from '../../utils/generate';
 
-export const string = value => isString(value);
+// we should handle a null value from API which is string type
+export const string = value => isString(value) || value == null;
 
 export const number = value => isNumber(value);
 

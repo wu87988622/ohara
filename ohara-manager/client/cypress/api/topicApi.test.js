@@ -49,8 +49,9 @@ describe('Topic API', () => {
   it('createTopic', async () => {
     const topic = await generateTopic();
     const result = await topicApi.create(topic);
+    expect(result.errors).to.be.undefined;
 
-    const { partitionInfos, metrics, state, lastModified } = result;
+    const { partitionInfos, metrics, state, lastModified } = result.data;
     const {
       brokerClusterKey,
       numberOfPartitions,
@@ -58,7 +59,7 @@ describe('Topic API', () => {
       group,
       name,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(partitionInfos).to.be.an('array');
 
@@ -90,8 +91,9 @@ describe('Topic API', () => {
     await topicApi.create(topic);
 
     const result = await topicApi.get(topic);
+    expect(result.errors).to.be.undefined;
 
-    const { partitionInfos, metrics, state, lastModified } = result;
+    const { partitionInfos, metrics, state, lastModified } = result.data;
     const {
       brokerClusterKey,
       numberOfPartitions,
@@ -99,7 +101,7 @@ describe('Topic API', () => {
       group,
       name,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(partitionInfos).to.be.an('array');
 
@@ -133,7 +135,9 @@ describe('Topic API', () => {
     await topicApi.create(topic2);
 
     const result = await topicApi.getAll();
-    const topics = result.map(topic => topic.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const topics = result.data.map(topic => topic.settings.name);
     expect(topics.includes(topic1.name)).to.be.true;
     expect(topics.includes(topic2.name)).to.be.true;
   });
@@ -144,13 +148,16 @@ describe('Topic API', () => {
     // delete a non-running topic
     await topicApi.create(topic);
     const result = await topicApi.remove(topic);
-    const topics = result.map(topic => topic.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const topics = result.data.map(topic => topic.settings.name);
     expect(topics.includes(topic.name)).to.be.false;
 
     // delete a running topic
     await topicApi.create(topic);
     const runningRes = await topicApi.start(topic);
-    expect(runningRes.state).to.eq('RUNNING');
+    expect(runningRes.errors).to.be.undefined;
+    expect(runningRes.data.state).to.eq('RUNNING');
 
     await topicApi.stop(topic);
     await topicApi.remove(topic);
@@ -166,8 +173,9 @@ describe('Topic API', () => {
 
     await topicApi.create(topic);
     const result = await topicApi.update(newTopic);
+    expect(result.errors).to.be.undefined;
 
-    const { partitionInfos, metrics, state, lastModified } = result;
+    const { partitionInfos, metrics, state, lastModified } = result.data;
     const {
       brokerClusterKey,
       numberOfPartitions,
@@ -175,7 +183,7 @@ describe('Topic API', () => {
       group,
       name,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(partitionInfos).to.be.an('array');
 
@@ -209,10 +217,12 @@ describe('Topic API', () => {
 
     await topicApi.create(topic);
     const undefinedTopicRes = await topicApi.get(topic);
-    expect(undefinedTopicRes.state).to.be.undefined;
+    expect(undefinedTopicRes.errors).to.be.undefined;
+    expect(undefinedTopicRes.data.state).to.be.undefined;
 
     const runningTopicRes = await topicApi.start(topic);
-    expect(runningTopicRes.state).to.eq('RUNNING');
+    expect(runningTopicRes.errors).to.be.undefined;
+    expect(runningTopicRes.data.state).to.eq('RUNNING');
   });
 
   it('stopTopic', async () => {
@@ -220,16 +230,20 @@ describe('Topic API', () => {
 
     await topicApi.create(topic);
     const undefinedTopicRes = await topicApi.get(topic);
-    expect(undefinedTopicRes.state).to.be.undefined;
+    expect(undefinedTopicRes.errors).to.be.undefined;
+    expect(undefinedTopicRes.data.state).to.be.undefined;
 
     const runningTopicRes = await topicApi.start(topic);
-    expect(runningTopicRes.state).to.eq('RUNNING');
+    expect(runningTopicRes.errors).to.be.undefined;
+    expect(runningTopicRes.data.state).to.eq('RUNNING');
 
     const stopTopicRes = await topicApi.stop(topic);
-    expect(stopTopicRes.state).to.be.undefined;
+    expect(stopTopicRes.errors).to.be.undefined;
+    expect(stopTopicRes.data.state).to.be.undefined;
 
     const result = await topicApi.remove(topic);
-    const topics = result.map(topic => topic.settings.name);
+    expect(result.errors).to.be.undefined;
+    const topics = result.data.map(topic => topic.settings.name);
     expect(topics.includes(topic.name)).to.be.false;
   });
 });

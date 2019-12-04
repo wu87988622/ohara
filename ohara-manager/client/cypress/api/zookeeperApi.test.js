@@ -41,7 +41,9 @@ describe('Zookeeper API', () => {
   it('createZookeeper', async () => {
     const zkCluster = await generateZookeeper();
     const result = await zkApi.create(zkCluster);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -51,7 +53,7 @@ describe('Zookeeper API', () => {
       peerPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -85,7 +87,9 @@ describe('Zookeeper API', () => {
     await zkApi.create(zkCluster);
 
     const result = await zkApi.get(zkCluster);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -95,7 +99,7 @@ describe('Zookeeper API', () => {
       peerPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -132,7 +136,9 @@ describe('Zookeeper API', () => {
     await zkApi.create(zkClusterTwo);
 
     const result = await zkApi.getAll();
-    const zookeepers = result.map(zk => zk.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const zookeepers = result.data.map(zk => zk.settings.name);
     expect(zookeepers.includes(zkClusterOne.name)).to.be.true;
     expect(zookeepers.includes(zkClusterTwo.name)).to.be.true;
   });
@@ -143,13 +149,17 @@ describe('Zookeeper API', () => {
     // delete a non-running zookeeper
     await zkApi.create(zkCluster);
     const result = await zkApi.remove(zkCluster);
-    const zookeepers = result.map(zk => zk.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const zookeepers = result.data.map(zk => zk.settings.name);
     expect(zookeepers.includes(zkCluster.name)).to.be.false;
 
     // delete a running zookeeper
     await zkApi.create(zkCluster);
     const runningRes = await zkApi.start(zkCluster);
-    expect(runningRes.state).to.eq('RUNNING');
+    expect(runningRes.errors).to.be.undefined;
+
+    expect(runningRes.data.state).to.eq('RUNNING');
 
     await zkApi.stop(zkCluster);
     await zkApi.remove(zkCluster);
@@ -167,7 +177,9 @@ describe('Zookeeper API', () => {
     await zkApi.create(zkCluster);
 
     const result = await zkApi.update(newZk);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -177,7 +189,7 @@ describe('Zookeeper API', () => {
       peerPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -216,10 +228,12 @@ describe('Zookeeper API', () => {
 
     await zkApi.create(zkCluster);
     const undefinedZkRes = await zkApi.get(zkCluster);
-    expect(undefinedZkRes.state).to.be.undefined;
+    expect(undefinedZkRes.errors).to.be.undefined;
+    expect(undefinedZkRes.data.state).to.be.undefined;
 
     const runningZkRes = await zkApi.start(zkCluster);
-    expect(runningZkRes.state).to.eq('RUNNING');
+    expect(runningZkRes.errors).to.be.undefined;
+    expect(runningZkRes.data.state).to.eq('RUNNING');
   });
 
   it('stopZookeeper', async () => {
@@ -227,17 +241,21 @@ describe('Zookeeper API', () => {
 
     await zkApi.create(zkCluster);
     const undefinedZkRes = await zkApi.get(zkCluster);
-    expect(undefinedZkRes.state).to.be.undefined;
+    expect(undefinedZkRes.errors).to.be.undefined;
+    expect(undefinedZkRes.data.state).to.be.undefined;
 
     const runningZkRes = await zkApi.start(zkCluster);
-    expect(runningZkRes.state).to.eq('RUNNING');
-    expect(runningZkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningZkRes.errors).to.be.undefined;
+    expect(runningZkRes.data.state).to.eq('RUNNING');
+    expect(runningZkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const stopZkRes = await zkApi.stop(zkCluster);
-    expect(stopZkRes.state).to.be.undefined;
+    expect(stopZkRes.errors).to.be.undefined;
+    expect(stopZkRes.data.state).to.be.undefined;
 
     const result = await zkApi.remove(zkCluster);
-    const zookeepers = result.map(zk => zk.settings.name);
+    expect(result.errors).to.be.undefined;
+    const zookeepers = result.data.map(zk => zk.settings.name);
     expect(zookeepers.includes(zkCluster.name)).to.be.false;
   });
 });

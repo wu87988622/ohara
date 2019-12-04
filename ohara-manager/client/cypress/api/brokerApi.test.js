@@ -56,11 +56,9 @@ describe('Broker API', () => {
   it('createBroker', async () => {
     const bkCluster = await generateBroker();
     const result = await bkApi.create(bkCluster);
+    expect(result.errors).to.be.undefined;
 
-    expect(result).to.be.an('object');
-    const { aliveNodes, lastModified, state, error } = result;
-
-    expect(result.settings).to.be.an('object');
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -70,7 +68,7 @@ describe('Broker API', () => {
       imageName,
       zookeeperClusterKey,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -107,11 +105,9 @@ describe('Broker API', () => {
     await bkApi.create(bkCluster);
 
     const result = await bkApi.get(bkCluster);
+    expect(result.errors).to.be.undefined;
 
-    expect(result).to.be.an('object');
-    const { aliveNodes, lastModified, state, error } = result;
-
-    expect(result.settings).to.be.an('object');
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -121,7 +117,7 @@ describe('Broker API', () => {
       imageName,
       zookeeperClusterKey,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -161,9 +157,9 @@ describe('Broker API', () => {
     await bkApi.create(bkClusterTwo);
 
     const result = await bkApi.getAll();
-    expect(result).to.be.an('array');
+    expect(result.errors).to.be.undefined;
 
-    const brokers = result.map(bk => bk.settings.name);
+    const brokers = result.data.map(bk => bk.settings.name);
     expect(brokers.includes(bkClusterOne.name)).to.be.true;
     expect(brokers.includes(bkClusterTwo.name)).to.be.true;
   });
@@ -174,17 +170,17 @@ describe('Broker API', () => {
     // delete a non-running broker
     await bkApi.create(bkCluster);
     const result = await bkApi.remove(bkCluster);
+    expect(result.errors).to.be.undefined;
 
-    expect(result).to.be.an('array');
-    const brokers = result.map(bk => bk.settings.name);
+    const brokers = result.data.map(bk => bk.settings.name);
     expect(brokers.includes(bkCluster.name)).to.be.false;
 
     // delete a running broker
     await bkApi.create(bkCluster);
     const runningRes = await bkApi.start(bkCluster);
+    expect(runningRes.errors).to.be.undefined;
 
-    expect(runningRes).to.be.an('object');
-    expect(runningRes.state).to.eq('RUNNING');
+    expect(runningRes.data.state).to.eq('RUNNING');
 
     await bkApi.stop(bkCluster);
     await bkApi.remove(bkCluster);
@@ -201,11 +197,9 @@ describe('Broker API', () => {
     await bkApi.create(bkCluster);
 
     const result = await bkApi.update(newBk);
+    expect(result.errors).to.be.undefined;
 
-    expect(result).to.be.an('object');
-    const { aliveNodes, lastModified, state, error } = result;
-
-    expect(result.settings).to.be.an('object');
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -214,7 +208,7 @@ describe('Broker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -251,12 +245,12 @@ describe('Broker API', () => {
 
     await bkApi.create(bkCluster);
     const undefinedBkRes = await bkApi.get(bkCluster);
-    expect(undefinedBkRes).to.be.an('object');
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningBkRes = await bkApi.start(bkCluster);
-    expect(runningBkRes).to.be.an('object');
-    expect(runningBkRes.state).to.eq('RUNNING');
+    expect(runningBkRes.errors).to.be.undefined;
+    expect(runningBkRes.data.state).to.eq('RUNNING');
   });
 
   it('stopBroker', async () => {
@@ -264,21 +258,21 @@ describe('Broker API', () => {
 
     await bkApi.create(bkCluster);
     const undefinedBkRes = await bkApi.get(bkCluster);
-    expect(undefinedBkRes).to.be.an('object');
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningBkRes = await bkApi.start(bkCluster);
-    expect(runningBkRes).to.be.an('object');
-    expect(runningBkRes.state).to.eq('RUNNING');
-    expect(runningBkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningBkRes.errors).to.be.undefined;
+    expect(runningBkRes.data.state).to.eq('RUNNING');
+    expect(runningBkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const stopBkRes = await bkApi.stop(bkCluster);
-    expect(stopBkRes).to.be.an('object');
-    expect(stopBkRes.state).to.be.undefined;
+    expect(stopBkRes.errors).to.be.undefined;
+    expect(stopBkRes.data.state).to.be.undefined;
 
     const result = await bkApi.remove(bkCluster);
-    expect(result).to.be.an('array');
-    const brokers = result.map(bk => bk.settings.name);
+    expect(result.errors).to.be.undefined;
+    const brokers = result.data.map(bk => bk.settings.name);
     expect(brokers.includes(bkCluster.name)).to.be.false;
   });
 
@@ -287,23 +281,22 @@ describe('Broker API', () => {
 
     await bkApi.create(bkCluster);
     const undefinedBkRes = await bkApi.get(bkCluster);
-    expect(undefinedBkRes).to.be.an('object');
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningBkRes = await bkApi.start(bkCluster);
-    expect(runningBkRes).to.be.an('object');
-    expect(runningBkRes.state).to.eq('RUNNING');
-    expect(runningBkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningBkRes.errors).to.be.undefined;
+    expect(runningBkRes.data.state).to.eq('RUNNING');
+    expect(runningBkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, bkCluster, {
       nodeName: newNode.hostname,
     });
     const result = await bkApi.addNode(newParams);
-    expect(result).to.be.an('object');
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
 
-    expect(result.settings).to.be.an('object');
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -312,7 +305,7 @@ describe('Broker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).have.lengthOf(2);
@@ -349,30 +342,29 @@ describe('Broker API', () => {
 
     await bkApi.create(bkCluster);
     const undefinedBkRes = await bkApi.get(bkCluster);
-    expect(undefinedBkRes).to.be.an('object');
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningBkRes = await bkApi.start(bkCluster);
-    expect(runningBkRes).to.be.an('object');
-    expect(runningBkRes.state).to.eq('RUNNING');
-    expect(runningBkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningBkRes.errors).to.be.undefined;
+    expect(runningBkRes.data.state).to.eq('RUNNING');
+    expect(runningBkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, bkCluster, {
       nodeName: newNode.hostname,
     });
     const twoNodeBkData = await bkApi.addNode(newParams);
-    expect(twoNodeBkData).to.be.an('object');
-    expect(twoNodeBkData.aliveNodes).to.be.an('array');
-    expect(twoNodeBkData.aliveNodes).have.lengthOf(2);
-    expect(twoNodeBkData.settings.nodeNames).to.be.an('array');
-    expect(twoNodeBkData.settings.nodeNames).have.lengthOf(2);
+    expect(twoNodeBkData.errors).to.be.undefined;
+    expect(twoNodeBkData.data.aliveNodes).to.be.an('array');
+    expect(twoNodeBkData.data.aliveNodes).have.lengthOf(2);
+    expect(twoNodeBkData.data.settings.nodeNames).to.be.an('array');
+    expect(twoNodeBkData.data.settings.nodeNames).have.lengthOf(2);
 
     const result = await bkApi.removeNode(newParams);
-    expect(result).to.be.an('object');
-    const { lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
 
-    expect(result.settings).to.be.an('object');
+    const { lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -381,7 +373,7 @@ describe('Broker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(lastModified).to.be.a('number');
 

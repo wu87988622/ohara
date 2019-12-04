@@ -15,7 +15,12 @@
  */
 
 import * as pipeline from './body/pipelineBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.PIPELINE_URL;
@@ -23,7 +28,11 @@ const url = URL.PIPELINE_URL;
 export const create = async params => {
   const requestBody = requestUtil(params, pipeline);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, pipeline);
+  const result = responseUtil(res, pipeline);
+  result.title =
+    `Create pipeline ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -32,24 +41,39 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, pipeline);
+  const result = responseUtil(res, pipeline);
+  result.title =
+    `Update pipeline ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async params => {
   const { name, group } = params;
   const res = await axiosInstance.delete(`${url}/${name}?group=${group}`);
-  return responseUtil(res, pipeline);
+  const result = responseUtil(res, pipeline);
+  result.title =
+    `Remove pipeline ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, pipeline);
+  const result = responseUtil(res, pipeline);
+  result.title =
+    `Get pipeline ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, pipeline) : [];
+  const result = responseUtil(res, pipeline);
+  result.title =
+    `Get pipeline list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const refresh = async params => {

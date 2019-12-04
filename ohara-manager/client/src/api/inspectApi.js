@@ -21,7 +21,12 @@ import * as inspectServiceBody from './body/inspectServiceBody';
 import * as inspectTopicBody from './body/inspectTopicBody';
 import * as inspectRdbBody from './body/inspectRdbBody';
 import * as file from './body/fileBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.INSPECT_URL;
@@ -48,12 +53,20 @@ const fetchServiceInfo = async (kind, params) => {
     ? `${url}/${kind}/${params.name}?group=${params.group}`
     : `${url}/${kind}`;
   const res = await axiosInstance.get(reqUrl);
-  return responseUtil(res, inspectServiceBody);
+  const result = responseUtil(res, inspectServiceBody);
+  result.title =
+    `Inspect ${kind} ${getKey(params)} info ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getConfiguratorInfo = async () => {
   const res = await axiosInstance.get(`${url}/${kind.configurator}`);
-  return responseUtil(res, inspectConfiguratorBody);
+  const result = responseUtil(res, inspectConfiguratorBody);
+  result.title =
+    `Inspect ${kind.configurator} info ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getZookeeperInfo = async (params = {}) => {
@@ -74,7 +87,11 @@ export const getStreamsInfo = async (params = {}) => {
 
 export const getManagerInfo = async () => {
   const res = await axiosInstance.get(`${url}/${kind.manager}`);
-  return responseUtil(res, inspectManagerBody);
+  const result = responseUtil(res, inspectManagerBody);
+  result.title =
+    `Inspect ${kind.manager} info ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getFileInfoWithoutUpload = async params => {
@@ -83,7 +100,7 @@ export const getFileInfoWithoutUpload = async params => {
   const requestBody = requestUtil(params, file);
   const config = {
     headers: {
-      'content-type': 'multipart/form-data',
+      'Content-Type': 'multipart/form-data',
     },
   };
 
@@ -94,7 +111,11 @@ export const getFileInfoWithoutUpload = async params => {
     formData.append('tags', JSON.stringify(requestBody.tags));
   }
   const res = await axiosInstance.post(fileUrl, formData, config);
-  return responseUtil(res, file);
+  const result = responseUtil(res, file);
+  result.title =
+    `Inspect ${kind.file} ${getKey(params)} info ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getTopicData = async params => {
@@ -102,12 +123,19 @@ export const getTopicData = async params => {
   const topicUrl =
     `${url}/${kind.topic}/${name}` + URL.toQueryParameters(others);
   const res = await axiosInstance.post(topicUrl);
-  return responseUtil(res, inspectTopicBody);
+  const result = responseUtil(res, inspectTopicBody);
+  result.title =
+    `Inspect ${kind.topic} ${getKey(params)} info ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getRdbData = async params => {
   const rdbUrl = `${url}/${kind.rdb}`;
   const requestBody = requestUtil(params, inspectRdbBody);
   const res = await axiosInstance.post(rdbUrl, requestBody);
-  return responseUtil(res, inspectRdbBody);
+  const result = responseUtil(res, inspectRdbBody);
+  result.title =
+    `Inspect ${kind.rdb} info ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

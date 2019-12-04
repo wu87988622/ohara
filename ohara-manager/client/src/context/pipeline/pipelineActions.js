@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
-
 import * as pipelineApi from 'api/pipelineApi';
 import { fetchPipelinesRoutine, addPipelineRoutine } from './pipelineRoutines';
 
@@ -29,33 +27,29 @@ const createFetchPipelines = (
   dispatch(fetchPipelinesRoutine.request());
   const pipelines = await pipelineApi.getAll({ group: workspaceName });
 
-  if (!pipelines) {
-    const error = 'failed to fetch pipelines';
-    dispatch(fetchPipelinesRoutine.failure(error));
-    showMessage(error);
+  if (pipelines.errors) {
+    dispatch(fetchPipelinesRoutine.failure(pipelines.title));
+    showMessage(pipelines.title);
     return;
   }
 
-  dispatch(fetchPipelinesRoutine.success(pipelines));
+  dispatch(fetchPipelinesRoutine.success(pipelines.data));
 };
 
 const createAddPipeline = (state, dispatch, showMessage) => async values => {
   if (state.isFetching) return;
 
-  const { name } = values;
-
   dispatch(addPipelineRoutine.request());
   const pipeline = await pipelineApi.create(values);
 
-  if (isEmpty(pipeline)) {
-    const error = `Failed to add pipeline ${name}`;
-    dispatch(addPipelineRoutine.failure(error));
-    showMessage(error);
+  if (pipeline.errors) {
+    dispatch(addPipelineRoutine.failure(pipeline.title));
+    showMessage(pipeline.title);
     return;
   }
 
-  dispatch(addPipelineRoutine.success(pipeline));
-  showMessage(`Successfully added pipeline ${name}`);
+  dispatch(addPipelineRoutine.success(pipeline.data));
+  showMessage(pipeline.title);
 };
 
 export { createFetchPipelines, createAddPipeline };

@@ -74,8 +74,9 @@ describe('Validate API', () => {
   it('validateConnector', async () => {
     const { connector } = await generateValidation();
     const result = await validateApi.validateConnector(connector);
+    expect(result.errors).to.be.undefined;
 
-    const { errorCount, settings } = result;
+    const { errorCount, settings } = result.data;
 
     expect(errorCount).to.eq(0);
 

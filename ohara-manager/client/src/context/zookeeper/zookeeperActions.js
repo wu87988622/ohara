@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, pick, map } from 'lodash';
+import { pick, map } from 'lodash';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as inspectApi from 'api/inspectApi';
@@ -29,19 +29,20 @@ const fetchZookeepersCreator = (
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(routine.request());
-  const zookeepers = await zookeeperApi.getAll();
+  const result = await zookeeperApi.getAll();
+  const zookeepers = result.data;
 
-  if (isEmpty(zookeepers)) {
-    const error = 'failed to fetch zookeepers';
-    dispatch(routine.failure(error));
-    showMessage(error);
+  if (result.errors) {
+    dispatch(routine.failure(result.title));
+    showMessage(result.title);
     return;
   }
 
   const zookeeperInfos = await Promise.all(
     map(zookeepers, async zookeeper => {
       const params = pick(zookeeper.settings, ['name', 'group']);
-      const zookeeperInfo = await inspectApi.getZookeeperInfo(params);
+      const result = await inspectApi.getZookeeperInfo(params);
+      const zookeeperInfo = result.errors ? {} : result.data;
       return { ...zookeeper, ...zookeeperInfo };
     }),
   );

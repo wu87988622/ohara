@@ -15,7 +15,12 @@
  */
 
 import * as file from './body/fileBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.FILE_URL;
@@ -35,7 +40,11 @@ export const create = async (params = {}) => {
     formData.append('tags', JSON.stringify(requestBody.tags));
   }
   const res = await axiosInstance.post(url, formData, config);
-  return responseUtil(res, file);
+  const result = responseUtil(res, file);
+  result.title =
+    `Create file ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -44,23 +53,36 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, file);
+  const result = responseUtil(res, file);
+  result.title =
+    `Update file ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async (params = {}) => {
   const { name, group } = params;
   const res = await axiosInstance.delete(`${url}/${name}?group=${group}`);
 
-  return responseUtil(res, file);
+  const result = responseUtil(res, file);
+  result.title =
+    `Remove file ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async (params = {}) => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, file);
+  const result = responseUtil(res, file);
+  result.title =
+    `Get file ${getKey(params)} ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, file) : [];
+  const result = responseUtil(res, file);
+  result.title = `Get file list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

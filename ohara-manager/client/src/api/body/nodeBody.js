@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { string, number, array, option } from '../utils/validation';
+import { string, number, array, object, option } from '../utils/validation';
 
 export const request = () => {
   const hostname = [string];
   const port = [number, option];
   const user = [string, option];
   const password = [string, option];
-  const tags = [array, option];
+  const tags = [object, option];
 
   return { hostname, port, user, password, tags };
 };
@@ -30,9 +30,10 @@ export const response = () => {
   const hostname = [string];
   const port = [number];
   const user = [string];
-  const password = [string];
+  const password = [string, option];
+  const error = [string, option];
   const lastModified = [number];
-  const tags = [array];
+  const tags = [object, option];
   const services = {
     name: [string],
     clusterKeys: [
@@ -49,6 +50,7 @@ export const response = () => {
     port,
     user,
     password,
+    error,
     lastModified,
     tags,
     services,

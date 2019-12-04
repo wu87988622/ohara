@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { get, has, isEmpty } from 'lodash';
-
 import * as topicApi from 'api/topicApi';
 import {
   fetchTopicsRoutine,
@@ -23,18 +21,23 @@ import {
   deleteTopicRoutine,
 } from './topicRoutines';
 
-const createFetchTopics = (state, dispatch) => async workspaceName => {
+const createFetchTopics = (
+  state,
+  dispatch,
+  showMessage,
+) => async workspaceName => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(fetchTopicsRoutine.request());
-  const topics = await topicApi.getAll({ group: workspaceName });
+  const result = await topicApi.getAll({ group: workspaceName });
 
-  if (isEmpty(topics)) {
-    dispatch(fetchTopicsRoutine.failure('failed to fetch topics'));
+  if (result.errors) {
+    dispatch(fetchTopicsRoutine.failure(result.title));
+    showMessage(result.title);
     return;
   }
 
-  dispatch(fetchTopicsRoutine.success(topics));
+  dispatch(fetchTopicsRoutine.success(result.data));
 };
 
 const createAddTopic = (state, dispatch, showMessage) => async values => {
@@ -45,15 +48,10 @@ const createAddTopic = (state, dispatch, showMessage) => async values => {
   dispatch(addTopicRoutine.request());
   const createTopicResponse = await topicApi.create(values);
 
-  const isCreated = !isEmpty(createTopicResponse);
-
   // Failed to create, show a custom error message
-  if (!isCreated) {
-    const error = `Failed to add topic ${topicName}`;
-    dispatch(addTopicRoutine.failure(error));
-    // After the error handling logic is done in https://github.com/oharastream/ohara/issues/3124
-    // we can remove this custom message since it's handled higher up in the API layer
-    showMessage(error);
+  if (createTopicResponse.errors) {
+    dispatch(addTopicRoutine.failure(createTopicResponse.title));
+    showMessage(createTopicResponse.title);
     return;
   }
 
@@ -62,21 +60,16 @@ const createAddTopic = (state, dispatch, showMessage) => async values => {
     group: topicGroup,
   });
 
-  const isStarted = get(startTopicResponse, 'state', undefined);
-
   // Failed to start, show a custom error message here
-  if (!isStarted) {
-    const error = `Failed to start topic ${topicName}`;
-    dispatch(addTopicRoutine.failure(error));
-    // After the error handling logic is done in https://github.com/oharastream/ohara/issues/3124
-    // we can remove this custom message since it's handled higher up in the API layer
-    showMessage(error);
+  if (startTopicResponse.errors) {
+    dispatch(addTopicRoutine.failure(startTopicResponse.title));
+    showMessage(startTopicResponse.title);
     return;
   }
 
   // Topic successfully created, display success message
-  dispatch(addTopicRoutine.success(createTopicResponse));
-  showMessage(`Successfully added topic ${topicName}`);
+  dispatch(addTopicRoutine.success(createTopicResponse.data));
+  showMessage(createTopicResponse.title);
 };
 
 const createDeleteTopic = (state, dispatch, showMessage) => async (
@@ -91,13 +84,10 @@ const createDeleteTopic = (state, dispatch, showMessage) => async (
     group: topicGroup,
   });
 
-  const isStopped = !has(stopTopicResponse, 'state');
-
   // Failed to start, show a custom error message here
-  if (!isStopped) {
-    const error = `Failed to stop topic ${topicName}`;
-    dispatch(deleteTopicRoutine.failure(error));
-    showMessage(error);
+  if (stopTopicResponse.errors) {
+    dispatch(deleteTopicRoutine.failure(stopTopicResponse.title));
+    showMessage(stopTopicResponse.title);
     return;
   }
 
@@ -105,12 +95,10 @@ const createDeleteTopic = (state, dispatch, showMessage) => async (
     name: topicName,
     group: topicGroup,
   });
-  const isDeleted = !isEmpty(deleteTopicResponse);
 
-  if (!isDeleted) {
-    const error = `Failed to delete topic ${topicName}`;
-    dispatch(deleteTopicRoutine.failure(error));
-    showMessage(error);
+  if (deleteTopicResponse.errors) {
+    dispatch(deleteTopicRoutine.failure(deleteTopicResponse.title));
+    showMessage(deleteTopicResponse.title);
     return;
   }
 
@@ -120,7 +108,7 @@ const createDeleteTopic = (state, dispatch, showMessage) => async (
       group: topicGroup,
     }),
   );
-  showMessage(`Successfully deleted topic ${topicName}`);
+  showMessage(deleteTopicResponse.title);
 };
 
 export { createFetchTopics, createAddTopic, createDeleteTopic };

@@ -15,7 +15,12 @@
  */
 
 import * as topic from './body/topicBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -24,13 +29,20 @@ import * as inspectApi from './inspectApi';
 const url = URL.TOPIC_URL;
 
 export const create = async params => {
+  let topicDefinition = {};
   const brokerInfo = await inspectApi.getBrokerInfo();
-  // broker only contain one topic definition (since they are all the same)
-  // we fetch the first element here
-  const topicDefinition = brokerInfo.classInfos[0];
+  if (!brokerInfo.errors) {
+    // broker only contain one topic definition (since they are all the same)
+    // we fetch the first element here
+    topicDefinition = brokerInfo.data.classInfos[0];
+  }
   const requestBody = requestUtil(params, topic, topicDefinition);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, topic);
+  const result = responseUtil(res, topic);
+  result.title =
+    `Create topic ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const start = async params => {
@@ -40,7 +52,11 @@ export const start = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForRunning,
   });
-  return responseUtil(res, topic);
+  const result = responseUtil(res, topic);
+  result.title =
+    `Start topic ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -49,7 +65,11 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, topic);
+  const result = responseUtil(res, topic);
+  result.title =
+    `Update topic ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const stop = async params => {
@@ -59,7 +79,11 @@ export const stop = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForStop,
   });
-  return responseUtil(res, topic);
+  const result = responseUtil(res, topic);
+  result.title =
+    `Stop topic ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async params => {
@@ -70,16 +94,27 @@ export const remove = async params => {
     checkFn: waitUtil.waitForClusterNonexistent,
     paramRes: params,
   });
-  return responseUtil(res, topic);
+  const result = responseUtil(res, topic);
+  result.title =
+    `Remove topic ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, topic);
+  const result = responseUtil(res, topic);
+  result.title =
+    `Get topic ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, topic) : [];
+  const result = responseUtil(res, topic);
+  result.title =
+    `Get topic list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

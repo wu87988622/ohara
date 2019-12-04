@@ -15,8 +15,10 @@
  */
 
 import { number, array, string } from '../utils/validation';
-import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
+import { createBody, getDefinition } from '../utils/definitionsUtils';
 import { object } from 'prop-types';
+
+export let definitions = undefined;
 
 // convert the request parameter to another key
 // ex: { node: 'nodeNames' }
@@ -27,7 +29,7 @@ export const reqConverter = {};
 export const resConverter = {};
 
 export const request = params => {
-  const definitions = getDefinitionsBody(params);
+  definitions = getDefinition(params);
   const body = createBody(definitions);
   return body;
 };

@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import { number, array } from '../utils/validation';
-import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
+import { number, array, object } from '../utils/validation';
+import { createBody, getDefinition } from '../utils/definitionsUtils';
+
+export let definitions = undefined;
 
 export const request = params => {
-  const definitions = getDefinitionsBody(params);
+  definitions = getDefinition(params);
   const body = createBody(definitions);
   return body;
 };
 
 export const response = () => {
-  const aliveNode = [array];
+  const aliveNodes = [array];
   const lastModified = [number];
-  const settings = [];
+  const settings = [object];
   const metrics = {
-    meters: [],
+    meters: [array],
   };
 
   return {
-    aliveNode,
+    aliveNodes,
     lastModified,
     settings,
     metrics,

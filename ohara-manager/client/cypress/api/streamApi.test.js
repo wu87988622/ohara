@@ -81,7 +81,9 @@ describe('Stream API', () => {
   it('createStream', async () => {
     const stream = await generateStream();
     const result = await streamApi.create(stream);
-    const { aliveNodes, lastModified, metrics, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, metrics, state, error } = result.data;
     const {
       name,
       group,
@@ -93,7 +95,7 @@ describe('Stream API', () => {
       jarKey,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -112,7 +114,7 @@ describe('Stream API', () => {
 
     expect(group).to.be.a('string');
     expect(group).to.eq(stream.group);
-    stream;
+
     expect(nodeNames).to.be.an('array');
     expect(nodeNames).have.lengthOf(1);
 
@@ -143,7 +145,9 @@ describe('Stream API', () => {
     await streamApi.create(stream);
 
     const result = await streamApi.get(stream);
-    const { aliveNodes, lastModified, metrics, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, metrics, state, error } = result.data;
     const {
       name,
       group,
@@ -155,7 +159,7 @@ describe('Stream API', () => {
       jarKey,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -208,7 +212,9 @@ describe('Stream API', () => {
     await streamApi.create(stream2);
 
     const result = await streamApi.getAll();
-    const streams = result.map(zk => zk.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const streams = result.data.map(zk => zk.settings.name);
     expect(streams.includes(stream1.name)).to.be.true;
     expect(streams.includes(stream2.name)).to.be.true;
   });
@@ -219,13 +225,16 @@ describe('Stream API', () => {
     // delete a non-running stream
     await streamApi.create(stream);
     const result = await streamApi.remove(stream);
-    const streams = result.map(stream => stream.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const streams = result.data.map(stream => stream.settings.name);
     expect(streams.includes(stream.name)).to.be.false;
 
     // delete a running stream
     await streamApi.create(stream);
     const runningRes = await streamApi.start(stream);
-    expect(runningRes.state).to.eq('RUNNING');
+    expect(runningRes.errors).to.be.undefined;
+    expect(runningRes.data.state).to.eq('RUNNING');
 
     await streamApi.stop(stream);
     await streamApi.remove(stream);
@@ -241,7 +250,9 @@ describe('Stream API', () => {
     await streamApi.create(stream);
 
     const result = await streamApi.update(newStream);
-    const { aliveNodes, lastModified, metrics, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, metrics, state, error } = result.data;
     const {
       name,
       group,
@@ -253,7 +264,7 @@ describe('Stream API', () => {
       jarKey,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -303,27 +314,33 @@ describe('Stream API', () => {
     const stream = await generateStream();
     await streamApi.create(stream);
     const undefinedStreamRes = await streamApi.get(stream);
-    expect(undefinedStreamRes.state).to.be.undefined;
+    expect(undefinedStreamRes.errors).to.be.undefined;
+    expect(undefinedStreamRes.data.state).to.be.undefined;
 
     const runningStreamRes = await streamApi.start(stream);
-    expect(runningStreamRes.state).to.eq('RUNNING');
+    expect(runningStreamRes.errors).to.be.undefined;
+    expect(runningStreamRes.data.state).to.eq('RUNNING');
   });
 
   it('stopStream', async () => {
     const stream = await generateStream();
     await streamApi.create(stream);
     const undefinedStreamRes = await streamApi.get(stream);
-    expect(undefinedStreamRes.state).to.be.undefined;
+    expect(undefinedStreamRes.errors).to.be.undefined;
+    expect(undefinedStreamRes.data.state).to.be.undefined;
 
     const runningStreamRes = await streamApi.start(stream);
-    expect(runningStreamRes.state).to.eq('RUNNING');
-    expect(runningStreamRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningStreamRes.errors).to.be.undefined;
+    expect(runningStreamRes.data.state).to.eq('RUNNING');
+    expect(runningStreamRes.data.settings.nodeNames).have.lengthOf(1);
 
     const stopStreamRes = await streamApi.stop(stream);
-    expect(stopStreamRes.state).to.be.undefined;
+    expect(stopStreamRes.errors).to.be.undefined;
+    expect(stopStreamRes.data.state).to.be.undefined;
 
     const result = await streamApi.remove(stream);
-    const streams = result.map(stream => stream.settings.name);
+    expect(result.errors).to.be.undefined;
+    const streams = result.data.map(stream => stream.settings.name);
     expect(streams.includes(stream.name)).to.be.false;
   });
 });

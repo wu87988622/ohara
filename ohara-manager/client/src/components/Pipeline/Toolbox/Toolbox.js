@@ -28,7 +28,6 @@ import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
 import { useParams } from 'react-router-dom';
 import * as joint from 'jointjs';
-import * as _ from 'lodash';
 
 import * as fileApi from 'api/fileApi';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
@@ -99,10 +98,7 @@ const Toolbox = props => {
       group: workspaceName,
     });
 
-    const isSuccess = !_.isEmpty(response);
-    if (isSuccess) {
-      showMessage('Successfully uploaded the jar');
-    }
+    showMessage(response.title);
     setStatus('loading');
   };
 

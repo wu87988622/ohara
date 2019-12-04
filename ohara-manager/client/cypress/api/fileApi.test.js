@@ -39,8 +39,17 @@ describe('File API', () => {
     const file = generateFile();
     cy.createJar(file)
       .then(params => fileApi.create(params))
-      .then(data => {
-        const { group, name, size, url, lastModified, classInfos, tags } = data;
+      .then(result => {
+        expect(result.errors).to.be.undefined;
+        const {
+          group,
+          name,
+          size,
+          url,
+          lastModified,
+          classInfos,
+          tags,
+        } = result.data;
         expect(group).to.be.a('string');
         expect(group).to.eq(file.group);
 
@@ -79,10 +88,12 @@ describe('File API', () => {
       .then(params => fileApi.create(params))
       .then(() => {
         fileApi.getAll(group).then(result => {
-          expect(result).to.be.an('array');
-          expect(result.length).to.eq(1);
+          expect(result.errors).to.be.undefined;
 
-          const fileInfo = result[0];
+          expect(result.data).to.be.an('array');
+          expect(result.data.length).to.eq(1);
+
+          const fileInfo = result.data[0];
           expect(fileInfo).to.include.keys('name', 'group');
           expect(fileInfo.name).to.be.a('string');
           expect(fileInfo.group).to.be.a('string');
@@ -97,6 +108,7 @@ describe('File API', () => {
       .then(params => fileApi.create(params))
       .then(() => {
         fileApi.get(file).then(result => {
+          expect(result.errors).to.be.undefined;
           const {
             group,
             name,
@@ -105,7 +117,7 @@ describe('File API', () => {
             lastModified,
             classInfos,
             tags,
-          } = result;
+          } = result.data;
           expect(group).to.be.a('string');
           expect(group).to.eq(file.group);
 
@@ -146,7 +158,9 @@ describe('File API', () => {
       .then(params => fileApi.create(params))
       .then(() => {
         fileApi.update(newFile).then(result => {
-          const { group, name, size, url, lastModified, tags } = result;
+          expect(result.errors).to.be.undefined;
+
+          const { group, name, size, url, lastModified, tags } = result.data;
           expect(group).to.be.a('string');
           expect(group).to.eq(file.group);
 
@@ -172,6 +186,9 @@ describe('File API', () => {
     cy.createJar(file)
       .then(params => fileApi.create(params))
       .then(() => fileApi.remove(file))
-      .then(result => expect(result.length).to.eq(0));
+      .then(result => {
+        expect(result.errors).to.be.undefined;
+        expect(result.data.length).to.eq(0);
+      });
   });
 });

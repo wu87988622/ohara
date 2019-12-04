@@ -16,7 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import * as nodeApi from 'api/nodeApi';
@@ -45,15 +44,14 @@ const AddNodeDialog = props => {
     };
 
     const response = await nodeApi.create(params);
-    const isSuccess = !isEmpty(response);
-    if (isSuccess) {
+    showMessage(response.title);
+    if (response.errors) {
+      return;
+    } else {
       setTimeout(form.reset);
       showMessage(`Successfully created node ${hostname}`);
       await fetchNodes();
       handleClose();
-    } else {
-      showMessage('Test failed!');
-      return;
     }
   };
 

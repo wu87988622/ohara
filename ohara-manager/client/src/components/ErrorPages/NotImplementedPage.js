@@ -30,7 +30,9 @@ const NotFoundPage = () => {
   React.useEffect(() => {
     const fetchConfiguratorInfo = async () => {
       const info = await inspectApi.getConfiguratorInfo();
-      setConfiguratorVersion(info.versionInfo.version);
+      if (!info.errors) {
+        setConfiguratorVersion(info.data.versionInfo.version);
+      }
     };
     fetchConfiguratorInfo();
   }, []);
@@ -38,7 +40,9 @@ const NotFoundPage = () => {
   React.useEffect(() => {
     const fetchMangerInfo = async () => {
       const info = await inspectApi.getManagerInfo();
-      setManagerVersion(info.version);
+      if (!info.errors) {
+        setManagerVersion(info.data.version);
+      }
     };
 
     fetchMangerInfo();

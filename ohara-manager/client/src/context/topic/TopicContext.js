@@ -72,7 +72,7 @@ const useTopicActions = () => {
   const dispatch = useTopicDispatch();
   const showMessage = useSnackbar();
   return {
-    fetchTopics: createFetchTopics(state, dispatch),
+    fetchTopics: createFetchTopics(state, dispatch, showMessage),
     addTopic: createAddTopic(state, dispatch, showMessage),
     deleteTopic: createDeleteTopic(state, dispatch, showMessage),
   };

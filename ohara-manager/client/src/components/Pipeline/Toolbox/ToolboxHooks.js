@@ -28,23 +28,25 @@ export const useConnectors = workspace => {
 
     const fetchWorkerInfo = async () => {
       const { name, group } = workspace.settings;
-      const data = await inspectApi.getWorkerInfo({ name, group });
-      data.classInfos.forEach(info => {
-        const { className, classType } = info;
-        const displayClassName = className.split('.').pop();
-        if (info.classType === 'source') {
-          setSources(prevState => [
+      const result = await inspectApi.getWorkerInfo({ name, group });
+      if (!result.errors) {
+        result.data.classInfos.forEach(info => {
+          const { className, classType } = info;
+          const displayClassName = className.split('.').pop();
+          if (info.classType === 'source') {
+            setSources(prevState => [
+              ...prevState,
+              { displayName: displayClassName, classType },
+            ]);
+            return;
+          }
+
+          setSinks(prevState => [
             ...prevState,
             { displayName: displayClassName, classType },
           ]);
-          return;
-        }
-
-        setSinks(prevState => [
-          ...prevState,
-          { displayName: displayClassName, classType },
-        ]);
-      });
+        });
+      }
     };
 
     fetchWorkerInfo();
@@ -64,30 +66,31 @@ export const useFiles = workspace => {
     if (!workspace || status !== 'loading') return;
 
     const fetchFiles = async workspaceName => {
-      const files = await fileApi.getAll({ group: workspaceName });
+      const result = await fileApi.getAll({ group: workspaceName });
+      if (!result.errors) {
+        const fileNames = result.data.map(file => file.name);
+        setFileNames(fileNames);
 
-      const fileNames = files.map(file => file.name);
-      setFileNames(fileNames);
+        const streamClasses = result.data
+          .map(file => file.classInfos)
+          .flat()
+          .filter(cls => cls.classType === 'stream');
 
-      const streamClasses = files
-        .map(file => file.classInfos)
-        .flat()
-        .filter(cls => cls.classType === 'stream');
+        if (streamClasses.length > 0) {
+          const results = streamClasses
+            .map(({ className, classType }) => {
+              const displayName = className.split('.').pop();
+              return {
+                displayName,
+                classType,
+              };
+            })
+            .sort((a, b) => a.className.localeCompare(b.className));
+          setStreams(results);
+        }
 
-      if (streamClasses.length > 0) {
-        const results = streamClasses
-          .map(({ className, classType }) => {
-            const displayName = className.split('.').pop();
-            return {
-              displayName,
-              classType,
-            };
-          })
-          .sort((a, b) => a.className.localeCompare(b.className));
-        setStreams(results);
+        setStatus('loaded');
       }
-
-      setStatus('loaded');
     };
 
     fetchFiles(workspace.settings.name);

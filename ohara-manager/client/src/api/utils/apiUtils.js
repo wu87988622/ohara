@@ -22,9 +22,15 @@ import {
   getGenerate,
 } from './validation';
 import axios from 'axios';
-import { get, has, isEmpty, isUndefined, isArray, isString } from 'lodash';
+import { has, isEmpty, isArray } from 'lodash';
 
-const converterUtil = (params, api) => {
+export const getKey = params => {
+  const name = params.name || undefined;
+  const group = params.group || undefined;
+  return JSON.stringify({ group, name });
+};
+
+const converterUtil = (warnReasons, params, api) => {
   const converterKeys = Object.keys(api.reqConverter ? api.reqConverter : {});
   const paramsKeys = Object.keys(params);
   if (converterKeys.length === 0) return params;
@@ -35,12 +41,14 @@ const converterUtil = (params, api) => {
       .map(pKey => (params[api.reqConverter[cKey]] = params[pKey]))
       .forEach(pKey => {
         delete params[pKey];
-        console.warn(
-          pKey +
+        const warnData = {
+          message:
+            pKey +
             ' has been changed ' +
             api.reqConverter[cKey] +
             ' please modify params!',
-        );
+        };
+        warnReasons.push(warnData);
       }),
   );
   return params;
@@ -74,14 +82,23 @@ const generateUtil = (params = {}, api) => {
   return requestBody;
 };
 
-const optionUtil = (params = {}, api, requestBody = {}, parentKey) => {
+const optionUtil = (warnReasons, data, parentKey) => {
+  const { params = {}, api, body = {} } = data;
   const requestKeys = Object.keys(api);
   const paramsKeys = Object.keys(params);
-  const requestBodyKeys = Object.keys(requestBody);
+  const bodyKeys = Object.keys(body);
   requestKeys
     .map(rKey => {
       if (isObject(api[rKey])) {
-        optionUtil(params[rKey], api[rKey], requestBody[rKey], rKey);
+        optionUtil(
+          warnReasons,
+          {
+            params: params[rKey],
+            api: api[rKey],
+            body: body[rKey],
+          },
+          rKey,
+        );
         return null;
       } else {
         return rKey;
@@ -91,26 +108,39 @@ const optionUtil = (params = {}, api, requestBody = {}, parentKey) => {
     .forEach(rKey => {
       if (
         !paramsKeys.includes(rKey) &&
-        !requestBodyKeys.includes(rKey) &&
+        !bodyKeys.includes(rKey) &&
         !api[rKey].includes(isOption)
       ) {
         const errorKey = parentKey ? `${parentKey}.${rKey}` : rKey;
-        console.error(errorKey + ' is not the option!');
+        const warnData = {
+          message: errorKey + ' is not defined as optional.',
+        };
+        warnReasons.push(warnData);
       }
     });
 };
 
-const typeUtil = (params, api, requestBody, parentKey) => {
-  const requestKeys = Object.keys(api);
+export const typeUtil = (warnReasons, data, parentKey = undefined) => {
+  const { params, api, body, definitions } = data;
+  const apiKeys = Object.keys(api);
   const paramsKeys = Object.keys(params);
 
-  requestKeys.forEach(rKey =>
+  apiKeys.forEach(rKey =>
     paramsKeys
       .filter(pKey => rKey === pKey)
       .map(pKey => {
         if (isObject(api[rKey])) {
-          const obj = typeUtil(params[pKey], api[rKey], {}, parentKey);
-          requestBody[pKey] = Object.assign(obj, requestBody[pKey]);
+          const obj = typeUtil(
+            warnReasons,
+            {
+              params: params[pKey],
+              api: api[rKey],
+              body: {},
+              definitions,
+            },
+            pKey,
+          );
+          body[pKey] = Object.assign(obj, body[pKey]);
           return null;
         } else {
           return pKey;
@@ -119,14 +149,26 @@ const typeUtil = (params, api, requestBody, parentKey) => {
       .filter(Boolean)
       .forEach(pKey => {
         if (getType(api[rKey])(params[pKey])) {
-          requestBody[rKey] = params[pKey];
+          body[rKey] = params[pKey];
         } else {
           const errorKey = parentKey ? `${parentKey}.${rKey}` : rKey;
-          console.error(errorKey + ' type is wrong!');
+          const warnData = {
+            message:
+              `the field '${errorKey}' type is wrong. ` +
+              `expected: '${getType(api[rKey]).name}', ` +
+              `actual value is: '${JSON.stringify(params[pKey])}'`,
+            stack:
+              definitions && definitions[errorKey]
+                ? // show the definitions as detail message
+                  definitions[errorKey]
+                : // if no definition, use undefined instead
+                  undefined,
+          };
+          warnReasons.push(warnData);
         }
       }),
   );
-  return requestBody;
+  return body;
 };
 
 const getNestObjectByString = (resKey, params) => {
@@ -141,76 +183,113 @@ const getNestObjectByString = (resKey, params) => {
 };
 
 export const requestUtil = (params, api, definitionsBody) => {
+  let warnReasons = [];
   let requestBody = {};
-  const converterParams = converterUtil(params, api);
+  const converterParams = converterUtil(warnReasons, params, api);
   requestBody = generateUtil(converterParams, api.request(definitionsBody));
-  optionUtil(params, api.request(definitionsBody), requestBody);
-  requestBody = typeUtil(params, api.request(definitionsBody), requestBody);
+  optionUtil(warnReasons, {
+    params,
+    api: api.request(definitionsBody),
+    body: requestBody,
+  });
+  const data = {
+    params,
+    api: api.request(definitionsBody),
+    body: requestBody,
+    definitions: api.definitions,
+  };
+  requestBody = typeUtil(warnReasons, data);
+  if (!isEmpty(warnReasons)) {
+    // since request does not "response" anything
+    // we need to print the warnings to console
+    warnReasons.forEach(warn => console.log(warn));
+  }
   return requestBody;
 };
 
 export const responseUtil = (params, api) => {
-  const { result, isSuccess } = params.data;
-  if (!isSuccess) return;
-  const warns = new Set();
-  let resList = isArray(result) ? result : [result];
-  resList.forEach((res, i) => {
-    const paramsKeys = Object.keys(res);
-    const resConverterKeys = Object.keys(
-      api.resConverter ? api.resConverter : {},
-    );
-    resConverterKeys.forEach(resKey => {
-      paramsKeys.forEach(pKey => {
-        if (resKey.indexOf(pKey) > -1) {
-          res[api.resConverter[resKey]] = getNestObjectByString(resKey, res);
-          resList[i] = res;
-          warns.add(
-            `${pKey} has been changed ${api.resConverter[resKey]} please modify params!`,
-          );
-        }
+  let finalRes = {
+    status: 0,
+    // object or array
+    data: undefined,
+    // api message that could be used in SnackBar
+    title: '',
+    // using "undefined" as initial value could help us more easily
+    // to check whether this api was success or not
+    // ex: const data = (res.errors) ? res.errors : res.data
+    errors: undefined,
+    // additional information about this response
+    meta: undefined,
+  };
+  const { meta, data } = params;
+  const { status, url, method, params: queryParameters, body, headers } = meta;
+  const { result, errorMessage, isSuccess } = data;
+
+  finalRes.status = status;
+  finalRes.meta = {
+    method,
+    url,
+    params: queryParameters,
+    body,
+    headers,
+  };
+  if (!isSuccess) {
+    finalRes.errors = has(errorMessage, 'message')
+      ? [
+          {
+            type: 'fail',
+            message: errorMessage.message,
+            stack: errorMessage,
+          },
+        ]
+      : [
+          {
+            type: 'fail',
+            message: errorMessage.message,
+          },
+        ];
+  } else {
+    const warnReasons = [];
+    let resList = isArray(result) ? result : [result];
+    resList.forEach((res, i) => {
+      const paramsKeys = Object.keys(res);
+      const resConverterKeys = Object.keys(
+        api.resConverter ? api.resConverter : {},
+      );
+      resConverterKeys.forEach(resKey => {
+        paramsKeys.forEach(pKey => {
+          if (resKey.indexOf(pKey) > -1) {
+            res[api.resConverter[resKey]] = getNestObjectByString(resKey, res);
+            resList[i] = res;
+            warnReasons.push({
+              message: `${pKey} has been changed to ${api.resConverter[resKey]}, please modify params!`,
+            });
+          }
+        });
       });
+      // checking the type of response data by api.response() definitions
+      // we don't assign additional data of body for response here
+      const data = {
+        params: res,
+        api: api.response(),
+        body: {},
+        definitions: api.definitions,
+      };
+      typeUtil(warnReasons, data);
     });
-  });
-  warns.forEach(warn => console.warn(warn));
-  return isArray(result) ? resList : resList[0];
-};
-
-export const handleError = error => {
-  if (isUndefined(error)) return; // prevent `undefined` error from throwing `Internal Server Error`
-
-  const message = get(error, 'data.errorMessage.message', null);
-  if (isString(message)) {
-    return message;
+    finalRes.data = isArray(result) ? resList : resList[0];
+    if (!isEmpty(warnReasons)) {
+      warnReasons.forEach(warn => console.log(warn));
+      finalRes.errors = warnReasons.map(warnReason => {
+        return {
+          type: 'warning',
+          message: warnReason.message,
+          stack: warnReason.stack,
+        };
+      });
+    }
   }
-
-  const errorMessage = get(error, 'data.errorMessage', null);
-  if (isString(errorMessage)) {
-    return errorMessage;
-  }
-
-  return error.message || 'Internal Server Error';
-};
-
-export const handleConnectorValidationError = res => {
-  const error = res.data.result;
-  if (error.errorCount === 0) return;
-  const { settings } = error;
-
-  const hasError = def => !isEmpty(def.value.errors);
-  const errors = settings.filter(hasError).map(def => {
-    return {
-      fieldName: def.definition.displayName,
-      errorMessage: def.value.errors.join(' '),
-    };
-  });
-
-  // There could be multiple validation errors, so we need to loop thru them and
-  // display respectively
-  return errors.map(error => {
-    return `<b>${error.fieldName.toUpperCase()}</b><br /> ${
-      error.errorMessage
-    }`;
-  });
+  return finalRes;
 };
 
 const regularObject = (objs, originKey, changeKey) => {
@@ -230,22 +309,22 @@ const regularObject = (objs, originKey, changeKey) => {
   return isArray(objs) ? newObjs : newObjs[0];
 };
 
-export const handleNodeValidationError = res => {
-  const error = res.data.result;
-  if (!Array.isArray(error)) return;
-  return error.map(node => {
-    if (!node.pass) {
-      return node.message;
-    } else {
-      return '';
-    }
-  });
-};
-
 const createAxios = () => {
   const instance = axios.create({
     validateStatus: status => status >= 200 && status < 300,
+    // set an acceptable timeout (20 seconds) to avoid infinite request
+    // this value is as same as `defaultCommandTimeout` of cypress.api.json
+    timeout: 20000,
   });
+
+  // get the query params object from url string
+  const axiosParams = urlString => {
+    const params = {};
+    new URL(urlString).searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+    return params;
+  };
 
   // Add a request interceptor
   instance.interceptors.request.use(config => {
@@ -278,6 +357,14 @@ const createAxios = () => {
         response.data = regularObject(response.data, '.', '__');
       }
       return {
+        meta: {
+          status: response.status,
+          url: response.config.url,
+          method: response.config.method,
+          params: axiosParams(response.request.responseURL),
+          body: response.config.data,
+          headers: response.headers,
+        },
         data: {
           result: response.data,
           isSuccess: true,
@@ -285,15 +372,50 @@ const createAxios = () => {
       };
     },
     error => {
-      const { statusText, data: errorMessage } = error.response;
-      return {
-        data: {
+      let errorRes = {};
+      //initial the error response data
+      errorRes.meta = {
+        url: error.config.url,
+        method: error.config.method,
+        body: error.config.data,
+      };
+      // the request may not finished yet
+      // we need to check if the request is defined to get the params
+      if (errorRes.request) {
+        errorRes.meta.params = axiosParams(errorRes.request.responseURL);
+      }
+      if (error.response) {
+        const {
+          status,
+          headers,
+          statusText,
+          data: errorMessage,
+        } = error.response;
+        errorRes.meta.status = status;
+        errorRes.meta.headers = headers;
+        // the official format of error data from API should be
+        // {apiUrl, code, message, stack}
+        errorRes.data = {
           errorMessage: has(errorMessage, 'message')
             ? errorMessage
             : statusText,
           isSuccess: false,
-        },
-      };
+        };
+      } else if (error.request) {
+        // had send a request but got no response
+        // ex: server connection timeout
+        errorRes.data = {
+          errorMessage: error.message,
+          isSuccess: false,
+        };
+      } else {
+        // failed sending a request
+        errorRes.data = {
+          errorMessage: error.message,
+          isSuccess: false,
+        };
+      }
+      return errorRes;
     },
   );
 

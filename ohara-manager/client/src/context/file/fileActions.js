@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, some } from 'lodash';
+import { some } from 'lodash';
 
 import * as fileApi from 'api/fileApi';
 import {
@@ -23,18 +23,23 @@ import {
   deleteFileRoutine,
 } from './fileRoutines';
 
-const createFetchFiles = (state, dispatch) => async workspaceName => {
+const createFetchFiles = (
+  state,
+  dispatch,
+  showMessage,
+) => async workspaceName => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(fetchFilesRoutine.request());
-  const files = await fileApi.getAll({ group: workspaceName });
+  const result = await fileApi.getAll({ group: workspaceName });
 
-  if (isEmpty(files)) {
-    dispatch(fetchFilesRoutine.failure('failed to fetch files'));
+  if (result.errors) {
+    dispatch(fetchFilesRoutine.failure(result.title));
+    showMessage(result.title);
     return;
   }
 
-  dispatch(fetchFilesRoutine.success(files));
+  dispatch(fetchFilesRoutine.success(result.data));
 };
 
 const createUploadFile = (state, dispatch, showMessage) => async (
@@ -57,19 +62,16 @@ const createUploadFile = (state, dispatch, showMessage) => async (
     file,
   });
 
-  const isCreated = !isEmpty(createFileResponse);
-
-  // Failed to upload, show a custom error message
-  if (!isCreated) {
-    const error = `Failed to upload file ${file.name}`;
-    dispatch(uploadFileRoutine.failure(error));
-    showMessage(error);
+  // Failed to upload, route to failure
+  if (createFileResponse.errors) {
+    dispatch(uploadFileRoutine.failure(createFileResponse.title));
+    showMessage(createFileResponse.title);
     return;
   }
 
   // File successfully uploaded, display success message
-  dispatch(uploadFileRoutine.success(createFileResponse));
-  showMessage(`Successfully uploaded file ${file.name}`);
+  dispatch(uploadFileRoutine.success(createFileResponse.data));
+  showMessage(createFileResponse.title);
 };
 
 const createDeleteFile = (state, dispatch, showMessage) => async (
@@ -84,12 +86,9 @@ const createDeleteFile = (state, dispatch, showMessage) => async (
     group,
   });
 
-  const isDeleted = isEmpty(deleteFileResponse);
-
-  if (!isDeleted) {
-    const error = `Failed to delete file ${name}`;
-    dispatch(deleteFileRoutine.failure(error));
-    showMessage(error);
+  if (deleteFileResponse.errors) {
+    dispatch(deleteFileRoutine.failure(deleteFileResponse.title));
+    showMessage(deleteFileResponse.title);
     return;
   }
 
@@ -99,7 +98,7 @@ const createDeleteFile = (state, dispatch, showMessage) => async (
       group,
     }),
   );
-  showMessage(`Successfully deleted file ${name}`);
+  showMessage(deleteFileResponse.title);
 };
 
 export { createFetchFiles, createUploadFile, createDeleteFile };

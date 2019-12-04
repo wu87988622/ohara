@@ -71,7 +71,7 @@ const useFileActions = () => {
   const dispatch = useFileDispatch();
   const showMessage = useSnackbar();
   return {
-    fetchFiles: createFetchFiles(state, dispatch),
+    fetchFiles: createFetchFiles(state, dispatch, showMessage),
     uploadFile: createUploadFile(state, dispatch, showMessage),
     deleteFile: createDeleteFile(state, dispatch, showMessage),
   };

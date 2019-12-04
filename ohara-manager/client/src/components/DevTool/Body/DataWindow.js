@@ -72,8 +72,8 @@ const DataWindow = props => {
       timeout: topicTimeout,
     });
 
-    if (response) {
-      data = response.messages.map(message => {
+    if (!response.errors) {
+      data = response.data.messages.map(message => {
         // we don't need the "tags" field in the topic data
         if (message.value) delete message.value.tags;
         return message;
@@ -102,11 +102,13 @@ const DataWindow = props => {
         const bkInfo = await brokerApi.get(
           currentWorkspace.settings.brokerClusterKey,
         );
-        response = await logApi.getZookeeperLog({
-          name: bkInfo.settings.zookeeperClusterKey.name,
-          group: bkInfo.settings.zookeeperClusterKey.group,
-          sinceSeconds: timeSeconds,
-        });
+        if (!bkInfo.errors) {
+          response = await logApi.getZookeeperLog({
+            name: bkInfo.data.settings.zookeeperClusterKey.name,
+            group: bkInfo.data.settings.zookeeperClusterKey.group,
+            sinceSeconds: timeSeconds,
+          });
+        }
         break;
       case 'broker':
         response = await logApi.getBrokerLog({
@@ -133,8 +135,8 @@ const DataWindow = props => {
         break;
       default:
     }
-    if (!isEmpty(response)) {
-      const result = response.logs
+    if (!response.errors) {
+      const result = response.data.logs
         // the hostname log should be unique, it is OK to "filter" the result
         .filter(log => log.hostname === hostname)
         .map(log => log.value.split('\n'));

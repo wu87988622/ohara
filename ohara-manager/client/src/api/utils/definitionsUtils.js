@@ -78,7 +78,7 @@ const getTypeWithValueType = key => {
   }
 };
 
-export const getDefinitionsBody = params => {
+export const getDefinition = params => {
   const { settingDefinitions } = params;
   const definitionsObj = {};
   settingDefinitions.forEach(definition => {

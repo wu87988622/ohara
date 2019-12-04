@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
+import { isEmpty } from 'lodash';
 import * as worker from './body/workerBody';
-import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
+import {
+  getKey,
+  requestUtil,
+  responseUtil,
+  axiosInstance,
+} from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -23,11 +29,19 @@ import * as inspect from './inspectApi';
 
 const url = URL.WORKER_URL;
 
-export const create = async (params, body) => {
-  body = body ? body : await inspect.getWorkerInfo();
+export const create = async (params, body = {}) => {
+  if (isEmpty(body)) {
+    const info = await inspect.getWorkerInfo();
+    if (!info.errors) body = info.data;
+  }
+
   const requestBody = requestUtil(params, worker, body);
   const res = await axiosInstance.post(url, requestBody);
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Create worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const start = async params => {
@@ -38,7 +52,11 @@ export const start = async params => {
     checkFn: waitUtil.waitForConnectReady,
   });
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Start worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const update = async params => {
@@ -47,7 +65,11 @@ export const update = async params => {
   delete params[group];
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Update worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const stop = async params => {
@@ -57,7 +79,11 @@ export const stop = async params => {
     url: `${url}/${name}?group=${group}`,
     checkFn: waitUtil.waitForStop,
   });
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Stop worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const remove = async params => {
@@ -68,18 +94,29 @@ export const remove = async params => {
     checkFn: waitUtil.waitForClusterNonexistent,
     paramRes: params,
   });
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Remove worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Get worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  return res ? responseUtil(res, worker) : [];
+  const result = responseUtil(res, worker);
+  result.title =
+    `Get worker list ` + (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const addNode = async params => {
@@ -90,7 +127,11 @@ export const addNode = async params => {
     checkFn: waitUtil.waitForNodeReady,
     paramRes: nodeName,
   });
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Add node to worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };
 
 export const removeNode = async params => {
@@ -101,5 +142,9 @@ export const removeNode = async params => {
     checkFn: waitUtil.waitForNodeNonexistentInCluster,
     paramRes: nodeName,
   });
-  return responseUtil(res, worker);
+  const result = responseUtil(res, worker);
+  result.title =
+    `Remove node from worker ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

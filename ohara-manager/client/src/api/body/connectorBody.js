@@ -15,10 +15,12 @@
  */
 
 import { number, array, object } from '../utils/validation';
-import { createBody, getDefinitionsBody } from '../utils/definitionsUtils';
+import { createBody, getDefinition } from '../utils/definitionsUtils';
+
+export let definitions = undefined;
 
 export const request = params => {
-  const definitions = getDefinitionsBody(params);
+  definitions = getDefinition(params);
   const body = createBody(definitions);
   return body;
 };
@@ -27,7 +29,7 @@ export const response = () => {
   const lastModified = [number];
   const metrics = [object];
   const status = [object];
-  const settings = [];
+  const settings = [object];
   const tasksStatus = [array];
 
   return { lastModified, metrics, settings, status, tasksStatus };

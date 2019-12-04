@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty, pick, map } from 'lodash';
+import { pick, map } from 'lodash';
 
 import * as brokerApi from 'api/brokerApi';
 import * as inspectApi from 'api/inspectApi';
@@ -29,19 +29,20 @@ const fetchBrokersCreator = (
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(routine.request());
-  const brokers = await brokerApi.getAll();
+  const result = await brokerApi.getAll();
 
-  if (isEmpty(brokers)) {
-    const error = 'failed to fetch brokers';
-    dispatch(routine.failure(error));
-    showMessage(error);
+  if (result.errors) {
+    dispatch(routine.failure(result.title));
+    showMessage(result.title);
     return;
   }
+  const brokers = result.data;
 
   const brokerInfos = await Promise.all(
     map(brokers, async broker => {
       const params = pick(broker.settings, ['name', 'group']);
-      const brokerInfo = await inspectApi.getBrokerInfo(params);
+      const result = await inspectApi.getBrokerInfo(params);
+      const brokerInfo = result.errors ? {} : result.data;
       return { ...broker, ...brokerInfo };
     }),
   );

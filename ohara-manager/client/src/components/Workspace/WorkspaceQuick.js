@@ -126,17 +126,22 @@ const WorkspaceQuick = props => {
   };
 
   const onDrop = async (file, values) => {
-    let fileInfo = await fileApi.create({
+    const result = await fileApi.create({
       group: values.workerName,
       file: file[0],
     });
-
-    fileInfo = {
-      ...fileInfo,
-      file: fileInfo.name,
-      name: fileInfo.name.replace(`.${fileInfo.name.split('.').pop()}`, ''),
-      'File Size': `${round(fileInfo.size / 1024, 2)}KiB`,
-    };
+    let fileInfo = {};
+    if (!result.errors) {
+      fileInfo = {
+        ...result.data,
+        file: result.data.name,
+        name: result.data.name.replace(
+          `.${result.data.name.split('.').pop()}`,
+          '',
+        ),
+        'File Size': `${round(result.data.size / 1024, 2)}KiB`,
+      };
+    }
 
     const selectedIndex = files
       .map(select => select.file)
@@ -207,12 +212,14 @@ const WorkspaceQuick = props => {
           ? getRandoms(nodeNames, 3)
           : getRandoms(nodeNames, 1),
     });
-    const zkStartRes = await zkApi.start({
-      name: zkCreateRes.settings.name,
-      group: zkCreateRes.settings.group,
-    });
+    const zkStartRes = zkCreateRes.errors
+      ? {}
+      : await zkApi.start({
+          name: zkCreateRes.data.settings.name,
+          group: zkCreateRes.data.settings.group,
+        });
 
-    return zkStartRes;
+    return zkStartRes.errors ? {} : zkStartRes.data;
   };
 
   const createBk = async params => {
@@ -225,12 +232,14 @@ const WorkspaceQuick = props => {
         group: zookeeper.settings.group,
       },
     });
-    const bkStartRes = await bkApi.start({
-      name: bkCreateRes.settings.name,
-      group: bkCreateRes.settings.group,
-    });
+    const bkStartRes = bkCreateRes.errors
+      ? {}
+      : await bkApi.start({
+          name: bkCreateRes.data.settings.name,
+          group: bkCreateRes.data.settings.group,
+        });
 
-    return bkStartRes;
+    return bkStartRes.errors ? {} : bkStartRes.data;
   };
 
   const createWk = async params => {
@@ -244,10 +253,12 @@ const WorkspaceQuick = props => {
         group: broker.settings.group,
       },
     });
-    const wkStartRes = await wkApi.start({
-      name: wkCreateRes.settings.name,
-      group: wkCreateRes.settings.group,
-    });
+    const wkStartRes = wkCreateRes.errors
+      ? {}
+      : await wkApi.start({
+          name: wkCreateRes.data.settings.name,
+          group: wkCreateRes.data.settings.group,
+        });
 
     return wkStartRes;
   };

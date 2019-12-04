@@ -15,12 +15,16 @@
  */
 
 import * as validateBody from './body/validateBody';
-import { responseUtil, axiosInstance } from './utils/apiUtils';
+import { getKey, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.VALIDATE_URL;
 
 export const validateConnector = async params => {
   const res = await axiosInstance.put(`${url}/connector`, params);
-  return responseUtil(res, validateBody);
+  const result = responseUtil(res, validateBody);
+  result.title =
+    `Validate connector ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
+  return result;
 };

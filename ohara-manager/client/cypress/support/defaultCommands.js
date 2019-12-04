@@ -26,6 +26,7 @@ Cypress.Commands.add('createJar', file => {
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;
       const params = {
+        name,
         file: blob[0],
         group: jarGroup,
       };

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-unused-expressions */
+
 import * as generate from '../../src/utils/generate';
 import * as nodeApi from '../../src/api/nodeApi';
 import { deleteAllServices } from '../utils';
@@ -33,6 +35,10 @@ describe('Node API', () => {
 
   it('createNode', async () => {
     const params = generateNode();
+
+    const result = await nodeApi.create(params);
+    expect(result.errors).to.be.undefined;
+
     const {
       hostname,
       port,
@@ -43,7 +49,7 @@ describe('Node API', () => {
       services,
       state,
       resources,
-    } = await nodeApi.create(params);
+    } = result.data;
 
     expect(hostname).to.be.a('string');
     expect(hostname).to.eq(params.hostname);
@@ -83,6 +89,9 @@ describe('Node API', () => {
     newParams.password = generate.password();
     newParams.tags = { a: 'tag' };
 
+    const result = await nodeApi.update(newParams);
+    expect(result.errors).to.be.undefined;
+
     const {
       hostname,
       port,
@@ -91,7 +100,7 @@ describe('Node API', () => {
       lastModified,
       tags,
       services,
-    } = await nodeApi.update(newParams);
+    } = result.data;
 
     expect(hostname).to.be.a('string');
     expect(hostname).to.eq(params.hostname);
@@ -118,6 +127,9 @@ describe('Node API', () => {
     const params = generateNode();
     await nodeApi.create(params);
 
+    const result = await nodeApi.get(params);
+    expect(result.errors).to.be.undefined;
+
     const {
       hostname,
       port,
@@ -128,7 +140,7 @@ describe('Node API', () => {
       services,
       state,
       resources,
-    } = await nodeApi.get(params);
+    } = result.data;
 
     expect(hostname).to.be.a('string');
     expect(hostname).to.eq(params.hostname);
@@ -161,8 +173,10 @@ describe('Node API', () => {
     await nodeApi.create(paramsOne);
     await nodeApi.create(paramsTwo);
 
-    const nodeRes = await nodeApi.getAll();
-    const nodes = nodeRes.filter(
+    const result = await nodeApi.getAll();
+    expect(result.errors).to.be.undefined;
+
+    const nodes = result.data.filter(
       node =>
         node.hostname === paramsOne.hostname ||
         node.hostname === paramsTwo.hostname,
@@ -176,8 +190,10 @@ describe('Node API', () => {
     await nodeApi.create(params);
     await nodeApi.remove(params);
 
-    const nodeRes = await nodeApi.getAll();
-    const nodes = nodeRes.filter(node => node.hostname === params.hostname);
+    const result = await nodeApi.getAll();
+    expect(result.errors).to.be.undefined;
+
+    const nodes = result.data.filter(node => node.hostname === params.hostname);
 
     expect(nodes.length).to.eq(0);
   });

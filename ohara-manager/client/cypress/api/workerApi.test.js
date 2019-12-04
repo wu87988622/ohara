@@ -49,29 +49,30 @@ describe('Worker API', () => {
   it('createWorker', async () => {
     const wkCluster = await generateWorker();
     const result = await wkApi.create(wkCluster);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
       nodeNames,
       clientPort,
       jmxPort,
-      //
-      // groupId,
-      // statusTopicName,
-      // statusTopicPartitions,
-      // statusTopicReplications,
-      // configTopicName,
-      // configTopicReplications,
-      // offsetTopicName,
-      // offsetTopicPartitions,
-      // offsetTopicReplications,
+      group__id,
+      status__storage__topic,
+      status__storage__partitions,
+      status__storage__replication__factor,
+      config__storage__topic,
+      config__storage__replication__factor,
+      offset__storage__topic,
+      offset__storage__partitions,
+      offset__storage__replication__factor,
       pluginKeys,
       freePorts,
       imageName,
       brokerClusterKey,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -94,18 +95,18 @@ describe('Worker API', () => {
     expect(clientPort).to.be.a('number');
     expect(jmxPort).to.be.a('number');
 
-    // expect(groupId).to.be.a('string');
+    expect(group__id).to.be.a('string');
 
-    // expect(statusTopicName).to.be.a('string');
-    // expect(statusTopicPartitions).to.be.a('number');
-    // expect(statusTopicReplications).to.be.a('number');
+    expect(status__storage__topic).to.be.a('string');
+    expect(status__storage__partitions).to.be.a('number');
+    expect(status__storage__replication__factor).to.be.a('number');
 
-    // expect(configTopicName).to.be.a('string');
-    // expect(configTopicReplications).to.be.a('number');
+    expect(config__storage__topic).to.be.a('string');
+    expect(config__storage__replication__factor).to.be.a('number');
 
-    // expect(offsetTopicName).to.be.a('string');
-    // expect(offsetTopicPartitions).to.be.a('number');
-    // expect(offsetTopicReplications).to.be.a('number');
+    expect(offset__storage__topic).to.be.a('string');
+    expect(offset__storage__partitions).to.be.a('number');
+    expect(offset__storage__replication__factor).to.be.a('number');
 
     expect(pluginKeys).to.be.an('array');
 
@@ -124,29 +125,30 @@ describe('Worker API', () => {
     await wkApi.create(wkCluster);
 
     const result = await wkApi.get(wkCluster);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
       nodeNames,
       clientPort,
       jmxPort,
-      //
-      // groupId,
-      // statusTopicName,
-      // statusTopicPartitions,
-      // statusTopicReplications,
-      // configTopicName,
-      // configTopicReplications,
-      // offsetTopicName,
-      // offsetTopicPartitions,
-      // offsetTopicReplications,
+      group__id,
+      status__storage__topic,
+      status__storage__partitions,
+      status__storage__replication__factor,
+      config__storage__topic,
+      config__storage__replication__factor,
+      offset__storage__topic,
+      offset__storage__partitions,
+      offset__storage__replication__factor,
       pluginKeys,
       freePorts,
       imageName,
       brokerClusterKey,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -169,18 +171,18 @@ describe('Worker API', () => {
     expect(clientPort).to.be.a('number');
     expect(jmxPort).to.be.a('number');
 
-    // expect(groupId).to.be.a('string');
+    expect(group__id).to.be.a('string');
 
-    // expect(statusTopicName).to.be.a('string');
-    // expect(statusTopicPartitions).to.be.a('number');
-    // expect(statusTopicReplications).to.be.a('number');
+    expect(status__storage__topic).to.be.a('string');
+    expect(status__storage__partitions).to.be.a('number');
+    expect(status__storage__replication__factor).to.be.a('number');
 
-    // expect(configTopicName).to.be.a('string');
-    // expect(configTopicReplications).to.be.a('number');
+    expect(config__storage__topic).to.be.a('string');
+    expect(config__storage__replication__factor).to.be.a('number');
 
-    // expect(offsetTopicName).to.be.a('string');
-    // expect(offsetTopicPartitions).to.be.a('number');
-    // expect(offsetTopicReplications).to.be.a('number');
+    expect(offset__storage__topic).to.be.a('string');
+    expect(offset__storage__partitions).to.be.a('number');
+    expect(offset__storage__replication__factor).to.be.a('number');
 
     expect(pluginKeys).to.be.an('array');
 
@@ -202,7 +204,9 @@ describe('Worker API', () => {
     await wkApi.create(wkClusterTwo);
 
     const result = await wkApi.getAll();
-    const workers = result.map(wk => wk.settings.name);
+    expect(result.errors).to.be.undefined;
+
+    const workers = result.data.map(wk => wk.settings.name);
     expect(workers.includes(wkClusterOne.name)).to.be.true;
     expect(workers.includes(wkClusterTwo.name)).to.be.true;
   });
@@ -213,14 +217,16 @@ describe('Worker API', () => {
     // delete a non-running worker
     await wkApi.create(wkCluster);
     const result = await wkApi.remove(wkCluster);
+    expect(result.errors).to.be.undefined;
 
-    const workers = result.map(wk => wk.settings.name);
+    const workers = result.data.map(wk => wk.settings.name);
     expect(workers.includes(wkCluster.name)).to.be.false;
 
     // delete a running worker
     await wkApi.create(wkCluster);
     const runningRes = await wkApi.start(wkCluster);
-    expect(runningRes.state).to.eq('RUNNING');
+    expect(runningRes.errors).to.be.undefined;
+    expect(runningRes.data.state).to.eq('RUNNING');
 
     await wkApi.stop(wkCluster);
     await wkApi.remove(wkCluster);
@@ -237,7 +243,9 @@ describe('Worker API', () => {
     await wkApi.create(wkCluster);
 
     const result = await wkApi.update(newBk);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -246,7 +254,7 @@ describe('Worker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -282,10 +290,12 @@ describe('Worker API', () => {
 
     await wkApi.create(wkCluster);
     const undefinedBkRes = await wkApi.get(wkCluster);
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningWkRes = await wkApi.start(wkCluster);
-    expect(runningWkRes.state).to.eq('RUNNING');
+    expect(runningWkRes.errors).to.be.undefined;
+    expect(runningWkRes.data.state).to.eq('RUNNING');
   });
 
   it('stopWorker', async () => {
@@ -293,17 +303,21 @@ describe('Worker API', () => {
 
     await wkApi.create(wkCluster);
     const undefinedBkRes = await wkApi.get(wkCluster);
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningWkRes = await wkApi.start(wkCluster);
-    expect(runningWkRes.state).to.eq('RUNNING');
-    expect(runningWkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningWkRes.errors).to.be.undefined;
+    expect(runningWkRes.data.state).to.eq('RUNNING');
+    expect(runningWkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const stopWkRes = await wkApi.stop(wkCluster);
-    expect(stopWkRes.state).to.be.undefined;
+    expect(stopWkRes.errors).to.be.undefined;
+    expect(stopWkRes.data.state).to.be.undefined;
 
     const result = await wkApi.remove(wkCluster);
-    const workers = result.map(wk => wk.settings.name);
+    expect(result.errors).to.be.undefined;
+    const workers = result.data.map(wk => wk.settings.name);
     expect(workers.includes(wkCluster.name)).to.be.false;
   });
 
@@ -312,18 +326,22 @@ describe('Worker API', () => {
 
     await wkApi.create(wkCluster);
     const undefinedBkRes = await wkApi.get(wkCluster);
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningWkRes = await wkApi.start(wkCluster);
-    expect(runningWkRes.state).to.eq('RUNNING');
-    expect(runningWkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningWkRes.errors).to.be.undefined;
+    expect(runningWkRes.data.state).to.eq('RUNNING');
+    expect(runningWkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, wkCluster, {
       nodeName: newNode.hostname,
     });
     const result = await wkApi.addNode(newParams);
-    const { aliveNodes, lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { aliveNodes, lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -332,7 +350,7 @@ describe('Worker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes.length).to.eq(2);
@@ -368,24 +386,30 @@ describe('Worker API', () => {
 
     await wkApi.create(wkCluster);
     const undefinedBkRes = await wkApi.get(wkCluster);
-    expect(undefinedBkRes.state).to.be.undefined;
+    expect(undefinedBkRes.errors).to.be.undefined;
+    expect(undefinedBkRes.data.state).to.be.undefined;
 
     const runningWkRes = await wkApi.start(wkCluster);
-    expect(runningWkRes.state).to.eq('RUNNING');
-    expect(runningWkRes.settings.nodeNames).have.lengthOf(1);
+    expect(runningWkRes.errors).to.be.undefined;
+    expect(runningWkRes.data.state).to.eq('RUNNING');
+    expect(runningWkRes.data.settings.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, wkCluster, {
       nodeName: newNode.hostname,
     });
     const twoNodeWkData = await wkApi.addNode(newParams);
-    expect(twoNodeWkData.aliveNodes).to.be.an('array');
-    expect(twoNodeWkData.aliveNodes).have.lengthOf(2);
-    expect(twoNodeWkData.settings.nodeNames).to.be.an('array');
-    expect(twoNodeWkData.settings.nodeNames).have.lengthOf(2);
+    expect(twoNodeWkData.errors).to.be.undefined;
+
+    expect(twoNodeWkData.data.aliveNodes).to.be.an('array');
+    expect(twoNodeWkData.data.aliveNodes).have.lengthOf(2);
+    expect(twoNodeWkData.data.settings.nodeNames).to.be.an('array');
+    expect(twoNodeWkData.data.settings.nodeNames).have.lengthOf(2);
 
     const result = await wkApi.removeNode(newParams);
-    const { lastModified, state, error } = result;
+    expect(result.errors).to.be.undefined;
+
+    const { lastModified, state, error } = result.data;
     const {
       name,
       group,
@@ -394,7 +418,7 @@ describe('Worker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.settings;
+    } = result.data.settings;
 
     expect(lastModified).to.be.a('number');
 

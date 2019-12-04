@@ -24,7 +24,9 @@ import { createServices, deleteAllServices } from '../utils';
 describe('Inspect API', () => {
   it('fetchConfiguratorInfo', async () => {
     const infoRes = await inspect.getConfiguratorInfo();
-    const { mode, versionInfo } = infoRes;
+    expect(infoRes.errors).to.be.undefined;
+
+    const { mode, versionInfo } = infoRes.data;
     const { branch, version, user, revision, date } = versionInfo;
 
     // we're using fake configurator in our tests; so this value should be "FAKE"
@@ -46,13 +48,10 @@ describe('Inspect API', () => {
   // it depends on a gradle task :ohara-common:versionFile to generate version
   // info when running in dev mode
   it('fetchManagerInfo', async () => {
-    const {
-      branch,
-      version,
-      user,
-      revision,
-      date,
-    } = await inspect.getManagerInfo();
+    const result = await inspect.getManagerInfo();
+    expect(result.errors).to.be.undefined;
+
+    const { branch, version, user, revision, date } = result.data;
 
     expect(branch).to.be.a('string');
     expect(version).to.be.a('string');
@@ -62,8 +61,8 @@ describe('Inspect API', () => {
   });
 
   it('fetchServiceDefinition', async () => {
-    function expectResult(serviceName, data) {
-      const { imageName, settingDefinitions, classInfos } = data;
+    function expectResult(serviceName, result) {
+      const { imageName, settingDefinitions, classInfos } = result.data;
       expect(imageName).to.be.a('string');
       expect(imageName).to.include(serviceName);
 
@@ -74,15 +73,19 @@ describe('Inspect API', () => {
     }
 
     const infoZookeeper = await inspect.getZookeeperInfo();
+    expect(infoZookeeper.errors).to.be.undefined;
     expectResult(inspect.kind.zookeeper, infoZookeeper);
 
     const infoBroker = await inspect.getBrokerInfo();
+    expect(infoBroker.errors).to.be.undefined;
     expectResult(inspect.kind.broker, infoBroker);
 
     const infoWorker = await inspect.getWorkerInfo();
+    expect(infoWorker.errors).to.be.undefined;
     expectResult(inspect.kind.worker, infoWorker);
 
     const infoStream = await inspect.getStreamsInfo();
+    expect(infoStream.errors).to.be.undefined;
     expectResult(inspect.kind.stream, infoStream);
   });
 
@@ -94,8 +97,8 @@ describe('Inspect API', () => {
       withNode: true,
     });
 
-    function expectResult(serviceName, data) {
-      const { imageName, settingDefinitions, classInfos } = data;
+    function expectResult(serviceName, result) {
+      const { imageName, settingDefinitions, classInfos } = result.data;
       expect(imageName).to.be.a('string');
       expect(imageName).to.include(serviceName);
 
@@ -106,18 +109,22 @@ describe('Inspect API', () => {
     }
 
     const infoZookeeper = await inspect.getZookeeperInfo(zookeeper);
+    expect(infoZookeeper.errors).to.be.undefined;
     expectResult(inspect.kind.zookeeper, infoZookeeper);
 
     const infoBroker = await inspect.getBrokerInfo(broker);
+    expect(infoBroker.errors).to.be.undefined;
     expectResult(inspect.kind.broker, infoBroker);
 
     const infoWorker = await inspect.getWorkerInfo(worker);
+    expect(infoWorker.errors).to.be.undefined;
     expectResult(inspect.kind.worker, infoWorker);
   });
 
   it('fetchTopicDefinition', async () => {
     const infoTopic = await inspect.getBrokerInfo();
-    const { imageName, settingDefinitions, classInfos } = infoTopic;
+    expect(infoTopic.errors).to.be.undefined;
+    const { imageName, settingDefinitions, classInfos } = infoTopic.data;
 
     expect(imageName).to.be.a('string');
 
@@ -150,8 +157,10 @@ describe('Inspect API', () => {
       name: worker.name,
       group: worker.group,
     });
-    expect(infoWorker.classInfos).to.be.an('array');
-    infoWorker.classInfos.forEach(classInfo => {
+    expect(infoWorker.errors).to.be.undefined;
+
+    expect(infoWorker.data.classInfos).to.be.an('array');
+    infoWorker.data.classInfos.forEach(classInfo => {
       const { className, classType, settingDefinitions } = classInfo;
       expect(className).to.be.a('string');
 
@@ -174,6 +183,7 @@ describe('Inspect API', () => {
     cy.createJar(file)
       .then(params => inspect.getFileInfoWithoutUpload(params))
       .then(result => {
+        expect(result.errors).to.be.undefined;
         const {
           name,
           group,
@@ -182,7 +192,7 @@ describe('Inspect API', () => {
           size,
           tags,
           url,
-        } = result;
+        } = result.data;
 
         expect(name).to.be.a('string');
         expect(name).to.eq(file.name);
@@ -228,6 +238,7 @@ describe('Inspect API', () => {
     cy.createJar(source)
       .then(params => inspect.getFileInfoWithoutUpload(params))
       .then(result => {
+        expect(result.errors).to.be.undefined;
         const {
           name,
           group,
@@ -236,7 +247,7 @@ describe('Inspect API', () => {
           size,
           tags,
           url,
-        } = result;
+        } = result.data;
 
         expect(name).to.be.a('string');
         expect(name).to.eq(source.name);
@@ -282,6 +293,7 @@ describe('Inspect API', () => {
     cy.createJar(sink)
       .then(params => inspect.getFileInfoWithoutUpload(params))
       .then(result => {
+        expect(result.errors).to.be.undefined;
         const {
           name,
           group,
@@ -290,7 +302,7 @@ describe('Inspect API', () => {
           size,
           tags,
           url,
-        } = result;
+        } = result.data;
 
         expect(name).to.be.a('string');
         expect(name).to.eq(sink.name);
