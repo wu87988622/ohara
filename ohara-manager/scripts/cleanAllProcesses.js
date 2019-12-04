@@ -20,13 +20,21 @@ const cp = require('child_process');
 
 // Kill both server and client processes
 try {
-  cp.execSync('./node_modules/.bin/forever stopall', { stdio: 'inherit' });
+  if (process.platform === 'win32') {
+    cp.execSync('node_modules\\.bin\\forever stopall', { stdio: 'inherit' });
+  } else {
+    cp.execSync('./node_modules/.bin/forever stopall', { stdio: 'inherit' });
+  }
 } catch (error) {
   throw new Error(error);
 }
 
 try {
-  cp.execSync('pkill -f start.js', { stdio: 'inherit' });
+  if (process.platform === 'win32') {
+    console.warn('Windows cannot delete tasklist due to security issue!');
+  } else {
+    cp.execSync('pkill -f start.js', { stdio: 'inherit' });
+  }
 } catch (error) {
   if (error.status === 1) {
     // Couldn't find any processes, exit with success status

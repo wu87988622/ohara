@@ -16,6 +16,19 @@
 
 defaultTasks 'clean', 'build'
 
+import org.apache.tools.ant.taskdefs.condition.Os
+private static Iterable<String> toOsCommand(Object... commands) {
+  def newCmds = []
+  if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+    // append "windows command exec" to the actual commands
+    newCmds = ['cmd', '/c']
+  }
+
+  newCmds.addAll(commands)
+  println newCmds
+  return newCmds
+}
+
 /**
  * clean all processes and files, and then install all dependencies
  */
@@ -24,10 +37,10 @@ task clean {
     doLast {
       // We need some Manager's dependencies so we'll able to run the claen command afterward
       exec {
-        commandLine 'yarn'
+        commandLine toOsCommand('yarn')
       }
       exec {
-        commandLine 'yarn', 'clean'
+        commandLine toOsCommand('yarn', 'clean')
       }
     }
   }
@@ -37,7 +50,7 @@ task setup {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'setup'
+        commandLine toOsCommand('yarn', 'setup')
       }
     }
   }
@@ -47,7 +60,7 @@ task test {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'test'
+        commandLine toOsCommand('yarn', 'test')
       }
     }
   }
@@ -58,7 +71,7 @@ task lint {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'lint:ci'
+        commandLine toOsCommand('yarn', 'lint:ci')
       }
     }
   }
@@ -69,7 +82,7 @@ task format {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'format:check'
+        commandLine toOsCommand('yarn', 'format:check')
       }
     }
   }
@@ -83,7 +96,7 @@ task api {
         if(!project.hasProperty('ohara.manager.api.configurator')) throw new IllegalArgumentException("ohara.manager.api.configurator is required")
         String configurator = project.getProperty('ohara.manager.api.configurator')
 
-        commandLine 'yarn', 'test:api:ci', '--port', 0, '--configurator', configurator    
+        commandLine toOsCommand('yarn', 'test:api:ci', '--port', 0, '--configurator', configurator)
       }
     }
   }
@@ -114,7 +127,7 @@ task e2e {
         if(!project.hasProperty('ohara.it.container.prefix')) throw new IllegalArgumentException("ohara.it.container.prefix is required")
         String prefix = project.getProperty('ohara.it.container.prefix')
                
-        commandLine 'yarn', 'test:e2e:ci', '--port', 0, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass, '--servicePrefix', prefix
+        commandLine toOsCommand('yarn', 'test:e2e:ci', '--port', 0, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass, '--servicePrefix', prefix)
       }
     }
   }
@@ -134,7 +147,7 @@ task runManager {
   description 'run a manager'
   doLast {
     exec {
-      commandLine 'yarn', 'setup'
+      commandLine toOsCommand('yarn', 'setup')
     }
     exec {
       String port = 22222
@@ -143,7 +156,7 @@ task runManager {
       if(!project.hasProperty('configurator')) throw new IllegalArgumentException("configurator is required")
       String configurator = project.getProperty('configurator')
 
-      commandLine 'node', './start.js', '--port', port, "--configurator", configurator
+      commandLine toOsCommand('node', './start.js', '--port', port, "--configurator", configurator)
     }
   }
 }
