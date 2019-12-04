@@ -16,30 +16,38 @@
 
 package com.island.ohara.configurator.route
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
-import com.island.ohara.client.configurator.Data
-import com.island.ohara.client.configurator.v0.ObjectApi._
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.client.configurator.v0.ObjectApi
+import com.island.ohara.client.configurator.v0.ObjectApi.{Creation, OBJECTS_PREFIX_PATH, ObjectInfo, Updating}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
-import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
+
 private[configurator] object ObjectRoute {
-  private[this] def toObject(data: Data): Object = Object(
-    group = data.group,
-    name = data.name,
-    lastModified = data.lastModified,
-    kind = data.kind,
-    tags = data.tags
-  )
+  private[this] def toObject(creation: Creation): Future[ObjectInfo] =
+    Future.successful(
+      ObjectInfo(
+        creation.settings,
+        // add the last timestamp manually since there is no explicit field in ObjectInfo
+        CommonUtils.current()
+      )
+    )
+
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    pathPrefix(OBJECT_PREFIX_PATH) {
-      pathEnd(get(complete(store.raws().map(_.map(toObject))))) ~ path(Segment) { name =>
-        parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
-          get(complete(store.raws(ObjectKey.of(group, name)).map(_.map(toObject))))
-        }
-      }
-    }
+    RouteBuilder[Creation, Updating, ObjectInfo]()
+      .root(OBJECTS_PREFIX_PATH)
+      .hookOfCreation(toObject)
+      .hookOfUpdating(
+        (key, updating, previousOption) =>
+          toObject(previousOption match {
+            case None => new Creation(updating.settings)
+            case Some(previous) =>
+              ObjectApi.access.request.key(key).settings(previous.settings).settings(updating.settings).creation
+          })
+      )
+      .hookOfGet(Future.successful(_))
+      .hookOfList(Future.successful(_))
+      .hookBeforeDelete(_ => Future.unit)
+      .build()
 }

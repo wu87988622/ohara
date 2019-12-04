@@ -214,6 +214,7 @@ package object v0 {
 
   /**
     * add limits to group and name.
+    * NOTED: this rules don't include the default value to group!!!
     * @return refiner
     */
   private[v0] def limitsOfKey[T]: JsonRefiner[T] =

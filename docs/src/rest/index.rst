@@ -100,3 +100,4 @@ Manage clusters
    rest-files
    rest-logs
    rest-inspect
+   rest-objects

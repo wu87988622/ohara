@@ -19,22 +19,130 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
-  val OBJECT_PREFIX_PATH: String = "objects"
+  val OBJECTS_PREFIX_PATH: String = "objects"
 
-  final case class Object(group: String, name: String, lastModified: Long, kind: String, tags: Map[String, JsValue])
-      extends Data
-  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat5(Object)
+  final class Creation(val settings: Map[String, JsValue]) extends BasicCreation {
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
-  class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
-    def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
-      exec.get[Seq[Object], ErrorApi.Error](urlBuilder.key(key).build())
-    def list()(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
-      exec.get[Seq[Object], ErrorApi.Error](url)
+    override def group: String = settings.group.get
+
+    override def name: String = settings.name.get
+
+    override def tags: Map[String, JsValue] = settings.tags.get
+  }
+  private[ohara] implicit val OBJECT_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+    rulesOfKey[Creation]
+      .format(new RootJsonFormat[Creation] {
+        override def write(obj: Creation): JsValue = JsObject(obj.settings)
+
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
+      })
+      .nullToEmptyObject(TAGS_KEY)
+      .refine
+
+  final class Updating(val settings: Map[String, JsValue]) {
+    // We use the update parser to get the name and group
+    private[ObjectApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
+
+    private[ObjectApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
+
+    def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map {
+      case s: JsObject => s.fields
+      case other: JsValue =>
+        throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
+    }
+  }
+
+  implicit val OBJECT_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] = new RootJsonFormat[Updating] {
+    override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
+
+    override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+  }
+
+  final class ObjectInfo private[v0] (val settings: Map[String, JsValue]) extends Data with Serializable {
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
+
+    override def group: String = settings.group
+
+    override def name: String = settings.name
+
+    override def lastModified: Long = settings(LAST_MODIFIED_KEY).convertTo[Long]
+
+    override def kind: String = "object"
+
+    override def tags: Map[String, JsValue] = settings.tags
+
+    override def equals(obj: Any): Boolean = obj match {
+      case other: ObjectInfo => other.settings == settings
+      case _                 => false
+    }
+
+    override def hashCode(): Int = settings.hashCode()
+
+    override def toString: String = settings.toString()
+  }
+
+  object ObjectInfo {
+    def apply(settings: Map[String, JsValue], lastModified: Long): ObjectInfo =
+      new ObjectInfo(settings + (LAST_MODIFIED_KEY -> JsNumber(lastModified)))
+  }
+
+  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[ObjectInfo] = new RootJsonFormat[ObjectInfo] {
+    override def write(obj: ObjectInfo): JsValue = JsObject(obj.settings)
+    override def read(json: JsValue): ObjectInfo = new ObjectInfo(json.asJsObject.fields)
+  }
+
+  trait Request {
+    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
+
+    def name(name: String): Request =
+      settings(Map(NAME_KEY -> JsString(name)))
+
+    def group(group: String): Request =
+      settings(Map(GROUP_KEY -> JsString(group)))
+
+    def key(key: ObjectKey): Request =
+      settings(Map(NAME_KEY -> JsString(key.name()), GROUP_KEY -> JsString(key.group())))
+
+    def settings(settings: Map[String, JsValue]): Request = {
+      this.settings ++= settings
+      this
+    }
+
+    def creation: Creation =
+      OBJECT_CREATION_JSON_FORMAT.read(OBJECT_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
+
+    def updating: Updating =
+      OBJECT_UPDATING_JSON_FORMAT.read(OBJECT_UPDATING_JSON_FORMAT.write(new Updating(settings.toMap)))
+
+    /**
+      * generate the POST request
+      * @param executionContext thread pool
+      * @return created data
+      */
+    def create()(implicit executionContext: ExecutionContext): Future[ObjectInfo]
+
+    /**
+      * generate the PUT request
+      * @param executionContext thread pool
+      * @return updated/created data
+      */
+    def update()(implicit executionContext: ExecutionContext): Future[ObjectInfo]
+  }
+
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.Access[Creation, Updating, ObjectInfo](OBJECTS_PREFIX_PATH) {
+    def request: Request = new Request {
+      override def create()(implicit executionContext: ExecutionContext): Future[ObjectInfo] = post(creation)
+      override def update()(implicit executionContext: ExecutionContext): Future[ObjectInfo] =
+        put(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
+    }
   }
 
   def access: Access = new Access

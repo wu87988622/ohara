@@ -245,7 +245,7 @@ object RouteBuilder {
                           complete(
                             store
                               .get[Res](key)
-                              .flatMap(previous => hook(key = key, update = update, previous = previous))
+                              .flatMap(previous => hook(key = key, updating = update, previous = previous))
                               .flatMap(store.add)
                           )
                       )

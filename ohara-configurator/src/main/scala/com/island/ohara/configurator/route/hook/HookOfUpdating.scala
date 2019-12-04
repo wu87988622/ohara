@@ -29,6 +29,6 @@ import scala.concurrent.Future
   *
   * @tparam Res result to response
   */
-trait HookOfUpdating[Update, Res <: Data] {
-  def apply(key: ObjectKey, update: Update, previous: Option[Res]): Future[Res]
+trait HookOfUpdating[Updating, Res <: Data] {
+  def apply(key: ObjectKey, updating: Updating, previous: Option[Res]): Future[Res]
 }
