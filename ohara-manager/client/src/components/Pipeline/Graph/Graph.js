@@ -19,15 +19,25 @@ import { useTheme } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
 
+import { usePrevious } from 'utils/hooks';
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
 import { Paper, PaperWrapper } from './GraphStyles';
-import { usePrevious } from 'utils/hooks';
+import { updateCurrentCell } from './graphUtils';
+import { useZoom, useCenter } from './GraphHooks';
 
 const Graph = props => {
   const { palette } = useTheme();
-  const [paperScale, setPaperScale] = useState(1);
-  const [isFitToContent, setIsFitToContent] = useState(false);
+  const [hasSelectedCell, setHasSelectedCell] = useState(false);
+  const {
+    setZoom,
+    paperScale,
+    setPaperScale,
+    isFitToContent,
+    setIsFitToContent,
+  } = useZoom();
+
+  const { setCenter, isCentered, setIsCentered } = useCenter();
 
   const {
     isToolboxOpen,
@@ -43,19 +53,18 @@ const Graph = props => {
   let graph = useRef(null);
   let paper = useRef(null);
   let dragStartPosition = useRef(null);
+  let currentCell = useRef(null);
 
   useEffect(() => {
     const renderGraph = () => {
       graph.current = new joint.dia.Graph();
-
-      // This variable will be used in the future
-      // eslint-disable-next-line
       paper.current = new joint.dia.Paper({
         el: document.getElementById('paper'),
         model: graph.current,
         width: '100%',
         height: '100%',
         gridSize: 10,
+        origin: { x: 0, y: 0 },
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
         defaultConnectionPoint: { name: 'boundary' },
         background: {
@@ -66,37 +75,51 @@ const Graph = props => {
         restrictTranslate: true, // prevent graph from stepping outside of the paper
       });
 
-      paper.current.on('cell:pointerclick', function(elementView) {
-        if (!elementView.$box) return;
-        resetAll(this);
-        elementView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
-        elementView.model.attributes.menuDisplay = 'block';
-        elementView.updateBox();
+      paper.current.on('cell:pointerclick', cellView => {
+        currentCell.current = {
+          cellView,
+          bBox: {
+            ...cellView.getBBox(),
+            ...cellView.getBBox().center(),
+          },
+        };
+
+        setHasSelectedCell(true);
+
+        if (!cellView.$box) return;
+
+        resetAll(paper.current);
+        cellView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
+        cellView.model.attributes.menuDisplay = 'block';
+        cellView.updateBox();
         const links = graph.current.getLinks();
+
         if (links.length > 0) {
           const disConnectLink = links.filter(
             link => !link.attributes.target.id,
           );
           if (disConnectLink.length > 0) {
-            disConnectLink[0].target({ id: elementView.model.id });
+            disConnectLink[0].target({ id: cellView.model.id });
           }
         }
       });
 
-      paper.current.on('blank:pointerclick', function() {
-        resetAll(this);
+      paper.current.on('blank:pointerclick', () => {
+        resetAll(paper.current);
         resetLink();
+        currentCell.current = null;
+        setHasSelectedCell(false);
       });
 
-      paper.current.on('cell:mouseenter', function(elementView) {
-        if (!elementView.$box) return;
-        elementView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
+      paper.current.on('cell:mouseenter', cellView => {
+        if (!cellView.$box) return;
+        cellView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
       });
 
-      paper.current.on('cell:mouseleave', function(elementView) {
-        if (!elementView.$box) return;
-        if (elementView.model.attributes.menuDisplay === 'none') {
-          elementView.$box.css('boxShadow', '');
+      paper.current.on('cell:mouseleave', cellView => {
+        if (!cellView.$box) return;
+        if (cellView.model.attributes.menuDisplay === 'none') {
+          cellView.$box.css('boxShadow', '');
         }
       });
 
@@ -115,6 +138,9 @@ const Graph = props => {
           delete dragStartPosition.current.x;
           delete dragStartPosition.current.y;
         }
+
+        updateCurrentCell(currentCell);
+        setIsCentered(false);
       });
 
       const resetAll = paper => {
@@ -141,68 +167,7 @@ const Graph = props => {
     };
 
     renderGraph();
-  }, [palette.common.white, palette.grey, palette.primary]);
-
-  const setZoom = (scale, instruction = 'fromDropdown') => {
-    const fixedScale = Number((Math.floor(scale * 100) / 100).toFixed(2));
-    const allowedScales = [0.01, 0.03, 0.06, 0.12, 0.25, 0.5, 1.0, 2.0];
-    const isValidScale = allowedScales.includes(fixedScale);
-
-    // Prevent graph from rescaling again
-    setIsFitToContent(false);
-
-    if (isValidScale) {
-      // If the instruction is `fromDropdown`, we will use the scale it gives
-      // and update the state right alway
-      if (instruction === 'fromDropdown') return setPaperScale(scale);
-
-      // By default, the scale is multiply and divide by `2`
-      let newScale = 0;
-      if (instruction === 'in') {
-        // Dealing with two edge cases here, these two
-        // values are not valid in our App
-        // 0.02 -> 0.03
-        // 0.24 -> 0.25
-        if (fixedScale * 2 === 0.02) {
-          newScale = 0.03;
-        } else if (fixedScale * 2 === 0.24) {
-          newScale = 0.25;
-        } else {
-          // Handle other scale normally
-          newScale = fixedScale * 2;
-        }
-      } else {
-        newScale = fixedScale / 2;
-      }
-
-      return setPaperScale(newScale);
-    }
-
-    // Handle `none-valid` scales here
-    const defaultScales = [0.5, 1.0, 2.0];
-    const closestInScale = defaultScales.reduce((prev, curr) => {
-      return Math.abs(curr - fixedScale) < Math.abs(prev - fixedScale)
-        ? curr
-        : prev;
-    });
-
-    // The next value of the `closetInScale` is the out scale
-    const inScaleIndex = defaultScales.indexOf(closestInScale);
-    const closestOutScale = defaultScales[inScaleIndex + 1];
-
-    let updatedInScale = closestInScale;
-    let updatedOutScale = closestOutScale;
-
-    // In case the calculation gives us the wrong scale
-    if (closestInScale >= fixedScale) {
-      updatedInScale = defaultScales[inScaleIndex - 1];
-      updatedOutScale = closestInScale;
-    }
-
-    const newScale =
-      instruction === 'in' ? updatedInScale * 2 : updatedOutScale / 2;
-    setPaperScale(newScale);
-  };
+  }, [palette.common.white, palette.grey, palette.primary, setIsCentered]);
 
   const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {
@@ -219,7 +184,10 @@ const Graph = props => {
       size.width / 2,
       size.height / 2,
     );
-  }, [isFitToContent, paperScale, prevPaperScale]);
+
+    updateCurrentCell(currentCell);
+    setIsCentered(false);
+  }, [isFitToContent, paperScale, prevPaperScale, setIsCentered]);
 
   useEffect(() => {
     if (!isFitToContent) return;
@@ -232,14 +200,14 @@ const Graph = props => {
     // This update is needed so the scale which displays on zoom in/out
     // dropdown will be reflected
     setPaperScale(paper.current.scale().sx);
-  }, [isFitToContent]);
+    updateCurrentCell(currentCell);
+    setIsCentered(false);
+  }, [isFitToContent, setIsCentered, setPaperScale]);
 
   useEffect(() => {
     document.getElementById('paper').addEventListener('mousemove', event => {
-      if (isFitToContent) {
-        // Reset the state so we can call fit to content multiple times
-        setIsFitToContent(false);
-      }
+      // Reset the state so we can call fit to content multiple times
+      if (isFitToContent) setIsFitToContent(false);
 
       if (
         dragStartPosition.current &&
@@ -252,7 +220,7 @@ const Graph = props => {
         );
       }
     });
-  }, [isFitToContent]);
+  }, [isFitToContent, setIsFitToContent]);
 
   return (
     <>
@@ -261,8 +229,16 @@ const Graph = props => {
         handleToolboxOpen={handleToolboxOpen}
         handleToolbarClick={handleToolbarClick}
         paperScale={paperScale}
-        setZoom={setZoom}
-        setFit={() => setIsFitToContent(true)}
+        handleZoom={setZoom}
+        handleFit={() => setIsFitToContent(true)}
+        handleCenter={() => {
+          if (!isCentered) {
+            setCenter({ paper, currentCell, paperScale });
+            setIsFitToContent(false);
+            setIsCentered(true);
+          }
+        }}
+        hasSelectedCell={hasSelectedCell}
       />
       <PaperWrapper>
         <Paper id="paper"></Paper>

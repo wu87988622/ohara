@@ -31,6 +31,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
@@ -41,8 +42,10 @@ const Toolbar = props => {
     handleToolboxOpen,
     handleToolbarClick,
     isToolboxOpen,
-    setZoom,
-    setFit,
+    handleZoom,
+    handleFit,
+    handleCenter,
+    hasSelectedCell,
   } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
@@ -58,7 +61,7 @@ const Toolbar = props => {
   };
 
   const handleZoomItemClick = newScale => () => {
-    setZoom(newScale);
+    handleZoom(newScale);
     handleZoomClose();
   };
 
@@ -87,16 +90,24 @@ const Toolbar = props => {
       <div className="toolbox-controls">
         <ButtonGroup size="small">
           <Button onClick={() => onToolboxClick('source')}>
-            <FlightTakeoffIcon color="action" />
+            <Tooltip title="Open Toolbox source panel" enterDelay={1000}>
+              <FlightTakeoffIcon color="action" />
+            </Tooltip>
           </Button>
           <Button onClick={() => onToolboxClick('topic')}>
-            <StorageIcon color="action" />
+            <Tooltip title="Open Toolbox topic panel" enterDelay={1000}>
+              <StorageIcon color="action" />
+            </Tooltip>
           </Button>
           <Button onClick={() => onToolboxClick('stream')}>
-            <WavesIcon color="action" />
+            <Tooltip title="Open Toolbox stream panel" enterDelay={1000}>
+              <WavesIcon color="action" />
+            </Tooltip>
           </Button>
           <Button onClick={() => onToolboxClick('sink')}>
-            <FlightLandIcon color="action" />
+            <Tooltip title="Open Toolbox sink panel" enterDelay={1000}>
+              <FlightLandIcon color="action" />
+            </Tooltip>
           </Button>
         </ButtonGroup>
         <Typography variant="body2">Insert</Typography>
@@ -105,10 +116,12 @@ const Toolbar = props => {
         <div className="zoom">
           <ButtonGroup size="small">
             <Button
-              onClick={() => setZoom(paperScale, 'out')}
+              onClick={() => handleZoom(paperScale, 'out')}
               disabled={paperScale <= 0.02}
             >
-              <RemoveIcon color="action" />
+              <Tooltip title="Zoom out" enterDelay={1000}>
+                <RemoveIcon color="action" />
+              </Tooltip>
             </Button>
             <Button
               onClick={handleZoomClick}
@@ -119,10 +132,12 @@ const Toolbar = props => {
               {getZoomDisplayedValue(paperScale)}
             </Button>
             <Button
-              onClick={() => setZoom(paperScale, 'in')}
+              onClick={() => handleZoom(paperScale, 'in')}
               disabled={paperScale >= 2}
             >
-              <AddIcon color="action" />
+              <Tooltip title="Zoom in" enterDelay={1000}>
+                <AddIcon color="action" />
+              </Tooltip>
             </Button>
           </ButtonGroup>
           <Typography variant="body2">Zoom</Typography>
@@ -141,19 +156,35 @@ const Toolbar = props => {
 
         <div className="fit">
           <Button
-            onClick={setFit}
+            onClick={handleFit}
             variant="outlined"
             color="default"
             size="small"
           >
-            <FullscreenIcon color="action" />
+            <Tooltip
+              title="Resize the paper to fit the content"
+              enterDelay={1000}
+            >
+              <FullscreenIcon color="action" />
+            </Tooltip>
           </Button>
           <Typography variant="body2">Fit</Typography>
         </div>
 
         <div className="center">
-          <Button variant="outlined" color="default" size="small">
-            <FullscreenExitIcon color="action" />
+          <Button
+            onClick={handleCenter}
+            variant="outlined"
+            color="default"
+            size="small"
+            disabled={!hasSelectedCell}
+          >
+            <Tooltip
+              title="Move selected graph to the center"
+              enterDelay={1000}
+            >
+              <FullscreenExitIcon color="action" />
+            </Tooltip>
           </Button>
           <Typography variant="body2">Center</Typography>
         </div>
@@ -211,8 +242,10 @@ Toolbar.propTypes = {
   handleToolbarClick: PropTypes.func.isRequired,
   isToolboxOpen: PropTypes.bool.isRequired,
   paperScale: PropTypes.number.isRequired,
-  setZoom: PropTypes.func.isRequired,
-  setFit: PropTypes.func.isRequired,
+  handleZoom: PropTypes.func.isRequired,
+  handleFit: PropTypes.func.isRequired,
+  handleCenter: PropTypes.func.isRequired,
+  hasSelectedCell: PropTypes.bool.isRequired,
 };
 
 export default Toolbar;
