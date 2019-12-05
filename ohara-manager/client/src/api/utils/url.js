@@ -32,6 +32,7 @@ export const VALIDATE_URL = `${BASE_URL}/validate`;
 export const CONTAINER_URL = `${BASE_URL}/containers`;
 export const INSPECT_URL = `${BASE_URL}/inspect`;
 export const FILE_URL = `${BASE_URL}/files`;
+export const OBJECT_URL = `${BASE_URL}/objects`;
 
 // Helper function
 export const toQueryParameters = (params = {}) => {

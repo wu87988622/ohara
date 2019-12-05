@@ -23,6 +23,7 @@ import * as wkApi from '../src/api/workerApi';
 import * as connectorApi from '../src/api/connectorApi';
 import * as topicApi from '../src/api/topicApi';
 import * as streamApi from '../src/api/streamApi';
+import * as objectApi from '../src/api/objectApi';
 
 export const createServices = async ({
   withWorker = false,
@@ -180,4 +181,14 @@ export const deleteAllServices = async () => {
   // we don't care the execute order of each individual file was done or not.
   // Using Promise.all() to make sure all files were deleted.
   await Promise.all(files.map(file => fileApi.remove(file)));
+
+  // delete all objects
+  const objectRes = await objectApi.getAll();
+  if (objectRes.errors) {
+    throw new Error(JSON.stringify(objectRes));
+  }
+  const objects = objectRes.data;
+  // we don't care the execute order of each individual object was done or not.
+  // Using Promise.all() to make sure all objects were deleted.
+  await Promise.all(objects.map(object => objectApi.remove(object)));
 };

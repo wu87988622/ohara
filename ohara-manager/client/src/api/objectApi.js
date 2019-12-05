@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as node from './body/nodeBody';
+import * as objBody from './body/objectBody';
 import {
   getKey,
   requestUtil,
@@ -25,63 +25,61 @@ import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
 
-const url = URL.NODE_URL;
-
-export const state = {
-  available: 'AVAILABLE',
-  unavailable: 'UNAVAILABLE',
-};
+const url = URL.OBJECT_URL;
 
 export const create = async (params = {}) => {
-  const requestBody = requestUtil(params, node);
+  const requestBody = requestUtil(params, objBody);
   const res = await axiosInstance.post(url, requestBody);
 
-  const result = responseUtil(res, node);
+  const result = responseUtil(res, objBody);
   result.title =
-    `Create node ${getKey(params)} ` +
+    `Create object ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const update = async params => {
-  const { hostname } = params;
-  delete params[hostname];
+  const { name, group } = params;
+  delete params[name];
+  delete params[group];
   const body = params;
-  const res = await axiosInstance.put(`${url}/${hostname}`, body);
-  const result = responseUtil(res, node);
+  const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
+  const result = responseUtil(res, objBody);
   result.title =
-    `Update node ${getKey(params)} ` +
+    `Update object ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const remove = async params => {
-  const { hostname } = params;
-  await axiosInstance.delete(`${url}/${hostname}`);
+  const { name, group } = params;
+  await axiosInstance.delete(`${url}/${name}?group=${group}`);
   const res = await wait({
     url,
-    checkFn: waitUtil.waitForNodeNonexistent,
+    checkFn: waitUtil.waitForObjectNonexistent,
     paramRes: params,
   });
-  const result = responseUtil(res, node);
+  const result = responseUtil(res, objBody);
   result.title =
-    `Remove node ${getKey(params)} ` +
+    `Remove object ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const get = async params => {
-  const { hostname } = params;
-  const res = await axiosInstance.get(`${url}/${hostname}`);
-  const result = responseUtil(res, node);
+  const { name, group } = params;
+  const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+  const result = responseUtil(res, objBody);
   result.title =
-    `Get node ${getKey(params)} ` + (result.errors ? 'failed.' : 'successful.');
+    `Get object ${getKey(params)} ` +
+    (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
-  const result = responseUtil(res, node);
-  result.title = `Get node list ` + (result.errors ? 'failed.' : 'successful.');
+  const result = responseUtil(res, objBody);
+  result.title =
+    `Get object list ` + (result.errors ? 'failed.' : 'successful.');
   return result;
 };

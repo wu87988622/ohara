@@ -55,6 +55,14 @@ export const waitForNodeNonexistent = (res, params) => {
   return !result;
 };
 
+export const waitForObjectNonexistent = (res, params) => {
+  const { name, group } = params;
+  const result = res.data.result.some(
+    d => d.name === name && d.group === group,
+  );
+  return !result;
+};
+
 export const waitForNodeReady = (res, node) => {
   const nodeNames = res.data.result.settings.nodeNames;
   return nodeNames.includes(node);
