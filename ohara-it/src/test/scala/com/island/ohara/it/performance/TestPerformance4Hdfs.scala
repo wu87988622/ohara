@@ -27,8 +27,8 @@ import org.junit.{After, AssumptionViolatedException, Test}
 
 @Category(Array(classOf[PerformanceGroup]))
 class TestPerformance4Hdfs extends BasicTestPerformance {
-  private[this] val HDFS_URL_KEY: String         = "ohara.it.hdfs.url"
-  private[this] val NEED_DELETE_DATA_KEY: String = "ohara.it.hdfs.needDeleteData"
+  private[this] val HDFS_URL_KEY: String         = "ohara.it.performance.hdfs.url"
+  private[this] val NEED_DELETE_DATA_KEY: String = "ohara.it.performance.hdfs.needDeleteData"
 
   private[this] val connectorKey: ConnectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5))
   private[this] val topicKey: TopicKey         = TopicKey.of("benchmark", CommonUtils.randomString(5))

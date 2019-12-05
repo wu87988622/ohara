@@ -66,7 +66,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       .port(configuratorPort)
 
   //------------------------------[global properties]------------------------------//
-  private[this] val durationOfTestPerformanceKey     = "durationOfTestPerformance"
+  private[this] val durationOfTestPerformanceKey     = "ohara.it.performance.duration"
   private[this] val durationOfTestPerformanceDefault = 30 seconds
   private[this] val durationOfTestPerformance = {
     val v = value(durationOfTestPerformanceKey).map(Duration.apply).getOrElse(durationOfTestPerformanceDefault)
@@ -75,7 +75,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     v
   }
 
-  private[this] val csvOutputFolderKey = "csvOutputFolder"
+  private[this] val csvOutputFolderKey = "ohara.it.performance.output"
   private[this] val csvOutputFolder: File = mkdir(
     new File(
       value(csvOutputFolderKey)
@@ -84,38 +84,24 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   )
 
   //------------------------------[topic properties]------------------------------//
-  private[this] val numberOfProducerThreadKey     = "numberOfProducerThread"
-  private[this] val numberOfProducerThreadDefault = 2
-  private[this] val numberOfProducerThread =
-    value(numberOfProducerThreadKey).map(_.toInt).getOrElse(numberOfProducerThreadDefault)
+  private[this] val numberOfProducerThread: Int = 4
 
-  private[this] val megabytesOfInputDataKey           = "megabytesOfInputData"
+  private[this] val megabytesOfInputDataKey           = "ohara.it.performance.data.size"
   private[this] val megabytesOfInputDataDefault: Long = 100
   private[this] val sizeOfInputData =
     1024L * 1024L * value(megabytesOfInputDataKey).map(_.toLong).getOrElse(megabytesOfInputDataDefault)
 
-  private[this] val durationOfTestProducingInputDataKey = "durationOfTestProducingInputData"
-  private[this] val durationOfTestProducingInputDataDefault =
-    (durationOfTestPerformanceDefault.toMillis * 10) milliseconds
-  private[this] val durationOfTestProducingInputData =
-    value(durationOfTestProducingInputDataKey).map(Duration.apply).getOrElse(durationOfTestProducingInputDataDefault)
-  //------------------------------[producer properties]------------------------------//
-  private[this] val numberOfPartitionsKey     = "numberOfPartitions"
-  private[this] val numberOfPartitionsDefault = 1
+  private[this] val durationOfTestProducingInputData = (durationOfTestPerformanceDefault.toMillis * 10) milliseconds
+  private[this] val numberOfPartitionsKey            = "ohara.it.performance.topic.partitions"
+  private[this] val numberOfPartitionsDefault        = 1
   protected val numberOfPartitions: Int =
     value(numberOfPartitionsKey).map(_.toInt).getOrElse(numberOfPartitionsDefault)
 
-  private[this] val numberOfRowsToFlushKey     = "numberOfRowsToFlush"
-  private[this] val numberOfRowsToFlushDefault = 10
-  private[this] val numberOfRowsToFlush =
-    value(numberOfRowsToFlushKey).map(_.toInt).getOrElse(numberOfRowsToFlushDefault)
-
-  private[this] val cellNamesKey           = "cellNames"
-  private[this] val cellNamesDefault       = Set("c0", "c1", "c2")
-  private[this] val cellNames: Set[String] = value(cellNamesKey).map(_.split(",").toSet).getOrElse(cellNamesDefault)
+  private[this] val numberOfRowsToFlush: Int = 2000
+  private[this] val cellNames: Set[String]   = (0 until 10).map(index => s"c$index").toSet
 
   //------------------------------[connector properties]------------------------------//
-  private[this] val numberOfConnectorTasksKey     = "numberOfConnectorTasks"
+  private[this] val numberOfConnectorTasksKey     = "ohara.it.performance.connector.tasks"
   private[this] val numberOfConnectorTasksDefault = 1
   protected val numberOfConnectorTasks: Int =
     value(numberOfConnectorTasksKey).map(_.toInt).getOrElse(numberOfConnectorTasksDefault)

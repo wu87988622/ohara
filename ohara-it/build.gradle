@@ -114,43 +114,12 @@ task sinkJar(type: Jar, dependsOn: compileJava) {
  * a custom test for IT tasks. It initialize the arguments for all tasks.
  */
 class OharaTest extends Test {
-  static def IT_ARGUMENTS = [
-          "ohara.it.docker",
-          // hostname used to expose the location of configurator
-          "ohara.it.hostname",
-          // hostname used to expose the location of configurator
-          "ohara.it.port",
-          "ohara.it.k8s",
-          "ohara.it.k8s.namespace",
-          "ohara.it.k8s.nodename",
-          "ohara.it.k8s.metrics.server",
-          // set the prefix to all containers
-          "ohara.it.container.prefix",
-          // set database setting
-          "ohara.it.oracle.db.url",
-          "ohara.it.oracle.db.username",
-          "ohara.it.oracle.db.password",
-          "ohara.it.postgresql.db.url",
-          "ohara.it.postgresql.db.username",
-          "ohara.it.postgresql.db.password",
-          "ohara.it.jar.folder",
-          // set smb setting
-          "ohara.it.smb.hostname",
-          "ohara.it.smb.port",
-          "ohara.it.smb.username",
-          "ohara.it.smb.password",
-          "ohara.it.smb.shareName",
-          // set hdfs setting
-          "ohara.it.hdfs.url",
-          "ohara.it.hdfs.needDeleteData",
-          // assign "true" to this false to keep all containers created by IT
-          "ohara.it.keep.containers"
-  ]
-
-  public OharaTest() {
-    IT_ARGUMENTS.forEach {
-      keyword ->
-        if(project.hasProperty(keyword)) environment keyword, project.getProperty(keyword)
+  OharaTest() {
+    project.getProperties().forEach {
+      k, v ->
+        if (k.startsWith("ohara.it")) {
+          environment k, v
+        }
     }
     maxParallelForks = 1
     forkEvery = 1
@@ -170,9 +139,11 @@ class OharaTest extends Test {
  * the junit arguments to test is controlled by root/gradle so we just assign the properties.
  */
 test {
-  OharaTest.IT_ARGUMENTS.forEach {
-    keyword ->
-      if(project.hasProperty(keyword)) environment keyword, project.getProperty(keyword)
+  project.getProperties().forEach {
+    k, v ->
+      if (k.startsWith("ohara.it")) {
+        environment k, v
+      }
   }
   // generate the testing-purpose jars for IT
   dependsOn 'sourceJar'
