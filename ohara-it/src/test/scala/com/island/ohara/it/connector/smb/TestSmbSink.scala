@@ -49,6 +49,6 @@ class TestSmbSink extends CsvSinkTestBase {
     SMB_USER_KEY       -> itProps.username,
     SMB_PASSWORD_KEY   -> itProps.password,
     SMB_SHARE_NAME_KEY -> itProps.shareName,
-    TOPICS_DIR_KEY     -> "output"
+    OUTPUT_FOLDER_KEY  -> "output"
   )
 }

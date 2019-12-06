@@ -29,7 +29,7 @@ case class FtpSinkProps(
 ) {
   def toMap: Map[String, String] =
     Map(
-      TOPICS_DIR_KEY       -> topicsDir,
+      OUTPUT_FOLDER_KEY    -> topicsDir,
       FILE_NEED_HEADER_KEY -> needHeader.toString,
       FILE_ENCODE_KEY      -> encode,
       FTP_HOSTNAME_KEY     -> hostname,
@@ -41,7 +41,7 @@ case class FtpSinkProps(
 
 object FtpSinkProps {
   def apply(settings: TaskSetting): FtpSinkProps = FtpSinkProps(
-    topicsDir = settings.stringValue(TOPICS_DIR_KEY),
+    topicsDir = settings.stringValue(OUTPUT_FOLDER_KEY),
     needHeader = settings.booleanOption(FILE_NEED_HEADER_KEY).orElse(FILE_NEED_HEADER_DEFAULT),
     encode = settings.stringOption(FILE_ENCODE_KEY).orElse(FILE_ENCODE_DEFAULT),
     hostname = settings.stringValue(FTP_HOSTNAME_KEY),

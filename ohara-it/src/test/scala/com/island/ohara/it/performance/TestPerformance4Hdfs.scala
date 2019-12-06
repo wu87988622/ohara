@@ -50,9 +50,9 @@ class TestPerformance4Hdfs extends BasicTestPerformance {
       topicKey = topicKey,
       className = classOf[HDFSSink].getName(),
       settings = Map(
-        com.island.ohara.connector.hdfs.sink.HDFS_URL_KEY   -> JsString(hdfsURL),
-        com.island.ohara.connector.hdfs.sink.FLUSH_SIZE_KEY -> JsNumber(2000),
-        com.island.ohara.connector.hdfs.sink.TOPICS_DIR_KEY -> JsString(dataDir)
+        com.island.ohara.connector.hdfs.sink.HDFS_URL_KEY      -> JsString(hdfsURL),
+        com.island.ohara.connector.hdfs.sink.FLUSH_SIZE_KEY    -> JsNumber(2000),
+        com.island.ohara.connector.hdfs.sink.OUTPUT_FOLDER_KEY -> JsString(dataDir)
       )
     )
     sleepUntilEnd()

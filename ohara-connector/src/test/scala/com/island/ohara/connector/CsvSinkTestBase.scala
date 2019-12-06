@@ -42,7 +42,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   protected def setupProps: Map[String, String]
 
   private[this] val defaultProps: Map[String, String] = Map(
-    TOPICS_DIR_KEY         -> "/output",
+    OUTPUT_FOLDER_KEY      -> "/output",
     FLUSH_SIZE_KEY         -> "3",
     ROTATE_INTERVAL_MS_KEY -> "0", // don't auto commit on time
     FILE_NEED_HEADER_KEY   -> "false",
@@ -51,7 +51,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   private[this] def props: Map[String, String] = defaultProps ++ setupProps
 
-  private[this] def topicsDir = props(TOPICS_DIR_KEY)
+  private[this] def outputFolder = props(OUTPUT_FOLDER_KEY)
 
   private[this] val schema: Seq[Column] = Seq(
     Column.builder().name("a").dataType(DataType.STRING).order(1).build(),
@@ -78,7 +78,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   }
 
   private[this] def fetchData(topicKey: TopicKey): Seq[String] = {
-    val dir = Paths.get(topicsDir, topicKey.topicNameOnKafka(), "partition0").toString
+    val dir = Paths.get(outputFolder, topicKey.topicNameOnKafka(), "partition0").toString
     if (fileSystem.exists(dir)) {
       listCommittedFileNames(dir)
         .map(fileName => Paths.get(dir, fileName).toString)
@@ -115,9 +115,9 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   @Before
   def setup(): Unit = {
-    fileSystem.reMkdirs(topicsDir)
-    fileSystem.exists(topicsDir) shouldBe true
-    fileSystem.listFileNames(topicsDir).asScala.size shouldBe 0
+    fileSystem.reMkdirs(outputFolder)
+    fileSystem.exists(outputFolder) shouldBe true
+    fileSystem.listFileNames(outputFolder).asScala.size shouldBe 0
   }
 
   @Test

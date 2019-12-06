@@ -34,5 +34,5 @@ class TestHDFSSink extends CsvSinkTestBase {
   override val connectorClass: Class[_ <: CsvSinkConnector] = classOf[HDFSSink]
 
   override def setupProps: Map[String, String] =
-    Map(HDFS_URL_KEY -> localHdfsURL, TOPICS_DIR_KEY -> localTopicsDir)
+    Map(HDFS_URL_KEY -> localHdfsURL, OUTPUT_FOLDER_KEY -> localTopicsDir)
 }

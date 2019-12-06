@@ -28,7 +28,7 @@ class TestFtpSinkDefinitions extends OharaTest {
   private[this] val ftpSink = new FtpSink
   @Test
   def checkOutputFolder(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
+    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == OUTPUT_FOLDER_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true

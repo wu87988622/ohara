@@ -40,7 +40,7 @@ class TestFtpSinkProps extends OharaTest {
       encode = encode
     ).toMap
 
-    props(TOPICS_DIR_KEY) shouldBe topicsDir
+    props(OUTPUT_FOLDER_KEY) shouldBe topicsDir
     props(FILE_NEED_HEADER_KEY).toBoolean shouldBe needHeader
     props(FILE_ENCODE_KEY) shouldBe encode
     props(FTP_HOSTNAME_KEY) shouldBe hostname

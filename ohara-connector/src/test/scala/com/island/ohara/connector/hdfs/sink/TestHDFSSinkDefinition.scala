@@ -48,7 +48,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
 
   @Test
   def checkTopicsDir(): Unit = {
-    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == TOPICS_DIR_KEY).get
+    val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == OUTPUT_FOLDER_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
@@ -114,7 +114,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
         .settings(
           Map(
             HDFS_URL_KEY           -> s"file://${testUtil.hdfs.tmpDirectory}",
-            TOPICS_DIR_KEY         -> s"file://${testUtil.hdfs.tmpDirectory}",
+            OUTPUT_FOLDER_KEY      -> s"file://${testUtil.hdfs.tmpDirectory}",
             FLUSH_SIZE_KEY         -> "10",
             ROTATE_INTERVAL_MS_KEY -> "4000"
           )

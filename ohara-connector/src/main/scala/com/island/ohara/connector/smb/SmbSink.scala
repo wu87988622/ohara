@@ -50,7 +50,7 @@ class SmbSink extends CsvSinkConnector {
 
     try {
       val csvSinkConfig = CsvSinkConfig.of(settings, settings.columns)
-      val topicsDir     = csvSinkConfig.topicsDir()
+      val topicsDir     = csvSinkConfig.outputFolder()
       if (topicsDir.startsWith("/")) {
         throw new IllegalArgumentException(s"The $topicsDir is invalid, we don't allow paths beginning with a slash.")
       }

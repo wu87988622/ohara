@@ -36,7 +36,7 @@ public class TestCsvDataWriter extends WithMockStorage {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvConnectorDefinitions.TOPICS_DIR_KEY, topicsDir.getPath());
+    props.put(CsvConnectorDefinitions.OUTPUT_FOLDER_KEY, topicsDir.getPath());
     props.put(CsvConnectorDefinitions.FILE_NEED_HEADER_KEY, "false");
     props.putAll(localProps);
     return props;
@@ -142,7 +142,7 @@ public class TestCsvDataWriter extends WithMockStorage {
 
         String filePath =
             FileUtils.committedFileName(
-                config.topicsDir(), getDirectory(tp), tp, startOffset, extension);
+                config.outputFolder(), getDirectory(tp), tp, startOffset, extension);
         Collection<String> data = readData(filePath);
 
         Assert.assertEquals(size, data.size());

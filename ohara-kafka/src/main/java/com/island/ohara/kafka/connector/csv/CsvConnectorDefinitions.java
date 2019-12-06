@@ -54,13 +54,13 @@ public final class CsvConnectorDefinitions {
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 
-  public static final String TOPICS_DIR_KEY = "topics.dir";
-  public static final SettingDef TOPICS_DIR_DEFINITION =
+  public static final String OUTPUT_FOLDER_KEY = "output.folder";
+  public static final SettingDef OUTPUT_FOLDER_DEFINITION =
       SettingDef.builder()
           .displayName("Output Folder")
           .documentation("Read csv data from topic and then write to this folder")
           .required(SettingDef.Type.STRING)
-          .key(TOPICS_DIR_KEY)
+          .key(OUTPUT_FOLDER_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 

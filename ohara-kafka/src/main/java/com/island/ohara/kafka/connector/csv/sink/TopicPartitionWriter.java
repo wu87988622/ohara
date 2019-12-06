@@ -65,7 +65,7 @@ public class TopicPartitionWriter implements Releasable {
 
     this.flushSize = conf.flushSize();
     this.rotateIntervalMs = conf.rotateIntervalMs();
-    this.topicsDir = conf.topicsDir();
+    this.topicsDir = conf.outputFolder();
 
     this.buffer = new LinkedList<>();
     this.writers = new HashMap<>();

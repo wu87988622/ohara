@@ -80,7 +80,7 @@ package object ftp {
   @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String     = CsvConnectorDefinitions.INPUT_FOLDER_KEY
   @VisibleForTesting private[connector] val COMPLETED_FOLDER_KEY: String = CsvConnectorDefinitions.COMPLETED_FOLDER_KEY
   @VisibleForTesting private[connector] val ERROR_FOLDER_KEY: String     = CsvConnectorDefinitions.ERROR_FOLDER_KEY
-  @VisibleForTesting private[connector] val TOPICS_DIR_KEY: String       = CsvConnectorDefinitions.TOPICS_DIR_KEY
+  @VisibleForTesting private[connector] val OUTPUT_FOLDER_KEY: String    = CsvConnectorDefinitions.OUTPUT_FOLDER_KEY
   @VisibleForTesting private[connector] val FLUSH_SIZE_KEY: String       = CsvConnectorDefinitions.FLUSH_SIZE_KEY
   @VisibleForTesting private[connector] val FLUSH_SIZE_DEFAULT: Int      = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
   @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_KEY: String =

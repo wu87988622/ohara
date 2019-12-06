@@ -22,9 +22,9 @@ import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_
 import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_NEED_HEADER_KEY;
 import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT;
 import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.FLUSH_SIZE_KEY;
+import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.OUTPUT_FOLDER_KEY;
 import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFAULT;
 import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY;
-import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.TOPICS_DIR_KEY;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
@@ -39,13 +39,13 @@ import java.util.Optional;
 public class CsvSinkConfig {
   private final int flushSize;
   private final long rotateIntervalMs;
-  private final String topicsDir;
+  private final String outputFolder;
   private final String encode;
   private final boolean needHeader;
   private final List<Column> schema;
 
   private CsvSinkConfig(Builder builder) {
-    this.topicsDir = builder.topicsDir;
+    this.outputFolder = builder.outputFolder;
     this.flushSize = builder.flushSize;
     this.rotateIntervalMs = builder.rotateIntervalMs;
     this.encode = builder.encode;
@@ -61,8 +61,8 @@ public class CsvSinkConfig {
     return rotateIntervalMs;
   }
 
-  public String topicsDir() {
-    return topicsDir;
+  public String outputFolder() {
+    return outputFolder;
   }
 
   public String encode() {
@@ -98,9 +98,9 @@ public class CsvSinkConfig {
   public static CsvSinkConfig of(TaskSetting setting, List<Column> schema) {
     Builder builder = new Builder();
 
-    Optional<String> topicDir = setting.stringOption(TOPICS_DIR_KEY);
-    if (topicDir.isPresent()) {
-      builder.topicsDir(topicDir.get());
+    Optional<String> outputFolder = setting.stringOption(OUTPUT_FOLDER_KEY);
+    if (outputFolder.isPresent()) {
+      builder.outputFolder(outputFolder.get());
     }
 
     Optional<Integer> flushSize = setting.intOption(FLUSH_SIZE_KEY);
@@ -137,15 +137,15 @@ public class CsvSinkConfig {
   }
 
   public static class Builder implements com.island.ohara.common.pattern.Builder<CsvSinkConfig> {
-    private String topicsDir;
+    private String outputFolder;
     private int flushSize = FLUSH_SIZE_DEFAULT;
     private long rotateIntervalMs = ROTATE_INTERVAL_MS_DEFAULT;
     private boolean needHeader = FILE_NEED_HEADER_DEFAULT;
     private String encode = FILE_ENCODE_DEFAULT;
     private List<Column> schema;
 
-    public Builder topicsDir(String val) {
-      topicsDir = val;
+    public Builder outputFolder(String val) {
+      outputFolder = val;
       return this;
     }
 
@@ -180,7 +180,7 @@ public class CsvSinkConfig {
 
     @Override
     public CsvSinkConfig build() {
-      Objects.requireNonNull(topicsDir);
+      Objects.requireNonNull(outputFolder);
       return new CsvSinkConfig(this);
     }
   }
@@ -188,7 +188,7 @@ public class CsvSinkConfig {
   @VisibleForTesting
   public Map<String, String> toProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(TOPICS_DIR_KEY, topicsDir);
+    props.put(OUTPUT_FOLDER_KEY, outputFolder);
     props.put(FLUSH_SIZE_KEY, String.valueOf(flushSize));
     props.put(ROTATE_INTERVAL_MS_KEY, String.valueOf(rotateIntervalMs));
     props.put(FILE_NEED_HEADER_KEY, String.valueOf(needHeader));

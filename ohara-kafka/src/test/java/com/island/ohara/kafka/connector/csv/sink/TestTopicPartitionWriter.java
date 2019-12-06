@@ -37,7 +37,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvConnectorDefinitions.TOPICS_DIR_KEY, topicsDir.getPath());
+    props.put(CsvConnectorDefinitions.OUTPUT_FOLDER_KEY, topicsDir.getPath());
     props.putAll(localProps);
     return props;
   }
