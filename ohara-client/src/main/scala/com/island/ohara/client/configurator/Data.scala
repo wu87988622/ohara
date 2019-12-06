@@ -59,6 +59,12 @@ trait Data {
           case "name" => value == name
           case "group" =>
             value == group
+          // partial alignment
+          case "tag" =>
+            value.parseJson.asJsObject.fields.forall {
+              case (key, value) => tags.get(key).contains(value)
+            }
+          // complete alignment
           case "tags"         => value.parseJson.asJsObject == JsObject(tags)
           case "lastModified" => value.toLong == lastModified
 

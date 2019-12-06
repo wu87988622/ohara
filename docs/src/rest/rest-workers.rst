@@ -212,6 +212,7 @@ the accepted query keys are listed below.
 #. name
 #. lastModified
 #. tags
+#. tag - this field is similar to tags but it addresses the "contain" behavior.
 #. state
 #. aliveNodes
 #. key in settings

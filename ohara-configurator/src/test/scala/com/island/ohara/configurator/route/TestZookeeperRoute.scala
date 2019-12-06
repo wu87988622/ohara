@@ -394,6 +394,19 @@ class TestZookeeperRoute extends OharaTest {
   }
 
   @Test
+  def testTagFilter(): Unit = {
+    result(zookeeperApi.request.tags(Map("a" -> JsString("b"), "b" -> JsNumber(123))).nodeNames(nodeNames).create())
+
+    result(zookeeperApi.request.tags(Map("a" -> JsString("b"), "c" -> JsNumber(123))).nodeNames(nodeNames).create())
+
+    result(zookeeperApi.query.tag(Map("a" -> JsString("b"))).execute()).size shouldBe 2
+
+    result(zookeeperApi.query.tag(Map("b" -> JsNumber(123))).execute()).size shouldBe 1
+
+    result(zookeeperApi.query.tag(Map("c" -> JsNumber(123))).execute()).size shouldBe 1
+  }
+
+  @Test
   def testTagsFilter(): Unit = {
     val tags = Map(
       "a" -> JsString("b"),

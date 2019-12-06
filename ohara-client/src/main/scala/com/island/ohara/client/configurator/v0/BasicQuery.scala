@@ -35,6 +35,19 @@ trait BasicQuery[T] {
 
   def group(value: String): BasicQuery.this.type = set("group", value)
 
+  /**
+    * partial alignment to the "tags".
+    * This is a specific query parameter offering partial alignment. By contrast, other queries address complete match.
+    * @param tag
+    * @return this query
+    */
+  def tag(tag: Map[String, JsValue]): BasicQuery.this.type = set("tag", JsObject(tag).toString())
+
+  /**
+    * complete match to the "tags"
+    * @param tags
+    * @return this query
+    */
   def tags(tags: Map[String, JsValue]): BasicQuery.this.type = set("tags", JsObject(tags).toString())
 
   def lastModified(value: Long): BasicQuery.this.type = set("lastModified", value.toString)
