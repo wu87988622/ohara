@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,7 +54,8 @@ object BrokerApi {
   val CLIENT_PORT_DEFINITION: SettingDef              = createDef(clientPortDefinition)
   val JMX_PORT_DEFINITION: SettingDef                 = createDef(jmxPortDefinition)
   val NODE_NAMES_DEFINITION: SettingDef               = createDef(nodeDefinition)
-  val TAGS_DEFINITION: SettingDef                     = createDef(tagDefinition)
+  val ROUTES_DEFINITION: SettingDef                   = createDef(routesDefinition)
+  val TAGS_DEFINITION: SettingDef                     = createDef(tagsDefinition)
   private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
   val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
@@ -115,20 +116,9 @@ object BrokerApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    // the name and group fields are used to identify zookeeper cluster object
-    // we should give them default value in JsonRefiner
-    override def name: String  = settings.name.get
-    override def group: String = settings.group.get
-    // helper method to get the key
-    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
-    override def imageName: String          = settings.imageName.get
-    override def nodeNames: Set[String]     = settings.nodeNames.get
-    override def ports: Set[Int]            = Set(clientPort, jmxPort)
-    override def tags: Map[String, JsValue] = settings.tags.get
-
+    override def ports: Set[Int]       = Set(clientPort, jmxPort)
     def clientPort: Int                = settings.clientPort.get
-    def jmxPort: Int                   = settings.jmxPort.get
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
     def logDirs: String                = settings.logDirs.get
     def numberOfPartitions: Int        = settings.numberOfPartitions.get
@@ -151,20 +141,7 @@ object BrokerApi {
     )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
-    // We use the update parser to get the name and group
-    private[BrokerApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-    private[BrokerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    override def imageName: Option[String]       = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
-    override def nodeNames: Option[Set[String]] =
-      noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
-    override def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map {
-      case s: JsObject => s.fields
-      case other: JsValue =>
-        throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
-    }
-
     def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
-    def jmxPort: Option[Int]    = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
 
     def zookeeperClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -209,12 +186,8 @@ object BrokerApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def name: String                                                     = settings.name
-    override def group: String                                                    = settings.group
     override def kind: String                                                     = BROKER_SERVICE_NAME
     override def ports: Set[Int]                                                  = Set(clientPort, jmxPort)
-    override def tags: Map[String, JsValue]                                       = settings.tags
-    def nodeNames: Set[String]                                                    = settings.nodeNames
 
     /**
       * the node names is not equal to "running" nodes. The connection props may reference to invalid nodes and the error
@@ -225,9 +198,7 @@ object BrokerApi {
       if (nodeNames.isEmpty) throw new IllegalArgumentException("there is no nodes!!!")
       else nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
-    override def imageName: String             = settings.imageName
     def clientPort: Int                        = settings.clientPort
-    def jmxPort: Int                           = settings.jmxPort
     def zookeeperClusterKey: ObjectKey         = settings.zookeeperClusterKey
     def logDirs: String                        = settings.logDirs
     def numberOfPartitions: Int                = settings.numberOfPartitions
@@ -257,7 +228,12 @@ object BrokerApi {
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
-    @Optional("default value is empty array in creation and None in update")
+    @Optional("default value is empty array")
+    def routes(routes: Map[String, String]): Request.this.type =
+      setting(ROUTES_KEY, JsObject(routes.map {
+        case (k, v) => k -> JsString(v)
+      }))
+    @Optional("default value is empty array")
     def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))
 
     /**
@@ -298,8 +274,7 @@ object BrokerApi {
     def request: ExecutableRequest = new ExecutableRequest {
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = post(creation)
 
-      override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-        put(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
+      override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = put(key, updating)
     }
   }
 

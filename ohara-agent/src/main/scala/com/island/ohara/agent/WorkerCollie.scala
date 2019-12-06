@@ -85,7 +85,7 @@ trait WorkerCollie extends Collie {
           // we should add the "hostname" to configurator for most cases...
           // This is for those configurators that have no hostname (for example, temp configurator)
             ++ pluginInfos.map(_.url.get.getHost).toSet
-        )
+        ) ++ creation.routes
         val successfulContainersFuture =
           if (newNodes.isEmpty) Future.successful(Seq.empty)
           else {

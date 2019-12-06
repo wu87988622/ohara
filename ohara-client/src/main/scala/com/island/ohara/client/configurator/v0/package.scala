@@ -59,6 +59,11 @@ package object v0 {
   val LAST_MODIFIED_KEY: String = "lastModified"
 
   /**
+    * the extra routes to this service.
+    */
+  val ROUTES_KEY: String = "routes"
+
+  /**
     * Noted: there are other two definition having "tags""
     * 1) ConnectorDefUtils.TAGS_DEFINITION
     * 2) StreamDefinitions.TAGS_DEFINITION
@@ -410,6 +415,9 @@ package object v0 {
       .blacklist(Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
       .build()
 
-  private[v0] def tagDefinition: SettingDef.Builder => SettingDef =
+  private[v0] def routesDefinition: SettingDef.Builder => SettingDef =
+    _.key(ROUTES_KEY).documentation("the extra routes to this service").optional(Type.TAGS).build()
+
+  private[v0] def tagsDefinition: SettingDef.Builder => SettingDef =
     _.key(TAGS_KEY).documentation("the tags to this cluster").optional(Type.TAGS).build()
 }

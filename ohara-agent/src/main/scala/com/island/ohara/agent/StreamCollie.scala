@@ -79,7 +79,7 @@ trait StreamCollie extends Collie {
                 ++ brokerClusterInfo.nodeNames
               // make sure the stream can connect to configurator
                 ++ Seq(fileInfo.url.get.getHost)).toSet
-            )
+            ) ++ creation.routes
             val successfulContainersFuture =
               if (newNodes.isEmpty) Future.successful(Seq.empty)
               else {

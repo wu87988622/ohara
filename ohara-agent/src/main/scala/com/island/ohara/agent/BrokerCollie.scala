@@ -72,7 +72,7 @@ trait BrokerCollie extends Collie {
       case (existentNodes, newNodes, zookeeperClusterInfo) =>
         val routes = resolveHostNames(
           (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet
-        )
+        ) ++ creation.routes
         val successfulContainersFuture =
           if (newNodes.isEmpty) Future.successful(Seq.empty)
           else {

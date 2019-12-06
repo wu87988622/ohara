@@ -46,12 +46,6 @@ object StreamApi {
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    // the name and group fields are used to identify zookeeper cluster object
-    // we should give them default value in JsonRefiner
-    override def name: String  = settings.name.get
-    override def group: String = settings.group.get
-    // helper method to get the key
-    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -66,21 +60,13 @@ object StreamApi {
 
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
 
-    override def imageName: String = settings.imageName.get
-
     def className: Option[String] = settings.className
-
-    override def nodeNames: Set[String] = settings.nodeNames.get
-
-    override def tags: Map[String, JsValue] = settings.tags.get
 
     override def ports: Set[Int] = Set(jmxPort)
 
     def jarKey: ObjectKey = settings.jarKey.get
 
     private[ohara] def connectionProps: String = settings.connectionProps.get
-
-    def jmxPort: Int = settings.jmxPort.get
 
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
@@ -95,15 +81,8 @@ object StreamApi {
     )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
-    // We use the update parser to get the name and group
-    private[StreamApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-    private[StreamApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-
     def brokerClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key()).map(_.convertTo[ObjectKey])
-
-    override def imageName: Option[String] =
-      noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
 
     def className: Option[String] =
       noJsNull(settings).get(StreamDefUtils.CLASS_NAME_DEFINITION.key()).map(_.convertTo[String])
@@ -114,23 +93,11 @@ object StreamApi {
     private[StreamApi] def connectionProps: Option[String] =
       noJsNull(settings).get(StreamDefUtils.BROKER_DEFINITION.key()).map(_.convertTo[String])
 
-    def jmxPort: Option[Int] = noJsNull(settings).get(StreamDefUtils.JMX_PORT_DEFINITION.key()).map(_.convertTo[Int])
-
     def fromTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
     def toTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
-
-    override def nodeNames: Option[Set[String]] =
-      noJsNull(settings).get(StreamDefUtils.NODE_NAMES_DEFINITION.key()).map(_.convertTo[Seq[String]].toSet)
-
-    override def tags: Option[Map[String, JsValue]] =
-      noJsNull(settings).get(StreamDefUtils.TAGS_DEFINITION.key()).map {
-        case s: JsObject => s.fields
-        case other: JsValue =>
-          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
-      }
   }
   implicit val STREAM_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
     rulesOfUpdating[Updating](
@@ -164,15 +131,9 @@ object StreamApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-
-    override def name: String               = settings.name
-    override def group: String              = settings.group
-    override def kind: String               = STREAM_SERVICE_NAME
-    override def ports: Set[Int]            = settings.ports
-    override def tags: Map[String, JsValue] = settings.tags
-
-    def imageName: String = settings.imageName
-    def className: String = settings.className.get
+    override def kind: String                                                     = STREAM_SERVICE_NAME
+    override def ports: Set[Int]                                                  = settings.ports
+    def className: String                                                         = settings.className.get
 
     /**
       * Return the key of explicit value. Otherwise, return the key of jar info.
@@ -184,11 +145,7 @@ object StreamApi {
     def brokerClusterKey: ObjectKey  = settings.brokerClusterKey
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys
-    def jmxPort: Int                 = settings.jmxPort
-
-    def nodeNames: Set[String] = settings.nodeNames
-
-    def connectionProps: String = settings.connectionProps
+    def connectionProps: String      = settings.connectionProps
   }
 
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
@@ -285,7 +242,7 @@ object StreamApi {
       override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
-        put(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
+        put(key, updating)
     }
   }
 

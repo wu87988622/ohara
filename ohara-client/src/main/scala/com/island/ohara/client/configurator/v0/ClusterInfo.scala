@@ -32,6 +32,15 @@ import spray.json.DefaultJsonProtocol._
   */
 trait ClusterInfo extends Data {
   /**
+    * @return the settings to set up this cluster. This is the raw data of settings.
+    */
+  def settings: Map[String, JsValue]
+
+  override def group: String = noJsNull(settings)(GROUP_KEY).convertTo[String]
+
+  override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
+
+  /**
     * override the key to avoid conflict of double inheritance.
     */
   override def key: ObjectKey = ObjectKey.of(group, name)
@@ -39,7 +48,7 @@ trait ClusterInfo extends Data {
   /**
     * @return docker image name used to build container for this cluster
     */
-  def imageName: String
+  def imageName: String = noJsNull(settings)(IMAGE_NAME_KEY).convertTo[String]
 
   /**
     * All services hosted by ohara should use some ports, which are used to communicate.
@@ -52,12 +61,12 @@ trait ClusterInfo extends Data {
     * the port used to expose the jmx service
     * @return jmx port
     */
-  def jmxPort: Int
+  def jmxPort: Int = noJsNull(settings)(JMX_PORT_KEY).convertTo[Int]
 
   /**
     * @return nodes running this cluster
     */
-  def nodeNames: Set[String]
+  def nodeNames: Set[String] = noJsNull(settings)(NODE_NAMES_KEY).convertTo[Set[String]]
 
   /**
     * @return the state of this cluster. None means the cluster is not running
@@ -84,11 +93,6 @@ trait ClusterInfo extends Data {
     *         of dead nodes is equal to (the number of node names) - (the number of alive nodes)
     */
   def deadNodes: Set[String] = if (state.isEmpty) Set.empty else nodeNames -- aliveNodes
-
-  /**
-    * @return the settings to set up this cluster. This is the raw data of settings.
-    */
-  def settings: Map[String, JsValue]
 
   /**
     * this is a small helper method used to update the node names for cluster info
@@ -119,4 +123,6 @@ trait ClusterInfo extends Data {
       }
     case _ => matchSetting(settings, key, value)
   }
+
+  def tags: Map[String, JsValue] = noJsNull(settings)(TAGS_KEY).asJsObject.fields
 }

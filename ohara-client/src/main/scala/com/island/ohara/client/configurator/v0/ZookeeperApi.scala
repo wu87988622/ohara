@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.{ObjectKey, SettingDef}
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
@@ -51,7 +51,8 @@ object ZookeeperApi {
   val CLIENT_PORT_DEFINITION: SettingDef = createDef(clientPortDefinition)
   val JMX_PORT_DEFINITION: SettingDef    = createDef(jmxPortDefinition)
   val NODE_NAMES_DEFINITION: SettingDef  = createDef(nodeDefinition)
-  val TAGS_DEFINITION: SettingDef        = createDef(tagDefinition)
+  val ROUTES_DEFINITION: SettingDef      = createDef(routesDefinition)
+  val TAGS_DEFINITION: SettingDef        = createDef(tagsDefinition)
   private[this] val PEER_PORT_KEY        = "peerPort"
   val PEER_PORT_DEFINITION: SettingDef =
     createDef(
@@ -105,26 +106,14 @@ object ZookeeperApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    // the name and group fields are used to identify zookeeper cluster object
-    // we should give them default value in JsonRefiner
-    override def name: String  = settings.name.get
-    override def group: String = settings.group.get
-    // helper method to get the key
-    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
-
-    override def imageName: String          = settings.imageName.get
-    override def nodeNames: Set[String]     = settings.nodeNames.get
-    override def ports: Set[Int]            = Set(clientPort, peerPort, electionPort, jmxPort)
-    override def tags: Map[String, JsValue] = settings.tags.get
-
-    def clientPort: Int   = settings.clientPort.get
-    def peerPort: Int     = settings.peerPort.get
-    def jmxPort: Int      = settings.jmxPort.get
-    def electionPort: Int = settings.electionPort.get
-    def tickTime: Int     = settings.tickTime.get
-    def initLimit: Int    = settings.initLimit.get
-    def syncLimit: Int    = settings.syncLimit.get
-    def dataDir: String   = settings.dataDir.get
+    override def ports: Set[Int]                                                = Set(clientPort, peerPort, electionPort, jmxPort)
+    def clientPort: Int                                                         = settings.clientPort.get
+    def peerPort: Int                                                           = settings.peerPort.get
+    def electionPort: Int                                                       = settings.electionPort.get
+    def tickTime: Int                                                           = settings.tickTime.get
+    def initLimit: Int                                                          = settings.initLimit.get
+    def syncLimit: Int                                                          = settings.syncLimit.get
+    def dataDir: String                                                         = settings.dataDir.get
   }
 
   /**
@@ -140,22 +129,6 @@ object ZookeeperApi {
     )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
-    // We use the update parser to get the name and group
-    private[ZookeeperApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-    private[ZookeeperApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    override def imageName: Option[String] =
-      noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
-    override def nodeNames: Option[Set[String]] =
-      noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
-    override def tags: Option[Map[String, JsValue]] =
-      noJsNull(settings).get(TAGS_KEY).map {
-        case s: JsObject => s.fields
-        case other: JsValue =>
-          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
-      }
-    def jmxPort: Option[Int] =
-      noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
-
     def clientPort: Option[Int] =
       noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
     def peerPort: Option[Int] =
@@ -193,22 +166,15 @@ object ZookeeperApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-
-    override def name: String               = settings.name
-    override def group: String              = settings.group
-    override def kind: String               = ZOOKEEPER_SERVICE_NAME
-    override def ports: Set[Int]            = Set(clientPort, peerPort, electionPort, jmxPort)
-    override def tags: Map[String, JsValue] = settings.tags
-    def nodeNames: Set[String]              = settings.nodeNames
-    def imageName: String                   = settings.imageName
-    def jmxPort: Int                        = settings.jmxPort
-    def clientPort: Int                     = settings.clientPort
-    def peerPort: Int                       = settings.peerPort
-    def electionPort: Int                   = settings.electionPort
-    def tickTime: Int                       = settings.tickTime
-    def initLimit: Int                      = settings.initLimit
-    def syncLimit: Int                      = settings.syncLimit
-    def dataDir: String                     = settings.dataDir
+    override def kind: String                                                     = ZOOKEEPER_SERVICE_NAME
+    override def ports: Set[Int]                                                  = Set(clientPort, peerPort, electionPort, jmxPort)
+    def clientPort: Int                                                           = settings.clientPort
+    def peerPort: Int                                                             = settings.peerPort
+    def electionPort: Int                                                         = settings.electionPort
+    def tickTime: Int                                                             = settings.tickTime
+    def initLimit: Int                                                            = settings.initLimit
+    def syncLimit: Int                                                            = settings.syncLimit
+    def dataDir: String                                                           = settings.dataDir
   }
 
   /**
@@ -283,7 +249,7 @@ object ZookeeperApi {
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-        put(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
+        put(key, updating)
     }
   }
 

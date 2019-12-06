@@ -20,9 +20,7 @@ import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
 
-case class FakeClusterInfo(name: String) extends ClusterInfo {
-  override def imageName: String = "I DON'T CARE"
-
+case class FakeClusterInfo(override val name: String) extends ClusterInfo {
   override def ports: Set[Int] = Set.empty
 
   override def nodeNames: Set[String] = Set.empty
@@ -42,6 +40,4 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
   override def error: Option[String] = None
 
   override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
-
-  override def jmxPort: Int = -1
 }

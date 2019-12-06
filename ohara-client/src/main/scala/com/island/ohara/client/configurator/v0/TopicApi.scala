@@ -141,7 +141,7 @@ object TopicApi {
       extends com.island.ohara.client.configurator.v0.BasicCreation {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
-    def key: TopicKey = TopicKey.of(group, name)
+    override def key: TopicKey = TopicKey.of(group, name)
 
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
 

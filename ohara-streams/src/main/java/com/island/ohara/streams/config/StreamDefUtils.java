@@ -207,6 +207,17 @@ public final class StreamDefUtils {
           .optional(VersionUtils.USER)
           .build();
 
+  public static final SettingDef ROUTES_DEFINITION =
+      SettingDef.builder()
+          // similar to com.island.ohara.client.configurator.ROUTES_KEY
+          .key("routes")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Routes")
+          .documentation("the extra routes to this service")
+          .optional(Type.TAGS)
+          .build();
+
   public static final SettingDef TAGS_DEFINITION =
       SettingDef.builder()
           .key("tags")

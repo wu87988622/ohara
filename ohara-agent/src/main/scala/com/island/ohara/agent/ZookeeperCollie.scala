@@ -85,7 +85,9 @@ trait ZookeeperCollie extends Collie {
       }
       .flatMap { newNodes =>
         // add route in order to make zk node can connect to each other.
-        val routes: Map[String, String] = newNodes.map(node => node.name -> CommonUtils.address(node.name)).toMap
+        val routes: Map[String, String] = newNodes
+          .map(node => node.name -> CommonUtils.address(node.name))
+          .toMap ++ creation.routes
         val successfulContainersFuture =
           if (newNodes.isEmpty) Future.successful(Seq.empty)
           else {

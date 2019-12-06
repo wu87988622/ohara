@@ -89,7 +89,7 @@ object ConnectorApi {
 
     override def name: String = settings.name.get
 
-    def key: ConnectorKey = ConnectorKey.of(group, name)
+    override def key: ConnectorKey = ConnectorKey.of(group, name)
 
     override def tags: Map[String, JsValue] = settings.tags.get
   }

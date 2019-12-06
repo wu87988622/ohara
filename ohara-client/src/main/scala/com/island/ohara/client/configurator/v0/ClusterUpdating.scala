@@ -15,15 +15,30 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import spray.json.JsValue
+import spray.json.DefaultJsonProtocol._
+import spray.json.{JsString, JsValue}
 
 /**
   * this is a basic interface of cluster request to update a normal object resource.
   */
 trait ClusterUpdating {
-  def imageName: Option[String]
+  /**
+    * @return the raw settings from request
+    */
+  def settings: Map[String, JsValue]
 
-  def nodeNames: Option[Set[String]]
+  def imageName: Option[String] = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
 
-  def tags: Option[Map[String, JsValue]]
+  def nodeNames: Option[Set[String]] = noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
+
+  def routes: Option[Map[String, String]] =
+    noJsNull(settings)
+      .get(ROUTES_KEY)
+      .map(_.asJsObject.fields.filter(_._2.isInstanceOf[JsString]).map {
+        case (k, v) => k -> v.convertTo[String]
+      })
+
+  def jmxPort: Option[Int] = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
+
+  def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
 }

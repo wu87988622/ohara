@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.common.setting.ObjectKey
 import spray.json.JsValue
 
 /**
@@ -23,6 +24,8 @@ import spray.json.JsValue
   * We separate this interface with basic Data since request payload does not mean to be a "store-able" data
   */
 trait BasicCreation {
+  def key: ObjectKey = ObjectKey.of(group, name)
+
   def group: String
 
   /**

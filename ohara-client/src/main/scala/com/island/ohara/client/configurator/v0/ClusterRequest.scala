@@ -23,11 +23,22 @@ import spray.json.{JsArray, JsString, JsValue}
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
+import spray.json.DefaultJsonProtocol._
+
 /**
   * This is the basic cluster api request object.
   * A minimum request must set the nodeName.
   */
 trait ClusterRequest {
+  /**
+    * a helper method to sub class to extract the key from settings
+    * @return key from settings
+    */
+  protected def key: ObjectKey = ObjectKey.of(
+    settings.get(GROUP_KEY).map(_.convertTo[String]).getOrElse(GROUP_DEFAULT),
+    settings(NAME_KEY).convertTo[String]
+  )
+
   protected val settings: mutable.Map[String, JsValue] = mutable.Map()
 
   @Optional("default key is a random string. But it is required in updating")

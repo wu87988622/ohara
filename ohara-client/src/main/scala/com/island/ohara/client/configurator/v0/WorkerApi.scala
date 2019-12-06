@@ -54,7 +54,8 @@ object WorkerApi {
   val CLIENT_PORT_DEFINITION: SettingDef   = createDef(clientPortDefinition)
   val JMX_PORT_DEFINITION: SettingDef      = createDef(jmxPortDefinition)
   val NODE_NAMES_DEFINITION: SettingDef    = createDef(nodeDefinition)
-  val TAGS_DEFINITION: SettingDef          = createDef(tagDefinition)
+  val ROUTES_DEFINITION: SettingDef        = createDef(routesDefinition)
+  val TAGS_DEFINITION: SettingDef          = createDef(tagsDefinition)
   private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
   val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(BROKER_CLUSTER_KEY_KEY)
@@ -178,33 +179,22 @@ object WorkerApi {
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    // the name and group fields are used to identify zookeeper cluster object
-    // we should give them default value in JsonRefiner
-    override def name: String  = settings.name.get
-    override def group: String = settings.group.get
-    // helper method to get the key
-    private[ohara] def key: ObjectKey = ObjectKey.of(group, name)
+    def brokerClusterKey: ObjectKey                                             = settings.brokerClusterKey.get
+    def clientPort: Int                                                         = settings.clientPort.get
+    def groupId: String                                                         = settings.groupId.get
+    def statusTopicName: String                                                 = settings.statusTopicName.get
+    def statusTopicPartitions: Int                                              = settings.statusTopicPartitions.get
+    def statusTopicReplications: Short                                          = settings.statusTopicReplications.get
+    def configTopicName: String                                                 = settings.configTopicName.get
+    def configTopicReplications: Short                                          = settings.configTopicReplications.get
+    def offsetTopicName: String                                                 = settings.offsetTopicName.get
+    def offsetTopicPartitions: Int                                              = settings.offsetTopicPartitions.get
+    def offsetTopicReplications: Short                                          = settings.offsetTopicReplications.get
+    def pluginKeys: Set[ObjectKey]                                              = settings.pluginKeys.getOrElse(Set.empty)
+    def sharedJarKeys: Set[ObjectKey]                                           = settings.sharedJarKeys.getOrElse(Set.empty)
+    def freePorts: Set[Int]                                                     = settings.freePorts.get
 
-    override def imageName: String     = settings.imageName.get
-    def brokerClusterKey: ObjectKey    = settings.brokerClusterKey.get
-    def clientPort: Int                = settings.clientPort.get
-    def jmxPort: Int                   = settings.jmxPort.get
-    def groupId: String                = settings.groupId.get
-    def statusTopicName: String        = settings.statusTopicName.get
-    def statusTopicPartitions: Int     = settings.statusTopicPartitions.get
-    def statusTopicReplications: Short = settings.statusTopicReplications.get
-    def configTopicName: String        = settings.configTopicName.get
-    def configTopicReplications: Short = settings.configTopicReplications.get
-    def offsetTopicName: String        = settings.offsetTopicName.get
-    def offsetTopicPartitions: Int     = settings.offsetTopicPartitions.get
-    def offsetTopicReplications: Short = settings.offsetTopicReplications.get
-    def pluginKeys: Set[ObjectKey]     = settings.pluginKeys.getOrElse(Set.empty)
-    def sharedJarKeys: Set[ObjectKey]  = settings.sharedJarKeys.getOrElse(Set.empty)
-    def freePorts: Set[Int]            = settings.freePorts.get
-
-    override def tags: Map[String, JsValue] = settings.tags.get
-    override def nodeNames: Set[String]     = settings.nodeNames.get
-    override def ports: Set[Int]            = freePorts + clientPort + jmxPort
+    override def ports: Set[Int] = freePorts + clientPort + jmxPort
   }
 
   /**
@@ -220,16 +210,11 @@ object WorkerApi {
     )
 
   final class Updating private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdating {
-    // We use the update parser to get the name and group
-    private[WorkerApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-    private[WorkerApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    override def imageName: Option[String]       = noJsNull(settings).get(IMAGE_NAME_KEY).map(_.convertTo[String])
-    def brokerClusterKey: Option[ObjectKey]      = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
-    def clientPort: Option[Int]                  = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
-    def jmxPort: Option[Int]                     = noJsNull(settings).get(JMX_PORT_KEY).map(_.convertTo[Int])
-    def groupId: Option[String]                  = noJsNull(settings).get(GROUP_ID_KEY).map(_.convertTo[String])
-    def statusTopicName: Option[String]          = noJsNull(settings).get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String])
-    def statusTopicPartitions: Option[Int]       = noJsNull(settings).get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+    def clientPort: Option[Int]             = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+    def groupId: Option[String]             = noJsNull(settings).get(GROUP_ID_KEY).map(_.convertTo[String])
+    def statusTopicName: Option[String]     = noJsNull(settings).get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String])
+    def statusTopicPartitions: Option[Int]  = noJsNull(settings).get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def statusTopicReplications: Option[Short] =
       noJsNull(settings).get(STATUS_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
     def configTopicName: Option[String] = noJsNull(settings).get(CONFIG_TOPIC_NAME_KEY).map(_.convertTo[String])
@@ -244,11 +229,6 @@ object WorkerApi {
       noJsNull(settings).get(SHARED_JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def freePorts: Option[Set[Int]] =
       noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
-
-    override def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
-
-    override def nodeNames: Option[Set[String]] =
-      noJsNull(settings).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
   }
   implicit val WORKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
     rulesOfUpdating[Updating](
@@ -271,28 +251,21 @@ object WorkerApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-
-    override def name: String               = settings.name
-    override def group: String              = settings.group
-    override def imageName: String          = settings.imageName
-    def brokerClusterKey: ObjectKey         = settings.brokerClusterKey
-    def clientPort: Int                     = settings.clientPort
-    def jmxPort: Int                        = settings.jmxPort
-    def groupId: String                     = settings.groupId
-    def statusTopicName: String             = settings.statusTopicName
-    def statusTopicPartitions: Int          = settings.statusTopicPartitions
-    def statusTopicReplications: Short      = settings.statusTopicReplications
-    def configTopicName: String             = settings.configTopicName
-    def configTopicPartitions: Int          = 1
-    def configTopicReplications: Short      = settings.configTopicReplications
-    def offsetTopicName: String             = settings.offsetTopicName
-    def offsetTopicPartitions: Int          = settings.offsetTopicPartitions
-    def offsetTopicReplications: Short      = settings.offsetTopicReplications
-    def pluginKeys: Set[ObjectKey]          = settings.pluginKeys
-    def sharedJarKeys: Set[ObjectKey]       = settings.sharedJarKeys
-    def nodeNames: Set[String]              = settings.nodeNames
-    def freePorts: Set[Int]                 = settings.freePorts
-    override def tags: Map[String, JsValue] = settings.tags
+    def brokerClusterKey: ObjectKey                                               = settings.brokerClusterKey
+    def clientPort: Int                                                           = settings.clientPort
+    def groupId: String                                                           = settings.groupId
+    def statusTopicName: String                                                   = settings.statusTopicName
+    def statusTopicPartitions: Int                                                = settings.statusTopicPartitions
+    def statusTopicReplications: Short                                            = settings.statusTopicReplications
+    def configTopicName: String                                                   = settings.configTopicName
+    def configTopicPartitions: Int                                                = 1
+    def configTopicReplications: Short                                            = settings.configTopicReplications
+    def offsetTopicName: String                                                   = settings.offsetTopicName
+    def offsetTopicPartitions: Int                                                = settings.offsetTopicPartitions
+    def offsetTopicReplications: Short                                            = settings.offsetTopicReplications
+    def pluginKeys: Set[ObjectKey]                                                = settings.pluginKeys
+    def sharedJarKeys: Set[ObjectKey]                                             = settings.sharedJarKeys
+    def freePorts: Set[Int]                                                       = settings.freePorts
 
     /**
       * the node names is not equal to "running" nodes. The connection props may reference to invalid nodes and the error
@@ -422,7 +395,7 @@ object WorkerApi {
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-        put(ObjectKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
+        put(key, updating)
     }
   }
 
