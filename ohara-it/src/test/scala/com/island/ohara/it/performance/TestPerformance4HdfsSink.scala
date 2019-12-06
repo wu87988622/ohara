@@ -26,7 +26,7 @@ import spray.json.{JsNumber, JsString}
 import org.junit.{After, AssumptionViolatedException, Test}
 
 @Category(Array(classOf[PerformanceGroup]))
-class TestPerformance4Hdfs extends BasicTestPerformance {
+class TestPerformance4HdfsSink extends BasicTestPerformance {
   private[this] val HDFS_URL_KEY: String         = "ohara.it.performance.hdfs.url"
   private[this] val NEED_DELETE_DATA_KEY: String = "ohara.it.performance.hdfs.needDeleteData"
 
@@ -44,7 +44,7 @@ class TestPerformance4Hdfs extends BasicTestPerformance {
   @Test
   def test(): Unit = {
     println(s"Topic name is ${topicKey.topicNameOnKafka}")
-    setupTopic(topicKey)
+    produce(createTopic(topicKey))
     setupConnector(
       connectorKey = connectorKey,
       topicKey = topicKey,
@@ -59,11 +59,10 @@ class TestPerformance4Hdfs extends BasicTestPerformance {
   }
 
   @After
-  def deleteData(): Unit = {
+  def deleteData(): Unit =
     if (needDeleteData) {
       val fileSystem = FileSystem.hdfsBuilder.url(hdfsURL).build
       try fileSystem.delete(s"${dataDir}/${topicKey.topicNameOnKafka}", true)
       finally Releasable.close(fileSystem)
     }
-  }
 }

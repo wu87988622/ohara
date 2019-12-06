@@ -28,5 +28,5 @@ class TestPerformance4Topic extends BasicTestPerformance {
 
   @Test
   def test(): Unit =
-    setupTopic(topicKey)
+    produce(createTopic(topicKey))
 }

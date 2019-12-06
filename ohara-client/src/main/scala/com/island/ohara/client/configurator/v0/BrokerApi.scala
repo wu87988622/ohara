@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -228,11 +228,6 @@ object BrokerApi {
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
-    @Optional("default value is empty array")
-    def routes(routes: Map[String, String]): Request.this.type =
-      setting(ROUTES_KEY, JsObject(routes.map {
-        case (k, v) => k -> JsString(v)
-      }))
     @Optional("default value is empty array")
     def tags(tags: Map[String, JsValue]): Request.this.type = setting(TAGS_KEY, JsObject(tags))
 

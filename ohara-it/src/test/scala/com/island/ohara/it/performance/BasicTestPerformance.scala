@@ -66,39 +66,32 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       .port(configuratorPort)
 
   //------------------------------[global properties]------------------------------//
-  private[this] val durationOfTestPerformanceKey     = "ohara.it.performance.duration"
-  private[this] val durationOfTestPerformanceDefault = 30 seconds
-  private[this] val durationOfTestPerformance = {
-    val v = value(durationOfTestPerformanceKey).map(Duration.apply).getOrElse(durationOfTestPerformanceDefault)
+  private[this] val durationOfPerformanceKey     = "ohara.it.performance.duration"
+  private[this] val durationOfPerformanceDefault = 30 seconds
+  protected val durationOfPerformance: Duration = {
+    val v = value(durationOfPerformanceKey).map(Duration.apply).getOrElse(durationOfPerformanceDefault)
     // too big duration is never completed
     if (v.toSeconds > wholeTimeout / 2) throw new AssertionError(s"the max duration is ${wholeTimeout / 2} seconds")
     v
   }
 
-  private[this] val csvOutputFolderKey = "ohara.it.performance.output"
-  private[this] val csvOutputFolder: File = mkdir(
+  private[this] val reportOutputFolderKey = "ohara.it.performance.report.output"
+  private[this] val reportOutputFolder: File = mkdir(
     new File(
-      value(csvOutputFolderKey)
-        .getOrElse("/tmp/performance")
+      value(reportOutputFolderKey).getOrElse("/tmp/performance")
     )
   )
 
   //------------------------------[topic properties]------------------------------//
-  private[this] val numberOfProducerThread: Int = 4
-
   private[this] val megabytesOfInputDataKey           = "ohara.it.performance.data.size"
   private[this] val megabytesOfInputDataDefault: Long = 100
-  private[this] val sizeOfInputData =
+  protected val sizeOfInputData =
     1024L * 1024L * value(megabytesOfInputDataKey).map(_.toLong).getOrElse(megabytesOfInputDataDefault)
 
-  private[this] val durationOfTestProducingInputData = (durationOfTestPerformanceDefault.toMillis * 10) milliseconds
-  private[this] val numberOfPartitionsKey            = "ohara.it.performance.topic.partitions"
-  private[this] val numberOfPartitionsDefault        = 1
+  private[this] val numberOfPartitionsKey     = "ohara.it.performance.topic.partitions"
+  private[this] val numberOfPartitionsDefault = 1
   protected val numberOfPartitions: Int =
     value(numberOfPartitionsKey).map(_.toInt).getOrElse(numberOfPartitionsDefault)
-
-  private[this] val numberOfRowsToFlush: Int = 2000
-  private[this] val cellNames: Set[String]   = (0 until 10).map(index => s"c$index").toSet
 
   //------------------------------[connector properties]------------------------------//
   private[this] val numberOfConnectorTasksKey     = "ohara.it.performance.connector.tasks"
@@ -106,25 +99,25 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   protected val numberOfConnectorTasks: Int =
     value(numberOfConnectorTasksKey).map(_.toInt).getOrElse(numberOfConnectorTasksDefault)
 
-  private[this] def value(key: String): Option[String] = sys.env.get(key)
+  protected def value(key: String): Option[String] = sys.env.get(key)
   //------------------------------[helper methods]------------------------------//
-  private[this] def mkdir(folder: File): File = {
+  protected def mkdir(folder: File): File = {
     if (!folder.exists() && !folder.mkdirs()) throw new AssertionError(s"failed to create folder on $folder")
     if (folder.exists() && !folder.isDirectory) throw new AssertionError(s"$folder is not a folder")
     folder
   }
 
   protected def sleepUntilEnd(): Long = {
-    TimeUnit.MILLISECONDS.sleep(durationOfTestPerformance.toMillis)
-    durationOfTestPerformance.toMillis
+    TimeUnit.MILLISECONDS.sleep(durationOfPerformance.toMillis)
+    durationOfPerformance.toMillis
   }
 
   /**
-    * create the topic and setup the data.
+    * create and start the topic.
     * @param topicKey topic key
-    * @return (topic info, number of rows, size (in bytes) of all input rows)
+    * @return topic info
     */
-  protected def setupTopic(topicKey: TopicKey): (TopicInfo, Long, Long) = {
+  protected def createTopic(topicKey: TopicKey): TopicInfo = {
     result(
       topicApi.request
         .key(topicKey)
@@ -136,7 +129,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       result(topicApi.start(topicKey))
       true
     }, true)
-    produce(result(topicApi.get(topicKey)))
+    result(topicApi.get(topicKey))
   }
 
   protected def setupConnector(
@@ -165,11 +158,14 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     result(connectorApi.get(connectorKey))
   }
 
-  private[this] def produce(topicInfo: TopicInfo): (TopicInfo, Long, Long) = {
-    val pool        = Executors.newFixedThreadPool(numberOfProducerThread)
-    val closed      = new AtomicBoolean(false)
-    val count       = new LongAdder()
-    val sizeInBytes = new LongAdder()
+  protected def produce(topicInfo: TopicInfo): (TopicInfo, Long, Long) = {
+    val cellNames: Set[String] = (0 until 10).map(index => s"c$index").toSet
+    val numberOfRowsToFlush    = 2000
+    val numberOfProducerThread = 4
+    val pool                   = Executors.newFixedThreadPool(numberOfProducerThread)
+    val closed                 = new AtomicBoolean(false)
+    val count                  = new LongAdder()
+    val sizeInBytes            = new LongAdder()
     try {
       (0 until numberOfProducerThread).foreach { _ =>
         pool.execute(() => {
@@ -204,7 +200,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       }
     } finally {
       pool.shutdown()
-      pool.awaitTermination(durationOfTestProducingInputData.toMillis, TimeUnit.MILLISECONDS)
+      pool.awaitTermination(durationOfPerformanceDefault.toMillis * 10, TimeUnit.MILLISECONDS)
       closed.set(true)
     }
     (topicInfo, count.longValue(), sizeInBytes.longValue())
@@ -223,7 +219,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     // $OUTPUT/className/testName/$RANDOM.csv
     def path(className: String): File =
       new File(
-        mkdir(new File(mkdir(new File(csvOutputFolder, simpleName(className))), this.getClass.getSimpleName)),
+        mkdir(new File(mkdir(new File(reportOutputFolder, simpleName(className))), this.getClass.getSimpleName)),
         s"${CommonUtils.randomString(10)}.csv"
       )
 
@@ -238,8 +234,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       )
 
     // record topic meters
-    val topicMeters = result(topicApi.list()).flatMap(_.metrics.meters)
-    if (topicMeters.nonEmpty) recordCsv(path("topic"), topicMeters)
+    recordCsv(path("topic"), result(topicApi.list()).flatMap(_.metrics.meters))
   }
 
   private[this] def recordCsv(file: File, meters: Seq[Meter]): Unit =
@@ -247,7 +242,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       m.name -> meters.filter(_.name == m.name).map(_.value).sum
     }.toMap)
 
-  private[this] def recordCsv(file: File, items: Map[String, Double]): Unit = {
+  private[this] def recordCsv(file: File, items: Map[String, Double]): Unit = if (items.nonEmpty) {
     // we have to fix the order of key-value
     // if we generate line via map.keys and map.values, the order may be different ...
     val headers    = items.keys.toList

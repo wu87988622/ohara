@@ -18,12 +18,11 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import spray.json.{JsArray, JsString, JsValue}
+import spray.json.DefaultJsonProtocol._
+import spray.json.{JsArray, JsObject, JsString, JsValue}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-
-import spray.json.DefaultJsonProtocol._
 
 /**
   * This is the basic cluster api request object.
@@ -56,6 +55,12 @@ trait ClusterRequest {
   def nodeName(nodeName: String): ClusterRequest.this.type = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
   def nodeNames(nodeNames: Set[String]): ClusterRequest.this.type =
     setting(NODE_NAMES_KEY, JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
+
+  @Optional("default value is empty array")
+  def routes(routes: Map[String, String]): ClusterRequest.this.type =
+    setting(ROUTES_KEY, JsObject(routes.map {
+      case (k, v) => k -> JsString(v)
+    }))
 
   @Optional("extra settings is empty by default")
   def setting(key: String, value: JsValue): ClusterRequest.this.type =

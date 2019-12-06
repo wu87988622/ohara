@@ -46,6 +46,12 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
       .port(configuratorPort)
   protected def workerClusterInfo: WorkerClusterInfo = result(wkApi.get(wkKey))
 
+  /**
+    * set the extra routes to all services
+    * @return routes
+    */
+  protected def routes: Map[String, String] = Map.empty
+
   @Before
   def setupWorkers(): Unit = {
     // single zk
@@ -53,6 +59,12 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
       zkApi.request
         .key(zkKey)
         .nodeName(nodeNames.head)
+        .routes(
+          nodeNames
+            .slice(1, nodeNames.size)
+            .map(node => node -> CommonUtils.address(node))
+            .toMap ++ routes
+        )
         .create()
         .map(_.key)
         .flatMap(zkApi.start)
@@ -64,6 +76,7 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
         .key(bkKey)
         .zookeeperClusterKey(zkKey)
         .nodeNames(nodeNames.toSet)
+        .routes(routes)
         .create()
         .map(_.key)
         .flatMap(bkApi.start)
@@ -76,6 +89,7 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
         .brokerClusterKey(bkKey)
         .nodeNames(nodeNames.toSet)
         .freePort(CommonUtils.availablePort())
+        .routes(routes)
         .create()
         .map(_.key)
         .flatMap(wkApi.start)

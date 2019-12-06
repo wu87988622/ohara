@@ -35,7 +35,7 @@ import scala.concurrent.duration._
   * NOTED: FtpClient doesn't extend ReleaseOnce since it is a "retryable" class which do close-and-then-reconnect
   * internally. Hence, FtpClient MAY close itself many times and re-build the connection.
   */
-private[ftp] trait FtpClient extends Releasable {
+trait FtpClient extends Releasable {
   def listFileNames(dir: String): Seq[String]
 
   /**
@@ -169,7 +169,7 @@ private[ftp] trait FtpClient extends Releasable {
   def workingFolder(): String
 }
 
-private[ftp] object FtpClient {
+object FtpClient {
   private[this] val LOG  = Logger(classOf[FtpClient])
   def builder(): Builder = new Builder
 
@@ -314,6 +314,13 @@ private[ftp] object FtpClient {
           if (_client == null) _client = new FTPClient
           _client.connect(hostname, port)
           _client.enterLocalPassiveMode()
+
+          /**
+            * apache FTPClient, by default, disallow ftp server to use different address in control and data connection.
+            * However, in container world, it is easy that ftp server use another address in passive mode.
+            * Hence, we disable this check by default ...
+            */
+          _client.setRemoteVerificationEnabled(false)
           if (!_client.login(user, password))
             throw new IllegalArgumentException(s"fail to login ftp server:$hostname by account:$user")
           _client

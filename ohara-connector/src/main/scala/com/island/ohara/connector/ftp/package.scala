@@ -28,7 +28,7 @@ package object ftp {
     */
   private[this] val COUNTER = new AtomicInteger(0)
   val FTP_HOSTNAME_KEY      = "ftp.hostname"
-  val FTP_HOSTNAME_DEFINITION = SettingDef
+  val FTP_HOSTNAME_DEFINITION: SettingDef = SettingDef
     .builder()
     .displayName("Hostname of FTP Server")
     .documentation("hostname of ftp server")
@@ -38,7 +38,7 @@ package object ftp {
     .build()
 
   val FTP_PORT_KEY = "ftp.port"
-  val FTP_PORT_DEFINITION = SettingDef
+  val FTP_PORT_DEFINITION: SettingDef = SettingDef
     .builder()
     .displayName("Port of FTP Server")
     .documentation("port of ftp server")
@@ -48,7 +48,7 @@ package object ftp {
     .build()
 
   val FTP_USER_NAME_KEY = "ftp.user.name"
-  val FTP_USER_NAME_DEFINITION = SettingDef
+  val FTP_USER_NAME_DEFINITION: SettingDef = SettingDef
     .builder()
     .displayName("User of FTP Server")
     .documentation("user of ftp server. This account must have read/delete permission of input folder and error folder")
@@ -58,7 +58,7 @@ package object ftp {
     .build()
 
   val FTP_PASSWORD_KEY = "ftp.user.password"
-  val FTP_PASSWORD_DEFINITION = SettingDef
+  val FTP_PASSWORD_DEFINITION: SettingDef = SettingDef
     .builder()
     .displayName("Password of FTP Server")
     .documentation("password of ftp server")
