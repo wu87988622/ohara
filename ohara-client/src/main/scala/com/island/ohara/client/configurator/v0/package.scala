@@ -392,10 +392,10 @@ package object v0 {
 
   //------------------[quick builder for cluster services]------------------//
   private[v0] def groupDefinition: SettingDef.Builder => SettingDef =
-    _.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build()
+    _.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).disableUpdate().build()
 
   private[v0] def nameDefinition: SettingDef.Builder => SettingDef =
-    _.key(NAME_KEY).documentation("name of this worker cluster").stringWithRandomDefault().build()
+    _.key(NAME_KEY).documentation("name of this worker cluster").stringWithRandomDefault().disableUpdate().build()
 
   private[v0] def imageNameDefinition(defaultImage: String): SettingDef.Builder => SettingDef =
     _.key(IMAGE_NAME_KEY).optional(defaultImage).documentation("the docker image of this service").readonly().build()

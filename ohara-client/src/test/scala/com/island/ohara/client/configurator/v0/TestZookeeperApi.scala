@@ -439,6 +439,14 @@ class TestZookeeperApi extends OharaTest {
   def checkNameDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == NAME_KEY) should not be None
 
   @Test
+  def nameDefinitionShouldBeNonUpdatable(): Unit =
+    ZookeeperApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+
+  @Test
+  def groupDefinitionShouldBeNonUpdatable(): Unit =
+    ZookeeperApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
+
+  @Test
   def checkImageNameDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == IMAGE_NAME_KEY) should not be None
 
   @Test

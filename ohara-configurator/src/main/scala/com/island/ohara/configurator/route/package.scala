@@ -34,11 +34,11 @@ import com.island.ohara.client.configurator.v0.{
   OharaJsonFormat
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import spray.json.{DeserializationException, JsArray, JsString, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -436,4 +436,16 @@ package object route {
     executionContext: ExecutionContext
   ): Future[TopicAdmin] =
     brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
+
+  /**
+    * a helper method to Updating request that it remove all fields declared as non-updatable.
+    * @param settings origin settings
+    * @param settingDefs definitions
+    * @return settings have no non-updatable
+    */
+  def removeNonUpdatableFields(settings: Map[String, JsValue], settingDefs: Seq[SettingDef]): Map[String, JsValue] =
+    settings.filter {
+      case (k, _) =>
+        settingDefs.find(_.key() == k).forall(_.updatable())
+    }
 }

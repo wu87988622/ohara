@@ -74,7 +74,7 @@ object BrokerRoute {
             creationToClusterInfo(
               BrokerApi.access.request
                 .settings(previous.settings)
-                .settings(updating.settings)
+                .settings(removeNonUpdatableFields(updating.settings, BrokerApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

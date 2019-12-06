@@ -21,7 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroup, TopicKey}
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroup, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
@@ -94,6 +94,8 @@ object ConnectorApi {
     override def tags: Map[String, JsValue] = settings.tags.get
   }
 
+  val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala
+
   implicit val CONNECTOR_CREATION_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
@@ -101,7 +103,7 @@ object ConnectorApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
-      .definitions(ConnectorDefUtils.DEFAULT.asScala)
+      .definitions(DEFINITIONS)
       .rejectEmptyString()
       .valueChecker(
         COLUMNS_KEY, {

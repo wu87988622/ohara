@@ -19,6 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ServiceCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -64,7 +65,7 @@ object ZookeeperRoute {
               // 3) fill the ignored settings by creation
               access.request
                 .settings(previous.settings)
-                .settings(updating.settings)
+                .settings(removeNonUpdatableFields(updating.settings, ZookeeperApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

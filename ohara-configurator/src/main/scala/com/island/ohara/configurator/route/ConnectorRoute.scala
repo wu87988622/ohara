@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.WorkerCollie
+import com.island.ohara.client.configurator.v0.ConnectorApi
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
@@ -149,7 +150,7 @@ private[configurator] object ConnectorRoute {
             creationToConnectorInfo(
               access.request
                 .settings(previous.settings)
-                .settings(updating.settings)
+                .settings(removeNonUpdatableFields(updating.settings, ConnectorApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .name(key.name)
                 .group(key.group)

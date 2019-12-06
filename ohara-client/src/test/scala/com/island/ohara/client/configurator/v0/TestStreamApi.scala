@@ -927,4 +927,12 @@ class TestStreamApi extends OharaTest {
     cluster.deadNodes shouldBe Set("n1")
     cluster.copy(state = None).deadNodes shouldBe Set.empty
   }
+
+  @Test
+  def nameDefinitionShouldBeNonUpdatable(): Unit =
+    StreamApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+
+  @Test
+  def groupDefinitionShouldBeNonUpdatable(): Unit =
+    StreamApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
 }

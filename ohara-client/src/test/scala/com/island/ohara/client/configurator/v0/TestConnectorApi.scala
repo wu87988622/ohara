@@ -678,4 +678,12 @@ class TestConnectorApi extends OharaTest {
       .topicKey(TopicKey.of("g", "n"))
       .creation
       .group shouldBe GROUP_DEFAULT
+
+  @Test
+  def nameDefinitionShouldBeNonUpdatable(): Unit =
+    ConnectorApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+
+  @Test
+  def groupDefinitionShouldBeNonUpdatable(): Unit =
+    ConnectorApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
 }

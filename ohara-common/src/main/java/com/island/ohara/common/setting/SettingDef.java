@@ -144,6 +144,7 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
   private static final String TABLE_KEYS_KEY = "tableKeys";
+  private static final String UPDATABLE_KEY = "updatable";
   // exposed to TableColumn
   static final String RECOMMENDED_VALUES_KEY = "recommendedValues";
   private static final String BLACKLIST_KEY = "blacklist";
@@ -163,6 +164,7 @@ public class SettingDef implements JsonObject, Serializable {
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
+  private final boolean updatable;
   private final List<TableColumn> tableKeys;
   private final Set<String> recommendedValues;
   private final Set<String> blacklist;
@@ -180,6 +182,7 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) Reference reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
+      @JsonProperty(UPDATABLE_KEY) boolean updatable,
       @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
       @JsonProperty(RECOMMENDED_VALUES_KEY) Set<String> recommendedValues,
       @JsonProperty(BLACKLIST_KEY) Set<String> blacklist) {
@@ -200,6 +203,7 @@ public class SettingDef implements JsonObject, Serializable {
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Objects.requireNonNull(reference);
     this.internal = internal;
+    this.updatable = updatable;
     this.tableKeys = Objects.requireNonNull(tableKeys);
     // It is legal to ignore the display name.
     // However, we all hate null so we set the default value equal to key.
@@ -417,6 +421,11 @@ public class SettingDef implements JsonObject, Serializable {
     return internal;
   }
 
+  @JsonProperty(UPDATABLE_KEY)
+  public boolean updatable() {
+    return updatable;
+  }
+
   @JsonProperty(DISPLAY_NAME_KEY)
   public String displayName() {
     return displayName;
@@ -592,6 +601,7 @@ public class SettingDef implements JsonObject, Serializable {
           && Objects.equals(documentation, another.documentation)
           && Objects.equals(reference, another.reference)
           && Objects.equals(internal, another.internal)
+          && Objects.equals(updatable, another.updatable)
           && Objects.equals(tableKeys, another.tableKeys)
           && Objects.equals(recommendedValues, another.recommendedValues)
           && Objects.equals(blacklist, another.blacklist);
@@ -625,6 +635,7 @@ public class SettingDef implements JsonObject, Serializable {
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
+    private boolean updatable = true;
     private List<TableColumn> tableKeys = Collections.emptyList();
     private Set<String> recommendedValues = Collections.emptySet();
     private Set<String> blacklist = Collections.emptySet();
@@ -634,6 +645,12 @@ public class SettingDef implements JsonObject, Serializable {
     @Optional("default value is false")
     public Builder internal() {
       this.internal = true;
+      return this;
+    }
+
+    @Optional("default value is updatable")
+    public Builder disableUpdate() {
+      this.updatable = false;
       return this;
     }
 
@@ -941,6 +958,7 @@ public class SettingDef implements JsonObject, Serializable {
           documentation,
           reference,
           internal,
+          updatable,
           tableKeys,
           recommendedValues,
           blacklist);

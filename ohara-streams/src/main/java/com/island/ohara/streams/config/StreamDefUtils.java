@@ -78,6 +78,7 @@ public final class StreamDefUtils {
           .displayName("Stream name")
           .documentation("The unique name of this stream")
           .stringWithRandomDefault()
+          .disableUpdate()
           .build();
 
   public static final SettingDef GROUP_DEFINITION =
@@ -88,6 +89,7 @@ public final class StreamDefUtils {
           .displayName("Stream group")
           .documentation("The unique group of this stream")
           .optional("default")
+          .disableUpdate()
           .build();
 
   public static final SettingDef JAR_KEY_DEFINITION =

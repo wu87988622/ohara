@@ -81,6 +81,7 @@ public final class ConnectorDefUtils {
                   .displayName("Connector group")
                   .key("group")
                   .optional("default")
+                  .disableUpdate()
                   .documentation("the group of this connector")
                   .build());
 
@@ -96,6 +97,7 @@ public final class ConnectorDefUtils {
                   .displayName("Connector name")
                   .key("name")
                   .stringWithRandomDefault()
+                  .disableUpdate()
                   .documentation("the name of this connector")
                   .build());
 

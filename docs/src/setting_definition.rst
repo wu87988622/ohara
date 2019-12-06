@@ -48,7 +48,8 @@ SettingDef is a class used to describe the details of **a** setting. It consists
 #. defaultValue (**object**) — the default value. the type is equal to what valueType defines
                                but we only allow string, number and boolean type to have default value currently.
 #. documentation (**string**) — the explanation of this definition
-#. internal (**string**) — true if this setting is assigned by system automatically.
+#. internal (**boolean**) — true if this setting is assigned by system automatically.
+#. updatable (**boolean**) — true if this setting is updatable. Otherwise, the value is removed in updating request.
 #. tableKeys (**array(object)**) — the description to Type.TABLE
 
   - tableKeys[i].name - the column name

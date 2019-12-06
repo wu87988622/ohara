@@ -681,4 +681,12 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def checkClientPortDefinition(): Unit = BrokerApi.DEFINITIONS.find(_.key() == CLIENT_PORT_KEY) should not be None
+
+  @Test
+  def nameDefinitionShouldBeNonUpdatable(): Unit =
+    BrokerApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+
+  @Test
+  def groupDefinitionShouldBeNonUpdatable(): Unit =
+    BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
 }
