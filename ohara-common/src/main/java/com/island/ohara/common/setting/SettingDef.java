@@ -829,11 +829,12 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(Duration defaultValue) {
+      long value = defaultValue.toMillis();
       return checkAndSet(
           Type.DURATION,
           Necessary.OPTIONAL_WITH_DEFAULT,
           // this format is more readable and it is compatible to scala.Duration
-          defaultValue.toMillis() + " milliseconds");
+          value <= 1 ? value + " millisecond" : value + " milliseconds");
     }
 
     /**

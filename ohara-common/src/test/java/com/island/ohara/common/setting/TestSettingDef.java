@@ -625,4 +625,23 @@ public class TestSettingDef extends OharaTest {
   public void testUnderLineInKey() {
     SettingDef.builder().key("_");
   }
+
+  @Test
+  public void testDefaultDuration() {
+    Assert.assertEquals(
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .optional(Duration.ofMillis(10))
+            .build()
+            .defaultValue(),
+        "10 milliseconds");
+
+    Assert.assertEquals(
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .optional(Duration.ofMillis(1))
+            .build()
+            .defaultValue(),
+        "1 millisecond");
+  }
 }
