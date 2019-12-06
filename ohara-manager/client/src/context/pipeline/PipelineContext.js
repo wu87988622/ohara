@@ -28,7 +28,6 @@ const PipelineDispatchContext = React.createContext();
 
 const PipelineProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-
   const { workspaceName } = useWorkspace();
 
   React.useEffect(() => {

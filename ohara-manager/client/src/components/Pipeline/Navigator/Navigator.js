@@ -127,7 +127,7 @@ const Navigator = () => {
       <Form
         onSubmit={onSubmit}
         initialValues={{}}
-        render={({ handleSubmit, form, pristine, invalid }) => (
+        render={({ handleSubmit, form, submitting, pristine, invalid }) => (
           <Dialog
             open={isOpen}
             title="Add a new pipeline"
@@ -136,7 +136,7 @@ const Navigator = () => {
               form.reset();
             }}
             handleConfirm={handleSubmit}
-            confirmDisabled={pristine || invalid}
+            confirmDisabled={submitting || pristine || invalid}
           >
             <form onSubmit={handleSubmit}>
               <Field

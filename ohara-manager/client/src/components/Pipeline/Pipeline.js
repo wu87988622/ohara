@@ -30,10 +30,10 @@ const Pipeline = () => {
   const {
     workspaces,
     isFetching: isFetchingWorkspaces,
-    currentWorkspace: currentWorker,
+    currentWorkspace,
   } = useWorkspace();
   const { fetchPipelines } = usePipelineActions();
-  const { data: pipelines } = usePipelineState();
+  const { data: pipelines, lastUpdated } = usePipelineState();
   const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
@@ -58,22 +58,14 @@ const Pipeline = () => {
   };
 
   const hasWorkspace = workspaces.length > 0;
-  let currentWorkspace;
 
-  if (workspaceName && isFetchingWorkspaces === false) {
-    const current = workspaces.find(
-      workspace => workspace.settings.name === workspaceName,
-    );
-
-    // If the `current` pipeline is found in the pipeline list
-    if (current) currentWorkspace = current;
-
-    // If the `current` workspace is not found in the list but the
-    // list is not empty, let's display the first workspace
-    if (current === undefined && hasWorkspace) {
+  // Check if the given workspace name is valid
+  if (workspaceName) {
+    if (currentWorkspace === undefined && hasWorkspace) {
       history.push(`/${workspaces[0].settings.name}`);
     }
   } else if (hasWorkspace) {
+    // Load a default workspace if there's one
     history.push(`/${workspaces[0].settings.name}`);
   }
 
@@ -86,9 +78,9 @@ const Pipeline = () => {
   }, [hasWorkspace, setIsNewWorkspaceDialogOpen]);
 
   useEffect(() => {
-    if (!currentWorker) return;
-    fetchPipelines(currentWorker.settings.name);
-  }, [fetchPipelines, currentWorker, workspaceName]);
+    if (!currentWorkspace) return;
+    fetchPipelines(currentWorkspace.settings.name);
+  }, [currentWorkspace, fetchPipelines]);
 
   const hasPipeline = pipelines.length > 0;
   let currentPipeline;
@@ -98,17 +90,20 @@ const Pipeline = () => {
     // If the `current` pipeline is found in the pipeline list
     if (current) currentPipeline = current;
 
-    // If the `current` pipeline is not found in the list but the
-    // list is not empty, let's display the first pipeline
-    if (current === undefined && !hasPipeline) {
+    // No pipeline found, redirect back to workspace
+    if (current === undefined && !hasPipeline && lastUpdated !== null) {
       history.push(`/${workspaceName}`);
+      // Has some pipelines, let's direct to the first pipeline
     } else if (current === undefined && hasPipeline) {
       history.push(`/${workspaceName}/${pipelines[0].name}`);
     }
-  } else {
-    if (hasWorkspace && hasPipeline) {
-      history.push(`/${workspaceName}/${pipelines[0].name}`);
-    }
+  } else if (
+    currentPipeline === undefined &&
+    hasWorkspace &&
+    hasPipeline &&
+    lastUpdated !== null
+  ) {
+    history.push(`/${workspaceName}/${pipelines[0].name}`);
   }
 
   const prevPipeline = usePrevious(currentPipeline);

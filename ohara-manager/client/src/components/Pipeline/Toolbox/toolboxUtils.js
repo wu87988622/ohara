@@ -234,10 +234,10 @@ export const enableDragAndDrop = params => {
           openAddConnectorDialog(true);
 
           const localPoint = paper.paperToLocalPoint(paper.translate());
-          const { sx, sy } = paper.scale();
+          const scale = paper.scale();
 
-          const newX = (x - target.left - offset.x) / sx + localPoint.x;
-          const newY = (y - target.top - offset.y) / sy + localPoint.y;
+          const newX = (x - target.left - offset.x) / scale.sx + localPoint.x;
+          const newY = (y - target.top - offset.y) / scale.sy + localPoint.y;
           setPosition({ x: newX, y: newY });
         }
 
