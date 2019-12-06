@@ -118,10 +118,10 @@ const ConnectorGraph = params => {
         .attr('style', `display:${this.model.get('menuDisplay')};`);
 
       if (this.paper) {
-        this.paper.$document.on('mousemove', function(evt) {
+        this.paper.$document.on('mousemove', function(event) {
           if (linkLine) {
             if (!linkLine.attributes.target.id) {
-              linkLine.target({ x: evt.pageX - 290, y: evt.pageY - 72 });
+              linkLine.target({ x: event.pageX - 290, y: event.pageY - 72 });
               linkLine.attr({ line: { stroke: '#333333' } });
             }
           }
@@ -133,12 +133,11 @@ const ConnectorGraph = params => {
     },
   });
 
-  let el = new joint.shapes.html.Element({
+  return new joint.shapes.html.Element({
     position: { x: position.x, y: position.y },
     size: { width: 240, height: 100 },
     title: value,
     menuDisplay: 'none',
   });
-  return el;
 };
 export default ConnectorGraph;

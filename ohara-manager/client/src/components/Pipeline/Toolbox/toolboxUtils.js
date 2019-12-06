@@ -211,19 +211,6 @@ export const enableDragAndDrop = params => {
         top: event.pageY - offset.y,
       });
 
-      const isInsidePaper = () => {
-        const target = paper.$el.offset();
-        const x = event.pageX;
-        const y = event.pageY;
-
-        return (
-          x > target.left &&
-          x < target.left + paper.$el.width() &&
-          y > target.top &&
-          y < target.top + paper.$el.height()
-        );
-      };
-
       $('#paper').on('mousemove.fly', event => {
         $('#flying-paper').offset({
           left: event.pageX - offset.x,
@@ -236,13 +223,22 @@ export const enableDragAndDrop = params => {
         const y = event.pageY;
         const target = paper.$el.offset();
 
+        const isInsidePaper =
+          x > target.left &&
+          x < target.left + paper.$el.width() &&
+          y > target.top &&
+          y < target.top + paper.$el.height();
+
         // Dropped over paper ?
-        if (isInsidePaper()) {
+        if (isInsidePaper) {
           openAddConnectorDialog(true);
-          setPosition({
-            x: x - target.left - offset.x,
-            y: y - target.top - offset.y,
-          });
+
+          const localPoint = paper.paperToLocalPoint(paper.translate());
+          const { sx, sy } = paper.scale();
+
+          const newX = (x - target.left - offset.x) / sx + localPoint.x;
+          const newY = (y - target.top - offset.y) / sy + localPoint.y;
+          setPosition({ x: newX, y: newY });
         }
 
         // Clean up

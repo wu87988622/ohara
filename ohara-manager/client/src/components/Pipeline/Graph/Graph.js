@@ -142,32 +142,32 @@ const Graph = props => {
         updateCurrentCell(currentCell);
         setIsCentered(false);
       });
-
-      const resetAll = paper => {
-        const views = paper._views;
-        paper.model.getElements().forEach(element => {
-          element.attributes.menuDisplay = 'none';
-        });
-        Object.keys(paper._views).forEach(key => {
-          if (!views[key].$box) return;
-          views[key].updateBox();
-          views[key].$box.css('boxShadow', '');
-        });
-      };
-    };
-
-    const resetLink = () => {
-      const links = graph.current.getLinks();
-      if (links.length > 0) {
-        const disConnectLink = links.filter(link => !link.attributes.target.id);
-        if (disConnectLink.length > 0) {
-          disConnectLink[0].remove();
-        }
-      }
     };
 
     renderGraph();
   }, [palette.common.white, palette.grey, palette.primary, setIsCentered]);
+
+  const resetAll = paper => {
+    const views = paper._views;
+    paper.model.getElements().forEach(element => {
+      element.attributes.menuDisplay = 'none';
+    });
+    Object.keys(paper._views).forEach(key => {
+      if (!views[key].$box) return;
+      views[key].updateBox();
+      views[key].$box.css('boxShadow', '');
+    });
+  };
+
+  const resetLink = () => {
+    const links = graph.current.getLinks();
+    if (links.length > 0) {
+      const disConnectLink = links.filter(link => !link.attributes.target.id);
+      if (disConnectLink.length > 0) {
+        disConnectLink[0].remove();
+      }
+    }
+  };
 
   const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {
@@ -175,15 +175,7 @@ const Graph = props => {
     if (prevPaperScale === paperScale) return;
     if (isFitToContent) return;
 
-    // Update paper scale when `paperScale` updates
-    const size = paper.current.getComputedSize();
-    paper.current.translate(0, 0);
-    paper.current.scale(
-      paperScale,
-      paperScale,
-      size.width / 2,
-      size.height / 2,
-    );
+    paper.current.scale(paperScale);
 
     updateCurrentCell(currentCell);
     setIsCentered(false);
@@ -211,8 +203,8 @@ const Graph = props => {
 
       if (
         dragStartPosition.current &&
-        dragStartPosition.current.x !== undefined &&
-        dragStartPosition.current.y !== undefined
+        dragStartPosition.current.x &&
+        dragStartPosition.current.y
       ) {
         paper.current.translate(
           event.offsetX - dragStartPosition.current.x,
@@ -232,8 +224,10 @@ const Graph = props => {
         handleZoom={setZoom}
         handleFit={() => setIsFitToContent(true)}
         handleCenter={() => {
+          // We don't want to re-center again
           if (!isCentered) {
             setCenter({ paper, currentCell, paperScale });
+
             setIsFitToContent(false);
             setIsCentered(true);
           }
@@ -247,7 +241,6 @@ const Graph = props => {
           expanded={toolboxExpanded}
           handleClick={handleToolboxClick}
           handleClose={handleToolboxClose}
-          paperScale={paperScale}
           paper={paper.current}
           graph={graph.current}
           toolboxKey={toolboxKey}

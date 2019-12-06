@@ -107,12 +107,18 @@ export const useZoom = () => {
     let updatedOutScale = closestOutScale;
 
     // In case the calculation gives us the wrong scale
+    // We need to manually fix it...
     if (closestInScale >= fixedScale) {
-      updatedInScale =
-        inScaleIndex === 0
-          ? defaultScales[inScaleIndex]
-          : defaultScales[inScaleIndex - 1];
-      updatedOutScale = closestInScale;
+      const lowestScale = inScaleIndex === 0;
+
+      // Use the current scale if it's already in the lowest possible scale
+      // otherwise, down one or up one level
+      updatedInScale = lowestScale
+        ? defaultScales[inScaleIndex]
+        : defaultScales[inScaleIndex + 1];
+      updatedOutScale = lowestScale
+        ? defaultScales[inScaleIndex]
+        : defaultScales[inScaleIndex - 1];
     }
 
     const newScale = instruction === 'in' ? updatedInScale : updatedOutScale;

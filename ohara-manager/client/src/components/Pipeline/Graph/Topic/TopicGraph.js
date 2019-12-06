@@ -124,12 +124,11 @@ const TopicGraph = params => {
     },
   });
 
-  let el = new joint.shapes.html.Element({
+  return new joint.shapes.html.Element({
     position: { x: position.x, y: position.y },
     size: { width: 56, height: 56 + height },
     title: topicValue,
     menuDisplay: 'none',
   });
-  return el;
 };
 export default TopicGraph;
