@@ -1738,4 +1738,22 @@ class TestJsonRefiner extends OharaTest {
                |  }
                |  """.stripMargin.parseJson).fields(key) shouldBe JsString(value)
   }
+  @Test
+  def testInternalSettingShouldBeRemoved(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).internal().build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": "a"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsString("a")
+  }
 }

@@ -81,7 +81,10 @@ public final class StreamSetting {
   /** @return brokers' connection props */
   public String brokerConnectionProps() {
     return string(StreamDefUtils.BROKER_DEFINITION.key())
-        .orElseThrow(() -> new RuntimeException("BROKER_DEFINITION not found in env."));
+        .orElseThrow(
+            () ->
+                new RuntimeException(
+                    StreamDefUtils.BROKER_DEFINITION.key() + " not found in env."));
   }
 
   /** @return the keys of from topics */
