@@ -67,7 +67,7 @@ public final class StreamDefUtils {
           .documentation("The image name of this stream running with")
           .optional("oharastream/stream:" + VersionUtils.VERSION)
           // In manager, user cannot change the image name
-          .readonly()
+          .permission(SettingDef.Permission.READ_ONLY)
           .build();
 
   public static final SettingDef NAME_DEFINITION =
@@ -78,7 +78,7 @@ public final class StreamDefUtils {
           .displayName("Stream name")
           .documentation("The unique name of this stream")
           .stringWithRandomDefault()
-          .disableUpdate()
+          .permission(SettingDef.Permission.CREATE_ONLY)
           .build();
 
   public static final SettingDef GROUP_DEFINITION =
@@ -89,7 +89,7 @@ public final class StreamDefUtils {
           .displayName("Stream group")
           .documentation("The unique group of this stream")
           .optional("default")
-          .disableUpdate()
+          .permission(SettingDef.Permission.CREATE_ONLY)
           .build();
 
   public static final SettingDef JAR_KEY_DEFINITION =
@@ -173,7 +173,7 @@ public final class StreamDefUtils {
           .key("kind")
           .documentation("kind of stream application")
           .optional(STREAM)
-          .readonly()
+          .permission(SettingDef.Permission.READ_ONLY)
           .build();
 
   public static final SettingDef VERSION_DEFINITION =
@@ -183,7 +183,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Version")
           .documentation("Version of stream")
-          .readonly()
+          .permission(SettingDef.Permission.READ_ONLY)
           .optional(VersionUtils.VERSION)
           .build();
 
@@ -193,7 +193,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Revision")
-          .readonly()
+          .permission(SettingDef.Permission.READ_ONLY)
           .documentation("Revision of stream")
           .optional(VersionUtils.REVISION)
           .build();
@@ -204,7 +204,7 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Author")
-          .readonly()
+          .permission(SettingDef.Permission.READ_ONLY)
           .documentation("Author of stream")
           .optional(VersionUtils.USER)
           .build();

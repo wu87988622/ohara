@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -440,11 +441,11 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def nameDefinitionShouldBeNonUpdatable(): Unit =
-    ZookeeperApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+    ZookeeperApi.DEFINITIONS.find(_.key() == NAME_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
-    ZookeeperApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
+    ZookeeperApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def checkImageNameDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == IMAGE_NAME_KEY) should not be None

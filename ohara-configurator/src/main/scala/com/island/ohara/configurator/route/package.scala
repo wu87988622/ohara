@@ -34,6 +34,7 @@ import com.island.ohara.client.configurator.v0.{
   OharaJsonFormat
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
+import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.configurator.route.hook._
@@ -443,9 +444,9 @@ package object route {
     * @param settingDefs definitions
     * @return settings have no non-updatable
     */
-  def removeNonUpdatableFields(settings: Map[String, JsValue], settingDefs: Seq[SettingDef]): Map[String, JsValue] =
+  def keepEditableFields(settings: Map[String, JsValue], settingDefs: Seq[SettingDef]): Map[String, JsValue] =
     settings.filter {
       case (k, _) =>
-        settingDefs.find(_.key() == k).forall(_.updatable())
+        settingDefs.find(_.key() == k).forall(_.permission() == Permission.EDITABLE)
     }
 }

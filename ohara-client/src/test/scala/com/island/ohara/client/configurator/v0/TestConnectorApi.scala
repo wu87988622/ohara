@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, PropGroup, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -681,9 +682,9 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def nameDefinitionShouldBeNonUpdatable(): Unit =
-    ConnectorApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+    ConnectorApi.DEFINITIONS.find(_.key() == NAME_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
-    ConnectorApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
+    ConnectorApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 }

@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.BrokerApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -684,9 +685,9 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def nameDefinitionShouldBeNonUpdatable(): Unit =
-    BrokerApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+    BrokerApi.DEFINITIONS.find(_.key() == NAME_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
-    BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
+    BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 }

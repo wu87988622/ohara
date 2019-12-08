@@ -155,7 +155,7 @@ public class TestSettingDef extends OharaTest {
             .reference(reference)
             .orderInGroup(orderInGroup)
             .documentation(documentation)
-            .readonly()
+            .permission(SettingDef.Permission.READ_ONLY)
             .internal()
             .build();
 

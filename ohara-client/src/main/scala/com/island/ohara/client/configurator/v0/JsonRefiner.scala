@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.JsonRefiner.{ArrayRestriction, StringRestriction}
-import com.island.ohara.common.setting.SettingDef.{Necessary, Type}
+import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Type}
 import com.island.ohara.common.setting.{ObjectKey, PropGroup, SettingDef}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
@@ -71,7 +71,7 @@ trait JsonRefiner[T] {
   def definition(definition: SettingDef): JsonRefiner[T] = {
     // the internal is not exposed to user so we skip it.
     // remove the value if the field is readonly
-    if (!definition.editable()) valueConverter(definition.key(), _ => JsNull)
+    if (definition.permission() == Permission.READ_ONLY) valueConverter(definition.key(), _ => JsNull)
 
     if (!definition.internal() && definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
     definition.valueType() match {

@@ -81,7 +81,7 @@ public final class ConnectorDefUtils {
                   .displayName("Connector group")
                   .key("group")
                   .optional("default")
-                  .disableUpdate()
+                  .permission(SettingDef.Permission.CREATE_ONLY)
                   .documentation("the group of this connector")
                   .build());
 
@@ -97,7 +97,7 @@ public final class ConnectorDefUtils {
                   .displayName("Connector name")
                   .key("name")
                   .stringWithRandomDefault()
-                  .disableUpdate()
+                  .permission(SettingDef.Permission.CREATE_ONLY)
                   .documentation("the name of this connector")
                   .build());
 
@@ -251,7 +251,7 @@ public final class ConnectorDefUtils {
                   .key(KIND_KEY)
                   .documentation("kind of connector")
                   .optional(SOURCE_CONNECTOR)
-                  .readonly()
+                  .permission(SettingDef.Permission.READ_ONLY)
                   .build());
 
   public static final SettingDef SINK_KIND_DEFINITION =
@@ -264,7 +264,7 @@ public final class ConnectorDefUtils {
                   .group(SOURCE_KIND_DEFINITION.group())
                   .optional(SINK_CONNECTOR)
                   .orderInGroup(SOURCE_KIND_DEFINITION.orderInGroup())
-                  .readonly()
+                  .permission(SettingDef.Permission.READ_ONLY)
                   .build());
 
   public static final SettingDef TAGS_DEFINITION =
@@ -288,7 +288,7 @@ public final class ConnectorDefUtils {
         .group(CORE_GROUP)
         .optional(version)
         .orderInGroup(VERSION_ORDER)
-        .readonly()
+        .permission(SettingDef.Permission.READ_ONLY)
         .build();
   }
 
@@ -303,7 +303,7 @@ public final class ConnectorDefUtils {
         .group(CORE_GROUP)
         .optional(revision)
         .orderInGroup(REVISION_ORDER)
-        .readonly()
+        .permission(SettingDef.Permission.READ_ONLY)
         .build();
   }
 
@@ -318,7 +318,7 @@ public final class ConnectorDefUtils {
         .group(CORE_GROUP)
         .optional(author)
         .orderInGroup(AUTHOR_ORDER)
-        .readonly()
+        .permission(SettingDef.Permission.READ_ONLY)
         .build();
   }
 

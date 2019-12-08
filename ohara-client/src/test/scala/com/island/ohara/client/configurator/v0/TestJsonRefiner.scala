@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -1724,7 +1725,7 @@ class TestJsonRefiner extends OharaTest {
 
         override def write(obj: JsObject): JsValue = obj
       })
-      .definition(SettingDef.builder().key(key).optional(value).readonly().build())
+      .definition(SettingDef.builder().key(key).optional(value).permission(SettingDef.Permission.READ_ONLY).build())
       .refine
 
     format.read(s"""
@@ -1738,6 +1739,7 @@ class TestJsonRefiner extends OharaTest {
                |  }
                |  """.stripMargin.parseJson).fields(key) shouldBe JsString(value)
   }
+
   @Test
   def testInternalSettingShouldBeRemoved(): Unit = {
     val key = CommonUtils.randomString()
@@ -1748,6 +1750,25 @@ class TestJsonRefiner extends OharaTest {
         override def write(obj: JsObject): JsValue = obj
       })
       .definition(SettingDef.builder().key(key).internal().build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |    "$key": "a"
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key) shouldBe JsString("a")
+  }
+
+  @Test
+  def testCreateOnly(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).permission(Permission.CREATE_ONLY).build())
       .refine
 
     format.read(s"""

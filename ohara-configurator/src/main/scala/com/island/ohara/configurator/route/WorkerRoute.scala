@@ -75,7 +75,7 @@ object WorkerRoute {
             creationToClusterInfo(
               WorkerApi.access.request
                 .settings(previous.settings)
-                .settings(removeNonUpdatableFields(updating.settings, WorkerApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.settings, WorkerApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

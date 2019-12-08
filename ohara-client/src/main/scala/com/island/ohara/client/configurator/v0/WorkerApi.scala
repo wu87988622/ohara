@@ -131,7 +131,7 @@ object WorkerApi {
     _.key(CONFIG_TOPIC_PARTITIONS_KEY)
       .documentation("number of partitions for config topic. this value MUST be 1")
       .positiveNumber(CONFIG_TOPIC_PARTITIONS_DEFAULT)
-      .readonly()
+      .permission(SettingDef.Permission.READ_ONLY)
       .build()
   )
   private[this] val CONFIG_TOPIC_REPLICATIONS_KEY            = "config.storage.replication.factor"

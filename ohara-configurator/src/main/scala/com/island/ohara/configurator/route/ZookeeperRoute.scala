@@ -65,7 +65,7 @@ object ZookeeperRoute {
               // 3) fill the ignored settings by creation
               access.request
                 .settings(previous.settings)
-                .settings(removeNonUpdatableFields(updating.settings, ZookeeperApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.settings, ZookeeperApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

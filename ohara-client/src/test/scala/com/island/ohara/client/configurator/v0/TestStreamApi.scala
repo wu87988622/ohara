@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
@@ -930,9 +931,9 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def nameDefinitionShouldBeNonUpdatable(): Unit =
-    StreamApi.DEFINITIONS.find(_.key() == NAME_KEY).get.updatable() shouldBe false
+    StreamApi.DEFINITIONS.find(_.key() == NAME_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
-    StreamApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.updatable() shouldBe false
+    StreamApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 }

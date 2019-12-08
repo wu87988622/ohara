@@ -18,6 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Permission
 import org.junit.Test
 import spray.json.JsString
 import org.scalatest.Matchers._
@@ -26,12 +27,11 @@ class TestRouteUtils extends OharaTest {
   @Test
   def testUpdatable(): Unit = {
     val settings = Map("a" -> JsString("b"))
-
     val settingDef = SettingDef
       .builder()
       .key("a")
-      .disableUpdate()
+      .permission(Permission.CREATE_ONLY)
       .build()
-    removeNonUpdatableFields(settings, Seq(settingDef)) shouldBe Map.empty
+    keepEditableFields(settings, Seq(settingDef)) shouldBe Map.empty
   }
 }

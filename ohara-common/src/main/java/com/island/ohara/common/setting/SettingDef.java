@@ -62,6 +62,13 @@ public class SettingDef implements JsonObject, Serializable {
     FILE
   }
 
+  // -------------------------------[value permission]-------------------------------//
+  public enum Permission {
+    READ_ONLY,
+    CREATE_ONLY,
+    EDITABLE
+  }
+
   // -------------------------------[value required]-------------------------------//
   public enum Necessary {
     REQUIRED,
@@ -136,6 +143,7 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String GROUP_KEY = "group";
   private static final String ORDER_IN_GROUP_KEY = "orderInGroup";
   private static final String DISPLAY_NAME_KEY = "displayName";
+  // TODO: remove this depracted field (see https://github.com/oharastream/ohara/issues/3480)
   private static final String EDITABLE_KEY = "editable";
   private static final String KEY_KEY = "key";
   private static final String VALUE_TYPE_KEY = "valueType";
@@ -144,7 +152,7 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
   private static final String TABLE_KEYS_KEY = "tableKeys";
-  private static final String UPDATABLE_KEY = "updatable";
+  private static final String PERMISSION_KEY = "permission";
   // exposed to TableColumn
   static final String RECOMMENDED_VALUES_KEY = "recommendedValues";
   private static final String BLACKLIST_KEY = "blacklist";
@@ -156,7 +164,6 @@ public class SettingDef implements JsonObject, Serializable {
   private final String displayName;
   private final String group;
   private final int orderInGroup;
-  private final boolean editable;
   private final String key;
   private final Type valueType;
   @Nullable private final Object defaultValue;
@@ -164,7 +171,7 @@ public class SettingDef implements JsonObject, Serializable {
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
-  private final boolean updatable;
+  private final Permission permission;
   private final List<TableColumn> tableKeys;
   private final Set<String> recommendedValues;
   private final Set<String> blacklist;
@@ -174,7 +181,6 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(DISPLAY_NAME_KEY) String displayName,
       @JsonProperty(GROUP_KEY) String group,
       @JsonProperty(ORDER_IN_GROUP_KEY) int orderInGroup,
-      @JsonProperty(EDITABLE_KEY) boolean editable,
       @JsonProperty(KEY_KEY) String key,
       @JsonProperty(VALUE_TYPE_KEY) Type valueType,
       @JsonProperty(NECESSARY_KEY) Necessary necessary,
@@ -182,13 +188,12 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) Reference reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
-      @JsonProperty(UPDATABLE_KEY) boolean updatable,
+      @JsonProperty(PERMISSION_KEY) Permission permission,
       @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
       @JsonProperty(RECOMMENDED_VALUES_KEY) Set<String> recommendedValues,
       @JsonProperty(BLACKLIST_KEY) Set<String> blacklist) {
     this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
-    this.editable = editable;
     this.key = CommonUtils.requireNonEmpty(key);
     if (this.key.contains("__"))
       throw new IllegalArgumentException(
@@ -203,7 +208,7 @@ public class SettingDef implements JsonObject, Serializable {
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Objects.requireNonNull(reference);
     this.internal = internal;
-    this.updatable = updatable;
+    this.permission = permission;
     this.tableKeys = Objects.requireNonNull(tableKeys);
     // It is legal to ignore the display name.
     // However, we all hate null so we set the default value equal to key.
@@ -421,9 +426,9 @@ public class SettingDef implements JsonObject, Serializable {
     return internal;
   }
 
-  @JsonProperty(UPDATABLE_KEY)
-  public boolean updatable() {
-    return updatable;
+  @JsonProperty(PERMISSION_KEY)
+  public Permission permission() {
+    return permission;
   }
 
   @JsonProperty(DISPLAY_NAME_KEY)
@@ -442,9 +447,10 @@ public class SettingDef implements JsonObject, Serializable {
     return orderInGroup;
   }
 
+  // TODO: remove this deprecated field (see https://github.com/oharastream/ohara/issues/3480)
   @JsonProperty(EDITABLE_KEY)
   public boolean editable() {
-    return editable;
+    return permission == Permission.EDITABLE;
   }
 
   @JsonProperty(KEY_KEY)
@@ -593,7 +599,6 @@ public class SettingDef implements JsonObject, Serializable {
       return Objects.equals(displayName, another.displayName)
           && Objects.equals(group, another.group)
           && Objects.equals(orderInGroup, another.orderInGroup)
-          && Objects.equals(editable, another.editable)
           && Objects.equals(key, another.key)
           && Objects.equals(valueType, another.valueType)
           && Objects.equals(necessary, another.necessary)
@@ -601,7 +606,7 @@ public class SettingDef implements JsonObject, Serializable {
           && Objects.equals(documentation, another.documentation)
           && Objects.equals(reference, another.reference)
           && Objects.equals(internal, another.internal)
-          && Objects.equals(updatable, another.updatable)
+          && Objects.equals(permission, another.permission)
           && Objects.equals(tableKeys, another.tableKeys)
           && Objects.equals(recommendedValues, another.recommendedValues)
           && Objects.equals(blacklist, another.blacklist);
@@ -627,7 +632,6 @@ public class SettingDef implements JsonObject, Serializable {
     private String displayName;
     private String group = COMMON_GROUP;
     private int orderInGroup = -1;
-    private boolean editable = true;
     private String key;
     private Type valueType = null;
     private Necessary necessary = null;
@@ -635,7 +639,7 @@ public class SettingDef implements JsonObject, Serializable {
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
-    private boolean updatable = true;
+    private Permission permission = Permission.EDITABLE;
     private List<TableColumn> tableKeys = Collections.emptyList();
     private Set<String> recommendedValues = Collections.emptySet();
     private Set<String> blacklist = Collections.emptySet();
@@ -648,9 +652,9 @@ public class SettingDef implements JsonObject, Serializable {
       return this;
     }
 
-    @Optional("default value is updatable")
-    public Builder disableUpdate() {
-      this.updatable = false;
+    @Optional("default value is editable")
+    public Builder permission(Permission permission) {
+      this.permission = Objects.requireNonNull(permission);
       return this;
     }
 
@@ -932,12 +936,6 @@ public class SettingDef implements JsonObject, Serializable {
       return this;
     }
 
-    @Optional("default setting is modifiable")
-    public Builder readonly() {
-      this.editable = false;
-      return this;
-    }
-
     @Optional("default value is equal to key")
     public Builder displayName(String displayName) {
       this.displayName = CommonUtils.requireNonEmpty(displayName);
@@ -950,7 +948,6 @@ public class SettingDef implements JsonObject, Serializable {
           displayName,
           group,
           orderInGroup,
-          editable,
           key,
           valueType == null ? Type.STRING : valueType,
           necessary == null ? Necessary.REQUIRED : necessary,
@@ -958,7 +955,7 @@ public class SettingDef implements JsonObject, Serializable {
           documentation,
           reference,
           internal,
-          updatable,
+          permission,
           tableKeys,
           recommendedValues,
           blacklist);

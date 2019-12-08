@@ -35,7 +35,12 @@ SettingDef is a class used to describe the details of **a** setting. It consists
 #. group (**string**) — the group of this setting (all core setting are in core group)
 #. orderInGroup (**int**) — the order in group
 #. displayName (**string**) — the readable name of this setting
-#. editable (**boolean**) — true if this setting is modifiable
+#. permission (**string**) — the way to "touch" value. It consists of
+
+  - READ_ONLY — you can't define an new value for it
+  - CREATE_ONLY — you can't update the value to an new one
+  - EDITABLE — feel free to modify the value as you wish :)
+
 #. key (**string**) — the key of configuration
 #. :ref:`valueType <setting-definition-type>` (**string**) — the type of value
 #. necessary (**string**)
@@ -49,7 +54,6 @@ SettingDef is a class used to describe the details of **a** setting. It consists
                                but we only allow string, number and boolean type to have default value currently.
 #. documentation (**string**) — the explanation of this definition
 #. internal (**boolean**) — true if this setting is assigned by system automatically.
-#. updatable (**boolean**) — true if this setting is updatable. Otherwise, the value is removed in updating request.
 #. tableKeys (**array(object)**) — the description to Type.TABLE
 
   - tableKeys[i].name - the column name
@@ -133,7 +137,11 @@ setting.
 
 .. code-block:: java
 
-   SettingDef.builder().key(key).optional(defaultValue).readonly().build();
+   SettingDef.builder()
+    .key(key)
+    .optional(defaultValue)
+    .permission(SettingDef.Permission.READ_ONLY)
+    .build();
 
 .. note::
    The input value will be removed automatically if the associated setting is declared readonly.
@@ -441,7 +449,7 @@ having table type is shown below.
      "necessary": "REQUIRED",
      "defaultValue": null,
      "group": "core",
-     "editable": true
+     "permission": "EDITABLE"
    }
 
 .. note::
