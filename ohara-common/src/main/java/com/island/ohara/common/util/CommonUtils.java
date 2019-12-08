@@ -95,7 +95,7 @@ public final class CommonUtils {
             "the value:"
                 + value
                 + " can't be converted to either java.time.Duration or scala.concurrent.duration.Duration type");
-      long number = Long.valueOf(stringValue.substring(0, indexOfUnit));
+      long number = Long.parseLong(stringValue.substring(0, indexOfUnit));
       String unitString = stringValue.substring(indexOfUnit).toUpperCase();
       // all units in TimeUnit end with "S". However, it forbids the representation like "1 second",
       // "1 minute" and "1 day".

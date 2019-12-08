@@ -70,7 +70,7 @@ public class SumExample extends Stream {
   public void start(OStream<Row> ostream, StreamSetting streamSetting) {
     ostream
         // filter out even number
-        .filter(row -> Integer.valueOf(row.cell("number").value().toString()) % 2 != 0)
+        .filter(row -> Integer.parseInt(row.cell("number").value().toString()) % 2 != 0)
         // add a temp cell "dummy" for groupBy use
         .map(
             row -> {

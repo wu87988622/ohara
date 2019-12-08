@@ -196,8 +196,8 @@ public class TestPurchaseAnalysis extends With3Brokers {
                       row.cell("gender"),
                       Cell.of(
                           "amount",
-                          Double.valueOf(row.cell("quantity").value().toString())
-                              * Double.valueOf(row.cell("price").value().toString()))))
+                          Double.parseDouble(row.cell("quantity").value().toString())
+                              * Double.parseDouble(row.cell("price").value().toString()))))
           .groupByKey(Collections.singletonList("gender"))
           .reduce((Double r1, Double r2) -> r1 + r2, "amount")
           .start();

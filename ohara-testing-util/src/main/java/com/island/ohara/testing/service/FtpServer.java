@@ -282,7 +282,7 @@ public interface FtpServer extends Releasable {
           password = value;
           break;
         case CONTROL_PORT:
-          controlPort = Integer.valueOf(value);
+          controlPort = Integer.parseInt(value);
           break;
         case DATA_PORTS:
           if (value.startsWith("-"))
@@ -290,8 +290,8 @@ public interface FtpServer extends Releasable {
           else if (value.contains("-"))
             dataPorts =
                 IntStream.range(
-                        Integer.valueOf(value.split("-")[0]),
-                        Integer.valueOf(value.split("-")[1]) + 1)
+                        Integer.parseInt(value.split("-")[0]),
+                        Integer.parseInt(value.split("-")[1]) + 1)
                     .boxed()
                     .collect(Collectors.toList());
           else
@@ -299,7 +299,7 @@ public interface FtpServer extends Releasable {
                 Stream.of(value.split(",")).map(Integer::valueOf).collect(Collectors.toList());
           break;
         case TTL:
-          ttl = Integer.valueOf(value);
+          ttl = Integer.parseInt(value);
           break;
         default:
           throw new IllegalArgumentException("unknown key:" + args[i] + " " + USAGE);

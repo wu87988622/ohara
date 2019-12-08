@@ -111,7 +111,7 @@ public final class PropGroup implements Iterable<Map<String, String>> {
 
   private static Column toColumn(Map<String, String> propGroup) {
     return Column.builder()
-        .order(Integer.valueOf(propGroup.get(SettingDef.ORDER_KEY)))
+        .order(Integer.parseInt(propGroup.get(SettingDef.ORDER_KEY)))
         .name(propGroup.get(SettingDef.COLUMN_NAME_KEY))
         .newName(
             propGroup.getOrDefault(

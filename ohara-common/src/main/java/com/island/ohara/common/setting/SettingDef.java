@@ -248,6 +248,7 @@ public class SettingDef implements JsonObject, Serializable {
                 "The value should equals to case-insensitive string value of 'true' or 'false'");
           break;
         case STRING:
+        case PASSWORD:
           try {
             String.valueOf(trueValue);
           } catch (Exception e) {
@@ -324,13 +325,6 @@ public class SettingDef implements JsonObject, Serializable {
         case CLASS:
           // TODO: implement the class checking
           break;
-        case PASSWORD:
-          try {
-            String.valueOf(trueValue);
-          } catch (Exception e) {
-            throw new OharaConfigException(this.key, trueValue, e.getMessage());
-          }
-          break;
         case JDBC_TABLE:
           // TODO: implement the jdbc table checking
           break;
@@ -373,7 +367,7 @@ public class SettingDef implements JsonObject, Serializable {
         case BINDING_PORT:
         case PORT:
           try {
-            int port = Integer.valueOf(String.valueOf(trueValue));
+            int port = Integer.parseInt(String.valueOf(trueValue));
             if (!CommonUtils.isConnectionPort(port))
               throw new OharaConfigException(
                   "the legal range for port is [1, 65535], but actual port is " + port);

@@ -93,7 +93,7 @@ public class TaskSetting {
    * @return value
    */
   public long longValue(String key) {
-    return Long.valueOf(stringValue(key));
+    return Long.parseLong(stringValue(key));
   }
 
   /**
@@ -117,7 +117,7 @@ public class TaskSetting {
    * @return value
    */
   public int intValue(String key) {
-    return Integer.valueOf(stringValue(key));
+    return Integer.parseInt(stringValue(key));
   }
 
   /**
@@ -141,7 +141,7 @@ public class TaskSetting {
    * @return value
    */
   public short shortValue(String key) {
-    return Short.valueOf(stringValue(key));
+    return Short.parseShort(stringValue(key));
   }
 
   /**
@@ -165,7 +165,7 @@ public class TaskSetting {
    * @return value
    */
   public double doubleValue(String key) {
-    return Double.valueOf(stringValue(key));
+    return Double.parseDouble(stringValue(key));
   }
 
   /**
