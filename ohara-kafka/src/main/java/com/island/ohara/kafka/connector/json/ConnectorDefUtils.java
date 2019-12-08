@@ -221,6 +221,22 @@ public final class ConnectorDefUtils {
                   .internal()
                   .build());
 
+  /**
+   * kafka connector also wrap the data by Json converter by default. However, the wrap obstruct us
+   * from parsing the byte array to our object. Hence, we requires the raw converter to skip any
+   * wrapping.
+   */
+  public static final SettingDef HEADER_CONVERTER_DEFINITION =
+      createDef(
+          builder ->
+              builder
+                  .displayName("header converter")
+                  .key("header.converter")
+                  .documentation("header converter")
+                  .optionalClassValue(ConverterType.NONE.className())
+                  .internal()
+                  .build());
+
   /** this is the base of source/sink definition. */
   public static final String KIND_KEY = "kind";
 

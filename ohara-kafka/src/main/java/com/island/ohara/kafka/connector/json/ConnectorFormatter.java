@@ -17,7 +17,6 @@
 package com.island.ohara.kafka.connector.json;
 
 import com.google.common.collect.ImmutableMap;
-import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.ConnectorKey;
@@ -46,8 +45,15 @@ public final class ConnectorFormatter {
 
   private ConnectorFormatter() {
     // ohara has custom serializeration so the json converter is useless for ohara
-    converterTypeOfKey(ConverterType.NONE);
-    converterTypeOfValue(ConverterType.NONE);
+    setting(
+        ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key(),
+        ConnectorDefUtils.KEY_CONVERTER_DEFINITION.defaultString());
+    setting(
+        ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key(),
+        ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.defaultString());
+    setting(
+        ConnectorDefUtils.HEADER_CONVERTER_DEFINITION.key(),
+        ConnectorDefUtils.HEADER_CONVERTER_DEFINITION.defaultString());
   }
 
   /**
@@ -142,16 +148,6 @@ public final class ConnectorFormatter {
     return setting(
         ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key(),
         String.valueOf(CommonUtils.requirePositiveInt(numberOfTasks)));
-  }
-
-  @Optional("default is ConverterType.NONE")
-  public ConnectorFormatter converterTypeOfKey(ConverterType type) {
-    return setting(ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key(), type.className());
-  }
-
-  @Optional("default is ConverterType.NONE")
-  public ConnectorFormatter converterTypeOfValue(ConverterType type) {
-    return setting(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key(), type.className());
   }
 
   public ConnectorFormatter propGroup(String key, PropGroup propGroup) {

@@ -76,18 +76,6 @@ public class TestConnectorFormatter extends OharaTest {
     Assert.assertNull(creation.configs().get(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()));
   }
 
-  @Test
-  public void testSetKeyConverter() {
-    Creation creation =
-        ConnectorFormatter.of()
-            .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
-            .converterTypeOfKey(ConverterType.JSON)
-            .converterTypeOfValue(ConverterType.JSON)
-            .requestOfCreation();
-    Assert.assertTrue(creation.toJsonString().contains(ConverterType.JSON.className()));
-    Assert.assertFalse(creation.toJsonString().contains(ConverterType.NONE.className()));
-  }
-
   @Test(expected = NullPointerException.class)
   public void ignoreName() {
     ConnectorFormatter.of().requestOfCreation();

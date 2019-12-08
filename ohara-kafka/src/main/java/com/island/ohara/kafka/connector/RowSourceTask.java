@@ -27,6 +27,7 @@ import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.Header;
 import com.island.ohara.metrics.basic.Counter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -117,10 +118,11 @@ public abstract class RowSourceTask extends SourceTask {
     ConnectHeaders headers = new ConnectHeaders();
     // add the header to mark the source of this data
     // we convert the string to bytes manually since we don't want to use the schema in order to
-    // make this
-    // header is readable to consumer.
-    headers.addBytes(Header.SOURCE_CLASS_KEY, getClass().getName().getBytes());
-    headers.addBytes(Header.SOURCE_KEY_KEY, ObjectKey.toJsonString(key).getBytes());
+    // make this header is readable to consumer.
+    headers.addBytes(
+        Header.SOURCE_CLASS_KEY, getClass().getName().getBytes(StandardCharsets.UTF_8));
+    headers.addBytes(
+        Header.SOURCE_KEY_KEY, ObjectKey.toJsonString(key).getBytes(StandardCharsets.UTF_8));
     return new SourceRecord(
         record.sourcePartition(),
         record.sourceOffset(),

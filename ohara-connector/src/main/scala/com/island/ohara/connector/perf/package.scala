@@ -16,7 +16,8 @@
 
 package com.island.ohara.connector
 
-import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.common.data.{Cell, Column, DataType, Row}
+import com.island.ohara.common.util.{ByteUtils, CommonUtils}
 
 import scala.concurrent.duration.Duration
 
@@ -40,4 +41,29 @@ package object perf {
   def toJavaDuration(d: Duration): java.time.Duration = java.time.Duration.ofMillis(d.toMillis)
   def toScalaDuration(d: java.time.Duration): Duration =
     Duration(d.toMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
+
+  /**
+    * generate a row according to input schema
+    * @param schema schema
+    * @return row
+    */
+  def row(schema: Seq[Column]): Row = Row.of(
+    schema.sortBy(_.order).map { c =>
+      Cell.of(
+        c.newName,
+        c.dataType match {
+          case DataType.BOOLEAN => false
+          case DataType.BYTE    => ByteUtils.toBytes(CommonUtils.current()).head
+          case DataType.BYTES   => ByteUtils.toBytes(CommonUtils.current())
+          case DataType.SHORT   => CommonUtils.current().toShort
+          case DataType.INT     => CommonUtils.current().toInt
+          case DataType.LONG    => CommonUtils.current()
+          case DataType.FLOAT   => CommonUtils.current().toFloat
+          case DataType.DOUBLE  => CommonUtils.current().toDouble
+          case DataType.STRING  => CommonUtils.current().toString
+          case _                => CommonUtils.current()
+        }
+      )
+    }: _*
+  )
 }

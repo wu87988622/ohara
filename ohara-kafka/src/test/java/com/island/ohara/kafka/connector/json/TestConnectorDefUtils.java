@@ -137,6 +137,17 @@ public class TestConnectorDefUtils extends OharaTest {
             .defaultString());
   }
 
+  @Test
+  public void testDefaultHeaderConverter() {
+    Assert.assertEquals(
+        ConverterType.NONE.className(),
+        ConnectorDefUtils.DEFAULT.stream()
+            .filter(d -> d.key().equals(ConnectorDefUtils.HEADER_CONVERTER_DEFINITION.key()))
+            .findAny()
+            .get()
+            .defaultString());
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void parseStaleConfigKeyInfo() {
     ConfigKeyInfo fake = Mockito.mock(ConfigKeyInfo.class);

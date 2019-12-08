@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.route
 
+import java.nio.charset.StandardCharsets
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
@@ -70,29 +72,31 @@ private[configurator] object InspectRoute {
         .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
         .map {
           case (partition, offset, bytes, headers) =>
-            try Message(
+            var error: Option[String] = None
+            def swallowException[T](f: => Option[T]): Option[T] =
+              try f
+              catch {
+                case e: Throwable =>
+                  error = Some(e.getMessage)
+                  None
+              }
+
+            Message(
               partition = partition,
               offset = offset,
               // only Ohara source connectors have this header
-              sourceClass = headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value())),
-              sourceKey = headers
-                .find(_.key() == Header.SOURCE_KEY_KEY)
-                .map(h => new String(h.value()))
-                .map(ObjectKey.toObjectKey),
-              value = Some(toJson(Serializer.ROW.from(bytes))),
-              error = None
+              sourceClass = swallowException(
+                headers.find(_.key() == Header.SOURCE_CLASS_KEY).map(h => new String(h.value(), StandardCharsets.UTF_8))
+              ),
+              sourceKey = swallowException(
+                headers
+                  .find(_.key() == Header.SOURCE_KEY_KEY)
+                  .map(h => new String(h.value(), StandardCharsets.UTF_8))
+                  .map(ObjectKey.toObjectKey)
+              ),
+              value = swallowException(Some(toJson(Serializer.ROW.from(bytes)))),
+              error = error
             )
-            catch {
-              case e: Throwable =>
-                Message(
-                  partition = partition,
-                  offset = offset,
-                  sourceClass = None,
-                  sourceKey = None,
-                  value = None,
-                  error = Some(e.getMessage)
-                )
-            }
         }
     )
 

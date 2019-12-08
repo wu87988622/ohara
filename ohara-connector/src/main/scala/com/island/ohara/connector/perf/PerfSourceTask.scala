@@ -16,8 +16,8 @@
 
 package com.island.ohara.connector.perf
 import com.island.ohara.common.annotations.VisibleForTesting
-import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{ByteUtils, CommonUtils}
+import com.island.ohara.common.data.Column
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -41,26 +41,7 @@ class PerfSourceTask extends RowSourceTask {
   override protected def _poll(): java.util.List[RowSourceRecord] = {
     val current = CommonUtils.current()
     if (current - lastPoll > props.freq.toMillis) {
-      val row: Row = Row.of(
-        schema.sortBy(_.order).map { c =>
-          Cell.of(
-            c.name,
-            c.dataType match {
-              case DataType.BOOLEAN => false
-              case DataType.BYTE    => ByteUtils.toBytes(current).head
-              case DataType.BYTES   => ByteUtils.toBytes(current)
-              case DataType.SHORT   => current.toShort
-              case DataType.INT     => current.toInt
-              case DataType.LONG    => current
-              case DataType.FLOAT   => current.toFloat
-              case DataType.DOUBLE  => current.toDouble
-              case DataType.STRING  => current.toString
-              case _                => current
-            }
-          )
-        }: _*
-      )
-      val records: Seq[RowSourceRecord] = topics.map(RowSourceRecord.builder().row(row).topicName(_).build())
+      val records = topics.map(RowSourceRecord.builder().row(row(schema)).topicName(_).build())
       lastPoll = current
       (0 until props.batch).flatMap(_ => records).asJava
     } else Seq.empty.asJava

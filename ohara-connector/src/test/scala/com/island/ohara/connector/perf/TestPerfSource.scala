@@ -25,11 +25,13 @@ import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers._
+import spray.json.DefaultJsonProtocol._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
 class TestPerfSource extends With3Brokers3Workers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
@@ -254,5 +256,19 @@ class TestPerfSource extends With3Brokers3Workers {
         .create()
     )
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
+  }
+
+  @Test
+  def testDataGeneratedByPerfSource(): Unit = {
+    val name    = CommonUtils.randomString()
+    val columns = Seq(Column.builder().name(name).dataType(DataType.BOOLEAN).build())
+    // should pass
+    com.island.ohara.client.configurator.v0.toJson(row(columns)).fields(name).convertTo[Boolean]
+
+    // should pass
+    com.island.ohara.client.configurator.v0
+      .toJson(Serializer.ROW.from(Serializer.ROW.to(row(columns))))
+      .fields(name)
+      .convertTo[Boolean]
   }
 }

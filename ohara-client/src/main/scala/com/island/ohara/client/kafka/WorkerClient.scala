@@ -29,7 +29,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConverterType, _}
+import com.island.ohara.kafka.connector.json._
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.connect.runtime.rest.entities.ConfigInfos
 import spray.json.DefaultJsonProtocol._
@@ -502,32 +502,6 @@ object WorkerClient {
 
     def topicKeys(topicKeys: Set[TopicKey]): Creator = {
       format.topicKeys(topicKeys.asJava)
-      this
-    }
-
-    /**
-      * setting the key converter. By default there is no converter in ohara connector since it enable us to retrieve/send
-      * data to connector through topic. If you wrap the data by connector, your producer/consumer have to unwrap
-      * data in order to access data correctly.
-      *
-      * @return this one
-      */
-    @Optional("default key converter is ConverterType.NONE")
-    def converterTypeOfKey(converterTypeOfKey: ConverterType): Creator = {
-      format.converterTypeOfKey(converterTypeOfKey)
-      this
-    }
-
-    /**
-      * setting the value converter. By default there is no converter in ohara connector since it enable us to retrieve/send
-      * data to connector through topic. If you wrap the data by connector, your producer/consumer have to unwrap
-      * data in order to access data correctly.
-      *
-      * @return this one
-      */
-    @Optional("default key converter is ConverterType.NONE")
-    def converterTypeOfValue(converterTypeOfValue: ConverterType): Creator = {
-      format.converterTypeOfValue(converterTypeOfValue)
       this
     }
 
