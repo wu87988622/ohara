@@ -93,35 +93,28 @@ export const useZoom = () => {
 
     // Handle `none-valid` scales here
     const defaultScales = [0.5, 1.0, 2.0];
-    const closestInScale = defaultScales.reduce((prev, curr) => {
+    const closest = defaultScales.reduce((prev, curr) => {
       return Math.abs(curr - fixedScale) < Math.abs(prev - fixedScale)
         ? curr
         : prev;
     });
 
-    // The next value of the `closetInScale` is the out scale
-    const inScaleIndex = defaultScales.indexOf(closestInScale);
-    const closestOutScale = defaultScales[inScaleIndex + 1];
-
-    let updatedInScale = closestInScale;
-    let updatedOutScale = closestOutScale;
-
-    // In case the calculation gives us the wrong scale
-    // We need to manually fix it...
-    if (closestInScale >= fixedScale) {
-      const lowestScale = inScaleIndex === 0;
-
-      // Use the current scale if it's already in the lowest possible scale
-      // otherwise, down one or up one level
-      updatedInScale = lowestScale
-        ? defaultScales[inScaleIndex]
-        : defaultScales[inScaleIndex + 1];
-      updatedOutScale = lowestScale
-        ? defaultScales[inScaleIndex]
-        : defaultScales[inScaleIndex - 1];
+    let outScale;
+    let inScale;
+    if (closest === 0.5) {
+      // If the fixedScale is something like 0.46, we'd like the next `in` scale
+      // to be `0.5` not `1`
+      inScale = fixedScale <= 0.5 ? 0.5 : 1;
+      outScale = 0.5;
+    } else if (closest === 1) {
+      inScale = 1;
+      outScale = 0.5;
+    } else {
+      inScale = 2;
+      outScale = 2;
     }
 
-    const newScale = instruction === 'in' ? updatedInScale : updatedOutScale;
+    const newScale = instruction === 'in' ? inScale : outScale;
     setPaperScale(newScale);
   };
 

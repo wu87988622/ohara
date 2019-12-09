@@ -100,16 +100,16 @@ const ConnectorGraph = params => {
     },
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
-      const bbox = this.getBBox({ useModelGeometry: true });
+      const bBox = this.getBBox({ useModelGeometry: true });
       const scale = paper.scale();
 
       this.$box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
         transformOrigin: '0 0',
-        width: bbox.width / scale.sx,
-        height: bbox.height / scale.sy,
-        left: bbox.x,
-        top: bbox.y,
+        width: bBox.width / scale.sx,
+        height: bBox.height / scale.sy,
+        left: bBox.x,
+        top: bBox.y,
       });
 
       this.$box.find('.title').text(this.model.get('title'));
