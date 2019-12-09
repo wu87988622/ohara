@@ -19,20 +19,28 @@ import { renderToString } from 'react-dom/server';
 import * as joint from 'jointjs';
 import * as $ from 'jquery';
 import * as _ from 'lodash';
-import AccountTreeIcon from '@material-ui/icons/AccountTree';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import StopIcon from '@material-ui/icons/Stop';
 import BuildIcon from '@material-ui/icons/Build';
-import ClearIcon from '@material-ui/icons/Clear';
+import CancelIcon from '@material-ui/icons/Cancel';
+import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 const ConnectorGraph = params => {
-  const { value, position, type, icon, graph, paper } = params;
+  const {
+    value,
+    position,
+    type,
+    icon,
+    graph,
+    paper,
+    isTemporary = false,
+  } = params;
 
+  const link = renderToString(<TrendingUpIcon />);
   const start = renderToString(<PlayArrowIcon />);
   const stop = renderToString(<StopIcon />);
-  const setting = renderToString(<BuildIcon />);
-  const link = renderToString(<AccountTreeIcon />);
-  const remove = renderToString(<ClearIcon />);
+  const setting = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
+  const remove = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
   let linkLine;
 
   joint.shapes.html = {};
@@ -90,7 +98,9 @@ const ConnectorGraph = params => {
       this.$box.find('button#link').on('mousedown', function() {
         linkLine = new joint.shapes.standard.Link();
         linkLine.source({ id: modelId });
-        linkLine.router('manhattan');
+
+        // The link doesn't show up in the right position, set it to
+        // `transparent` and reset it back in the mousemove event
         linkLine.attr({ line: { stroke: 'transparent' } });
         linkLine.addTo(graph);
       });
@@ -122,7 +132,7 @@ const ConnectorGraph = params => {
           if (linkLine) {
             if (!linkLine.attributes.target.id) {
               linkLine.target({ x: event.pageX - 290, y: event.pageY - 72 });
-              linkLine.attr({ line: { stroke: '#333333' } });
+              linkLine.attr({ line: { stroke: '#9e9e9e' } });
             }
           }
         });
@@ -138,6 +148,7 @@ const ConnectorGraph = params => {
     size: { width: 240, height: 100 },
     title: value,
     menuDisplay: 'none',
+    isTemporary,
   });
 };
 export default ConnectorGraph;

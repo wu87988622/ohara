@@ -157,6 +157,12 @@ const Toolbox = props => {
       }
     }
 
+    // Remove temporary cells
+    const tempCells = graph
+      .getCells()
+      .filter(cell => Boolean(cell.attributes.isTemporary));
+    tempCells.forEach(cell => cell.remove());
+
     showMessage(`${newGraph} has been added`);
     setIsOpen(false);
   };
@@ -229,11 +235,12 @@ const Toolbox = props => {
         setPosition,
         setIcon,
         setIsOpen,
+        graph,
       });
     };
 
     renderToolbox();
-  }, [paper, searchResults, sinks, sources, streams, topics]);
+  }, [graph, paper, searchResults, sinks, sources, streams, topics]);
 
   return (
     <Draggable bounds="parent" handle=".box-title" key={toolboxKey}>

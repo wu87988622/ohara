@@ -15,7 +15,6 @@
  */
 
 import styled, { css } from 'styled-components';
-import { topic, topicMenu, title as topicTitle } from './Topic/styles';
 
 export const PaperWrapper = styled.div`
   position: relative;
@@ -29,6 +28,10 @@ export const Paper = styled.div(
     border: ${theme.spacing(1)}px solid ${theme.palette.common.white};
     overflow: hidden;
     cursor: grab;
+
+    &.is-being-grabbed {
+      cursor: grabbing;
+    }
 
     .flying-paper {
       border: 1px dashed ${theme.palette.grey[400]};
@@ -72,13 +75,12 @@ export const Paper = styled.div(
       }
 
       .connectorMenu {
-        width: 24px;
         position: absolute;
-        top: ${theme.spacing(1)}px;
-        left: 245px;
+        top: ${theme.spacing(0.5)}px;
+        left: calc(100% + 8px);
 
         svg {
-          color: ${theme.palette.grey[500]};
+          color: ${theme.palette.grey[600]};
         }
 
         button {
@@ -88,7 +90,12 @@ export const Paper = styled.div(
           padding: 0;
 
           &:hover {
-            background-color: rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            
+            svg {
+              background-color: ${theme.palette.action.hover};
+              border-radius: ${theme.shape.borderRadius}px;
+            }
           }
 
           &:focus {
@@ -104,8 +111,8 @@ export const Paper = styled.div(
       .circle {
         width: 40px;
         height: 40px;
-        border-radius: 999em;
-        background-color: ${theme.palette.grey[500]};
+        border-radius: 100%;
+        background-color: ${theme.palette.grey[600]};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -125,6 +132,7 @@ export const Paper = styled.div(
         ${theme.typography.body2}
         color:${theme.palette.text.secondary};
       }
+      
       .status {
         display: flex;
         justify-content: space-between;
@@ -135,12 +143,24 @@ export const Paper = styled.div(
     }
 
     .topic {
-      ${topic}
+      position: absolute;
+      pointer-events: none;
+      background-color: white;
+
       .title {
-        ${topicTitle}
-      }
+        ${theme.typography.h5}
+        color:${theme.palette.text.primary};
+        text-align:center;      
+}
       .topicMenu {
-        ${topicMenu}
+        width: 24px;
+        position: absolute;
+        top: ${theme.spacing(0.5)}px;
+        left: calc(100% + 8px);
+
+        svg {
+          color: ${theme.palette.grey[600]};
+        }
 
         button {
           pointer-events: auto;
@@ -149,9 +169,14 @@ export const Paper = styled.div(
           padding: 0;
 
           &:hover {
-            background-color: rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            
+            svg {
+              background-color: ${theme.palette.action.hover};
+              border-radius: ${theme.shape.borderRadius}px;
+            }
           }
-
+          
           &:focus {
             outline: 0;
           }

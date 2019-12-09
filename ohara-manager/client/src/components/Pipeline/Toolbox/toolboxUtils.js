@@ -24,6 +24,8 @@ import WavesIcon from '@material-ui/icons/Waves';
 import * as $ from 'jquery';
 import * as joint from 'jointjs';
 
+import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
+import TopicGraph from '../Graph/Topic/TopicGraph';
 import { AddPublicTopicIcon } from 'components/common/Icon';
 
 export const createToolboxList = params => {
@@ -159,6 +161,7 @@ export const createToolboxList = params => {
 export const enableDragAndDrop = params => {
   const {
     toolPapers,
+    graph,
     paper,
     setGraphType,
     setPosition,
@@ -170,16 +173,16 @@ export const enableDragAndDrop = params => {
   toolPapers.forEach(toolPaper => {
     // Add "hover" state in items, I cannot figure out how to do
     // this when initializing the HTML elements...
-    toolPaper.on('cell:mouseenter', function(cellView) {
+    toolPaper.on('cell:mouseenter', cellView => {
       cellView.$box.css('backgroundColor', 'rgba(0, 0, 0, 0.08)');
     });
 
-    toolPaper.on('cell:mouseleave', function(cellView) {
+    toolPaper.on('cell:mouseleave', cellView => {
       cellView.$box.css('backgroundColor', 'transparent');
     });
 
     // Create "flying papers", which enable drag and drop feature
-    toolPaper.on('cell:pointerdown', function(cellView, event, x, y) {
+    toolPaper.on('cell:pointerdown', (cellView, event, x, y) => {
       $('#paper').append('<div id="flying-paper" class="flying-paper"></div>');
 
       const flyingGraph = new joint.dia.Graph();
@@ -199,9 +202,13 @@ export const enableDragAndDrop = params => {
         y: y - position.y,
       };
 
-      setGraphType(cellView.model.get('classType'));
-      setConnectorType(cellView.model.get('displayName'));
-      setIcon(cellView.model.get('icon'));
+      const classType = cellView.model.get('classType');
+      const connectorType = cellView.model.get('displayName');
+      const icon = cellView.model.get('icon');
+
+      setGraphType(classType);
+      setConnectorType(connectorType);
+      setIcon(icon);
 
       flyingShape.position(0, 0);
       flyingGraph.addCell(flyingShape);
@@ -235,10 +242,35 @@ export const enableDragAndDrop = params => {
 
           const localPoint = paper.paperToLocalPoint(paper.translate());
           const scale = paper.scale();
-
           const newX = (x - target.left - offset.x) / scale.sx + localPoint.x;
           const newY = (y - target.top - offset.y) / scale.sy + localPoint.y;
           setPosition({ x: newX, y: newY });
+
+          // A temporary cell which gives users a better idea of
+          // where the graph will be added at. It will be removed
+          // once the real graph is added
+          const sharedParams = {
+            position: { x: newX, y: newY },
+            isTemporary: true, // A temp graph
+            value: 'New graph',
+            graph,
+            paper,
+          };
+
+          let newCell;
+          if (classType === 'topic') {
+            newCell = TopicGraph({
+              ...sharedParams,
+              type: connectorType === 'Pipeline Only' ? 'private' : 'public',
+            });
+          } else {
+            newCell = ConnectorGraph({
+              ...sharedParams,
+              type: connectorType,
+              icon,
+            });
+          }
+          graph.addCell(newCell);
         }
 
         // Clean up

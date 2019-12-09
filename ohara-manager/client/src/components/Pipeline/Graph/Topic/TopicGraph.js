@@ -20,20 +20,21 @@ import * as joint from 'jointjs';
 import * as $ from 'jquery';
 import * as _ from 'lodash';
 import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
-import AccountTreeIcon from '@material-ui/icons/AccountTree';
 import BuildIcon from '@material-ui/icons/Build';
-import ClearIcon from '@material-ui/icons/Clear';
+import CancelIcon from '@material-ui/icons/Cancel';
+import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 const TopicGraph = params => {
-  const { value, position, paper, graph, type } = params;
+  const { value, position, paper, graph, type, isTemporary = false } = params;
 
   const privateIcon = renderToString(
     <PrivateTopicIcon width={56} height={56} />,
   );
   const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
-  const setting = renderToString(<BuildIcon />);
-  const link = renderToString(<AccountTreeIcon />);
-  const remove = renderToString(<ClearIcon />);
+  const link = renderToString(<TrendingUpIcon />);
+  const setting = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
+  const remove = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
+
   let linkLine;
   const height = type !== 'public' ? 0 : 22;
   const topicValue = type === 'public' ? value : '';
@@ -82,7 +83,6 @@ const TopicGraph = params => {
       this.$box.find('button#link').on('mousedown', function() {
         linkLine = new joint.shapes.standard.Link();
         linkLine.source({ id: modelId });
-        linkLine.router('manhattan');
         linkLine.attr({ line: { stroke: 'transparent' } });
         linkLine.addTo(graph);
       });
@@ -113,7 +113,7 @@ const TopicGraph = params => {
           if (linkLine) {
             if (!linkLine.attributes.target.id) {
               linkLine.target({ x: evt.pageX - 290, y: evt.pageY - 72 });
-              linkLine.attr({ line: { stroke: '#333333' } });
+              linkLine.attr({ line: { stroke: '#9e9e9e' } });
             }
           }
         });
@@ -129,6 +129,7 @@ const TopicGraph = params => {
     size: { width: 56, height: 56 + height },
     title: topicValue,
     menuDisplay: 'none',
+    isTemporary,
   });
 };
 export default TopicGraph;

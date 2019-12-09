@@ -63,16 +63,27 @@ const Graph = props => {
         model: graph.current,
         width: '100%',
         height: '100%',
+
+        // Grid settings
         gridSize: 10,
-        origin: { x: 0, y: 0 },
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
-        defaultConnectionPoint: { name: 'boundary' },
+
+        origin: { x: 0, y: 0 },
+        defaultConnectionPoint: { name: 'bbox' },
+        defaultAnchor: {
+          name: 'modelCenter',
+        },
         background: {
           color: palette.common.white,
         },
-        linkPinning: false, // This ensures the link should always link to a valid target
+
+        // Ensures the link should always link to a valid target
+        linkPinning: false,
         cellViewNamespace: joint.shapes,
-        restrictTranslate: true, // prevent graph from stepping outside of the paper
+
+        // prevent graph from stepping outside of the paper
+        restrictTranslate: true,
+        perpendicularLinks: true,
       });
 
       paper.current.on('cell:pointerclick', cellView => {
@@ -131,6 +142,8 @@ const Graph = props => {
           x: x * paper.current.scale().sx,
           y: y * paper.current.scale().sy,
         };
+
+        paper.current.$el.addClass('is-being-grabbed');
       });
 
       paper.current.on('cell:pointerup blank:pointerup', () => {
@@ -141,6 +154,7 @@ const Graph = props => {
 
         updateCurrentCell(currentCell);
         setIsCentered(false);
+        paper.current.$el.removeClass('is-being-grabbed');
       });
     };
 
