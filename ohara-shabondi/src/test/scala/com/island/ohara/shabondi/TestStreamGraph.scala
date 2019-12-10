@@ -24,7 +24,7 @@ import com.island.ohara.kafka.Consumer
 import org.junit.Test
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 final class TestStreamGraph extends BasicShabondiTest {
   implicit lazy val system: ActorSystem        = ActorSystem("shabondi-stream-graph")
@@ -48,12 +48,12 @@ final class TestStreamGraph extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey1.name(), 10, columnSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 10, columnSize)
       rowsTopic1.size should ===(1)
       rowsTopic1(0).key.get.cells.size should ===(columnSize)
 
       val rowsTopic2: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey2.name(), 10, columnSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey2.name(), 10, columnSize)
 
       rowsTopic2.size should ===(1)
       rowsTopic2(0).key.get.cells.size should ===(columnSize)

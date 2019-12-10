@@ -16,14 +16,25 @@
 
 package com.island.ohara.shabondi
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.island.ohara.common.util.CommonUtils
+import scala.collection.JavaConverters._
 
 object Boot {
-  import scala.collection.JavaConverters._
+  implicit val actorSystem: ActorSystem        = ActorSystem("shabondi")
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   def main(args: Array[String]): Unit = {
-    val rawConfig = CommonUtils.parse(args.toSeq.asJava).asScala.toMap
-    val webServer = new WebServer(Config(rawConfig))
-    webServer.start()
+    try {
+      val rawConfig = CommonUtils.parse(args.toSeq.asJava).asScala.toMap
+      val config    = Config(rawConfig)
+      val webServer = new WebServer(config)
+      webServer.start()
+    } catch {
+      case ex: Throwable =>
+        actorSystem.terminate()
+        throw ex
+    }
   }
 }

@@ -16,27 +16,29 @@
 
 package com.island.ohara.shabondi
 
-import akka.actor.ActorSystem
+import java.util.concurrent.{ExecutorService, Executors}
+
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{Directives, ExceptionHandler, Route}
-import akka.stream.ActorMaterializer
-import com.island.ohara.common.setting.TopicKey
-import spray.json._
+import akka.http.scaladsl.server.{ExceptionHandler, Route}
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.Releasable
+import com.island.ohara.kafka.Producer
 
-private[shabondi] object SourceRoute {
-  def apply(config: Config)(implicit actorSystem: ActorSystem, materializer: ActorMaterializer) =
-    new SourceRoute(config)
+import scala.concurrent.ExecutionContext
+
+private[shabondi] object SourceRouteHandler {
+  def apply(config: Config) = new SourceRouteHandler(config)
 }
 
-private[shabondi] class SourceRoute(config: Config)(
-  implicit val actorSystem: ActorSystem,
-  implicit val materializer: ActorMaterializer
-) extends Directives {
+private[shabondi] class SourceRouteHandler(config: Config) extends RouteHandler {
+  import Boot._
   import JsonSupport._
-  import actorSystem.dispatcher
 
-  private lazy val log = Logging(actorSystem, classOf[SourceRoute])
+  private val log = Logging(actorSystem, classOf[SourceRouteHandler])
+
+  private val threadPool: ExecutorService = Executors.newFixedThreadPool(4)
+  implicit private val ec                 = ExecutionContext.fromExecutorService(threadPool)
 
   private val exceptionHandler = ExceptionHandler {
     case ex: Throwable =>
@@ -44,17 +46,29 @@ private[shabondi] class SourceRoute(config: Config)(
       complete((StatusCodes.InternalServerError, ex.getMessage))
   }
 
-  private val producer = KafkaSupport.newProducer(config.brokers)
+  private val producer = Producer
+    .builder()
+    .connectionProps(config.brokers)
+    .keySerializer(Serializer.ROW)
+    .valueSerializer(Serializer.BYTES)
+    .build()
 
-  def route(topicKeys: Seq[TopicKey]): Route = {
+  private val topicKeys = config.sourceToTopics
+
+  override def route(): Route = {
     (post & path("v0")) {
       handleExceptions(exceptionHandler) {
         entity(as[RowData]) { rowData =>
-          val row   = JsonSupport.toRow(JsObject(rowData))
+          val row   = JsonSupport.toRow(rowData)
           val graph = StreamGraph.fromSendRow(producer, topicKeys, row)
           complete((StatusCodes.OK, graph.run()))
         }
       } // handleExceptions
     }
+  }
+
+  override def close(): Unit = {
+    Releasable.close(producer)
+    threadPool.shutdown()
   }
 }

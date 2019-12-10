@@ -16,30 +16,30 @@
 
 package com.island.ohara.shabondi
 
-import java.time.Duration
-
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.island.ohara.common.data.{Cell, Row}
+import akka.http.scaladsl.testkit.RouteTestTimeout
+import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.{BrokerClient, Consumer}
+import com.island.ohara.kafka.BrokerClient
 import com.island.ohara.shabondi.DefaultDefinitions._
 import com.island.ohara.testing.WithBroker
 import com.typesafe.scalalogging.Logger
 import org.junit.After
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, Suite}
+import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable
-
-object ShabondiRouteTestSupport extends Suite with ScalaFutures with ScalatestRouteTest
+import scala.collection.{immutable, mutable}
+import scala.concurrent.duration._
 
 abstract private[shabondi] class BasicShabondiTest extends WithBroker with Matchers {
   protected val log = Logger(this.getClass())
 
   protected val brokerProps                = testUtil.brokersConnProps
   protected val brokerClient: BrokerClient = BrokerClient.of(brokerProps)
+
+  // Extend the timeout to avoid the exception:
+  // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
+  implicit def default(): RouteTestTimeout = RouteTestTimeout(5 seconds)
 
   protected def createTopicKey = TopicKey.of("default", CommonUtils.randomString(5))
 
@@ -53,43 +53,31 @@ abstract private[shabondi] class BasicShabondiTest extends WithBroker with Match
       .topicName(name)
       .create
 
-  protected def defaultTestConfig(serverType: String, topicKeys: Seq[TopicKey]): Config = {
-    val jsonToTopics = TopicKey.toJsonString(topicKeys.asJava)
-    //val jsonFromTopic = TopicKey.toJsonString(topicKey2)
-    val args = Array(
+  protected def defaultTestConfig(
+    serverType: String,
+    sourceToTopics: Seq[TopicKey] = Seq.empty[TopicKey],
+    sinkFromTopics: Seq[TopicKey] = Seq.empty[TopicKey]
+  ): Config = {
+    val args = mutable.ArrayBuffer(
       s"$SERVER_TYPE_KEY=$serverType",
       s"$CLIENT_PORT_KEY=8080",
-      s"$BROKERS_KEY=${testUtil.brokersConnProps}",
-      s"$SOURCE_TO_TOPICS_KEY=$jsonToTopics"
-      //s"$SINK_FROM_TOPIC_KEY=$jsonFromTopic"
+      s"$BROKERS_KEY=${testUtil.brokersConnProps}"
     )
-    val rawConfig = CommonUtils.parse(args.toSeq.asJava)
+    if (sourceToTopics.nonEmpty)
+      args += s"$SOURCE_TO_TOPICS_KEY=${TopicKey.toJsonString(sourceToTopics.asJava)}"
+
+    if (sinkFromTopics.nonEmpty)
+      args += s"$SINK_FROM_TOPICS_KEY=${TopicKey.toJsonString(sinkFromTopics.asJava)}"
+
+    val rawConfig = CommonUtils.parse(args.asJava)
     Config(rawConfig.asScala.toMap)
   }
 
-  protected def singleRow(columnSize: Int, rowId: Int = 0) =
-    Row.of(
-      (1 to columnSize).map(ci => Cell.of(s"col-$ci", s"r$rowId-${ci * 10}")): _*
-    )
+  protected def singleRow(columnSize: Int, rowId: Int = 0): Row =
+    KafkaSupport.singleRow(columnSize, rowId)
 
   protected def multipleRows(rowSize: Int): immutable.Iterable[Row] =
-    (0 until rowSize).map { ri =>
-      singleRow(10, ri)
-    }
-
-  protected def pollTopicOnce(
-    brokers: String,
-    topicName: String,
-    timeoutSecond: Long,
-    expectedSize: Int
-  ): Seq[Consumer.Record[Row, Array[Byte]]] = {
-    val consumer = KafkaSupport.newConsumer(brokers, topicName)
-    try {
-      consumer.poll(Duration.ofSeconds(timeoutSecond), expectedSize).asScala
-    } finally {
-      Releasable.close(consumer)
-    }
-  }
+    KafkaSupport.multipleRows(rowSize)
 
   @After
   def tearDown(): Unit = {

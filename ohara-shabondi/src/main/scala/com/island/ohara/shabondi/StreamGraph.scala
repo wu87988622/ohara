@@ -22,10 +22,13 @@ import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.kafka.Producer
 
+import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
 
 private[shabondi] object StreamGraph {
-  import KafkaSupport._
+  import ConvertSupport._
+
+  type ROWS = immutable.Iterable[Row]
 
   def fromSendRow(producer: Producer[Row, Array[Byte]], topicKeys: Seq[TopicKey], row: Row)(
     implicit executor: ExecutionContext

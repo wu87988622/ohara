@@ -30,6 +30,7 @@ dependencies {
   implementation libs.sprayJson
   implementation libs.commonsLang
   implementation libs.scalaJava8Compat
+  implementation libs.guava
 
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(':ohara-kafka')

@@ -23,6 +23,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 final class TestConfig extends OharaTest with Matchers {
   import DefaultDefinitions._
@@ -38,10 +39,12 @@ final class TestConfig extends OharaTest with Matchers {
       s"$SERVER_TYPE_KEY=source",
       s"$CLIENT_PORT_KEY=8080",
       s"$SOURCE_TO_TOPICS_KEY=$jsonSourceTopicKeys",
-      s"$SINK_FROM_TOPICS_KEY=$jsonSinkTopicKeys"
-    )
+      s"$SINK_FROM_TOPICS_KEY=$jsonSinkTopicKeys",
+      s"$SINK_POLL_ROW_SIZE=5000",
+      s"$SINK_POLL_TIMEOUT=1500"
+    ).toSeq.asJava
 
-    val rawConfig = parseArgs(args)
+    val rawConfig = CommonUtils.parse(args).asScala.toMap
     val config    = Config(rawConfig)
     config.serverType should ===(SERVER_TYPE_SOURCE)
     config.port should ===(8080)
@@ -52,8 +55,11 @@ final class TestConfig extends OharaTest with Matchers {
     config.sourceToTopics(0) should ===(topicKeys(0))
     config.sourceToTopics(1) should ===(topicKeys(1))
 
-    config.sinksFromTopics(0) should ===(topicKeys(0))
-    config.sinksFromTopics(1) should ===(topicKeys(1))
+    config.sinkFromTopics(0) should ===(topicKeys(0))
+    config.sinkFromTopics(1) should ===(topicKeys(1))
+
+    config.sinkPollRowSize should ===(5000)
+    config.sinkPollTimeout should ===(FiniteDuration(1500, MILLISECONDS))
   }
 
   @Test
@@ -63,8 +69,7 @@ final class TestConfig extends OharaTest with Matchers {
     DefaultDefinitions.all(BROKERS_KEY) should ===(BROKERS_DEFINITION)
     DefaultDefinitions.all(SOURCE_TO_TOPICS_KEY) should ===(SOURCE_TO_TOPICS_DEFINITION)
     DefaultDefinitions.all(SINK_FROM_TOPICS_KEY) should ===(SINK_FROM_TOPICS_DEFINITION)
+    DefaultDefinitions.all(SINK_POLL_ROW_SIZE) should ===(SINK_POLL_ROW_SIZE_DEF)
+    DefaultDefinitions.all(SINK_POLL_TIMEOUT) should ===(SINK_POLL_TIMEOUT_DEF)
   }
-
-  private def parseArgs(args: Array[String]): Map[String, String] =
-    CommonUtils.parse(args.toSeq.asJava).asScala.toMap
 }

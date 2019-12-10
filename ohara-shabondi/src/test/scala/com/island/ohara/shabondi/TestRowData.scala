@@ -36,7 +36,7 @@ final class TestRowData extends OharaTest with Matchers {
     rowData("col1") should ===(JsString("hello"))
     rowData("col2") should ===(JsNumber(200))
 
-    val row = JsonSupport.toRow(JsObject(rowData))
+    val row = JsonSupport.toRow(rowData)
 
     row.cell(0) should ===(Cell.of("col1", "hello"))
     row.cell(1) should ===(Cell.of("col2", 200))

@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 final class TestKafkaClient extends BasicShabondiTest {
-  import KafkaSupport._
+  import ConvertSupport._
 
   implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -70,7 +70,7 @@ final class TestKafkaClient extends BasicShabondiTest {
 
   @Test
   def testConsumer(): Unit = {
-    val producer = newProducer(brokerProps)
+    val producer = KafkaSupport.newProducer(brokerProps)
     try {
       Future.sequence {
         (1 to 9)
@@ -81,7 +81,7 @@ final class TestKafkaClient extends BasicShabondiTest {
           }
       }
 
-      val records = pollTopicOnce(brokerProps, TOPIC_1, 10, 10)
+      val records = KafkaSupport.pollTopicOnce(brokerProps, TOPIC_1, 10, 10)
 
       records.size should ===(9)
       records(0).topicName == (TOPIC_1)

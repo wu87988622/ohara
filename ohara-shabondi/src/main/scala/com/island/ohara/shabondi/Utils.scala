@@ -19,43 +19,25 @@ package com.island.ohara.shabondi
 import java.util.concurrent.CompletableFuture
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.kafka.{Consumer, Producer}
-import spray.json.{JsObject, JsValue, RootJsonFormat}
+import com.island.ohara.common.data.Row
+import spray.json.{DefaultJsonProtocol, JsObject, JsValue, RootJsonFormat}
 
 import scala.compat.java8.FutureConverters
 import scala.concurrent.Future
 
-private[shabondi] object JsonSupport extends SprayJsonSupport {
+private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   type RowData = Map[String, JsValue] // column, value
 
   implicit val rowDataFormat: RootJsonFormat[RowData] = new RootJsonFormat[RowData] {
-    override def read(json: JsValue): RowData = json.asJsObject.fields
     override def write(obj: RowData): JsValue = JsObject(obj)
+    override def read(json: JsValue): RowData = json.asJsObject.fields
   }
 
-  def toRow(obj: JsObject) = com.island.ohara.client.configurator.v0.toRow(obj)
+  def toRow(rowData: RowData): Row = com.island.ohara.client.configurator.v0.toRow(JsObject(rowData))
+  def toRowData(row: Row): RowData = com.island.ohara.client.configurator.v0.toJson(row).fields
 }
 
-private[shabondi] object KafkaSupport {
-  def newProducer(brokers: String): Producer[Row, Array[Byte]] =
-    Producer
-      .builder()
-      .connectionProps(brokers)
-      .keySerializer(Serializer.ROW)
-      .valueSerializer(Serializer.BYTES)
-      .build()
-
-  def newConsumer(brokers: String, topicName: String): Consumer[Row, Array[Byte]] =
-    Consumer
-      .builder()
-      .keySerializer(Serializer.ROW)
-      .valueSerializer(Serializer.BYTES)
-      .offsetFromBegin()
-      .topicName(topicName)
-      .connectionProps(brokers)
-      .build()
-
+private[shabondi] object ConvertSupport {
   implicit class ScalaFutureConverter[T](completableFuture: java.util.concurrent.Future[T]) {
     def toScala: Future[T] = {
       FutureConverters.toScala(completableFuture.asInstanceOf[CompletableFuture[T]])

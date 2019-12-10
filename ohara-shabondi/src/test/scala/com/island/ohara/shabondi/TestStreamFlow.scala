@@ -31,7 +31,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 final class TestStreamFlow extends BasicShabondiTest {
-  import KafkaSupport._
+  import ConvertSupport._
 
   implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -69,7 +69,7 @@ final class TestStreamFlow extends BasicShabondiTest {
       val future: Future[Done] = source.via(pushRow).toMat(sink)(Keep.right).run()
       Await.result(future, 2 seconds)
 
-      val rows = pollTopicOnce(brokerProps, topicKey1.name(), 10, 10)
+      val rows = KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 10, 10)
       rows.size should ===(1)
     } finally {
       Releasable.close(producer)
@@ -82,7 +82,7 @@ final class TestStreamFlow extends BasicShabondiTest {
     val topicKey1  = createTopicKey
     val topicKey2  = createTopicKey
     val topicKeys  = Seq(topicKey1, topicKey2).to[immutable.Iterable]
-    val producer   = newProducer(brokerProps)
+    val producer   = KafkaSupport.newProducer(brokerProps)
     val maxRowSize = 1000
     val rows       = multipleRows(maxRowSize)
     try {
@@ -105,11 +105,11 @@ final class TestStreamFlow extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey1.name(), 30, maxRowSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 30, maxRowSize)
       rowsTopic1.size should ===(maxRowSize)
 
       val rowsTopic2: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey2.name(), 30, maxRowSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey2.name(), 30, maxRowSize)
       rowsTopic2.size should ===(maxRowSize)
     } finally {
       Releasable.close(producer)
@@ -121,7 +121,7 @@ final class TestStreamFlow extends BasicShabondiTest {
   @Test
   def testMultipleRow(): Unit = {
     val topicKey1  = createTopicKey
-    val producer   = newProducer(brokerProps)
+    val producer   = KafkaSupport.newProducer(brokerProps)
     val maxRowSize = 100
     val rows       = multipleRows(maxRowSize)
     try {
@@ -138,7 +138,7 @@ final class TestStreamFlow extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        pollTopicOnce(brokerProps, topicKey1.name(), 30, maxRowSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 30, maxRowSize)
       rowsTopic1.size should ===(maxRowSize)
 
       rowsTopic1(0).key.get.cell(0) should ===(Cell.of("col-1", "r0-10"))

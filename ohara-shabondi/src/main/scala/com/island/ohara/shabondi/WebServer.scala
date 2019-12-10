@@ -20,38 +20,52 @@ import java.util.concurrent.atomic.AtomicReference
 
 import akka.Done
 import akka.actor.ActorSystem
+import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
-private[shabondi] class WebServer(config: Config) extends AbstractWebServer {
+private[shabondi] trait RouteHandler extends Directives with AutoCloseable {
+  def route(): Route
+}
+
+private[shabondi] class WebServer(val config: Config) extends AbstractWebServer with AutoCloseable {
+  import Boot._
   import DefaultDefinitions._
 
-  private implicit val _system = ActorSystem("shabondi")
-
-  def start(): Unit = {
-    start(CommonUtils.anyLocalAddress(), config.port, ServerSettings(_system), _system)
+  private var _routeHandler: RouteHandler = _
+  private def routeHandler: RouteHandler = {
+    if (_routeHandler == null)
+      _routeHandler = config.serverType match {
+        case SERVER_TYPE_SOURCE => SourceRouteHandler(config)
+        case SERVER_TYPE_SINK   => SinkRouteHandler(config)
+        case t                  => throw new RuntimeException(s"Invalid server type: $t")
+      }
+    _routeHandler
   }
 
-  override def routes: Route = {
-    implicit val materializer = ActorMaterializer()
+  def start(): Unit = {
+    start(CommonUtils.anyLocalAddress(), config.port, ServerSettings(actorSystem), Some(actorSystem))
+  }
 
-    val sourceRoute = SourceRoute(config)
-    val sinkRoute   = SinkRoute(config)
+  override def routes: Route = routeHandler.route()
 
-    config.serverType match {
-      case SERVER_TYPE_SOURCE => sourceRoute.route(config.sourceToTopics)
-      case SERVER_TYPE_SINK   => sinkRoute.route
-      case t                  => throw new RuntimeException(s"Invalid server type: $t")
-    }
+  override protected def postServerShutdown(attempt: Try[Done], system: ActorSystem): Unit = {
+    super.postServerShutdown(attempt, system)
+    this.close()
+    system.terminate()
+  }
+
+  override def close(): Unit = {
+    Releasable.close(_routeHandler)
   }
 }
 
@@ -91,13 +105,14 @@ private abstract class AbstractWebServer extends Directives {
     actorSystemRef.get().log.info("Shutting down the server")
   }
 
-  protected def start(host: String, port: Int, settings: ServerSettings, actorSystem: ActorSystem): Unit = {
-    implicit val _actorSystem = actorSystem
+  protected def start(host: String, port: Int, settings: ServerSettings): Unit = {}
 
-    actorSystemRef.set(actorSystem)
+  protected def start(host: String, port: Int, settings: ServerSettings, system: Option[ActorSystem]): Unit = {
+    implicit val _actorSystem = system.getOrElse(ActorSystem(Logging.simpleName(this).replaceAll("\\$", "")))
+    actorSystemRef.set(_actorSystem)
 
     implicit val materializer: ActorMaterializer            = ActorMaterializer()
-    implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
+    implicit val executionContext: ExecutionContextExecutor = _actorSystem.dispatcher
 
     val bindingFuture: Future[Http.ServerBinding] = Http().bindAndHandle(
       handler = routes,
@@ -114,15 +129,15 @@ private abstract class AbstractWebServer extends Directives {
     }
 
     Await.ready(
-      bindingFuture.flatMap(_ => waitForShutdownSignal(actorSystem)),
+      bindingFuture.flatMap(_ => waitForShutdownSignal(_actorSystem)),
       Duration.Inf
     )
 
     bindingFuture
       .flatMap(_.unbind())
       .onComplete(attempt => {
-        postServerShutdown(attempt, actorSystem)
-        actorSystem.terminate()
+        postServerShutdown(attempt, _actorSystem)
+        if (system.isEmpty) _actorSystem.terminate()
       })
   }
 }
