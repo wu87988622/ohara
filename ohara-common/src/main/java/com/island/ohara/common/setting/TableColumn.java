@@ -74,7 +74,7 @@ public class TableColumn implements JsonObject, Serializable {
   }
 
   private static final String NAME_KEY = "name";
-  private static final String TYPE_KEY = "string";
+  private static final String TYPE_KEY = "type";
   private static final String RECOMMENDED_VALUES_KEY = SettingDef.RECOMMENDED_VALUES_KEY;
 
   private final String name;
