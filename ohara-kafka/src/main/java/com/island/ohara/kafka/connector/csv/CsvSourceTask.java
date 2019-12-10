@@ -48,7 +48,7 @@ public abstract class CsvSourceTask extends RowSourceTask {
   @Override
   public final void _start(TaskSetting setting) {
     fs = _fileSystem(setting);
-    config = CsvSourceConfig.of(setting, setting.columns());
+    config = CsvSourceConfig.of(setting);
     dataReader = CsvDataReader.of(fs, config, rowContext);
   }
 

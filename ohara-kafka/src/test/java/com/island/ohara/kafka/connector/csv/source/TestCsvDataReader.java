@@ -19,6 +19,7 @@ package com.island.ohara.kafka.connector.csv.source;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.kafka.connector.RowSourceRecord;
+import com.island.ohara.kafka.connector.TaskSetting;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class TestCsvDataReader extends WithFakeStorage {
   }
 
   protected DataReader createDataReader(Map<String, String> props, List<Column> schema) {
-    CsvSourceConfig config = CsvSourceConfig.of(props, schema);
+    CsvSourceConfig config = CsvSourceConfig.of(TaskSetting.of(props), schema);
     return CsvDataReader.of(storage, config, rowContext);
   }
 

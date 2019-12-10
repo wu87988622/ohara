@@ -54,9 +54,9 @@ public class CsvDataReader implements DataReader {
       CsvRecordConverter converter =
           new CsvRecordConverter.Builder()
               .path(path)
-              .topics(config.topics())
+              .topics(config.topicNames())
               .offsetCache(offsetCache)
-              .schema(config.schema())
+              .schema(config.columns())
               .build();
 
       List<RowSourceRecord> records;

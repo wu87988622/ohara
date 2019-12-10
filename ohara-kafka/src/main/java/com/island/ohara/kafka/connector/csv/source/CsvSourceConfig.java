@@ -26,180 +26,93 @@ import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
-import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.TaskSetting;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
-public class CsvSourceConfig {
-  private int total;
-  private int hash;
-  private String inputFolder;
-  private Optional<String> completedFolder;
-  private String errorFolder;
-  private String encode;
-  private List<String> topics;
-  private List<Column> schema;
+public interface CsvSourceConfig {
 
-  public int total() {
-    return total;
+  /** @return the count of tasks */
+  int total();
+
+  /** @return the hash of this task */
+  int hash();
+
+  /** @return the folder containing the csv files */
+  String inputFolder();
+
+  /** @return the folder storing the processed csv files */
+  Optional<String> completedFolder();
+
+  /** @return the folder storing the corrupt csv files */
+  String errorFolder();
+
+  /** @return the string encode to parse csv files */
+  String encode();
+
+  /** @return target topics */
+  List<String> topicNames();
+
+  /** @return the rules to control the output records */
+  List<Column> columns();
+
+  static CsvSourceConfig of(TaskSetting setting) {
+    return of(setting, setting.columns());
   }
 
-  public int hash() {
-    return hash;
-  }
-
-  public String inputFolder() {
-    return inputFolder;
-  }
-
-  public Optional<String> completedFolder() {
-    return completedFolder;
-  }
-
-  public String errorFolder() {
-    return errorFolder;
-  }
-
-  public String encode() {
-    return encode;
-  }
-
-  public List<String> topics() {
-    return topics;
-  }
-
+  /**
+   * this method enable us to override the columns used in csv job.
+   *
+   * @param setting task settings
+   * @param columns new columns
+   * @return csv configs
+   */
   @VisibleForTesting
-  public void topics(List<String> topics) {
-    this.topics = topics;
-  }
+  static CsvSourceConfig of(TaskSetting setting, List<Column> columns) {
+    return new CsvSourceConfig() {
 
-  public List<Column> schema() {
-    return schema;
-  }
+      @Override
+      public int total() {
+        return setting.intValue(TASK_TOTAL_KEY);
+      }
 
-  @VisibleForTesting
-  public void schema(List<Column> schema) {
-    this.schema = schema;
-  }
+      @Override
+      public int hash() {
+        return setting.intValue(TASK_HASH_KEY);
+      }
 
-  public static CsvSourceConfig.Builder builder() {
-    return new CsvSourceConfig.Builder();
-  }
+      @Override
+      public String inputFolder() {
+        return setting.stringValue(INPUT_FOLDER_KEY);
+      }
 
-  public static class Builder implements com.island.ohara.common.pattern.Builder<CsvSourceConfig> {
-    private int total;
-    private int hash;
-    private String inputFolder;
-    private Optional<String> completedFolder;
-    private String errorFolder;
-    private String encode = FILE_ENCODE_DEFAULT;
-    private List<String> topics;
-    private List<Column> schema;
+      @Override
+      public Optional<String> completedFolder() {
+        return setting.stringOption(COMPLETED_FOLDER_KEY);
+      }
 
-    public CsvSourceConfig.Builder total(int val) {
-      total = val;
-      return this;
-    }
+      @Override
+      public String errorFolder() {
+        return setting.stringValue(ERROR_FOLDER_KEY);
+      }
 
-    public CsvSourceConfig.Builder hash(int val) {
-      hash = val;
-      return this;
-    }
+      @Override
+      public String encode() {
+        // We fulfil the auto-complete for the default value to simplify our UT
+        // BTW, the default value is handled by Configurator :)
+        return setting.stringOption(FILE_ENCODE_KEY).orElse(FILE_ENCODE_DEFAULT);
+      }
 
-    public CsvSourceConfig.Builder inputFolder(String val) {
-      inputFolder = val;
-      return this;
-    }
+      @Override
+      public List<String> topicNames() {
+        return setting.topicNames();
+      }
 
-    public CsvSourceConfig.Builder completedFolder(Optional<String> val) {
-      completedFolder = val;
-      return this;
-    }
-
-    public CsvSourceConfig.Builder errorFolder(String val) {
-      errorFolder = val;
-      return this;
-    }
-
-    @com.island.ohara.common.annotations.Optional("default is " + FILE_ENCODE_DEFAULT)
-    public CsvSourceConfig.Builder encode(String val) {
-      encode = val;
-      return this;
-    }
-
-    public CsvSourceConfig.Builder topics(List<String> val) {
-      topics = val;
-      return this;
-    }
-
-    public CsvSourceConfig.Builder schema(List<Column> val) {
-      schema = val;
-      return this;
-    }
-
-    @Override
-    public CsvSourceConfig build() {
-      Objects.requireNonNull(inputFolder);
-      Objects.requireNonNull(errorFolder);
-      CommonUtils.requireNonEmpty(topics);
-      return new CsvSourceConfig(this);
-    }
-  }
-
-  private CsvSourceConfig(CsvSourceConfig.Builder builder) {
-    this.total = builder.total;
-    this.hash = builder.hash;
-    this.inputFolder = builder.inputFolder;
-    this.completedFolder = builder.completedFolder;
-    this.errorFolder = builder.errorFolder;
-    this.encode = builder.encode;
-    this.topics = builder.topics;
-    this.schema = builder.schema;
-  }
-
-  @VisibleForTesting
-  public static CsvSourceConfig of(Map<String, String> props, List<Column> schema) {
-    return of(TaskSetting.of(props), schema);
-  }
-
-  public static CsvSourceConfig of(TaskSetting setting) {
-    return of(setting, null);
-  }
-
-  public static CsvSourceConfig of(TaskSetting setting, List<Column> schema) {
-    CsvSourceConfig.Builder builder = new CsvSourceConfig.Builder();
-
-    builder.total(setting.intValue(TASK_TOTAL_KEY));
-    builder.hash(setting.intValue(TASK_HASH_KEY));
-
-    Optional<String> inputFolder = setting.stringOption(INPUT_FOLDER_KEY);
-    if (inputFolder.isPresent()) {
-      builder.inputFolder(inputFolder.get());
-    }
-
-    builder.completedFolder(setting.stringOption(COMPLETED_FOLDER_KEY));
-
-    Optional<String> errorFolder = setting.stringOption(ERROR_FOLDER_KEY);
-    if (errorFolder.isPresent()) {
-      builder.errorFolder(errorFolder.get());
-    }
-
-    Optional<String> encode = setting.stringOption(FILE_ENCODE_KEY);
-    if (encode.isPresent()) {
-      builder.encode(encode.get());
-    }
-
-    builder.topics(setting.topicNames());
-
-    if (schema != null) {
-      builder.schema(schema);
-    } else {
-      builder.schema(setting.columns());
-    }
-
-    return builder.build();
+      @Override
+      public List<Column> columns() {
+        return Collections.unmodifiableList(columns);
+      }
+    };
   }
 }
