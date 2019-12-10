@@ -22,6 +22,7 @@ import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.kafka.TimestampType;
 import com.island.ohara.kafka.connector.RowSinkContext;
 import com.island.ohara.kafka.connector.RowSinkRecord;
+import com.island.ohara.kafka.connector.TaskSetting;
 import com.island.ohara.kafka.connector.TopicPartition;
 import com.island.ohara.kafka.connector.csv.sink.CsvSinkConfig;
 import java.util.*;
@@ -47,7 +48,7 @@ public abstract class CsvSinkTestBase extends OharaTest {
 
   protected void setUp() {
     props = createProps();
-    config = CsvSinkConfig.of(props, null);
+    config = CsvSinkConfig.of(TaskSetting.of(props));
     Set<TopicPartition> assignment = new HashSet<>();
     assignment.add(TOPIC_PARTITION);
     assignment.add(TOPIC_PARTITION2);

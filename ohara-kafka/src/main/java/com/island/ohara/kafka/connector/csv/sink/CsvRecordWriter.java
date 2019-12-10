@@ -43,7 +43,7 @@ public class CsvRecordWriter implements RecordWriter {
   public CsvRecordWriter(
       final CsvSinkConfig config, final String filePath, final FileSystem fileSystem) {
     this.fileSystem = fileSystem;
-    this.schema = config.schema();
+    this.schema = config.columns();
     this.needHeader = config.needHeader();
     this.encode = config.encode();
     this.committedFile = Paths.get(filePath);
