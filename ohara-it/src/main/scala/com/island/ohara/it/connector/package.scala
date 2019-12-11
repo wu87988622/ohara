@@ -15,8 +15,10 @@
  */
 
 package com.island.ohara.it
-import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.common.setting.SettingDef.Type
+import java.util
+
+import com.island.ohara.common.setting.SettingDef.{Reference, Type}
+import com.island.ohara.common.setting.{SettingDef, TableColumn}
 
 package object connector {
   /**
@@ -32,10 +34,24 @@ package object connector {
       .build(),
     SettingDef
       .builder()
+      .displayName("dumb string")
+      .key("dumb.string")
+      .documentation("string for testing")
+      .optional("random")
+      .build(),
+    SettingDef
+      .builder()
       .displayName("dumb short")
       .key("dumb.short")
       .documentation("short for testing")
       .optional(10.asInstanceOf[Short])
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb positive short")
+      .key("dumb.positive.short")
+      .documentation("positive short for testing")
+      .positiveNumber(10.asInstanceOf[Short])
       .build(),
     SettingDef
       .builder()
@@ -46,10 +62,24 @@ package object connector {
       .build(),
     SettingDef
       .builder()
+      .displayName("dumb positive integer")
+      .key("dumb.positive.integer")
+      .documentation("positive integer for testing")
+      .positiveNumber(10)
+      .build(),
+    SettingDef
+      .builder()
       .displayName("dumb long")
       .key("dumb.long")
       .documentation("long for testing")
       .optional(10L)
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb positive long")
+      .key("dumb.positive.long")
+      .documentation("positive long for testing")
+      .positiveNumber(10L)
       .build(),
     SettingDef
       .builder()
@@ -60,10 +90,24 @@ package object connector {
       .build(),
     SettingDef
       .builder()
+      .displayName("dumb positive double")
+      .key("dumb.positive.double")
+      .documentation("positive double for testing")
+      .positiveNumber(10d)
+      .build(),
+    SettingDef
+      .builder()
       .displayName("dumb array")
       .key("dumb.array")
       .optional(Type.ARRAY)
       .documentation("array for testing")
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb class")
+      .key("dumb.class")
+      .optional(Type.CLASS)
+      .documentation("class for testing")
       .build(),
     SettingDef
       .builder()
@@ -81,6 +125,31 @@ package object connector {
       .build(),
     SettingDef
       .builder()
+      .displayName("dumb table")
+      .key("dumb.table")
+      .optional(
+        util.Arrays.asList(
+          TableColumn
+            .builder()
+            .`type`(TableColumn.Type.NUMBER)
+            .name("number item")
+            .build(),
+          TableColumn
+            .builder()
+            .`type`(TableColumn.Type.STRING)
+            .name("string item")
+            .build(),
+          TableColumn
+            .builder()
+            .`type`(TableColumn.Type.BOOLEAN)
+            .name("boolean item")
+            .build()
+        )
+      )
+      .documentation("jdbc table for testing")
+      .build(),
+    SettingDef
+      .builder()
       .displayName("dumb duration")
       .key("dumb.duration")
       .documentation("duration for testing")
@@ -91,8 +160,51 @@ package object connector {
       .displayName("dumb port")
       .key("dumb.port")
       .documentation("port for testing")
-      .optional("9999")
+      .optionalPort(22)
       .build(),
-    SettingDef.builder().displayName("dumb tags").key("dumb.tags").optional(Type.TAGS).documentation("Tags").build()
+    SettingDef
+      .builder()
+      .displayName("dumb binding port")
+      .key("dumb.binding.port")
+      .documentation("binding port for testing")
+      .optionalBindingPort(12345)
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb object keys")
+      .key("dumb.object.keys")
+      .documentation("object keys for testing")
+      .optional(Type.OBJECT_KEYS)
+      .reference(Reference.FILE)
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb object keys2")
+      .key("dumb.object.keys2")
+      .documentation("object keys2 for testing")
+      .optional(Type.OBJECT_KEYS)
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb object key")
+      .key("dumb.object.key")
+      .documentation("object key for testing")
+      .optional(Type.OBJECT_KEY)
+      .reference(Reference.TOPIC)
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb object key2")
+      .key("dumb.object.key2")
+      .documentation("object key2 for testing")
+      .optional(Type.OBJECT_KEY)
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb tags")
+      .key("dumb.tags")
+      .optional(Type.TAGS)
+      .documentation("Tags")
+      .build()
   )
 }

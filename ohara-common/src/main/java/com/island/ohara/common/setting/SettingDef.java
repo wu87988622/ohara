@@ -484,6 +484,17 @@ public class SettingDef implements JsonObject, Serializable {
   }
 
   /**
+   * get and convert the default value to Port type
+   *
+   * @return default value in short type
+   */
+  public int defaultPort() {
+    if (valueType == Type.PORT || valueType == Type.BINDING_PORT)
+      return (int) Objects.requireNonNull(defaultValue);
+    throw new IllegalStateException("expected type: PORT/BINDING_PORT, but actual:" + valueType);
+  }
+
+  /**
    * get and convert the default value to int type
    *
    * @return default value in int type
@@ -885,6 +896,26 @@ public class SettingDef implements JsonObject, Serializable {
     public Builder optionalClassValue(String defaultValue) {
       return checkAndSet(
           Type.CLASS, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
+    }
+
+    /**
+     * set the type to PORT
+     *
+     * @param defaultValue the default CLASS value
+     * @return builder
+     */
+    public Builder optionalPort(int defaultValue) {
+      return checkAndSet(Type.PORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+    }
+
+    /**
+     * set the type to binding PORT
+     *
+     * @param defaultValue the default CLASS value
+     * @return builder
+     */
+    public Builder optionalBindingPort(int defaultValue) {
+      return checkAndSet(Type.BINDING_PORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
     }
 
     /**

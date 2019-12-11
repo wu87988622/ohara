@@ -24,7 +24,12 @@ import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -643,5 +648,21 @@ public class TestSettingDef extends OharaTest {
             .build()
             .defaultValue(),
         "1 millisecond");
+  }
+
+  @Test
+  public void testOptionalPort() {
+    SettingDef def =
+        SettingDef.builder().key(CommonUtils.randomString()).optionalPort(12345).build();
+    Assert.assertEquals(def.valueType(), SettingDef.Type.PORT);
+    Assert.assertEquals(def.defaultPort(), 12345);
+  }
+
+  @Test
+  public void testOptionalBindingPort() {
+    SettingDef def =
+        SettingDef.builder().key(CommonUtils.randomString()).optionalBindingPort(12345).build();
+    Assert.assertEquals(def.valueType(), SettingDef.Type.BINDING_PORT);
+    Assert.assertEquals(def.defaultPort(), 12345);
   }
 }
