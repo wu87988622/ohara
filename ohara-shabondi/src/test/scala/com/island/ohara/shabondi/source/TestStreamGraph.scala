@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.shabondi
+package com.island.ohara.shabondi.source
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.Consumer
+import com.island.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 
 import scala.concurrent.Await

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.shabondi
+package com.island.ohara.shabondi.source
 
 import java.util.concurrent.{ExecutorService, Executors}
 
@@ -24,6 +24,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.Producer
+import com.island.ohara.shabondi._
 
 import scala.concurrent.ExecutionContext
 

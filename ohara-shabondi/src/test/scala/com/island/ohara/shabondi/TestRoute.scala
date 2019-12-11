@@ -26,8 +26,8 @@ import org.junit.Test
 import spray.json._
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 final class TestRoute extends BasicShabondiTest {
   import DefaultDefinitions._

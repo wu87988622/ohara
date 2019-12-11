@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.island.ohara.shabondi
+package com.island.ohara.shabondi.sink
 
-import java.util.concurrent.{BlockingQueue, Executors, LinkedBlockingQueue}
+import java.util.concurrent.{BlockingQueue, Executors}
 
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
@@ -24,6 +24,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.util.Releasable
+import com.island.ohara.shabondi._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -41,8 +42,8 @@ private[shabondi] class SinkRouteHandler(config: Config) extends RouteHandler {
   // TODO:  We should provide a
   private val threadPool =
     Executors.newFixedThreadPool(4, new ThreadFactoryBuilder().setNameFormat("shabondi-sinkpool-%d").build())
-  private val queue                = new LinkedBlockingQueue[Row]()
-  private val sinkRowQueueProducer = RowQueueProducer(queue, config)
+  private val sinkRowQueueProducer = RowQueueProducer(config)
+  private val queue                = sinkRowQueueProducer.queue
 
   threadPool.execute(sinkRowQueueProducer)
 
@@ -70,7 +71,6 @@ private[shabondi] class SinkRouteHandler(config: Config) extends RouteHandler {
     (post & path("v0" / "poll")) {
       handleExceptions(exceptionHandler) {
         val result = fullyPollQueue(queue).map(row => JsonSupport.toRowData(row))
-        //log.debug("[sink route]queue size: {}, row size= {}", queue.size, result.size)
         complete(result)
       }
     }

@@ -16,6 +16,8 @@
 
 package com.island.ohara.shabondi
 
+import java.time.Duration
+
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.CommonUtils
@@ -23,7 +25,6 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 
 final class TestConfig extends OharaTest with Matchers {
   import DefaultDefinitions._
@@ -40,7 +41,6 @@ final class TestConfig extends OharaTest with Matchers {
       s"$CLIENT_PORT_KEY=8080",
       s"$SOURCE_TO_TOPICS_KEY=$jsonSourceTopicKeys",
       s"$SINK_FROM_TOPICS_KEY=$jsonSinkTopicKeys",
-      s"$SINK_POLL_ROW_SIZE=5000",
       s"$SINK_POLL_TIMEOUT=1500"
     ).toSeq.asJava
 
@@ -58,8 +58,7 @@ final class TestConfig extends OharaTest with Matchers {
     config.sinkFromTopics(0) should ===(topicKeys(0))
     config.sinkFromTopics(1) should ===(topicKeys(1))
 
-    config.sinkPollRowSize should ===(5000)
-    config.sinkPollTimeout should ===(FiniteDuration(1500, MILLISECONDS))
+    config.sinkPollTimeout should ===(Duration.ofMillis(1500))
   }
 
   @Test
@@ -69,7 +68,6 @@ final class TestConfig extends OharaTest with Matchers {
     DefaultDefinitions.all(BROKERS_KEY) should ===(BROKERS_DEFINITION)
     DefaultDefinitions.all(SOURCE_TO_TOPICS_KEY) should ===(SOURCE_TO_TOPICS_DEFINITION)
     DefaultDefinitions.all(SINK_FROM_TOPICS_KEY) should ===(SINK_FROM_TOPICS_DEFINITION)
-    DefaultDefinitions.all(SINK_POLL_ROW_SIZE) should ===(SINK_POLL_ROW_SIZE_DEF)
     DefaultDefinitions.all(SINK_POLL_TIMEOUT) should ===(SINK_POLL_TIMEOUT_DEF)
   }
 }

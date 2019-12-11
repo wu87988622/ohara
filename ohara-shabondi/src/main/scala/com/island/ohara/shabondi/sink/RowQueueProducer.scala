@@ -14,53 +14,34 @@
  * limitations under the License.
  */
 
-package com.island.ohara.shabondi
+package com.island.ohara.shabondi.sink
 
 import java.time.Duration
-import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
 
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.kafka.Consumer
+import com.island.ohara.shabondi.Config
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
-import scala.compat.java8.DurationConverters
-import scala.concurrent.duration.FiniteDuration
 
 private[shabondi] object RowQueueProducer {
-  def apply(
-    queue: BlockingQueue[Row],
-    brokerProps: String,
-    topicNames: Seq[String],
-    pollTimeout: FiniteDuration,
-    pollSize: Int
-  ) =
-    new RowQueueProducer(queue, brokerProps, topicNames, pollTimeout, pollSize)
-
-  def apply(blockingQueue: BlockingQueue[Row], config: Config) =
-    new RowQueueProducer(
-      blockingQueue: BlockingQueue[Row],
-      config.brokers,
-      config.sinkFromTopics.map(_.name),
-      config.sinkPollTimeout,
-      config.sinkPollRowSize
-    )
+  def apply(config: Config) =
+    new RowQueueProducer(config.brokers, config.sinkFromTopics.map(_.name), config.sinkPollTimeout)
 }
 
 private[shabondi] class RowQueueProducer(
-  val queue: BlockingQueue[Row],
   val brokerProps: String,
   val topicNames: Seq[String],
-  val pollTimeout: FiniteDuration,
-  val pollSize: Int
+  val pollTimeout: Duration
 ) extends Runnable
     with AutoCloseable {
-  private[this] val log                       = Logger(classOf[RowQueueProducer])
-  private[this] val paused: AtomicBoolean     = new AtomicBoolean(false)
-  private[this] val stopped: AtomicBoolean    = new AtomicBoolean(false)
-  private[this] val pollTimeoutJava: Duration = DurationConverters.toJava(pollTimeout)
-  private[this] val limitSize                 = 50
+  private[this] val log                    = Logger(classOf[RowQueueProducer])
+  private[this] val paused: AtomicBoolean  = new AtomicBoolean(false)
+  private[this] val stopped: AtomicBoolean = new AtomicBoolean(false)
+  private[this] val blockingQueue          = new LinkedBlockingQueue[Row]()
 
   private[this] val consumer: Consumer[Row, Array[Byte]] = Consumer
     .builder()
@@ -72,19 +53,18 @@ private[shabondi] class RowQueueProducer(
     .build()
 
   override def run(): Unit = {
-    log.debug("RowProducer start running: topics={}, brokerProps={}", topicNames.mkString(","), brokerProps)
+    log.debug("{} start running.", this.getClass.getSimpleName)
+    log.debug("topics={}, brokerProps={}", topicNames.mkString(","), brokerProps)
     try {
       while (!stopped.get) {
-        if (!paused.get) {
-          if (queue.size < limitSize) {
-            val rows: Seq[Row] = consumer.poll(pollTimeoutJava, pollSize).asScala.map(_.key.get)
-            rows.foreach(r => queue.add(r))
-            log.trace("  queue size: {}, row size: {}", queue.size, rows.size)
-          }
+        if (!paused.get && blockingQueue.isEmpty) {
+          val rows: Seq[Row] = consumer.poll(pollTimeout).asScala.map(_.key.get)
+          rows.foreach(r => blockingQueue.add(r))
+          log.trace("  queue size: {}, row size: {}", blockingQueue.size, rows.size)
         } else {
-          log.trace("  paused. queue size: {}", queue.size)
+          log.trace("  paused or not empty. queue size: {}", blockingQueue.size)
+          Thread.sleep(10)
         }
-        Thread.sleep(50)
       } // while
     } finally {
       consumer.close()
@@ -95,6 +75,8 @@ private[shabondi] class RowQueueProducer(
   override def close(): Unit = {
     stop()
   }
+
+  def queue: BlockingQueue[Row] = blockingQueue
 
   def stop(): Unit = {
     stopped.set(true)

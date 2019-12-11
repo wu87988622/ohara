@@ -16,6 +16,7 @@
 
 package com.island.ohara.shabondi
 
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.common.setting.SettingDef.Type
@@ -23,7 +24,6 @@ import com.island.ohara.common.setting.{SettingDef, TopicKey}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.concurrent.duration._
 
 private[shabondi] object Config {
   def apply(raw: Map[String, String]) =
@@ -41,17 +41,12 @@ private[shabondi] class Config(raw: Map[String, String]) {
 
   def sinkFromTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SINK_FROM_TOPICS_KEY)).asScala
 
-  def sinkPollRowSize: Int = intValue(SINK_POLL_ROW_SIZE_DEF)
-
-  def sinkPollTimeout: FiniteDuration = FiniteDuration(longValue(SINK_POLL_TIMEOUT_DEF), MILLISECONDS)
+  def sinkPollTimeout: Duration = Duration.ofMillis(longValue(SINK_POLL_TIMEOUT_DEF))
 
   def brokers: String = raw(BROKERS_KEY)
 
   private def longValue(settingDef: SettingDef): Long =
     if (!raw.contains(settingDef.key)) settingDef.defaultLong() else raw(settingDef.key).toLong
-
-  private def intValue(settingDef: SettingDef): Int =
-    if (!raw.contains(settingDef.key)) settingDef.defaultInt() else raw(settingDef.key).toInt
 }
 
 object DefaultDefinitions {
@@ -122,17 +117,6 @@ object DefaultDefinitions {
     .displayName("Source topic")
     .documentation("The topic that Shabondi will pull rows from")
     .optional(Type.OBJECT_KEYS)
-    .build
-    .registerDefault
-
-  val SINK_POLL_ROW_SIZE = "shabondi.sink.poll.rowsize"
-  val SINK_POLL_ROW_SIZE_DEF = SettingDef.builder
-    .key(SINK_POLL_ROW_SIZE)
-    .group(coreGroup)
-    .orderInGroup(orderNumber)
-    .positiveNumber(500)
-    .displayName("Poll row size")
-    .documentation("The row size that each poll from topic")
     .build
     .registerDefault
 
