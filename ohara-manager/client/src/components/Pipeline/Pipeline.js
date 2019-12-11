@@ -19,8 +19,9 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
+import SettingDialog from './SettingDialog';
 import Graph from './Graph';
-import { useWorkspace } from 'context';
+import { useWorkspace, useGraphSettingDialog } from 'context';
 import { usePipelineActions, usePipelineState } from 'context';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
@@ -38,6 +39,11 @@ const Pipeline = () => {
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
   const [toolboxKey, setToolboxKey] = useState(0);
+  const {
+    isOpen: openSettingDialog,
+    close: closeSettingDialog,
+    data: settingDialogData,
+  } = useGraphSettingDialog();
 
   const initialState = {
     topic: false,
@@ -146,6 +152,11 @@ const Pipeline = () => {
 
       {!isFetchingWorkspaces && <IntroDialog />}
       <NodeDialog />
+      <SettingDialog
+        open={openSettingDialog}
+        handleClose={closeSettingDialog}
+        data={settingDialogData}
+      ></SettingDialog>
     </>
   );
 };

@@ -91,6 +91,7 @@ export const defaultValue = params => {
 };
 
 const converterBooleanWithString = string => {
+  if (isBoolean(string)) return string;
   const lowerCaseString = string.toLowerCase();
   switch (lowerCaseString) {
     case 'true':

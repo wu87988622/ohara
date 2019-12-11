@@ -30,6 +30,7 @@ import { useParams } from 'react-router-dom';
 import * as joint from 'jointjs';
 
 import * as fileApi from 'api/fileApi';
+import * as connectorApi from 'api/connectorApi';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
 import { StyledToolbox } from './ToolboxStyles';
@@ -46,6 +47,7 @@ import { useConnectors, useFiles } from './ToolboxHooks';
 import { enableDragAndDrop, createToolboxList } from './toolboxUtils';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import { TopicGraph } from '../Graph/Topic';
+import { useGraphSettingDialog } from 'context';
 
 const Toolbox = props => {
   const {
@@ -59,7 +61,7 @@ const Toolbox = props => {
     setToolboxExpanded,
   } = props;
 
-  const { findByWorkspaceName } = useWorkspace();
+  const { findByWorkspaceName, currentWorker } = useWorkspace();
   const { workspaceName } = useParams();
   const { data: topicsData } = useTopicState();
   const { fetchTopics } = useTopicActions();
@@ -71,6 +73,7 @@ const Toolbox = props => {
   const [zIndex, setZIndex] = useState(2);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [searchResults, setSearchResults] = useState(null);
+  const { open: openSettingDialog, setData } = useGraphSettingDialog();
 
   const showMessage = useSnackbar();
 
@@ -115,7 +118,7 @@ const Toolbox = props => {
     }
   };
 
-  const handleAddGraph = newGraph => {
+  const handleAddGraph = async newGraph => {
     if (newGraph) {
       setZIndex(zIndex + 1);
 
@@ -143,14 +146,27 @@ const Toolbox = props => {
           }
           break;
         default:
+          await connectorApi.create({
+            classInfos: currentWorker.classInfos,
+            workerClusterKey: {
+              name: currentWorker.settings.name,
+              group: currentWorker.settings.group,
+            },
+            connector__class: connectorType,
+          });
           graph.addCell(
             ConnectorGraph({
               position,
               value: newGraph,
-              type: connectorType,
+              type: connectorType.split('.').pop(),
               icon,
               graph,
               paper,
+              openSettingDialog,
+              setData,
+              classInfo: currentWorker.classInfos.filter(
+                classInfo => classInfo.className === connectorType,
+              )[0],
             }),
           );
           break;
