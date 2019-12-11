@@ -14,8 +14,26 @@
  * limitations under the License.
  */
 
-import WorkspaceQuick from './WorkspaceQuick';
-import WorkspaceList from './WorkspaceList';
-import { EditWorkspace } from './Edit';
+import styled, { css } from 'styled-components';
 
-export { WorkspaceQuick, EditWorkspace, WorkspaceList };
+export const Wrapper = styled.div(
+  ({ theme }) => css`
+    height: ${theme.spacing(56)}px;
+
+    .workspace-icon {
+      border-radius: 10%;
+    }
+
+    .call-to-action {
+      margin: 0 auto;
+    }
+
+    .active-workspace {
+      border: 2px solid ${theme.palette.primary[400]};
+    }
+
+    .MuiCard-root:not(.active-workspace):hover {
+      border: 2px solid ${theme.palette.grey[400]};
+    }
+  `,
+);

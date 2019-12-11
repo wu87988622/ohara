@@ -19,3 +19,4 @@ export const ADD_TOPIC_DIALOG = Symbol();
 export const VIEW_TOPIC_DIALOG = Symbol();
 export const DEV_TOOL_DIALOG = Symbol();
 export const GRAPH_SETTING_DIALOG = Symbol();
+export const LIST_WORKSPACES_DIALOG = Symbol();

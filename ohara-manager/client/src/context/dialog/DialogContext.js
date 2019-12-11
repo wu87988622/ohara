@@ -32,6 +32,7 @@ import {
   VIEW_TOPIC_DIALOG,
   DEV_TOOL_DIALOG,
   GRAPH_SETTING_DIALOG,
+  LIST_WORKSPACES_DIALOG,
 } from './dialogNames';
 import { reducer, initialState } from './dialogReducer';
 
@@ -110,6 +111,7 @@ const useAddTopicDialog = createUseDialogActions(ADD_TOPIC_DIALOG);
 const useViewTopicDialog = createUseDialogActions(VIEW_TOPIC_DIALOG);
 const useDevToolDialog = createUseDialogActions(DEV_TOOL_DIALOG);
 const useGraphSettingDialog = createUseDialogActions(GRAPH_SETTING_DIALOG);
+const useListWorkspacesDialog = createUseDialogActions(LIST_WORKSPACES_DIALOG);
 
 export {
   DialogProvider,
@@ -118,4 +120,5 @@ export {
   useViewTopicDialog,
   useDevToolDialog,
   useGraphSettingDialog,
+  useListWorkspacesDialog,
 };
