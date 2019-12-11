@@ -98,16 +98,22 @@ public class CsvDataReader implements DataReader {
   }
 
   /**
-   * Move the file to the error folder. If any error occur, only log the error reason.
+   * Move the file to the error folder. If any error occur, only log the error reason. Noted: it
+   * does nothing if user don't define the error folder to collect incorrect csv files.
    *
    * @param path the file path
    */
   private void handleErrorFile(String path) {
-    try {
-      moveToAnotherFolder(path, config.errorFolder());
-    } catch (Exception e) {
-      LOG.error("failed to moveFile " + path + " to " + config.errorFolder(), e);
-    }
+    config
+        .errorFolder()
+        .ifPresent(
+            folder -> {
+              try {
+                moveToAnotherFolder(path, folder);
+              } catch (Exception e) {
+                LOG.error("failed to moveFile " + path + " to " + config.errorFolder(), e);
+              }
+            });
   }
 
   private void moveToAnotherFolder(String path, String targetFolder) {

@@ -76,7 +76,7 @@ public class TestCsvSourceConfig extends OharaTest {
   @Test
   public void testErrorFolder() {
     CsvSourceConfig config = config(ERROR_FOLDER_KEY, "10");
-    Assert.assertEquals(config.errorFolder(), "10");
+    Assert.assertEquals(config.errorFolder().get(), "10");
   }
 
   @Test

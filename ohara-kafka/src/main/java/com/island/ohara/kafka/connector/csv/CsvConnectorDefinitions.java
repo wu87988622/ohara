@@ -49,7 +49,7 @@ public final class CsvConnectorDefinitions {
       SettingDef.builder()
           .displayName("Error Folder")
           .documentation("This folder is used to keep the invalid files. For example, non-csv file")
-          .required(SettingDef.Type.STRING)
+          .optional(SettingDef.Type.STRING)
           .key(ERROR_FOLDER_KEY)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();

@@ -50,7 +50,7 @@ class TestFtpSourceDefinitions extends OharaTest {
   @Test
   def checkErrorFolder(): Unit = {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == ERROR_FOLDER_KEY).get
-    definition.necessary() shouldBe Necessary.REQUIRED
+    definition.necessary() shouldBe Necessary.OPTIONAL
     definition.hasDefault shouldBe false
     definition.editable() shouldBe true
     definition.internal() shouldBe false

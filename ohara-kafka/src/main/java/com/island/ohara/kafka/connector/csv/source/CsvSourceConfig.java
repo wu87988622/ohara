@@ -46,7 +46,7 @@ public interface CsvSourceConfig {
   Optional<String> completedFolder();
 
   /** @return the folder storing the corrupt csv files */
-  String errorFolder();
+  Optional<String> errorFolder();
 
   /** @return the string encode to parse csv files */
   String encode();
@@ -93,8 +93,8 @@ public interface CsvSourceConfig {
       }
 
       @Override
-      public String errorFolder() {
-        return setting.stringValue(ERROR_FOLDER_KEY);
+      public Optional<String> errorFolder() {
+        return setting.stringOption(ERROR_FOLDER_KEY);
       }
 
       @Override
