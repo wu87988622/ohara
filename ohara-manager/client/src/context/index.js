@@ -26,6 +26,7 @@ import {
   useViewTopicDialog,
   useEditWorkspaceDialog,
   useDevToolDialog,
+  useGraphSettingDialog,
 } from 'context/dialog/DialogContext';
 import {
   FileProvider,
@@ -72,6 +73,7 @@ export {
   useEditWorkspaceDialog,
   useAddTopicDialog,
   useDevToolDialog,
+  useGraphSettingDialog,
   // File
   FileProvider,
   useFileState,

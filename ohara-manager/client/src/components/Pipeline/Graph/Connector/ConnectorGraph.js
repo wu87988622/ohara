@@ -34,6 +34,9 @@ const ConnectorGraph = params => {
     graph,
     paper,
     isTemporary = false,
+    openSettingDialog,
+    setData,
+    classInfo,
   } = params;
 
   const link = renderToString(<TrendingUpIcon />);
@@ -60,9 +63,7 @@ const ConnectorGraph = params => {
       '<div class="connector">',
       `<div class="header"><div class="circle">${icon}</div>`,
       `<div class="title-wrapper"><div class="title"></div>`,
-      `<div class="type">${
-        type === 'Pipeline Only' ? 'Topic' : type
-      }</div></div></div>`,
+      `<div class="type">${type}</div></div></div>`,
       `<div class="status">`,
       `<span>${'Status'}</span>`,
       `<span>${'Stopped'}</span>`,
@@ -103,6 +104,14 @@ const ConnectorGraph = params => {
         // `transparent` and reset it back in the mousemove event
         linkLine.attr({ line: { stroke: 'transparent' } });
         linkLine.addTo(graph);
+      });
+
+      this.$box.find('button#setting').on('mousedown', function() {
+        openSettingDialog();
+        setData({
+          title: `Editing the settings for ${value} ${type}`,
+          classInfo,
+        });
       });
 
       this.updateBox();

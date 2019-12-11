@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-export const EDIT_WORKSPACE_DIALOG = Symbol();
-export const ADD_TOPIC_DIALOG = Symbol();
-export const VIEW_TOPIC_DIALOG = Symbol();
-export const DEV_TOOL_DIALOG = Symbol();
-export const GRAPH_SETTING_DIALOG = Symbol();
+import RenderDefinitions from './RenderDefinitions';
+
+export { RenderDefinitions };

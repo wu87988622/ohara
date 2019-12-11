@@ -109,6 +109,7 @@ export const createToolboxList = params => {
         displayName: source.displayName,
         classType: source.classType,
         icon: sourceIcon,
+        className: source.className,
       }),
     );
   });
@@ -153,6 +154,7 @@ export const createToolboxList = params => {
         displayName: sink.displayName,
         classType: sink.classType,
         icon: sinkIcon,
+        className: sink.className,
       }),
     );
   });
