@@ -37,14 +37,15 @@ const ConnectorGraph = params => {
     openSettingDialog,
     setData,
     classInfo,
+    graphType,
   } = params;
 
-  const link = renderToString(<TrendingUpIcon />);
-  const start = renderToString(<PlayArrowIcon />);
-  const stop = renderToString(<StopIcon />);
-  const setting = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
-  const remove = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
-  let linkLine;
+  const linkIcon = renderToString(<TrendingUpIcon />);
+  const startIcon = renderToString(<PlayArrowIcon />);
+  const stopIcon = renderToString(<StopIcon />);
+  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
+  const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
+  let link;
 
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -59,24 +60,31 @@ const ConnectorGraph = params => {
     ),
   });
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-    template: [
-      '<div class="connector">',
-      `<div class="header"><div class="circle">${icon}</div>`,
-      `<div class="title-wrapper"><div class="title"></div>`,
-      `<div class="type">${type}</div></div></div>`,
-      `<div class="status">`,
-      `<span>${'Status'}</span>`,
-      `<span>${'Stopped'}</span>`,
-      `</div>`,
-      `<div class="connectorMenu">`,
-      `<Button id="link">${link}</Button>`,
-      `<Button id="start">${start}</Button>`,
-      `<Button id="stop">${stop}</Button>`,
-      `<Button id="setting">${setting}</Button>`,
-      `<Button id="remove">${remove}</Button> `,
-      `</div>`,
-      '</div>',
-    ].join(''),
+    template: `
+      <div class="connector">
+        <div class="header">
+          <div class="circle">${icon}</div>
+          <div class="title-wrapper">
+            <div class="title"></div>
+              <div class="type">${
+                type === 'Pipeline Only' ? 'Topic' : type
+              }</div>
+            </div>
+          </div>
+        <div class="status">
+          <span>${'Status'}</span>
+          <span>${'Stopped'}</span>
+        </div>
+        <div class="connectorMenu">
+          ${
+            graphType !== 'sink' ? `<Button id="link">${linkIcon}</Button>` : ''
+          }
+          <Button id="start">${startIcon}</Button>
+          <Button id="stop">${stopIcon}</Button>
+          <Button id="setting">${settingIcon}</Button>
+          <Button id="remove">${removeIcon}</Button>
+        </div>
+    </div>`,
 
     init() {
       this.listenTo(this.model, 'change', this.updateBox);
@@ -97,13 +105,13 @@ const ConnectorGraph = params => {
 
       const modelId = this.model.id;
       this.$box.find('button#link').on('mousedown', function() {
-        linkLine = new joint.shapes.standard.Link();
-        linkLine.source({ id: modelId });
+        link = new joint.shapes.standard.Link();
+        link.source({ id: modelId });
 
         // The link doesn't show up in the right position, set it to
         // `transparent` and reset it back in the mousemove event
-        linkLine.attr({ line: { stroke: 'transparent' } });
-        linkLine.addTo(graph);
+        link.attr({ line: { stroke: 'transparent' } });
+        link.addTo(graph);
       });
 
       this.$box.find('button#setting').on('mousedown', function() {
@@ -138,10 +146,10 @@ const ConnectorGraph = params => {
 
       if (this.paper) {
         this.paper.$document.on('mousemove', function(event) {
-          if (linkLine) {
-            if (!linkLine.attributes.target.id) {
-              linkLine.target({ x: event.pageX - 290, y: event.pageY - 72 });
-              linkLine.attr({ line: { stroke: '#9e9e9e' } });
+          if (link) {
+            if (!link.attributes.target.id) {
+              link.target({ x: event.pageX - 290, y: event.pageY - 72 });
+              link.attr({ line: { stroke: '#9e9e9e' } });
             }
           }
         });
@@ -157,6 +165,7 @@ const ConnectorGraph = params => {
     size: { width: 240, height: 100 },
     title: value,
     menuDisplay: 'none',
+    classType: graphType,
     isTemporary,
   });
 };

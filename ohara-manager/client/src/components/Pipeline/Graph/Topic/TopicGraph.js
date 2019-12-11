@@ -25,7 +25,15 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 const TopicGraph = params => {
-  const { value, position, paper, graph, type, isTemporary = false } = params;
+  const {
+    value,
+    position,
+    paper,
+    graph,
+    type,
+    isTemporary = false,
+    graphType,
+  } = params;
 
   const privateIcon = renderToString(
     <PrivateTopicIcon width={56} height={56} />,
@@ -129,6 +137,7 @@ const TopicGraph = params => {
     size: { width: 56, height: 56 + height },
     title: topicValue,
     menuDisplay: 'none',
+    classType: graphType,
     isTemporary,
   });
 };

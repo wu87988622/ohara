@@ -118,6 +118,14 @@ const Toolbox = props => {
     }
   };
 
+  const removeTempCell = () => {
+    // Remove temporary cells
+    const tempCells = graph
+      .getCells()
+      .filter(cell => Boolean(cell.attributes.isTemporary));
+    tempCells.forEach(cell => cell.remove());
+  };
+
   const handleAddGraph = async newGraph => {
     if (newGraph) {
       setZIndex(zIndex + 1);
@@ -131,6 +139,7 @@ const Toolbox = props => {
                 graph,
                 type: 'private',
                 paper,
+                graphType,
               }),
             );
           } else {
@@ -141,6 +150,7 @@ const Toolbox = props => {
                 value: newGraph,
                 type: 'public',
                 paper,
+                graphType,
               }),
             );
           }
@@ -167,18 +177,14 @@ const Toolbox = props => {
               classInfo: currentWorker.classInfos.filter(
                 classInfo => classInfo.className === connectorType,
               )[0],
+              graphType,
             }),
           );
           break;
       }
     }
 
-    // Remove temporary cells
-    const tempCells = graph
-      .getCells()
-      .filter(cell => Boolean(cell.attributes.isTemporary));
-    tempCells.forEach(cell => cell.remove());
-
+    removeTempCell();
     showMessage(`${newGraph} has been added`);
     setIsOpen(false);
   };
@@ -385,6 +391,7 @@ const Toolbox = props => {
           handleConfirm={handleAddGraph}
           handleClose={() => {
             setIsOpen(false);
+            removeTempCell();
           }}
         />
       </StyledToolbox>

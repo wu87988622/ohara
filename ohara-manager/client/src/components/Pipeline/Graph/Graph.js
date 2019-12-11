@@ -19,10 +19,11 @@ import { useTheme } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
 
-import { usePrevious } from 'utils/hooks';
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
+import { useSnackbar } from 'context/SnackbarContext';
 import { Paper, PaperWrapper } from './GraphStyles';
+import { usePrevious } from 'utils/hooks';
 import { updateCurrentCell } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
 
@@ -38,6 +39,7 @@ const Graph = props => {
   } = useZoom();
 
   const { setCenter, isCentered, setIsCentered } = useCenter();
+  const showMessage = useSnackbar();
 
   const {
     isToolboxOpen,
@@ -83,7 +85,6 @@ const Graph = props => {
 
         // prevent graph from stepping outside of the paper
         restrictTranslate: true,
-        perpendicularLinks: true,
       });
 
       paper.current.on('cell:pointerclick', cellView => {
@@ -109,10 +110,162 @@ const Graph = props => {
           const disConnectLink = links.filter(
             link => !link.attributes.target.id,
           );
+
           if (disConnectLink.length > 0) {
-            disConnectLink[0].target({ id: cellView.model.id });
+            // Connect to the target cell
+            if (disConnectLink.length > 0) {
+              const targetId = cellView.model.get('id');
+              const targetType = cellView.model.get('classType');
+              const targetTitle = cellView.model.get('title');
+              const targetConnectedLinks = graph.current.getConnectedLinks(
+                cellView.model,
+              );
+
+              const sourceId = disConnectLink[0].get('source').id;
+              const sourceType = graph.current.getCell(sourceId).attributes
+                .classType;
+              const sourceCell = graph.current.getCell(sourceId);
+              const sourceConnectedLinks = graph.current.getConnectedLinks(
+                sourceCell,
+              );
+              const sourceTitle = sourceCell.get('title');
+
+              const isLoopLink = () => {
+                return targetConnectedLinks.some(link => {
+                  return (
+                    sourceId === link.get('source').id ||
+                    sourceId === link.get('target').id
+                  );
+                });
+              };
+
+              const handleError = (message = false) => {
+                if (message) showMessage(message);
+
+                resetLink();
+              };
+
+              if (targetId === sourceId) {
+                // A cell cannot connect to itself, not throwing a
+                // message out here since the behavior is not obvious
+                handleError();
+              } else if (targetType === 'source') {
+                handleError(`Target ${targetTitle} is a source!`);
+              } else if (sourceType === targetType) {
+                handleError(
+                  `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
+                );
+              } else if (isLoopLink()) {
+                handleError(
+                  `A connection is already in place for these two cells`,
+                );
+              } else {
+                const hasMoreThanOneTarget = sourceConnectedLinks.length >= 2;
+                const hasSource = targetConnectedLinks.length !== 0;
+
+                if (sourceType === 'source' && targetType === 'sink') {
+                  if (hasMoreThanOneTarget) {
+                    return handleError(
+                      `The source ${sourceTitle} is already connected to a target`,
+                    );
+                  }
+
+                  if (hasSource) {
+                    return handleError(
+                      `The target ${targetTitle} is already connected to a source `,
+                    );
+                  }
+                }
+
+                if (sourceType === 'source' && targetType === 'stream') {
+                  const isTargetConnectedBySource = targetConnectedLinks.some(
+                    link => link.getSourceCell().get('classType') === 'source',
+                  );
+
+                  if (hasMoreThanOneTarget) {
+                    return handleError(
+                      `The source ${sourceTitle} is already connected to a target`,
+                    );
+                  }
+
+                  if (isTargetConnectedBySource) {
+                    return handleError(
+                      `The target ${targetTitle} already has a connection!`,
+                    );
+                  }
+                }
+
+                if (sourceType === 'source' && targetType === 'topic') {
+                  if (hasMoreThanOneTarget) {
+                    return handleError(
+                      `The source ${sourceTitle} is already connected to a target`,
+                    );
+                  }
+                }
+
+                if (sourceType === 'topic' && targetType === 'sink') {
+                  if (hasSource) {
+                    return handleError(
+                      `The target ${targetTitle} is already connected to a source `,
+                    );
+                  }
+                }
+
+                if (sourceType === 'stream' && targetType === 'sink') {
+                  if (hasMoreThanOneTarget) {
+                    return handleError(
+                      `The source ${sourceTitle} is already connected to a target`,
+                    );
+                  }
+
+                  if (hasSource) {
+                    return handleError(
+                      `The target ${targetTitle} is already connected to a source `,
+                    );
+                  }
+                }
+
+                // Link to the target cell
+                disConnectLink[0].target({ id: cellView.model.id });
+              }
+            }
           }
         }
+      });
+
+      paper.current.on('link:pointerclick', linkView => {
+        linkView.addTools(
+          new joint.dia.ToolsView({
+            tools: [
+              new joint.linkTools.Vertices(),
+              new joint.linkTools.Remove({
+                distance: '50%',
+                markup: [
+                  {
+                    tagName: 'circle',
+                    selector: 'button',
+                    attributes: {
+                      r: 8,
+                      fill: 'grey',
+                      cursor: 'pointer',
+                    },
+                  },
+                  {
+                    tagName: 'path',
+                    selector: 'icon',
+                    attributes: {
+                      d: 'M -3 -3 3 3 M -3 3 3 -3',
+                      fill: 'none',
+                      stroke: '#fff',
+                      'stroke-width': 2,
+                      'pointer-events': 'none',
+                    },
+                  },
+                ],
+              }),
+            ],
+          }),
+        );
       });
 
       paper.current.on('blank:pointerclick', () => {
@@ -122,6 +275,7 @@ const Graph = props => {
         setHasSelectedCell(false);
       });
 
+      // Cell hover effect
       paper.current.on('cell:mouseenter', cellView => {
         if (!cellView.$box) return;
         cellView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
@@ -159,7 +313,13 @@ const Graph = props => {
     };
 
     renderGraph();
-  }, [palette.common.white, palette.grey, palette.primary, setIsCentered]);
+  }, [
+    palette.common.white,
+    palette.grey,
+    palette.primary,
+    setIsCentered,
+    showMessage,
+  ]);
 
   const resetAll = paper => {
     const views = paper._views;
@@ -174,6 +334,9 @@ const Graph = props => {
   };
 
   const resetLink = () => {
+    // Remove link tools that were added in the previous event
+    paper.current.removeTools();
+
     const links = graph.current.getLinks();
     if (links.length > 0) {
       const disConnectLink = links.filter(link => !link.attributes.target.id);
