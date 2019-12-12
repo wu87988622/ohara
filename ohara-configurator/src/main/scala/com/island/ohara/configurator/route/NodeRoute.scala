@@ -39,7 +39,9 @@ object NodeRoute {
       .flatMap(
         clusters =>
           serviceCollie.configuratorContainerName().map(clusters -> Some(_)).recover {
-            case _: NoSuchElementException => clusters -> None
+            case e: NoSuchElementException =>
+              LOG.debug("failed to get the configurator information", e)
+              clusters -> None
           }
       )
       .map {
