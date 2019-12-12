@@ -38,14 +38,14 @@ export const useConnectors = workspace => {
             if (info.classType === 'source') {
               setSources(prevState => [
                 ...prevState,
-                { displayName: displayClassName, classType },
+                { displayName: displayClassName, classType, className },
               ]);
               return;
             }
 
             setSinks(prevState => [
               ...prevState,
-              { displayName: displayClassName, classType },
+              { displayName: displayClassName, classType, className },
             ]);
           });
         }

@@ -149,6 +149,7 @@ const SettingDialog = props => {
 
   const Defintions = RenderDefinitions({
     Definitions: classInfo.settingDefinitions,
+    onSubmit: () => null,
   });
 
   const handleExpansionPanelChange = panel => (event, isExpanded) => {

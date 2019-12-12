@@ -46,7 +46,7 @@ export const connectorSinks = {
 
 export const create = async params => {
   const info = params.classInfos
-    ? { classInfos: params.classInfos }
+    ? { data: { classInfos: params.classInfos } }
     : await inspectApi.getWorkerInfo(params.workerClusterKey);
 
   let connectorDefinition = {};
