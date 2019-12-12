@@ -64,7 +64,7 @@ public class TestConnectorProps extends OharaTest {
   public void testCounterInSink() {
     Column column =
         Column.builder()
-            .name(CommonUtils.randomString())
+            .name(CommonUtils.randomString(10))
             .dataType(DataType.STRING)
             .order(1)
             .build();
@@ -160,7 +160,7 @@ public class TestConnectorProps extends OharaTest {
   public void testCounterInSource() {
     Column column =
         Column.builder()
-            .name(CommonUtils.randomString())
+            .name(CommonUtils.randomString(10))
             .dataType(DataType.STRING)
             .order(1)
             .build();
@@ -176,7 +176,7 @@ public class TestConnectorProps extends OharaTest {
               return Collections.singletonList(
                   RowSourceRecord.builder()
                       .row(good ? goodRow : badRow)
-                      .topicName(CommonUtils.randomString())
+                      .topicName(CommonUtils.randomString(10))
                       .build());
             } finally {
               good = false;
@@ -237,7 +237,7 @@ public class TestConnectorProps extends OharaTest {
             return Collections.singletonList(
                 RowSourceRecord.builder()
                     .row(badRow)
-                    .topicName(CommonUtils.randomString())
+                    .topicName(CommonUtils.randomString(10))
                     .build());
           }
         };
@@ -263,7 +263,7 @@ public class TestConnectorProps extends OharaTest {
             return Collections.singletonList(
                 RowSourceRecord.builder()
                     .row(badRow)
-                    .topicName(CommonUtils.randomString())
+                    .topicName(CommonUtils.randomString(10))
                     .build());
           }
         };

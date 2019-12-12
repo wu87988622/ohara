@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef.Permission
-import com.island.ohara.common.setting.{ObjectKey, PropGroup, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, PropGroup, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
@@ -62,7 +62,7 @@ class TestConnectorApi extends OharaTest {
       """.stripMargin.parseJson)
 
     creation.group shouldBe GROUP_DEFAULT
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
+    creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
     creation.workerClusterKey.name() shouldBe workerClusterName
     creation.className shouldBe className
     creation.columns shouldBe Seq.empty
@@ -75,12 +75,12 @@ class TestConnectorApi extends OharaTest {
     creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
     CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)).settings shouldBe creation.settings
 
-    val group = CommonUtils.randomString()
-    val name  = CommonUtils.randomString()
+    val group = CommonUtils.randomString(10)
+    val name  = CommonUtils.randomString(10)
     val column = Column
       .builder()
-      .name(CommonUtils.randomString())
-      .newName(CommonUtils.randomString())
+      .name(CommonUtils.randomString(10))
+      .newName(CommonUtils.randomString(10))
       .dataType(DataType.DOUBLE)
       .build()
     val creation2 = CONNECTOR_CREATION_FORMAT.read(s"""
@@ -222,7 +222,7 @@ class TestConnectorApi extends OharaTest {
   def ignoreClassNameOnCreation(): Unit =
     intercept[DeserializationException] {
       ConnectorApi.access
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .request
         .workerClusterKey(ObjectKey.of("default", "name"))
@@ -233,10 +233,10 @@ class TestConnectorApi extends OharaTest {
   @Test
   def ignoreNameOnCreation(): Unit =
     ConnectorApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .className(CommonUtils.randomString())
+      .className(CommonUtils.randomString(10))
       .workerClusterKey(ObjectKey.of("default", "name"))
       .topicKey(TopicKey.of("g", "n"))
       .creation
@@ -246,7 +246,7 @@ class TestConnectorApi extends OharaTest {
   @Test
   def ignoreNameOnUpdate(): Unit =
     an[NoSuchElementException] should be thrownBy ConnectorApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .update()
@@ -658,11 +658,11 @@ class TestConnectorApi extends OharaTest {
   @Test
   def testCustomGroup(): Unit =
     ConnectorApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .group("abc")
-      .className(CommonUtils.randomString())
+      .className(CommonUtils.randomString(10))
       .workerClusterKey(ObjectKey.of("g", "n"))
       .topicKey(TopicKey.of("g", "n"))
       .creation
@@ -671,10 +671,10 @@ class TestConnectorApi extends OharaTest {
   @Test
   def testDefaultGroup(): Unit =
     ConnectorApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .className(CommonUtils.randomString())
+      .className(CommonUtils.randomString(10))
       .workerClusterKey(ObjectKey.of("g", "n"))
       .topicKey(TopicKey.of("g", "n"))
       .creation

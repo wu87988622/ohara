@@ -50,5 +50,5 @@ class TestObjectApi extends OharaTest {
 
   @Test
   def testDefaultGroup(): Unit =
-    ObjectApi.access.request.name(CommonUtils.randomString()).creation.group shouldBe GROUP_DEFAULT
+    ObjectApi.access.request.name(CommonUtils.randomString(10)).creation.group shouldBe GROUP_DEFAULT
 }

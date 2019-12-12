@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -37,7 +37,7 @@ class TestPipelineApi extends OharaTest {
   @Test
   def ignoreNameOnCreation(): Unit =
     PipelineApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .creation
@@ -47,7 +47,7 @@ class TestPipelineApi extends OharaTest {
   @Test
   def ignoreNameOnUpdate(): Unit =
     an[NullPointerException] should be thrownBy PipelineApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .update()
@@ -123,11 +123,11 @@ class TestPipelineApi extends OharaTest {
                                                           |
     """.stripMargin.parseJson)
     creation.group shouldBe GROUP_DEFAULT
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
+    creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
     creation.flows shouldBe Seq.empty
 
-    val group     = CommonUtils.randomString()
-    val name      = CommonUtils.randomString()
+    val group     = CommonUtils.randomString(10)
+    val name      = CommonUtils.randomString(10)
     val creation2 = PIPELINE_CREATION_JSON_FORMAT.read(s"""
         |  {
         |    "group": "$group",
@@ -160,10 +160,20 @@ class TestPipelineApi extends OharaTest {
   def testNameLimit(): Unit =
     an[DeserializationException] should be thrownBy
       PipelineApi.access
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .request
-        .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
-        .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
+        .name(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT + 1))
+        .group(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
+        .creation
+  @Test
+  def testGroupLimit(): Unit =
+    an[DeserializationException] should be thrownBy
+      PipelineApi.access
+        .hostname(CommonUtils.randomString(10))
+        .port(CommonUtils.availablePort())
+        .request
+        .name(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
+        .group(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT + 1))
         .creation
 }

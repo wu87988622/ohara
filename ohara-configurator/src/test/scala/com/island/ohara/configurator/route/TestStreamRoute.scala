@@ -49,8 +49,8 @@ class TestStreamRoute extends OharaTest {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
   private[this] val nodeNames: Set[String] = result(zkApi.list()).head.nodeNames
-  private[this] val toTopicKey             = TopicKey.of("g", CommonUtils.randomString())
-  private[this] val fromTopicKey           = TopicKey.of("g", CommonUtils.randomString())
+  private[this] val toTopicKey             = TopicKey.of("g", CommonUtils.randomString(10))
+  private[this] val fromTopicKey           = TopicKey.of("g", CommonUtils.randomString(10))
   private[this] val file                   = RouteUtils.streamFile
   private[this] var fileInfo: FileInfo     = _
 
@@ -73,7 +73,7 @@ class TestStreamRoute extends OharaTest {
         .brokerClusterKey(brokerClusterInfo.key)
         .toTopicKey(toTopicKey)
         .fromTopicKey(fromTopicKey)
-        .nodeName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
         .create()
     )
 
@@ -133,7 +133,7 @@ class TestStreamRoute extends OharaTest {
     res1.nodeNames shouldBe nodeNames
 
     // update partial properties
-    val to = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(topicApi.request.key(to).brokerClusterKey(brokerClusterInfo.key).create())
     val res2 = result(streamApi.request.name(defaultProps.name).toTopicKey(to).nodeNames(nodeNames).update())
     res2.name shouldBe name
@@ -144,7 +144,7 @@ class TestStreamRoute extends OharaTest {
 
     // create property with some user defined properties
     val userAppId = CommonUtils.randomString(5)
-    val to2       = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to2       = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(topicApi.request.key(to2).brokerClusterKey(brokerClusterInfo.key).create())
     val userProps = result(
       streamApi.request
@@ -164,8 +164,8 @@ class TestStreamRoute extends OharaTest {
     result(streamApi.list()).size shouldBe 2
 
     // update properties
-    val from3 = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to3   = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val from3 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val to3   = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(topicApi.request.key(from3).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.request.key(to3).brokerClusterKey(brokerClusterInfo.key).create())
     val res3 = result(streamApi.request.name(userAppId).fromTopicKey(from3).toTopicKey(to3).update())
@@ -200,8 +200,8 @@ class TestStreamRoute extends OharaTest {
         .create()
     )
 
-    val from = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to   = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val from = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val to   = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
 
     // run topics
     result(
@@ -402,7 +402,7 @@ class TestStreamRoute extends OharaTest {
     )
     streamDesc.fromTopicKeys should not be Set.empty
     streamDesc.toTopicKeys should not be Set.empty
-    val from = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val from = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(topicApi.request.key(from).brokerClusterKey(brokerClusterInfo.key).create())
     // update from topic
     result(streamApi.request.name(streamDesc.name).fromTopicKey(from).update()).fromTopicKeys shouldBe Set(from)
@@ -732,7 +732,7 @@ class TestStreamRoute extends OharaTest {
     streams.size shouldBe 1
     streams.find(_.key == stream.key) should not be None
 
-    result(streamApi.query.group(CommonUtils.randomString()).state("running").execute()).size shouldBe 0
+    result(streamApi.query.group(CommonUtils.randomString(10)).state("running").execute()).size shouldBe 0
     result(streamApi.query.state("none").execute()).size shouldBe 3
   }
 

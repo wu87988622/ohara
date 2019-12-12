@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -43,13 +43,13 @@ class TestTopicApi extends OharaTest {
   @Test
   def brokerClusterKeyShouldBeRequired(): Unit =
     intercept[DeserializationException] {
-      TopicApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.creation
+      TopicApi.access.hostname(CommonUtils.randomString(10)).port(CommonUtils.availablePort()).request.creation
     }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_DEFINITION.key())
 
   @Test
   def ignoreNameOnCreation(): Unit =
     TopicApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .brokerClusterKey(ObjectKey.of("fake", "fake"))
@@ -60,7 +60,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def ignoreNameOnUpdate(): Unit =
     an[NoSuchElementException] should be thrownBy TopicApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .update()
@@ -85,11 +85,11 @@ class TestTopicApi extends OharaTest {
 
   @Test
   def parseCreation(): Unit = {
-    val brokerClusterName    = CommonUtils.randomString()
+    val brokerClusterName    = CommonUtils.randomString(10)
     val numberOfPartitions   = 100
     val numberOfReplications = 10
-    val group                = CommonUtils.randomString()
-    val name                 = CommonUtils.randomString()
+    val group                = CommonUtils.randomString(10)
+    val name                 = CommonUtils.randomString(10)
     val creation             = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
          | "$GROUP_KEY": "$group",
@@ -109,8 +109,8 @@ class TestTopicApi extends OharaTest {
 
   @Test
   def parseJsonForUpdate(): Unit = {
-    val name                 = CommonUtils.randomString()
-    val brokerClusterName    = CommonUtils.randomString()
+    val name                 = CommonUtils.randomString(10)
+    val brokerClusterName    = CommonUtils.randomString(10)
     val numberOfPartitions   = 100
     val numberOfReplications = 10
     val update               = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
@@ -146,11 +146,11 @@ class TestTopicApi extends OharaTest {
   def testNameLimit(): Unit =
     an[DeserializationException] should be thrownBy
       TopicApi.access
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .request
-        .name(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
-        .group(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH))
+        .name(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
+        .group(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
         .creation
 
   @Test

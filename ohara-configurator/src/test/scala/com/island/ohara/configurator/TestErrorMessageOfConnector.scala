@@ -76,7 +76,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(CommonUtils.randomString())
+        .name(CommonUtils.randomString(10))
         .flows(
           Seq(
             Flow(
@@ -136,7 +136,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(CommonUtils.randomString())
+        .name(CommonUtils.randomString(10))
         .flows(
           Seq(
             Flow(

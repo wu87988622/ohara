@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.JsonRefiner.{ArrayRestriction, StringRestriction}
+import com.island.ohara.client.configurator.v0.JsonRefiner.ArrayRestriction
 import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Type}
 import com.island.ohara.common.setting.{ObjectKey, PropGroup, SettingDef}
 import com.island.ohara.common.util.CommonUtils
@@ -72,7 +72,7 @@ trait JsonRefiner[T] {
     // the internal is not exposed to user so we skip it.
     // remove the value if the field is readonly
     if (definition.permission() == Permission.READ_ONLY) valueConverter(definition.key(), _ => JsNull)
-
+    if (definition.regex() != null) stringRestriction(definition.key(), definition.regex())
     if (!definition.internal() && definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
     definition.valueType() match {
       case Type.BOOLEAN =>
@@ -240,7 +240,7 @@ trait JsonRefiner[T] {
       case Type.STRING =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
         else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
-          nullToJsValue(definition.key(), () => JsString(CommonUtils.randomString(LIMIT_OF_KEY_LENGTH / 2)))
+          nullToJsValue(definition.key(), () => JsString(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)))
         if (!definition.internal()) requireJsonType[JsString](definition.key())
       case _ @(Type.CLASS | Type.PASSWORD | Type.JDBC_TABLE) =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
@@ -478,38 +478,17 @@ trait JsonRefiner[T] {
     (checkers: Seq[(String, JsArray) => Unit]) =>
       requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
 
-  def stringRestriction(key: String): StringRestriction[T] = stringRestriction(Set(key))
-
-  /**
-    * add the string restriction to specific value. It throws exception if the input value can't pass any restriction.
-    * Noted: the empty restriction make the checker to reject all input values. However, you are disable to create a
-    * restriction instance without any restriction rules. see our implementation.
-    * @param keys keys
-    * @return refiner
-    */
-  def stringRestriction(keys: Set[String]): StringRestriction[T] =
-    (legalPairs: Seq[(Char, Char)], lengthLimit: Int) => {
-      keys.foreach { key =>
-        requireJsonType[JsString](
-          key,
-          (jsString: JsString) => {
-            val string = jsString.value
-            if (legalPairs.nonEmpty) string.foreach { c =>
-              if (!legalPairs.exists {
-                    case (start, end) => c >= start && c <= end
-                  })
-                throw DeserializationException(
-                  s"""the \"$string\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
-                  fieldNames = List(key)
-                )
-            }
-            if (string.length > lengthLimit)
-              throw DeserializationException(s"the length of $string exceeds $lengthLimit", fieldNames = List(key))
-          }
-        )
+  def stringRestriction(key: String, regex: String): JsonRefiner[T] = valueChecker(
+    key,
+    (v: JsValue) => {
+      val s = v match {
+        case JsString(s) => s
+        case _           => v.toString
       }
-      this
+      if (!s.matches(regex))
+        throw DeserializationException(s"""the value \"$s\" is not matched to $regex""", fieldNames = List(key))
     }
+  )
 
   /**
     * add your custom check for specific (key, value). the checker is executed only if the key exists.
@@ -575,85 +554,6 @@ trait JsonRefiner[T] {
 }
 
 object JsonRefiner {
-  trait StringRestriction[T] {
-    private[this] var legalPair: Seq[(Char, Char)] = Seq.empty
-    private[this] var lengthLimit: Int             = Int.MaxValue
-
-    /**
-      * accept [a-zA-Z]
-      * @return this restriction
-      */
-    def withCharset(): StringRestriction[T] = {
-      withLowerCase()
-      withUpperCase()
-    }
-
-    /**
-      * accept [a-z]
-      * @return this restriction
-      */
-    def withLowerCase(): StringRestriction[T] = withPair('a', 'z')
-
-    /**
-      * accept [A-Z]
-      * @return this restriction
-      */
-    def withUpperCase(): StringRestriction[T] = withPair('A', 'Z')
-
-    /**
-      * accept [0-9]
-      * @return this restriction
-      */
-    def withNumber(): StringRestriction[T] = withPair('0', '9')
-
-    /**
-      * accept [.]
-      * @return this restriction
-      */
-    def withDot(): StringRestriction[T] = withPair('.', '.')
-
-    /**
-      * accept [-]
-      * @return this restriction
-      */
-    def withDash(): StringRestriction[T] = withPair('-', '-')
-
-    /**
-      * accept [_]
-      * @return this restriction
-      */
-    def withUnderLine(): StringRestriction[T] = withPair('_', '_')
-
-    def withLengthLimit(limit: Int): StringRestriction[T] = {
-      this.lengthLimit = CommonUtils.requirePositiveInt(limit)
-      this
-    }
-
-    /**
-      * Complete this restriction and add it to string refiner.
-      */
-    def toRefiner: JsonRefiner[T] =
-      if (legalPair.isEmpty && lengthLimit == Int.MaxValue)
-        throw new IllegalArgumentException("Don't use String Restriction if you hate to add any restriction")
-      else addToJsonRefiner(legalPair, lengthLimit)
-
-    /**
-      * add custom regex to this restriction instance.
-      * Noted: null and empty string produce exception.
-      * @param startChar legal start char
-      * @param endChar legal end char
-      * @return this restriction
-      */
-    private[this] def withPair(startChar: Char, endChar: Char): StringRestriction[T] = {
-      if (startChar > endChar)
-        throw new IllegalArgumentException(s"the start char:$startChar must be small than end char:$endChar")
-      legalPair = legalPair ++ Seq((startChar, endChar))
-      this
-    }
-
-    protected def addToJsonRefiner(legalPairs: Seq[(Char, Char)], lengthLimit: Int): JsonRefiner[T]
-  }
-
   trait ArrayRestriction[T] {
     private[this] var checkers: Seq[(String, JsArray) => Unit] = Seq.empty
 

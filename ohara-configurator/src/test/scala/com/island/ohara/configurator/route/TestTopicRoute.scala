@@ -247,7 +247,7 @@ class TestTopicRoute extends OharaTest {
   @Test
   def duplicateUpdate(): Unit =
     (0 to 10).foreach(
-      _ => result(topicApi.request.name(CommonUtils.randomString()).brokerClusterKey(brokerClusterInfo.key).update())
+      _ => result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(brokerClusterInfo.key).update())
     )
 
   @Test
@@ -285,7 +285,7 @@ class TestTopicRoute extends OharaTest {
   private[this] def updatePartOfField(req: Request => Request, _expected: TopicInfo => TopicInfo): Unit = {
     val previous = result(
       topicApi.request
-        .name(CommonUtils.randomString())
+        .name(CommonUtils.randomString(10))
         .numberOfReplications(1)
         .numberOfPartitions(1)
         .brokerClusterKey(brokerClusterInfo.key)
@@ -368,7 +368,7 @@ class TestTopicRoute extends OharaTest {
   @Test
   def testCreateSameTopicAfterCreateWithoutAction(): Unit = {
     // This is the backward-compatibility test
-    val name  = CommonUtils.randomString()
+    val name  = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(name).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.get(topic.key)).name shouldBe name
 
@@ -380,7 +380,7 @@ class TestTopicRoute extends OharaTest {
 
   @Test
   def testCreateSameTopicAfterCreateWithAction(): Unit = {
-    val name  = CommonUtils.randomString()
+    val name  = CommonUtils.randomString(10)
     val topic = result(topicApi.request.name(name).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(topic.key))
     val res = result(topicApi.get(topic.key))

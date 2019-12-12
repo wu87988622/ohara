@@ -38,7 +38,7 @@ class TestConnectorRoute extends OharaTest {
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi     = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val topicKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+  private[this] val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
   ).head
@@ -75,7 +75,7 @@ class TestConnectorRoute extends OharaTest {
   def createConnectorWithoutTopics(): Unit =
     result(
       connectorApi.request
-        .className(CommonUtils.randomString())
+        .className(CommonUtils.randomString(10))
         .workerClusterKey(workerClusterInfo.key)
         .create()
     ).topicKeys shouldBe Set.empty
@@ -89,7 +89,7 @@ class TestConnectorRoute extends OharaTest {
       Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
       Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build()
     )
-    val name          = CommonUtils.randomString()
+    val name          = CommonUtils.randomString(10)
     val className     = CommonUtils.randomString()
     val numberOfTasks = 3
     val response = result(

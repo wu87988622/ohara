@@ -59,7 +59,7 @@ class TestNodeRoute extends OharaTest {
 
   @Test
   def testAdd(): Unit = {
-    val hostname = CommonUtils.randomString()
+    val hostname = CommonUtils.randomString(10)
     val port     = CommonUtils.availablePort()
     val user     = CommonUtils.randomString()
     val password = CommonUtils.randomString()
@@ -82,7 +82,7 @@ class TestNodeRoute extends OharaTest {
   def testDelete(): Unit = {
     val res = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -106,7 +106,7 @@ class TestNodeRoute extends OharaTest {
   def testUpdate(): Unit = {
     val res = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -140,7 +140,7 @@ class TestNodeRoute extends OharaTest {
     (0 until count).foreach { _ =>
       result(
         nodeApi.request
-          .hostname(CommonUtils.randomString())
+          .hostname(CommonUtils.randomString(10))
           .port(CommonUtils.availablePort())
           .user(CommonUtils.randomString())
           .password(CommonUtils.randomString())
@@ -186,7 +186,7 @@ class TestNodeRoute extends OharaTest {
   private[this] def updatePartOfField(req: Request => Request, _expected: Node => Node): Unit = {
     val previous = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -204,7 +204,7 @@ class TestNodeRoute extends OharaTest {
   def createNodeWithoutPort(): Unit =
     result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update()
@@ -214,7 +214,7 @@ class TestNodeRoute extends OharaTest {
   def createNodeWithoutUser(): Unit =
     result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .password(CommonUtils.randomString())
         .update()
@@ -224,7 +224,7 @@ class TestNodeRoute extends OharaTest {
   def createNodeWithoutPassword(): Unit =
     result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .update()
@@ -238,7 +238,7 @@ class TestNodeRoute extends OharaTest {
     )
     val nodeDesc = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(22)
         .user("user")
         .password("password")

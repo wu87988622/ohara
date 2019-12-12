@@ -29,12 +29,12 @@ class TestNodeApi extends OharaTest {
   @Test
   def ignorePortOnCreation(): Unit =
     NodeApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .hostname(CommonUtils.randomString())
-      .user(CommonUtils.randomString())
-      .password(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
+      .user(CommonUtils.randomString(10))
+      .password(CommonUtils.randomString(10))
       .create()
 
   @Test
@@ -43,12 +43,12 @@ class TestNodeApi extends OharaTest {
   @Test
   def ignoreUserOnCreation(): Unit =
     NodeApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
-      .password(CommonUtils.randomString())
+      .password(CommonUtils.randomString(10))
       .create()
 
   @Test
@@ -60,23 +60,23 @@ class TestNodeApi extends OharaTest {
   @Test
   def ignoreHostnameOnCreation(): Unit =
     an[NullPointerException] should be thrownBy NodeApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .password(CommonUtils.randomString())
+      .password(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
-      .user(CommonUtils.randomString())
+      .user(CommonUtils.randomString(10))
       .create()
 
   @Test
   def ignoreHostnameOnUpdate(): Unit =
     an[NullPointerException] should be thrownBy NodeApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .password(CommonUtils.randomString())
+      .password(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
-      .user(CommonUtils.randomString())
+      .user(CommonUtils.randomString(10))
       .update()
 
   @Test
@@ -88,12 +88,12 @@ class TestNodeApi extends OharaTest {
   @Test
   def ignorePasswordOnCreation(): Unit =
     NodeApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
-      .user(CommonUtils.randomString())
+      .user(CommonUtils.randomString(10))
       .create()
 
   @Test
@@ -104,9 +104,9 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testCreation(): Unit = {
-    val hostname = CommonUtils.randomString()
-    val user     = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val hostname = CommonUtils.randomString(10)
+    val user     = CommonUtils.randomString(10)
+    val password = CommonUtils.randomString(10)
     val port     = CommonUtils.availablePort()
     val creation =
       NodeApi.access.request.hostname(hostname).user(user).password(password).port(port).creation
@@ -119,8 +119,8 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testUpdate(): Unit = {
-    val user     = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val user     = CommonUtils.randomString(10)
+    val password = CommonUtils.randomString(10)
     val port     = CommonUtils.availablePort()
     val update   = NodeApi.access.request.user(user).password(password).port(port).updating
     update.user.get shouldBe user
@@ -167,8 +167,8 @@ class TestNodeApi extends OharaTest {
   @Test
   def testParseUpdate(): Unit = {
     val port     = CommonUtils.availablePort()
-    val user     = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val user     = CommonUtils.randomString(10)
+    val password = CommonUtils.randomString(10)
     val update   = NodeApi.NODE_UPDATING_JSON_FORMAT.read(s"""
                                                        |{
                                                        | "port": $port,
@@ -183,7 +183,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testParseDefaultPortInCreation(): Unit = {
-    val hostname = CommonUtils.randomString()
+    val hostname = CommonUtils.randomString(10)
     val creation = NodeApi.NODE_CREATION_JSON_FORMAT.read(s"""
                                                             |{
                                                             | "hostname": "$hostname",
@@ -256,10 +256,10 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testParseCreation(): Unit = {
-    val name     = CommonUtils.randomString()
+    val name     = CommonUtils.randomString(10)
     val port     = CommonUtils.availablePort()
-    val user     = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+    val user     = CommonUtils.randomString(10)
+    val password = CommonUtils.randomString(10)
     val creation = NodeApi.NODE_CREATION_JSON_FORMAT.read(s"""
                                                          |{
                                                          | "hostname": "$name",
@@ -275,10 +275,10 @@ class TestNodeApi extends OharaTest {
     creation.user.get shouldBe user
     creation.password.get shouldBe password
 
-    val hostname  = CommonUtils.randomString()
+    val hostname  = CommonUtils.randomString(10)
     val creation2 = NodeApi.NODE_CREATION_JSON_FORMAT.read(s"""
                                                              |{
-                                                             | "group": "${CommonUtils.randomString()}",
+                                                             | "group": "${CommonUtils.randomString(10)}",
                                                              | "hostname": "$name",
                                                              | "hostname": "$hostname",
                                                              | "port": $port,
@@ -306,7 +306,7 @@ class TestNodeApi extends OharaTest {
   def testHostnameLimit(): Unit =
     an[DeserializationException] should be thrownBy
       NodeApi.access
-        .hostname(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .request
         .hostname(CommonUtils.randomString(LIMIT_OF_HOSTNAME_LENGTH + 1))
@@ -325,5 +325,5 @@ class TestNodeApi extends OharaTest {
   def testLargeMemoryResource(): Unit = Resource.memory(Long.MaxValue, None).unit shouldBe "MB"
 
   @Test
-  def testNodeSetter(): Unit = NodeApi.access.request.node(Node(CommonUtils.randomString()))
+  def testNodeSetter(): Unit = NodeApi.access.request.node(Node(CommonUtils.randomString(10)))
 }

@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef.Permission
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.Test
@@ -124,7 +124,7 @@ class TestStreamApi extends OharaTest {
       .fromTopicKey(topicKey(CommonUtils.randomString()))
       .toTopicKey(topicKey(CommonUtils.randomString()))
       .jarKey(fakeJar)
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .brokerClusterKey(ObjectKey.of("group", "n"))
       .creation
       .imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
@@ -172,7 +172,7 @@ class TestStreamApi extends OharaTest {
       accessRequest
         .jarKey(fakeJar)
         .name(CommonUtils.randomString(5))
-        .nodeName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
         .fromTopicKey(topicKey(CommonUtils.randomString()))
         .toTopicKey(topicKey(CommonUtils.randomString()))
         .brokerClusterKey(ObjectKey.of("group", "n"))
@@ -191,7 +191,7 @@ class TestStreamApi extends OharaTest {
     accessRequest
       .name(CommonUtils.randomString(5))
       .jarKey(fakeJar)
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .fromTopicKey(topicKey(CommonUtils.randomString()))
       .toTopicKey(topicKey(CommonUtils.randomString()))
       .brokerClusterKey(ObjectKey.of("group", "n"))
@@ -209,7 +209,7 @@ class TestStreamApi extends OharaTest {
     // jarKey is required
     an[DeserializationException] should be thrownBy accessRequest
       .name(CommonUtils.randomString(5))
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .creation
   }
 
@@ -220,7 +220,7 @@ class TestStreamApi extends OharaTest {
       .fromTopicKey(topicKey(CommonUtils.randomString()))
       .toTopicKey(topicKey(CommonUtils.randomString()))
       .brokerClusterKey(ObjectKey.of("group", "n"))
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .creation
 
     creationApi.name.nonEmpty shouldBe true
@@ -336,7 +336,7 @@ class TestStreamApi extends OharaTest {
       |    }
       |  }
       |  """.stripMargin.parseJson)
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
+    creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
     creation.group shouldBe GROUP_DEFAULT
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jarKey shouldBe fakeJar
@@ -828,7 +828,7 @@ class TestStreamApi extends OharaTest {
       .fromTopicKey(topicKey(CommonUtils.randomString()))
       .toTopicKey(topicKey(CommonUtils.randomString()))
       .jarKey(fakeJar)
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .brokerClusterKey(ObjectKey.of("group", "n"))
       .creation
       .name
@@ -845,7 +845,7 @@ class TestStreamApi extends OharaTest {
           .brokerClusterKey(ObjectKey.of("group", "n"))
           .jarKey(fakeJar)
           .name(name)
-          .nodeName(CommonUtils.randomString())
+          .nodeName(CommonUtils.randomString(10))
           .creation
           .settings,
         aliveNodes = Set.empty,
@@ -878,7 +878,7 @@ class TestStreamApi extends OharaTest {
         .toTopicKey(toTopicKey)
         .jarKey(fakeJar)
         .brokerClusterKey(ObjectKey.of("group", "n"))
-        .nodeName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
         .creation
 
     val r2 = accessRequest
@@ -903,7 +903,7 @@ class TestStreamApi extends OharaTest {
       .jarKey(fakeJar)
       .fromTopicKey(topicKey(CommonUtils.randomString()))
       .toTopicKey(topicKey(CommonUtils.randomString()))
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .creation
     r1.brokerClusterKey.name() shouldBe bkName
   }

@@ -665,4 +665,26 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(def.valueType(), SettingDef.Type.BINDING_PORT);
     Assert.assertEquals(def.defaultPort(), 12345);
   }
+
+  @Test
+  public void testCommonStringRegex() {
+    Assert.assertTrue("ab-_".matches(SettingDef.COMMON_STRING_REGEX));
+    // upper case is illegal
+    Assert.assertFalse("A".matches(SettingDef.COMMON_STRING_REGEX));
+    // dot is illegal
+    Assert.assertFalse("a.".matches(SettingDef.COMMON_STRING_REGEX));
+    // the length limit is 25
+    Assert.assertFalse(CommonUtils.randomString(100).matches(SettingDef.COMMON_STRING_REGEX));
+  }
+
+  @Test
+  public void testHostnameRegex() {
+    Assert.assertTrue("aAbB-".matches(SettingDef.HOSTNAME_REGEX));
+    // dash is illegal
+    Assert.assertFalse("a_".matches(SettingDef.HOSTNAME_REGEX));
+    // dot is legal
+    Assert.assertTrue("a.".matches(SettingDef.HOSTNAME_REGEX));
+    // the length limit is 25
+    Assert.assertFalse(CommonUtils.randomString(100).matches(SettingDef.HOSTNAME_REGEX));
+  }
 }

@@ -19,6 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -94,23 +95,23 @@ class TestZookeeperCreator extends OharaTest {
       .peerPort(CommonUtils.availablePort())
       .clientPort(CommonUtils.availablePort())
       .electionPort(CommonUtils.availablePort())
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .create()
 
   @Test
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy zkCreator()
-      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT + 1))
       .group(CommonUtils.randomString(10))
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .create()
 
   @Test
   def testInvalidGroup(): Unit =
     an[DeserializationException] should be thrownBy zkCreator()
       .name(CommonUtils.randomString(10))
-      .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
-      .nodeName(CommonUtils.randomString())
+      .group(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT + 1))
+      .nodeName(CommonUtils.randomString(10))
       .create()
 
   @Test

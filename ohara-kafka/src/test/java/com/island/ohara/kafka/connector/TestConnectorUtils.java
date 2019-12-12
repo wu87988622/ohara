@@ -87,8 +87,8 @@ public class TestConnectorUtils extends OharaTest {
   public void testMatch() {
     Column column =
         Column.builder()
-            .name(CommonUtils.randomString())
-            .newName(CommonUtils.randomString())
+            .name(CommonUtils.randomString(10))
+            .newName(CommonUtils.randomString(10))
             .dataType(DataType.STRING)
             .build();
 

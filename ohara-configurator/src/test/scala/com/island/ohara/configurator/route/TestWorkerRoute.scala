@@ -138,7 +138,7 @@ class TestWorkerRoute extends OharaTest {
     an[IllegalArgumentException] should be thrownBy result(
       workerApi.request
         .name(CommonUtils.randomString(10))
-        .nodeName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
         .brokerClusterKey(brokerClusterKey)
         .create()
         .flatMap(wk => workerApi.start(wk.key))

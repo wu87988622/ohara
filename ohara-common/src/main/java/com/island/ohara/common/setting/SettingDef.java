@@ -45,9 +45,13 @@ import java.util.stream.Collectors;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SettingDef implements JsonObject, Serializable {
+  public static final int STRING_LENGTH_LIMIT = 25;
+  public static final String COMMON_STRING_REGEX = "[a-z0-9_\\-]{1," + STRING_LENGTH_LIMIT + "}$";
+  public static final String HOSTNAME_REGEX = "[a-zA-Z0-9.\\-]{1," + STRING_LENGTH_LIMIT + "}$";
+
   private static final long serialVersionUID = 1L;
   // -------------------------------[groups]-------------------------------//
-  public static final String COMMON_GROUP = "common";
+  private static final String COMMON_GROUP = "common";
   public static final String ORDER_KEY = "order";
   public static final String COLUMN_NAME_KEY = "name";
   public static final String COLUMN_NEW_NAME_KEY = "newName";
@@ -140,6 +144,7 @@ public class SettingDef implements JsonObject, Serializable {
 
   // -------------------------------[key]-------------------------------//
   private static final String REFERENCE_KEY = "reference";
+  private static final String REGEX_KEY = "regex";
   private static final String GROUP_KEY = "group";
   private static final String ORDER_IN_GROUP_KEY = "orderInGroup";
   private static final String DISPLAY_NAME_KEY = "displayName";
@@ -167,6 +172,7 @@ public class SettingDef implements JsonObject, Serializable {
   private final String key;
   private final Type valueType;
   @Nullable private final Object defaultValue;
+  @Nullable private final String regex;
   private final Necessary necessary;
   private final String documentation;
   private final Reference reference;
@@ -187,6 +193,7 @@ public class SettingDef implements JsonObject, Serializable {
       @Nullable @JsonProperty(DEFAULT_VALUE_KEY) Object defaultValue,
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) Reference reference,
+      @Nullable @JsonProperty(REGEX_KEY) String regex,
       @JsonProperty(INTERNAL_KEY) boolean internal,
       @JsonProperty(PERMISSION_KEY) Permission permission,
       @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
@@ -215,6 +222,7 @@ public class SettingDef implements JsonObject, Serializable {
     this.displayName = CommonUtils.isEmpty(displayName) ? this.key : displayName;
     this.recommendedValues = Objects.requireNonNull(recommendedValues);
     this.blacklist = Objects.requireNonNull(blacklist);
+    this.regex = regex;
   }
 
   /**
@@ -572,6 +580,12 @@ public class SettingDef implements JsonObject, Serializable {
     return defaultValue;
   }
 
+  @Nullable
+  @JsonProperty(REGEX_KEY)
+  public String regex() {
+    return regex;
+  }
+
   @JsonProperty(DOCUMENTATION_KEY)
   public String documentation() {
     return documentation;
@@ -648,6 +662,7 @@ public class SettingDef implements JsonObject, Serializable {
     private List<TableColumn> tableKeys = Collections.emptyList();
     private Set<String> recommendedValues = Collections.emptySet();
     private Set<String> blacklist = Collections.emptySet();
+    @Nullable private String regex = null;
 
     private Builder() {}
 
@@ -967,6 +982,19 @@ public class SettingDef implements JsonObject, Serializable {
       return this;
     }
 
+    /**
+     * set the regex to limit the value. Noted, it call toString from input value and apply this
+     * regex.
+     *
+     * @param regex regex
+     * @return this builder
+     */
+    @Optional("default value is null")
+    public Builder regex(String regex) {
+      this.regex = CommonUtils.requireNonEmpty(regex);
+      return this;
+    }
+
     @Override
     public SettingDef build() {
       return new SettingDef(
@@ -979,6 +1007,7 @@ public class SettingDef implements JsonObject, Serializable {
           defaultValue,
           documentation,
           reference,
+          regex,
           internal,
           permission,
           tableKeys,

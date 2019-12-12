@@ -19,7 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
@@ -72,13 +72,7 @@ object NodeApi {
       .nullToInt("port", 22)
       .requireConnectionPort("port")
       .rejectEmptyString()
-      .stringRestriction("hostname")
-      .withNumber()
-      .withCharset()
-      .withDot()
-      .withDash()
-      .withLengthLimit(LIMIT_OF_HOSTNAME_LENGTH)
-      .toRefiner
+      .stringRestriction("hostname", SettingDef.HOSTNAME_REGEX)
       .nullToEmptyObject(TAGS_KEY)
       .refine
 

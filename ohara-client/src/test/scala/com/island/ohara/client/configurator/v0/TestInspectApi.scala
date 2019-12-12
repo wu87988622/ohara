@@ -42,7 +42,7 @@ class TestInspectApi extends OharaTest {
     val password         = CommonUtils.randomString(10)
     val workerClusterKey = ObjectKey.of("default", "wk")
     val query = InspectApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .rdbRequest
       .jdbcUrl(url)
@@ -70,7 +70,7 @@ class TestInspectApi extends OharaTest {
     val schemaPattern    = CommonUtils.randomString(10)
     val tableName        = CommonUtils.randomString(10)
     val query = InspectApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .rdbRequest
       .jdbcUrl(url)
@@ -94,7 +94,7 @@ class TestInspectApi extends OharaTest {
   @Test
   def ignoreUrlOnCreation(): Unit =
     an[NullPointerException] should be thrownBy InspectApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .rdbRequest
       .user(CommonUtils.randomString())
@@ -104,7 +104,7 @@ class TestInspectApi extends OharaTest {
   @Test
   def ignoreUserOnCreation(): Unit =
     an[NullPointerException] should be thrownBy InspectApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .rdbRequest
       .jdbcUrl(CommonUtils.randomString())
@@ -114,7 +114,7 @@ class TestInspectApi extends OharaTest {
   @Test
   def ignorePasswordOnCreation(): Unit =
     an[NullPointerException] should be thrownBy InspectApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .rdbRequest
       .jdbcUrl(CommonUtils.randomString())

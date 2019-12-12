@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -115,7 +115,7 @@ class TestStreamCreator extends OharaTest {
 
     // name + group length > 100
     an[DeserializationException] should be thrownBy streamCreator()
-      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT + 1))
       .group(CommonUtils.randomString(10))
       .brokerClusterKey(brokerKey())
       .jarKey(fileInfo.key)
@@ -130,8 +130,8 @@ class TestStreamCreator extends OharaTest {
   def testInvalidGroup(): Unit =
     an[DeserializationException] should be thrownBy streamCreator()
       .name(CommonUtils.randomString(10))
-      .group(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
-      .nodeName(CommonUtils.randomString())
+      .group(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT + 1))
+      .nodeName(CommonUtils.randomString(10))
       .create()
 
   @Test
@@ -168,7 +168,7 @@ class TestStreamCreator extends OharaTest {
         .fromTopicKey(topicKey())
         .toTopicKey(topicKey())
         .jmxPort(CommonUtils.availablePort())
-        .nodeName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
         .create()
     )
 
@@ -180,7 +180,7 @@ class TestStreamCreator extends OharaTest {
       .name(CommonUtils.randomString(10))
       .group(CommonUtils.randomString(10))
       .brokerClusterKey(brokerKey())
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .fromTopicKey(topicKey())
       .toTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
@@ -199,7 +199,7 @@ class TestStreamCreator extends OharaTest {
       .jarKey(fileInfo.key)
       .toTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .creation
       .fromTopicKeys shouldBe Set.empty
 
@@ -212,7 +212,7 @@ class TestStreamCreator extends OharaTest {
       .jarKey(fileInfo.key)
       .fromTopicKey(topicKey())
       .jmxPort(CommonUtils.availablePort())
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .creation
       .toTopicKeys shouldBe Set.empty
 
@@ -229,7 +229,7 @@ class TestStreamCreator extends OharaTest {
         .jarKey(fileInfo.key)
         .fromTopicKey(topicKey())
         .toTopicKey(topicKey())
-        .nodeName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
         .creation
         .jmxPort
     )

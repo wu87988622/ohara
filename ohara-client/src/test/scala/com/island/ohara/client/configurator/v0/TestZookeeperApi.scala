@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -134,7 +135,7 @@ class TestZookeeperApi extends OharaTest {
       """.stripMargin.parseJson)
 
     creation.group shouldBe GROUP_DEFAULT
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
+    creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
     creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT

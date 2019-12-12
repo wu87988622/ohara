@@ -183,7 +183,7 @@ public class TestPropGroup extends OharaTest {
   public void testToColumnWithLowerCase() {
     Column column =
         Column.builder()
-            .name(CommonUtils.randomString())
+            .name(CommonUtils.randomString(10))
             .dataType(DataType.BOOLEAN)
             .order(3)
             .build();

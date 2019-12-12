@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.BrokerApi._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -146,7 +146,7 @@ class TestBrokerApi extends OharaTest {
       |  }
       """.stripMargin.parseJson)
     creation.group shouldBe GROUP_DEFAULT
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
+    creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.zookeeperClusterKey should not be None
     creation.nodeNames.size shouldBe 1

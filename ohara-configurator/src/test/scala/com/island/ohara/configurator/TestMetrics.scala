@@ -68,7 +68,7 @@ class TestMetrics extends WithBrokerWorker {
   def testTopic(): Unit = {
     val topic = result(
       topicApi.request
-        .name(CommonUtils.randomString())
+        .name(CommonUtils.randomString(10))
         .brokerClusterKey(
           result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
         )
@@ -110,7 +110,7 @@ class TestMetrics extends WithBrokerWorker {
   def testConnector(): Unit = {
     val topic = result(
       topicApi.request
-        .name(CommonUtils.randomString())
+        .name(CommonUtils.randomString(10))
         .brokerClusterKey(
           result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
         )
@@ -173,7 +173,7 @@ class TestMetrics extends WithBrokerWorker {
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, sink.key).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, sink.key).create())
 
     pipeline.objects.filter(_.key == sink.key).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(sink.key))
@@ -195,7 +195,7 @@ class TestMetrics extends WithBrokerWorker {
 
   @Test
   def testTopicMeterInPerfSource(): Unit = {
-    val topicName = CommonUtils.randomString()
+    val topicName = CommonUtils.randomString(10)
     val topic = result(
       topicApi.request
         .name(topicName)
@@ -221,7 +221,7 @@ class TestMetrics extends WithBrokerWorker {
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, source.key).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, source.key).create())
 
     pipeline.objects.filter(_.key == source.key).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(source.key))
@@ -262,7 +262,7 @@ class TestMetrics extends WithBrokerWorker {
 
     val t1 = result(
       topicApi.request
-        .name(CommonUtils.randomString)
+        .name(CommonUtils.randomString(10))
         .brokerClusterKey(
           result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
         )
@@ -270,7 +270,7 @@ class TestMetrics extends WithBrokerWorker {
     )
     val t2 = result(
       topicApi.request
-        .name(CommonUtils.randomString)
+        .name(CommonUtils.randomString(10))
         .brokerClusterKey(
           result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
         )
@@ -295,7 +295,7 @@ class TestMetrics extends WithBrokerWorker {
 
     val pipeline = result(
       pipelineApi.request
-        .name(CommonUtils.randomString())
+        .name(CommonUtils.randomString(10))
         .flows(Seq(Flow(t1.key, Set(stream.key)), Flow(stream.key, Set(t2.key))))
         .create()
     )

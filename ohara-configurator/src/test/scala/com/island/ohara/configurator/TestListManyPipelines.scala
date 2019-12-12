@@ -69,7 +69,7 @@ class TestListManyPipelines extends WithBrokerWorker {
           .hostname(configurator.hostname)
           .port(configurator.port)
           .request
-          .name(CommonUtils.randomString())
+          .name(CommonUtils.randomString(10))
           .flow(connector.key, topic.key)
           .create()
       )

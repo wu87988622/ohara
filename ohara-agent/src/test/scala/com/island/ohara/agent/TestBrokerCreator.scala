@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -104,7 +104,7 @@ class TestBrokerCreator extends OharaTest {
   @Test
   def testInvalidName(): Unit =
     an[DeserializationException] should be thrownBy bkCreator()
-      .name(CommonUtils.randomString(com.island.ohara.client.configurator.v0.LIMIT_OF_KEY_LENGTH))
+      .name(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
       .group(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString)
       .create()

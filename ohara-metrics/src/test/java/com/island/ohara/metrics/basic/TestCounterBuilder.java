@@ -75,7 +75,7 @@ public class TestCounterBuilder extends OharaTest {
 
   @Test
   public void testSetOnlyName() {
-    try (Counter counter = Counter.builder().name(CommonUtils.randomString()).build()) {
+    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).build()) {
       CommonUtils.requireNonEmpty(counter.getDocument());
       CommonUtils.requireNonEmpty(counter.getUnit());
       Assert.assertEquals(counter.name(), counter.group());

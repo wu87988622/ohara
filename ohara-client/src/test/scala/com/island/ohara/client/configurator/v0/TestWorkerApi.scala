@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -169,7 +169,7 @@ class TestWorkerApi extends OharaTest {
     val statusTopicReplications: Short = 2
     val nodeName                       = CommonUtils.randomString()
     val creation = WorkerApi.access
-      .hostname(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
       .name(name)
@@ -215,7 +215,7 @@ class TestWorkerApi extends OharaTest {
       |    }
       |  }
       |  """.stripMargin.parseJson)
-    creation.name.length shouldBe LIMIT_OF_KEY_LENGTH / 2
+    creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
     creation.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
     creation.brokerClusterKey shouldBe ObjectKey.of("g", "n")
     creation.configTopicReplications shouldBe 1
@@ -726,14 +726,14 @@ class TestWorkerApi extends OharaTest {
   @Test
   def testFreePorts(): Unit = {
     WorkerApi.access.request
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .brokerClusterKey(ObjectKey.of("g", "n"))
       .creation
       .freePorts shouldBe Set.empty
 
     val freePorts = Set(CommonUtils.availablePort(), CommonUtils.availablePort())
     WorkerApi.access.request
-      .nodeName(CommonUtils.randomString())
+      .nodeName(CommonUtils.randomString(10))
       .freePorts(freePorts)
       .brokerClusterKey(ObjectKey.of("g", "n"))
       .creation

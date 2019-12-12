@@ -404,26 +404,6 @@ class TestJsonRefiner extends OharaTest {
           """.stripMargin.parseJson)
 
   @Test
-  def testRejectKeyRuledByStringRestriction(): Unit =
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      // bindPort is not mapped to string type so it is rejected
-      .stringRestriction("bindPort")
-      .withNumber()
-      .withCharset()
-      .toRefiner
-      .refine
-      .read("""
-              |{
-              | "stringValue": "abc",
-              | "bindPort": 9999,
-              | "connectionPort": 123,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-  @Test
   def testRejectEmptyArrayForSpecificKey(): Unit = {
     an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)
@@ -545,308 +525,6 @@ class TestJsonRefiner extends OharaTest {
               |}
             """.stripMargin.parseJson)
       .stringArray shouldBe Seq.empty
-
-  @Test
-  def testWithNumberOfStringRestriction(): Unit = {
-    val refinedFormat =
-      JsonRefiner[SimpleData].format(format).stringRestriction("stringValue").withNumber().toRefiner.refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "abc",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-              |{
-              | "stringValue": "123",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testWithCharsetOfStringRestriction(): Unit = {
-    val refinedFormat =
-      JsonRefiner[SimpleData].format(format).stringRestriction("stringValue").withCharset().toRefiner.refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "abc1",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-              |{
-              | "stringValue": "aaa",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testWithLowerCaseOfStringRestriction(): Unit = {
-    val refinedFormat =
-      JsonRefiner[SimpleData].format(format).stringRestriction("stringValue").withLowerCase().toRefiner.refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "Abc",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "abc2",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-              |{
-              | "stringValue": "aaa",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testWithDashOfStringRestriction(): Unit = {
-    val refinedFormat =
-      JsonRefiner[SimpleData].format(format).stringRestriction("stringValue").withDash().toRefiner.refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "Abc",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-              |{
-              | "stringValue": "-",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testWithDotOfStringRestriction(): Unit = {
-    val refinedFormat =
-      JsonRefiner[SimpleData].format(format).stringRestriction("stringValue").withDot().toRefiner.refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "Abc",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-              |{
-              | "stringValue": ".",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testWithUnderLineOfStringRestriction(): Unit = {
-    val refinedFormat =
-      JsonRefiner[SimpleData].format(format).stringRestriction("stringValue").withUnderLine().toRefiner.refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "aaa",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-              |{
-              | "stringValue": "_",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testComposeMultiplesRulesInStringRestriction(): Unit = {
-    val refinedFormat = JsonRefiner[SimpleData]
-      .format(format)
-      .stringRestriction("stringValue")
-      .withLowerCase()
-      .withNumber()
-      .toRefiner
-      .refine
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-              |{
-              | "stringValue": "ABC11",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    an[DeserializationException] should be thrownBy refinedFormat.read("""
-                                                                  |{
-                                                                  | "stringValue": "abc111-",
-                                                                  | "group": "default",
-                                                                  | "bindPort": 123,
-                                                                  | "connectionPort": 111,
-                                                                  | "stringArray": [],
-                                                                  | "objects":{}
-                                                                  |}
-                                                                """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-                  |{
-                  | "stringValue": "abc111",
-                  | "group": "default",
-                  | "bindPort": 123,
-                  | "connectionPort": 111,
-                  | "stringArray": [],
-                  | "objects":{}
-                  |}
-                """.stripMargin.parseJson)
-
-    refinedFormat.read("""
-                  |{
-                  | "stringValue": "777abc111",
-                  | "group": "default",
-                  | "bindPort": 123,
-                  | "connectionPort": 111,
-                  | "stringArray": [],
-                  | "objects":{}
-                  |}
-                """.stripMargin.parseJson)
-  }
-
-  @Test
-  def testStringLength(): Unit = {
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .stringRestriction("stringValue")
-      .withLengthLimit(3)
-      .toRefiner
-      .refine
-      .read("""
-              |{
-              | "stringValue": "777abc111",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-
-    // pass
-    JsonRefiner[SimpleData]
-      .format(format)
-      .stringRestriction("stringValue")
-      .withLengthLimit(100)
-      .toRefiner
-      .refine
-      .read("""
-              |{
-              | "stringValue": "777abc111",
-              | "group": "default",
-              | "bindPort": 123,
-              | "connectionPort": 111,
-              | "stringArray": [],
-              | "objects":{}
-              |}
-            """.stripMargin.parseJson)
-  }
-
-  @Test
-  def emptyStringRestriction(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].stringRestriction("stringValue").toRefiner
-
-  @Test
-  def testInvalidString(): Unit = {
-    val invalidStrings = Seq("a@", "a=", "a~", "a//")
-    val refinedFormat = JsonRefiner[SimpleData]
-      .format(format)
-      .stringRestriction("stringValue")
-      .withCharset()
-      .withNumber()
-      .withUnderLine()
-      .withDot()
-      .withDash()
-      .toRefiner
-      .refine
-    invalidStrings.foreach { invalidString =>
-      an[DeserializationException] should be thrownBy refinedFormat.read(s"""
-                                                                              |{
-                                                                              | "stringValue": "$invalidString",
-                                                                              | "bindPort": 123,
-                                                                              | "connectionPort": 111,
-                                                                              | "stringArray": [],
-                                                                              | "objects":{}
-                                                                              |}
-                           """.stripMargin.parseJson)
-    }
-  }
 
   @Test
   def testRejectEmptyStringForSpecificKey(): Unit = {
@@ -985,86 +663,6 @@ class TestJsonRefiner extends OharaTest {
       JsObject(
         format.write(data).asJsObject.fields + ("a" -> JsString("bb")) + ("b" -> JsString("bb"))
       )
-    )
-  }
-
-  @Test
-  def testAllValuesCheck(): Unit = {
-    val data = SimpleData(
-      stringValue = CommonUtils.randomString(5),
-      group = CommonUtils.randomString(10),
-      bindPort = CommonUtils.availablePort(),
-      connectionPort = CommonUtils.availablePort(),
-      stringArray = Seq.empty,
-      objects = Map.empty
-    )
-
-    val f = JsonRefiner[SimpleData].format(format).stringSumLengthLimit(Set("stringValue", "group"), 100).refine
-
-    // pass
-    f.read(format.write(data))
-    // pass (only check the sum length of stringValue)
-    JsonRefiner[SimpleData].format(format).stringSumLengthLimit(Set("stringValue"), 5).refine.read(format.write(data))
-    // we don't support other types length checking
-    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .stringSumLengthLimit(Set("group", "bindPort"), 5)
-      .refine
-      .read(format.write(data))
-
-    // the sum length (stringValue, group) is bigger than 100
-    an[DeserializationException] should be thrownBy f.read(
-      format.write(data.copy(stringValue = CommonUtils.randomString(100)))
-    )
-
-    // duplicate values should not be distinct
-    val str = CommonUtils.randomString(100)
-    an[DeserializationException] should be thrownBy f.read(format.write(data.copy(stringValue = str, group = str)))
-  }
-
-  @Test
-  def testAllValuesCheckWithoutRequiredKeys(): Unit = {
-    val data = SimpleData(
-      stringValue = CommonUtils.randomString(5),
-      group = CommonUtils.randomString(10),
-      bindPort = CommonUtils.availablePort(),
-      connectionPort = CommonUtils.availablePort(),
-      stringArray = Seq.empty,
-      objects = Map.empty
-    )
-
-    val f = JsonRefiner[SimpleData].format(format).stringSumLengthLimit(Set("abc"), 100).refine
-
-    // the required keys should exist in data
-    an[DeserializationException] should be thrownBy f.read(format.write(data))
-  }
-
-  @Test
-  def testAllValuesCheckWithOtherCheckers(): Unit = {
-    val data = SimpleData(
-      stringValue = CommonUtils.randomString(5),
-      group = CommonUtils.randomString(10),
-      bindPort = CommonUtils.availablePort(),
-      connectionPort = CommonUtils.availablePort(),
-      stringArray = Seq.empty,
-      objects = Map.empty
-    )
-
-    val f = JsonRefiner[SimpleData]
-      .format(format)
-      .rejectEmptyString("stringValue")
-      .stringSumLengthLimit(Set("stringValue", "group"), 100)
-      .refine
-
-    // pass
-    f.read(format.write(data))
-    // stringValue could not be empty
-    an[DeserializationException] should be thrownBy f.read(format.write(data.copy(stringValue = "")))
-    // pass
-    f.read(format.write(data.copy(group = "", stringValue = CommonUtils.randomString(100))))
-    // the length of stringValue + group is bigger than 100
-    an[DeserializationException] should be thrownBy f.read(
-      format.write(data.copy(group = "aa", stringValue = CommonUtils.randomString(100)))
     )
   }
 
@@ -1776,5 +1374,36 @@ class TestJsonRefiner extends OharaTest {
                    |    "$key": "a"
                    |  }
                    |  """.stripMargin.parseJson).fields(key) shouldBe JsString("a")
+  }
+
+  @Test
+  def testStringRestriction(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).regex(SettingDef.COMMON_STRING_REGEX).build())
+      .refine
+
+    // good case
+    Set("ab", "a-", "a_", "aaaaa-_").foreach(s => format.read(s"""
+                                              |  {
+                                              |    "$key": "$s"
+                                              |  }
+                                              |  """.stripMargin.parseJson))
+
+    Set("B", ".", "=", "~", CommonUtils.randomString(100))
+      .foreach { s =>
+        withClue(s"input:$s") {
+          an[DeserializationException] should be thrownBy format.read(s"""
+                                                                         |  {
+                                                                         |    "$key": "$s"
+                                                                         |  }
+                                                                         |  """.stripMargin.parseJson)
+        }
+      }
   }
 }
