@@ -27,7 +27,7 @@ import scala.collection.JavaConverters._
 /**
   * our QA, by default, have specific plan for all IT so this test case is moved to ohara-assembly.
   */
-class TestSettingDefInDumbConnector extends OharaTest {
+class TestSettingDefinitionsOfDumbConnector extends OharaTest {
   @Test
   def allTypesShouldBeIncludedByDumbSource(): Unit =
     verify((new DumbSourceConnector).settingDefinitions().asScala)
