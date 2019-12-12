@@ -33,6 +33,7 @@ import spray.json.{JsObject, JsString, JsValue, RootJsonFormat, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 object FileInfoApi {
+  val KIND: String             = "file"
   val FILE_PREFIX_PATH: String = "files"
 
   /**
@@ -115,7 +116,7 @@ object FileInfoApi {
     def sinkClassInfos: Seq[ClassInfo]   = classInfos.sinkClassInfos
     def streamClassInfos: Seq[ClassInfo] = classInfos.streamClassInfos
 
-    override def kind: String = "file"
+    override def kind: String = KIND
   }
 
   private[this] val URL_KEY         = "url"

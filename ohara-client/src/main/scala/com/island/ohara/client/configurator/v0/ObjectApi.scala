@@ -25,6 +25,7 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
+  val KIND: String                = "object"
   val OBJECTS_PREFIX_PATH: String = "objects"
 
   final class Creation(val settings: Map[String, JsValue]) extends BasicCreation {
@@ -74,7 +75,7 @@ object ObjectApi {
 
     override def lastModified: Long = settings(LAST_MODIFIED_KEY).convertTo[Long]
 
-    override def kind: String = "object"
+    override def kind: String = KIND
 
     override def tags: Map[String, JsValue] = settings.tags
 

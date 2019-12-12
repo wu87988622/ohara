@@ -25,6 +25,8 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 final object ShabondiApi {
+  val KIND: String = "shabondi"
+
   /**
     * shabondi does not support group. However, we are in group world and there are many cases of inputting key (group, name)
     * to access resource. This method used to generate key for hostname of node.
@@ -46,7 +48,7 @@ final object ShabondiApi {
   ) extends Data {
     // Shabondi does not support to define group
     override def group: String = GROUP_DEFAULT
-    override def kind: String  = "shabondi"
+    override def kind: String  = KIND
 
     // TODO: Does shabondi need the tags? by chia
     override def tags: Map[String, JsValue] = Map.empty

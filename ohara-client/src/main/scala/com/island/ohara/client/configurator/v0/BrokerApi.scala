@@ -30,6 +30,7 @@ import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerApi {
+  val KIND: String               = "broker"
   val BROKER_PREFIX_PATH: String = "brokers"
 
   val BROKER_SERVICE_NAME: String = "bk"
@@ -186,7 +187,7 @@ object BrokerApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def kind: String                                                     = BROKER_SERVICE_NAME
+    override def kind: String                                                     = KIND
     override def ports: Set[Int]                                                  = Set(clientPort, jmxPort)
 
     /**

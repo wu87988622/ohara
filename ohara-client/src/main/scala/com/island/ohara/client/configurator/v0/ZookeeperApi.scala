@@ -27,6 +27,7 @@ import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperApi {
+  val KIND: String                  = "zookeeper"
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
   val ZOOKEEPER_SERVICE_NAME: String = "zk"
@@ -166,7 +167,7 @@ object ZookeeperApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def kind: String                                                     = ZOOKEEPER_SERVICE_NAME
+    override def kind: String                                                     = KIND
     override def ports: Set[Int]                                                  = Set(clientPort, peerPort, electionPort, jmxPort)
     def clientPort: Int                                                           = settings.clientPort
     def peerPort: Int                                                             = settings.peerPort

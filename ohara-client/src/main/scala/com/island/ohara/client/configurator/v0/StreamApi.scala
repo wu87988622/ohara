@@ -30,6 +30,7 @@ import spray.json._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 object StreamApi {
+  val KIND: String               = "stream"
   val STREAM_PREFIX_PATH: String = "streams"
 
   /**
@@ -131,7 +132,7 @@ object StreamApi {
       * @return creation
       */
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def kind: String                                                     = STREAM_SERVICE_NAME
+    override def kind: String                                                     = KIND
     override def ports: Set[Int]                                                  = settings.ports
     def className: String                                                         = settings.className.get
 

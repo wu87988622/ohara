@@ -30,6 +30,7 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
+  val KIND: String                = "worker"
   val WORKER_SERVICE_NAME: String = "wk"
 
   val WORKER_PREFIX_PATH: String = "workers"
@@ -278,7 +279,7 @@ object WorkerApi {
 
     override def ports: Set[Int] = settings.ports
 
-    override def kind: String = WORKER_SERVICE_NAME
+    override def kind: String = KIND
   }
 
   /**

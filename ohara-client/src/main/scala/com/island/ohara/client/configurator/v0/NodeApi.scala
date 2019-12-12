@@ -26,6 +26,7 @@ import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
+  val KIND: String = "node"
   // We use the hostname field as "spec.hostname" label in k8s, which has a limit length <= 63
   // also see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
   val LIMIT_OF_HOSTNAME_LENGTH: Int = 63
@@ -151,7 +152,7 @@ object NodeApi {
     def _user: String                          = user.getOrElse(throw new NoSuchElementException(msg("user")))
     def _password: String                      = password.getOrElse(throw new NoSuchElementException(msg("password")))
     override def name: String                  = hostname
-    override def kind: String                  = "node"
+    override def kind: String                  = KIND
   }
 
   object Node {

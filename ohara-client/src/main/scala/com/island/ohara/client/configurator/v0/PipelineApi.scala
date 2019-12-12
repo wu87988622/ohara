@@ -27,6 +27,7 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object PipelineApi {
+  val KIND: String                  = "pipeline"
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   /**
@@ -83,7 +84,7 @@ object PipelineApi {
     lastModified: Long,
     tags: Map[String, JsValue]
   ) extends Data {
-    override def kind: String = "pipeline"
+    override def kind: String = KIND
   }
 
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)

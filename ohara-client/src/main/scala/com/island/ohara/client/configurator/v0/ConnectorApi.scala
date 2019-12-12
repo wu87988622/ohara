@@ -32,6 +32,7 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ConnectorApi {
+  val KIND: String                               = "connector"
   val CONNECTORS_PREFIX_PATH: String             = "connectors"
   private[v0] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
   private[this] val NUMBER_OF_TASKS_KEY: String  = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
@@ -201,7 +202,7 @@ object ConnectorApi {
     def plain: Map[String, String] = settings.plain
 
     override def name: String = settings.name
-    override def kind: String = "connector"
+    override def kind: String = KIND
     def className: String     = settings.className
 
     def columns: Seq[Column]                = settings.columns

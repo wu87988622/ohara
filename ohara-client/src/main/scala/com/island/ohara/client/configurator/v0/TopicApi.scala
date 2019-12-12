@@ -31,6 +31,8 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object TopicApi {
+  val KIND: String = "topic"
+
   @VisibleForTesting
   private[ohara] val TOPICS_PREFIX_PATH: String = "topics"
 
@@ -205,7 +207,7 @@ object TopicApi {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: TopicKey = TopicKey.of(group, name)
-    override def kind: String  = "topic"
+    override def kind: String  = KIND
 
     /**
       * kafka topic does not support to group topic so we salt the group with name.
