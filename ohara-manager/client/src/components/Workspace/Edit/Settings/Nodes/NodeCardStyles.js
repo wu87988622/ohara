@@ -18,19 +18,36 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
-    .actions {
-      margin-bottom: ${theme.spacing(3)}px;
+    .services {
+      .MuiButton-root {
+        min-width: 0;
+      }
+      .MuiIconButton-root {
+        padding: 0;
+      }
+      .MuiButton-root {
+        text-transform: none;
+      }
 
-      .button {
-        margin-left: ${theme.spacing(1)}px;
+      .expand {
+        transform: rotate(0deg);
+        margin-left: auto;
+        transition: ${theme.transitions.create('transform', {
+          duration: theme.transitions.duration.shortest,
+        })};
+      }
+      .expand-open {
+        transform: rotate(180deg);
       }
     }
-    .tab-panel {
-      margin-top: ${theme.spacing(3)}px;
-    }
-
-    .MuiTab-root .MuiBadge-badge {
-      right: -${theme.spacing(2)}px;
+    .services-detail {
+      .MuiChip-root {
+        height: 20px;
+        border-radius: 4px;
+      }
+      .service-name:hover {
+        background-color: rgba(0, 0, 0, 0.08);
+      }
     }
   `,
 );

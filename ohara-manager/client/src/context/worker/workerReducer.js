@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy, isEqualWith } from 'lodash';
+import { map, reject, sortBy } from 'lodash';
 
 import {
   fetchWorkersRoutine,
   addWorkerRoutine,
   updateWorkerRoutine,
   deleteWorkerRoutine,
+  updateStagingSettingsRoutine,
 } from './workerRoutines';
 
 const initialState = {
@@ -28,12 +29,10 @@ const initialState = {
   isFetching: false,
   lastUpdated: null,
   error: null,
+  stagingSettings: [],
 };
 
 const sort = workers => sortBy(workers, 'settings.name');
-
-const isEqual = (object, other) =>
-  isEqualWith(object, other, ['settings.name', 'settings.group']);
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -41,6 +40,7 @@ const reducer = (state, action) => {
     case addWorkerRoutine.REQUEST:
     case updateWorkerRoutine.REQUEST:
     case deleteWorkerRoutine.REQUEST:
+    case updateStagingSettingsRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -63,9 +63,16 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, worker =>
-          isEqual(worker, action.payload) ? action.payload : worker,
-        ),
+        data: map(state.data, worker => {
+          if (
+            worker.settings.name === action.payload.name &&
+            worker.settings.group === action.payload.group
+          ) {
+            return action.payload;
+          } else {
+            return worker;
+          }
+        }),
         lastUpdated: new Date(),
       };
     case deleteWorkerRoutine.SUCCESS:
@@ -80,10 +87,27 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
+    case updateStagingSettingsRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, worker => {
+          if (
+            worker.settings.name === action.payload.name &&
+            worker.settings.group === action.payload.group
+          ) {
+            return { ...worker, stagingSettings: action.payload };
+          } else {
+            return worker;
+          }
+        }),
+        lastUpdated: new Date(),
+      };
     case fetchWorkersRoutine.FAILURE:
     case addWorkerRoutine.FAILURE:
     case updateWorkerRoutine.FAILURE:
     case deleteWorkerRoutine.FAILURE:
+    case updateStagingSettingsRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

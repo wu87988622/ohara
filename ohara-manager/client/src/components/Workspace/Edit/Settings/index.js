@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import Nodes from './Nodes';
+import { Nodes } from './Nodes';
 import Plugins from './Plugins';
 import Settings from './Settings';
 import SettingsMenu from './SettingsMenu';

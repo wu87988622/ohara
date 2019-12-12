@@ -16,9 +16,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty, get } from 'lodash';
+import { isEmpty, get, isEqual } from 'lodash';
 
 import { useWorkerState, useBrokerState, useZookeeperState } from 'context';
+import { usePrevious } from 'utils/hooks';
 
 const WorkspaceContext = createContext();
 
@@ -31,49 +32,46 @@ const WorkspaceProvider = ({ children }) => {
   const { data: brokers } = useBrokerState();
   const { data: zookeepers } = useZookeeperState();
 
+  const prevCurrentWorker = usePrevious(currentWorker);
+  const prevCurrentBroker = usePrevious(currentBroker);
+  const prevCurrentZookeeper = usePrevious(currentZookeeper);
+
   // Set the current worker
   useEffect(() => {
     if (isEmpty(workers) || !workspaceName) return;
-    if (get(currentWorker, 'settings.name') === workspaceName) return;
     const workerFound = workers.find(
       worker => worker.settings.name === workspaceName,
     );
-    setCurrentWorker(workerFound);
-  }, [workers, currentWorker, workspaceName]);
+    if (!isEqual(workerFound, prevCurrentWorker)) {
+      setCurrentWorker(workerFound);
+    }
+  }, [workers, prevCurrentWorker, workspaceName]);
 
   // Set the current broker
   useEffect(() => {
     if (isEmpty(brokers) || isEmpty(currentWorker)) return;
-    if (
-      get(currentBroker, 'settings.name') ===
-      get(currentWorker, 'settings.brokerClusterKey.name')
-    ) {
-      return;
-    }
     const brokerFound = brokers.find(
       broker =>
         broker.settings.name ===
         get(currentWorker, 'settings.brokerClusterKey.name'),
     );
-    setCurrentBroker(brokerFound);
-  }, [brokers, currentBroker, currentWorker]);
+    if (!isEqual(brokerFound, prevCurrentBroker)) {
+      setCurrentBroker(brokerFound);
+    }
+  }, [brokers, prevCurrentBroker, currentWorker]);
 
   // Set the current zookeeper
   useEffect(() => {
     if (isEmpty(zookeepers) || isEmpty(currentBroker)) return;
-    if (
-      get(currentZookeeper, 'settings.name') ===
-      get(currentBroker, 'settings.zookeeperClusterKey.name')
-    ) {
-      return;
-    }
     const zookeeperFound = zookeepers.find(
       zookeeper =>
         zookeeper.settings.name ===
         get(currentBroker, 'settings.zookeeperClusterKey.name'),
     );
-    setCurrentZookeeper(zookeeperFound);
-  }, [zookeepers, currentZookeeper, currentBroker]);
+    if (!isEqual(zookeeperFound, prevCurrentZookeeper)) {
+      setCurrentZookeeper(zookeeperFound);
+    }
+  }, [zookeepers, currentZookeeper, currentBroker, prevCurrentZookeeper]);
 
   const findByWorkspaceName = workspaceName => {
     const workspaces = workers;

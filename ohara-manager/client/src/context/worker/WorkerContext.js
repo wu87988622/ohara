@@ -22,6 +22,7 @@ import {
   addWorkerCreator,
   updateWorkerCreator,
   deleteWorkerCreator,
+  updateStagingSettingsCreator,
 } from './workerActions';
 import { reducer, initialState } from './workerReducer';
 
@@ -78,6 +79,11 @@ const useWorkerActions = () => {
     addWorker: addWorkerCreator(state, dispatch, showMessage),
     updateWorker: updateWorkerCreator(state, dispatch, showMessage),
     deleteWorker: deleteWorkerCreator(state, dispatch, showMessage),
+    updateStagingSettings: updateStagingSettingsCreator(
+      state,
+      dispatch,
+      showMessage,
+    ),
   };
 };
 

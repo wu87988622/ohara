@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import styled, { css } from 'styled-components';
 
-const fetchBrokersRoutine = createRoutine('FETCH_BROKERS');
-const addBrokerRoutine = createRoutine('ADD_BROKER');
-const updateBrokerRoutine = createRoutine('UPDATE_BROKER');
-const deleteBrokerRoutine = createRoutine('DELETE_BROKER');
-const updateStagingSettingsRoutine = createRoutine('UPDATE_STAGING_SETTINGS');
+export const Wrapper = styled.div(
+  ({ theme }) => css`
+    margin-bottom: ${theme.spacing(2)}px;
 
-export {
-  fetchBrokersRoutine,
-  addBrokerRoutine,
-  updateBrokerRoutine,
-  deleteBrokerRoutine,
-  updateStagingSettingsRoutine,
-};
+    .MuiSnackbarContent-root {
+      background-color: ${theme.palette.warning.main};
+      .message {
+        margin-left: ${theme.spacing(1)}px;
+      }
+    }
+
+    .MuiButton-root {
+      color: ${theme.palette.common.white};
+    }
+  `,
+);

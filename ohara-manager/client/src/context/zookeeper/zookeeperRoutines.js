@@ -20,10 +20,12 @@ const fetchZookeepersRoutine = createRoutine('FETCH_ZOOKEEPERS');
 const addZookeeperRoutine = createRoutine('ADD_ZOOKEEPER');
 const updateZookeeperRoutine = createRoutine('UPDATE_ZOOKEEPER');
 const deleteZookeeperRoutine = createRoutine('DELETE_ZOOKEEPER');
+const updateStagingSettingsRoutine = createRoutine('UPDATE_STAGING_SETTINGS');
 
 export {
   fetchZookeepersRoutine,
   addZookeeperRoutine,
   updateZookeeperRoutine,
   deleteZookeeperRoutine,
+  updateStagingSettingsRoutine,
 };

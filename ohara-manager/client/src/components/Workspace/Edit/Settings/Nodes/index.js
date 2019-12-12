@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import Nodes from './Nodes';
+import NodeCard from './NodeCard';
 
-const Nodes = () => {
-  return <>Nodes</>;
-};
-
-export default Nodes;
+export { Nodes, NodeCard };

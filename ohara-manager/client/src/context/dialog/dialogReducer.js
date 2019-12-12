@@ -24,6 +24,9 @@ import {
   closeAllDialogRoutine,
 } from './dialogRoutines';
 
+import { EDIT_WORKSPACE_DIALOG } from './dialogNames';
+import { Tabs, SubTabs, Segments } from 'components/Workspace/Edit';
+
 /**
  * The element in dialogs should be like
  *
@@ -47,7 +50,16 @@ import {
  * The name property is necessary and can be a string or Symbol.
  */
 const initialState = {
-  dialogs: [],
+  dialogs: [
+    {
+      name: EDIT_WORKSPACE_DIALOG,
+      data: {
+        tab: Tabs.SETTINGS,
+        subTab: SubTabs.NODES,
+        segment: Segments.NODES,
+      },
+    },
+  ],
 };
 
 const reducer = (state, action) => {

@@ -18,7 +18,11 @@ import { pick, map } from 'lodash';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as inspectApi from 'api/inspectApi';
-import { fetchZookeepersRoutine } from './zookeeperRoutines';
+import * as objectApi from 'api/objectApi';
+import {
+  fetchZookeepersRoutine,
+  updateStagingSettingsRoutine,
+} from './zookeeperRoutines';
 
 const fetchZookeepersCreator = (
   state,
@@ -43,7 +47,16 @@ const fetchZookeepersCreator = (
       const params = pick(zookeeper.settings, ['name', 'group']);
       const result = await inspectApi.getZookeeperInfo(params);
       const zookeeperInfo = result.errors ? {} : result.data;
-      return { ...zookeeper, ...zookeeperInfo };
+
+      const result2 = await objectApi.get(params);
+      const stagingSettings = result2.errors ? {} : result2.data;
+
+      return {
+        serviceType: 'zookeeper',
+        ...zookeeper,
+        ...zookeeperInfo,
+        stagingSettings,
+      };
     }),
   );
 
@@ -60,9 +73,30 @@ const deleteZookeeperCreator = () => async () => {
   // TODO: implement the logic for delete zookeeper
 };
 
+const updateStagingSettingsCreator = (
+  state,
+  dispatch,
+  showMessage,
+  routine = updateStagingSettingsRoutine,
+) => async params => {
+  if (state.isFetching) return;
+
+  dispatch(routine.request());
+  const result = await objectApi.update(params);
+
+  if (result.errors) {
+    dispatch(routine.failure(result.title));
+    showMessage(result.title);
+    return;
+  }
+
+  dispatch(routine.success(result.data));
+};
+
 export {
   fetchZookeepersCreator,
   addZookeeperCreator,
   updateZookeeperCreator,
   deleteZookeeperCreator,
+  updateStagingSettingsCreator,
 };

@@ -17,19 +17,24 @@
 import React from 'react';
 import { get } from 'lodash';
 import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import MoreIcon from '@material-ui/icons/MoreVert';
 import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
 
 import { FullScreenDialog } from 'components/common/Dialog';
 import { AddTopicDialog } from 'components/Topic';
-import { useEditWorkspaceDialog, useAddTopicDialog } from 'context';
+import Badge from 'components/common/Badge';
+import {
+  useEditWorkspaceDialog,
+  useAddTopicDialog,
+  useEditWorkspace,
+} from 'context';
 
 import { Tabs as WorkspaceTabs } from '.';
 import { FileUpload } from './File';
+import MoreActions from './MoreActions';
+import RestartIndicator from './RestartIndicator';
 import { TabPanel, SettingsTab, FilesTab, TopicsTab } from './Tabs';
 import { Wrapper } from './EditWorkspaceStyles';
 
@@ -41,6 +46,7 @@ const EditWorkspace = () => {
     setData: setEditWorkspaceDialogData,
   } = useEditWorkspaceDialog();
   const { open: openAddTopicDialog } = useAddTopicDialog();
+  const { dirties } = useEditWorkspace();
 
   const handleChange = (event, newTab) => {
     setEditWorkspaceDialogData({ tab: newTab });
@@ -75,15 +81,9 @@ const EditWorkspace = () => {
                 UPLOAD FILE
               </Button>
             </FileUpload>
-
-            <IconButton
-              aria-label="display more actions"
-              edge="end"
-              color="inherit"
-            >
-              <MoreIcon />
-            </IconButton>
+            <MoreActions />
           </Grid>
+          <RestartIndicator invisible={dirties.all === 0} />
           <Tabs
             value={tab}
             onChange={handleChange}
@@ -97,7 +97,15 @@ const EditWorkspace = () => {
             <Tab label={WorkspaceTabs.TOPICS} value={WorkspaceTabs.TOPICS} />
             <Tab label={WorkspaceTabs.FILES} value={WorkspaceTabs.FILES} />
             <Tab
-              label={WorkspaceTabs.SETTINGS}
+              label={
+                <Badge
+                  badgeContent={dirties.all}
+                  invisible={dirties.all === 0}
+                  color="warning"
+                >
+                  {WorkspaceTabs.SETTINGS}
+                </Badge>
+              }
               value={WorkspaceTabs.SETTINGS}
             />
           </Tabs>

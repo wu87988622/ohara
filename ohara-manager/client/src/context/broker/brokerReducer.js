@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy, isEqualWith } from 'lodash';
+import { map, reject, sortBy } from 'lodash';
 
 import {
   fetchBrokersRoutine,
   addBrokerRoutine,
   updateBrokerRoutine,
   deleteBrokerRoutine,
+  updateStagingSettingsRoutine,
 } from './brokerRoutines';
 
 const initialState = {
@@ -32,15 +33,13 @@ const initialState = {
 
 const sort = brokers => sortBy(brokers, 'settings.name');
 
-const isEqual = (object, other) =>
-  isEqualWith(object, other, ['settings.name', 'settings.group']);
-
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchBrokersRoutine.REQUEST:
     case addBrokerRoutine.REQUEST:
     case updateBrokerRoutine.REQUEST:
     case deleteBrokerRoutine.REQUEST:
+    case updateStagingSettingsRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -63,9 +62,16 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, broker =>
-          isEqual(broker, action.payload) ? action.payload : broker,
-        ),
+        data: map(state.data, broker => {
+          if (
+            broker.settings.name === action.payload.name &&
+            broker.settings.group === action.payload.group
+          ) {
+            return action.payload;
+          } else {
+            return broker;
+          }
+        }),
         lastUpdated: new Date(),
       };
     case deleteBrokerRoutine.SUCCESS:
@@ -80,10 +86,27 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
+    case updateStagingSettingsRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, broker => {
+          if (
+            broker.settings.name === action.payload.name &&
+            broker.settings.group === action.payload.group
+          ) {
+            return { ...broker, stagingSettings: action.payload };
+          } else {
+            return broker;
+          }
+        }),
+        lastUpdated: new Date(),
+      };
     case fetchBrokersRoutine.FAILURE:
     case addBrokerRoutine.FAILURE:
     case updateBrokerRoutine.FAILURE:
     case deleteBrokerRoutine.FAILURE:
+    case updateStagingSettingsRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

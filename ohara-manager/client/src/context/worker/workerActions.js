@@ -18,7 +18,11 @@ import { pick, map } from 'lodash';
 
 import * as workerApi from 'api/workerApi';
 import * as inspectApi from 'api/inspectApi';
-import { fetchWorkersRoutine } from './workerRoutines';
+import * as objectApi from 'api/objectApi';
+import {
+  fetchWorkersRoutine,
+  updateStagingSettingsRoutine,
+} from './workerRoutines';
 
 const fetchWorkersCreator = (
   state,
@@ -30,7 +34,6 @@ const fetchWorkersCreator = (
 
   dispatch(routine.request());
   const result = await workerApi.getAll();
-  const workers = result.data;
 
   if (result.errors) {
     dispatch(routine.failure(result.title));
@@ -38,12 +41,22 @@ const fetchWorkersCreator = (
     return;
   }
 
+  const workers = result.data;
   const workerInfos = await Promise.all(
     map(workers, async worker => {
       const params = pick(worker.settings, ['name', 'group']);
       const result = await inspectApi.getWorkerInfo(params);
       const workerInfo = result.errors ? {} : result.data;
-      return { ...worker, ...workerInfo };
+
+      const result2 = await objectApi.get(params);
+      const stagingSettings = result2.errors ? {} : result2.data;
+
+      return {
+        serviceType: 'worker',
+        ...worker,
+        ...workerInfo,
+        stagingSettings,
+      };
     }),
   );
 
@@ -60,9 +73,30 @@ const deleteWorkerCreator = () => async () => {
   // TODO: implement the logic for delete worker
 };
 
+const updateStagingSettingsCreator = (
+  state,
+  dispatch,
+  showMessage,
+  routine = updateStagingSettingsRoutine,
+) => async params => {
+  if (state.isFetching) return;
+
+  dispatch(routine.request());
+  const result = await objectApi.update(params);
+
+  if (result.errors) {
+    dispatch(routine.failure(result.title));
+    showMessage(result.title);
+    return;
+  }
+
+  dispatch(routine.success(result.data));
+};
+
 export {
   fetchWorkersCreator,
   addWorkerCreator,
   updateWorkerCreator,
   deleteWorkerCreator,
+  updateStagingSettingsCreator,
 };

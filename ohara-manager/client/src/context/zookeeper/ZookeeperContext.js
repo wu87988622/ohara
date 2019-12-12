@@ -22,6 +22,7 @@ import {
   addZookeeperCreator,
   updateZookeeperCreator,
   deleteZookeeperCreator,
+  updateStagingSettingsCreator,
 } from './zookeeperActions';
 import { reducer, initialState } from './zookeeperReducer';
 
@@ -82,6 +83,11 @@ const useZookeeperActions = () => {
     addZookeeper: addZookeeperCreator(state, dispatch, showMessage),
     updateZookeeper: updateZookeeperCreator(state, dispatch, showMessage),
     deleteZookeeper: deleteZookeeperCreator(state, dispatch, showMessage),
+    updateStagingSettings: updateStagingSettingsCreator(
+      state,
+      dispatch,
+      showMessage,
+    ),
   };
 };
 

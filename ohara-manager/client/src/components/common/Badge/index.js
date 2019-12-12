@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import Badge from './Badge';
 
-const fetchBrokersRoutine = createRoutine('FETCH_BROKERS');
-const addBrokerRoutine = createRoutine('ADD_BROKER');
-const updateBrokerRoutine = createRoutine('UPDATE_BROKER');
-const deleteBrokerRoutine = createRoutine('DELETE_BROKER');
-const updateStagingSettingsRoutine = createRoutine('UPDATE_STAGING_SETTINGS');
-
-export {
-  fetchBrokersRoutine,
-  addBrokerRoutine,
-  updateBrokerRoutine,
-  deleteBrokerRoutine,
-  updateStagingSettingsRoutine,
-};
+export default Badge;

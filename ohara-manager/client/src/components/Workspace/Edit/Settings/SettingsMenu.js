@@ -20,13 +20,15 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 
-import { useEditWorkspaceDialog } from 'context';
+import { useEditWorkspaceDialog, useEditWorkspace } from 'context';
 
 import { SubTabs, Segments } from 'components/Workspace/Edit';
+import Badge from 'components/common/Badge';
 import { Wrapper } from './SettingsMenuStyles';
 
 function SettingsMenu() {
   const { data = {}, setData } = useEditWorkspaceDialog();
+  const { dirties } = useEditWorkspace();
   const { subTab = SubTabs.SETTINGS, segment = Segments.WORKER } = data;
 
   const handleClick = (clickedTab, clickedSegment) => () => {
@@ -96,6 +98,11 @@ function SettingsMenu() {
             onClick={handleClick(SubTabs.NODES, Segments.NONE)}
           >
             <ListItemText primary="Nodes" />
+            <Badge
+              badgeContent={dirties.nodes}
+              invisible={dirties.nodes === 0}
+              color="warning"
+            />
           </ListItem>
         </List>
       </Paper>

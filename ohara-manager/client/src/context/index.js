@@ -35,6 +35,12 @@ import {
   useFileActions,
 } from 'context/file/FileContext';
 import {
+  NodeProvider,
+  useNodeState,
+  useNodeDispatch,
+  useNodeActions,
+} from 'context/node/NodeContext';
+import {
   TopicProvider,
   useTopicState,
   useTopicActions,
@@ -49,6 +55,10 @@ import {
   WorkspaceProvider,
   useWorkspace,
 } from 'context/workspace/WorkspaceContext';
+import {
+  EditWorkspaceProvider,
+  useEditWorkspace,
+} from 'context/workspace/EditWorkspaceContext';
 import {
   ZookeeperProvider,
   useZookeeperState,
@@ -80,6 +90,11 @@ export {
   FileProvider,
   useFileState,
   useFileActions,
+  // Node
+  NodeProvider,
+  useNodeState,
+  useNodeDispatch,
+  useNodeActions,
   // Topic
   TopicProvider,
   useTopicState,
@@ -92,6 +107,8 @@ export {
   // Workspace
   WorkspaceProvider,
   useWorkspace,
+  EditWorkspaceProvider,
+  useEditWorkspace,
   // Zookeeper
   ZookeeperProvider,
   useZookeeperState,

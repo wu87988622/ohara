@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy, isEqualWith } from 'lodash';
+import { map, reject, sortBy } from 'lodash';
 
 import {
   fetchZookeepersRoutine,
   addZookeeperRoutine,
   updateZookeeperRoutine,
   deleteZookeeperRoutine,
+  updateStagingSettingsRoutine,
 } from './zookeeperRoutines';
 
 const initialState = {
@@ -32,15 +33,13 @@ const initialState = {
 
 const sort = zookeepers => sortBy(zookeepers, 'settings.name');
 
-const isEqual = (object, other) =>
-  isEqualWith(object, other, ['settings.name', 'settings.group']);
-
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchZookeepersRoutine.REQUEST:
     case addZookeeperRoutine.REQUEST:
     case updateZookeeperRoutine.REQUEST:
     case deleteZookeeperRoutine.REQUEST:
+    case updateStagingSettingsRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -63,9 +62,16 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, zookeeper =>
-          isEqual(zookeeper, action.payload) ? action.payload : zookeeper,
-        ),
+        data: map(state.data, zookeeper => {
+          if (
+            zookeeper.settings.name === action.payload.name &&
+            zookeeper.settings.group === action.payload.group
+          ) {
+            return action.payload;
+          } else {
+            return zookeeper;
+          }
+        }),
         lastUpdated: new Date(),
       };
     case deleteZookeeperRoutine.SUCCESS:
@@ -80,10 +86,27 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
+    case updateStagingSettingsRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, zookeeper => {
+          if (
+            zookeeper.settings.name === action.payload.name &&
+            zookeeper.settings.group === action.payload.group
+          ) {
+            return { ...zookeeper, stagingSettings: action.payload };
+          } else {
+            return zookeeper;
+          }
+        }),
+        lastUpdated: new Date(),
+      };
     case fetchZookeepersRoutine.FAILURE:
     case addZookeeperRoutine.FAILURE:
     case updateZookeeperRoutine.FAILURE:
     case deleteZookeeperRoutine.FAILURE:
+    case updateStagingSettingsRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

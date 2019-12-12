@@ -18,7 +18,11 @@ import { pick, map } from 'lodash';
 
 import * as brokerApi from 'api/brokerApi';
 import * as inspectApi from 'api/inspectApi';
-import { fetchBrokersRoutine } from './brokerRoutines';
+import * as objectApi from 'api/objectApi';
+import {
+  fetchBrokersRoutine,
+  updateStagingSettingsRoutine,
+} from './brokerRoutines';
 
 const fetchBrokersCreator = (
   state,
@@ -43,7 +47,16 @@ const fetchBrokersCreator = (
       const params = pick(broker.settings, ['name', 'group']);
       const result = await inspectApi.getBrokerInfo(params);
       const brokerInfo = result.errors ? {} : result.data;
-      return { ...broker, ...brokerInfo };
+
+      const result2 = await objectApi.get(params);
+      const stagingSettings = result2.errors ? {} : result2.data;
+
+      return {
+        serviceType: 'broker',
+        ...broker,
+        ...brokerInfo,
+        stagingSettings,
+      };
     }),
   );
 
@@ -60,9 +73,30 @@ const deleteBrokerCreator = () => async () => {
   // TODO: implement the logic for delete broker
 };
 
+const updateStagingSettingsCreator = (
+  state,
+  dispatch,
+  showMessage,
+  routine = updateStagingSettingsRoutine,
+) => async params => {
+  if (state.isFetching) return;
+
+  dispatch(routine.request());
+  const result = await objectApi.update(params);
+
+  if (result.errors) {
+    dispatch(routine.failure(result.title));
+    showMessage(result.title);
+    return;
+  }
+
+  dispatch(routine.success(result.data));
+};
+
 export {
   fetchBrokersCreator,
   addBrokerCreator,
   updateBrokerCreator,
   deleteBrokerCreator,
+  updateStagingSettingsCreator,
 };
