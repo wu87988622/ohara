@@ -23,8 +23,8 @@ import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class TestConfigurator extends OharaTest {
@@ -46,9 +46,11 @@ class TestConfigurator extends OharaTest {
     val createNode = Await.result(nodeApi.request.hostname("node1").create(), 15 seconds)
     createNode.hostname shouldBe "node1"
 
-    val nodes = Await.result(configurator.addK8SNodes(), 15 seconds)
-    nodes.size shouldBe 2
-    nodes(0).hostname shouldBe "node2"
-    nodes(1).hostname shouldBe "node3"
+    Await.result(configurator.addK8SNodes(), 15 seconds)
+    val nodes = Await.result(nodeApi.list(), 15 seconds).map(_.hostname)
+    nodes.size shouldBe 3
+    nodes should contain("node1")
+    nodes should contain("node2")
+    nodes should contain("node3")
   }
 }
