@@ -117,10 +117,15 @@ const TopicGraph = params => {
         .find('.topicMenu')
         .attr('style', `display:${this.model.get('menuDisplay')};`);
       if (this.paper) {
-        this.paper.$document.on('mousemove', function(evt) {
+        this.paper.$document.on('mousemove', function(event) {
           if (linkLine) {
-            if (!linkLine.attributes.target.id) {
-              linkLine.target({ x: evt.pageX - 290, y: evt.pageY - 72 });
+            if (!linkLine.get('target').id) {
+              const localPoint = paper.paperToLocalPoint(paper.translate());
+
+              link.target({
+                x: (event.pageX - 290) / scale.sx + localPoint.x,
+                y: (event.pageY - 72) / scale.sy + localPoint.y,
+              });
               linkLine.attr({ line: { stroke: '#9e9e9e' } });
             }
           }

@@ -70,7 +70,10 @@ const Graph = props => {
         gridSize: 10,
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
 
+        // Default origin is in the paper center, reset this so it's
+        // Easier to reason about
         origin: { x: 0, y: 0 },
+
         defaultConnectionPoint: { name: 'bbox' },
         defaultAnchor: {
           name: 'modelCenter',
@@ -79,8 +82,26 @@ const Graph = props => {
           color: palette.common.white,
         },
 
+        // Tweak the default highlighting to match our theme
+        highlighting: {
+          default: {
+            name: 'stroke',
+            options: {
+              padding: 4,
+              rx: 4,
+              ry: 4,
+              attrs: {
+                'stroke-width': 2,
+                stroke: palette.primary.main,
+              },
+            },
+          },
+        },
+
         // Ensures the link should always link to a valid target
         linkPinning: false,
+
+        // Fix es6 module issue with JointJS
         cellViewNamespace: joint.shapes,
 
         // prevent graph from stepping outside of the paper
@@ -101,7 +122,7 @@ const Graph = props => {
         if (!cellView.$box) return;
 
         resetAll(paper.current);
-        cellView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
+        cellView.highlight();
         cellView.model.attributes.menuDisplay = 'block';
         cellView.updateBox();
         const links = graph.current.getLinks();
@@ -145,6 +166,7 @@ const Graph = props => {
                 resetLink();
               };
 
+              // Cell connection logic
               if (targetId === sourceId) {
                 // A cell cannot connect to itself, not throwing a
                 // message out here since the behavior is not obvious
@@ -234,10 +256,16 @@ const Graph = props => {
       });
 
       paper.current.on('link:pointerclick', linkView => {
+        const targetId = linkView.model.get('target').id;
+        if (!targetId) return; // Prevents users accidentally click on the link while connecting
+
         linkView.addTools(
           new joint.dia.ToolsView({
             tools: [
+              // Allow users to add vertices on link view
               new joint.linkTools.Vertices(),
+
+              // Add a custom remove tool
               new joint.linkTools.Remove({
                 distance: '50%',
                 markup: [
@@ -268,23 +296,26 @@ const Graph = props => {
         );
       });
 
-      paper.current.on('blank:pointerclick', () => {
-        resetAll(paper.current);
-        resetLink();
-        currentCell.current = null;
-        setHasSelectedCell(false);
-      });
-
-      // Cell hover effect
+      // Cell and link hover effect
       paper.current.on('cell:mouseenter', cellView => {
-        if (!cellView.$box) return;
-        cellView.$box.css('boxShadow', `0 0 0 2px ${palette.primary[500]}`);
+        if (cellView.model.isLink()) {
+          // Prevents users accidentally hover on the link while connecting
+          const linkView = cellView;
+          const targetId = linkView.model.get('target').id;
+          if (!targetId) return;
+        }
+
+        cellView.highlight();
       });
 
       paper.current.on('cell:mouseleave', cellView => {
-        if (!cellView.$box) return;
-        if (cellView.model.attributes.menuDisplay === 'none') {
-          cellView.$box.css('boxShadow', '');
+        if (cellView.model.isLink()) {
+          cellView.unhighlight();
+        } else {
+          // Keep cell menu when necessary
+          if (cellView.model.attributes.menuDisplay === 'none') {
+            cellView.unhighlight();
+          }
         }
       });
 
@@ -300,6 +331,13 @@ const Graph = props => {
         paper.current.$el.addClass('is-being-grabbed');
       });
 
+      paper.current.on('blank:pointerclick', () => {
+        resetAll();
+        resetLink();
+        currentCell.current = null;
+        setHasSelectedCell(false);
+      });
+
       paper.current.on('cell:pointerup blank:pointerup', () => {
         if (dragStartPosition.current) {
           delete dragStartPosition.current.x;
@@ -312,6 +350,32 @@ const Graph = props => {
       });
     };
 
+    const resetAll = () => {
+      paper.current.findViewsInArea(paper.current.getArea()).forEach(cell => {
+        cell.model.attributes.menuDisplay = 'none';
+        cell.unhighlight();
+      });
+
+      const views = paper.current._views;
+      Object.keys(views).forEach(key => {
+        if (!views[key].$box) return;
+        views[key].updateBox();
+      });
+    };
+
+    const resetLink = () => {
+      // Remove link tools that were added in the previous event
+      paper.current.removeTools();
+
+      const links = graph.current.getLinks();
+      if (links.length > 0) {
+        const disConnectLink = links.filter(link => !link.attributes.target.id);
+        if (disConnectLink.length > 0) {
+          disConnectLink[0].remove();
+        }
+      }
+    };
+
     renderGraph();
   }, [
     palette.common.white,
@@ -320,31 +384,6 @@ const Graph = props => {
     setIsCentered,
     showMessage,
   ]);
-
-  const resetAll = paper => {
-    const views = paper._views;
-    paper.model.getElements().forEach(element => {
-      element.attributes.menuDisplay = 'none';
-    });
-    Object.keys(paper._views).forEach(key => {
-      if (!views[key].$box) return;
-      views[key].updateBox();
-      views[key].$box.css('boxShadow', '');
-    });
-  };
-
-  const resetLink = () => {
-    // Remove link tools that were added in the previous event
-    paper.current.removeTools();
-
-    const links = graph.current.getLinks();
-    if (links.length > 0) {
-      const disConnectLink = links.filter(link => !link.attributes.target.id);
-      if (disConnectLink.length > 0) {
-        disConnectLink[0].remove();
-      }
-    }
-  };
 
   const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {

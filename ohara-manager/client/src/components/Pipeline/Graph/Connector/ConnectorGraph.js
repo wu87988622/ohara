@@ -147,8 +147,13 @@ const ConnectorGraph = params => {
       if (this.paper) {
         this.paper.$document.on('mousemove', function(event) {
           if (link) {
-            if (!link.attributes.target.id) {
-              link.target({ x: event.pageX - 290, y: event.pageY - 72 });
+            if (!link.get('target').id) {
+              const localPoint = paper.paperToLocalPoint(paper.translate());
+
+              link.target({
+                x: (event.pageX - 290) / scale.sx + localPoint.x,
+                y: (event.pageY - 72) / scale.sy + localPoint.y,
+              });
               link.attr({ line: { stroke: '#9e9e9e' } });
             }
           }
