@@ -68,7 +68,7 @@ const Toolbox = props => {
   const { open: openAddTopicDialog } = useAddTopicDialog();
   const [isOpen, setIsOpen] = useState(false);
   const [graphType, setGraphType] = useState('');
-  const [connectorType, setConnectorType] = useState('');
+  const [className, setClassName] = useState('');
   const [icon, setIcon] = useState('');
   const [zIndex, setZIndex] = useState(2);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -132,7 +132,7 @@ const Toolbox = props => {
 
       switch (graphType) {
         case 'topic':
-          if (connectorType === 'Pipeline Only') {
+          if (className === 'Pipeline Only') {
             graph.addCell(
               TopicGraph({
                 position,
@@ -162,20 +162,20 @@ const Toolbox = props => {
               name: currentWorker.settings.name,
               group: currentWorker.settings.group,
             },
-            connector__class: connectorType,
+            connector__class: className,
           });
           graph.addCell(
             ConnectorGraph({
               position,
               value: newGraph,
-              type: connectorType.split('.').pop(),
+              type: className.split('.').pop(),
               icon,
               graph,
               paper,
               openSettingDialog,
               setData,
               classInfo: currentWorker.classInfos.filter(
-                classInfo => classInfo.className === connectorType,
+                classInfo => classInfo.className === className,
               )[0],
               graphType,
             }),
@@ -253,7 +253,7 @@ const Toolbox = props => {
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
         paper, // main paper
         setGraphType,
-        setConnectorType,
+        setClassName,
         setPosition,
         setIcon,
         setIsOpen,

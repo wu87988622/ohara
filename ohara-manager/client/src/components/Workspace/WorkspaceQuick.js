@@ -247,7 +247,7 @@ const WorkspaceQuick = props => {
     const wkCreateRes = await wkApi.create({
       name: workerName,
       nodeNames,
-      plugins,
+      pluginKeys: plugins,
       brokerClusterKey: {
         name: broker.settings.name,
         group: broker.settings.group,

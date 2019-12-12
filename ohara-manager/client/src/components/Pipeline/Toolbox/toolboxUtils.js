@@ -167,7 +167,7 @@ export const enableDragAndDrop = params => {
     paper,
     setGraphType,
     setPosition,
-    setConnectorType,
+    setClassName,
     setIcon,
     setIsOpen: openAddConnectorDialog,
   } = params;
@@ -206,10 +206,11 @@ export const enableDragAndDrop = params => {
 
       const classType = cellView.model.get('classType');
       const connectorType = cellView.model.get('displayName');
+      const className = cellView.model.get('className');
       const icon = cellView.model.get('icon');
 
       setGraphType(classType);
-      setConnectorType(connectorType);
+      setClassName(className);
       setIcon(icon);
 
       flyingShape.position(0, 0);
