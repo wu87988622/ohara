@@ -21,18 +21,17 @@ Pipeline
 
 Pipeline APIs are born of Ohara manager which needs a way to store the
 relationship of components in streaming. The relationship in pipeline is
-made up of multi **flows**. Each **flow** describe a **from** and multi **to**\s. For example,
-you have a :ref:`topic <rest-topics>` as source and a :ref:`connector <rest-connectors>`
-as consumer, so you can describe the
-relationship via following flow.
+made up of multi **endpoints**. Each **endpoint** describe a component. For example,
+you have a :ref:`topic <rest-topics>` as source so you can describe the relationship via following endpoints.
 
   .. code-block:: json
 
      {
-       "flows": [
+       "endpoints": [
          {
-           "from": "topic's name",
-           "to": ["connector's name"]
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ]
      }
@@ -49,17 +48,11 @@ The properties used in generating pipeline are shown below.
 
 #. group (**string**) — pipeline’s name
 #. name (**string**) — pipeline’s name
-#. flows (**array(object)**) — the relationship between objects
+#. endpoints (**array(object)**) — the relationship between objects
 
-   - flows[i].from (**object**) — the endpoint of source
-
-     - flows[i].from.group — the group of source
-     - flows[i].from.name — the name of source
-
-   - flows[i].to (**array(object)**) — the endpoint of sinks
-
-     - flows[i].to[j].group — the group of sink[j]
-     - flows[i].to[j].name — the name of sink[j]
+   - endpoints[i].group (**String**) — the group of this endpoint
+   - endpoints[i].name (**String**) — the name of this endpoint
+   - endpoints[i].kind (**String**) — the kind of this endpoint
 
 #. tags (**object**) — the extra description to this object
 
@@ -105,10 +98,11 @@ Example Request 1
 
      {
        "name": "pipeline0",
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-aaa",
-           "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ]
      }
@@ -119,12 +113,11 @@ Example Response 1
      {
        "name": "pipeline0",
        "lastModified": 1554950999668,
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": [
-             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
-           ]
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ],
        "objects": [
@@ -153,20 +146,16 @@ Example Response 1
        "tags": {}
      }
 
-  .. note::
-    Don’t worry about creating a pipeline with incomplete flows. It is ok to
-    add a flow with only **from**. The following example creates a pipeline
-    with only a object and leave empty in **to** field.
-
 Example Request 1
   .. code-block:: json
 
      {
        "name": "pipeline1",
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": []
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ]
      }
@@ -177,10 +166,11 @@ Example Response 1
      {
        "name": "pipeline1",
        "lastModified": 1554952500972,
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": []
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ],
        "objects": [
@@ -209,10 +199,11 @@ Example Request
 
      {
        "name": "pipeline0",
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-aaa",
-           "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ]
      }
@@ -227,12 +218,11 @@ Example Response
      {
        "name": "pipeline0",
        "lastModified": 1554950999668,
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": [
-             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
-           ]
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ],
        "objects": [
@@ -287,12 +277,11 @@ Example Response
        {
          "name": "pipeline0",
          "lastModified": 1554950999668,
-         "flows": [
+         "endpoints": [
            {
-             "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-             "to": [
-               "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
-             ]
+             "group": "default",
+             "name": "topic0",
+             "kind": "topic"
            }
          ],
          "objects": [
@@ -354,12 +343,11 @@ Example Response
      {
        "name": "pipeline0",
        "lastModified": 1554950999668,
-       "flows": [
+       "endpoints": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": [
-             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
-           ]
+           "group": "default",
+           "name": "topic0",
+           "kind": "topic"
          }
        ],
        "objects": [
@@ -398,7 +386,7 @@ Requires Ohara Configurator to cleanup nonexistent objects of pipeline. Pipeline
 sometimes, some nonexistent objects. Those nonexistent objects won't hurt our services but it may be ugly and weird to
 read. Hence, the (helper) API do a background cleanup for your pipeline. The cleanup rules are shown below.
 
-#. the flow having nonexistent "from" is removed
+#. the endpoint having nonexistent "from" is removed
 #. the objects in "to" get removed
 
 Example Response

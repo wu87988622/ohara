@@ -499,6 +499,32 @@ class TestPipelineRoute extends OharaTest {
     pipelines.head.key shouldBe pipeline.key
   }
 
+  @Test
+  def testEndpoint(): Unit = {
+    val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val pipeline = result(pipelineApi.request.endpoint(topic).create())
+    pipeline.endpoints.size shouldBe 1
+    pipeline.objects.size shouldBe 1
+    pipeline.objects.head.group shouldBe topic.group
+    pipeline.objects.head.name shouldBe topic.name
+    pipeline.objects.head.kind shouldBe topic.kind
+    pipeline.objects.head.lastModified shouldBe topic.lastModified
+    pipeline.objects.head.tags shouldBe topic.tags
+  }
+
+  @Test
+  def testRefreshEndpoint(): Unit = {
+    val topic0   = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val topic1   = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val pipeline = result(pipelineApi.request.endpoint(topic0).endpoint(topic1).create())
+    pipeline.endpoints.size shouldBe 2
+    pipeline.objects.size shouldBe 2
+    result(topicApi.delete(topic0.key))
+    result(pipelineApi.refresh(pipeline.key))
+    result(pipelineApi.get(pipeline.key)).endpoints.size shouldBe 1
+    result(pipelineApi.get(pipeline.key)).objects.size shouldBe 1
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

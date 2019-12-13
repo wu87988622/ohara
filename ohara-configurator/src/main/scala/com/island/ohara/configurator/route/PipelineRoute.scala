@@ -20,12 +20,29 @@ import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi._
+import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ObjectApi.ObjectInfo
 import com.island.ohara.client.configurator.v0.PipelineApi._
+import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiDescription
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.TopicApi
+import com.island.ohara.client.configurator.v0.{
+  BrokerApi,
+  ConnectorApi,
+  FileInfoApi,
+  NodeApi,
+  ObjectApi,
+  PipelineApi,
+  ShabondiApi,
+  StreamApi,
+  TopicApi,
+  WorkerApi,
+  ZookeeperApi
+}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -172,7 +189,7 @@ private[configurator] object PipelineRoute {
     meterCache: MeterCache
   ): Future[Pipeline] =
     Future
-      .traverse(pipeline.flows.flatMap(flow => flow.to ++ Set(flow.from)))(store.raws)
+      .traverse(pipeline._endpoints.map(_.key))(store.raws)
       .map(_.flatten.toSet)
       .flatMap(Future.traverse(_) { obj =>
         toAbstract(obj).recover {
@@ -249,6 +266,7 @@ private[configurator] object PipelineRoute {
           group = creation.group,
           name = creation.name,
           flows = creation.flows,
+          endpoints = creation.endpoints,
           objects = Set.empty,
           jarKeys = Set.empty,
           lastModified = CommonUtils.current(),
@@ -271,6 +289,7 @@ private[configurator] object PipelineRoute {
           group = key.group,
           name = key.name,
           flows = update.flows.getOrElse(previous.map(_.flows).getOrElse(Seq.empty)),
+          endpoints = update.endpoints.getOrElse(previous.map(_.endpoints).getOrElse(Set.empty)),
           objects = previous.map(_.objects).getOrElse(Set.empty),
           jarKeys = previous.map(_.jarKeys).getOrElse(Set.empty),
           lastModified = CommonUtils.current(),
@@ -280,29 +299,80 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
+  private[this] def refreshFlows(
+    pipeline: Pipeline
+  )(implicit store: DataStore, executionContext: ExecutionContext): Future[Pipeline] =
+    Future
+      .traverse(pipeline.flows.flatMap(flow => flow.to + flow.from))(
+        key => store.raws(key).map(objs => key -> objs.nonEmpty)
+      )
+      // filter the nonexistent objKeys
+      .map(_.filter(_._2).map(_._1).toSeq)
+      .map(
+        existedObjKeys =>
+          pipeline.copy(
+            flows = pipeline.flows
+            // remove the flow if the obj in "from" is nonexistent
+              .filter(flow => existedObjKeys.contains(flow.from))
+              // remove nonexistent obj from "to"
+              .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))
+          )
+      )
+
+  private[this] def refreshEndpoints(
+    pipeline: Pipeline
+  )(implicit store: DataStore, executionContext: ExecutionContext): Future[Pipeline] =
+    Future
+      .traverse(pipeline.endpoints)(
+        endpoint =>
+          endpoint.kind match {
+            case Some(k) =>
+              (k match {
+                case TopicApi.KIND     => store.get[TopicInfo](endpoint.key)
+                case ConnectorApi.KIND => store.get[ConnectorInfo](endpoint.key)
+                case FileInfoApi.KIND  => store.get[FileInfo](endpoint.key)
+                case NodeApi.KIND      => store.get[Node](endpoint.key)
+                case ObjectApi.KIND    => store.get[ObjectInfo](endpoint.key)
+                case PipelineApi.KIND  => store.get[Pipeline](endpoint.key)
+                case ZookeeperApi.KIND => store.get[ZookeeperClusterInfo](endpoint.key)
+                case BrokerApi.KIND    => store.get[BrokerClusterInfo](endpoint.key)
+                case WorkerApi.KIND    => store.get[WorkerClusterInfo](endpoint.key)
+                case StreamApi.KIND    => store.get[StreamClusterInfo](endpoint.key)
+                case ShabondiApi.KIND  => store.get[ShabondiDescription](endpoint.key)
+                case _                 => Future.successful(None)
+              }).map {
+                case None    => Seq.empty
+                case Some(o) => Seq(o)
+              }
+            case None => store.raws(endpoint.key)
+          }
+      )
+      .map(_.flatten)
+      .map(
+        existedData =>
+          pipeline.copy(
+            endpoints = pipeline.endpoints
+              .filter(
+                endpoint =>
+                  existedData.exists(
+                    data =>
+                      data.group == endpoint.group
+                        && data.name == endpoint.name
+                        && endpoint.kind.contains(data.kind)
+                  )
+              )
+          )
+      )
+
   private[this] def hookOfRefresh(
     implicit store: DataStore,
     executionContext: ExecutionContext
   ): HookOfAction[Pipeline] =
-    (pipeline: Pipeline, _, _) => {
-      val objKeys = pipeline.flows.flatMap(flow => flow.to + flow.from)
-      Future
-        .traverse(objKeys)(key => store.raws(key).map(objs => key -> objs.nonEmpty))
-        // filter the nonexistent objKeys
-        .map(_.filter(_._2).map(_._1).toSeq)
-        .map(
-          existedObjKeys =>
-            pipeline.copy(
-              flows = pipeline.flows
-              // remove the flow if the obj in "from" is nonexistent
-                .filter(flow => existedObjKeys.contains(flow.from))
-                // remove nonexistent obj from "to"
-                .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))
-            )
-        )
+    (pipeline: Pipeline, _, _) =>
+      refreshFlows(pipeline)
+        .flatMap(refreshEndpoints)
         .flatMap(pipeline => store.add[Pipeline](pipeline))
         .map(_ => Unit)
-    }
 
   def apply(
     implicit brokerCollie: BrokerCollie,
