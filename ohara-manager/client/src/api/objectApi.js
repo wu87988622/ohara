@@ -15,12 +15,7 @@
  */
 
 import * as objBody from './body/objectBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { getKey, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -28,8 +23,7 @@ import * as waitUtil from './utils/waitUtils';
 const url = URL.OBJECT_URL;
 
 export const create = async (params = {}) => {
-  const requestBody = requestUtil(params, objBody);
-  const res = await axiosInstance.post(url, requestBody);
+  const res = await axiosInstance.post(url, params);
 
   const result = responseUtil(res, objBody);
   result.title =

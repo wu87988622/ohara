@@ -14,88 +14,119 @@
  * limitations under the License.
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useReducer,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty, get, isEqual } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 
+import { useSnackbar } from 'context/SnackbarContext';
 import { useWorkerState, useBrokerState, useZookeeperState } from 'context';
 import { usePrevious } from 'utils/hooks';
+import {
+  fetchWorkspacesCreator,
+  addWorkspaceCreator,
+  updateWorkspaceCreator,
+  stageWorkspaceCreator,
+  deleteWorkspaceCreator,
+} from './workspaceActions';
+import { reducer, initialState } from './workspaceReducer';
 
 const WorkspaceContext = createContext();
+const WorkspaceStateContext = createContext();
+const WorkspaceDispatchContext = createContext();
 
 const WorkspaceProvider = ({ children }) => {
-  const [workspaceName, setWorkspaceName] = useState(null);
-  const [currentWorker, setCurrentWorker] = useState(null);
-  const [currentBroker, setCurrentBroker] = useState(null);
-  const [currentZookeeper, setCurrentZookeeper] = useState(null);
-  const { data: workers, isFetching } = useWorkerState();
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { data: workspaces, isFetching } = state;
+  const { data: workers } = useWorkerState();
   const { data: brokers } = useBrokerState();
   const { data: zookeepers } = useZookeeperState();
 
-  const prevCurrentWorker = usePrevious(currentWorker);
-  const prevCurrentBroker = usePrevious(currentBroker);
-  const prevCurrentZookeeper = usePrevious(currentZookeeper);
+  /**
+   * Short terms:
+   * workspace => ws
+   * worker => wk
+   * broker => bk
+   * zookeeper => zk
+   */
+  const [name, setName] = useState(null);
+  const [currWs, setCurrWs] = useState(null);
+  const [currWk, setCurrWk] = useState(null);
+  const [currBk, setCurrBk] = useState(null);
+  const [currZk, setCurrZk] = useState(null);
+  const prevWs = usePrevious(currWs);
+  const prevWk = usePrevious(currWk);
+  const prevBk = usePrevious(currBk);
+  const prevZk = usePrevious(currZk);
+
+  const showMessage = useSnackbar();
+
+  const fetchWorkspaces = useCallback(
+    fetchWorkspacesCreator(state, dispatch, showMessage),
+    [state],
+  );
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
+
+  // Set the current workspace
+  useEffect(() => {
+    if (!name || isEmpty(workspaces)) return;
+    const found = workspaces.find(ws => ws.settings.name === name);
+    if (!isEqual(found, prevWs)) setCurrWs(found);
+  }, [name, workspaces, prevWs]);
 
   // Set the current worker
   useEffect(() => {
-    if (isEmpty(workers) || !workspaceName) return;
-    const workerFound = workers.find(
-      worker => worker.settings.name === workspaceName,
-    );
-    if (!isEqual(workerFound, prevCurrentWorker)) {
-      setCurrentWorker(workerFound);
-    }
-  }, [workers, prevCurrentWorker, workspaceName]);
+    if (!name || isEmpty(workers)) return;
+    const found = workers.find(wk => wk.settings.name === name);
+    if (!isEqual(found, prevWk)) setCurrWk(found);
+  }, [name, workers, prevWk]);
 
   // Set the current broker
   useEffect(() => {
-    if (isEmpty(brokers) || isEmpty(currentWorker)) return;
-    const brokerFound = brokers.find(
-      broker =>
-        broker.settings.name ===
-        get(currentWorker, 'settings.brokerClusterKey.name'),
-    );
-    if (!isEqual(brokerFound, prevCurrentBroker)) {
-      setCurrentBroker(brokerFound);
-    }
-  }, [brokers, prevCurrentBroker, currentWorker]);
+    if (!name || isEmpty(brokers)) return;
+    const found = brokers.find(bk => bk.settings.name === name);
+    if (!isEqual(found, prevBk)) setCurrBk(found);
+  }, [name, brokers, prevBk]);
 
   // Set the current zookeeper
   useEffect(() => {
-    if (isEmpty(zookeepers) || isEmpty(currentBroker)) return;
-    const zookeeperFound = zookeepers.find(
-      zookeeper =>
-        zookeeper.settings.name ===
-        get(currentBroker, 'settings.zookeeperClusterKey.name'),
-    );
-    if (!isEqual(zookeeperFound, prevCurrentZookeeper)) {
-      setCurrentZookeeper(zookeeperFound);
-    }
-  }, [zookeepers, currentZookeeper, currentBroker, prevCurrentZookeeper]);
+    if (!name || isEmpty(zookeepers)) return;
+    const found = zookeepers.find(zk => zk.settings.name === name);
+    if (!isEqual(found, prevZk)) setCurrZk(found);
+  }, [name, zookeepers, prevZk]);
 
-  const findByWorkspaceName = workspaceName => {
-    const workspaces = workers;
-    return workspaces.find(
-      workspace => workspace.settings.name === workspaceName,
-    );
-  };
+  const findWorkerByWorkspaceName = name =>
+    workers.find(wk => wk.settings.name === name);
 
   return (
-    <WorkspaceContext.Provider
-      value={{
-        workspaces: workers,
-        currentWorkspace: currentWorker,
-        currentWorker,
-        currentBroker,
-        currentZookeeper,
-        isFetching,
-        workspaceName,
-        setWorkspaceName,
-        findByWorkspaceName,
-      }}
-    >
-      {children}
-    </WorkspaceContext.Provider>
+    <WorkspaceStateContext.Provider value={state}>
+      <WorkspaceDispatchContext.Provider value={dispatch}>
+        <WorkspaceContext.Provider
+          value={{
+            workspaces,
+            currentWorkspace: currWs,
+            currentWorker: currWk,
+            currentBroker: currZk,
+            currentZookeeper: currZk,
+            isFetching,
+            workspaceName: name,
+            setWorkspaceName: setName,
+            findByWorkspaceName: findWorkerByWorkspaceName,
+          }}
+        >
+          {children}
+        </WorkspaceContext.Provider>
+      </WorkspaceDispatchContext.Provider>
+    </WorkspaceStateContext.Provider>
   );
 };
 
@@ -109,8 +140,46 @@ const useWorkspace = () => {
   return context;
 };
 
+const useWorkspaceState = () => {
+  const context = React.useContext(WorkspaceStateContext);
+  if (context === undefined) {
+    throw new Error(
+      'useWorkspaceState must be used within a WorkspaceProvider',
+    );
+  }
+  return context;
+};
+
+const useWorkspaceDispatch = () => {
+  const context = React.useContext(WorkspaceDispatchContext);
+  if (context === undefined) {
+    throw new Error(
+      'useWorkspaceDispatch must be used within a WorkspaceProvider',
+    );
+  }
+  return context;
+};
+
 WorkspaceProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export { WorkspaceProvider, useWorkspace };
+const useWorkspaceActions = () => {
+  const state = useWorkspaceState();
+  const dispatch = useWorkspaceDispatch();
+  const showMessage = useSnackbar();
+  return {
+    addWorkspace: addWorkspaceCreator(state, dispatch, showMessage),
+    updateWorkspace: updateWorkspaceCreator(state, dispatch, showMessage),
+    stageWorkspace: stageWorkspaceCreator(state, dispatch, showMessage),
+    deleteWorkspace: deleteWorkspaceCreator(state, dispatch, showMessage),
+  };
+};
+
+export {
+  WorkspaceProvider,
+  useWorkspace,
+  useWorkspaceState,
+  useWorkspaceDispatch,
+  useWorkspaceActions,
+};

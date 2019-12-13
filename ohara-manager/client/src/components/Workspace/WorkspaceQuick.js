@@ -45,10 +45,10 @@ import * as bkApi from 'api/brokerApi';
 import * as wkApi from 'api/workerApi';
 import * as zkApi from 'api/zookeeperApi';
 import SelectCard from './Card/SelectCard';
-import * as generate from 'utils/generate';
 import WorkspaceCard from './Card/WorkspaceCard';
 
 import { useNodeDialog } from 'context/NodeDialogContext';
+import { useWorkspaceActions } from 'context';
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
@@ -95,6 +95,7 @@ const WorkspaceQuick = props => {
     selected,
     setSelected,
   } = useNodeDialog();
+  const { addWorkspace: createWorkspace } = useWorkspaceActions();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -127,7 +128,7 @@ const WorkspaceQuick = props => {
 
   const onDrop = async (file, values) => {
     const result = await fileApi.create({
-      group: values.workerName,
+      group: values.workspaceName,
       file: file[0],
     });
     let fileInfo = {};
@@ -180,7 +181,7 @@ const WorkspaceQuick = props => {
           required,
           validServiceName,
           maxLength(64),
-        )(values.workerName);
+        )(values.workspaceName);
         return !isUndefined(error);
 
       case 1:
@@ -204,67 +205,47 @@ const WorkspaceQuick = props => {
     return result;
   };
 
-  const createZk = async nodeNames => {
-    const zkCreateRes = await zkApi.create({
-      name: generate.serviceName({ prefix: 'zk' }),
+  const createZk = async params => {
+    const { zkKey, nodeNames } = params;
+    const createResult = await zkApi.create({
+      ...zkKey,
       nodeNames:
         nodeNames.length > 3
           ? getRandoms(nodeNames, 3)
           : getRandoms(nodeNames, 1),
     });
-    const zkStartRes = zkCreateRes.errors
-      ? {}
-      : await zkApi.start({
-          name: zkCreateRes.data.settings.name,
-          group: zkCreateRes.data.settings.group,
-        });
-
-    return zkStartRes.errors ? {} : zkStartRes.data;
+    if (createResult.errors) throw new Error(createResult.title);
+    const startResult = await zkApi.start(zkKey);
+    if (startResult.errors) throw new Error(startResult.title);
   };
 
   const createBk = async params => {
-    const { nodeNames, zookeeper } = params;
-    const bkCreateRes = await bkApi.create({
-      name: generate.serviceName({ prefix: 'bk' }),
+    const { bkKey, zkKey, nodeNames } = params;
+    const createResult = await bkApi.create({
+      ...bkKey,
+      zookeeperClusterKey: zkKey,
       nodeNames,
-      zookeeperClusterKey: {
-        name: zookeeper.settings.name,
-        group: zookeeper.settings.group,
-      },
     });
-    const bkStartRes = bkCreateRes.errors
-      ? {}
-      : await bkApi.start({
-          name: bkCreateRes.data.settings.name,
-          group: bkCreateRes.data.settings.group,
-        });
-
-    return bkStartRes.errors ? {} : bkStartRes.data;
+    if (createResult.errors) throw new Error(createResult.title);
+    const startResult = await bkApi.start(bkKey);
+    if (startResult.errors) throw new Error(startResult.title);
   };
 
   const createWk = async params => {
-    const { nodeNames, broker, workerName, plugins } = params;
-    const wkCreateRes = await wkApi.create({
-      name: workerName,
+    const { wkKey, bkKey, nodeNames, plugins } = params;
+    const createResult = await wkApi.create({
+      ...wkKey,
+      brokerClusterKey: bkKey,
       nodeNames,
       pluginKeys: plugins,
-      brokerClusterKey: {
-        name: broker.settings.name,
-        group: broker.settings.group,
-      },
     });
-    const wkStartRes = wkCreateRes.errors
-      ? {}
-      : await wkApi.start({
-          name: wkCreateRes.data.settings.name,
-          group: wkCreateRes.data.settings.group,
-        });
-
-    return wkStartRes;
+    if (createResult.errors) throw new Error(createResult.title);
+    const startResult = await wkApi.start(wkKey);
+    if (startResult.errors) throw new Error(startResult.title);
   };
 
   const createQuickWorkspace = async values => {
-    const { workerName } = values;
+    const { workspaceName } = values;
     const nodeNames = selected.map(select => select.name);
     const plugins = files.map(file => {
       return {
@@ -273,13 +254,23 @@ const WorkspaceQuick = props => {
       };
     });
 
-    setProgressOpen(true);
-    const zk = await createZk(nodeNames);
-    setProgressActiveStep(1);
-    const bk = await createBk({ nodeNames, zookeeper: zk });
-    setProgressActiveStep(2);
-    await createWk({ nodeNames, broker: bk, workerName, plugins });
-    setProgressActiveStep(3);
+    const wsKey = { name: workspaceName, group: 'workspace' };
+    const zkKey = { name: workspaceName, group: 'zookeeper' };
+    const bkKey = { name: workspaceName, group: 'broker' };
+    const wkKey = { name: workspaceName, group: 'worker' };
+
+    try {
+      setProgressOpen(true);
+      await createZk({ zkKey, nodeNames });
+      setProgressActiveStep(1);
+      await createBk({ bkKey, zkKey, nodeNames });
+      setProgressActiveStep(2);
+      await createWk({ wkKey, bkKey, nodeNames, plugins });
+      setProgressActiveStep(3);
+      createWorkspace({ ...wsKey, nodeNames });
+    } catch (e) {
+      // TODO: handle error to create, rollback the created services
+    }
     handelOpen(false);
   };
 
@@ -289,7 +280,7 @@ const WorkspaceQuick = props => {
         return (
           <Field
             type="text"
-            name="workerName"
+            name="workspaceName"
             label="Workspace name"
             margin="normal"
             helperText="Assistive text"
@@ -376,7 +367,7 @@ const WorkspaceQuick = props => {
                   <TableBody>
                     <StyledTableRow>
                       <TableCell>{'Workspace Name'}</TableCell>
-                      <TableCell>{values.workerName}</TableCell>
+                      <TableCell>{values.workspaceName}</TableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                       <TableCell>{'Node Names'}</TableCell>

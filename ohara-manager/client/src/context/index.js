@@ -54,6 +54,9 @@ import {
 import {
   WorkspaceProvider,
   useWorkspace,
+  useWorkspaceState,
+  useWorkspaceDispatch,
+  useWorkspaceActions,
 } from 'context/workspace/WorkspaceContext';
 import {
   EditWorkspaceProvider,
@@ -107,6 +110,9 @@ export {
   // Workspace
   WorkspaceProvider,
   useWorkspace,
+  useWorkspaceState,
+  useWorkspaceDispatch,
+  useWorkspaceActions,
   EditWorkspaceProvider,
   useEditWorkspace,
   // Zookeeper
