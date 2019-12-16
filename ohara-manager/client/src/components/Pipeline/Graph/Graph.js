@@ -74,7 +74,7 @@ const Graph = props => {
         // Easier to reason about
         origin: { x: 0, y: 0 },
 
-        defaultConnectionPoint: { name: 'bbox' },
+        defaultConnectionPoint: { name: 'boundary' },
         defaultAnchor: {
           name: 'modelCenter',
         },
@@ -134,122 +134,123 @@ const Graph = props => {
 
           if (disConnectLink.length > 0) {
             // Connect to the target cell
-            if (disConnectLink.length > 0) {
-              const targetId = cellView.model.get('id');
-              const targetType = cellView.model.get('classType');
-              const targetTitle = cellView.model.get('title');
-              const targetConnectedLinks = graph.current.getConnectedLinks(
-                cellView.model,
-              );
+            const targetId = cellView.model.get('id');
+            const targetType = cellView.model.get('classType');
+            const targetTitle = cellView.model.get('title');
+            const targetConnectedLinks = graph.current.getConnectedLinks(
+              cellView.model,
+            );
 
-              const sourceId = disConnectLink[0].get('source').id;
-              const sourceType = graph.current.getCell(sourceId).attributes
-                .classType;
-              const sourceCell = graph.current.getCell(sourceId);
-              const sourceConnectedLinks = graph.current.getConnectedLinks(
-                sourceCell,
-              );
-              const sourceTitle = sourceCell.get('title');
+            const sourceId = disConnectLink[0].get('source').id;
+            const sourceType = graph.current.getCell(sourceId).attributes
+              .classType;
+            const sourceCell = graph.current.getCell(sourceId);
+            const sourceConnectedLinks = graph.current.getConnectedLinks(
+              sourceCell,
+            );
+            const sourceTitle = sourceCell.get('title');
 
-              const isLoopLink = () => {
-                return targetConnectedLinks.some(link => {
-                  return (
-                    sourceId === link.get('source').id ||
-                    sourceId === link.get('target').id
-                  );
-                });
-              };
-
-              const handleError = (message = false) => {
-                if (message) showMessage(message);
-
-                resetLink();
-              };
-
-              // Cell connection logic
-              if (targetId === sourceId) {
-                // A cell cannot connect to itself, not throwing a
-                // message out here since the behavior is not obvious
-                handleError();
-              } else if (targetType === 'source') {
-                handleError(`Target ${targetTitle} is a source!`);
-              } else if (sourceType === targetType) {
-                handleError(
-                  `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
+            const isLoopLink = () => {
+              return targetConnectedLinks.some(link => {
+                return (
+                  sourceId === link.get('source').id ||
+                  sourceId === link.get('target').id
                 );
-              } else if (isLoopLink()) {
-                handleError(
-                  `A connection is already in place for these two cells`,
-                );
-              } else {
-                const hasMoreThanOneTarget = sourceConnectedLinks.length >= 2;
-                const hasSource = targetConnectedLinks.length !== 0;
+              });
+            };
 
-                if (sourceType === 'source' && targetType === 'sink') {
-                  if (hasMoreThanOneTarget) {
-                    return handleError(
-                      `The source ${sourceTitle} is already connected to a target`,
-                    );
-                  }
+            const handleError = (message = false) => {
+              if (message) showMessage(message);
 
-                  if (hasSource) {
-                    return handleError(
-                      `The target ${targetTitle} is already connected to a source `,
-                    );
-                  }
-                }
+              resetLink();
+            };
 
-                if (sourceType === 'source' && targetType === 'stream') {
-                  const isTargetConnectedBySource = targetConnectedLinks.some(
-                    link => link.getSourceCell().get('classType') === 'source',
+            // Cell connection logic
+            if (targetId === sourceId) {
+              // A cell cannot connect to itself, not throwing a
+              // message out here since the behavior is not obvious
+              handleError();
+            } else if (targetType === 'source') {
+              handleError(`Target ${targetTitle} is a source!`);
+            } else if (
+              sourceType === targetType &&
+              (sourceType !== 'stream' && targetType !== 'stream')
+            ) {
+              handleError(
+                `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
+              );
+            } else if (isLoopLink()) {
+              handleError(
+                `A connection is already in place for these two cells`,
+              );
+            } else {
+              const hasMoreThanOneTarget = sourceConnectedLinks.length >= 2;
+              const hasSource = targetConnectedLinks.length !== 0;
+
+              if (sourceType === 'source' && targetType === 'sink') {
+                if (hasMoreThanOneTarget) {
+                  return handleError(
+                    `The source ${sourceTitle} is already connected to a target`,
                   );
-
-                  if (hasMoreThanOneTarget) {
-                    return handleError(
-                      `The source ${sourceTitle} is already connected to a target`,
-                    );
-                  }
-
-                  if (isTargetConnectedBySource) {
-                    return handleError(
-                      `The target ${targetTitle} already has a connection!`,
-                    );
-                  }
                 }
 
-                if (sourceType === 'source' && targetType === 'topic') {
-                  if (hasMoreThanOneTarget) {
-                    return handleError(
-                      `The source ${sourceTitle} is already connected to a target`,
-                    );
-                  }
+                if (hasSource) {
+                  return handleError(
+                    `The target ${targetTitle} is already connected to a source `,
+                  );
                 }
-
-                if (sourceType === 'topic' && targetType === 'sink') {
-                  if (hasSource) {
-                    return handleError(
-                      `The target ${targetTitle} is already connected to a source `,
-                    );
-                  }
-                }
-
-                if (sourceType === 'stream' && targetType === 'sink') {
-                  if (hasMoreThanOneTarget) {
-                    return handleError(
-                      `The source ${sourceTitle} is already connected to a target`,
-                    );
-                  }
-
-                  if (hasSource) {
-                    return handleError(
-                      `The target ${targetTitle} is already connected to a source `,
-                    );
-                  }
-                }
-
-                // Link to the target cell
-                disConnectLink[0].target({ id: cellView.model.id });
               }
+
+              if (sourceType === 'source' && targetType === 'stream') {
+                const isTargetConnectedBySource = targetConnectedLinks.some(
+                  link => link.getSourceCell().get('classType') === 'source',
+                );
+
+                if (hasMoreThanOneTarget) {
+                  return handleError(
+                    `The source ${sourceTitle} is already connected to a target`,
+                  );
+                }
+
+                if (isTargetConnectedBySource) {
+                  return handleError(
+                    `The target ${targetTitle} already has a connection!`,
+                  );
+                }
+              }
+
+              if (sourceType === 'source' && targetType === 'topic') {
+                if (hasMoreThanOneTarget) {
+                  return handleError(
+                    `The source ${sourceTitle} is already connected to a target`,
+                  );
+                }
+              }
+
+              if (sourceType === 'topic' && targetType === 'sink') {
+                if (hasSource) {
+                  return handleError(
+                    `The target ${targetTitle} is already connected to a source `,
+                  );
+                }
+              }
+
+              if (sourceType === 'stream' && targetType === 'sink') {
+                if (hasMoreThanOneTarget) {
+                  return handleError(
+                    `The source ${sourceTitle} is already connected to a target`,
+                  );
+                }
+
+                if (hasSource) {
+                  return handleError(
+                    `The target ${targetTitle} is already connected to a source `,
+                  );
+                }
+              }
+
+              // Link to the target cell
+              disConnectLink[0].target({ id: cellView.model.id });
             }
           }
         }
@@ -264,9 +265,10 @@ const Graph = props => {
             tools: [
               // Allow users to add vertices on link view
               new joint.linkTools.Vertices(),
-
+              new joint.linkTools.Segments(),
               // Add a custom remove tool
               new joint.linkTools.Remove({
+                offset: 15,
                 distance: '50%',
                 markup: [
                   {

@@ -104,9 +104,6 @@ const WorkspaceProvider = ({ children }) => {
     if (!isEqual(found, prevZk)) setCurrZk(found);
   }, [name, zookeepers, prevZk]);
 
-  const findWorkerByWorkspaceName = name =>
-    workers.find(wk => wk.settings.name === name);
-
   return (
     <WorkspaceStateContext.Provider value={state}>
       <WorkspaceDispatchContext.Provider value={dispatch}>
@@ -120,7 +117,6 @@ const WorkspaceProvider = ({ children }) => {
             isFetching,
             workspaceName: name,
             setWorkspaceName: setName,
-            findByWorkspaceName: findWorkerByWorkspaceName,
           }}
         >
           {children}
@@ -132,7 +128,6 @@ const WorkspaceProvider = ({ children }) => {
 
 const useWorkspace = () => {
   const context = useContext(WorkspaceContext);
-
   if (context === undefined) {
     throw new Error('useWorkspace must be used within a WorkspaceProvider');
   }
@@ -142,6 +137,7 @@ const useWorkspace = () => {
 
 const useWorkspaceState = () => {
   const context = React.useContext(WorkspaceStateContext);
+
   if (context === undefined) {
     throw new Error(
       'useWorkspaceState must be used within a WorkspaceProvider',

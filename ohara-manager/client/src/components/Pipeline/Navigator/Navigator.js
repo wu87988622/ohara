@@ -22,11 +22,9 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import AddIcon from '@material-ui/icons/Add';
 import ShareIcon from '@material-ui/icons/Share';
 import Menu from '@material-ui/core/Menu';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
-import { usePipelineActions, usePipelineState } from 'context';
-import { useWorkspace, useEditWorkspaceDialog } from 'context';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {
@@ -48,11 +46,17 @@ import {
   PipelineList,
 } from './NavigatorStyles';
 
+import {
+  useWorkspace,
+  useEditWorkspaceDialog,
+  usePipelineActions,
+  usePipelineState,
+} from 'context';
+
 const Navigator = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { workspaceName } = useParams();
-  const { findByWorkspaceName } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
   const [isExpanded, setIsExpanded] = useState(true);
   const { open: openEditWorkspaceDialog } = useEditWorkspaceDialog();
   const { data: pipelines } = usePipelineState();
@@ -74,7 +78,7 @@ const Navigator = () => {
   const onSubmit = async ({ pipelineName }, form) => {
     addPipeline({
       name: pipelineName,
-      group: workspaceName,
+      group: currentWorkspace.settings.name,
       flows: [],
     });
 
@@ -82,9 +86,11 @@ const Navigator = () => {
     setIsOpen(false);
   };
 
-  const validWorkspaceName = findByWorkspaceName(workspaceName);
+  if (!currentWorkspace) return null;
 
-  if (!validWorkspaceName) return null;
+  const {
+    settings: { name: workspaceName },
+  } = currentWorkspace;
 
   return (
     <StyledNavigator>

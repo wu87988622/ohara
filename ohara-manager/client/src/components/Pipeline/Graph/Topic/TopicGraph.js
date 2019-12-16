@@ -39,11 +39,11 @@ const TopicGraph = params => {
     <PrivateTopicIcon width={56} height={56} />,
   );
   const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
-  const link = renderToString(<TrendingUpIcon />);
-  const setting = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
-  const remove = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
+  const linkIcon = renderToString(<TrendingUpIcon />);
+  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
+  const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
-  let linkLine;
+  let link;
   const height = type !== 'public' ? 0 : 22;
   const topicValue = type === 'public' ? value : '';
 
@@ -65,9 +65,9 @@ const TopicGraph = params => {
       `${type === 'public' ? publicIcon : privateIcon}`,
       `<div class="title"></div>`,
       `<div class="topicMenu">`,
-      `<Button id="link">${link}</Button>`,
-      `<Button id="setting">${setting}</Button>`,
-      `<Button id="remove">${remove}</Button> `,
+      `<Button id="link">${linkIcon}</Button>`,
+      `<Button id="setting">${settingIcon}</Button>`,
+      `<Button id="remove">${removeIcon}</Button> `,
       `</div>`,
       '</div>',
     ].join(''),
@@ -89,10 +89,10 @@ const TopicGraph = params => {
 
       const modelId = this.model.id;
       this.$box.find('button#link').on('mousedown', function() {
-        linkLine = new joint.shapes.standard.Link();
-        linkLine.source({ id: modelId });
-        linkLine.attr({ line: { stroke: 'transparent' } });
-        linkLine.addTo(graph);
+        link = new joint.shapes.standard.Link();
+        link.source({ id: modelId });
+        link.attr({ line: { stroke: 'transparent' } });
+        link.addTo(graph);
       });
 
       this.updateBox();
@@ -118,15 +118,15 @@ const TopicGraph = params => {
         .attr('style', `display:${this.model.get('menuDisplay')};`);
       if (this.paper) {
         this.paper.$document.on('mousemove', function(event) {
-          if (linkLine) {
-            if (!linkLine.get('target').id) {
+          if (link) {
+            if (!link.get('target').id) {
               const localPoint = paper.paperToLocalPoint(paper.translate());
 
               link.target({
                 x: (event.pageX - 290) / scale.sx + localPoint.x,
                 y: (event.pageY - 72) / scale.sy + localPoint.y,
               });
-              linkLine.attr({ line: { stroke: '#9e9e9e' } });
+              link.attr({ line: { stroke: '#9e9e9e' } });
             }
           }
         });

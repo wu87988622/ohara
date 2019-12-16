@@ -287,3 +287,26 @@ export const enableDragAndDrop = params => {
     });
   });
 };
+
+export const getConnectorInfo = worker => {
+  let sources = [];
+  let sinks = [];
+
+  if (worker) {
+    worker.classInfos.forEach(info => {
+      const { className, classType } = info;
+      const displayClassName = className.split('.').pop();
+      if (info.classType === 'source') {
+        return sources.push({
+          displayName: displayClassName,
+          classType,
+          className,
+        });
+      }
+
+      sinks.push({ displayName: displayClassName, classType, className });
+    });
+  }
+
+  return [sources, sinks];
+};

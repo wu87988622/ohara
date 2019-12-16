@@ -26,7 +26,6 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
-import { useParams } from 'react-router-dom';
 import * as joint from 'jointjs';
 
 import * as fileApi from 'api/fileApi';
@@ -43,8 +42,12 @@ import {
 import { useSnackbar } from 'context/SnackbarContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
-import { useConnectors, useFiles } from './ToolboxHooks';
-import { enableDragAndDrop, createToolboxList } from './toolboxUtils';
+import { useFiles } from './ToolboxHooks';
+import {
+  enableDragAndDrop,
+  createToolboxList,
+  getConnectorInfo,
+} from './toolboxUtils';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import { TopicGraph } from '../Graph/Topic';
 import { useGraphSettingDialog } from 'context';
@@ -61,8 +64,7 @@ const Toolbox = props => {
     setToolboxExpanded,
   } = props;
 
-  const { findByWorkspaceName, currentWorker } = useWorkspace();
-  const { workspaceName } = useParams();
+  const { currentWorker, currentWorkspace } = useWorkspace();
   const { data: topicsData } = useTopicState();
   const { fetchTopics } = useTopicActions();
   const { open: openAddTopicDialog } = useAddTopicDialog();
@@ -77,8 +79,6 @@ const Toolbox = props => {
 
   const showMessage = useSnackbar();
 
-  const currentWorkspace = findByWorkspaceName(workspaceName);
-  const [sources, sinks] = useConnectors(currentWorkspace);
   const { streams, fileNames, setStatus } = useFiles(currentWorkspace);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ const Toolbox = props => {
   const uploadJar = async file => {
     const response = await fileApi.create({
       file,
-      group: workspaceName,
+      group: currentWorkspace.settings.name,
     });
 
     showMessage(response.title);
@@ -127,61 +127,47 @@ const Toolbox = props => {
   };
 
   const handleAddGraph = async newGraph => {
-    if (newGraph) {
-      setZIndex(zIndex + 1);
+    setZIndex(zIndex + 1);
 
-      switch (graphType) {
-        case 'topic':
-          if (className === 'Pipeline Only') {
-            graph.addCell(
-              TopicGraph({
-                position,
-                graph,
-                type: 'private',
-                paper,
-                graphType,
-              }),
-            );
-          } else {
-            graph.addCell(
-              TopicGraph({
-                position,
-                graph,
-                value: newGraph,
-                type: 'public',
-                paper,
-                graphType,
-              }),
-            );
-          }
-          break;
-        default:
-          await connectorApi.create({
-            classInfos: currentWorker.classInfos,
-            workerClusterKey: {
-              name: currentWorker.settings.name,
-              group: currentWorker.settings.group,
-            },
-            connector__class: className,
-          });
-          graph.addCell(
-            ConnectorGraph({
-              position,
-              value: newGraph,
-              type: className.split('.').pop(),
-              icon,
-              graph,
-              paper,
-              openSettingDialog,
-              setData,
-              classInfo: currentWorker.classInfos.filter(
-                classInfo => classInfo.className === className,
-              )[0],
-              graphType,
-            }),
-          );
-          break;
-      }
+    const sharedParams = {
+      position,
+      graph,
+      graphType,
+      paper,
+    };
+
+    switch (graphType) {
+      case 'topic':
+        graph.addCell(
+          TopicGraph({
+            ...sharedParams,
+            type: className === 'Pipeline Only' ? 'private' : 'public',
+          }),
+        );
+        break;
+      default:
+        await connectorApi.create({
+          classInfos: currentWorker.classInfos,
+          workerClusterKey: {
+            name: currentWorkspace.settings.name,
+            group: currentWorkspace.settings.group,
+          },
+          connector__class: className,
+        });
+        graph.addCell(
+          ConnectorGraph({
+            ...sharedParams,
+            value: newGraph,
+            type: className.split('.').pop(),
+            icon,
+            openSettingDialog,
+            setData,
+            classInfo: currentWorker.classInfos.filter(
+              classInfo => classInfo.className === className,
+            )[0],
+          }),
+        );
+        break;
     }
 
     removeTempCell();
@@ -194,6 +180,7 @@ const Toolbox = props => {
   let topicGraph = useRef(null);
   let streamGraph = useRef(null);
 
+  const [sources, sinks] = getConnectorInfo(currentWorker);
   useEffect(() => {
     // Should we handle topic and stream here?
     if (!sources || !sinks) return;

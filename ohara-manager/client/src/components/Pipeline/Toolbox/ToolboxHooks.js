@@ -16,51 +16,7 @@
 
 import { useEffect, useState } from 'react';
 
-import * as inspectApi from 'api/inspectApi';
 import * as fileApi from 'api/fileApi';
-
-export const useConnectors = workspace => {
-  const [sources, setSources] = useState([]);
-  const [sinks, setSinks] = useState([]);
-
-  useEffect(() => {
-    if (!workspace) return;
-    let didCancel = false;
-
-    const fetchWorkerInfo = async () => {
-      const { name, group } = workspace.settings;
-      const result = await inspectApi.getWorkerInfo({ name, group });
-      if (!didCancel) {
-        if (!result.errors) {
-          result.data.classInfos.forEach(info => {
-            const { className, classType } = info;
-            const displayClassName = className.split('.').pop();
-            if (info.classType === 'source') {
-              setSources(prevState => [
-                ...prevState,
-                { displayName: displayClassName, classType, className },
-              ]);
-              return;
-            }
-
-            setSinks(prevState => [
-              ...prevState,
-              { displayName: displayClassName, classType, className },
-            ]);
-          });
-        }
-      }
-    };
-
-    fetchWorkerInfo();
-
-    return () => {
-      didCancel = true;
-    };
-  }, [workspace]);
-
-  return [sources, sinks];
-};
 
 export const useFiles = workspace => {
   // We're not filtering out other jars here
