@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.collection.{immutable, mutable}
 import scala.concurrent.duration._
 
-abstract private[shabondi] class BasicShabondiTest extends WithBroker with Matchers {
+abstract class BasicShabondiTest extends WithBroker with Matchers {
   protected val log = Logger(this.getClass())
 
   protected val brokerProps                = testUtil.brokersConnProps

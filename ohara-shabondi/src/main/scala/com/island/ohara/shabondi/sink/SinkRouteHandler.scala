@@ -16,12 +16,11 @@
 
 package com.island.ohara.shabondi.sink
 
-import java.util.concurrent.{BlockingQueue, Executors}
+import java.util
 
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.shabondi._
@@ -37,15 +36,8 @@ private[shabondi] class SinkRouteHandler(config: Config) extends RouteHandler {
   import Boot._
   import JsonSupport._
 
-  private val log = Logging(actorSystem, classOf[SinkRouteHandler])
-
-  // TODO:  We should provide a
-  private val threadPool =
-    Executors.newFixedThreadPool(4, new ThreadFactoryBuilder().setNameFormat("shabondi-sinkpool-%d").build())
-  private val sinkRowQueueProducer = RowQueueProducer(config)
-  private val queue                = sinkRowQueueProducer.queue
-
-  threadPool.execute(sinkRowQueueProducer)
+  private val log        = Logging(actorSystem, classOf[SinkRouteHandler])
+  private val dataGroups = SinkDataGroups(config)
 
   private val exceptionHandler = ExceptionHandler {
     case ex: Throwable =>
@@ -53,7 +45,7 @@ private[shabondi] class SinkRouteHandler(config: Config) extends RouteHandler {
       complete((StatusCodes.InternalServerError, ex.getMessage))
   }
 
-  private def fullyPollQueue(queue: BlockingQueue[Row]): Seq[Row] = {
+  private def fullyPollQueue(queue: util.Queue[Row]): Seq[Row] = {
     if (queue.isEmpty)
       Seq.empty[Row]
     else {
@@ -67,17 +59,19 @@ private[shabondi] class SinkRouteHandler(config: Config) extends RouteHandler {
     }
   }
 
-  def route: Route = {
-    (post & path("v0" / "poll")) {
-      handleExceptions(exceptionHandler) {
-        val result = fullyPollQueue(queue).map(row => JsonSupport.toRowData(row))
-        complete(result)
-      }
+  def route: Route = handleExceptions(exceptionHandler) {
+    (get & path("v0" / "poll")) {
+      val group  = dataGroups.defaultGroup
+      val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
+      complete(result)
+    } ~ (get & path("v0" / "poll" / Segment)) { groupId =>
+      val group  = dataGroups.createIfAbsent(groupId)
+      val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
+      complete(result)
     }
   }
 
   override def close(): Unit = {
-    Releasable.close(sinkRowQueueProducer)
-    threadPool.shutdown()
+    Releasable.close(dataGroups)
   }
 }

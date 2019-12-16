@@ -16,18 +16,11 @@
 
 package com.island.ohara.shabondi
 
-import java.util.concurrent.{ExecutorService, Executors}
-
 import akka.http.scaladsl.model._
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.kafka.Consumer
 import org.junit.Test
 import spray.json._
-
-import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
 
 final class TestRoute extends BasicShabondiTest {
   import DefaultDefinitions._
@@ -64,57 +57,6 @@ final class TestRoute extends BasicShabondiTest {
     } finally {
       webServer.close()
       brokerClient.deleteTopic(topicKey1.name())
-    }
-  }
-
-  @Test
-  def testSinkRoute(): Unit = {
-    val threadPool: ExecutorService =
-      Executors.newFixedThreadPool(2, new ThreadFactoryBuilder().setNameFormat("test-client-%d").build())
-    implicit val ec = ExecutionContext.fromExecutorService(threadPool)
-
-    val totalRowCount = 300
-    val topicKey1     = createTopicKey
-    val config        = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
-    val webServer     = new WebServer(config)
-
-    try {
-      val clientFetch: Future[Seq[Row]] = Future {
-        val resultRows = ArrayBuffer.empty[Row]
-        val request    = Post(uri = "/v0/poll")
-        var idx: Int   = 0
-        while (resultRows.size < totalRowCount) {
-          idx += 1
-          request ~> webServer.routes ~> check {
-            val result = entityAs[Seq[RowData]].map(JsonSupport.toRow)
-            resultRows ++= result
-          }
-          log.info(" [{}]client fetch rows: {}", idx, resultRows.size)
-          Thread.sleep(500)
-        }
-        resultRows
-      }
-
-      val rowCount1 = 50
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.name, rowCount1, FiniteDuration(10, SECONDS))
-      log.info("produce {} rows", rowCount1); Thread.sleep(2000)
-
-      val rowCount2 = 80
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.name, rowCount2, FiniteDuration(10, SECONDS))
-      log.info("produce {} rows", rowCount2); Thread.sleep(2000)
-
-      val rowCount3 = 40
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.name, rowCount3, FiniteDuration(10, SECONDS))
-      log.info("produce {} rows", rowCount3); Thread.sleep(2000)
-
-      val rowCount4 = 130
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.name, rowCount4, FiniteDuration(10, SECONDS))
-      log.info("produce {} rows", rowCount4); Thread.sleep(2000)
-
-      val rows = Await.result(clientFetch, Duration.Inf)
-      rows.size should ===(totalRowCount)
-    } finally {
-      webServer.close()
     }
   }
 }

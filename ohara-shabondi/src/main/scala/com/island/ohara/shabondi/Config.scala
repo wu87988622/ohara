@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.setting.{SettingDef, TopicKey}
+import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -41,12 +42,12 @@ private[shabondi] class Config(raw: Map[String, String]) {
 
   def sinkFromTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SINK_FROM_TOPICS_KEY)).asScala
 
-  def sinkPollTimeout: Duration = Duration.ofMillis(longValue(SINK_POLL_TIMEOUT_DEF))
+  def sinkPollTimeout: Duration = durationValue(SINK_POLL_TIMEOUT_DEF)
 
   def brokers: String = raw(BROKERS_KEY)
 
-  private def longValue(settingDef: SettingDef): Long =
-    if (!raw.contains(settingDef.key)) settingDef.defaultLong() else raw(settingDef.key).toLong
+  private def durationValue(settingDef: SettingDef): Duration =
+    if (!raw.contains(settingDef.key)) settingDef.defaultDuration() else CommonUtils.toDuration(raw(settingDef.key))
 }
 
 object DefaultDefinitions {
@@ -125,7 +126,7 @@ object DefaultDefinitions {
     .key(SINK_POLL_TIMEOUT)
     .group(coreGroup)
     .orderInGroup(orderNumber)
-    .positiveNumber(500L)
+    .optional(Duration.ofMillis(1500))
     .displayName("Poll timeout")
     .documentation("The timeout value(milliseconds) that each poll from topic")
     .build

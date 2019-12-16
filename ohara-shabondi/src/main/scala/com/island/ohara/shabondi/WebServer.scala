@@ -35,28 +35,24 @@ import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
-private[shabondi] trait RouteHandler extends Directives with AutoCloseable {
+private[shabondi] trait RouteHandler extends Directives with Releasable {
   def route(): Route
 }
 
-private[shabondi] class WebServer(val config: Config) extends AbstractWebServer with AutoCloseable {
+private[shabondi] class WebServer(val config: Config) extends AbstractWebServer with Releasable {
   import Boot._
   import DefaultDefinitions._
-
-  private var _routeHandler: RouteHandler = _
-  private def routeHandler: RouteHandler = {
-    if (_routeHandler == null)
-      _routeHandler = config.serverType match {
-        case SERVER_TYPE_SOURCE => SourceRouteHandler(config)
-        case SERVER_TYPE_SINK   => SinkRouteHandler(config)
-        case t                  => throw new RuntimeException(s"Invalid server type: $t")
-      }
-    _routeHandler
-  }
 
   def start(): Unit = {
     start(CommonUtils.anyLocalAddress(), config.port, ServerSettings(actorSystem), Some(actorSystem))
   }
+
+  private[this] lazy val routeHandler: RouteHandler =
+    config.serverType match {
+      case SERVER_TYPE_SOURCE => SourceRouteHandler(config)
+      case SERVER_TYPE_SINK   => SinkRouteHandler(config)
+      case t                  => throw new RuntimeException(s"Invalid server type: $t")
+    }
 
   override def routes: Route = routeHandler.route()
 
@@ -67,7 +63,7 @@ private[shabondi] class WebServer(val config: Config) extends AbstractWebServer 
   }
 
   override def close(): Unit = {
-    Releasable.close(_routeHandler)
+    Releasable.close(routeHandler)
   }
 }
 

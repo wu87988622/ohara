@@ -41,7 +41,7 @@ final class TestConfig extends OharaTest with Matchers {
       s"$CLIENT_PORT_KEY=8080",
       s"$SOURCE_TO_TOPICS_KEY=$jsonSourceTopicKeys",
       s"$SINK_FROM_TOPICS_KEY=$jsonSinkTopicKeys",
-      s"$SINK_POLL_TIMEOUT=1500"
+      s"$SINK_POLL_TIMEOUT=1500 milliseconds"
     ).toSeq.asJava
 
     val rawConfig = CommonUtils.parse(args).asScala.toMap
