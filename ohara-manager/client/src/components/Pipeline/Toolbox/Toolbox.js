@@ -83,8 +83,8 @@ const Toolbox = props => {
 
   useEffect(() => {
     if (!currentWorkspace) return;
-    fetchTopics(currentWorkspace.settings.name);
-  }, [fetchTopics, currentWorkspace.settings.name, currentWorkspace]);
+    fetchTopics(currentWorkspace);
+  }, [fetchTopics, currentWorkspace]);
 
   const privateTopic = {
     settings: { name: 'Pipeline Only' },

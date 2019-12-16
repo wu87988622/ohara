@@ -53,6 +53,7 @@
     "junit-report-merger": "0.0.6",
     "lodash": "4.17.15",
     "morgan": "1.9.1",
+    "sha.js": "2.4.11",
     "yargs": "14.2.0"
   },
   "devDependencies": {

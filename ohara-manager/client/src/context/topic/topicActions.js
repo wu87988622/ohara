@@ -15,21 +15,18 @@
  */
 
 import * as topicApi from 'api/topicApi';
+import { hashKey } from 'utils/object';
 import {
   fetchTopicsRoutine,
   addTopicRoutine,
   deleteTopicRoutine,
 } from './topicRoutines';
 
-const createFetchTopics = (
-  state,
-  dispatch,
-  showMessage,
-) => async workspaceName => {
+const createFetchTopics = (state, dispatch, showMessage) => async workspace => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(fetchTopicsRoutine.request());
-  const result = await topicApi.getAll({ group: workspaceName });
+  const result = await topicApi.getAll({ group: hashKey(workspace) });
 
   if (result.errors) {
     dispatch(fetchTopicsRoutine.failure(result.title));

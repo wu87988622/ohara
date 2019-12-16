@@ -38,7 +38,7 @@ function TopicTable() {
 
   useEffect(() => {
     if (!currentWorkspace) return;
-    fetchTopics(currentWorkspace.settings.name);
+    fetchTopics(currentWorkspace);
   }, [fetchTopics, currentWorkspace]);
 
   const tableHeaders = [

@@ -115,7 +115,7 @@ const WorkspaceProvider = ({ children }) => {
             workspaces,
             currentWorkspace: currWs,
             currentWorker: currWk,
-            currentBroker: currZk,
+            currentBroker: currBk,
             currentZookeeper: currZk,
             isFetching,
             workspaceName: name,

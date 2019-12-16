@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { get, sortBy } from 'lodash';
+import { get, has, sortBy } from 'lodash';
+import { hashByGroupAndName } from './sha';
 
 export const getKey = object => {
   return {
@@ -28,3 +29,14 @@ export const isKeyEqual = (object, other) =>
   get(object, 'settings.group') === get(other, 'settings.group');
 
 export const sortByName = objects => sortBy(objects, 'settings.name');
+
+export const hashKey = object => {
+  if (!has(object, 'settings.group' || !has(object, 'settings.name')))
+    throw new Error(
+      'To calculate the hash key, the settings.group and settings.name must be provided.',
+    );
+  return hashByGroupAndName(
+    get(object, 'settings.group'),
+    get(object, 'settings.name'),
+  );
+};

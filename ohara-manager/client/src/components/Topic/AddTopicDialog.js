@@ -32,9 +32,10 @@ import {
   validServiceName,
   composeValidators,
 } from 'utils/validate';
+import { getKey, hashKey } from 'utils/object';
 
 const AddTopicDialog = () => {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, currentBroker } = useWorkspace();
   const { isFetching: isSaving } = useTopicState();
   const { addTopic } = useTopicActions();
 
@@ -42,15 +43,12 @@ const AddTopicDialog = () => {
 
   const onSubmit = async (values, form) => {
     const { name: topicName } = values;
-    const { name: topicGroup } = currentWorkspace.settings;
+    const topicGroup = hashKey(currentWorkspace);
     addTopic({
       name: topicName,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
-      brokerClusterKey: {
-        group: currentWorkspace.settings.group,
-        name: currentWorkspace.settings.brokerClusterKey.name,
-      },
+      brokerClusterKey: getKey(currentBroker),
       group: topicGroup,
     });
     setTimeout(form.reset);
