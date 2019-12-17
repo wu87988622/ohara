@@ -386,10 +386,7 @@ object Configurator {
       )
       LOG.info("enter ctrl+c to terminate the configurator")
 
-      while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
-        TimeUnit.SECONDS.sleep(2)
-        LOG.info(s"Current data size:${GLOBAL_CONFIGURATOR.size}")
-      }
+      while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) TimeUnit.SECONDS.sleep(2)
     } finally {
       Releasable.close(GLOBAL_CONFIGURATOR)
       GLOBAL_CONFIGURATOR = null
