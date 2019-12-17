@@ -213,7 +213,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[configurator] def addK8SNodes(): Future[Seq[NodeApi.Node]] =
     this.k8sClient
       .map {
-        log.info("Running check Kubernetes node")
         val nodeApi = NodeApi.access.hostname(hostname).port(port)
         _.nodes()
           .flatMap { kns =>
@@ -221,10 +220,22 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
               Future.sequence(
                 kns
                   .filterNot(kn => nodes.map(_.hostname).contains(kn.nodeName))
-                  .map(newK8sNode => nodeApi.request.hostname(newK8sNode.nodeName).create())
+                  .map(
+                    newK8sNode =>
+                      nodeApi.request
+                        .hostname(newK8sNode.nodeName)
+                        .create()
+                        .map(Some(_))
+                        .recover {
+                          case _: Throwable =>
+                            // this loop may encounter the data conflict so we swallow the exception
+                            None
+                        }
+                  )
               )
             }
           }
+          .map(_.flatten)
       }
       .getOrElse(Future.successful(Seq.empty))
 
