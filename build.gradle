@@ -157,6 +157,7 @@ subprojects {
       maxHeapSize = "4096m"
       testLogging {
         events "PASSED", "STARTED", "FAILED", "SKIPPED"
+        exceptionFormat = 'full'
       }
     }
   }
