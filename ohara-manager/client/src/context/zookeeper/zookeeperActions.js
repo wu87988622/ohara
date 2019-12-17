@@ -14,15 +14,42 @@
  * limitations under the License.
  */
 
-import { pick, map } from 'lodash';
+import { has, map } from 'lodash';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import {
   fetchZookeepersRoutine,
+  addZookeeperRoutine,
   updateStagingSettingsRoutine,
 } from './zookeeperRoutines';
+import { getKey } from 'utils/object';
+
+const ZOOKEEPER = 'zookeeper';
+
+const checkRequired = values => {
+  if (!has(values, 'name')) {
+    throw new Error("Values is missing required member 'name'");
+  }
+};
+
+const transformToZookeeper = (zookeeper, zookeeperInfo, stagingZookeeper) => {
+  if (!has(zookeeper, 'settings')) {
+    throw new Error("zookeeper is missing required member 'settings'");
+  }
+  if (!has(zookeeperInfo, 'settingDefinitions')) {
+    throw new Error(
+      "zookeeperInfo is missing required member 'settingDefinitions'",
+    );
+  }
+  return {
+    serviceType: ZOOKEEPER,
+    ...zookeeper,
+    ...zookeeperInfo,
+    stagingSettings: stagingZookeeper,
+  };
+};
 
 const fetchZookeepersCreator = (
   state,
@@ -32,40 +59,94 @@ const fetchZookeepersCreator = (
 ) => async () => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
-  dispatch(routine.request());
-  const result = await zookeeperApi.getAll();
-  const zookeepers = result.data;
+  try {
+    dispatch(routine.request());
 
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
+    const resultForFetchZookeepers = await zookeeperApi.getAll();
+    if (resultForFetchZookeepers.errors) {
+      throw new Error(resultForFetchZookeepers.title);
+    }
+
+    const zookeepers = await Promise.all(
+      map(resultForFetchZookeepers.data, async zookeeper => {
+        const key = getKey(zookeeper);
+
+        const resultForFetchZookeeperInfo = await inspectApi.getZookeeperInfo(
+          key,
+        );
+        if (resultForFetchZookeeperInfo.errors) {
+          throw new Error(resultForFetchZookeeperInfo.title);
+        }
+
+        const resultForFetchStagingZookeeper = await objectApi.get(key);
+        if (resultForFetchStagingZookeeper.errors) {
+          throw new Error(resultForFetchStagingZookeeper.title);
+        }
+
+        return transformToZookeeper(
+          zookeeper,
+          resultForFetchZookeeperInfo.data,
+          resultForFetchStagingZookeeper.data,
+        );
+      }),
+    );
+    dispatch(routine.success(zookeepers));
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
   }
-
-  const zookeeperInfos = await Promise.all(
-    map(zookeepers, async zookeeper => {
-      const params = pick(zookeeper.settings, ['name', 'group']);
-      const result = await inspectApi.getZookeeperInfo(params);
-      const zookeeperInfo = result.errors ? {} : result.data;
-
-      const result2 = await objectApi.get(params);
-      const stagingSettings = result2.errors ? {} : result2.data;
-
-      return {
-        serviceType: 'zookeeper',
-        ...zookeeper,
-        ...zookeeperInfo,
-        stagingSettings,
-      };
-    }),
-  );
-
-  dispatch(routine.success(zookeeperInfos));
 };
 
-const addZookeeperCreator = () => async () => {
-  // TODO: implement the logic for add zookeeper
+const addZookeeperCreator = (
+  state,
+  dispatch,
+  showMessage,
+  routine = addZookeeperRoutine,
+) => async values => {
+  if (state.isFetching) return;
+
+  try {
+    checkRequired(values);
+    const ensuredValues = { ...values, group: ZOOKEEPER };
+    dispatch(routine.request());
+
+    const resultForCreateZookeeper = await zookeeperApi.create(ensuredValues);
+    if (resultForCreateZookeeper.errors) {
+      throw new Error(resultForCreateZookeeper.title);
+    }
+
+    const resultForStartZookeeper = await zookeeperApi.start(ensuredValues);
+    if (resultForStartZookeeper.errors) {
+      throw new Error(resultForStartZookeeper.title);
+    }
+
+    const resultForStageZookeeper = await objectApi.create(ensuredValues);
+    if (resultForStageZookeeper.errors) {
+      throw new Error(resultForStageZookeeper.title);
+    }
+
+    const resultForFetchZookeeperInfo = await inspectApi.getZookeeperInfo(
+      ensuredValues,
+    );
+    if (resultForFetchZookeeperInfo.errors) {
+      throw new Error(resultForFetchZookeeperInfo.title);
+    }
+
+    dispatch(
+      routine.success(
+        transformToZookeeper(
+          resultForCreateZookeeper.data,
+          resultForFetchZookeeperInfo.data,
+          resultForStageZookeeper.data,
+        ),
+      ),
+    );
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
+  }
 };
+
 const updateZookeeperCreator = () => async () => {
   // TODO: implement the logic for update zookeeper
 };

@@ -43,6 +43,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: true,
+        error: null,
       };
     case fetchBrokersRoutine.SUCCESS:
       return {

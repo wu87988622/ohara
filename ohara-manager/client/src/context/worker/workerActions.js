@@ -14,15 +14,42 @@
  * limitations under the License.
  */
 
-import { pick, map } from 'lodash';
+import { has, map } from 'lodash';
 
 import * as workerApi from 'api/workerApi';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import {
   fetchWorkersRoutine,
+  addWorkerRoutine,
   updateStagingSettingsRoutine,
 } from './workerRoutines';
+import { getKey } from 'utils/object';
+
+const WORKER = 'worker';
+
+const checkRequired = values => {
+  if (!has(values, 'name')) {
+    throw new Error("Values is missing required member 'name'");
+  }
+};
+
+const transformToWorker = (worker, workerInfo, stagingWorker) => {
+  if (!has(worker, 'settings')) {
+    throw new Error("worker is missing required member 'settings'");
+  }
+  if (!has(workerInfo, 'settingDefinitions')) {
+    throw new Error(
+      "workerInfo is missing required member 'settingDefinitions'",
+    );
+  }
+  return {
+    serviceType: WORKER,
+    ...worker,
+    ...workerInfo,
+    stagingSettings: stagingWorker,
+  };
+};
 
 const fetchWorkersCreator = (
   state,
@@ -32,43 +59,96 @@ const fetchWorkersCreator = (
 ) => async () => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
-  dispatch(routine.request());
-  const result = await workerApi.getAll();
+  try {
+    dispatch(routine.request());
 
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
+    const resultForFetchWorkers = await workerApi.getAll();
+    if (resultForFetchWorkers.errors) {
+      throw new Error(resultForFetchWorkers.title);
+    }
+
+    const workers = await Promise.all(
+      map(resultForFetchWorkers.data, async worker => {
+        const key = getKey(worker);
+
+        const resultForFetchWorkerInfo = await inspectApi.getWorkerInfo(key);
+        if (resultForFetchWorkerInfo.errors) {
+          throw new Error(resultForFetchWorkerInfo.title);
+        }
+
+        const resultForFetchStagingWorker = await objectApi.get(key);
+        if (resultForFetchStagingWorker.errors) {
+          throw new Error(resultForFetchStagingWorker.title);
+        }
+
+        return transformToWorker(
+          worker,
+          resultForFetchWorkerInfo.data,
+          resultForFetchStagingWorker.data,
+        );
+      }),
+    );
+    dispatch(routine.success(workers));
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
   }
-
-  const workers = result.data;
-  const workerInfos = await Promise.all(
-    map(workers, async worker => {
-      const params = pick(worker.settings, ['name', 'group']);
-      const result = await inspectApi.getWorkerInfo(params);
-      const workerInfo = result.errors ? {} : result.data;
-
-      const result2 = await objectApi.get(params);
-      const stagingSettings = result2.errors ? {} : result2.data;
-
-      return {
-        serviceType: 'worker',
-        ...worker,
-        ...workerInfo,
-        stagingSettings,
-      };
-    }),
-  );
-
-  dispatch(routine.success(workerInfos));
 };
 
-const addWorkerCreator = () => async () => {
-  // TODO: implement the logic for add worker
+const addWorkerCreator = (
+  state,
+  dispatch,
+  showMessage,
+  routine = addWorkerRoutine,
+) => async values => {
+  if (state.isFetching) return;
+
+  try {
+    checkRequired(values);
+    const ensuredValues = { ...values, group: WORKER };
+    dispatch(routine.request());
+
+    const resultForCreateWorker = await workerApi.create(ensuredValues);
+    if (resultForCreateWorker.errors) {
+      throw new Error(resultForCreateWorker.title);
+    }
+
+    const resultForStartWorker = await workerApi.start(ensuredValues);
+    if (resultForStartWorker.errors) {
+      throw new Error(resultForStartWorker.title);
+    }
+
+    const resultForStageWorker = await objectApi.create(ensuredValues);
+    if (resultForStageWorker.errors) {
+      throw new Error(resultForStageWorker.title);
+    }
+
+    const resultForFetchWorkerInfo = await inspectApi.getWorkerInfo(
+      ensuredValues,
+    );
+    if (resultForFetchWorkerInfo.errors) {
+      throw new Error(resultForFetchWorkerInfo.title);
+    }
+
+    dispatch(
+      routine.success(
+        transformToWorker(
+          resultForCreateWorker.data,
+          resultForFetchWorkerInfo.data,
+          resultForStageWorker.data,
+        ),
+      ),
+    );
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
+  }
 };
+
 const updateWorkerCreator = () => async () => {
   // TODO: implement the logic for update worker
 };
+
 const deleteWorkerCreator = () => async () => {
   // TODO: implement the logic for delete worker
 };

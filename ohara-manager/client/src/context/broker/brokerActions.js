@@ -14,15 +14,42 @@
  * limitations under the License.
  */
 
-import { pick, map } from 'lodash';
+import { has, map } from 'lodash';
 
 import * as brokerApi from 'api/brokerApi';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import {
   fetchBrokersRoutine,
+  addBrokerRoutine,
   updateStagingSettingsRoutine,
 } from './brokerRoutines';
+import { getKey } from 'utils/object';
+
+const BROKER = 'broker';
+
+const checkRequired = values => {
+  if (!has(values, 'name')) {
+    throw new Error("Values is missing required member 'name'");
+  }
+};
+
+const transformToBroker = (broker, brokerInfo, stagingBroker) => {
+  if (!has(broker, 'settings')) {
+    throw new Error("broker is missing required member 'settings'");
+  }
+  if (!has(brokerInfo, 'settingDefinitions')) {
+    throw new Error(
+      "brokerInfo is missing required member 'settingDefinitions'",
+    );
+  }
+  return {
+    serviceType: BROKER,
+    ...broker,
+    ...brokerInfo,
+    stagingSettings: stagingBroker,
+  };
+};
 
 const fetchBrokersCreator = (
   state,
@@ -32,40 +59,92 @@ const fetchBrokersCreator = (
 ) => async () => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
-  dispatch(routine.request());
-  const result = await brokerApi.getAll();
+  try {
+    dispatch(routine.request());
 
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
+    const resultForFetchBrokers = await brokerApi.getAll();
+    if (resultForFetchBrokers.errors) {
+      throw new Error(resultForFetchBrokers.title);
+    }
+
+    const brokers = await Promise.all(
+      map(resultForFetchBrokers.data, async broker => {
+        const key = getKey(broker);
+
+        const resultForFetchBrokerInfo = await inspectApi.getBrokerInfo(key);
+        if (resultForFetchBrokerInfo.errors) {
+          throw new Error(resultForFetchBrokerInfo.title);
+        }
+
+        const resultForFetchStagingBroker = await objectApi.get(key);
+        if (resultForFetchStagingBroker.errors) {
+          throw new Error(resultForFetchStagingBroker.title);
+        }
+
+        return transformToBroker(
+          broker,
+          resultForFetchBrokerInfo.data,
+          resultForFetchStagingBroker.data,
+        );
+      }),
+    );
+    dispatch(routine.success(brokers));
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
   }
-  const brokers = result.data;
-
-  const brokerInfos = await Promise.all(
-    map(brokers, async broker => {
-      const params = pick(broker.settings, ['name', 'group']);
-      const result = await inspectApi.getBrokerInfo(params);
-      const brokerInfo = result.errors ? {} : result.data;
-
-      const result2 = await objectApi.get(params);
-      const stagingSettings = result2.errors ? {} : result2.data;
-
-      return {
-        serviceType: 'broker',
-        ...broker,
-        ...brokerInfo,
-        stagingSettings,
-      };
-    }),
-  );
-
-  dispatch(routine.success(brokerInfos));
 };
 
-const addBrokerCreator = () => async () => {
-  // TODO: implement the logic for add broker
+const addBrokerCreator = (
+  state,
+  dispatch,
+  showMessage,
+  routine = addBrokerRoutine,
+) => async values => {
+  if (state.isFetching) return;
+
+  try {
+    checkRequired(values);
+    const ensuredValues = { ...values, group: BROKER };
+    dispatch(routine.request());
+
+    const resultForCreateBroker = await brokerApi.create(ensuredValues);
+    if (resultForCreateBroker.errors) {
+      throw new Error(resultForCreateBroker.title);
+    }
+
+    const resultForStartBroker = await brokerApi.start(ensuredValues);
+    if (resultForStartBroker.errors) {
+      throw new Error(resultForStartBroker.title);
+    }
+
+    const resultForStageBroker = await objectApi.create(ensuredValues);
+    if (resultForStageBroker.errors) {
+      throw new Error(resultForStageBroker.title);
+    }
+
+    const resultForFetchBrokerInfo = await inspectApi.getBrokerInfo(
+      ensuredValues,
+    );
+    if (resultForFetchBrokerInfo.errors) {
+      throw new Error(resultForFetchBrokerInfo.title);
+    }
+
+    dispatch(
+      routine.success(
+        transformToBroker(
+          resultForCreateBroker.data,
+          resultForFetchBrokerInfo.data,
+          resultForStageBroker.data,
+        ),
+      ),
+    );
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
+  }
 };
+
 const updateBrokerCreator = () => async () => {
   // TODO: implement the logic for update broker
 };

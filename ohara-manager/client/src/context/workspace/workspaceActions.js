@@ -25,7 +25,7 @@ import {
   deleteWorkspaceRoutine,
 } from './workspaceRoutines';
 
-const WORKSPACE_GROUP = 'workspace';
+const WORKSPACE = 'workspace';
 
 const checkRequired = values => {
   if (!has(values, 'name')) {
@@ -76,7 +76,7 @@ const fetchWorkspacesCreator = (
   if (state.isFetching || state.lastUpdated || state.error) return;
   try {
     dispatch(routine.request());
-    const result = await objectApi.getAll({ group: WORKSPACE_GROUP });
+    const result = await objectApi.getAll({ group: WORKSPACE });
     if (result.errors) throw new Error(result.title);
     const workspaces = map(result.data, transformToWorkspace);
     dispatch(routine.success(workspaces));
@@ -93,9 +93,10 @@ const addWorkspaceCreator = (
   routine = addWorkspaceRoutine,
 ) => async values => {
   if (state.isFetching) return;
+
   try {
     checkRequired(values);
-    const ensuredValues = { ...values, group: WORKSPACE_GROUP };
+    const ensuredValues = { ...values, group: WORKSPACE };
     const params = {
       ...ensuredValues,
       tags: ensuredValues, // Copy from values, used to store the staging data.
@@ -109,6 +110,7 @@ const addWorkspaceCreator = (
     showMessage(e.message);
   }
 };
+
 const updateWorkspaceCreator = (
   state,
   dispatch,
@@ -118,7 +120,7 @@ const updateWorkspaceCreator = (
   if (state.isFetching) return;
   try {
     checkRequired(values);
-    const ensuredValues = { ...values, group: WORKSPACE_GROUP };
+    const ensuredValues = { ...values, group: WORKSPACE };
     const params = {
       ...ensuredValues,
       tags: ensuredValues, // Sync from values
@@ -145,7 +147,7 @@ const stageWorkspaceCreator = (
     const ensuredValues = omit(values, ['name', 'group', 'tags']);
     const params = {
       name: values.name,
-      group: WORKSPACE_GROUP,
+      group: WORKSPACE,
       tags: ensuredValues,
     };
     dispatch(routine.request());
@@ -168,7 +170,7 @@ const deleteWorkspaceCreator = (
   try {
     const params = {
       name,
-      group: WORKSPACE_GROUP,
+      group: WORKSPACE,
     };
     dispatch(routine.request());
     const result = await objectApi.remove(params);

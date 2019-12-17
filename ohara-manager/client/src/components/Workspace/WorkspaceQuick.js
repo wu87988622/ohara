@@ -41,14 +41,20 @@ import {
 } from 'utils/validate';
 import * as fileApi from 'api/fileApi';
 import FileCard from './Card/FileCard';
-import * as bkApi from 'api/brokerApi';
-import * as wkApi from 'api/workerApi';
-import * as zkApi from 'api/zookeeperApi';
 import SelectCard from './Card/SelectCard';
 import WorkspaceCard from './Card/WorkspaceCard';
 
 import { useNodeDialog } from 'context/NodeDialogContext';
-import { useWorkspaceActions } from 'context';
+import {
+  useWorkspaceState,
+  useWorkspaceActions,
+  useWorkerState,
+  useWorkerActions,
+  useBrokerState,
+  useBrokerActions,
+  useZookeeperState,
+  useZookeeperActions,
+} from 'context';
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
@@ -95,7 +101,16 @@ const WorkspaceQuick = props => {
     selected,
     setSelected,
   } = useNodeDialog();
-  const { addWorkspace: createWorkspace } = useWorkspaceActions();
+
+  const { addWorkspace } = useWorkspaceActions();
+  const { addWorker } = useWorkerActions();
+  const { addBroker } = useBrokerActions();
+  const { addZookeeper } = useZookeeperActions();
+
+  const { error: errorForAddWorkspace } = useWorkspaceState();
+  const { error: errorForAddWorker } = useWorkerState();
+  const { error: errorForAddBroker } = useBrokerState();
+  const { error: errorForAddZookeeper } = useZookeeperState();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -207,41 +222,41 @@ const WorkspaceQuick = props => {
 
   const createZk = async params => {
     const { zkKey, nodeNames } = params;
-    const createResult = await zkApi.create({
+    await addZookeeper({
       ...zkKey,
       nodeNames:
         nodeNames.length > 3
           ? getRandoms(nodeNames, 3)
           : getRandoms(nodeNames, 1),
     });
-    if (createResult.errors) throw new Error(createResult.title);
-    const startResult = await zkApi.start(zkKey);
-    if (startResult.errors) throw new Error(startResult.title);
+    if (errorForAddZookeeper) throw new Error(errorForAddZookeeper);
   };
 
   const createBk = async params => {
     const { bkKey, zkKey, nodeNames } = params;
-    const createResult = await bkApi.create({
+    await addBroker({
       ...bkKey,
       zookeeperClusterKey: zkKey,
       nodeNames,
     });
-    if (createResult.errors) throw new Error(createResult.title);
-    const startResult = await bkApi.start(bkKey);
-    if (startResult.errors) throw new Error(startResult.title);
+    if (errorForAddBroker) throw new Error(errorForAddBroker);
   };
 
   const createWk = async params => {
     const { wkKey, bkKey, nodeNames, plugins } = params;
-    const createResult = await wkApi.create({
+    await addWorker({
       ...wkKey,
       brokerClusterKey: bkKey,
       nodeNames,
       pluginKeys: plugins,
     });
-    if (createResult.errors) throw new Error(createResult.title);
-    const startResult = await wkApi.start(wkKey);
-    if (startResult.errors) throw new Error(startResult.title);
+    if (errorForAddWorker) throw new Error(errorForAddWorker);
+  };
+
+  const createWs = async params => {
+    const { wsKey, nodeNames } = params;
+    await addWorkspace({ ...wsKey, nodeNames });
+    if (errorForAddWorkspace) throw new Error(errorForAddWorkspace);
   };
 
   const createQuickWorkspace = async values => {
@@ -267,7 +282,7 @@ const WorkspaceQuick = props => {
       setProgressActiveStep(2);
       await createWk({ wkKey, bkKey, nodeNames, plugins });
       setProgressActiveStep(3);
-      createWorkspace({ ...wsKey, nodeNames });
+      await createWs({ wsKey, nodeNames });
     } catch (e) {
       // TODO: handle error to create, rollback the created services
     }

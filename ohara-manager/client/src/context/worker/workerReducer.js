@@ -44,6 +44,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: true,
+        error: null,
       };
     case fetchWorkersRoutine.SUCCESS:
       return {
