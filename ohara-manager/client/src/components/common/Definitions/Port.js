@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
@@ -23,8 +24,9 @@ const Port = props => {
     input: { name, onChange, value },
     meta = {},
     helperText,
+    refs,
     ...rest
-  } = props;
+  } = omit(props, ['tableKeys']);
 
   const hasError =
     (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
@@ -32,6 +34,7 @@ const Port = props => {
   return (
     <TextField
       {...rest}
+      ref={refs}
       fullWidth
       variant="filled"
       onChange={onChange}
@@ -63,6 +66,7 @@ Port.propTypes = {
   width: PropTypes.string,
   helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   errorMessage: PropTypes.string,
+  refs: PropTypes.object,
 };
 
 export default Port;

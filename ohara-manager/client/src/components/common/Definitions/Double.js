@@ -17,56 +17,55 @@
 import React from 'react';
 import { omit } from 'lodash';
 import PropTypes from 'prop-types';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
+import TextField from '@material-ui/core/TextField';
 
-const BooleanDef = props => {
+const Double = props => {
   const {
-    input: { name, onChange, checked = false, ...restInput },
-    label,
-    testId,
+    input: { name, onChange, value },
+    meta = {},
+    helperText,
     refs,
     ...rest
-  } = omit(props, ['tableKeys', 'helperText']);
+  } = omit(props, ['tableKeys']);
+
+  const hasError =
+    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
 
   return (
-    <FormControlLabel
+    <TextField
+      {...rest}
       ref={refs}
-      control={
-        <Checkbox
-          data-testid={testId}
-          {...rest}
-          onChange={onChange}
-          name={name}
-          inputProps={restInput}
-          checked={checked}
-          color="primary"
-        />
-      }
-      label={label}
+      fullWidth
+      variant="filled"
+      onChange={onChange}
+      name={name}
+      value={value}
+      helperText={hasError ? meta.error : helperText}
+      error={hasError}
+      type="number"
     />
   );
 };
 
-BooleanDef.propTypes = {
+Double.propTypes = {
   input: PropTypes.shape({
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
-    checked: PropTypes.bool,
     value: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
-      PropTypes.bool,
+      PropTypes.object,
     ]).isRequired,
   }).isRequired,
   meta: PropTypes.shape({
+    dirty: PropTypes.bool,
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  }).isRequired,
-  label: PropTypes.string,
-  helperText: PropTypes.string,
-  testId: PropTypes.string,
+  }),
+  width: PropTypes.string,
+  helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  errorMessage: PropTypes.string,
   refs: PropTypes.object,
 };
 
-export default BooleanDef;
+export default Double;

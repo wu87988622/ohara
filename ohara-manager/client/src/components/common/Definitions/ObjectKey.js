@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
@@ -22,10 +23,11 @@ const ObjectKey = props => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},
-    width = '100%',
     helperText,
+    label,
+    refs,
     ...rest
-  } = props;
+  } = omit(props, ['tableKeys']);
 
   const hasError =
     (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
@@ -34,12 +36,14 @@ const ObjectKey = props => {
     <>
       <TextField
         {...rest}
+        ref={refs}
         variant="filled"
         onChange={onChange}
-        name={name}
+        name={name + 'Name'}
         InputProps={restInput}
         value={value}
-        width={width}
+        fullWidth
+        label={label + ' (name)'}
         helperText={hasError ? meta.error : helperText}
         error={hasError}
       />
@@ -47,10 +51,11 @@ const ObjectKey = props => {
         {...rest}
         variant="filled"
         onChange={onChange}
-        name={name}
+        name={name + 'Group'}
         InputProps={restInput}
         value={value}
-        width={width}
+        fullWidth
+        label={label + ' (group)'}
         helperText={hasError ? meta.error : helperText}
         error={hasError}
       />
@@ -76,6 +81,8 @@ ObjectKey.propTypes = {
   width: PropTypes.string,
   helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   errorMessage: PropTypes.string,
+  label: PropTypes.string,
+  refs: PropTypes.object,
 };
 
 export default ObjectKey;

@@ -15,37 +15,84 @@
  */
 
 import React from 'react';
+import { omit } from 'lodash';
+import PropTypes from 'prop-types';
 import Chip from '@material-ui/core/Chip';
+import styled, { css } from 'styled-components';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-const ArrayDef = () => {
+const SttledAutocomplete = styled(Autocomplete)(
+  () => css`
+    .MuiFilledInput-root {
+      background-color: Transparent;
+    }
+  `,
+);
+
+const ArrayDef = props => {
+  const {
+    input: { name, onChange, value: formValue = [] },
+    meta = {},
+    helperText,
+    refs,
+    ...rest
+  } = omit(props, ['tableKeys']);
+
+  const hasError =
+    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+
   return (
-    <Autocomplete
+    <SttledAutocomplete
+      ref={refs}
       multiple
+      id="tags-filled"
       freeSolo
-      renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Chip
-            variant="outlined"
-            size="small"
-            label={option}
-            {...getTagProps({ index })}
+      renderTags={(value, getTagProps) => {
+        onChange(value);
+        return [...formValue, value].map((option, index) => (
+          <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+        ));
+      }}
+      renderInput={params => {
+        return (
+          <TextField
+            {...params}
+            {...rest}
+            placeholder={'Please press enter to add'}
+            fullWidth
+            variant="filled"
+            name={name}
+            helperText={hasError ? meta.error : helperText}
+            error={hasError}
+            type="text"
           />
-        ))
-      }
-      renderInput={params => (
-        <TextField
-          {...params}
-          variant="filled"
-          label="freeSolo"
-          placeholder="Favorites"
-          margin="normal"
-          fullWidth
-        />
-      )}
+        );
+      }}
     />
   );
+};
+
+ArrayDef.propTypes = {
+  input: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
+    value: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+      PropTypes.object,
+      PropTypes.array,
+    ]).isRequired,
+  }).isRequired,
+  meta: PropTypes.shape({
+    dirty: PropTypes.bool,
+    touched: PropTypes.bool,
+    error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  }),
+  width: PropTypes.string,
+  helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  errorMessage: PropTypes.string,
+  refs: PropTypes.object,
 };
 
 export default ArrayDef;

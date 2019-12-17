@@ -15,9 +15,12 @@
  */
 
 import React, { useRef } from 'react';
+import { capitalize } from 'lodash';
 import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
-import RednerDefinition from './RenderDefinition';
+import Typography from '@material-ui/core/Typography';
+
+import RednerDefinition from 'components/common/Definitions/RenderDefinition';
 
 const RenderDefinitions = props => {
   const {
@@ -41,19 +44,27 @@ const RenderDefinitions = props => {
       render={({ handleSubmit, form }) => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>
-            {displayDefinitions
-              .filter(def => def.key !== 'group')
-              .map(def => {
-                const { definitionField, ref } = RednerDefinition({
-                  def,
-                  topics,
-                  files,
-                });
+            {displayDefinitions.map(defs => {
+              const title = defs[0].group;
+              return (
+                <>
+                  <Typography variant="h4">{capitalize(title)}</Typography>
+                  {defs
+                    .filter(def => def.key !== 'group')
+                    .map(def => {
+                      const { definitionField, ref } = RednerDefinition({
+                        def,
+                        topics,
+                        files,
+                      });
 
-                refs[def.key] = ref;
+                      refs[def.key] = ref;
 
-                return definitionField;
-              })}
+                      return definitionField;
+                    })}
+                </>
+              );
+            })}
           </form>
         );
       }}

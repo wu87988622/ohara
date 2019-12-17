@@ -69,75 +69,98 @@ const typeConverter = key => {
 };
 
 const Table = props => {
-  const { displayName, tableKeys } = props;
+  const {
+    input: { name, onChange, value = [] },
+    displayName,
+    tableKeys,
+    refs,
+  } = props;
   const [state, setState] = React.useState({
     columns: tableKeys.map(tableKey => {
       return {
         title: tableKey.name,
         field: tableKey.name,
-        type: typeConverter(tableKey.string),
+        type: typeConverter(tableKey.type),
         ...(tableKey.recommendedValues.length > 0 && {
           lookup: { ...tableKey.recommendedValues },
         }),
       };
     }),
-    data: [],
+    data: [...value],
   });
 
+  //have some warnings in console when simply using the tabl, waiting for the fix https://github.com/mbrn/material-table/issues/1293
   return (
-    <MaterialTable
-      options={{
-        paging: false,
-        draggable: false,
-      }}
-      icons={tableIcons}
-      title={displayName}
-      columns={state.columns}
-      data={state.data}
-      editable={{
-        onRowAdd: newData =>
-          new Promise(resolve => {
-            setTimeout(() => {
-              resolve();
-              setState(prevState => {
-                const data = [...prevState.data];
-                data.push(newData);
-                return { ...prevState, data };
-              });
-            }, 600);
-          }),
-        onRowUpdate: (newData, oldData) =>
-          new Promise(resolve => {
-            setTimeout(() => {
-              resolve();
-              if (oldData) {
+    <div ref={refs}>
+      <MaterialTable
+        options={{
+          paging: false,
+          draggable: false,
+        }}
+        name={name}
+        icons={tableIcons}
+        title={displayName}
+        columns={state.columns}
+        data={state.data}
+        editable={{
+          onRowAdd: newData =>
+            new Promise(resolve => {
+              setTimeout(() => {
+                resolve();
                 setState(prevState => {
                   const data = [...prevState.data];
-                  data[data.indexOf(oldData)] = newData;
+                  data.push(newData);
+                  onChange(data);
                   return { ...prevState, data };
                 });
-              }
-            }, 600);
-          }),
-        onRowDelete: oldData =>
-          new Promise(resolve => {
-            setTimeout(() => {
-              resolve();
-              setState(prevState => {
-                const data = [...prevState.data];
-                data.splice(data.indexOf(oldData), 1);
-                return { ...prevState, data };
-              });
-            }, 600);
-          }),
-      }}
-    />
+              }, 600);
+            }),
+          onRowUpdate: (newData, oldData) =>
+            new Promise(resolve => {
+              setTimeout(() => {
+                resolve();
+                if (oldData) {
+                  setState(prevState => {
+                    const data = [...prevState.data];
+                    data[data.indexOf(oldData)] = newData;
+                    onChange(data);
+                    return { ...prevState, data };
+                  });
+                }
+              }, 600);
+            }),
+          onRowDelete: oldData =>
+            new Promise(resolve => {
+              setTimeout(() => {
+                resolve();
+                setState(prevState => {
+                  const data = [...prevState.data];
+                  data.splice(data.indexOf(oldData), 1);
+                  onChange(data);
+                  return { ...prevState, data };
+                });
+              }, 600);
+            }),
+        }}
+      />
+    </div>
   );
 };
 
 Table.propTypes = {
+  input: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
+    value: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+      PropTypes.object,
+      PropTypes.array,
+    ]).isRequired,
+  }).isRequired,
   displayName: PropTypes.string,
   tableKeys: PropTypes.array,
+  refs: PropTypes.object,
 };
 
 export default Table;
