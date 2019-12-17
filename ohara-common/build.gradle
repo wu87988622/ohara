@@ -109,12 +109,15 @@ task initializer {
     if(project.hasProperty("ohara.version")) version = project.getProperty("ohara.version")
     def file = new File("$projectDir" + "/src/main/java/com/island/ohara/common/util/VersionUtils.java")
     if (file.exists()) file.delete()
+    // the date is not idempotent so we have to store it.
+    // Otherwise, the value of date will be different in different usage.
+    String dateString = date()
     String versionJson = versionInJson(
       version.toString(),
       revision(),
       project.branch.toString(),
       user(),
-      date()
+      dateString
     )
     String code = """package com.island.ohara.common.util;
 // DON'T touch this file!!! It is generated dynamically. see ohara-common/build.gradle
@@ -123,7 +126,7 @@ public final class VersionUtils {
   public static final String BRANCH = \"${project.branch}\";
   public static final String USER = \"${user()}\";
   public static final String REVISION = \"${revision()}\";
-  public static final String DATE = \"${date()}\";
+  public static final String DATE = \"${dateString}\";
 
   public static String jsonString() {
     return \"${versionJson.replaceAll("\"", "\\\\\"")}\";
