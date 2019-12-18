@@ -104,7 +104,6 @@ export const getDefinition = params => {
       });
     definitionsObj[obj.key] = obj;
   });
-  console.log(definitionsObj);
   return definitionsObj;
 };
 
