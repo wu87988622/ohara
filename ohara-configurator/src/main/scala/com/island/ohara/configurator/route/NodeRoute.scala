@@ -101,7 +101,13 @@ object NodeRoute {
       .map(
         rs =>
           nodes.map { node =>
-            node.copy(resources = rs.getOrElse(node.hostname, Seq.empty))
+            node.copy(
+              resources = rs.getOrElse(
+                node.hostname,
+                // Both cpu and memory are required by UI so we fake both ...
+                Seq(Resource.cpu(0, None), Resource.memory(0, None))
+              )
+            )
           }
       )
 

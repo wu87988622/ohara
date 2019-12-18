@@ -319,10 +319,16 @@ class TestNodeApi extends OharaTest {
   def testCoreResource(): Unit = Resource.cpu(1, None).unit shouldBe "core"
 
   @Test
-  def testSmallMemoryResource(): Unit = Resource.memory(1024, None).unit shouldBe "bytes"
+  def testMemoryResourceInBytes(): Unit = Resource.memory(1024 - 1, None).unit shouldBe "bytes"
 
   @Test
-  def testLargeMemoryResource(): Unit = Resource.memory(Long.MaxValue, None).unit shouldBe "MB"
+  def testMemoryResourceInKB(): Unit = Resource.memory(1024 * 1024 - 1, None).unit shouldBe "KB"
+
+  @Test
+  def testMemoryResourceInMB(): Unit = Resource.memory(1024 * 1024 * 1024 - 1, None).unit shouldBe "MB"
+
+  @Test
+  def testMemoryResourceInGB(): Unit = Resource.memory(1024 * 1024 * 1024, None).unit shouldBe "GB"
 
   @Test
   def testNodeSetter(): Unit = NodeApi.access.request.node(Node(CommonUtils.randomString(10)))

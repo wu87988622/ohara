@@ -338,7 +338,7 @@ class TestK8SClient extends OharaTest {
       node1Resource(0).used.get > 0.04 shouldBe true
 
       node1Resource(1).name shouldBe "Memory"
-      node1Resource(1).unit shouldBe "MB"
+      node1Resource(1).unit shouldBe "GB"
       node1Resource(1).used.get > 0.08 shouldBe true
     } finally s.close()
   }

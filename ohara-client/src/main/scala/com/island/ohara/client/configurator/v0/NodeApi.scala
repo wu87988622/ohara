@@ -102,18 +102,32 @@ object NodeApi {
       * @return memory resource
       */
     def memory(bytes: Long, used: Option[Double]): Resource =
-      if (bytes < 1024 * 1024)
+      if (bytes < 1024)
         Resource(
           name = "Memory",
           value = bytes,
           unit = "bytes",
           used = used
         )
+      else if (bytes < 1024 * 1024)
+        Resource(
+          name = "Memory",
+          value = bytes / 1024f,
+          unit = "KB",
+          used = used
+        )
+      else if (bytes < 1024 * 1024 * 1024)
+        Resource(
+          name = "Memory",
+          value = bytes / 1024f / 1024f,
+          unit = "MB",
+          used = used
+        )
       else
         Resource(
           name = "Memory",
-          value = (bytes / 1024).toDouble / 1024f,
-          unit = "MB",
+          value = bytes / 1024f / 1024f / 1024f,
+          unit = "GB",
           used = used
         )
   }
