@@ -41,19 +41,17 @@ const RenderDefinitions = props => {
       render={({ handleSubmit, form }) => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>
-            {displayDefinitions
-              .filter(def => def.key !== 'group')
-              .map(def => {
-                const { definitionField, ref } = RenderDefinition({
-                  def,
-                  topics,
-                  files,
-                });
+            {displayDefinitions.map(def => {
+              const { definitionField, ref } = RenderDefinition({
+                def,
+                topics,
+                files,
+              });
 
-                refs[def.key] = ref;
+              refs[def.key] = ref;
 
-                return definitionField;
-              })}
+              return definitionField;
+            })}
           </form>
         );
       }}

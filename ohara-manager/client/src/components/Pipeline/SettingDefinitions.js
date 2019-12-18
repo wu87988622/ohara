@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import React, { useRef } from 'react';
+import React, { useRef, Fragment } from 'react';
 import { capitalize } from 'lodash';
 import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
 import Typography from '@material-ui/core/Typography';
 
 import RenderDefinition from 'components/common/Definitions/RenderDefinition';
+import { EDITABLE } from 'components/common/Definitions/Permission';
 
 const RenderDefinitions = props => {
   const {
@@ -47,27 +48,26 @@ const RenderDefinitions = props => {
             {displayDefinitions.map(defs => {
               const title = defs[0].group;
               return (
-                <>
+                <Fragment key={title}>
                   <Typography variant="h4">{capitalize(title)}</Typography>
-                  {defs
-                    .filter(def => def.key !== 'group')
-                    .map(def => {
-                      const ref = React.createRef();
-                      const {
-                        definitionField,
-                        ref: currentRef,
-                      } = RenderDefinition({
-                        def,
-                        topics,
-                        files,
-                        ref,
-                      });
+                  {defs.map(def => {
+                    const ref = React.createRef();
+                    const {
+                      definitionField,
+                      ref: currentRef,
+                    } = RenderDefinition({
+                      def,
+                      topics,
+                      files,
+                      ref,
+                      defType: EDITABLE,
+                    });
 
-                      refs[def.key] = currentRef;
+                    refs[def.key] = currentRef;
 
-                      return definitionField;
-                    })}
-                </>
+                    return definitionField;
+                  })}
+                </Fragment>
               );
             })}
           </form>

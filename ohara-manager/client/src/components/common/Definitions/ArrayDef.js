@@ -32,7 +32,7 @@ const SttledAutocomplete = styled(Autocomplete)(
 
 const ArrayDef = props => {
   const {
-    input: { name, onChange, value: formValue = [] },
+    input: { name, onChange, value: formValue = [], ...restInput },
     meta = {},
     helperText,
     refs,
@@ -58,6 +58,7 @@ const ArrayDef = props => {
           <TextField
             {...params}
             {...rest}
+            InputProps={restInput}
             placeholder={'Please press enter to add'}
             fullWidth
             variant="filled"

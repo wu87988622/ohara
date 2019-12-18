@@ -85,14 +85,26 @@ export const getDefinition = params => {
     const obj = definition;
     const keys = Object.keys(obj);
     keys
-      .filter(key => key === 'key')
+      .filter(key => key === 'key' || key === 'group')
       .forEach(key => {
-        if (obj[key].indexOf('.') !== -1) {
-          obj[key] = obj[key].replace(/\./g, '__');
+        switch (key) {
+          case 'key':
+            if (obj[key].indexOf('.') !== -1) {
+              obj[key] = obj[key].replace(/\./g, '__');
+            }
+            break;
+
+          case 'group':
+            obj.internal = true;
+            break;
+
+          default:
+            break;
         }
       });
     definitionsObj[obj.key] = obj;
   });
+  console.log(definitionsObj);
   return definitionsObj;
 };
 

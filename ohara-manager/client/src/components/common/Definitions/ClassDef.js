@@ -21,7 +21,7 @@ import TextField from '@material-ui/core/TextField';
 
 const ClassDef = props => {
   const {
-    input: { name, onChange, value },
+    input: { name, onChange, value, ...restInput },
     meta = {},
     helperText,
     refs,
@@ -35,6 +35,7 @@ const ClassDef = props => {
       {...rest}
       ref={refs}
       fullWidth
+      InputProps={restInput}
       variant="filled"
       onChange={onChange}
       name={name}

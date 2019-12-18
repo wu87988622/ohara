@@ -21,19 +21,19 @@ import TextField from '@material-ui/core/TextField';
 
 const Tags = props => {
   const {
-    input: { name, onChange, value },
+    input: { name, onChange, value, ...restInput },
     meta = {},
     helperText,
     refs,
     ...rest
   } = omit(props, ['tableKeys']);
 
-  const hasError =
-    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <TextField
       {...rest}
+      InputProps={restInput}
       ref={refs}
       fullWidth
       variant="outlined"

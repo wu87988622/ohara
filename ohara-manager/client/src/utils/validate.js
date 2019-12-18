@@ -44,5 +44,34 @@ export const maxNumber = max => value => {
   return value <= max ? undefined : `The value must be less than ${max}`;
 };
 
+export const validWithRegex = regex => value => {
+  return regex.test(value)
+    ? 'The value does not meet the rules' + regex
+    : undefined;
+};
+
 export const composeValidators = (...validators) => value =>
   validators.reduce((error, validator) => error || validator(value), undefined);
+
+export const validWithDef = def => value => {
+  const { necessary, regex, blacklist } = def;
+  if (necessary === 'REQUIRED') {
+    const requiredValue = required(value);
+    if (requiredValue) {
+      return requiredValue;
+    }
+  }
+  if (blacklist.length > 0) {
+    if (blacklist.find(black => black === value)) {
+      return 'This value is in the blacklist';
+    }
+  }
+  if (regex) {
+    const regex = validWithRegex(def.regex);
+    const regexValue = regex(value);
+    if (regexValue) {
+      return regexValue;
+    }
+  }
+  return undefined;
+};

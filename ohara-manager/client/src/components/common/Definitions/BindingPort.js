@@ -22,7 +22,7 @@ import TextField from '@material-ui/core/TextField';
 
 const BindingPort = props => {
   const {
-    input: { name, onChange, value },
+    input: { name, onChange, value, ...restInput },
     meta = {},
     helperText,
     disables = [],
@@ -41,6 +41,7 @@ const BindingPort = props => {
     <TextField
       {...rest}
       ref={refs}
+      InputProps={restInput}
       fullWidth
       variant="filled"
       onChange={onChange}

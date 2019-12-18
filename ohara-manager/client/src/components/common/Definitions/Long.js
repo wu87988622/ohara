@@ -20,19 +20,18 @@ import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
 const Long = props => {
-  const {
-    input: { name, onChange, value },
-    meta = {},
-    helperText,
-    refs,
-    ...rest
-  } = omit(props, ['tableKeys']);
+  const { input, meta = {}, helperText, refs, ...rest } = omit(props, [
+    'tableKeys',
+  ]);
+
+  const { name, onChange, value, ...restInput } = omit(input, ['type']);
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <TextField
       {...rest}
+      InputProps={restInput}
       ref={refs}
       fullWidth
       variant="filled"
