@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.AdvertisedInfo
 import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.DataStore
@@ -33,64 +34,55 @@ object NodeRoute {
 
   private[this] def updateServices(
     nodes: Seq[Node]
-  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
+  )(
+    implicit advertisedInfo: AdvertisedInfo,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): Future[Seq[Node]] =
     serviceCollie
       .clusters()
-      .flatMap(
-        clusters =>
-          serviceCollie.configuratorContainerName().map(clusters -> Some(_)).recover {
-            case e: NoSuchElementException =>
-              LOG.debug("failed to get the configurator information", e)
-              clusters -> None
-          }
-      )
-      .map {
-        case (clusters, configuratorContainerOption) =>
-          nodes.map { node =>
-            node.copy(
-              services = Seq(
-                NodeService(
-                  name = NodeApi.ZOOKEEPER_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.kind == ClusterStatus.Kind.ZOOKEEPER)
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                ),
-                NodeService(
-                  name = NodeApi.BROKER_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.kind == ClusterStatus.Kind.BROKER)
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                ),
-                NodeService(
-                  name = NodeApi.WORKER_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.kind == ClusterStatus.Kind.WORKER)
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                ),
-                NodeService(
-                  name = NodeApi.STREAM_SERVICE_NAME,
-                  clusterKeys = clusters
-                    .filter(_.kind == ClusterStatus.Kind.STREAM)
-                    .filter(_.aliveNodes.contains(node.name))
-                    .map(_.key)
-                )
-              ) ++ configuratorContainerOption
-                .filter(_.nodeName == node.hostname)
-                .map(
-                  container =>
+      .map { clusters =>
+        nodes.map { node =>
+          node.copy(
+            services = Seq(
+              NodeService(
+                name = NodeApi.ZOOKEEPER_SERVICE_NAME,
+                clusterKeys = clusters
+                  .filter(_.kind == ClusterStatus.Kind.ZOOKEEPER)
+                  .filter(_.aliveNodes.contains(node.name))
+                  .map(_.key)
+              ),
+              NodeService(
+                name = NodeApi.BROKER_SERVICE_NAME,
+                clusterKeys = clusters
+                  .filter(_.kind == ClusterStatus.Kind.BROKER)
+                  .filter(_.aliveNodes.contains(node.name))
+                  .map(_.key)
+              ),
+              NodeService(
+                name = NodeApi.WORKER_SERVICE_NAME,
+                clusterKeys = clusters
+                  .filter(_.kind == ClusterStatus.Kind.WORKER)
+                  .filter(_.aliveNodes.contains(node.name))
+                  .map(_.key)
+              ),
+              NodeService(
+                name = NodeApi.STREAM_SERVICE_NAME,
+                clusterKeys = clusters
+                  .filter(_.kind == ClusterStatus.Kind.STREAM)
+                  .filter(_.aliveNodes.contains(node.name))
+                  .map(_.key)
+              )
+            ) ++ (if (advertisedInfo.hostname == node.hostname)
                     Seq(
                       NodeService(
                         name = NodeApi.CONFIGURATOR_SERVICE_NAME,
-                        clusterKeys = Seq(ObjectKey.of("N/A", container.name))
+                        clusterKeys = Seq(ObjectKey.of("N/A", CommonUtils.hostname()))
                       )
                     )
-                )
-                .getOrElse(Seq.empty)
-            )
-          }
+                  else Seq.empty)
+          )
+        }
       }
       .recover {
         case e: Throwable =>
@@ -138,27 +130,44 @@ object NodeRoute {
 
   private[this] def updateRuntimeInfo(
     node: Node
-  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Node] =
+  )(
+    implicit
+    advertisedInfo: AdvertisedInfo,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): Future[Node] =
     updateRuntimeInfo(Seq(node)).map(_.head)
 
   private[this] def updateRuntimeInfo(
     nodes: Seq[Node]
-  )(implicit serviceCollie: ServiceCollie, executionContext: ExecutionContext): Future[Seq[Node]] =
+  )(
+    implicit
+    advertisedInfo: AdvertisedInfo,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): Future[Seq[Node]] =
     updateServices(nodes).flatMap(updateResources).flatMap(verify)
 
   private[this] def hookOfGet(
     implicit serviceCollie: ServiceCollie,
+    advertisedInfo: AdvertisedInfo,
     executionContext: ExecutionContext
   ): HookOfGet[Node] = updateRuntimeInfo
 
   private[this] def hookOfList(
     implicit serviceCollie: ServiceCollie,
+    advertisedInfo: AdvertisedInfo,
     executionContext: ExecutionContext
   ): HookOfList[Node] = updateRuntimeInfo
 
   private[this] def creationToNode(
     creation: Creation
-  )(implicit executionContext: ExecutionContext, serviceCollie: ServiceCollie): Future[Node] =
+  )(
+    implicit
+    advertisedInfo: AdvertisedInfo,
+    executionContext: ExecutionContext,
+    serviceCollie: ServiceCollie
+  ): Future[Node] =
     updateRuntimeInfo(
       Node(
         hostname = creation.hostname,
@@ -175,7 +184,9 @@ object NodeRoute {
     )
 
   private[this] def hookOfCreation(
-    implicit executionContext: ExecutionContext,
+    implicit
+    advertisedInfo: AdvertisedInfo,
+    executionContext: ExecutionContext,
     serviceCollie: ServiceCollie
   ): HookOfCreation[Creation, Node] = creationToNode(_)
 
@@ -186,7 +197,9 @@ object NodeRoute {
   }
 
   private[this] def hookOfUpdating(
-    implicit objectChecker: ObjectChecker,
+    implicit
+    advertisedInfo: AdvertisedInfo,
+    objectChecker: ObjectChecker,
     executionContext: ExecutionContext,
     serviceCollie: ServiceCollie
   ): HookOfUpdating[Updating, Node] =
@@ -268,6 +281,7 @@ object NodeRoute {
 
   def apply(
     implicit store: DataStore,
+    advertisedInfo: AdvertisedInfo,
     objectChecker: ObjectChecker,
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext

@@ -66,6 +66,8 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     "folder",
     "fake"
   ]
+  // generate the log files
+  jvmArgs = ["-Dlog4j.configuration=file:../conf/log4j.properties"]
   args = keywords.stream()
     .filter {
       word -> project.hasProperty(word)

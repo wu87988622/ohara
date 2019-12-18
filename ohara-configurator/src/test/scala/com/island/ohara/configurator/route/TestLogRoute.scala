@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.route
 
+import java.text.SimpleDateFormat
+
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
@@ -110,6 +112,33 @@ class TestLogRoute extends OharaTest {
     */
   @Test
   def fetchLogFromConfigurator(): Unit = result(logApi.log4Configurator())
+
+  @Test
+  def testSinceSeconds(): Unit = {
+    val df           = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS")
+    val minTime      = df.parse("2019-12-17 03:20:00,339").getTime
+    val weirdString0 = CommonUtils.randomString()
+    val weirdString1 = CommonUtils.randomString()
+    val strings: Iterator[String] = new Iterator[String] {
+      private[this] val lines = Seq(
+        "2019-12-17 03:20:00,337 INFO  [main] configurator.Configurator$(391): start a configurator built on hostname:node00 and port:12345",
+        weirdString0,
+        "2019-12-17 03:20:00,339 INFO  [main] configurator.Configurator$(393): enter ctrl+c to terminate the configurator",
+        weirdString1,
+        "2019-12-17 03:20:38,352 INFO  [main] configurator.Configurator$(397): Current data size:0"
+      )
+      private[this] var index       = 0
+      override def hasNext: Boolean = index < lines.size
+      override def next(): String =
+        try lines(index)
+        finally index += 1
+    }
+    val result = LogRoute.seekLogByTimestamp(strings, minTime)
+    result should not include ("configurator.Configurator$(391)")
+    result should not include (weirdString0)
+    result should include(weirdString1)
+    result should include("configurator.Configurator$(397)")
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

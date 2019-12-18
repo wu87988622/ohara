@@ -32,7 +32,6 @@ class TestQueryConfiguratorLog extends WithRemoteConfigurator {
   @Test
   def test(): Unit = {
     val log = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator())
-    log.clusterKey.name() shouldBe configuratorContainerName
     log.logs.size shouldBe 1
     log.logs.head.hostname shouldBe configuratorHostname
     log.logs.head.value.length should not be 0

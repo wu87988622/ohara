@@ -33,6 +33,7 @@ import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, OharaJsonFormat}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.AdvertisedInfo
 import com.island.ohara.configurator.route.hook.{HookBeforeDelete, HookOfUpdating}
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
@@ -143,14 +144,20 @@ private[configurator] object FileInfoRoute {
   }
 
   private[this] def customPost(
-    hostname: String,
-    port: Int,
-    version: String
-  )(implicit store: DataStore, serviceCollie: ServiceCollie, executionContext: ExecutionContext): () => Route =
+    implicit store: DataStore,
+    advertisedInfo: AdvertisedInfo,
+    serviceCollie: ServiceCollie,
+    executionContext: ExecutionContext
+  ): () => Route =
     () =>
       routeOfUploadingFile(
         urlMaker = key =>
-          Some(new URL(s"http://$hostname:$port/$version/$DOWNLOAD_FILE_PREFIX_PATH/${key.group()}/${key.name()}")),
+          Some(
+            new URL(
+              s"http://${advertisedInfo.hostname}:${advertisedInfo.port}/${advertisedInfo.version}/$DOWNLOAD_FILE_PREFIX_PATH/${key
+                .group()}/${key.name()}"
+            )
+          ),
         storeOption = Some(store)
       )
 
@@ -190,18 +197,16 @@ private[configurator] object FileInfoRoute {
     })
     .refine
 
-  /**
-    * @param version the version is a part of generated URL. This is important stuff since we may reject the deprecated URL in the future.
-    */
-  def apply(hostname: String, port: Int, version: String)(
+  def apply(
     implicit store: DataStore,
+    advertisedInfo: AdvertisedInfo,
     serviceCollie: ServiceCollie,
     objectChecker: ObjectChecker,
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[FakeCreation, Updating, FileInfo]()
       .root(FILE_PREFIX_PATH)
-      .customPost(customPost(hostname, port, version))
+      .customPost(customPost)
       .hookOfUpdating(hookOfUpdating)
       .hookBeforeDelete(hookBeforeDelete)
       .build() ~ routeToDownload

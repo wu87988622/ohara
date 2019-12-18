@@ -245,6 +245,12 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
     */
   private[this] val version = com.island.ohara.client.configurator.v0.V0
 
+  private[this] implicit val advertisedInfo: AdvertisedInfo = new AdvertisedInfo(
+    hostname = hostname,
+    port = port,
+    version = version
+  )
+
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
@@ -262,7 +268,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         ZookeeperRoute.apply,
         BrokerRoute.apply,
         WorkerRoute.apply,
-        FileInfoRoute.apply(hostname, port, version),
+        FileInfoRoute.apply,
         LogRoute.apply,
         ObjectRoute.apply,
         ContainerRoute.apply

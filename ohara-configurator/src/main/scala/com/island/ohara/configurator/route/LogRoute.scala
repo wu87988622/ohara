@@ -16,6 +16,11 @@
 
 package com.island.ohara.configurator.route
 
+import java.io.{BufferedReader, File, FileInputStream, InputStreamReader}
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.text.SimpleDateFormat
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
@@ -26,8 +31,11 @@ import com.island.ohara.client.configurator.v0.LogApi._
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -50,30 +58,66 @@ object LogRoute {
         )
     })
 
+  private[this] def seekLogByTimestamp(file: File, sinceSecondsOption: Option[Long]): String =
+    sinceSecondsOption match {
+      case None => new String(Files.readAllBytes(file.toPath), Charset.forName("UTF-8"))
+      case Some(sinceSeconds) =>
+        val fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8")))
+        try {
+          seekLogByTimestamp(
+            new Iterator[String] {
+              private[this] var line: String = fileReader.readLine()
+              override def hasNext: Boolean  = line != null
+              override def next(): String =
+                try line
+                finally line = fileReader.readLine()
+            },
+            CommonUtils.current() - sinceSeconds
+          )
+        } finally Releasable.close(fileReader)
+    }
+
+  @VisibleForTesting
+  private[route] def seekLogByTimestamp(strings: Iterator[String], minTime: Long): String = {
+    val df   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS")
+    val buf  = mutable.ArrayBuffer[String]()
+    var pass = false
+    // 2019-12-17 03:20:30,350
+    while (strings.hasNext) {
+      val line = strings.next()
+      if (pass) buf += line
+      else
+        try {
+          val items = line.split(" ")
+          if (items.size >= 2 && df.parse(s"${items(0)} ${items(1)}").getTime >= minTime) pass = true
+        } catch {
+          case _: Throwable =>
+          // just skip this incorrect log message
+        }
+    }
+    buf.mkString("\n")
+  }
+
   def apply(implicit collie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LOG_PREFIX_PATH) {
       path(CONFIGURATOR_PREFIX_PATH) {
         parameters(SINCE_SECONDS_KEY.as[Long] ?) { sinceSeconds =>
+          // the log folder is kept by ../conf/log4j.properties
+          val folder   = new File("../logs")
+          val logFiles = folder.listFiles()
           complete(
-            collie
-              .configuratorContainerName()
-              .map(_.name)
-              .flatMap(name => collie.log(name, sinceSeconds))
-              .map {
-                case (containerName, log) =>
-                  ClusterLog(
-                    clusterKey = ObjectKey.of("N/A", containerName.name),
-                    logs = Seq(NodeLog(hostname = containerName.nodeName, value = log))
-                  )
-              }
-              .recover {
-                // the configurator may be not accessible to us so we convert the error to log.
-                case e: Throwable =>
-                  ClusterLog(
-                    clusterKey = ObjectKey.of("N/A", "unknown"),
-                    logs = Seq(NodeLog(hostname = "unknown", value = e.getMessage))
-                  )
-              }
+            ClusterLog(
+              clusterKey = ObjectKey.of("N/A", CommonUtils.hostname()),
+              logs =
+                if (logFiles == null || logFiles.isEmpty) Seq.empty
+                else
+                  logFiles.filter(_.getName.endsWith(".log")).map { file =>
+                    NodeLog(
+                      CommonUtils.hostname(),
+                      seekLogByTimestamp(file, sinceSeconds)
+                    )
+                  }
+            )
           )
         }
       } ~ path(ZOOKEEPER_PREFIX_PATH / Segment) { clusterName =>
