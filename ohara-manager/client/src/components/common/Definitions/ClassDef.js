@@ -28,8 +28,7 @@ const ClassDef = props => {
     ...rest
   } = omit(props, ['tableKeys']);
 
-  const hasError =
-    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <TextField

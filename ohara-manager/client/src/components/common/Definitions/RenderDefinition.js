@@ -40,9 +40,7 @@ import PositiveLong from './PositiveLong';
 import PositiveShort from './PositiveShort';
 
 const RenderDefinition = props => {
-  const { def, topics, files } = props;
-
-  const ref = React.createRef();
+  const { def, topics, files, ref = {} } = props;
 
   const RenderField = params => {
     const {

@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
 import Typography from '@material-ui/core/Typography';
 
-import RednerDefinition from 'components/common/Definitions/RenderDefinition';
+import RenderDefinition from 'components/common/Definitions/RenderDefinition';
 
 const RenderDefinitions = props => {
   const {
@@ -52,13 +52,18 @@ const RenderDefinitions = props => {
                   {defs
                     .filter(def => def.key !== 'group')
                     .map(def => {
-                      const { definitionField, ref } = RednerDefinition({
+                      const ref = React.createRef();
+                      const {
+                        definitionField,
+                        ref: currentRef,
+                      } = RenderDefinition({
                         def,
                         topics,
                         files,
+                        ref,
                       });
 
-                      refs[def.key] = ref;
+                      refs[def.key] = currentRef;
 
                       return definitionField;
                     })}

@@ -17,7 +17,7 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
-import RednerDefinition from './RenderDefinition';
+import RenderDefinition from './RenderDefinition';
 
 const RenderDefinitions = props => {
   const {
@@ -44,7 +44,7 @@ const RenderDefinitions = props => {
             {displayDefinitions
               .filter(def => def.key !== 'group')
               .map(def => {
-                const { definitionField, ref } = RednerDefinition({
+                const { definitionField, ref } = RenderDefinition({
                   def,
                   topics,
                   files,

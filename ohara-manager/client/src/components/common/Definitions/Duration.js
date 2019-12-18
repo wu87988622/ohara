@@ -40,8 +40,7 @@ const Duration = props => {
 
   const _value = value.split(' ')[0] / 1000;
 
-  const hasError =
-    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <StyledTextField

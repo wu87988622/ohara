@@ -216,10 +216,12 @@ const SettingDialog = props => {
     if (selected) {
       //in react useEffect componentDidUpdate default event is scrollToTop,so we need setTimeout wait to scroll.
       setTimeout(() => {
-        refs[selected].current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
+        if (refs[selected]) {
+          refs[selected].current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }
       }, 100);
     }
   });

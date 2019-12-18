@@ -35,8 +35,7 @@ const BindingPort = props => {
   const _list = [placeholder, ...list];
   const _value = value ? value : placeholder;
 
-  const hasError =
-    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <TextField
