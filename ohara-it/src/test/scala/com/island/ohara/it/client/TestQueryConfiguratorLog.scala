@@ -33,7 +33,7 @@ class TestQueryConfiguratorLog extends WithRemoteConfigurator {
   def test(): Unit = {
     val log = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator())
     log.logs.size shouldBe 1
-    log.logs.head.hostname shouldBe configuratorHostname
+    log.logs.head.hostname.length should not be 0
     log.logs.head.value.length should not be 0
 
     val logOf1Second = result(LogApi.access.hostname(configuratorHostname).port(configuratorPort).log4Configurator(1)).logs.head.value
