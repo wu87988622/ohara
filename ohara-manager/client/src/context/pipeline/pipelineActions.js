@@ -15,9 +15,13 @@
  */
 
 import * as pipelineApi from 'api/pipelineApi';
-import { fetchPipelinesRoutine, addPipelineRoutine } from './pipelineRoutines';
+import {
+  fetchPipelinesRoutine,
+  addPipelineRoutine,
+  setCurrentPipelineRoutine,
+} from './pipelineRoutines';
 
-const createFetchPipelines = (
+export const createFetchPipelines = (
   state,
   dispatch,
   showMessage,
@@ -36,7 +40,11 @@ const createFetchPipelines = (
   dispatch(fetchPipelinesRoutine.success(pipelines.data));
 };
 
-const createAddPipeline = (state, dispatch, showMessage) => async values => {
+export const createAddPipeline = (
+  state,
+  dispatch,
+  showMessage,
+) => async values => {
   if (state.isFetching) return;
 
   dispatch(addPipelineRoutine.request());
@@ -52,4 +60,6 @@ const createAddPipeline = (state, dispatch, showMessage) => async values => {
   showMessage(pipeline.title);
 };
 
-export { createFetchPipelines, createAddPipeline };
+export const CreateSetCurrentPipeline = dispatch => pipelineName => {
+  dispatch(setCurrentPipelineRoutine.trigger(pipelineName));
+};

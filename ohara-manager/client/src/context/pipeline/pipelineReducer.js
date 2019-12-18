@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+import { sortBy } from 'lodash';
+
 import {
   initializeRoutine,
   fetchPipelinesRoutine,
   addPipelineRoutine,
+  setCurrentPipelineRoutine,
 } from './pipelineRoutines';
-import { sortBy } from 'lodash';
 
 const sort = pipelines => sortBy(pipelines, 'name');
 
 const initialState = {
   data: [],
+  currentPipeline: null,
   isFetching: false,
   lastUpdated: null,
   error: null,
@@ -57,6 +60,12 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         error: action.payload || true,
+      };
+    case setCurrentPipelineRoutine.TRIGGER:
+      return {
+        ...state,
+        currentPipeline:
+          state.data.find(data => data.name === action.payload) || null,
       };
     case initializeRoutine.TRIGGER:
       return initialState;

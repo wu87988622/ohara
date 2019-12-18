@@ -259,7 +259,7 @@ const WorkspaceQuick = props => {
     if (errorForAddWorkspace) throw new Error(errorForAddWorkspace);
   };
 
-  const createQuickWorkspace = async values => {
+  const createQuickWorkspace = async (values, form) => {
     const { workspaceName } = values;
     const nodeNames = selected.map(select => select.name);
     const plugins = files.map(file => {
@@ -283,9 +283,13 @@ const WorkspaceQuick = props => {
       await createWk({ wkKey, bkKey, nodeNames, plugins });
       setProgressActiveStep(3);
       await createWs({ wsKey, nodeNames });
+      setTimeout(form.reset);
+      setActiveStep(0);
+      setFiles([]);
     } catch (e) {
       // TODO: handle error to create, rollback the created services
     }
+
     handelOpen(false);
   };
 
@@ -420,6 +424,10 @@ const WorkspaceQuick = props => {
               handleClose={() => {
                 setHasSelect(false);
                 handelOpen(false);
+
+                form.reset();
+                setActiveStep(0);
+                setFiles([]);
               }}
               children={
                 <form onSubmit={handleSubmit}>

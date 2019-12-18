@@ -19,7 +19,11 @@ import PropTypes from 'prop-types';
 
 import { useSnackbar } from 'context/SnackbarContext';
 import { initializeRoutine } from './pipelineRoutines';
-import { createFetchPipelines, createAddPipeline } from './pipelineActions';
+import {
+  createFetchPipelines,
+  createAddPipeline,
+  CreateSetCurrentPipeline,
+} from './pipelineActions';
 import { reducer, initialState } from './pipelineReducer';
 import { useWorkspace } from 'context';
 
@@ -65,8 +69,10 @@ const usePipelineActions = () => {
   const state = usePipelineState();
   const dispatch = usePipelineDispatch();
   const showMessage = useSnackbar();
+
   return {
     fetchPipelines: createFetchPipelines(state, dispatch, showMessage),
+    setCurrentPipeline: CreateSetCurrentPipeline(dispatch),
     addPipeline: createAddPipeline(state, dispatch, showMessage),
   };
 };

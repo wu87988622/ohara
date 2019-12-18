@@ -25,27 +25,12 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 const TopicGraph = params => {
-  const {
-    value,
-    position,
-    paper,
-    graph,
-    type,
-    isTemporary = false,
-    graphType,
-  } = params;
-
-  const privateIcon = renderToString(
-    <PrivateTopicIcon width={56} height={56} />,
-  );
-  const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
-  const linkIcon = renderToString(<TrendingUpIcon />);
-  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
-  const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
+  const { title, paper, graph, isTemporary = false, cellInfo } = params;
+  const { classType, className, position } = cellInfo;
 
   let link;
-  const height = type !== 'public' ? 0 : 22;
-  const topicValue = type === 'public' ? value : '';
+  const height = className === 'publicTopic' ? 22 : 0;
+  const topicTitle = className === 'publicTopic' ? title : '';
 
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -59,10 +44,19 @@ const TopicGraph = params => {
       joint.shapes.basic.Rect.prototype.defaults,
     ),
   });
+
+  const privateIcon = renderToString(
+    <PrivateTopicIcon width={56} height={56} />,
+  );
+  const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
+  const linkIcon = renderToString(<TrendingUpIcon />);
+  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
+  const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
+
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: [
       '<div class="topic">',
-      `${type === 'public' ? publicIcon : privateIcon}`,
+      `${className === 'publicTopic' ? publicIcon : privateIcon}`,
       `<div class="title"></div>`,
       `<div class="topicMenu">`,
       `<Button id="link">${linkIcon}</Button>`,
@@ -138,11 +132,11 @@ const TopicGraph = params => {
   });
 
   return new joint.shapes.html.Element({
-    position: { x: position.x, y: position.y },
     size: { width: 56, height: 56 + height },
-    title: topicValue,
+    position,
+    title: topicTitle,
     menuDisplay: 'none',
-    classType: graphType,
+    classType,
     isTemporary,
   });
 };

@@ -137,7 +137,6 @@ const useWorkspace = () => {
 
 const useWorkspaceState = () => {
   const context = React.useContext(WorkspaceStateContext);
-
   if (context === undefined) {
     throw new Error(
       'useWorkspaceState must be used within a WorkspaceProvider',

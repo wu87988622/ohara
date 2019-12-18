@@ -150,7 +150,8 @@ export const Paper = styled.div(
       .title {
         ${theme.typography.h5}
         color:${theme.palette.text.primary};
-        text-align:center;      
+        text-align:center;
+        
 }
       .topicMenu {
         width: 24px;

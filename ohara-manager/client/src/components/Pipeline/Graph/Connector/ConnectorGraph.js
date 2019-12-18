@@ -27,18 +27,17 @@ import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 const ConnectorGraph = params => {
   const {
-    value,
-    position,
-    type,
-    icon,
+    title,
     graph,
     paper,
     isTemporary = false,
     openSettingDialog,
     setData,
     classInfo,
-    graphType,
+    cellInfo,
   } = params;
+
+  const { classType, position, icon, displayedClassName } = cellInfo;
 
   const linkIcon = renderToString(<TrendingUpIcon />);
   const startIcon = renderToString(<PlayArrowIcon />);
@@ -66,9 +65,7 @@ const ConnectorGraph = params => {
           <div class="circle">${icon}</div>
           <div class="title-wrapper">
             <div class="title"></div>
-              <div class="type">${
-                type === 'Pipeline Only' ? 'Topic' : type
-              }</div>
+              <div class="type">${displayedClassName}</div>
             </div>
           </div>
         <div class="status">
@@ -77,7 +74,7 @@ const ConnectorGraph = params => {
         </div>
         <div class="connectorMenu">
           ${
-            graphType !== 'sink' ? `<Button id="link">${linkIcon}</Button>` : ''
+            classType !== 'sink' ? `<Button id="link">${linkIcon}</Button>` : ''
           }
           <Button id="start">${startIcon}</Button>
           <Button id="stop">${stopIcon}</Button>
@@ -117,7 +114,7 @@ const ConnectorGraph = params => {
       this.$box.find('button#setting').on('mousedown', function() {
         openSettingDialog();
         setData({
-          title: `Editing the settings for ${value} ${type}`,
+          title: `Editing the settings for ${title} ${displayedClassName}`,
           classInfo,
         });
       });
@@ -166,11 +163,11 @@ const ConnectorGraph = params => {
   });
 
   return new joint.shapes.html.Element({
-    position: { x: position.x, y: position.y },
+    position,
     size: { width: 240, height: 100 },
-    title: value,
+    title,
     menuDisplay: 'none',
-    classType: graphType,
+    classType,
     isTemporary,
   });
 };

@@ -30,15 +30,11 @@ import * as joint from 'jointjs';
 
 import * as fileApi from 'api/fileApi';
 import * as connectorApi from 'api/connectorApi';
+import * as streamApi from 'api/streamApi';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
 import { StyledToolbox } from './ToolboxStyles';
-import {
-  useWorkspace,
-  useTopicState,
-  useTopicActions,
-  useAddTopicDialog,
-} from 'context';
+import * as context from 'context';
 import { useSnackbar } from 'context/SnackbarContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
@@ -50,7 +46,7 @@ import {
 } from './toolboxUtils';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import { TopicGraph } from '../Graph/Topic';
-import { useGraphSettingDialog } from 'context';
+import { getKey, hashKey } from 'utils/object';
 
 const Toolbox = props => {
   const {
@@ -64,22 +60,33 @@ const Toolbox = props => {
     setToolboxExpanded,
   } = props;
 
-  const { currentWorker, currentWorkspace } = useWorkspace();
-  const { data: topicsData } = useTopicState();
-  const { fetchTopics } = useTopicActions();
-  const { open: openAddTopicDialog } = useAddTopicDialog();
+  const {
+    currentWorker,
+    currentWorkspace,
+    currentBroker,
+  } = context.useWorkspace();
+  const { data: topicsData } = context.useTopicState();
+  const { fetchTopics } = context.useTopicActions();
+  const { open: openAddTopicDialog } = context.useAddTopicDialog();
+  const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
   const [isOpen, setIsOpen] = useState(false);
-  const [graphType, setGraphType] = useState('');
-  const [className, setClassName] = useState('');
-  const [icon, setIcon] = useState('');
+
   const [zIndex, setZIndex] = useState(2);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [searchResults, setSearchResults] = useState(null);
-  const { open: openSettingDialog, setData } = useGraphSettingDialog();
+  const [cellInfo, setCellInfo] = useState({
+    classType: '',
+    className: '',
+    displayedClassName: '',
+    icon: '',
+    position: {
+      x: 0,
+      y: 0,
+    },
+  });
 
   const showMessage = useSnackbar();
 
-  const { streams, fileNames, setStatus } = useFiles(currentWorkspace);
+  const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
 
   useEffect(() => {
     if (!currentWorkspace) return;
@@ -98,7 +105,7 @@ const Toolbox = props => {
   const uploadJar = async file => {
     const response = await fileApi.create({
       file,
-      group: currentWorkspace.settings.name,
+      group: hashKey(currentWorkspace),
     });
 
     showMessage(response.title);
@@ -107,7 +114,9 @@ const Toolbox = props => {
 
   const handleFileSelect = event => {
     const file = event.target.files[0];
-    const isDuplicate = fileNames.some(fileName => fileName === file.name);
+    const isDuplicate = streamFiles.some(
+      streamFile => streamFile.name === file.name,
+    );
 
     if (isDuplicate) {
       return showMessage('The jar name is already taken!');
@@ -126,52 +135,80 @@ const Toolbox = props => {
     tempCells.forEach(cell => cell.remove());
   };
 
-  const handleAddGraph = async newGraph => {
+  const handleAddGraph = async newGraphName => {
     setZIndex(zIndex + 1);
 
     const sharedParams = {
-      position,
+      title: newGraphName,
       graph,
-      graphType,
       paper,
+      cellInfo,
     };
 
-    switch (graphType) {
+    switch (cellInfo.classType) {
       case 'topic':
         graph.addCell(
           TopicGraph({
             ...sharedParams,
-            type: className === 'Pipeline Only' ? 'private' : 'public',
           }),
         );
         break;
-      default:
-        await connectorApi.create({
-          classInfos: currentWorker.classInfos,
-          workerClusterKey: {
-            name: currentWorkspace.settings.name,
-            group: currentWorkspace.settings.group,
-          },
-          connector__class: className,
-        });
+
+      case 'stream':
+        const [targetStream] = streamFiles
+          .map(streamFile => streamFile.classInfos)
+          .flat()
+          .filter(infos => infos.className === cellInfo.className);
+
+        const requestParams = {
+          group: hashKey(currentWorkspace),
+          jarKey: getKey(currentWorkspace),
+          brokerClusterKey: getKey(currentBroker),
+          connector__class: cellInfo.className,
+        };
+        const definition = targetStream;
+
+        streamApi.create(requestParams, definition);
+
         graph.addCell(
           ConnectorGraph({
             ...sharedParams,
-            value: newGraph,
-            type: className.split('.').pop(),
-            icon,
-            openSettingDialog,
-            setData,
-            classInfo: currentWorker.classInfos.filter(
-              classInfo => classInfo.className === className,
-            )[0],
           }),
         );
+
+        break;
+
+      case 'source':
+      case 'sink':
+        const { classInfos } = currentWorker;
+
+        await connectorApi.create({
+          classInfos,
+          group: hashKey(currentWorkspace),
+          workerClusterKey: getKey(currentWorker),
+          connector__class: cellInfo.className,
+        });
+
+        const [targetConnector] = classInfos.filter(
+          classInfo => classInfo.className === cellInfo.className,
+        );
+
+        graph.addCell(
+          ConnectorGraph({
+            ...sharedParams,
+            openSettingDialog,
+            setData,
+            classInfo: targetConnector,
+          }),
+        );
+        break;
+
+      default:
         break;
     }
 
     removeTempCell();
-    showMessage(`${newGraph} has been added`);
+    showMessage(`${newGraphName} has been added`);
     setIsOpen(false);
   };
 
@@ -239,17 +276,23 @@ const Toolbox = props => {
       enableDragAndDrop({
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
         paper, // main paper
-        setGraphType,
-        setClassName,
-        setPosition,
-        setIcon,
+        setCellInfo,
         setIsOpen,
         graph,
       });
     };
 
     renderToolbox();
-  }, [graph, paper, searchResults, sinks, sources, streams, topics]);
+  }, [
+    cellInfo.position,
+    graph,
+    paper,
+    searchResults,
+    sinks,
+    sources,
+    streams,
+    topics,
+  ]);
 
   return (
     <Draggable bounds="parent" handle=".box-title" key={toolboxKey}>
@@ -374,7 +417,7 @@ const Toolbox = props => {
 
         <ToolboxAddGraphDialog
           isOpen={isOpen}
-          graphType={graphType}
+          classType={cellInfo.classType}
           handleConfirm={handleAddGraph}
           handleClose={() => {
             setIsOpen(false);

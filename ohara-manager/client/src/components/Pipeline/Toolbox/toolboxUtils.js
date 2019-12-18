@@ -41,16 +41,6 @@ export const createToolboxList = params => {
     searchResults,
   } = params;
 
-  const sourceIcon = renderToString(<FlightTakeoffIcon color="action" />);
-  const sinkIcon = renderToString(<FlightLandIcon color="action" />);
-  const streamIcon = renderToString(<WavesIcon color="action" />);
-  const AddPrivateTopic = renderToString(<StorageIcon color="action" />);
-
-  // Custom icon, so we need to pass some props...
-  const AddPublicTopic = renderToString(
-    <AddPublicTopicIcon className="public-topic" width={23} height={22} />,
-  );
-
   // Create a custom element.
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -96,6 +86,16 @@ export const createToolboxList = params => {
     },
   });
 
+  const sourceIcon = renderToString(<FlightTakeoffIcon color="action" />);
+  const sinkIcon = renderToString(<FlightLandIcon color="action" />);
+  const streamIcon = renderToString(<WavesIcon color="action" />);
+  const AddPrivateTopic = renderToString(<StorageIcon color="action" />);
+
+  // Custom icon, so we need to pass some props...
+  const AddPublicTopic = renderToString(
+    <AddPublicTopicIcon className="public-topic" width={23} height={22} />,
+  );
+
   const displaySources = isNull(searchResults)
     ? sources
     : searchResults.sources;
@@ -123,6 +123,7 @@ export const createToolboxList = params => {
         size: { width: 272 - 8 * 2, height: 40 },
         displayName: topic.displayName,
         classType: topic.classType,
+        className: index === 0 ? 'privateTopic' : 'publicTopic',
         icon: index === 0 ? AddPrivateTopic : AddPublicTopic,
       }),
     );
@@ -140,6 +141,7 @@ export const createToolboxList = params => {
         displayName: stream.displayName,
         classType: stream.classType,
         icon: streamIcon,
+        className: stream.className,
       }),
     );
   });
@@ -165,10 +167,7 @@ export const enableDragAndDrop = params => {
     toolPapers,
     graph,
     paper,
-    setGraphType,
-    setPosition,
-    setClassName,
-    setIcon,
+    setCellInfo,
     setIsOpen: openAddConnectorDialog,
   } = params;
 
@@ -204,15 +203,6 @@ export const enableDragAndDrop = params => {
         y: y - position.y,
       };
 
-      const classType = cellView.model.get('classType');
-      const connectorType = cellView.model.get('displayName');
-      const className = cellView.model.get('className');
-      const icon = cellView.model.get('icon');
-
-      setGraphType(classType);
-      setClassName(className);
-      setIcon(icon);
-
       flyingShape.position(0, 0);
       flyingGraph.addCell(flyingShape);
 
@@ -247,32 +237,52 @@ export const enableDragAndDrop = params => {
           const scale = paper.scale();
           const newX = (x - target.left - offset.x) / scale.sx + localPoint.x;
           const newY = (y - target.top - offset.y) / scale.sy + localPoint.y;
-          setPosition({ x: newX, y: newY });
+
+          const {
+            classType,
+            displayName,
+            className,
+            icon,
+          } = cellView.model.attributes;
+
+          // These info will be used when creating a cell
+          setCellInfo(prevState => ({
+            ...prevState,
+            classType,
+            className,
+            displayedClassName: displayName,
+            icon,
+            position: {
+              ...prevState.position,
+              x: newX,
+              y: newY,
+            },
+          }));
 
           // A temporary cell which gives users a better idea of
           // where the graph will be added at. It will be removed
           // once the real graph is added
-          const sharedParams = {
+          const params = {
             position: { x: newX, y: newY },
             isTemporary: true, // A temp graph
-            value: 'New graph',
+            title: 'newgraph',
             graph,
             paper,
+            cellInfo: {
+              classType,
+              className,
+              icon,
+              displayedClassName: displayName,
+              position: {
+                x: newX,
+                y: newY,
+              },
+            },
           };
 
-          let newCell;
-          if (classType === 'topic') {
-            newCell = TopicGraph({
-              ...sharedParams,
-              type: connectorType === 'Pipeline Only' ? 'private' : 'public',
-            });
-          } else {
-            newCell = ConnectorGraph({
-              ...sharedParams,
-              type: connectorType,
-              icon,
-            });
-          }
+          const newCell =
+            classType === 'topic' ? TopicGraph(params) : ConnectorGraph(params);
+
           graph.addCell(newCell);
         }
 

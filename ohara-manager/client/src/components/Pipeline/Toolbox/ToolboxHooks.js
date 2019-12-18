@@ -17,24 +17,24 @@
 import { useEffect, useState } from 'react';
 
 import * as fileApi from 'api/fileApi';
+import { hashKey } from 'utils/object';
 
 export const useFiles = workspace => {
   // We're not filtering out other jars here
   // but it should be done when stream jars
   const [streams, setStreams] = useState([]);
-  const [fileNames, setFileNames] = useState([]);
+  const [files, setFiles] = useState([]);
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     if (!workspace || status !== 'loading') return;
     let didCancel = false;
 
-    const fetchFiles = async workspaceName => {
-      const result = await fileApi.getAll({ group: workspaceName });
+    const fetchFiles = async () => {
+      const result = await fileApi.getAll({ group: hashKey(workspace) });
       if (!didCancel) {
         if (!result.errors) {
-          const fileNames = result.data.map(file => file.name);
-          setFileNames(fileNames);
+          setFiles(result.data);
 
           const streamClasses = result.data
             .map(file => file.classInfos)
@@ -48,6 +48,7 @@ export const useFiles = workspace => {
                 return {
                   displayName,
                   classType,
+                  className,
                 };
               })
               .sort((a, b) => a.className.localeCompare(b.className));
@@ -59,12 +60,12 @@ export const useFiles = workspace => {
       }
     };
 
-    fetchFiles(workspace.settings.name);
+    fetchFiles();
 
     return () => {
       didCancel = true;
     };
   }, [status, workspace]);
 
-  return { streams, setStatus, fileNames };
+  return { streams, setStatus, files };
 };

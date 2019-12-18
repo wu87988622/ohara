@@ -26,6 +26,7 @@ import { Paper, PaperWrapper } from './GraphStyles';
 import { usePrevious } from 'utils/hooks';
 import { updateCurrentCell } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
+import { TopicGraph } from '../Graph/Topic';
 
 const Graph = props => {
   const { palette } = useTheme();
@@ -196,14 +197,17 @@ const Graph = props => {
 
                 if (hasSource) {
                   return handleError(
-                    `The target ${targetTitle} is already connected to a source `,
+                    `The target ${targetTitle} is already connected to a source`,
                   );
                 }
               }
 
               if (sourceType === 'source' && targetType === 'stream') {
-                const isTargetConnectedBySource = targetConnectedLinks.some(
-                  link => link.getSourceCell().get('classType') === 'source',
+                const predecessors = graph.current.getPredecessors(
+                  cellView.model,
+                );
+                const hasSource = predecessors.some(
+                  successor => successor.attributes.classType === 'source',
                 );
 
                 if (hasMoreThanOneTarget) {
@@ -212,7 +216,7 @@ const Graph = props => {
                   );
                 }
 
-                if (isTargetConnectedBySource) {
+                if (hasSource) {
                   return handleError(
                     `The target ${targetTitle} already has a connection!`,
                   );
@@ -230,23 +234,73 @@ const Graph = props => {
               if (sourceType === 'topic' && targetType === 'sink') {
                 if (hasSource) {
                   return handleError(
-                    `The target ${targetTitle} is already connected to a source `,
+                    `The target ${targetTitle} is already connected to a source`,
                   );
                 }
               }
 
               if (sourceType === 'stream' && targetType === 'sink') {
-                if (hasMoreThanOneTarget) {
+                const successors = graph.current.getSuccessors(sourceCell);
+                const hasSink = successors.some(
+                  successor => successor.attributes.classType === 'sink',
+                );
+
+                if (hasSink) {
                   return handleError(
-                    `The source ${sourceTitle} is already connected to a target`,
+                    `The source ${sourceTitle} is already connected to a sink`,
                   );
                 }
 
                 if (hasSource) {
                   return handleError(
-                    `The target ${targetTitle} is already connected to a source `,
+                    `The target ${targetTitle} is already connected to a source`,
                   );
                 }
+              }
+
+              if (sourceType === 'stream' && targetType === 'stream') {
+                if (hasSource) {
+                  return handleError(
+                    `The target ${targetTitle} is already connected to a source`,
+                  );
+                }
+              }
+
+              if (
+                (sourceType === 'source' && targetType === 'sink') ||
+                (sourceType === 'source' && targetType === 'stream') ||
+                (sourceType === 'stream' && targetType === 'sink') ||
+                (sourceType === 'stream' && targetType === 'stream')
+              ) {
+                const sourcePosition = sourceCell.position();
+                const targetPosition = cellView.model.position();
+                const topicX = (sourcePosition.x + targetPosition.x + 23) / 2;
+                const topicY = (sourcePosition.y + targetPosition.y + 23) / 2;
+
+                graph.current.addCell(
+                  TopicGraph({
+                    cellInfo: {
+                      position: {
+                        x: topicX,
+                        y: topicY,
+                      },
+                      classType: 'topic',
+                      className: 'privateTopic',
+                    },
+                    graph: graph.current,
+                    paper: paper.current,
+                  }),
+                );
+
+                const topicId = graph.current.getLastCell().attributes.id;
+                disConnectLink[0].target({ id: topicId });
+
+                const newLink = new joint.shapes.standard.Link();
+                newLink.source({ id: topicId });
+                newLink.target({ id: cellView.model.id });
+                newLink.attr({ line: { stroke: '#9e9e9e' } });
+                newLink.addTo(graph.current);
+                return;
               }
 
               // Link to the target cell
