@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { capitalize } from 'lodash';
 import List from '@material-ui/core/List';
@@ -37,7 +37,7 @@ import MuiDialogActions from '@material-ui/core/DialogActions';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
-import { RenderDefinitions } from 'components/common/Definitions';
+import RenderDefinitions from './SettingDefinitions';
 
 const StyleTitle = styled(MuiDialogTitle)(
   ({ theme }) => css`
@@ -70,10 +70,46 @@ const StyleMuiDialogActions = styled(MuiDialogActions)(
 );
 
 const LeftBody = styled.div(
-  () => css`
+  ({ theme }) => css`
     float: left;
     height: 600px;
     width: 256px;
+
+    .nested {
+      padding-left: ${theme.spacing(3)}px;
+
+      .MuiListItemText-root {
+        padding-left: ${theme.spacing(3)}px;
+      }
+
+      ::before {
+        content: '';
+        left: ${theme.spacing(3)}px;
+        top: 0;
+        bottom: 0;
+        position: absolute;
+        width: ${theme.spacing(0.25)}px;
+        background-color: ${theme.palette.grey[300]};
+      }
+
+      :first-child::before {
+        margin-top: ${theme.spacing(1.5)}px;
+      }
+
+      :last-child::before {
+        margin-bottom: ${theme.spacing(1.5)}px;
+      }
+
+      &.Mui-selected {
+        background-color: white;
+
+        .MuiListItemText-root {
+          border-left: ${theme.palette.primary[600]} ${theme.spacing(0.25)}px
+            solid;
+          z-index: 0;
+        }
+      }
+    }
   `,
 );
 const RightBody = styled.div(
@@ -89,7 +125,7 @@ const RightBody = styled.div(
       margin: ${theme.spacing(0, 0, 3, 2)};
     }
 
-    & > form > .MuiPaper-elevation2 {
+    & > form > div > .MuiPaper-elevation2 {
       padding-left: ${theme.spacing(1)}px;
       margin-left: ${theme.spacing(1)}px;
     }
@@ -120,7 +156,8 @@ const StyleList = styled(List)(
 const SettingDialog = props => {
   const { open, handleClose, data = {}, maxWidth = 'md' } = props;
   const { title = '', classInfo = {} } = data;
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(null);
+  const [selected, setSelected] = useState(null);
 
   const groupBy = array => {
     if (!array) return [];
@@ -147,9 +184,14 @@ const SettingDialog = props => {
     padding: 1px;
   `;
 
-  const Defintions = RenderDefinitions({
-    Definitions: classInfo.settingDefinitions,
-    onSubmit: () => null,
+  const onSubmit = async (values, form) => {
+    form.reset();
+    return values;
+  };
+
+  const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
+    Definitions: groups.sort(),
+    onSubmit,
   });
 
   const handleExpansionPanelChange = panel => (event, isExpanded) => {
@@ -170,6 +212,24 @@ const SettingDialog = props => {
     );
   };
 
+  useEffect(() => {
+    if (selected) {
+      //in react useEffect componentDidUpdate default event is scrollToTop,so we need setTimeout wait to scroll.
+      setTimeout(() => {
+        if (refs[selected]) {
+          refs[selected].current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }
+      }, 100);
+    }
+  });
+
+  const handleClick = async key => {
+    setSelected(key);
+  };
+
   return (
     <Dialog onClose={handleClose} open={open} maxWidth={maxWidth} fullWidth>
       <DialogTitle handleClose={handleClose} title={title} />
@@ -187,13 +247,17 @@ const SettingDialog = props => {
             }}
           />
           <StyleDiv>
-            {groups.map(group => {
+            {groups.sort().map((group, index) => {
               const title = group[0].group;
-              const defs = group.filter(def => !def.internal);
+              const defs = group.filter(
+                def => !def.internal || def.key !== 'group',
+              );
               if (defs.length > 0) {
                 return (
                   <StyleExpansionPanel
-                    expanded={expanded === title}
+                    expanded={
+                      expanded === title || (index === 0 && expanded === null)
+                    }
                     onChange={handleExpansionPanelChange(title)}
                     key={title}
                   >
@@ -202,9 +266,18 @@ const SettingDialog = props => {
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                       <StyleList>
-                        {defs.map(def => {
+                        {defs.map((def, index) => {
                           return (
-                            <ListItem button key={def.key}>
+                            <ListItem
+                              className="nested"
+                              button
+                              key={def.key}
+                              selected={
+                                def.key === selected ||
+                                (selected === null && index === 0)
+                              }
+                              onClick={() => handleClick(def.key)}
+                            >
                               <ListItemText primary={def.displayName} />
                             </ListItem>
                           );
@@ -219,10 +292,10 @@ const SettingDialog = props => {
             })}
           </StyleDiv>
         </LeftBody>
-        <RightBody>{Defintions}</RightBody>
+        <RightBody>{RenderForm}</RightBody>
       </StyleMuiDialogContent>
       <StyleMuiDialogActions>
-        <Button autoFocus onClick={handleClose} color="primary">
+        <Button autoFocus onClick={() => formHandleSubmit()} color="primary">
           Save changes
         </Button>
       </StyleMuiDialogActions>

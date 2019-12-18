@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
@@ -26,19 +27,20 @@ const BindingPort = props => {
     helperText,
     disables = [],
     list = [],
+    refs,
     ...rest
-  } = props;
+  } = omit(props, ['tableKeys']);
 
   const placeholder = 'Please select...';
   const _list = [placeholder, ...list];
   const _value = value ? value : placeholder;
 
-  const hasError =
-    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <TextField
       {...rest}
+      ref={refs}
       fullWidth
       variant="filled"
       onChange={onChange}
@@ -80,6 +82,7 @@ BindingPort.propTypes = {
   errorMessage: PropTypes.string,
   disables: PropTypes.array,
   list: PropTypes.array,
+  refs: PropTypes.object,
 };
 
 export default BindingPort;

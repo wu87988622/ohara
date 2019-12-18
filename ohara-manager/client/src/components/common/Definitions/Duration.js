@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
 import TextField from '@material-ui/core/TextField';
@@ -33,17 +34,18 @@ const Duration = props => {
     input: { name, onChange, value },
     meta = {},
     helperText,
+    refs,
     ...rest
-  } = props;
+  } = omit(props, ['tableKeys']);
 
   const _value = value.split(' ')[0] / 1000;
 
-  const hasError =
-    (meta.error && meta.touched) || (meta.error && meta.dirty) ? true : false;
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
     <StyledTextField
       {...rest}
+      ref={refs}
       fullWidth
       variant="filled"
       onChange={onChange}
@@ -77,6 +79,7 @@ Duration.propTypes = {
   width: PropTypes.string,
   helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   errorMessage: PropTypes.string,
+  refs: PropTypes.object,
 };
 
 export default Duration;
