@@ -821,7 +821,7 @@ class TestWorkerApi extends OharaTest {
     WorkerApi.DEFINITIONS
       .filter(_.hasDefault)
       // the immutable setting is not in custom field
-      .filter(_.editable())
+      .filter(_.permission() == Permission.EDITABLE)
       .foreach { definition =>
         string should include(definition.key())
         string should include(definition.defaultValue().toString)

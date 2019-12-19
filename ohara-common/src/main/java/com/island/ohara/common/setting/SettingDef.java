@@ -148,8 +148,6 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String GROUP_KEY = "group";
   private static final String ORDER_IN_GROUP_KEY = "orderInGroup";
   private static final String DISPLAY_NAME_KEY = "displayName";
-  // TODO: remove this depracted field (see https://github.com/oharastream/ohara/issues/3480)
-  private static final String EDITABLE_KEY = "editable";
   private static final String KEY_KEY = "key";
   private static final String VALUE_TYPE_KEY = "valueType";
   private static final String NECESSARY_KEY = "necessary";
@@ -451,12 +449,6 @@ public class SettingDef implements JsonObject, Serializable {
   @JsonProperty(ORDER_IN_GROUP_KEY)
   public int orderInGroup() {
     return orderInGroup;
-  }
-
-  // TODO: remove this deprecated field (see https://github.com/oharastream/ohara/issues/3480)
-  @JsonProperty(EDITABLE_KEY)
-  public boolean editable() {
-    return permission == Permission.EDITABLE;
   }
 
   @JsonProperty(KEY_KEY)

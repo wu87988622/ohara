@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
+import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Reference}
 import org.junit.Test
 import org.scalatest.Matchers._
 
@@ -30,7 +30,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == INPUT_FOLDER_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -41,7 +41,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == COMPLETED_FOLDER_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -52,7 +52,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == ERROR_FOLDER_KEY).get
     definition.necessary() shouldBe Necessary.OPTIONAL
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -63,7 +63,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe "UTF-8"
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -74,7 +74,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == FTP_HOSTNAME_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -85,7 +85,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == FTP_PORT_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.PORT
@@ -96,7 +96,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == FTP_USER_NAME_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -107,7 +107,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     val definition = ftpSource.settingDefinitions().asScala.find(_.key() == FTP_PASSWORD_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.PASSWORD

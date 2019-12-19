@@ -17,7 +17,7 @@
 package com.island.ohara.connector.perf
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
+import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Reference}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -39,7 +39,7 @@ class TestPerfDefinition extends WithBrokerWorker {
     val definition = perfSource.settingDefinitions().asScala.find(_.key() == PERF_BATCH).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt() shouldBe DEFAULT_BATCH
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.INT
@@ -50,7 +50,7 @@ class TestPerfDefinition extends WithBrokerWorker {
     val definition = perfSource.settingDefinitions().asScala.find(_.key() == PERF_FREQUENCE).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultDuration() shouldBe java.time.Duration.ofMillis(DEFAULT_FREQUENCE.toMillis)
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.DURATION

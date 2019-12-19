@@ -17,7 +17,7 @@
 package com.island.ohara.connector.hdfs.sink
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
+import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Reference}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -40,7 +40,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
     val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == HDFS_URL_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -51,7 +51,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
     val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == OUTPUT_FOLDER_KEY).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -62,7 +62,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
     val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == FLUSH_SIZE_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt() shouldBe FLUSH_SIZE_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.INT
@@ -73,7 +73,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
     val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == ROTATE_INTERVAL_MS_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultLong() shouldBe ROTATE_INTERVAL_MS_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.LONG
@@ -84,7 +84,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
     val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultBoolean() shouldBe FILE_NEED_HEADER_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.BOOLEAN
@@ -95,7 +95,7 @@ class TestHDFSSinkDefinition extends WithBrokerWorker {
     val definition = hdfsSink.settingDefinitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe FILE_ENCODE_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING

@@ -204,7 +204,10 @@ class TestWorkerClient extends With3Brokers3Workers {
       .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
+      .head
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
@@ -216,7 +219,10 @@ class TestWorkerClient extends With3Brokers3Workers {
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
+      .head
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.hasDefault shouldBe false
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
@@ -228,7 +234,10 @@ class TestWorkerClient extends With3Brokers3Workers {
       .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS.find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()).head.defaultInt() shouldBe 1
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()) shouldBe true
@@ -237,7 +246,10 @@ class TestWorkerClient extends With3Brokers3Workers {
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
+      .head
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.hasDefault shouldBe false
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()) shouldBe true
@@ -252,7 +264,7 @@ class TestWorkerClient extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
-      .editable() shouldBe true
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key())
       .head
@@ -261,13 +273,19 @@ class TestWorkerClient extends With3Brokers3Workers {
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.AUTHOR_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.editable() shouldBe false
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.AUTHOR_KEY)
+      .head
+      .permission() shouldBe SettingDef.Permission.READ_ONLY
     settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultString shouldBe "unknown"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.editable() shouldBe false
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.VERSION_KEY)
+      .head
+      .permission() shouldBe SettingDef.Permission.READ_ONLY
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultString shouldBe "unknown"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_KEY) shouldBe true
@@ -276,13 +294,11 @@ class TestWorkerClient extends With3Brokers3Workers {
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.editable() shouldBe false
     settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultString shouldBe "unknown"
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.editable() shouldBe false
     (settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultString == "source"
     || settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.defaultString == "sink") shouldBe true
 
@@ -292,7 +308,10 @@ class TestWorkerClient extends With3Brokers3Workers {
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()).head.internal() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
+      .head
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
       .head
@@ -304,7 +323,10 @@ class TestWorkerClient extends With3Brokers3Workers {
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()).head.internal() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
+      .head
+      .permission() shouldBe SettingDef.Permission.EDITABLE
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
       .head

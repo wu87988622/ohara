@@ -17,7 +17,7 @@
 package com.island.ohara.connector.jdbc.source
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.SettingDef.{Necessary, Reference}
+import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Reference}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
@@ -40,7 +40,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_URL).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -51,7 +51,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_USERNAME).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -62,7 +62,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_PASSWORD).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.PASSWORD
@@ -73,7 +73,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == JDBC_FETCHDATA_SIZE).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt shouldBe JDBC_FETCHDATA_SIZE_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.INT
@@ -84,7 +84,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == JDBC_FLUSHDATA_SIZE).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt shouldBe JDBC_FLUSHDATA_SIZE_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.INT
@@ -95,7 +95,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == JDBC_FREQUENCE_TIME).get
     definition.necessary should not be Necessary.REQUIRED
     definition.defaultDuration() shouldBe java.time.Duration.ofMillis(JDBC_FREQUENCE_TIME_DEFAULT.toMillis)
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.DURATION
@@ -106,7 +106,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_TABLENAME).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.JDBC_TABLE
@@ -117,7 +117,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_CATALOG_PATTERN).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -128,7 +128,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_SCHEMA_PATTERN).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -139,7 +139,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == MODE).get
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe MODE_DEFAULT
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
@@ -150,7 +150,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
     val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == TIMESTAMP_COLUMN_NAME).get
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
-    definition.editable() shouldBe true
+    definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
     definition.valueType() shouldBe SettingDef.Type.STRING
