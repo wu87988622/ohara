@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { isNull, bindAll, template } from 'lodash';
+import { isNull } from 'lodash';
 import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import StorageIcon from '@material-ui/icons/Storage';
@@ -57,24 +57,20 @@ export const createToolboxList = params => {
 
   // Create a custom view for that element that displays an HTML div above it.
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-    template: [
-      `<div class="item">
-      <span class="icon"></span>
-      <span class="display-name"></span>
+    template: `<div class="item">
+        <span class="icon"></span>
+        <span class="display-name"></span>
       </div>`,
-    ],
 
-    initialize() {
-      bindAll(this, 'updateBox');
-      joint.dia.ElementView.prototype.initialize.apply(this, arguments);
-      this.$box = $(template(this.template)());
-      // Update the box position whenever the underlying model changes.
-      this.model.on('change', this.updateBox, this);
-      this.updateBox();
+    init() {
+      this.listenTo(this.model, 'change', this.updateBox);
     },
-    render() {
-      joint.dia.ElementView.prototype.render.apply(this, arguments);
-      this.paper.$el.append(this.$box);
+    onRender() {
+      const boxMarkup = joint.util.template(this.template)();
+      const $box = (this.$box = $(boxMarkup));
+      this.listenTo(this.paper, 'scale translate', this.updateBox);
+      $box.appendTo(this.paper.el);
+
       this.updateBox();
       return this;
     },
@@ -185,7 +181,6 @@ export const enableDragAndDrop = params => {
     // Create "flying papers", which enable drag and drop feature
     toolPaper.on('cell:pointerdown', (cellView, event, x, y) => {
       $('#paper').append('<div id="flying-paper" class="flying-paper"></div>');
-
       const flyingGraph = new joint.dia.Graph();
       new joint.dia.Paper({
         el: $('#flying-paper'),

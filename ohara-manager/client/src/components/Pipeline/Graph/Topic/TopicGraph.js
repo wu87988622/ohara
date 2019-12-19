@@ -54,17 +54,16 @@ const TopicGraph = params => {
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-    template: [
-      '<div class="topic">',
-      `${className === 'publicTopic' ? publicIcon : privateIcon}`,
-      `<div class="title"></div>`,
-      `<div class="topicMenu">`,
-      `<Button id="link">${linkIcon}</Button>`,
-      `<Button id="setting">${settingIcon}</Button>`,
-      `<Button id="remove">${removeIcon}</Button> `,
-      `</div>`,
-      '</div>',
-    ].join(''),
+    template: `
+      <div class="topic">
+        ${className === 'publicTopic' ? publicIcon : privateIcon}
+        <div class="title"></div>
+        <div class="topic-menu">
+          <Button id="topic-link">${linkIcon}</Button>
+          <Button id="topic-setting">${settingIcon}</Button>
+          <Button id="topic-remove">${removeIcon}</Button> 
+        </div>
+      </div>`,
     init() {
       this.listenTo(this.model, 'change', this.updateBox);
     },
@@ -78,13 +77,16 @@ const TopicGraph = params => {
 
       // Bind remove event to our custom icon
       this.$box
-        .find('button#remove')
+        .find('#topic-remove')
         .on('click', _.bind(this.model.remove, this.model));
 
       const modelId = this.model.id;
-      this.$box.find('button#link').on('mousedown', function() {
+      this.$box.find('#topic-link').on('mousedown', function() {
         link = new joint.shapes.standard.Link();
         link.source({ id: modelId });
+
+        // The link doesn't show up in the right position, set it to
+        // `transparent` and reset it back in the mousemove event
         link.attr({ line: { stroke: 'transparent' } });
         link.addTo(graph);
       });
@@ -108,7 +110,7 @@ const TopicGraph = params => {
 
       this.$box.find('.title').text(this.model.get('title'));
       this.$box
-        .find('.topicMenu')
+        .find('.topic-menu')
         .attr('style', `display:${this.model.get('menuDisplay')};`);
       if (this.paper) {
         this.paper.$document.on('mousemove', function(event) {
@@ -116,11 +118,19 @@ const TopicGraph = params => {
             if (!link.get('target').id) {
               const localPoint = paper.paperToLocalPoint(paper.translate());
 
+              // 290: AppBar and Navigator width
+              // 72: Toolbar height
               link.target({
                 x: (event.pageX - 290) / scale.sx + localPoint.x,
                 y: (event.pageY - 72) / scale.sy + localPoint.y,
               });
-              link.attr({ line: { stroke: '#9e9e9e' } });
+
+              link.attr({
+                // prevent the link from clicking by users, the `root` here is the
+                // SVG container element of the link
+                root: { style: 'pointer-events: none' },
+                line: { stroke: '#9e9e9e' },
+              });
             }
           }
         });
@@ -133,9 +143,9 @@ const TopicGraph = params => {
 
   return new joint.shapes.html.Element({
     size: { width: 56, height: 56 + height },
-    position,
     title: topicTitle,
     menuDisplay: 'none',
+    position,
     classType,
     isTemporary,
   });

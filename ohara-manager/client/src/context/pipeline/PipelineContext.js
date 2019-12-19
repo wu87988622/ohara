@@ -17,13 +17,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import * as actions from './pipelineActions';
 import { useSnackbar } from 'context/SnackbarContext';
 import { initializeRoutine } from './pipelineRoutines';
-import {
-  createFetchPipelines,
-  createAddPipeline,
-  CreateSetCurrentPipeline,
-} from './pipelineActions';
 import { reducer, initialState } from './pipelineReducer';
 import { useWorkspace } from 'context';
 
@@ -71,9 +67,10 @@ const usePipelineActions = () => {
   const showMessage = useSnackbar();
 
   return {
-    fetchPipelines: createFetchPipelines(state, dispatch, showMessage),
-    setCurrentPipeline: CreateSetCurrentPipeline(dispatch),
-    addPipeline: createAddPipeline(state, dispatch, showMessage),
+    fetchPipelines: actions.createFetchPipelines(state, dispatch, showMessage),
+    setCurrentPipeline: actions.createSetCurrentPipeline(dispatch),
+    addPipeline: actions.createAddPipeline(state, dispatch, showMessage),
+    deletePipeline: actions.createDeletePipeline(state, dispatch, showMessage),
   };
 };
 

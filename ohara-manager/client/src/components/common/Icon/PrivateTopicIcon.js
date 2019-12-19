@@ -17,12 +17,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import * as generate from 'utils/generate';
+
 export const PrivateTopicIcon = ({
   width,
   height,
   fillColor = 'currentColor',
   ...otherProps
 }) => {
+  const maskId = generate.id();
+
   return (
     <svg
       {...otherProps}
@@ -34,12 +38,6 @@ export const PrivateTopicIcon = ({
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
     >
-      <defs>
-        <path
-          d="M0.666666667,13.6666667 L17.3333333,13.6666667 L17.3333333,10.3333333 L0.666666667,10.3333333 L0.666666667,13.6666667 Z M2.33333333,11.1666667 L4,11.1666667 L4,12.8333333 L2.33333333,12.8333333 L2.33333333,11.1666667 Z M0.666666667,0.333333333 L0.666666667,3.66666667 L17.3333333,3.66666667 L17.3333333,0.333333333 L0.666666667,0.333333333 Z M4,2.83333333 L2.33333333,2.83333333 L2.33333333,1.16666667 L4,1.16666667 L4,2.83333333 Z M0.666666667,8.66666667 L17.3333333,8.66666667 L17.3333333,5.33333333 L0.666666667,5.33333333 L0.666666667,8.66666667 Z M2.33333333,6.16666667 L4,6.16666667 L4,7.83333333 L2.33333333,7.83333333 L2.33333333,6.16666667 Z"
-          id="privateTopic-1"
-        ></path>
-      </defs>
       <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
         <g transform="translate(-389.000000, -2906.000000)">
           <g transform="translate(390.000000, 2907.000000)">
@@ -52,11 +50,11 @@ export const PrivateTopicIcon = ({
                 r="28"
               ></circle>
               <g transform="translate(19.000000, 21.000000)">
-                <mask id="d-2" fill="white">
-                  <use xlinkHref="#privateTopic-1"></use>
+                <mask id={maskId} fill="white">
+                  <path d="M0.666666667,13.6666667 L17.3333333,13.6666667 L17.3333333,10.3333333 L0.666666667,10.3333333 L0.666666667,13.6666667 Z M2.33333333,11.1666667 L4,11.1666667 L4,12.8333333 L2.33333333,12.8333333 L2.33333333,11.1666667 Z M0.666666667,0.333333333 L0.666666667,3.66666667 L17.3333333,3.66666667 L17.3333333,0.333333333 L0.666666667,0.333333333 Z M4,2.83333333 L2.33333333,2.83333333 L2.33333333,1.16666667 L4,1.16666667 L4,2.83333333 Z M0.666666667,8.66666667 L17.3333333,8.66666667 L17.3333333,5.33333333 L0.666666667,5.33333333 L0.666666667,8.66666667 Z M2.33333333,6.16666667 L4,6.16666667 L4,7.83333333 L2.33333333,7.83333333 L2.33333333,6.16666667 Z"></path>
                 </mask>
                 <g fillRule="nonzero"></g>
-                <g mask="url(#d-2)" fill="#000000" fillOpacity="0.54">
+                <g mask={`url(#${maskId})`} fill="#000000" fillOpacity="0.54">
                   <g transform="translate(-1.000000, -3.000000)">
                     <rect x="0" y="0" width="20" height="20"></rect>
                   </g>

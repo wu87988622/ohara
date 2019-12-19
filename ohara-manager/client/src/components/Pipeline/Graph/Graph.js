@@ -24,13 +24,13 @@ import Toolbox from '../Toolbox';
 import { useSnackbar } from 'context/SnackbarContext';
 import { Paper, PaperWrapper } from './GraphStyles';
 import { usePrevious } from 'utils/hooks';
-import { updateCurrentCell } from './graphUtils';
+import { updateCurrentCell, createConnection } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
-import { TopicGraph } from '../Graph/Topic';
 
 const Graph = props => {
   const { palette } = useTheme();
   const [hasSelectedCell, setHasSelectedCell] = useState(false);
+  const [initToolboxList, setInitToolboxList] = useState(0);
   const {
     setZoom,
     paperScale,
@@ -71,17 +71,7 @@ const Graph = props => {
         gridSize: 10,
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
 
-        // Default origin is in the paper center, reset this so it's
-        // Easier to reason about
-        origin: { x: 0, y: 0 },
-
-        defaultConnectionPoint: { name: 'boundary' },
-        defaultAnchor: {
-          name: 'modelCenter',
-        },
-        background: {
-          color: palette.common.white,
-        },
+        background: { color: palette.common.white },
 
         // Tweak the default highlighting to match our theme
         highlighting: {
@@ -129,190 +119,24 @@ const Graph = props => {
         const links = graph.current.getLinks();
 
         if (links.length > 0) {
-          const disConnectLink = links.filter(
-            link => !link.attributes.target.id,
-          );
+          const currentLink = links.find(link => !link.get('target').id);
 
-          if (disConnectLink.length > 0) {
-            // Connect to the target cell
-            const targetId = cellView.model.get('id');
-            const targetType = cellView.model.get('classType');
-            const targetTitle = cellView.model.get('title');
-            const targetConnectedLinks = graph.current.getConnectedLinks(
-              cellView.model,
-            );
-
-            const sourceId = disConnectLink[0].get('source').id;
-            const sourceType = graph.current.getCell(sourceId).attributes
-              .classType;
-            const sourceCell = graph.current.getCell(sourceId);
-            const sourceConnectedLinks = graph.current.getConnectedLinks(
-              sourceCell,
-            );
-            const sourceTitle = sourceCell.get('title');
-
-            const isLoopLink = () => {
-              return targetConnectedLinks.some(link => {
-                return (
-                  sourceId === link.get('source').id ||
-                  sourceId === link.get('target').id
-                );
-              });
-            };
-
-            const handleError = (message = false) => {
-              if (message) showMessage(message);
-
-              resetLink();
-            };
-
-            // Cell connection logic
-            if (targetId === sourceId) {
-              // A cell cannot connect to itself, not throwing a
-              // message out here since the behavior is not obvious
-              handleError();
-            } else if (targetType === 'source') {
-              handleError(`Target ${targetTitle} is a source!`);
-            } else if (
-              sourceType === targetType &&
-              (sourceType !== 'stream' && targetType !== 'stream')
-            ) {
-              handleError(
-                `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
-              );
-            } else if (isLoopLink()) {
-              handleError(
-                `A connection is already in place for these two cells`,
-              );
-            } else {
-              const hasMoreThanOneTarget = sourceConnectedLinks.length >= 2;
-              const hasSource = targetConnectedLinks.length !== 0;
-
-              if (sourceType === 'source' && targetType === 'sink') {
-                if (hasMoreThanOneTarget) {
-                  return handleError(
-                    `The source ${sourceTitle} is already connected to a target`,
-                  );
-                }
-
-                if (hasSource) {
-                  return handleError(
-                    `The target ${targetTitle} is already connected to a source`,
-                  );
-                }
-              }
-
-              if (sourceType === 'source' && targetType === 'stream') {
-                const predecessors = graph.current.getPredecessors(
-                  cellView.model,
-                );
-                const hasSource = predecessors.some(
-                  successor => successor.attributes.classType === 'source',
-                );
-
-                if (hasMoreThanOneTarget) {
-                  return handleError(
-                    `The source ${sourceTitle} is already connected to a target`,
-                  );
-                }
-
-                if (hasSource) {
-                  return handleError(
-                    `The target ${targetTitle} already has a connection!`,
-                  );
-                }
-              }
-
-              if (sourceType === 'source' && targetType === 'topic') {
-                if (hasMoreThanOneTarget) {
-                  return handleError(
-                    `The source ${sourceTitle} is already connected to a target`,
-                  );
-                }
-              }
-
-              if (sourceType === 'topic' && targetType === 'sink') {
-                if (hasSource) {
-                  return handleError(
-                    `The target ${targetTitle} is already connected to a source`,
-                  );
-                }
-              }
-
-              if (sourceType === 'stream' && targetType === 'sink') {
-                const successors = graph.current.getSuccessors(sourceCell);
-                const hasSink = successors.some(
-                  successor => successor.attributes.classType === 'sink',
-                );
-
-                if (hasSink) {
-                  return handleError(
-                    `The source ${sourceTitle} is already connected to a sink`,
-                  );
-                }
-
-                if (hasSource) {
-                  return handleError(
-                    `The target ${targetTitle} is already connected to a source`,
-                  );
-                }
-              }
-
-              if (sourceType === 'stream' && targetType === 'stream') {
-                if (hasSource) {
-                  return handleError(
-                    `The target ${targetTitle} is already connected to a source`,
-                  );
-                }
-              }
-
-              if (
-                (sourceType === 'source' && targetType === 'sink') ||
-                (sourceType === 'source' && targetType === 'stream') ||
-                (sourceType === 'stream' && targetType === 'sink') ||
-                (sourceType === 'stream' && targetType === 'stream')
-              ) {
-                const sourcePosition = sourceCell.position();
-                const targetPosition = cellView.model.position();
-                const topicX = (sourcePosition.x + targetPosition.x + 23) / 2;
-                const topicY = (sourcePosition.y + targetPosition.y + 23) / 2;
-
-                graph.current.addCell(
-                  TopicGraph({
-                    cellInfo: {
-                      position: {
-                        x: topicX,
-                        y: topicY,
-                      },
-                      classType: 'topic',
-                      className: 'privateTopic',
-                    },
-                    graph: graph.current,
-                    paper: paper.current,
-                  }),
-                );
-
-                const topicId = graph.current.getLastCell().attributes.id;
-                disConnectLink[0].target({ id: topicId });
-
-                const newLink = new joint.shapes.standard.Link();
-                newLink.source({ id: topicId });
-                newLink.target({ id: cellView.model.id });
-                newLink.attr({ line: { stroke: '#9e9e9e' } });
-                newLink.addTo(graph.current);
-                return;
-              }
-
-              // Link to the target cell
-              disConnectLink[0].target({ id: cellView.model.id });
-            }
+          if (currentLink) {
+            createConnection({
+              currentLink,
+              cellView,
+              graph,
+              showMessage,
+              resetLink,
+              paper,
+              setInitToolboxList,
+            });
           }
         }
       });
 
       paper.current.on('link:pointerclick', linkView => {
-        const targetId = linkView.model.get('target').id;
-        if (!targetId) return; // Prevents users accidentally click on the link while connecting
+        resetLink();
 
         linkView.addTools(
           new joint.dia.ToolsView({
@@ -353,24 +177,17 @@ const Graph = props => {
       });
 
       // Cell and link hover effect
-      paper.current.on('cell:mouseenter', cellView => {
-        if (cellView.model.isLink()) {
-          // Prevents users accidentally hover on the link while connecting
-          const linkView = cellView;
-          const targetId = linkView.model.get('target').id;
-          if (!targetId) return;
-        }
-
-        cellView.highlight();
+      paper.current.on('cell:mouseenter', cellViewOrLinkView => {
+        cellViewOrLinkView.highlight();
       });
 
-      paper.current.on('cell:mouseleave', cellView => {
-        if (cellView.model.isLink()) {
-          cellView.unhighlight();
+      paper.current.on('cell:mouseleave', cellViewOrLinkView => {
+        if (cellViewOrLinkView.model.isLink()) {
+          cellViewOrLinkView.unhighlight();
         } else {
           // Keep cell menu when necessary
-          if (cellView.model.attributes.menuDisplay === 'none') {
-            cellView.unhighlight();
+          if (cellViewOrLinkView.model.attributes.menuDisplay === 'none') {
+            cellViewOrLinkView.unhighlight();
           }
         }
       });
@@ -401,7 +218,7 @@ const Graph = props => {
         }
 
         updateCurrentCell(currentCell);
-        setIsCentered(false);
+        // setIsCentered(false);
         paper.current.$el.removeClass('is-being-grabbed');
       });
     };
@@ -425,10 +242,8 @@ const Graph = props => {
 
       const links = graph.current.getLinks();
       if (links.length > 0) {
-        const disConnectLink = links.filter(link => !link.attributes.target.id);
-        if (disConnectLink.length > 0) {
-          disConnectLink[0].remove();
-        }
+        const currentLink = links.find(link => !link.get('target').id);
+        if (currentLink) currentLink.remove();
       }
     };
 
@@ -436,7 +251,7 @@ const Graph = props => {
   }, [
     palette.common.white,
     palette.grey,
-    palette.primary,
+    palette.primary.main,
     setIsCentered,
     showMessage,
   ]);
@@ -517,6 +332,7 @@ const Graph = props => {
           graph={graph.current}
           toolboxKey={toolboxKey}
           setToolboxExpanded={setToolboxExpanded}
+          initToolboxList={initToolboxList}
         />
       </PaperWrapper>
     </>

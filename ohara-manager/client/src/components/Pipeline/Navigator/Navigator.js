@@ -25,6 +25,8 @@ import Menu from '@material-ui/core/Menu';
 import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
+import * as context from 'context';
+import * as validate from 'utils/validate';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {
@@ -32,35 +34,22 @@ import {
   Tabs as EditWorkspaceTabs,
 } from 'components/Workspace/Edit';
 import {
-  required,
-  validServiceName,
-  minLength,
-  maxLength,
-  composeValidators,
-} from 'utils/validate';
-import {
   StyledNavigator,
   StyledButton,
   StyledExpansionPanel,
   StyledSubtitle1,
   PipelineList,
 } from './NavigatorStyles';
-
-import {
-  useWorkspace,
-  useEditWorkspaceDialog,
-  usePipelineActions,
-  usePipelineState,
-} from 'context';
+import { hashKey } from 'utils/object';
 
 const Navigator = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = context.useWorkspace();
   const [isExpanded, setIsExpanded] = useState(true);
-  const { open: openEditWorkspaceDialog } = useEditWorkspaceDialog();
-  const { data: pipelines } = usePipelineState();
-  const { addPipeline } = usePipelineActions();
+  const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
+  const { data: pipelines } = context.usePipelineState();
+  const { addPipeline } = context.usePipelineActions();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -78,7 +67,7 @@ const Navigator = () => {
   const onSubmit = async ({ pipelineName }, form) => {
     addPipeline({
       name: pipelineName,
-      group: currentWorkspace.settings.name,
+      group: hashKey(currentWorkspace),
       flows: [],
     });
 
@@ -153,11 +142,11 @@ const Navigator = () => {
                 component={InputField}
                 autoFocus
                 required
-                validate={composeValidators(
-                  required,
-                  minLength(2),
-                  maxLength(20),
-                  validServiceName,
+                validate={validate.composeValidators(
+                  validate.required,
+                  validate.minLength(2),
+                  validate.maxLength(20),
+                  validate.validServiceName,
                 )}
               />
             </form>

@@ -39,11 +39,6 @@ const ConnectorGraph = params => {
 
   const { classType, position, icon, displayedClassName } = cellInfo;
 
-  const linkIcon = renderToString(<TrendingUpIcon />);
-  const startIcon = renderToString(<PlayArrowIcon />);
-  const stopIcon = renderToString(<StopIcon />);
-  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
-  const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
   let link;
 
   joint.shapes.html = {};
@@ -58,6 +53,13 @@ const ConnectorGraph = params => {
       joint.shapes.basic.Rect.prototype.defaults,
     ),
   });
+
+  const linkIcon = renderToString(<TrendingUpIcon />);
+  const startIcon = renderToString(<PlayArrowIcon />);
+  const stopIcon = renderToString(<StopIcon />);
+  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
+  const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
+
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
       <div class="connector">
@@ -72,14 +74,17 @@ const ConnectorGraph = params => {
           <span>${'Status'}</span>
           <span>${'Stopped'}</span>
         </div>
-        <div class="connectorMenu">
+        <div class="connector-menu">
           ${
-            classType !== 'sink' ? `<Button id="link">${linkIcon}</Button>` : ''
+            // Sink cannot create connection form itself to others
+            classType !== 'sink'
+              ? `<Button id="connector-link">${linkIcon}</Button>`
+              : ''
           }
-          <Button id="start">${startIcon}</Button>
-          <Button id="stop">${stopIcon}</Button>
-          <Button id="setting">${settingIcon}</Button>
-          <Button id="remove">${removeIcon}</Button>
+          <Button id="connector-start">${startIcon}</Button>
+          <Button id="connector-stop">${stopIcon}</Button>
+          <Button id="connector-setting">${settingIcon}</Button>
+          <Button id="connector-remove">${removeIcon}</Button>
         </div>
     </div>`,
 
@@ -88,7 +93,6 @@ const ConnectorGraph = params => {
     },
     onRender() {
       if (this.$box) this.$box.remove();
-
       const boxMarkup = joint.util.template(this.template)();
       const $box = (this.$box = $(boxMarkup));
       this.listenTo(this.paper, 'scale translate', this.updateBox);
@@ -97,11 +101,11 @@ const ConnectorGraph = params => {
 
       // Bind remove event to our custom icon
       this.$box
-        .find('button#remove')
+        .find('#connector-remove')
         .on('click', _.bind(this.model.remove, this.model));
 
       const modelId = this.model.id;
-      this.$box.find('button#link').on('mousedown', function() {
+      this.$box.find('#connector-link').on('mousedown', function() {
         link = new joint.shapes.standard.Link();
         link.source({ id: modelId });
 
@@ -111,7 +115,7 @@ const ConnectorGraph = params => {
         link.addTo(graph);
       });
 
-      this.$box.find('button#setting').on('mousedown', function() {
+      this.$box.find('#connector-setting').on('mousedown', function() {
         openSettingDialog();
         setData({
           title: `Editing the settings for ${title} ${displayedClassName}`,
@@ -138,7 +142,7 @@ const ConnectorGraph = params => {
 
       this.$box.find('.title').text(this.model.get('title'));
       this.$box
-        .find('.connectorMenu')
+        .find('.connector-menu')
         .attr('style', `display:${this.model.get('menuDisplay')};`);
 
       if (this.paper) {
@@ -147,11 +151,19 @@ const ConnectorGraph = params => {
             if (!link.get('target').id) {
               const localPoint = paper.paperToLocalPoint(paper.translate());
 
+              // 290: AppBar and Navigator width
+              // 72: Toolbar height
               link.target({
                 x: (event.pageX - 290) / scale.sx + localPoint.x,
                 y: (event.pageY - 72) / scale.sy + localPoint.y,
               });
-              link.attr({ line: { stroke: '#9e9e9e' } });
+
+              link.attr({
+                // prevent the link from clicking by users, the `root` here is the
+                // SVG container element of the link
+                root: { style: 'pointer-events: none' },
+                line: { stroke: '#9e9e9e' },
+              });
             }
           }
         });
@@ -163,10 +175,10 @@ const ConnectorGraph = params => {
   });
 
   return new joint.shapes.html.Element({
-    position,
     size: { width: 240, height: 100 },
-    title,
     menuDisplay: 'none',
+    position,
+    title,
     classType,
     isTemporary,
   });

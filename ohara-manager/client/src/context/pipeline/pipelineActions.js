@@ -19,17 +19,20 @@ import {
   fetchPipelinesRoutine,
   addPipelineRoutine,
   setCurrentPipelineRoutine,
+  deletePipelineRoutine,
 } from './pipelineRoutines';
 
-export const createFetchPipelines = (
+import { hashKey } from 'utils/object';
+
+const createFetchPipelines = (
   state,
   dispatch,
   showMessage,
-) => async workspaceName => {
+) => async workspace => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
   dispatch(fetchPipelinesRoutine.request());
-  const pipelines = await pipelineApi.getAll({ group: workspaceName });
+  const pipelines = await pipelineApi.getAll({ group: hashKey(workspace) });
 
   if (pipelines.errors) {
     dispatch(fetchPipelinesRoutine.failure(pipelines.title));
@@ -40,11 +43,7 @@ export const createFetchPipelines = (
   dispatch(fetchPipelinesRoutine.success(pipelines.data));
 };
 
-export const createAddPipeline = (
-  state,
-  dispatch,
-  showMessage,
-) => async values => {
+const createAddPipeline = (state, dispatch, showMessage) => async values => {
   if (state.isFetching) return;
 
   dispatch(addPipelineRoutine.request());
@@ -60,6 +59,45 @@ export const createAddPipeline = (
   showMessage(pipeline.title);
 };
 
-export const CreateSetCurrentPipeline = dispatch => pipelineName => {
+const createDeletePipeline = (
+  state,
+  dispatch,
+  showMessage,
+) => async pipeline => {
+  if (state.isFetching) return;
+
+  dispatch(deletePipelineRoutine.request());
+
+  // TODO: stop all connectors before processing to delete pipeline. Tracked in
+  // https://github.com/oharastream/ohara/issues/3331
+
+  const deletePipelineResponse = await pipelineApi.remove({
+    name: pipeline.name,
+    group: pipeline.group,
+  });
+
+  if (deletePipelineResponse.errors) {
+    dispatch(deletePipelineRoutine.failure(deletePipelineResponse.title));
+    showMessage(deletePipelineResponse.title);
+    return;
+  }
+
+  dispatch(
+    deletePipelineRoutine.success({
+      name: pipeline.name,
+      group: pipeline.group,
+    }),
+  );
+  showMessage(deletePipelineResponse.title);
+};
+
+const createSetCurrentPipeline = dispatch => pipelineName => {
   dispatch(setCurrentPipelineRoutine.trigger(pipelineName));
+};
+
+export {
+  createFetchPipelines,
+  createDeletePipeline,
+  createAddPipeline,
+  createSetCurrentPipeline,
 };

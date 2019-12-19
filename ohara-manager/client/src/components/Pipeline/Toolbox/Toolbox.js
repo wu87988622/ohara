@@ -31,10 +31,10 @@ import * as joint from 'jointjs';
 import * as fileApi from 'api/fileApi';
 import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamApi';
+import * as context from 'context';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
 import { StyledToolbox } from './ToolboxStyles';
-import * as context from 'context';
 import { useSnackbar } from 'context/SnackbarContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
@@ -58,6 +58,7 @@ const Toolbox = props => {
     graph,
     toolboxKey,
     setToolboxExpanded,
+    initToolboxList,
   } = props;
 
   const {
@@ -284,7 +285,6 @@ const Toolbox = props => {
 
     renderToolbox();
   }, [
-    cellInfo.position,
     graph,
     paper,
     searchResults,
@@ -292,6 +292,7 @@ const Toolbox = props => {
     sources,
     streams,
     topics,
+    initToolboxList,
   ]);
 
   return (
@@ -441,6 +442,7 @@ Toolbox.propTypes = {
   }).isRequired,
   toolboxKey: PropTypes.number.isRequired,
   setToolboxExpanded: PropTypes.func.isRequired,
+  initToolboxList: PropTypes.number.isRequired,
   paper: PropTypes.any,
   graph: PropTypes.any,
 };

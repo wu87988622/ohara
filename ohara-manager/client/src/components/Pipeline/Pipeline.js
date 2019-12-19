@@ -88,7 +88,7 @@ const Pipeline = () => {
 
   useEffect(() => {
     if (!currentWorkspace) return;
-    fetchPipelines(currentWorkspace.settings.name);
+    fetchPipelines(currentWorkspace);
   }, [currentWorkspace, fetchPipelines]);
 
   const hasPipeline = pipelines.length > 0;
@@ -115,7 +115,7 @@ const Pipeline = () => {
   useEffect(() => {
     if (currentPipeline !== prevPipeline) {
       setToolboxExpanded(initialState);
-      // renders Toolbox
+      // re-renders Toolbox
       setToolboxKey(prevKey => prevKey + 1);
     }
   }, [currentPipeline, initialState, prevPipeline]);

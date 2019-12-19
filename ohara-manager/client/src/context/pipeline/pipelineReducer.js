@@ -20,6 +20,7 @@ import {
   initializeRoutine,
   fetchPipelinesRoutine,
   addPipelineRoutine,
+  deletePipelineRoutine,
   setCurrentPipelineRoutine,
 } from './pipelineRoutines';
 
@@ -36,11 +37,11 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchPipelinesRoutine.REQUEST:
-    case addPipelineRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
+
     case fetchPipelinesRoutine.SUCCESS:
       return {
         ...state,
@@ -48,6 +49,21 @@ const reducer = (state, action) => {
         data: sort(action.payload),
         lastUpdated: new Date(),
       };
+
+    case fetchPipelinesRoutine.FAILURE:
+      return {
+        ...state,
+        isFetching: false,
+        error: action.payload || true,
+      };
+
+    case addPipelineRoutine.REQUEST:
+      return {
+        ...state,
+        isFetching: true,
+        error: null,
+      };
+
     case addPipelineRoutine.SUCCESS:
       return {
         ...state,
@@ -55,20 +71,49 @@ const reducer = (state, action) => {
         data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case fetchPipelinesRoutine.FAILURE:
+
+    case addPipelineRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload || true,
       };
+
+    case deletePipelineRoutine.REQUEST:
+      return {
+        ...state,
+        isFetching: true,
+      };
+
+    case deletePipelineRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: state.data.filter(
+          pipeline =>
+            pipeline.name !== action.payload.name &&
+            pipeline.group !== action.payload.name,
+        ),
+        lastUpdated: new Date(),
+      };
+
+    case deletePipelineRoutine.FAILURE:
+      return {
+        ...state,
+        isFetching: false,
+        error: action.payload || true,
+      };
+
     case setCurrentPipelineRoutine.TRIGGER:
       return {
         ...state,
         currentPipeline:
           state.data.find(data => data.name === action.payload) || null,
       };
+
     case initializeRoutine.TRIGGER:
       return initialState;
+
     default:
       return state;
   }

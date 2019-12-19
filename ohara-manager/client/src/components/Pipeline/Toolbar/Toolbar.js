@@ -32,9 +32,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import Tooltip from '@material-ui/core/Tooltip';
+import { useHistory } from 'react-router-dom';
 
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
+import * as context from 'context';
 
 const Toolbar = props => {
   const {
@@ -52,6 +54,11 @@ const Toolbar = props => {
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
   const [isMetricsDisplayed, setIsMetricsDisplayed] = React.useState(true);
 
+  const { currentPipeline, error } = context.usePipelineState();
+  const { deletePipeline } = context.usePipelineActions();
+  const { currentWorkspace } = context.useWorkspace();
+  const history = useHistory();
+
   const handleZoomClick = event => {
     setZoomAnchorEl(event.currentTarget);
   };
@@ -67,6 +74,13 @@ const Toolbar = props => {
 
   const handlePipelineControlsClick = event => {
     setPipelineAnchorEl(event.currentTarget);
+  };
+
+  const handlePipelineDelete = async () => {
+    await deletePipeline(currentPipeline);
+
+    if (!error) history.push(`/${currentWorkspace.settings.name}`);
+    handlePipelineControlsClose();
   };
 
   const handlePipelineControlsClose = () => {
@@ -214,7 +228,11 @@ const Toolbar = props => {
           <MenuItem onClick={handlePipelineControlsClose}>
             Stop all components
           </MenuItem>
-          <MenuItem onClick={handlePipelineControlsClose}>
+          <MenuItem
+            onClick={() => {
+              handlePipelineDelete();
+            }}
+          >
             Delete this pipeline
           </MenuItem>
         </Menu>

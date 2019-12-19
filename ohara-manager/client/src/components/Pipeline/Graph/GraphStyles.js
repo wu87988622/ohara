@@ -74,7 +74,7 @@ export const Paper = styled.div(
         box-shadow: 0 0 0 2px ${theme.palette.primary};
       }
 
-      .connectorMenu {
+      .connector-menu {
         position: absolute;
         top: ${theme.spacing(0.5)}px;
         left: calc(100% + 8px);
@@ -153,7 +153,7 @@ export const Paper = styled.div(
         text-align:center;
         
 }
-      .topicMenu {
+      .topic-menu {
         width: 24px;
         position: absolute;
         top: ${theme.spacing(0.5)}px;
