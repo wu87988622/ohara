@@ -212,12 +212,11 @@ object ConnectorApi {
     override def tags: Map[String, JsValue] = settings.tags
   }
 
-  implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorInfo] =
+  implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] =
     new RootJsonFormat[ConnectorInfo] {
       private[this] val format                        = jsonFormat5(ConnectorInfo)
-      override def read(json: JsValue): ConnectorInfo = format.read(json)
-
-      override def write(obj: ConnectorInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
+      override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
+      override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
     }
 
   /**

@@ -97,25 +97,23 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "bk00",
-         "group": "abc",
-         "zookeeperClusterKey": {
-           "group": "default",
-           "name": "zk00"
-         },
-         "imageName": "oharastream/broker:$|version|",
-         "clientPort": 12345,
-         "jmxPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       }
-       "aliveNodes": [],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "bk00",
+      "group": "abc",
+      "zookeeperClusterKey": {
+        "group": "default",
+        "name": "zk00"
+      },
+      "imageName": "oharastream/broker:$|version|",
+      "clientPort": 12345,
+      "jmxPort": 12347,
+      "nodeNames": [
+        "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [],
+      "lastModified": 1563158986411
+    }
 
   As mentioned before, ohara provides default to most settings. You can
   just input nodeNames to run a broker cluster.
@@ -142,25 +140,23 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "403e6c457d",
-         "group": "default",
-         "zookeeperClusterKey": {
-           "group": "default",
-           "name": "zk00"
-         },
-         "imageName": "oharastream/broker:$|version|",
-         "clientPort": 12345,
-         "jmxPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       }
-       "aliveNodes": [],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "403e6c457d",
+      "group": "default",
+      "zookeeperClusterKey": {
+        "group": "default",
+        "name": "zk00"
+      },
+      "imageName": "oharastream/broker:$|version|",
+      "clientPort": 12345,
+      "jmxPort": 12347,
+      "nodeNames": [
+        "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [],
+      "lastModified": 1563158986411
+    }
 
 list all broker clusters
 ------------------------
@@ -175,32 +171,30 @@ the accepted query keys are listed below.
 #. tag - this field is similar to tags but it addresses the "contain" behavior.
 #. state
 #. aliveNodes
-#. key in settings
+#. key
 
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "settings": {
-           "name": "bk00",
-           "group": "default",
-           "zookeeperClusterKey": {
-             "group": "default",
-             "name": "zk00"
-           },
-           "imageName": "oharastream/broker:$|version|",
-           "clientPort": 12345,
-           "jmxPort": 12347,
-           "nodeNames": [
-             "node00"
-           ],
-           "tags": {}
-         }
-         "aliveNodes": [],
-         "lastModified": 1563158986411
-       }
-     ]
+    [
+      {
+        "name": "bk00",
+        "group": "default",
+        "zookeeperClusterKey": {
+          "group": "default",
+          "name": "zk00"
+        },
+        "imageName": "oharastream/broker:$|version|",
+        "clientPort": 12345,
+        "jmxPort": 12347,
+        "nodeNames": [
+          "node00"
+        ],
+        "tags": {},
+        "aliveNodes": [],
+        "lastModified": 1563158986411
+      }
+    ]
 
 update broker cluster properties
 --------------------------------
@@ -238,25 +232,23 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "bk00",
-         "group": "default",
-         "zookeeperClusterKey": {
-           "group": "default",
-           "name": "zk00"
-         },
-         "imageName": "oharastream/broker:$|version|",
-         "clientPort": 12345,
-         "jmxPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       }
-       "aliveNodes": [],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "bk00",
+      "group": "default",
+      "zookeeperClusterKey": {
+        "group": "default",
+        "name": "zk00"
+      },
+      "imageName": "oharastream/broker:$|version|",
+      "clientPort": 12345,
+      "jmxPort": 12347,
+      "nodeNames": [
+        "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [],
+      "lastModified": 1563158986411
+    }
 
 delete a broker properties
 --------------------------
@@ -287,28 +279,26 @@ We will use the default value as the query parameter "?group=" if you don't spec
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "bk00",
-         "group": "default",
-         "zookeeperClusterKey": {
-           "group": "default",
-           "name": "zk00"
-         },
-         "imageName": "oharastream/broker:$|version|",
-         "clientPort": 9092,
-         "jmxPort": 9093,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       }
-       "aliveNodes": [
-         "node00"
-       ],
-       "state": "RUNNING",
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "bk00",
+      "group": "default",
+      "zookeeperClusterKey": {
+        "group": "default",
+        "name": "zk00"
+      },
+      "imageName": "oharastream/broker:$|version|",
+      "clientPort": 9092,
+      "jmxPort": 9093,
+      "nodeNames": [
+        "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [
+        "node00"
+      ],
+      "state": "RUNNING",
+      "lastModified": 1563158986411
+    }
 
 
 start a broker cluster

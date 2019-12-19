@@ -134,28 +134,27 @@ Example Response
     {
       "lastModified": 1563499550267,
       "aliveNodes": [],
-      "aliveNodes": [],
       "metrics": {
         "meters": []
       },
-      "settings": {
-        "name": "a5eddb5b9fd144f1a75e",
-        "brokerClusterKey": {
-          "group": "default",
-          "name": "4ef3d4a266"
-        },
+      "name": "a5eddb5b9fd144f1a75e",
+      "brokerClusterKey": {
         "group": "default",
-        "tags": {},
-        "imageName": "oharastream/stream:$|VERSION|",
-        "from": [],
-        "to": [],
-        "jarKey": {
-          "group": "wk01",
-          "name": "stream-app.jar"
-        },
-        "jmxPort": 3792,
-        "nodeNames": ["node1"]
-      }
+        "name": "4ef3d4a266"
+      },
+      "group": "default",
+      "tags": {},
+      "imageName": "oharastream/stream:$|VERSION|",
+      "from": [],
+      "to": [],
+      "jarKey": {
+        "group": "wk01",
+        "name": "stream-app.jar"
+      },
+      "jmxPort": 3792,
+      "nodeNames": [
+        "node1"
+      ]
     }
 
   .. note::
@@ -177,31 +176,29 @@ Example Response
 
   .. code-block:: json
 
-     {
-       "lastModified": 1563499550267,
-       "aliveNodes": [],
-       "metrics": {
-         "meters": []
-       },
-       "settings": {
-         "name": "a5eddb5b9fd144f1a75e",
-         "group": "default",
-         "brokerClusterKey": {
-           "group": "default",
-           "name": "4ef3d4a266"
-         },
-         "tags": {},
-         "imageName": "oharastream/stream:$|version|",
-         "from": [],
-         "to": [],
-         "jarKey": {
-           "group": "wk01",
-           "name": "ohara-it-stream.jar"
-         },
-         "jmxPort": 3792,
-         "nodeNames": []
-       }
-     }
+    {
+      "lastModified": 1563499550267,
+      "aliveNodes": [],
+      "metrics": {
+        "meters": []
+      },
+      "name": "a5eddb5b9fd144f1a75e",
+      "group": "default",
+      "brokerClusterKey": {
+        "group": "default",
+        "name": "4ef3d4a266"
+      },
+      "tags": {},
+      "imageName": "oharastream/stream:$|version|",
+      "from": [],
+      "to": [],
+      "jarKey": {
+        "group": "wk01",
+        "name": "ohara-it-stream.jar"
+      },
+      "jmxPort": 3792,
+      "nodeNames": []
+    }
 
 list information of stream cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,40 +213,38 @@ the accepted query keys are listed below.
 #. tag - this field is similar to tags but it addresses the "contain" behavior.
 #. state
 #. aliveNodes
-#. key in settings
+#. key
 
 Example Response
   Response format is as :ref:`stream stored format <rest-stream-stored-data>`.
 
   .. code-block:: json
 
-     [
-       {
-         "lastModified": 1563499550267,
-         "aliveNodes": [],
-         "metrics": {
-           "meters": []
-         },
-         "settings": {
-           "name": "a5eddb5b9fd144f1a75e",
-           "group": "default",
-           "brokerClusterKey": {
-             "group": "default",
-             "name": "4ef3d4a266"
-           },
-           "tags": {},
-           "imageName": "oharastream/stream:$|version|",
-           "from": [],
-           "to": [],
-           "jarKey": {
-             "group": "wk01",
-             "name": "ohara-it-stream.jar"
-           },
-           "jmxPort": 3792,
-           "nodeNames": []
-         }
-       }
-     ]
+    [
+      {
+        "lastModified": 1563499550267,
+        "aliveNodes": [],
+        "metrics": {
+          "meters": []
+        },
+        "name": "a5eddb5b9fd144f1a75e",
+        "group": "default",
+        "brokerClusterKey": {
+          "group": "default",
+          "name": "4ef3d4a266"
+        },
+        "tags": {},
+        "imageName": "oharastream/stream:$|version|",
+        "from": [],
+        "to": [],
+        "jarKey": {
+          "group": "wk01",
+          "name": "ohara-it-stream.jar"
+        },
+        "jmxPort": 3792,
+        "nodeNames": []
+      }
+    ]
 
 .. _rest-streams-update-information:
 
@@ -309,33 +304,39 @@ Example Response
 
   .. code-block:: json
 
-     {
-        "lastModified": 1563503358666,
-        "aliveNodes": [
-          "node1", "node2"
-        ],
-        "metrics": {
-          "meters": []
-        },
-        "settings": {
-          "name": "myapp",
-          "group": "default",
-          "brokerClusterKey": {
-            "group": "default",
-            "name": "4ef3d4a266"
-          },
-          "tags": {},
-          "imageName": "myimage",
-          "jarKey": {
-              "group": "newGroup",
-              "name": "newJar.jar"
-          },
-          "to": ["newTopic2"],
-          "from": ["newTopic1"],
-          "jmxPort": 8888,
-          "nodeNames": ["node1", "node2"]
-        }
-     }
+    {
+      "lastModified": 1563503358666,
+      "aliveNodes": [
+        "node1",
+        "node2"
+      ],
+      "metrics": {
+        "meters": []
+      },
+      "name": "myapp",
+      "group": "default",
+      "brokerClusterKey": {
+        "group": "default",
+        "name": "4ef3d4a266"
+      },
+      "tags": {},
+      "imageName": "myimage",
+      "jarKey": {
+        "group": "newGroup",
+        "name": "newJar.jar"
+      },
+      "to": [
+        "newTopic2"
+      ],
+      "from": [
+        "newTopic1"
+      ],
+      "jmxPort": 8888,
+      "nodeNames": [
+        "node1",
+        "node2"
+      ]
+    }
 
 
 delete properties of specific stream

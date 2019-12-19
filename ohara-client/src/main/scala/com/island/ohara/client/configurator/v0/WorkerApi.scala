@@ -287,13 +287,12 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
+  private[ohara] implicit val WORKER_CLUSTER_INFO_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
     JsonRefiner[WorkerClusterInfo]
       .format(new RootJsonFormat[WorkerClusterInfo] {
         private[this] val format                            = jsonFormat5(WorkerClusterInfo)
-        override def write(obj: WorkerClusterInfo): JsValue = JsObject(noJsNull(format.write(obj).asJsObject.fields))
-
-        override def read(json: JsValue): WorkerClusterInfo = format.read(json)
+        override def read(json: JsValue): WorkerClusterInfo = format.read(extractSetting(json.asJsObject))
+        override def write(obj: WorkerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
       })
       .refine
 

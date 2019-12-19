@@ -16,11 +16,12 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json._
 
@@ -208,4 +209,29 @@ class TestTopicApi extends OharaTest {
                                            |  }
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
+
+  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
+  @Test
+  def settingsDisappearFromJson(): Unit = {
+    val cluster = TopicInfo(
+      settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      partitionInfos = Seq.empty,
+      state = None,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    TopicApi.TOPIC_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+  }
+
+  @Test
+  def testInfoJsonRepresentation(): Unit = {
+    val cluster = TopicInfo(
+      settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      partitionInfos = Seq.empty,
+      state = None,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    TopicApi.TOPIC_INFO_FORMAT.read(TopicApi.TOPIC_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
 }

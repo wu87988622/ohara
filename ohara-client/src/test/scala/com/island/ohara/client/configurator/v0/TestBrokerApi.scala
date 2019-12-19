@@ -21,7 +21,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
@@ -559,7 +559,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString(5)
-    val res = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.write(
+    val res = BrokerApi.BROKER_CLUSTER_INFO_FORMAT.write(
       BrokerClusterInfo(
         settings = BrokerApi.access.request
           .name(name)
@@ -574,13 +574,8 @@ class TestBrokerApi extends OharaTest {
       )
     )
     // serialize to json should see the object key (group, name)
-    res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
-
-    // // deserialize to info should see the object key (group, name)
-    val data = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.read(res)
-    data.name shouldBe name
-    data.group shouldBe GROUP_DEFAULT
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
   }
 
   @Test
@@ -657,7 +652,7 @@ class TestBrokerApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
 
-    val string = BrokerApi.BROKER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
+    val string = BrokerApi.BROKER_CLUSTER_INFO_FORMAT.write(cluster).toString()
 
     BrokerApi.DEFINITIONS.filter(_.hasDefault).foreach { definition =>
       string should include(definition.key())
@@ -726,4 +721,29 @@ class TestBrokerApi extends OharaTest {
                                                                                                                             |    "xms": -123
                                                                                                                             |  }
       """.stripMargin.parseJson)
+
+  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
+  @Test
+  def settingsDisappearFromJson(): Unit = {
+    val cluster = BrokerClusterInfo(
+      settings = BrokerApi.access.request.zookeeperClusterKey(ObjectKey.of("a", "b")).nodeName("aa").creation.settings,
+      aliveNodes = Set.empty,
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    BrokerApi.BROKER_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+  }
+
+  @Test
+  def testInfoJsonRepresentation(): Unit = {
+    val cluster = BrokerClusterInfo(
+      settings = BrokerApi.access.request.zookeeperClusterKey(ObjectKey.of("a", "b")).nodeName("aa").creation.settings,
+      aliveNodes = Set.empty,
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    BrokerApi.BROKER_CLUSTER_INFO_FORMAT.read(BrokerApi.BROKER_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
 }

@@ -183,13 +183,12 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[ZookeeperClusterInfo] =
+  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_FORMAT: OharaJsonFormat[ZookeeperClusterInfo] =
     JsonRefiner[ZookeeperClusterInfo]
       .format(new RootJsonFormat[ZookeeperClusterInfo] {
         private[this] val format                               = jsonFormat5(ZookeeperClusterInfo)
-        override def read(json: JsValue): ZookeeperClusterInfo = format.read(json)
-        override def write(obj: ZookeeperClusterInfo): JsValue =
-          JsObject(noJsNull(format.write(obj).asJsObject.fields))
+        override def read(json: JsValue): ZookeeperClusterInfo = format.read(extractSetting(json.asJsObject))
+        override def write(obj: ZookeeperClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
       })
       .refine
 

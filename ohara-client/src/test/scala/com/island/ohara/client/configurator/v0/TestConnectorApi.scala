@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, PropGroup, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, _}
@@ -140,7 +140,7 @@ class TestConnectorApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
     // pass
-    ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.write(response)
+    ConnectorApi.CONNECTOR_INFO_FORMAT.write(response)
   }
 
   @Test
@@ -158,32 +158,12 @@ class TestConnectorApi extends OharaTest {
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
-    ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT
+    ConnectorApi.CONNECTOR_INFO_FORMAT
       .write(response)
       .asInstanceOf[JsObject]
       // previous name
       .fields
       .contains("className") shouldBe false
-  }
-
-  @Test
-  def parsePreviousKeyOfClassNameFromConnectorDescription(): Unit = {
-    import spray.json._
-    val className            = CommonUtils.randomString()
-    val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.read(s"""
-      |  {
-      |    "id": "asdasdsad",
-      |    "lastModified": 123,
-      |    "settings": {
-      |    "className": "$className"
-      |    },
-      |    "metrics": {
-      |      "meters":[]
-      |    },
-      |    "tasksStatus": []
-      |  }
-      | """.stripMargin.parseJson)
-    an[NoSuchElementException] should be thrownBy connectorDescription.className
   }
 
   @Test
@@ -687,4 +667,29 @@ class TestConnectorApi extends OharaTest {
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
     ConnectorApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
+
+  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
+  @Test
+  def settingsDisappearFromJson(): Unit = {
+    val cluster = ConnectorInfo(
+      settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      status = None,
+      tasksStatus = Seq.empty,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    ConnectorApi.CONNECTOR_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+  }
+
+  @Test
+  def testInfoJsonRepresentation(): Unit = {
+    val cluster = ConnectorInfo(
+      settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      status = None,
+      tasksStatus = Seq.empty,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    ConnectorApi.CONNECTOR_INFO_FORMAT.read(ConnectorApi.CONNECTOR_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
 }

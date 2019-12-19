@@ -120,33 +120,31 @@ Example Response
     {
       "lastModified": 1567177024356,
       "aliveNodes": [],
-      "settings": {
-        "status.storage.topic": "statusTopic",
-        "name": "wk00",
+      "status.storage.topic": "statusTopic",
+      "name": "wk00",
+      "group": "default",
+      "offset.storage.partitions": 1,
+      "brokerClusterKey": {
         "group": "default",
-        "offset.storage.partitions": 1,
-        "brokerClusterKey": {
-          "group": "default",
-          "name": "preCreatedBkCluster"
-        },
-        "tags": {},
-        "jarInfos": [],
-        "offset.storage.topic": "offsetTopic",
-        "group.id": "abcdefg",
-        "status.storage.replication.factor": 1,
-        "offset.storage.replication.factor": 1,
-        "config.storage.replication.factor": 1,
-        "status.storage.partitions": 1,
-        "config.storage.topic": "configTopic",
-        "jmxPort": 12346,
-        "clientPort": 12345,
-        "freePorts": [],
-        "pluginKeys": [],
-        "sharedJarKeys": [],
-        "nodeNames": [
-          "node00"
-        ]
-      }
+        "name": "preCreatedBkCluster"
+      },
+      "tags": {},
+      "jarInfos": [],
+      "offset.storage.topic": "offsetTopic",
+      "group.id": "abcdefg",
+      "status.storage.replication.factor": 1,
+      "offset.storage.replication.factor": 1,
+      "config.storage.replication.factor": 1,
+      "status.storage.partitions": 1,
+      "config.storage.topic": "configTopic",
+      "jmxPort": 12346,
+      "clientPort": 12345,
+      "freePorts": [],
+      "pluginKeys": [],
+      "sharedJarKeys": [],
+      "nodeNames": [
+        "node00"
+      ]
     }
 
   As mentioned before, ohara provides default to most settings. You can
@@ -171,33 +169,31 @@ Example Response
     {
       "lastModified": 1567176877946,
       "aliveNodes": [],
-      "settings": {
-        "status.storage.topic": "a6c5018531",
-        "name": "wk",
+      "status.storage.topic": "a6c5018531",
+      "name": "wk",
+      "group": "default",
+      "offset.storage.partitions": 1,
+      "brokerClusterKey": {
         "group": "default",
-        "offset.storage.partitions": 1,
-        "brokerClusterKey": {
-          "group": "default",
-          "name": "preCreatedBkCluster"
-        },
-        "tags": {},
-        "jarInfos": [],
-        "offset.storage.topic": "6ec3cd5f1b",
-        "group.id": "979a8c0c18",
-        "status.storage.replication.factor": 1,
-        "offset.storage.replication.factor": 1,
-        "config.storage.replication.factor": 1,
-        "status.storage.partitions": 1,
-        "config.storage.topic": "4fdfdabb51",
-        "jmxPort": 37116,
-        "clientPort": 37634,
-        "freePorts": [],
-        "pluginKeys": [],
-        "sharedJarKeys": [],
-        "nodeNames": [
-          "node10"
-        ]
-      }
+        "name": "preCreatedBkCluster"
+      },
+      "tags": {},
+      "jarInfos": [],
+      "offset.storage.topic": "6ec3cd5f1b",
+      "group.id": "979a8c0c18",
+      "status.storage.replication.factor": 1,
+      "offset.storage.replication.factor": 1,
+      "config.storage.replication.factor": 1,
+      "status.storage.partitions": 1,
+      "config.storage.topic": "4fdfdabb51",
+      "jmxPort": 37116,
+      "clientPort": 37634,
+      "freePorts": [],
+      "pluginKeys": [],
+      "sharedJarKeys": [],
+      "nodeNames": [
+        "node10"
+      ]
     }
 
 .. _rest-workers-list:
@@ -215,7 +211,7 @@ the accepted query keys are listed below.
 #. tag - this field is similar to tags but it addresses the "contain" behavior.
 #. state
 #. aliveNodes
-#. key in settings
+#. key
 
 Example Response
   .. code-block:: json
@@ -224,32 +220,30 @@ Example Response
       {
         "lastModified": 1567177024356,
         "aliveNodes": [],
-        "settings": {
-          "status.storage.topic": "statusTopic",
-          "name": "wk00",
-          "offset.storage.partitions": 1,
-          "brokerClusterKey": {
-            "group": "default",
-            "name": "preCreatedBkCluster"
-          },
-          "tags": {},
-          "jarInfos": [],
-          "offset.storage.topic": "offsetTopic",
-            "group.id": "abcdefg",
-          "status.storage.replication.factor": 1,
-          "offset.storage.replication.factor": 1,
-          "config.storage.replication.factor": 1,
-          "status.storage.partitions": 1,
-          "config.storage.topic": "configTopic",
-          "jmxPort": 12346,
-          "clientPort": 12345,
-          "freePorts": [],
-          "pluginKeys": [],
-          "sharedJarKeys": [],
-          "nodeNames": [
-            "node00"
-          ],
-        }
+        "status.storage.topic": "statusTopic",
+        "name": "wk00",
+        "offset.storage.partitions": 1,
+        "brokerClusterKey": {
+          "group": "default",
+          "name": "preCreatedBkCluster"
+        },
+        "tags": {},
+        "jarInfos": [],
+        "offset.storage.topic": "offsetTopic",
+        "group.id": "abcdefg",
+        "status.storage.replication.factor": 1,
+        "offset.storage.replication.factor": 1,
+        "config.storage.replication.factor": 1,
+        "status.storage.partitions": 1,
+        "config.storage.topic": "configTopic",
+        "jmxPort": 12346,
+        "clientPort": 12345,
+        "freePorts": [],
+        "pluginKeys": [],
+        "sharedJarKeys": [],
+        "nodeNames": [
+          "node00"
+        ]
       }
     ]
 
@@ -292,33 +286,31 @@ Example Response
     {
       "lastModified": 1567177024356,
       "aliveNodes": [],
-      "settings": {
-        "status.storage.topic": "statusTopic",
-        "name": "wk00",
+      "status.storage.topic": "statusTopic",
+      "name": "wk00",
+      "group": "default",
+      "offset.storage.partitions": 1,
+      "brokerClusterKey": {
         "group": "default",
-        "offset.storage.partitions": 1,
-        "brokerClusterKey": {
-          "group": "default",
-          "name": "preCreatedBkCluster"
-        },
-        "tags": {},
-        "jarInfos": [],
-        "offset.storage.topic": "offsetTopic",
-        "group.id": "abcdefg",
-        "status.storage.replication.factor": 1,
-        "offset.storage.replication.factor": 1,
-        "config.storage.replication.factor": 1,
-        "status.storage.partitions": 1,
-        "config.storage.topic": "configTopic",
-        "jmxPort": 12346,
-        "clientPort": 12345,
-        "freePorts": [],
-        "pluginKeys": [],
-        "sharedJarKeys": [],
-        "nodeNames": [
-          "node00"
-        ]
-      }
+        "name": "preCreatedBkCluster"
+      },
+      "tags": {},
+      "jarInfos": [],
+      "offset.storage.topic": "offsetTopic",
+      "group.id": "abcdefg",
+      "status.storage.replication.factor": 1,
+      "offset.storage.replication.factor": 1,
+      "config.storage.replication.factor": 1,
+      "status.storage.partitions": 1,
+      "config.storage.topic": "configTopic",
+      "jmxPort": 12346,
+      "clientPort": 12345,
+      "freePorts": [],
+      "pluginKeys": [],
+      "sharedJarKeys": [],
+      "nodeNames": [
+        "node00"
+      ]
     }
 
 delete a worker properties
@@ -350,40 +342,35 @@ We will use the default value as the query parameter "?group=" if you don't spec
 Example Response
   .. code-block:: json
 
-      {
-         "lastModified":1567178933996,
-         "aliveNodes":[
-         ],
-         "settings":{
-            "status.storage.topic":"d28ca7c875",
-            "name":"wk",
-            "group": "default",
-            "offset.storage.partitions":1,
-            "brokerClusterKey": {
-              "group": "default",
-              "name": "preCreatedBkCluster"
-            },
-            "tags":{
-
-            },
-            "offset.storage.topic":"f1f6ae812c",
-            "imageName":"oharastream/connect-worker:0.8.0-SNAPSHOT",
-            "group.id":"16f3408f84",
-            "status.storage.replication.factor":1,
-            "offset.storage.replication.factor":1,
-            "config.storage.replication.factor":1,
-            "status.storage.partitions":1,
-            "config.storage.topic":"4279f8a236",
-            "jmxPort":33983,
-            "freePorts": [],
-            "clientPort":34601,
-            "pluginKeys":[],
-            "sharedJarKeys": [],
-            "nodeNames":[
-               "node10"
-            ]
-         }
-      }
+    {
+      "lastModified": 1567178933996,
+      "aliveNodes": [],
+      "status.storage.topic": "d28ca7c875",
+      "name": "wk",
+      "group": "default",
+      "offset.storage.partitions": 1,
+      "brokerClusterKey": {
+        "group": "default",
+        "name": "preCreatedBkCluster"
+      },
+      "tags": {},
+      "offset.storage.topic": "f1f6ae812c",
+      "imageName": "oharastream/connect-worker:0.8.0-SNAPSHOT",
+      "group.id": "16f3408f84",
+      "status.storage.replication.factor": 1,
+      "offset.storage.replication.factor": 1,
+      "config.storage.replication.factor": 1,
+      "status.storage.partitions": 1,
+      "config.storage.topic": "4279f8a236",
+      "jmxPort": 33983,
+      "freePorts": [],
+      "clientPort": 34601,
+      "pluginKeys": [],
+      "sharedJarKeys": [],
+      "nodeNames": [
+        "node10"
+      ]
+    }
 
 start a worker cluster
 ----------------------

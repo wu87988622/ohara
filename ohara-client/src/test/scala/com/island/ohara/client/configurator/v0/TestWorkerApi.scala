@@ -21,7 +21,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
@@ -29,23 +29,6 @@ import spray.json.{DeserializationException, _}
 class TestWorkerApi extends OharaTest {
   private[this] final val accessApi =
     WorkerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
-
-  @Test
-  def testResponseEquals(): Unit = {
-    val response = WorkerClusterInfo(
-      settings = accessApi
-        .brokerClusterKey(ObjectKey.of("default", CommonUtils.randomString()))
-        .nodeName(CommonUtils.randomString(10))
-        .creation
-        .settings,
-      aliveNodes = Set.empty,
-      state = None,
-      error = None,
-      lastModified = CommonUtils.current()
-    )
-
-    response shouldBe WORKER_CLUSTER_INFO_JSON_FORMAT.read(WORKER_CLUSTER_INFO_JSON_FORMAT.write(response))
-  }
 
   @Test
   def testClone(): Unit = {
@@ -765,7 +748,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString(5)
-    val res = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.write(
+    val res = WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(
       WorkerClusterInfo(
         settings =
           accessApi.name(name).brokerClusterKey(ObjectKey.of("default", "bk1")).nodeNames(Set("n1")).creation.settings,
@@ -777,13 +760,8 @@ class TestWorkerApi extends OharaTest {
     )
 
     // serialize to json should see the object key (group, name)
-    res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
-
-    // deserialize to info should see the object key (group, name)
-    val data = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.read(res)
-    data.name shouldBe name
-    data.group shouldBe GROUP_DEFAULT
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
   }
 
   @Test
@@ -816,7 +794,7 @@ class TestWorkerApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
 
-    val string = WorkerApi.WORKER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
+    val string = WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(cluster).toString()
 
     WorkerApi.DEFINITIONS
       .filter(_.hasDefault)
@@ -889,4 +867,31 @@ class TestWorkerApi extends OharaTest {
                                                                                                                                |    "xms": -123
                                                                                                                                |  }
       """.stripMargin.parseJson)
+
+  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
+  @Test
+  def settingsDisappearFromJson(): Unit = {
+    val cluster = WorkerClusterInfo(
+      settings =
+        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+  }
+
+  @Test
+  def testInfoJsonRepresentation(): Unit = {
+    val cluster = WorkerClusterInfo(
+      settings =
+        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    WorkerApi.WORKER_CLUSTER_INFO_FORMAT.read(WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
 }

@@ -235,7 +235,11 @@ object TopicApi {
     }
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat5(TopicInfo)
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
+    private[this] val format                    = jsonFormat5(TopicInfo)
+    override def read(json: JsValue): TopicInfo = format.read(extractSetting(json.asJsObject))
+    override def write(obj: TopicInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+  }
 
   /**
     * used to generate the payload and url for POST/PUT request.

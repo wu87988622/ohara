@@ -87,17 +87,15 @@ Example Response
   .. code-block:: json
 
     {
-      "settings": {
+      "group": "default",
+      "name": "topic0",
+      "workerClusterKey": {
         "group": "default",
-        "name": "topic0",
-        "workerClusterKey": {
-          "group": "default",
-          "name": "preCreatedBkCluster"
-        },
-        "numberOfReplications": 1,
-        "numberOfPartitions": 1,
-        "tags": {}
-      }
+        "name": "preCreatedBkCluster"
+      },
+      "numberOfReplications": 1,
+      "numberOfPartitions": 1,
+      "tags": {},
       "lastModified": 1553498552595,
       "metrics": {
         "meters": []
@@ -125,17 +123,15 @@ Example Response
   .. code-block:: json
 
     {
-      "settings": {
+      "group": "default",
+      "name": "topic0",
+      "workerClusterKey": {
         "group": "default",
-        "name": "topic0",
-        "workerClusterKey": {
-          "group": "default",
-          "name": "preCreatedBkCluster"
-        },
-        "numberOfReplications": 1,
-        "numberOfPartitions": 3,
-        "tags": {}
-      }
+        "name": "preCreatedBkCluster"
+      },
+      "numberOfReplications": 1,
+      "numberOfPartitions": 3,
+      "tags": {},
       "lastModified": 1553498552595,
       "metrics": {
         "meters": []
@@ -155,7 +151,7 @@ the accepted query keys are listed below.
 #. lastModified
 #. tags
 #. tag - this field is similar to tags but it addresses the "contain" behavior.
-#. key in settings
+#. key
 
   .. note::
     Using "NONE" represents the nonexistence of state.
@@ -165,17 +161,15 @@ Example Response
 
     [
       {
-        "settings": {
+        "group": "default",
+        "name": "topic0",
+        "workerClusterKey": {
           "group": "default",
-          "name": "topic0",
-          "workerClusterKey": {
-            "group": "default",
-            "name": "preCreatedBkCluster"
-          },
-          "numberOfReplications": 1,
-          "numberOfPartitions": 3,
-          "tags": {}
-        }
+          "name": "preCreatedBkCluster"
+        },
+        "numberOfReplications": 1,
+        "numberOfPartitions": 3,
+        "tags": {},
         "lastModified": 1553498552595,
         "metrics": {
           "meters": []
@@ -211,17 +205,15 @@ Example Response
   .. code-block:: json
 
     {
-      "settings": {
+      "group": "default",
+      "name": "topic0",
+      "workerClusterKey": {
         "group": "default",
-        "name": "topic0",
-        "workerClusterKey": {
-          "group": "default",
-          "name": "preCreatedBkCluster"
-        },
-        "numberOfReplications": 1,
-        "numberOfPartitions": 3,
-        "tags": {}
-      }
+        "name": "preCreatedBkCluster"
+      },
+      "numberOfReplications": 1,
+      "numberOfPartitions": 3,
+      "tags": {},
       "lastModified": 1553498552595,
       "metrics": {
         "meters": []

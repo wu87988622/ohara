@@ -213,9 +213,14 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat5(
-    BrokerClusterInfo
-  )
+  private[ohara] implicit val BROKER_CLUSTER_INFO_FORMAT: RootJsonFormat[BrokerClusterInfo] =
+    JsonRefiner[BrokerClusterInfo]
+      .format(new RootJsonFormat[BrokerClusterInfo] {
+        private[this] val format                            = jsonFormat5(BrokerClusterInfo)
+        override def read(json: JsValue): BrokerClusterInfo = format.read(extractSetting(json.asJsObject))
+        override def write(obj: BrokerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+      })
+      .refine
 
   /**
     * used to generate the payload and url for POST/PUT request.

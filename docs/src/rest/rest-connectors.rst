@@ -85,21 +85,6 @@ The following information are updated by Ohara.
     - meters[i].queryTime (**Long**) — the time we query this meter from remote nodes
     - meters[i].startTime (**Option(Long)**) — the time to start this meter (not all services offer this record)
 
-The settings from request, BTW, is a individual item in response. Hence,
-you will observe the following response after you store the settings with connector.class.
-
-  .. code-block:: json
-
-     {
-       "settings": {
-         "connector.class": "abc"
-       }
-     }
-
-  .. note::
-    Each connector has their custom settings. Please see :ref:`Get Worker Cluster info <rest-workers-get>` to fetch
-    the available settings of your connector on specific worker cluster.
-
 The following keys are internal and protected so you can't define them in creating/updating connector.
 
 #. connectorKey — It points to the really (group, name) for the connector running in kafka.
@@ -136,21 +121,17 @@ Example Response
       "lastModified": 1567520697909,
       "metrics": {
         "meters": []
-      }
+      },
       "group": "default",
-      "settings": {
-        "topicKeys": [],
-        "name": "pc",
-        "tags": {},
-        "workerClusterKey": {
-          "group": "default",
-          "name": "wk"
-        },
-        "tasks.max": 1,
-        "connector.class": "com.island.ohara.connector.perf.PerfSource",
-        "columns": [],
-        "group": "default"
-      }
+      "topicKeys": [],
+      "tags": {},
+      "workerClusterKey": {
+        "group": "default",
+        "name": "wk"
+      },
+      "tasks.max": 1,
+      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "columns": []
     }
 
 update the settings of connector
@@ -182,26 +163,22 @@ Example Response
       "lastModified": 1567520826794,
       "metrics": {
         "meters": []
-      }
+      },
       "group": "default",
-      "settings": {
-        "topicKeys": [
-          {
-            "group": "default",
-            "name": "tp"
-          }
-        ],
-        "name": "pc",
-        "tags": {},
-        "workerClusterKey": {
+      "topicKeys": [
+        {
           "group": "default",
-          "name": "wk"
-        },
-        "tasks.max": 1,
-        "connector.class": "com.island.ohara.connector.perf.PerfSource",
-        "columns": [],
-        "group": "default"
-      }
+          "name": "tp"
+        }
+      ],
+      "tags": {},
+      "workerClusterKey": {
+        "group": "default",
+        "name": "wk"
+      },
+      "tasks.max": 1,
+      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "columns": []
     }
 
 
@@ -216,7 +193,7 @@ the accepted query keys are listed below.
 #. lastModified
 #. tags
 #. tag - this field is similar to tags but it addresses the "contain" behavior.
-#. key in settings
+#. key
 
 Example Response
   .. code-block:: json
@@ -229,24 +206,20 @@ Example Response
           "meters": []
         },
         "group": "default",
-        "settings": {
-          "topicKeys": [
-            {
-              "group": "default",
-              "name": "tp"
-            }
-          ],
-          "name": "pc",
-          "tags": {},
-          "workerClusterKey": {
+        "topicKeys": [
+          {
             "group": "default",
-            "name": "wk"
-          },
-          "tasks.max": 1,
-          "connector.class": "com.island.ohara.connector.perf.PerfSource",
-          "columns": [],
-          "group": "default"
-        }
+            "name": "tp"
+          }
+        ],
+        "tags": {},
+        "workerClusterKey": {
+          "group": "default",
+          "name": "wk"
+        },
+        "tasks.max": 1,
+        "connector.class": "com.island.ohara.connector.perf.PerfSource",
+        "columns": []
       }
     ]
 
@@ -286,26 +259,22 @@ Example Response
       "lastModified": 1567520826794,
       "metrics": {
         "meters": []
-      }
+      },
       "group": "default",
-      "settings": {
-        "topicKeys": [
-          {
-            "group": "default",
-            "name": "tp"
-          }
-        ],
-        "name": "pc",
-        "tags": {},
-        "workerClusterKey": {
+      "topicKeys": [
+        {
           "group": "default",
-          "name": "wk"
-        },
-        "tasks.max": 1,
-        "connector.class": "com.island.ohara.connector.perf.PerfSource",
-        "columns": [],
-        "group": "default"
-      }
+          "name": "tp"
+        }
+      ],
+      "tags": {},
+      "workerClusterKey": {
+        "group": "default",
+        "name": "wk"
+      },
+      "tasks.max": 1,
+      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "columns": []
     }
 
 start a connector

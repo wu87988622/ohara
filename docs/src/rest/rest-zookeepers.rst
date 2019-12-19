@@ -78,23 +78,21 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "zk00",
-         "group": "abc",
-         "imageName": "oharastream/zookeeper:$|version|",
-         "jmxPort": 11111,
-         "clientPort": 12345,
-         "peerPort": 12346,
-         "electionPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       },
-       "aliveNodes": [],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "zk00",
+      "group": "abc",
+      "imageName": "oharastream/zookeeper:$|version|",
+      "jmxPort": 11111,
+      "clientPort": 12345,
+      "peerPort": 12346,
+      "electionPort": 12347,
+      "nodeNames": [
+      "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [],
+      "lastModified": 1563158986411
+    }
 
   As mentioned before, ohara provides default to most settings. You can
   just input nodeNames to run a zookeeper cluster.
@@ -116,23 +114,21 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "f6a867ae32",
-         "group": "default",
-         "imageName": "oharastream/zookeeper:$|version|",
-         "jmxPort": 11111,
-         "clientPort": 12345,
-         "peerPort": 12346,
-         "electionPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       },
-       "aliveNodes": [],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "f6a867ae32",
+      "group": "default",
+      "imageName": "oharastream/zookeeper:$|version|",
+      "jmxPort": 11111,
+      "clientPort": 12345,
+      "peerPort": 12346,
+      "electionPort": 12347,
+      "nodeNames": [
+      "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [],
+      "lastModified": 1563158986411
+    }
 
 
 list all zookeeper clusters
@@ -148,33 +144,31 @@ the accepted query keys are listed below.
 #. tag - this field is similar to tags but it addresses the "contain" behavior.
 #. state
 #. aliveNodes
-#. key in settings
+#. key
 
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "settings": {
-           "name": "zk00",
-           "group": "default",
-           "imageName": "oharastream/zookeeper:$|version|",
-           "jmxPort": 11111,
-           "clientPort": 12345,
-           "peerPort": 12346,
-           "electionPort": 12347,
-           "nodeNames": [
-             "node00"
-           ],
-           "tags": {}
-         },
-         "state": "RUNNING",
-         "aliveNodes": [
-           "node00"
-         ],
-         "lastModified": 1563158986411
-       }
-     ]
+    [
+      {
+        "name": "zk00",
+        "group": "default",
+        "imageName": "oharastream/zookeeper:$|version|",
+        "jmxPort": 11111,
+        "clientPort": 12345,
+        "peerPort": 12346,
+        "electionPort": 12347,
+        "nodeNames": [
+          "node00"
+        ],
+        "tags": {},
+        "state": "RUNNING",
+        "aliveNodes": [
+          "node00"
+        ],
+        "lastModified": 1563158986411
+      }
+    ]
 
 update zookeeper cluster properties
 -----------------------------------
@@ -202,23 +196,21 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "zk01",
-         "group": "default",
-         "imageName": "oharastream/zookeeper:$|version|",
-         "jmxPort": 11111,
-         "clientPort": 12345,
-         "peerPort": 12346,
-         "electionPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       },
-       "aliveNodes": [],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "zk01",
+      "group": "default",
+      "imageName": "oharastream/zookeeper:$|version|",
+      "jmxPort": 11111,
+      "clientPort": 12345,
+      "peerPort": 12346,
+      "electionPort": 12347,
+      "nodeNames": [
+        "node00"
+      ],
+      "tags": {},
+      "aliveNodes": [],
+      "lastModified": 1563158986411
+    }
 
 
 delete a zookeeper properties
@@ -252,26 +244,24 @@ We will use the default value as the query parameter "?group=" if you don't spec
 Example Response
   .. code-block:: json
 
-     {
-       "settings": {
-         "name": "zk00",
-         "group": "default",
-         "imageName": "oharastream/zookeeper:$|version|",
-         "jmxPort": 11111,
-         "clientPort": 12345,
-         "peerPort": 12346,
-         "electionPort": 12347,
-         "nodeNames": [
-           "node00"
-         ],
-         "tags": {}
-       },
-       "state": "RUNNING",
-       "aliveNodes": [
-         "node00"
-       ],
-       "lastModified": 1563158986411
-     }
+    {
+      "name": "zk00",
+      "group": "default",
+      "imageName": "oharastream/zookeeper:$|version|",
+      "jmxPort": 11111,
+      "clientPort": 12345,
+      "peerPort": 12346,
+      "electionPort": 12347,
+      "nodeNames": [
+        "node00"
+      ],
+      "tags": {}
+      "state": "RUNNING",
+      "aliveNodes": [
+        "node00"
+      ],
+      "lastModified": 1563158986411
+    }
 
 
 start a zookeeper cluster

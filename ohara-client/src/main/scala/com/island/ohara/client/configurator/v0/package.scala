@@ -431,4 +431,31 @@ package object v0 {
 
   private[v0] def initHeapDefinition: SettingDef.Builder => SettingDef =
     _.key(INIT_HEAP_KEY).documentation("initial heap size (in MB)").positiveNumber(1024L).build()
+
+  private[v0] def flattenSettings(obj: JsObject): JsObject =
+    JsObject(
+      // TODO: remove the "settings" key (https://github.com/oharastream/ohara/issues/3574)
+      noJsNull((obj.fields ++ obj.fields.get("settings").map(_.asJsObject.fields).getOrElse(Map.empty)))
+    )
+
+  private[this] val runtimeKeys = Set(
+    "aliveNodes",
+    "lastModified",
+    "state",
+    "error",
+    "partitionInfos",
+    "metrics",
+    "status",
+    "tasksStatus",
+    "settings"
+  )
+
+  /**
+    * it removes all keys related to runtime information.
+    * TODO: we hardcode the "runtime" key here and count on our tests to check all keys are added ...
+    * @param obj json representation
+    * @return filtered objs
+    */
+  private[v0] def extractSetting(obj: JsObject): JsObject =
+    JsObject(noJsNull(obj.fields + ("settings" -> JsObject(obj.fields.filterNot(e => runtimeKeys.contains(e._1))))))
 }

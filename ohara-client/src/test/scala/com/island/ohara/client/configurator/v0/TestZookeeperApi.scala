@@ -21,7 +21,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.util.CommonUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -370,7 +370,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString(5)
-    val res = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(
+    val res = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(
       ZookeeperClusterInfo(
         settings = ZookeeperApi.access.request.name(name).nodeNames(Set("n1")).creation.settings,
         aliveNodes = Set.empty,
@@ -380,13 +380,8 @@ class TestZookeeperApi extends OharaTest {
       )
     )
     // serialize to json should see the object key (group, name) in "settings"
-    res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
-
-    // // deserialize to info should see the object key (group, name)
-    val data = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.read(res)
-    data.name shouldBe name
-    data.group shouldBe GROUP_DEFAULT
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
   }
 
   @Test
@@ -429,7 +424,7 @@ class TestZookeeperApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
 
-    val string = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT.write(cluster).toString()
+    val string = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(cluster).toString()
 
     ZookeeperApi.DEFINITIONS.filter(_.hasDefault).foreach { definition =>
       string should include(definition.key())
@@ -496,4 +491,29 @@ class TestZookeeperApi extends OharaTest {
                                                                                                                               |    "xms": -123
                                                                                                                               |  }
       """.stripMargin.parseJson)
+
+  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
+  @Test
+  def settingsDisappearFromJson(): Unit = {
+    val cluster = ZookeeperClusterInfo(
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+  }
+
+  @Test
+  def testInfoJsonRepresentation(): Unit = {
+    val cluster = ZookeeperClusterInfo(
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.read(ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
 }

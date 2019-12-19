@@ -23,7 +23,7 @@ import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -66,42 +66,6 @@ class TestStreamApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
     streamClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
-  }
-
-  @Test
-  def testStreamClusterInfoEquals(): Unit = {
-    val fromTopicKey = topicKey()
-    val toTopicKey   = topicKey()
-    val name         = CommonUtils.randomString(20)
-    val group        = CommonUtils.randomString(20)
-    val info = StreamClusterInfo(
-      settings = StreamApi.access.request
-        .name(name)
-        .group(group)
-        .nodeNames(Set("node1"))
-        .fromTopicKey(fromTopicKey)
-        .toTopicKey(toTopicKey)
-        .jarKey(fakeJar)
-        .tags(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
-        .brokerClusterKey(ObjectKey.of("group", "n"))
-        .creation
-        .settings,
-      aliveNodes = Set.empty,
-      state = None,
-      error = None,
-      metrics = Metrics.EMPTY,
-      lastModified = CommonUtils.current()
-    )
-
-    info shouldBe StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(info))
-
-    info.name shouldBe name
-    info.group shouldBe group
-    info.nodeNames shouldBe Set("node1")
-    info.jarKey shouldBe fakeJar
-    info.fromTopicKeys shouldBe Set(fromTopicKey)
-    info.toTopicKeys shouldBe Set(toTopicKey)
-    info.tags.keys.size shouldBe 2
   }
 
   @Test
@@ -837,7 +801,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString(5)
-    val res = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(
+    val res = StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(
       StreamClusterInfo(
         settings = StreamApi.access.request
           .fromTopicKey(topicKey(CommonUtils.randomString()))
@@ -856,13 +820,8 @@ class TestStreamApi extends OharaTest {
       )
     )
     // serialize to json should see the object key (group, name) in "settings"
-    res.asJsObject.fields("settings").asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields("settings").asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
-
-    // // deserialize to info should see the object key (group, name)
-    val data = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(res)
-    data.name shouldBe name
-    data.group shouldBe GROUP_DEFAULT
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe GROUP_DEFAULT
   }
 
   @Test
@@ -974,4 +933,41 @@ class TestStreamApi extends OharaTest {
                                                                                                                             |    "xms": -123
                                                                                                                             |  }
       """.stripMargin.parseJson)
+
+  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
+  @Test
+  def settingsDisappearFromJson(): Unit = {
+    val cluster = StreamClusterInfo(
+      settings = StreamApi.access.request
+        .jarKey(ObjectKey.of("a", "b"))
+        .brokerClusterKey(ObjectKey.of("a", "b"))
+        .nodeNames(Set("n0", "n1"))
+        .creation
+        .settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+  }
+
+  @Test
+  def testInfoJsonRepresentation(): Unit = {
+    val cluster = StreamClusterInfo(
+      settings = StreamApi.access.request
+        .jarKey(ObjectKey.of("a", "b"))
+        .brokerClusterKey(ObjectKey.of("a", "b"))
+        .nodeNames(Set("n0", "n1"))
+        .creation
+        .settings,
+      aliveNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    StreamApi.STREAM_CLUSTER_INFO_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
 }

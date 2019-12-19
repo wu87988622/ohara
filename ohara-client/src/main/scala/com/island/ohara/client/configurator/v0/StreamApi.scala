@@ -149,13 +149,12 @@ object StreamApi {
     def connectionProps: String      = settings.connectionProps
   }
 
-  private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
+  private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: OharaJsonFormat[StreamClusterInfo] =
     JsonRefiner[StreamClusterInfo]
       .format(new RootJsonFormat[StreamClusterInfo] {
         private[this] val format                            = jsonFormat6(StreamClusterInfo)
-        override def read(json: JsValue): StreamClusterInfo = format.read(json)
-        override def write(obj: StreamClusterInfo): JsValue =
-          JsObject(noJsNull(format.write(obj).asJsObject.fields))
+        override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))
+        override def write(obj: StreamClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
       })
       .refine
 
