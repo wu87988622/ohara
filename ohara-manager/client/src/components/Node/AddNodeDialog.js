@@ -18,8 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
-import * as nodeApi from 'api/nodeApi';
-import { useSnackbar } from 'context/SnackbarContext';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {
@@ -32,8 +30,7 @@ import {
 import { configuratorMode } from '../../api/inspectApi';
 
 const AddNodeDialog = props => {
-  const { isOpen, handleClose, fetchNodes, mode } = props;
-  const showMessage = useSnackbar();
+  const { isOpen, handleClose, addNode, mode } = props;
 
   const onSubmit = async (values, form) => {
     const { hostname, port, ...rest } = values;
@@ -44,16 +41,9 @@ const AddNodeDialog = props => {
       ...rest,
     };
 
-    const response = await nodeApi.create(params);
-    showMessage(response.title);
-    if (response.errors) {
-      return;
-    } else {
-      setTimeout(form.reset);
-      showMessage(`Successfully created node ${hostname}`);
-      await fetchNodes();
-      handleClose();
-    }
+    addNode(params);
+    setTimeout(form.reset);
+    handleClose();
   };
 
   return (
@@ -143,7 +133,7 @@ const AddNodeDialog = props => {
 AddNodeDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  fetchNodes: PropTypes.func.isRequired,
+  addNode: PropTypes.func.isRequired,
   mode: PropTypes.string.isRequired,
 };
 export default AddNodeDialog;

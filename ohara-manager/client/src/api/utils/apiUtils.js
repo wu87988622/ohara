@@ -25,7 +25,7 @@ import axios from 'axios';
 import { has, isEmpty, isArray } from 'lodash';
 
 export const getKey = params => {
-  const name = params.name || undefined;
+  const name = params.name || params.hostname || undefined;
   const group = params.group || undefined;
   return JSON.stringify({ group, name });
 };

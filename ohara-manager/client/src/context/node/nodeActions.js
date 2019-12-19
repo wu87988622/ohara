@@ -15,7 +15,11 @@
  */
 
 import * as nodeApi from 'api/nodeApi';
-import { fetchNodesRoutine } from './nodeRoutines';
+import {
+  fetchNodesRoutine,
+  addNodeRoutine,
+  deleteNodeRoutine,
+} from './nodeRoutines';
 
 const fetchNodesCreator = (
   state,
@@ -37,14 +41,41 @@ const fetchNodesCreator = (
   dispatch(routine.success(result.data));
 };
 
-const addNodeCreator = () => async () => {
-  // TODO: implement the logic for add node
+const addNodeCreator = (state, dispatch, showMessage) => async value => {
+  if (state.isFetching) return;
+
+  dispatch(addNodeRoutine.request());
+  const createNodeResponse = await nodeApi.create(value);
+
+  // Failed to create, show a custom error message
+  if (createNodeResponse.errors) {
+    dispatch(addNodeRoutine.failure(createNodeResponse.title));
+    showMessage(createNodeResponse.title);
+    return;
+  }
+
+  // Node successfully created, display success message
+  dispatch(addNodeRoutine.success(createNodeResponse.data));
+  showMessage(createNodeResponse.title);
 };
 const updateNodeCreator = () => async () => {
   // TODO: implement the logic for update node
 };
-const deleteNodeCreator = () => async () => {
-  // TODO: implement the logic for delete node
+const deleteNodeCreator = (state, dispatch, showMessage) => async value => {
+  if (state.isFetching) return;
+
+  dispatch(deleteNodeRoutine.request());
+
+  const deleteNodeResponse = await nodeApi.remove(value);
+
+  if (deleteNodeResponse.errors) {
+    dispatch(deleteNodeRoutine.failure(deleteNodeResponse.title));
+    showMessage(deleteNodeResponse.title);
+    return;
+  }
+
+  dispatch(deleteNodeRoutine.success(value));
+  showMessage(deleteNodeResponse.title);
 };
 
 export {

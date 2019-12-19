@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
+import Link from '@material-ui/core/Link';
 import styled from 'styled-components';
-import { round, isEmpty } from 'lodash';
+import { round, isEmpty, flatMap } from 'lodash';
 
-import * as nodeApi from 'api/nodeApi';
 import AddNodeDialog from './AddNodeDialog';
 import { SelectTable } from 'components/common/Table';
 import { FullScreenDialog } from 'components/common/Dialog';
 import { useNodeDialog } from 'context/NodeDialogContext';
 import { Button } from 'components/common/Form';
 import ViewNodeDialog from './ViewNodeDialog';
-import { useConfiguratorState } from 'context';
+import { useConfiguratorState, useNodeState, useNodeActions } from 'context';
+import { QuickSearch } from 'components/common/Search';
 
 const Actions = styled.div`
   display: flex;
@@ -54,38 +55,50 @@ const NodeDialog = () => {
     setHasSelect,
   } = useNodeDialog();
 
+  const { data: nodes } = useNodeState();
+  const { addNode } = useNodeActions();
+
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
   const [isViewNodeDialogOpen, setIsViewNodeDialogOpen] = useState(false);
-  const [nodes, setNodes] = useState([]);
-  const [nodeData, setNodeData] = useState({});
+  const [filteredNodes, setFilteredNodes] = useState([]);
+  const [node, setNode] = useState({});
 
   useEffect(() => {
     if (isEmpty(configuratorInfo) || !configuratorInfo) return;
     setType(configuratorInfo.mode);
   }, [setType, configuratorInfo]);
 
-  const getRsources = node => {
-    return node.resources.reduce(
+  const getResources = node => {
+    const headers = getHeader();
+    const allResources = headers.map(header => {
+      const found = node.resources.find(
+        resource => resource.name === header.id,
+      );
+      return found ? found : { name: header };
+    });
+    return allResources.reduce(
       (obj, item) =>
         Object.assign(obj, {
-          [item.name]: `${round(item.value, 1)} ${item.unit}|${round(
-            item.used * 100,
-            1,
-          )}`,
+          [item.name]: `${round(item.value, 1)} ${item.unit}${
+            item.used ? `|${round(item.used * 100, 1)}` : ''
+          }`,
         }),
       {},
     );
   };
 
   const getHeader = () => {
-    return nodes.length > 0
-      ? nodes[0].resources.map(res => {
-          return {
-            id: res.name,
-            label: res.name,
-          };
-        })
-      : [];
+    if (filteredNodes.length > 0) {
+      const headers = filteredNodes
+        .map(node => node.resources.map(resource => resource.name))
+        .flat(1);
+      const distinctHeaders = [...new Set(headers)];
+      return distinctHeaders.map(header => {
+        return { id: header, label: header };
+      });
+    } else {
+      return [];
+    }
   };
 
   const tableHeaders = () => {
@@ -107,37 +120,39 @@ const NodeDialog = () => {
     return headers;
   };
 
+  const openDetailView = node => {
+    setNode(node);
+    setIsViewNodeDialogOpen(true);
+  };
+
   const viewButton = node => {
     return (
-      <Button
-        variant="outlined"
-        onClick={() => {
-          setNodeData(node);
-          setIsViewNodeDialogOpen(true);
-        }}
-      >
+      <Button variant="outlined" onClick={() => openDetailView(node)}>
         {'VIEW'}
       </Button>
     );
   };
 
-  const rows = nodes.map(node => {
-    return {
-      name: node.hostname,
-      ...getRsources(node),
-      services: node.services.length,
-      actions: viewButton(node),
-    };
-  });
-
-  const fetchNodes = useCallback(async () => {
-    const result = await nodeApi.getAll();
-    if (!result.errors) setNodes(result.data);
-  }, []);
-
-  useEffect(() => {
-    fetchNodes();
-  }, [fetchNodes]);
+  const rows = isEmpty(filteredNodes)
+    ? []
+    : filteredNodes.map(node => {
+        return {
+          name: node.hostname,
+          ...getResources(node),
+          services: (
+            <Typography>
+              <Link
+                component="button"
+                herf="#"
+                onClick={() => openDetailView(node)}
+              >
+                {flatMap(node.services, service => service.clusterKeys).length}
+              </Link>
+            </Typography>
+          ),
+          actions: viewButton(node),
+        };
+      });
 
   return (
     <FullScreenDialog
@@ -155,7 +170,14 @@ const NodeDialog = () => {
     >
       <>
         <Actions>
-          <Typography>Quick filter here</Typography>
+          <Typography component="div">
+            <QuickSearch
+              data={nodes}
+              keys={['hostname']}
+              placeholder="Quick Filter"
+              setResults={setFilteredNodes}
+            />
+          </Typography>
           <Button
             onClick={() => setIsAddNodeDialogOpen(true)}
             startIcon={<AddIcon />}
@@ -176,12 +198,12 @@ const NodeDialog = () => {
         <AddNodeDialog
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
-          fetchNodes={fetchNodes}
+          addNode={addNode}
           mode={type}
         />
 
         <ViewNodeDialog
-          data={nodeData}
+          data={node}
           isOpen={isViewNodeDialogOpen}
           handleClose={() => setIsViewNodeDialogOpen(false)}
           mode={type}
