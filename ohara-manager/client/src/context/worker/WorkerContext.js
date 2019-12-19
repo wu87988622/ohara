@@ -21,8 +21,8 @@ import {
   fetchWorkersCreator,
   addWorkerCreator,
   updateWorkerCreator,
+  stageWorkerCreator,
   deleteWorkerCreator,
-  updateStagingSettingsCreator,
 } from './workerActions';
 import { reducer, initialState } from './workerReducer';
 
@@ -78,12 +78,8 @@ const useWorkerActions = () => {
   return {
     addWorker: addWorkerCreator(state, dispatch, showMessage),
     updateWorker: updateWorkerCreator(state, dispatch, showMessage),
+    stageWorker: stageWorkerCreator(state, dispatch, showMessage),
     deleteWorker: deleteWorkerCreator(state, dispatch, showMessage),
-    updateStagingSettings: updateStagingSettingsCreator(
-      state,
-      dispatch,
-      showMessage,
-    ),
   };
 };
 

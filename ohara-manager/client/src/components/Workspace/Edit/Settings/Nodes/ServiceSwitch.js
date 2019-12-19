@@ -29,9 +29,9 @@ import {
 import Badge from 'components/common/Badge';
 
 const ServiceSwitch = ({ cluster, nodeName }) => {
-  const { updateStagingSettings: updateWkEditSettings } = useWorkerActions();
-  const { updateStagingSettings: updateBkEditSettings } = useBrokerActions();
-  const { updateStagingSettings: updateZkEditSettings } = useZookeeperActions();
+  const { stageWorker } = useWorkerActions();
+  const { stageBroker } = useBrokerActions();
+  const { stageZookeeper } = useZookeeperActions();
 
   if (!cluster) return <></>;
 
@@ -55,9 +55,9 @@ const ServiceSwitch = ({ cluster, nodeName }) => {
     } = cluster;
 
     const data = { name, group, nodeNames };
-    if (serviceType === 'worker') updateWkEditSettings(data);
-    if (serviceType === 'broker') updateBkEditSettings(data);
-    if (serviceType === 'zookeeper') updateZkEditSettings(data);
+    if (serviceType === 'worker') stageWorker(data);
+    if (serviceType === 'broker') stageBroker(data);
+    if (serviceType === 'zookeeper') stageZookeeper(data);
   };
 
   return (

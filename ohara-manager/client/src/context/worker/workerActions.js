@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { has, map } from 'lodash';
+import { get, has, map, omit } from 'lodash';
 
 import * as workerApi from 'api/workerApi';
 import * as inspectApi from 'api/inspectApi';
@@ -22,9 +22,9 @@ import * as objectApi from 'api/objectApi';
 import {
   fetchWorkersRoutine,
   addWorkerRoutine,
-  updateStagingSettingsRoutine,
+  stageWorkerRoutine,
 } from './workerRoutines';
-import { getKey } from 'utils/object';
+import { getKey, findByGroupAndName } from 'utils/object';
 
 const WORKER = 'worker';
 
@@ -34,7 +34,12 @@ const checkRequired = values => {
   }
 };
 
-const transformToWorker = (worker, workerInfo, stagingWorker) => {
+const transformToStagingWorker = object => ({
+  settings: omit(object, 'tags'),
+  stagingSettings: get(object, 'tags'),
+});
+
+const combineWorker = (worker, workerInfo, stagingWorker) => {
   if (!has(worker, 'settings')) {
     throw new Error("worker is missing required member 'settings'");
   }
@@ -43,11 +48,16 @@ const transformToWorker = (worker, workerInfo, stagingWorker) => {
       "workerInfo is missing required member 'settingDefinitions'",
     );
   }
+  if (!has(stagingWorker, 'stagingSettings')) {
+    throw new Error(
+      "stagingWorker is missing required member 'stagingSettings'",
+    );
+  }
   return {
     serviceType: WORKER,
     ...worker,
     ...workerInfo,
-    stagingSettings: stagingWorker,
+    stagingSettings: stagingWorker.stagingSettings,
   };
 };
 
@@ -81,11 +91,11 @@ const fetchWorkersCreator = (
           throw new Error(resultForFetchStagingWorker.title);
         }
 
-        return transformToWorker(
-          worker,
-          resultForFetchWorkerInfo.data,
+        const workerInfo = resultForFetchWorkerInfo.data;
+        const stagingWorker = transformToStagingWorker(
           resultForFetchStagingWorker.data,
         );
+        return combineWorker(worker, workerInfo, stagingWorker);
       }),
     );
     dispatch(routine.success(workers));
@@ -118,7 +128,11 @@ const addWorkerCreator = (
       throw new Error(resultForStartWorker.title);
     }
 
-    const resultForStageWorker = await objectApi.create(ensuredValues);
+    const worker = resultForCreateWorker.data;
+    const settings = worker.settings;
+    const stagingData = { ...settings, tags: omit(settings, 'tags') };
+
+    const resultForStageWorker = await objectApi.create(stagingData);
     if (resultForStageWorker.errors) {
       throw new Error(resultForStageWorker.title);
     }
@@ -130,15 +144,9 @@ const addWorkerCreator = (
       throw new Error(resultForFetchWorkerInfo.title);
     }
 
-    dispatch(
-      routine.success(
-        transformToWorker(
-          resultForCreateWorker.data,
-          resultForFetchWorkerInfo.data,
-          resultForStageWorker.data,
-        ),
-      ),
-    );
+    const workerInfo = resultForFetchWorkerInfo.data;
+    const stagingWorker = transformToStagingWorker(resultForStageWorker.data);
+    dispatch(routine.success(combineWorker(worker, workerInfo, stagingWorker)));
   } catch (e) {
     dispatch(routine.failure(e.message));
     showMessage(e.message);
@@ -153,24 +161,40 @@ const deleteWorkerCreator = () => async () => {
   // TODO: implement the logic for delete worker
 };
 
-const updateStagingSettingsCreator = (
+const stageWorkerCreator = (
   state,
   dispatch,
   showMessage,
-  routine = updateStagingSettingsRoutine,
-) => async params => {
+  routine = stageWorkerRoutine,
+) => async values => {
   if (state.isFetching) return;
 
-  dispatch(routine.request());
-  const result = await objectApi.update(params);
+  try {
+    checkRequired(values);
+    const group = WORKER;
+    const name = values.name;
+    const targetWorker = findByGroupAndName(state.data, group, name);
+    const ensuredValues = {
+      name,
+      group,
+      tags: {
+        ...omit(targetWorker.settings, 'tags'),
+        ...omit(targetWorker.stagingSettings, 'tags'),
+        ...omit(values, 'tags'),
+      },
+    };
 
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
+    const resultForStageWorker = await objectApi.update(ensuredValues);
+    if (resultForStageWorker.errors) {
+      throw new Error(resultForStageWorker.title);
+    }
+
+    const stagingWorker = transformToStagingWorker(resultForStageWorker.data);
+    dispatch(routine.success(stagingWorker));
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
   }
-
-  dispatch(routine.success(result.data));
 };
 
 export {
@@ -178,5 +202,5 @@ export {
   addWorkerCreator,
   updateWorkerCreator,
   deleteWorkerCreator,
-  updateStagingSettingsCreator,
+  stageWorkerCreator,
 };

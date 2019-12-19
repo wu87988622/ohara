@@ -19,13 +19,13 @@ import { createRoutine } from 'redux-routines';
 const fetchWorkersRoutine = createRoutine('FETCH_WORKERS');
 const addWorkerRoutine = createRoutine('ADD_WORKER');
 const updateWorkerRoutine = createRoutine('UPDATE_WORKER');
+const stageWorkerRoutine = createRoutine('STAGE_WORKER');
 const deleteWorkerRoutine = createRoutine('DELETE_WORKER');
-const updateStagingSettingsRoutine = createRoutine('UPDATE_STAGING_SETTINGS');
 
 export {
   fetchWorkersRoutine,
   addWorkerRoutine,
   updateWorkerRoutine,
+  stageWorkerRoutine,
   deleteWorkerRoutine,
-  updateStagingSettingsRoutine,
 };

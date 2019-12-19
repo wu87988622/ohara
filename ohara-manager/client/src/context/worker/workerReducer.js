@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy } from 'lodash';
-
+import { map, reject } from 'lodash';
+import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchWorkersRoutine,
   addWorkerRoutine,
   updateWorkerRoutine,
+  stageWorkerRoutine,
   deleteWorkerRoutine,
-  updateStagingSettingsRoutine,
 } from './workerRoutines';
 
 const initialState = {
@@ -32,15 +32,13 @@ const initialState = {
   stagingSettings: [],
 };
 
-const sort = workers => sortBy(workers, 'settings.name');
-
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchWorkersRoutine.REQUEST:
     case addWorkerRoutine.REQUEST:
     case updateWorkerRoutine.REQUEST:
+    case stageWorkerRoutine.REQUEST:
     case deleteWorkerRoutine.REQUEST:
-    case updateStagingSettingsRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -50,30 +48,26 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: sort(action.payload),
+        data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
     case addWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: sort([...state.data, action.payload]),
+        data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
     case updateWorkerRoutine.SUCCESS:
+    case stageWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, worker => {
-          if (
-            worker.settings.name === action.payload.name &&
-            worker.settings.group === action.payload.group
-          ) {
-            return action.payload;
-          } else {
-            return worker;
-          }
-        }),
+        data: map(state.data, worker =>
+          isKeyEqual(worker, action.payload)
+            ? { ...worker, ...action.payload }
+            : worker,
+        ),
         lastUpdated: new Date(),
       };
     case deleteWorkerRoutine.SUCCESS:
@@ -88,27 +82,11 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
-    case updateStagingSettingsRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: map(state.data, worker => {
-          if (
-            worker.settings.name === action.payload.name &&
-            worker.settings.group === action.payload.group
-          ) {
-            return { ...worker, stagingSettings: action.payload };
-          } else {
-            return worker;
-          }
-        }),
-        lastUpdated: new Date(),
-      };
     case fetchWorkersRoutine.FAILURE:
     case addWorkerRoutine.FAILURE:
     case updateWorkerRoutine.FAILURE:
+    case stageWorkerRoutine.FAILURE:
     case deleteWorkerRoutine.FAILURE:
-    case updateStagingSettingsRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

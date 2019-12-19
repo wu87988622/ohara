@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { has, map } from 'lodash';
+import { get, has, map, omit } from 'lodash';
 
 import * as brokerApi from 'api/brokerApi';
 import * as inspectApi from 'api/inspectApi';
@@ -22,9 +22,9 @@ import * as objectApi from 'api/objectApi';
 import {
   fetchBrokersRoutine,
   addBrokerRoutine,
-  updateStagingSettingsRoutine,
+  stageBrokerRoutine,
 } from './brokerRoutines';
-import { getKey } from 'utils/object';
+import { getKey, findByGroupAndName } from 'utils/object';
 
 const BROKER = 'broker';
 
@@ -34,7 +34,12 @@ const checkRequired = values => {
   }
 };
 
-const transformToBroker = (broker, brokerInfo, stagingBroker) => {
+const transformToStagingBroker = object => ({
+  settings: omit(object, 'tags'),
+  stagingSettings: get(object, 'tags'),
+});
+
+const combineBroker = (broker, brokerInfo, stagingBroker) => {
   if (!has(broker, 'settings')) {
     throw new Error("broker is missing required member 'settings'");
   }
@@ -43,11 +48,16 @@ const transformToBroker = (broker, brokerInfo, stagingBroker) => {
       "brokerInfo is missing required member 'settingDefinitions'",
     );
   }
+  if (!has(stagingBroker, 'stagingSettings')) {
+    throw new Error(
+      "stagingBroker is missing required member 'stagingSettings'",
+    );
+  }
   return {
     serviceType: BROKER,
     ...broker,
     ...brokerInfo,
-    stagingSettings: stagingBroker,
+    stagingSettings: stagingBroker.stagingSettings,
   };
 };
 
@@ -81,11 +91,11 @@ const fetchBrokersCreator = (
           throw new Error(resultForFetchStagingBroker.title);
         }
 
-        return transformToBroker(
-          broker,
-          resultForFetchBrokerInfo.data,
+        const brokerInfo = resultForFetchBrokerInfo.data;
+        const stagingBroker = transformToStagingBroker(
           resultForFetchStagingBroker.data,
         );
+        return combineBroker(broker, brokerInfo, stagingBroker);
       }),
     );
     dispatch(routine.success(brokers));
@@ -118,7 +128,11 @@ const addBrokerCreator = (
       throw new Error(resultForStartBroker.title);
     }
 
-    const resultForStageBroker = await objectApi.create(ensuredValues);
+    const broker = resultForCreateBroker.data;
+    const settings = broker.settings;
+    const stagingData = { ...settings, tags: omit(settings, 'tags') };
+
+    const resultForStageBroker = await objectApi.create(stagingData);
     if (resultForStageBroker.errors) {
       throw new Error(resultForStageBroker.title);
     }
@@ -130,15 +144,9 @@ const addBrokerCreator = (
       throw new Error(resultForFetchBrokerInfo.title);
     }
 
-    dispatch(
-      routine.success(
-        transformToBroker(
-          resultForCreateBroker.data,
-          resultForFetchBrokerInfo.data,
-          resultForStageBroker.data,
-        ),
-      ),
-    );
+    const brokerInfo = resultForFetchBrokerInfo.data;
+    const stagingBroker = transformToStagingBroker(resultForStageBroker.data);
+    dispatch(routine.success(combineBroker(broker, brokerInfo, stagingBroker)));
   } catch (e) {
     dispatch(routine.failure(e.message));
     showMessage(e.message);
@@ -148,28 +156,45 @@ const addBrokerCreator = (
 const updateBrokerCreator = () => async () => {
   // TODO: implement the logic for update broker
 };
+
 const deleteBrokerCreator = () => async () => {
   // TODO: implement the logic for delete broker
 };
 
-const updateStagingSettingsCreator = (
+const stageBrokerCreator = (
   state,
   dispatch,
   showMessage,
-  routine = updateStagingSettingsRoutine,
-) => async params => {
+  routine = stageBrokerRoutine,
+) => async values => {
   if (state.isFetching) return;
 
-  dispatch(routine.request());
-  const result = await objectApi.update(params);
+  try {
+    checkRequired(values);
+    const group = BROKER;
+    const name = values.name;
+    const targetBroker = findByGroupAndName(state.data, group, name);
+    const ensuredValues = {
+      name,
+      group,
+      tags: {
+        ...omit(targetBroker.settings, 'tags'),
+        ...omit(targetBroker.stagingSettings, 'tags'),
+        ...omit(values, 'tags'),
+      },
+    };
 
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
+    const resultForStageBroker = await objectApi.update(ensuredValues);
+    if (resultForStageBroker.errors) {
+      throw new Error(resultForStageBroker.title);
+    }
+
+    const stagingBroker = transformToStagingBroker(resultForStageBroker.data);
+    dispatch(routine.success(stagingBroker));
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
   }
-
-  dispatch(routine.success(result.data));
 };
 
 export {
@@ -177,5 +202,5 @@ export {
   addBrokerCreator,
   updateBrokerCreator,
   deleteBrokerCreator,
-  updateStagingSettingsCreator,
+  stageBrokerCreator,
 };

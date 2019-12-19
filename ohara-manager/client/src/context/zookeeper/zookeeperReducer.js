@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy } from 'lodash';
-
+import { map, reject } from 'lodash';
+import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchZookeepersRoutine,
   addZookeeperRoutine,
   updateZookeeperRoutine,
+  stageZookeeperRoutine,
   deleteZookeeperRoutine,
-  updateStagingSettingsRoutine,
 } from './zookeeperRoutines';
 
 const initialState = {
@@ -29,17 +29,16 @@ const initialState = {
   isFetching: false,
   lastUpdated: null,
   error: null,
+  stagingSettings: [],
 };
-
-const sort = zookeepers => sortBy(zookeepers, 'settings.name');
 
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchZookeepersRoutine.REQUEST:
     case addZookeeperRoutine.REQUEST:
     case updateZookeeperRoutine.REQUEST:
+    case stageZookeeperRoutine.REQUEST:
     case deleteZookeeperRoutine.REQUEST:
-    case updateStagingSettingsRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -49,30 +48,26 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: sort(action.payload),
+        data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
     case addZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: sort([...state.data, action.payload]),
+        data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
     case updateZookeeperRoutine.SUCCESS:
+    case stageZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, zookeeper => {
-          if (
-            zookeeper.settings.name === action.payload.name &&
-            zookeeper.settings.group === action.payload.group
-          ) {
-            return action.payload;
-          } else {
-            return zookeeper;
-          }
-        }),
+        data: map(state.data, zookeeper =>
+          isKeyEqual(zookeeper, action.payload)
+            ? { ...zookeeper, ...action.payload }
+            : zookeeper,
+        ),
         lastUpdated: new Date(),
       };
     case deleteZookeeperRoutine.SUCCESS:
@@ -87,27 +82,11 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
-    case updateStagingSettingsRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: map(state.data, zookeeper => {
-          if (
-            zookeeper.settings.name === action.payload.name &&
-            zookeeper.settings.group === action.payload.group
-          ) {
-            return { ...zookeeper, stagingSettings: action.payload };
-          } else {
-            return zookeeper;
-          }
-        }),
-        lastUpdated: new Date(),
-      };
     case fetchZookeepersRoutine.FAILURE:
     case addZookeeperRoutine.FAILURE:
     case updateZookeeperRoutine.FAILURE:
+    case stageZookeeperRoutine.FAILURE:
     case deleteZookeeperRoutine.FAILURE:
-    case updateStagingSettingsRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

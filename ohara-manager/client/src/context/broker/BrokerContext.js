@@ -21,8 +21,8 @@ import {
   fetchBrokersCreator,
   addBrokerCreator,
   updateBrokerCreator,
+  stageBrokerCreator,
   deleteBrokerCreator,
-  updateStagingSettingsCreator,
 } from './brokerActions';
 import { reducer, initialState } from './brokerReducer';
 
@@ -78,12 +78,8 @@ const useBrokerActions = () => {
   return {
     addBroker: addBrokerCreator(state, dispatch, showMessage),
     updateBroker: updateBrokerCreator(state, dispatch, showMessage),
+    stageBroker: stageBrokerCreator(state, dispatch, showMessage),
     deleteBroker: deleteBrokerCreator(state, dispatch, showMessage),
-    updateStagingSettings: updateStagingSettingsCreator(
-      state,
-      dispatch,
-      showMessage,
-    ),
   };
 };
 

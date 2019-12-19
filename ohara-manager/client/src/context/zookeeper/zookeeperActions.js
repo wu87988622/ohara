@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { has, map } from 'lodash';
+import { get, has, map, omit } from 'lodash';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as inspectApi from 'api/inspectApi';
@@ -22,9 +22,9 @@ import * as objectApi from 'api/objectApi';
 import {
   fetchZookeepersRoutine,
   addZookeeperRoutine,
-  updateStagingSettingsRoutine,
+  stageZookeeperRoutine,
 } from './zookeeperRoutines';
-import { getKey } from 'utils/object';
+import { getKey, findByGroupAndName } from 'utils/object';
 
 const ZOOKEEPER = 'zookeeper';
 
@@ -34,7 +34,12 @@ const checkRequired = values => {
   }
 };
 
-const transformToZookeeper = (zookeeper, zookeeperInfo, stagingZookeeper) => {
+const transformToStagingZookeeper = object => ({
+  settings: omit(object, 'tags'),
+  stagingSettings: get(object, 'tags'),
+});
+
+const combineZookeeper = (zookeeper, zookeeperInfo, stagingZookeeper) => {
   if (!has(zookeeper, 'settings')) {
     throw new Error("zookeeper is missing required member 'settings'");
   }
@@ -43,11 +48,16 @@ const transformToZookeeper = (zookeeper, zookeeperInfo, stagingZookeeper) => {
       "zookeeperInfo is missing required member 'settingDefinitions'",
     );
   }
+  if (!has(stagingZookeeper, 'stagingSettings')) {
+    throw new Error(
+      "stagingZookeeper is missing required member 'stagingSettings'",
+    );
+  }
   return {
     serviceType: ZOOKEEPER,
     ...zookeeper,
     ...zookeeperInfo,
-    stagingSettings: stagingZookeeper,
+    stagingSettings: stagingZookeeper.stagingSettings,
   };
 };
 
@@ -83,11 +93,11 @@ const fetchZookeepersCreator = (
           throw new Error(resultForFetchStagingZookeeper.title);
         }
 
-        return transformToZookeeper(
-          zookeeper,
-          resultForFetchZookeeperInfo.data,
+        const zookeeperInfo = resultForFetchZookeeperInfo.data;
+        const stagingZookeeper = transformToStagingZookeeper(
           resultForFetchStagingZookeeper.data,
         );
+        return combineZookeeper(zookeeper, zookeeperInfo, stagingZookeeper);
       }),
     );
     dispatch(routine.success(zookeepers));
@@ -120,7 +130,11 @@ const addZookeeperCreator = (
       throw new Error(resultForStartZookeeper.title);
     }
 
-    const resultForStageZookeeper = await objectApi.create(ensuredValues);
+    const zookeeper = resultForCreateZookeeper.data;
+    const settings = zookeeper.settings;
+    const stagingData = { ...settings, tags: omit(settings, 'tags') };
+
+    const resultForStageZookeeper = await objectApi.create(stagingData);
     if (resultForStageZookeeper.errors) {
       throw new Error(resultForStageZookeeper.title);
     }
@@ -132,13 +146,13 @@ const addZookeeperCreator = (
       throw new Error(resultForFetchZookeeperInfo.title);
     }
 
+    const zookeeperInfo = resultForFetchZookeeperInfo.data;
+    const stagingZookeeper = transformToStagingZookeeper(
+      resultForStageZookeeper.data,
+    );
     dispatch(
       routine.success(
-        transformToZookeeper(
-          resultForCreateZookeeper.data,
-          resultForFetchZookeeperInfo.data,
-          resultForStageZookeeper.data,
-        ),
+        combineZookeeper(zookeeper, zookeeperInfo, stagingZookeeper),
       ),
     );
   } catch (e) {
@@ -150,28 +164,47 @@ const addZookeeperCreator = (
 const updateZookeeperCreator = () => async () => {
   // TODO: implement the logic for update zookeeper
 };
+
 const deleteZookeeperCreator = () => async () => {
   // TODO: implement the logic for delete zookeeper
 };
 
-const updateStagingSettingsCreator = (
+const stageZookeeperCreator = (
   state,
   dispatch,
   showMessage,
-  routine = updateStagingSettingsRoutine,
-) => async params => {
+  routine = stageZookeeperRoutine,
+) => async values => {
   if (state.isFetching) return;
 
-  dispatch(routine.request());
-  const result = await objectApi.update(params);
+  try {
+    checkRequired(values);
+    const group = ZOOKEEPER;
+    const name = values.name;
+    const targetZookeeper = findByGroupAndName(state.data, group, name);
+    const ensuredValues = {
+      name,
+      group,
+      tags: {
+        ...omit(targetZookeeper.settings, 'tags'),
+        ...omit(targetZookeeper.stagingSettings, 'tags'),
+        ...omit(values, 'tags'),
+      },
+    };
 
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
+    const resultForStageZookeeper = await objectApi.update(ensuredValues);
+    if (resultForStageZookeeper.errors) {
+      throw new Error(resultForStageZookeeper.title);
+    }
+
+    const stagingZookeeper = transformToStagingZookeeper(
+      resultForStageZookeeper.data,
+    );
+    dispatch(routine.success(stagingZookeeper));
+  } catch (e) {
+    dispatch(routine.failure(e.message));
+    showMessage(e.message);
   }
-
-  dispatch(routine.success(result.data));
 };
 
 export {
@@ -179,5 +212,5 @@ export {
   addZookeeperCreator,
   updateZookeeperCreator,
   deleteZookeeperCreator,
-  updateStagingSettingsCreator,
+  stageZookeeperCreator,
 };

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy } from 'lodash';
-
+import { map, reject } from 'lodash';
+import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchBrokersRoutine,
   addBrokerRoutine,
   updateBrokerRoutine,
+  stageBrokerRoutine,
   deleteBrokerRoutine,
-  updateStagingSettingsRoutine,
 } from './brokerRoutines';
 
 const initialState = {
@@ -29,17 +29,16 @@ const initialState = {
   isFetching: false,
   lastUpdated: null,
   error: null,
+  stagingSettings: [],
 };
-
-const sort = brokers => sortBy(brokers, 'settings.name');
 
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchBrokersRoutine.REQUEST:
     case addBrokerRoutine.REQUEST:
     case updateBrokerRoutine.REQUEST:
+    case stageBrokerRoutine.REQUEST:
     case deleteBrokerRoutine.REQUEST:
-    case updateStagingSettingsRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -49,30 +48,26 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: sort(action.payload),
+        data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
     case addBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: sort([...state.data, action.payload]),
+        data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
     case updateBrokerRoutine.SUCCESS:
+    case stageBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, broker => {
-          if (
-            broker.settings.name === action.payload.name &&
-            broker.settings.group === action.payload.group
-          ) {
-            return action.payload;
-          } else {
-            return broker;
-          }
-        }),
+        data: map(state.data, broker =>
+          isKeyEqual(broker, action.payload)
+            ? { ...broker, ...action.payload }
+            : broker,
+        ),
         lastUpdated: new Date(),
       };
     case deleteBrokerRoutine.SUCCESS:
@@ -87,27 +82,11 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
-    case updateStagingSettingsRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: map(state.data, broker => {
-          if (
-            broker.settings.name === action.payload.name &&
-            broker.settings.group === action.payload.group
-          ) {
-            return { ...broker, stagingSettings: action.payload };
-          } else {
-            return broker;
-          }
-        }),
-        lastUpdated: new Date(),
-      };
     case fetchBrokersRoutine.FAILURE:
     case addBrokerRoutine.FAILURE:
     case updateBrokerRoutine.FAILURE:
+    case stageBrokerRoutine.FAILURE:
     case deleteBrokerRoutine.FAILURE:
-    case updateStagingSettingsRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { get, has, sortBy } from 'lodash';
+import { find, get, has, sortBy } from 'lodash';
 import { hashByGroupAndName } from './sha';
 
 export const getKey = object => {
@@ -40,3 +40,9 @@ export const hashKey = object => {
     get(object, 'settings.name'),
   );
 };
+
+export const findByGroupAndName = (objects, group, name) =>
+  find(
+    objects,
+    o => get(o, 'settings.group') === group && get(o, 'settings.name') === name,
+  );
