@@ -29,6 +29,7 @@ import {
   maxNumber,
   composeValidators,
 } from 'utils/validate';
+import { configuratorMode } from '../../api/inspectApi';
 
 const AddNodeDialog = props => {
   const { isOpen, handleClose, fetchNodes, mode } = props;
@@ -86,7 +87,7 @@ const AddNodeDialog = props => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              {mode !== 'k8s' && (
+              {mode !== configuratorMode.k8s && (
                 <>
                   <Field
                     name="port"

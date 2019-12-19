@@ -31,7 +31,7 @@ describe('Inspect API', () => {
 
     // we're using fake configurator in our tests; so this value should be "FAKE"
     expect(mode).to.be.a('string');
-    expect(mode).to.eq('FAKE');
+    expect(mode).to.eq(inspect.configuratorMode.fake);
 
     expect(branch).to.be.a('string');
 

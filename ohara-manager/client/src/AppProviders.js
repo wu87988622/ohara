@@ -35,6 +35,7 @@ import {
   EditWorkspaceProvider,
   ZookeeperProvider,
   PipelineProvider,
+  ConfiguratorProvider,
 } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
@@ -59,6 +60,7 @@ const AppProviders = ({ children }) => {
         <ErrorBoundary children={children} />,
         <DialogProvider children={children} />,
         <SnackbarProvider children={children} />,
+        <ConfiguratorProvider children={children} />,
         <NodeProvider children={children} />,
         <ZookeeperProvider children={children} />,
         <BrokerProvider children={children} />,

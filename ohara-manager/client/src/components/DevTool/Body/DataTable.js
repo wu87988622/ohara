@@ -86,7 +86,7 @@ const DataTable = props => {
     const headers = getHeaders(topicData);
     // we skip the detail view header
     headers.shift();
-    return data.topicData.map((message, rowIdx) => (
+    return topicData.map((message, rowIdx) => (
       <DataRow key={rowIdx}>
         {message.value ? (
           <>

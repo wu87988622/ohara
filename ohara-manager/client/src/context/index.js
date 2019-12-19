@@ -74,6 +74,10 @@ import {
   usePipelineDispatch,
   usePipelineActions,
 } from 'context/pipeline/PipelineContext';
+import {
+  ConfiguratorProvider,
+  useConfiguratorState,
+} from 'context/configurator/ConfiguratorContext';
 
 export {
   // Broker
@@ -125,4 +129,7 @@ export {
   usePipelineState,
   usePipelineDispatch,
   usePipelineActions,
+  // Configurator
+  ConfiguratorProvider,
+  useConfiguratorState,
 };

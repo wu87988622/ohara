@@ -18,7 +18,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import styled from 'styled-components';
-import { round } from 'lodash';
+import { round, isEmpty } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import AddNodeDialog from './AddNodeDialog';
@@ -26,6 +26,8 @@ import { SelectTable } from 'components/common/Table';
 import { FullScreenDialog } from 'components/common/Dialog';
 import { useNodeDialog } from 'context/NodeDialogContext';
 import { Button } from 'components/common/Form';
+import ViewNodeDialog from './ViewNodeDialog';
+import { useConfiguratorState } from 'context';
 
 const Actions = styled.div`
   display: flex;
@@ -38,10 +40,13 @@ const Actions = styled.div`
 `;
 
 const NodeDialog = () => {
+  const { data: configuratorInfo } = useConfiguratorState();
+
   const {
     isOpen: isNodeDialogOpen,
     setIsOpen: setIsNodeDialogOpen,
     type,
+    setType,
     hasSelect,
     hasSave,
     selected,
@@ -50,7 +55,14 @@ const NodeDialog = () => {
   } = useNodeDialog();
 
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
+  const [isViewNodeDialogOpen, setIsViewNodeDialogOpen] = useState(false);
   const [nodes, setNodes] = useState([]);
+  const [nodeData, setNodeData] = useState({});
+
+  useEffect(() => {
+    if (isEmpty(configuratorInfo) || !configuratorInfo) return;
+    setType(configuratorInfo.mode);
+  }, [setType, configuratorInfo]);
 
   const getRsources = node => {
     return node.resources.reduce(
@@ -95,8 +107,18 @@ const NodeDialog = () => {
     return headers;
   };
 
-  const viewButton = () => {
-    return <Button variant="outlined">{'VIEW'}</Button>;
+  const viewButton = node => {
+    return (
+      <Button
+        variant="outlined"
+        onClick={() => {
+          setNodeData(node);
+          setIsViewNodeDialogOpen(true);
+        }}
+      >
+        {'VIEW'}
+      </Button>
+    );
   };
 
   const rows = nodes.map(node => {
@@ -104,7 +126,7 @@ const NodeDialog = () => {
       name: node.hostname,
       ...getRsources(node),
       services: node.services.length,
-      actions: viewButton(),
+      actions: viewButton(node),
     };
   });
 
@@ -155,6 +177,13 @@ const NodeDialog = () => {
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
           fetchNodes={fetchNodes}
+          mode={type}
+        />
+
+        <ViewNodeDialog
+          data={nodeData}
+          isOpen={isViewNodeDialogOpen}
+          handleClose={() => setIsViewNodeDialogOpen(false)}
           mode={type}
         />
       </>

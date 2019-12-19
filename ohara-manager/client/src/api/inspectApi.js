@@ -48,6 +48,12 @@ export const classType = {
   source: 'source',
 };
 
+export const configuratorMode = {
+  fake: 'FAKE',
+  docker: 'DOCKER',
+  k8s: 'K8S',
+};
+
 const fetchServiceInfo = async (kind, params) => {
   const reqUrl = !isEmpty(params)
     ? `${url}/${kind}/${params.name}?group=${params.group}`

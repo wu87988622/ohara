@@ -30,8 +30,6 @@ import Typography from '@material-ui/core/Typography';
 import { TableLoader } from 'components/common/Loader';
 
 const Wrapper = styled.div`
-  /* to make this table fit the parent width */
-  display: table-cell;
   border: 1px solid ${props => props.theme.palette.grey[300]};
   border-radius: ${props => props.theme.shape.borderRadius}px;
 
