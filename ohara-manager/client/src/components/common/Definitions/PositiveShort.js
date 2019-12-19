@@ -20,13 +20,11 @@ import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
 const PositiveShort = props => {
-  const {
-    input: { name, onChange, value },
-    meta = {},
-    helperText,
-    refs,
-    ...rest
-  } = omit(props, ['tableKeys']);
+  const { input, meta = {}, helperText, refs, ...rest } = omit(props, [
+    'tableKeys',
+  ]);
+
+  const { name, onChange, value, ...restInput } = omit(input, ['type']);
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
@@ -38,7 +36,7 @@ const PositiveShort = props => {
       variant="filled"
       onChange={onChange}
       name={name}
-      InputProps={{ inputProps: { min: 0, max: 32767 } }}
+      InputProps={{ inputProps: { min: 0, max: 32767 }, ...restInput }}
       value={value}
       helperText={hasError ? meta.error : helperText}
       error={hasError}

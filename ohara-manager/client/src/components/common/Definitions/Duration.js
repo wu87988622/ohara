@@ -30,15 +30,11 @@ const StyledTextField = styled(TextField)(
 );
 
 const Duration = props => {
-  const {
-    input: { name, onChange, value },
-    meta = {},
-    helperText,
-    refs,
-    ...rest
-  } = omit(props, ['tableKeys']);
+  const { input, meta = {}, helperText, refs, ...rest } = omit(props, [
+    'tableKeys',
+  ]);
 
-  const _value = value.split(' ')[0] / 1000;
+  const { name, onChange, value, ...restInput } = omit(input, ['type']);
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
@@ -50,12 +46,13 @@ const Duration = props => {
       variant="filled"
       onChange={onChange}
       name={name}
-      value={_value}
+      value={value}
       helperText={hasError ? meta.error : helperText}
       error={hasError}
       type="number"
       InputProps={{
         endAdornment: <InputAdornment position="end">Seconds</InputAdornment>,
+        ...restInput,
       }}
     />
   );

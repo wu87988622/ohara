@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { Field } from 'react-final-form';
+
 import BindingPort from './BindingPort';
 import BooleanDef from './BooleanDef';
 import Duration from './Duration';
@@ -38,9 +39,11 @@ import ObjectKeys from './ObjectKeys';
 import PositiveDouble from './PositiveDouble';
 import PositiveLong from './PositiveLong';
 import PositiveShort from './PositiveShort';
+import { validWithDef } from 'utils/validate';
+import { READ_ONLY, CREATE_ONLY, EDITABLE } from './Permission';
 
 const RenderDefinition = props => {
-  const { def, topics, files, ref = {} } = props;
+  const { def, topics, files, defType, ref = {} } = props;
 
   const RenderField = params => {
     const {
@@ -49,9 +52,30 @@ const RenderDefinition = props => {
       documentation,
       input,
       necessary,
-      editable,
+      permission,
       tableKeys = [],
     } = params;
+
+    let disabled = false;
+
+    switch (permission) {
+      case READ_ONLY:
+        disabled = true;
+        break;
+
+      case CREATE_ONLY:
+        disabled = defType === CREATE_ONLY ? false : true;
+        break;
+
+      case EDITABLE:
+        disabled = defType === EDITABLE ? false : true;
+        disabled = true;
+        break;
+
+      default:
+        break;
+    }
+
     return (
       <Field
         refs={ref}
@@ -61,8 +85,9 @@ const RenderDefinition = props => {
         label={displayName}
         helperText={documentation}
         component={input}
-        disabled={!editable}
+        disabled={disabled}
         required={necessary === 'REQUIRED'}
+        validate={validWithDef(params)}
       />
     );
   };

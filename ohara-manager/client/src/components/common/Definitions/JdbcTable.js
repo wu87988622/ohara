@@ -21,7 +21,7 @@ import TextField from '@material-ui/core/TextField';
 
 const JdbcTable = props => {
   const {
-    input: { name, onChange, value },
+    input: { name, onChange, value, ...restInput },
     meta = {},
     helperText,
     refs,
@@ -33,6 +33,7 @@ const JdbcTable = props => {
   return (
     <TextField
       {...rest}
+      InputProps={restInput}
       ref={refs}
       fullWidth
       variant="filled"

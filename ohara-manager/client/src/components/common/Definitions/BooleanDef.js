@@ -21,13 +21,14 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 
 const BooleanDef = props => {
-  const {
-    input: { name, onChange, checked = false, ...restInput },
-    label,
-    testId,
-    refs,
-    ...rest
-  } = omit(props, ['tableKeys', 'helperText']);
+  const { input, label, testId, refs, ...rest } = omit(props, [
+    'tableKeys',
+    'helperText',
+  ]);
+
+  const { name, onChange, checked = false, ...restInput } = omit(input, [
+    'type',
+  ]);
 
   return (
     <FormControlLabel
@@ -38,7 +39,7 @@ const BooleanDef = props => {
           {...rest}
           onChange={onChange}
           name={name}
-          inputProps={restInput}
+          inputProps={{ type: 'checkbox', ...restInput }}
           checked={checked}
           color="primary"
         />
