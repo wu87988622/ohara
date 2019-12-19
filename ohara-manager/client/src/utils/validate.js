@@ -46,7 +46,7 @@ export const maxNumber = max => value => {
 
 export const validWithRegex = regex => value => {
   return regex.test(value)
-    ? 'The value does not meet the rules' + regex
+    ? `The value does not meet the rules ${regex}`
     : undefined;
 };
 
@@ -63,7 +63,7 @@ export const validWithDef = def => value => {
   }
   if (blacklist.length > 0) {
     if (blacklist.find(black => black === value)) {
-      return 'This value is in the blacklist';
+      return 'The value is listed in the blacklist and so cannot be used';
     }
   }
   if (regex) {
