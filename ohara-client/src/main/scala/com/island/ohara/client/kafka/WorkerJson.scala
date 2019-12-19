@@ -52,15 +52,14 @@ object WorkerJson {
     KafkaConnectorTaskId
   )
 
-  final case class KafkaConnectorCreationResponse(
+  final case class ConnectorCreationResponse(
     name: String,
     config: Map[String, String],
     tasks: Seq[KafkaConnectorTaskId]
   )
 
-  private[kafka] implicit val KAFKA_CONNECTOR_CREATION_RESPONSE_JSON_FORMAT
-    : RootJsonFormat[KafkaConnectorCreationResponse] =
-    jsonFormat3(KafkaConnectorCreationResponse)
+  private[kafka] implicit val CONNECTOR_CREATION_RESPONSE_JSON_FORMAT: RootJsonFormat[ConnectorCreationResponse] =
+    jsonFormat3(ConnectorCreationResponse)
   final case class KafkaConnectorStatus(state: String, worker_id: String, trace: Option[String]) {
     def workerHostname: String = {
       val splitIndex = worker_id.lastIndexOf(":")
@@ -157,7 +156,7 @@ object WorkerJson {
       )
     }
 
-  private[kafka] implicit val KAFKA_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = new RootJsonFormat[Creation] {
+  private[kafka] implicit val CREATION_JSON_FORMAT: RootJsonFormat[Creation] = new RootJsonFormat[Creation] {
     import spray.json._
     override def write(obj: Creation): JsValue = obj.toJsonString.parseJson
     override def read(json: JsValue): Creation = Creation.ofJson(json.toString())

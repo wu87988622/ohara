@@ -60,7 +60,7 @@ object PipelineApi {
     tags: Option[Map[String, JsValue]]
   )
 
-  implicit val PIPELINE_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
     JsonRefiner[Updating].format(jsonFormat3(Updating)).rejectEmptyString().refine
 
   final case class Creation(
@@ -72,7 +72,7 @@ object PipelineApi {
     tags: Map[String, JsValue]
   ) extends com.island.ohara.client.configurator.v0.BasicCreation
 
-  implicit val PIPELINE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     rulesOfKey[Creation]
       .format(jsonFormat5(Creation))
@@ -236,8 +236,8 @@ object PipelineApi {
 
       override private[v0] def creation: Creation =
         // auto-complete the creation via our refiner
-        PIPELINE_CREATION_JSON_FORMAT.read(
-          PIPELINE_CREATION_JSON_FORMAT.write(
+        CREATION_JSON_FORMAT.read(
+          CREATION_JSON_FORMAT.write(
             Creation(
               group = CommonUtils.requireNonEmpty(group),
               name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
@@ -250,8 +250,8 @@ object PipelineApi {
 
       override private[v0] def updating: Updating =
         // auto-complete the updating via our refiner
-        PIPELINE_UPDATING_JSON_FORMAT.read(
-          PIPELINE_UPDATING_JSON_FORMAT.write(
+        UPDATING_JSON_FORMAT.read(
+          UPDATING_JSON_FORMAT.write(
             Updating(
               flows = Option(flows),
               endpoints = Option(endpoints),

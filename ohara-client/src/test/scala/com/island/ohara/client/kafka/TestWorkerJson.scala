@@ -103,7 +103,7 @@ class TestWorkerJson extends OharaTest {
   @Test
   def testCreation(): Unit = {
     val creation = Creation.of(CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString())
-    creation shouldBe KAFKA_CREATION_JSON_FORMAT.read(KAFKA_CREATION_JSON_FORMAT.write(creation))
+    creation shouldBe CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(creation))
   }
 
   @Test

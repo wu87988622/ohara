@@ -26,6 +26,11 @@ if [[ -z "$OHARA_MANAGER_NODE_ENV" ]]; then
   export OHARA_MANAGER_NODE_ENV="prodcution"
 fi
 
+#----------[heap]----------#
+if [[ -z "$OHARA_HEAP_OPTS" ]]; then
+  export OHARA_HEAP_OPTS="-Xms1024M -Xmx1024M"
+fi
+
 #----------[JMX]----------#
 if [[ -z "$OHARA_JMX_OPTS" ]]; then
   export OHARA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
@@ -37,5 +42,4 @@ if [[ -z "$OHARA_JMX_OPTS" ]]; then
   if [[ ! -z $JMX_HOSTNAME ]]; then
     export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Djava.rmi.server.hostname=$JMX_HOSTNAME"
   fi
-
 fi

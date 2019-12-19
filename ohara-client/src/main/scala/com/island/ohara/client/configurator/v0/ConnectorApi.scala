@@ -97,7 +97,7 @@ object ConnectorApi {
 
   val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala
 
-  implicit val CONNECTOR_CREATION_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
@@ -157,7 +157,7 @@ object ConnectorApi {
     def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
   }
 
-  implicit val CONNECTOR_UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner[Updating]
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner[Updating]
     .format(new RootJsonFormat[Updating] {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
@@ -165,7 +165,7 @@ object ConnectorApi {
     .rejectEmptyString()
     .valueChecker(
       COLUMNS_KEY, {
-        case v: JsArray => CONNECTOR_CREATION_FORMAT.check(COLUMNS_KEY, v)
+        case v: JsArray => CREATION_FORMAT.check(COLUMNS_KEY, v)
         case _          => // do nothing
       }
     )
@@ -284,10 +284,10 @@ object ConnectorApi {
       * @return creation object
       */
     final def creation: Creation =
-      CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     private[v0] final def updating: Updating =
-      CONNECTOR_UPDATING_FORMAT.read(CONNECTOR_UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

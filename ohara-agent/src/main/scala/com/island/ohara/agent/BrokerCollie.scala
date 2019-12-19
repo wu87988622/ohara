@@ -108,7 +108,8 @@ trait BrokerCollie extends Collie {
                     s" -Dcom.sun.management.jmxremote.ssl=false" +
                     s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
                     s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
-                    s" -Djava.rmi.server.hostname=${newNode.hostname}")
+                    s" -Djava.rmi.server.hostname=${newNode.hostname}"),
+                  "KAFKA_HEAP_OPTS" -> s"-Xms${creation.initHeap}M -Xmx${creation.maxHeap}M"
                 ),
                 hostname = Collie.containerHostName(creation.group, creation.name, kind)
               )

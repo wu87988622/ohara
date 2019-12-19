@@ -109,7 +109,8 @@ trait StreamCollie extends Collie {
                       "JMX_PORT"     -> creation.jmxPort.toString,
                       "JMX_HOSTNAME" -> newNode.hostname,
                       // define the urls as string list so as to simplify the script for stream
-                      "STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString
+                      "STREAM_JAR_URLS" -> fileInfo.url.get.toURI.toASCIIString,
+                      "OHARA_HEAP_OPTS" -> s"-Xms${creation.initHeap}M -Xmx${creation.maxHeap}M"
                     ),
                     // we should set the hostname to container name in order to avoid duplicate name with other containers
                     hostname = Collie.containerHostName(creation.group, creation.name, kind)

@@ -121,6 +121,7 @@ trait WorkerCollie extends Collie {
                     s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
                     s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
                     s" -Djava.rmi.server.hostname=${newNode.hostname}"),
+                  "KAFKA_HEAP_OPTS" -> s"-Xms${creation.initHeap}M -Xmx${creation.maxHeap}M",
                   // define the urls as string list so as to simplify the script for worker
                   "WORKER_PLUGIN_URLS"     -> pluginInfos.map(_.url.get.toURI.toASCIIString).mkString(","),
                   "WORKER_SHARED_JAR_URLS" -> sharedJarInfos.map(_.url.get.toURI.toASCIIString).mkString(",")

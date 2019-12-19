@@ -57,6 +57,8 @@ object WorkerApi {
   val NODE_NAMES_DEFINITION: SettingDef    = createDef(nodeDefinition)
   val ROUTES_DEFINITION: SettingDef        = createDef(routesDefinition)
   val TAGS_DEFINITION: SettingDef          = createDef(tagsDefinition)
+  val MAX_HEAP_DEFINITION: SettingDef      = createDef(maxHeapDefinition)
+  val INIT_HEAP_DEFINITION: SettingDef     = createDef(initHeapDefinition)
   private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
   val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(BROKER_CLUSTER_KEY_KEY)
@@ -201,7 +203,7 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -231,7 +233,7 @@ object WorkerApi {
     def freePorts: Option[Set[Int]] =
       noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
   }
-  implicit val WORKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -365,14 +367,14 @@ object WorkerApi {
       * @return the payload of creation
       */
     final def creation: Creation =
-      WORKER_CREATION_JSON_FORMAT.read(WORKER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
       * @return the payload of update
       */
     private[v0] final def updating: Updating =
-      WORKER_UPDATING_JSON_FORMAT.read(WORKER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

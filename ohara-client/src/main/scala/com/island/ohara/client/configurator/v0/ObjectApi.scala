@@ -37,7 +37,7 @@ object ObjectApi {
 
     override def tags: Map[String, JsValue] = settings.tags.get
   }
-  private[ohara] implicit val OBJECT_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     rulesOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(obj.settings)
@@ -60,7 +60,7 @@ object ObjectApi {
     }
   }
 
-  implicit val OBJECT_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] = new RootJsonFormat[Updating] {
+  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] = new RootJsonFormat[Updating] {
     override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
 
     override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -117,10 +117,10 @@ object ObjectApi {
     }
 
     def creation: Creation =
-      OBJECT_CREATION_JSON_FORMAT.read(OBJECT_CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
+      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
 
     def updating: Updating =
-      OBJECT_UPDATING_JSON_FORMAT.read(OBJECT_UPDATING_JSON_FORMAT.write(new Updating(settings.toMap)))
+      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(settings.toMap)))
 
     /**
       * generate the POST request

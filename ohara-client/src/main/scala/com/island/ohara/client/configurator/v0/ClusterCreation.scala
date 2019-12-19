@@ -59,4 +59,8 @@ trait ClusterCreation extends BasicCreation {
     }
 
   def tags: Map[String, JsValue] = noJsNull(settings)(TAGS_KEY).asJsObject.fields
+
+  def maxHeap: Long = noJsNull(settings)(MAX_HEAP_KEY).convertTo[Long]
+
+  def initHeap: Long = noJsNull(settings)(INIT_HEAP_KEY).convertTo[Long]
 }

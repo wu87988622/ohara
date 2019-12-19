@@ -72,7 +72,7 @@ object StreamApi {
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
   }
-  implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -100,7 +100,7 @@ object StreamApi {
     def toTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
   }
-  implicit val STREAM_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -210,7 +210,7 @@ object StreamApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      STREAM_CREATION_JSON_FORMAT.read(STREAM_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
@@ -219,7 +219,7 @@ object StreamApi {
     @VisibleForTesting
     private[v0] final def updating: Updating =
       // auto-complete the update via our refiner
-      STREAM_UPDATING_JSON_FORMAT.read(STREAM_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

@@ -50,7 +50,7 @@ object FileInfoApi {
   def toTags(string: String): Map[String, JsValue] = string.parseJson.asJsObject.fields
 
   case class Updating(tags: Option[Map[String, JsValue]])
-  final implicit val FILE_UPDATING_FORMAT: RootJsonFormat[Updating] = jsonFormat1(Updating)
+  final implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = jsonFormat1(Updating)
 
   case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
   object ClassInfo {

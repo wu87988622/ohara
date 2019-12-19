@@ -136,7 +136,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def parseCreation(): Unit = {
     val nodeName = CommonUtils.randomString()
-    val creation = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    val creation = BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -160,7 +160,7 @@ class TestBrokerApi extends OharaTest {
     val zkKey      = ObjectKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val clientPort = CommonUtils.availablePort()
     val jmxPort    = CommonUtils.availablePort()
-    val creation2  = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    val creation2  = BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name",
       |    "group": "$group",
@@ -180,7 +180,7 @@ class TestBrokerApi extends OharaTest {
     creation2.clientPort shouldBe clientPort
     creation2.jmxPort shouldBe jmxPort
 
-    val creation3 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    val creation3 = BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "zookeeperClusterKey": ${zkKey.toString},
       |    "name": "$name",
@@ -223,7 +223,7 @@ class TestBrokerApi extends OharaTest {
   }
 
   @Test
-  def testDefaultName(): Unit = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+  def testDefaultName(): Unit = BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -236,7 +236,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def parseNameField(): Unit =
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -250,7 +250,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseImageNameField(): Unit =
-    BrokerApi.BROKER_CREATION_JSON_FORMAT
+    BrokerApi.CREATION_JSON_FORMAT
       .read(s"""
                                                   |  {
                                                   |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
@@ -267,7 +267,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def parseImageNameOnUpdate(): Unit =
     intercept[DeserializationException] {
-      BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
+      BrokerApi.UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "imageName": ""
            |  }
@@ -276,7 +276,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def testEmptyNodeNames(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -290,7 +290,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def parseNodeNamesOnUpdate(): Unit =
     intercept[DeserializationException] {
-      BrokerApi.BROKER_UPDATING_JSON_FORMAT.read(s"""
+      BrokerApi.UPDATING_JSON_FORMAT.read(s"""
            |  {
            |    "nodeNames": ""
            |  }
@@ -299,7 +299,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseZeroClientPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -313,7 +313,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseNegativeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -327,7 +327,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseLargeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -342,7 +342,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def parseClientPortOnUpdate(): Unit = {
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -357,7 +357,7 @@ class TestBrokerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -372,7 +372,7 @@ class TestBrokerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -389,7 +389,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseZeroJmxPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -403,7 +403,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseNegativeJmxPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -417,7 +417,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def parseLargeJmxPort(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "jmxPort": 999999,
@@ -428,7 +428,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def parseJmxPortOnUpdate(): Unit = {
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -443,7 +443,7 @@ class TestBrokerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -458,7 +458,7 @@ class TestBrokerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+      BrokerApi.CREATION_JSON_FORMAT.read(s"""
            |  {
            |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
            |      "group": "g",
@@ -480,7 +480,7 @@ class TestBrokerApi extends OharaTest {
     an[DeserializationException] should be thrownBy access.nodeName("start").updating
     an[DeserializationException] should be thrownBy access.nodeName("stop").updating
 
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -493,7 +493,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def testInvalidBrokerClusterKey(): Unit = {
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -508,7 +508,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def testBrokerClusterKeyWithDefaultGroup(): Unit = {
     val name = CommonUtils.randomString()
-    BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "zookeeperClusterKey": "$name",
       |    "nodeNames": ["n1"]
@@ -528,7 +528,7 @@ class TestBrokerApi extends OharaTest {
 
   @Test
   def testEmptyString(): Unit = {
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": {
       |      "group": "g",
@@ -539,7 +539,7 @@ class TestBrokerApi extends OharaTest {
       |  }
       """.stripMargin.parseJson)
 
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "zookeeperClusterKey": "",
@@ -547,7 +547,7 @@ class TestBrokerApi extends OharaTest {
       |  }
       """.stripMargin.parseJson)
 
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "imageName": "",
@@ -690,4 +690,40 @@ class TestBrokerApi extends OharaTest {
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
     BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
+
+  @Test
+  def testMaxHeap(): Unit = BrokerApi.CREATION_JSON_FORMAT.read(s"""
+                                                                   |  {
+                                                                   |    "zookeeperClusterKey": "zk",
+                                                                   |    "nodeNames": ["node00"],
+                                                                   |    "xmx": 123
+                                                                   |  }
+      """.stripMargin.parseJson).maxHeap shouldBe 123
+
+  @Test
+  def testInitHeap(): Unit = BrokerApi.CREATION_JSON_FORMAT.read(s"""
+                                                                    |  {
+                                                                    |    "zookeeperClusterKey": "zk",
+                                                                    |    "nodeNames": ["node00"],
+                                                                    |    "xms": 123
+                                                                    |  }
+      """.stripMargin.parseJson).initHeap shouldBe 123
+
+  @Test
+  def testNegativeMaxHeap(): Unit =
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
+                                                                                                                           |  {
+                                                                                                                           |    "nodeNames": ["node00"],
+                                                                                                                           |    "xmx": -123
+                                                                                                                           |  }
+      """.stripMargin.parseJson)
+
+  @Test
+  def testNegativeInitHeap(): Unit =
+    an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
+                                                                                                                            |  {
+                                                                                                                            |    "nodeNames": ["node00"],
+                                                                                                                            |    "xms": -123
+                                                                                                                            |  }
+      """.stripMargin.parseJson)
 }

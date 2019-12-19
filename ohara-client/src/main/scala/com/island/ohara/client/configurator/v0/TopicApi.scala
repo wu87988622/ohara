@@ -131,7 +131,7 @@ object TopicApi {
     private[TopicApi] def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
   }
 
-  implicit val TOPIC_UPDATING_FORMAT: RootJsonFormat[Updating] =
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
     JsonRefiner[Updating]
       .format(new RootJsonFormat[Updating] {
         override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
@@ -157,7 +157,7 @@ object TopicApi {
     override def tags: Map[String, JsValue] = settings.tags.get
   }
 
-  implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
@@ -291,12 +291,12 @@ object TopicApi {
     final def creation: Creation =
       // rewrite the creation via format since the format will auto-complete the creation
       // this make the creaion is consistent to creation sent to server
-      TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     private[v0] final def updating: Updating =
       // rewrite the update via format since the format will auto-complete the creation
       // this make the update is consistent to creation sent to server
-      TOPIC_UPDATING_FORMAT.read(TOPIC_UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
 
     /**
       * generate the POST request

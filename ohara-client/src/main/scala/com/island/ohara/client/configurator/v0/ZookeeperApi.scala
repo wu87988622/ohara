@@ -54,6 +54,8 @@ object ZookeeperApi {
   val NODE_NAMES_DEFINITION: SettingDef  = createDef(nodeDefinition)
   val ROUTES_DEFINITION: SettingDef      = createDef(routesDefinition)
   val TAGS_DEFINITION: SettingDef        = createDef(tagsDefinition)
+  val MAX_HEAP_DEFINITION: SettingDef    = createDef(maxHeapDefinition)
+  val INIT_HEAP_DEFINITION: SettingDef   = createDef(initHeapDefinition)
   private[this] val PEER_PORT_KEY        = "peerPort"
   val PEER_PORT_DEFINITION: SettingDef =
     createDef(
@@ -120,7 +122,7 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val ZOOKEEPER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -146,7 +148,7 @@ object ZookeeperApi {
       noJsNull(settings).get(DATA_DIR_KEY).map(_.convertTo[String])
   }
 
-  implicit val ZOOKEEPER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -218,7 +220,7 @@ object ZookeeperApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      ZOOKEEPER_CREATION_JSON_FORMAT.read(ZOOKEEPER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
@@ -226,7 +228,7 @@ object ZookeeperApi {
       */
     private[v0] final def updating: Updating =
       // auto-complete the update via our refiner
-      ZOOKEEPER_UPDATING_JSON_FORMAT.read(ZOOKEEPER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

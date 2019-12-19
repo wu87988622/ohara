@@ -71,6 +71,16 @@ package object v0 {
   val TAGS_KEY: String = "tags"
 
   /**
+    * equals to jvm's xms
+    */
+  val INIT_HEAP_KEY: String = "xms"
+
+  /**
+    * equals to jvm's xmx
+    */
+  val MAX_HEAP_KEY: String = "xmx"
+
+  /**
     * Noted: there are other two definition having "nodeNames""
     * 1) StreamDefinitions.NODE_NAMES_DEFINITION
     */
@@ -415,4 +425,10 @@ package object v0 {
 
   private[v0] def tagsDefinition: SettingDef.Builder => SettingDef =
     _.key(TAGS_KEY).documentation("the tags to this cluster").optional(Type.TAGS).build()
+
+  private[v0] def maxHeapDefinition: SettingDef.Builder => SettingDef =
+    _.key(MAX_HEAP_KEY).documentation("maximum memory allocation (in MB)").positiveNumber(1024L).build()
+
+  private[v0] def initHeapDefinition: SettingDef.Builder => SettingDef =
+    _.key(INIT_HEAP_KEY).documentation("initial heap size (in MB)").positiveNumber(1024L).build()
 }

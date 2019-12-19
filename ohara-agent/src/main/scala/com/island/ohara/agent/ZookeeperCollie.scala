@@ -136,7 +136,7 @@ trait ZookeeperCollie extends Collie {
                     )
                     .toSeq,
                   environments = Map(
-                    // zookeeper does not support java.rmi.server.hostname so we have to disable the default settings of jmx from zookeeper
+                    // TODO: zookeeper does not support java.rmi.server.hostname so we have to disable the default settings of jmx from zookeeper
                     // and then add our custom settings.
                     // see https://issues.apache.org/jira/browse/ZOOKEEPER-3606
                     "JMXDISABLE" -> "true",
@@ -145,7 +145,11 @@ trait ZookeeperCollie extends Collie {
                       s" -Dcom.sun.management.jmxremote.ssl=false" +
                       s" -Dcom.sun.management.jmxremote.port=${creation.jmxPort}" +
                       s" -Dcom.sun.management.jmxremote.rmi.port=${creation.jmxPort}" +
-                      s" -Djava.rmi.server.hostname=${newNode.hostname}")
+                      s" -Djava.rmi.server.hostname=${newNode.hostname}" +
+                      // TODO: zk's SERVER_JVMFLAGS is useless to us since the final argument passed to jvm - JVMFLAGS
+                      // is overwrite by us :(
+                      s" -Xmx${creation.maxHeap}M" +
+                      s" -Xms${creation.initHeap}M")
                   ),
                   hostname = hostname
                 )

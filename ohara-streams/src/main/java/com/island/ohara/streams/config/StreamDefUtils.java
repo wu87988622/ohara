@@ -230,6 +230,24 @@ public final class StreamDefUtils {
           .optional(Type.TAGS)
           .build();
 
+  public static final SettingDef MAX_HEAP_DEFINITION =
+      SettingDef.builder()
+          .key("xmx")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .documentation("maximum memory allocation (in MB)")
+          .optional(1024L)
+          .build();
+
+  public static final SettingDef INIT_HEAP_DEFINITION =
+      SettingDef.builder()
+          .key("xms")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .documentation("initial heap size (in MB)")
+          .optional(1024L)
+          .build();
+
   // this is the stream metric group definition
   public static final String STREAM_METRICS_GROUP_DEFAULT = "stream";
 

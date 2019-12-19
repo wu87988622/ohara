@@ -21,7 +21,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.client.kafka.WorkerJson.{KafkaConnectorCreationResponse, KafkaConnectorTaskId, _}
+import com.island.ohara.client.kafka.WorkerJson.{ConnectorCreationResponse, KafkaConnectorTaskId, _}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
@@ -55,7 +55,7 @@ class Test873 extends OharaTest {
         post {
           entity(as[Creation]) { req =>
             complete(
-              KafkaConnectorCreationResponse(
+              ConnectorCreationResponse(
                 name = req.name(),
                 config = req.configs().asScala.toMap,
                 tasks = tasks

@@ -90,7 +90,7 @@ class TestTopicApi extends OharaTest {
     val numberOfReplications = 10
     val group                = CommonUtils.randomString(10)
     val name                 = CommonUtils.randomString(10)
-    val creation             = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+    val creation             = TopicApi.CREATION_FORMAT.read(s"""
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
@@ -113,7 +113,7 @@ class TestTopicApi extends OharaTest {
     val brokerClusterName    = CommonUtils.randomString(10)
     val numberOfPartitions   = 100
     val numberOfReplications = 10
-    val update               = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
+    val update               = TopicApi.UPDATING_FORMAT.read(s"""
       |{
       | "$NAME_KEY": "$name",
       | "${BROKER_CLUSTER_KEY_DEFINITION.key()}": "$brokerClusterName",
@@ -126,7 +126,7 @@ class TestTopicApi extends OharaTest {
     update.settings(NUMBER_OF_PARTITIONS_DEFINITION.key()) shouldBe JsNumber(numberOfPartitions)
     update.settings(NUMBER_OF_REPLICATIONS_DEFINITION.key()) shouldBe JsNumber(numberOfReplications)
 
-    val update2 = TopicApi.TOPIC_UPDATING_FORMAT.read(s"""
+    val update2 = TopicApi.UPDATING_FORMAT.read(s"""
          |{
          |}
        """.stripMargin.parseJson)
@@ -156,7 +156,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def negativeReplicationsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
-      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+      TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -170,7 +170,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def negativePartitionsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
-      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+      TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -184,7 +184,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def zeroReplicationsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
-      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+      TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",
@@ -198,7 +198,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def zeroPartitionsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
-      TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+      TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
                                            |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
                                            |      "group": "g",

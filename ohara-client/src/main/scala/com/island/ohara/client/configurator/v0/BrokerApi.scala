@@ -57,6 +57,8 @@ object BrokerApi {
   val NODE_NAMES_DEFINITION: SettingDef               = createDef(nodeDefinition)
   val ROUTES_DEFINITION: SettingDef                   = createDef(routesDefinition)
   val TAGS_DEFINITION: SettingDef                     = createDef(tagsDefinition)
+  val MAX_HEAP_DEFINITION: SettingDef                 = createDef(maxHeapDefinition)
+  val INIT_HEAP_DEFINITION: SettingDef                = createDef(initHeapDefinition)
   private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
   val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
     _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
@@ -132,7 +134,7 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -163,7 +165,7 @@ object BrokerApi {
       noJsNull(settings).get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
   }
 
-  implicit val BROKER_UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
     rulesOfUpdating[Updating](new RootJsonFormat[Updating] {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
@@ -240,7 +242,7 @@ object BrokerApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      BROKER_CREATION_JSON_FORMAT.read(BROKER_CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
@@ -248,7 +250,7 @@ object BrokerApi {
       */
     private[v0] final def updating: Updating =
       // auto-complete the update via our refiner
-      BROKER_UPDATING_JSON_FORMAT.read(BROKER_UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

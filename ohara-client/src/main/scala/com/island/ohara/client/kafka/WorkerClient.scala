@@ -280,11 +280,11 @@ object WorkerClient {
         override protected def doCreate(
           executionContext: ExecutionContext,
           creation: Creation
-        ): Future[KafkaConnectorCreationResponse] = {
+        ): Future[ConnectorCreationResponse] = {
           implicit val exec: ExecutionContext = executionContext
           retry(
             () =>
-              HttpExecutor.SINGLETON.post[Creation, KafkaConnectorCreationResponse, KafkaError](
+              HttpExecutor.SINGLETON.post[Creation, ConnectorCreationResponse, KafkaError](
                 s"http://$workerAddress/connectors",
                 creation
               ),
@@ -424,7 +424,7 @@ object WorkerClient {
     * a base class used to collect the setting from source/sink connector when creating
     */
   abstract class Creator(format: ConnectorFormatter)
-      extends com.island.ohara.common.pattern.Creator[Future[KafkaConnectorCreationResponse]] {
+      extends com.island.ohara.common.pattern.Creator[Future[ConnectorCreationResponse]] {
     private[this] var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
     /**
@@ -526,7 +526,7 @@ object WorkerClient {
       *
       * @return this one
       */
-    override def create(): Future[KafkaConnectorCreationResponse] =
+    override def create(): Future[ConnectorCreationResponse] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = format.requestOfCreation()
@@ -540,7 +540,7 @@ object WorkerClient {
     protected def doCreate(
       executionContext: ExecutionContext,
       creation: Creation
-    ): Future[KafkaConnectorCreationResponse]
+    ): Future[ConnectorCreationResponse]
   }
 
   abstract class Validator(formatter: ConnectorFormatter) {

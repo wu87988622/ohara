@@ -211,6 +211,10 @@ public class SettingDef implements JsonObject, Serializable {
         && defaultValue instanceof Integer) {
       // jackson convert the number to int by default so we have to cast it again.
       this.defaultValue = (short) ((int) defaultValue);
+    } else if ((valueType == Type.LONG || valueType == Type.POSITIVE_LONG)
+        && defaultValue instanceof Integer) {
+      // jackson convert the number to int by default so we have to cast it again.
+      this.defaultValue = (long) ((int) defaultValue);
     } else this.defaultValue = defaultValue;
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Objects.requireNonNull(reference);

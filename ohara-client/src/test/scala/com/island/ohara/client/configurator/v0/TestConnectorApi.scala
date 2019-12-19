@@ -50,7 +50,7 @@ class TestConnectorApi extends OharaTest {
     val anotherKey        = CommonUtils.randomString()
     val anotherValue      = CommonUtils.randomString()
 
-    val creation = CONNECTOR_CREATION_FORMAT.read(s"""
+    val creation = CREATION_FORMAT.read(s"""
        |{
        |  "workerClusterKey": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
@@ -73,7 +73,7 @@ class TestConnectorApi extends OharaTest {
     creation.settings.contains("className") shouldBe false
     creation.settings.contains("aaa") shouldBe false
     creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)).settings shouldBe creation.settings
+    CREATION_FORMAT.read(CREATION_FORMAT.write(creation)).settings shouldBe creation.settings
 
     val group = CommonUtils.randomString(10)
     val name  = CommonUtils.randomString(10)
@@ -83,7 +83,7 @@ class TestConnectorApi extends OharaTest {
       .newName(CommonUtils.randomString(10))
       .dataType(DataType.DOUBLE)
       .build()
-    val creation2 = CONNECTOR_CREATION_FORMAT.read(s"""
+    val creation2 = CREATION_FORMAT.read(s"""
        |{
        |  "group": "$group",
        |  "name": ${JsString(name).toString()},
@@ -105,7 +105,7 @@ class TestConnectorApi extends OharaTest {
     creation2.settings.contains("className") shouldBe false
     creation2.settings.contains("aaa") shouldBe false
     creation2.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation2)).settings shouldBe creation2.settings
+    CREATION_FORMAT.read(CREATION_FORMAT.write(creation2)).settings shouldBe creation2.settings
   }
 
   @Test
@@ -188,7 +188,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def parsePropGroup(): Unit = {
-    val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    val creationRequest = ConnectorApi.CREATION_FORMAT.read(s"""
       |  {
       |    "$WORKER_CLUSTER_KEY_KEY": {
       |      "group": "g",
@@ -322,7 +322,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def testDefaultNumberOfTasks(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    ConnectorApi.CREATION_FORMAT.read(s"""
       |  {
       |    "$WORKER_CLUSTER_KEY_KEY": {
       |      "group": "g",
@@ -345,7 +345,7 @@ class TestConnectorApi extends OharaTest {
     val newName  = CommonUtils.randomString()
     val dataType = DataType.BOOLEAN
     val order    = 1
-    val creation = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    val creation = ConnectorApi.CREATION_FORMAT.read(s"""
                                             |  {
                                             |    "$WORKER_CLUSTER_KEY_KEY": {
                                             |      "group": "g",
@@ -375,7 +375,7 @@ class TestConnectorApi extends OharaTest {
     column.dataType shouldBe dataType
     column.order shouldBe order
 
-    val creation2 = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    val creation2 = ConnectorApi.CREATION_FORMAT.read(s"""
                                                                        |  {
                                                                        |    "$WORKER_CLUSTER_KEY_KEY": {
                                                                        |      "group": "g",
@@ -407,7 +407,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def emptyNameForCreatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.CREATION_FORMAT.read(
       s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -428,7 +428,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def emptyNewNameForCreatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.CREATION_FORMAT.read(
       s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -450,7 +450,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def negativeOrderForCreatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ConnectorApi.CREATION_FORMAT.read(s"""
                                                         |  {
                                                         |    "$WORKER_CLUSTER_KEY_KEY": {
                                                         |      "group": "g",
@@ -470,7 +470,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def duplicateOrderForCreatingColumns(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.CREATION_FORMAT.read(
       s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -498,7 +498,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def emptyNameForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.UPDATING_FORMAT.read(
       s"""
                                                                                                         |  {
                                                                                                         |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -519,7 +519,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def emptyNewNameForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.UPDATING_FORMAT.read(
       s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -541,7 +541,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def negativeOrderForUpdatingColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.UPDATING_FORMAT.read(
       s"""
                                                                                                  |  {
                                                                                                  |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -563,7 +563,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def duplicateOrderForUpdatingColumns(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATING_FORMAT.read(
+    an[DeserializationException] should be thrownBy ConnectorApi.UPDATING_FORMAT.read(
       s"""
                                                                                                    |  {
                                                                                                    |    "$WORKER_CLUSTER_KEY_KEY": {
@@ -596,7 +596,7 @@ class TestConnectorApi extends OharaTest {
   def emptyTags(): Unit = ConnectorApi.access.request.tags(Map.empty)
   @Test
   def parseTags(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    ConnectorApi.CREATION_FORMAT.read(s"""
       |  {
       |    "$WORKER_CLUSTER_KEY_KEY": {
       |      "group": "g",
@@ -621,7 +621,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def parseNullTags(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    ConnectorApi.CREATION_FORMAT.read(s"""
       |  {
       |    "$WORKER_CLUSTER_KEY_KEY": {
       |      "group": "g",
@@ -639,7 +639,7 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def defaultNumberOfTasks(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+    ConnectorApi.CREATION_FORMAT.read(s"""
        |  {
        |    "$WORKER_CLUSTER_KEY_KEY": {
        |      "group": "g",

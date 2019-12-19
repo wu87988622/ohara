@@ -53,7 +53,7 @@ object NodeApi {
     password: Option[String],
     tags: Option[Map[String, JsValue]]
   )
-  implicit val NODE_UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
     JsonRefiner[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().refine
 
   case class Creation(
@@ -66,7 +66,7 @@ object NodeApi {
     override def group: String = GROUP_DEFAULT
     override def name: String  = hostname
   }
-  implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat5(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
@@ -293,8 +293,8 @@ object NodeApi {
 
       override private[v0] def creation: Creation =
         // auto-complete the creation via our refiner
-        NODE_CREATION_JSON_FORMAT.read(
-          NODE_CREATION_JSON_FORMAT.write(
+        CREATION_JSON_FORMAT.read(
+          CREATION_JSON_FORMAT.write(
             Creation(
               hostname = CommonUtils.requireNonEmpty(hostname),
               user = user.map(CommonUtils.requireNonEmpty),
@@ -307,8 +307,8 @@ object NodeApi {
 
       override private[v0] def updating: Updating =
         // auto-complete the updating via our refiner
-        NODE_UPDATING_JSON_FORMAT.read(
-          NODE_UPDATING_JSON_FORMAT.write(
+        UPDATING_JSON_FORMAT.read(
+          UPDATING_JSON_FORMAT.write(
             Updating(
               port = port.map(CommonUtils.requireConnectionPort),
               user = user.map(CommonUtils.requireNonEmpty),

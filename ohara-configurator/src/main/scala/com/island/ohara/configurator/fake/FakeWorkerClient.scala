@@ -25,7 +25,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.{Creator, Validator}
 import com.island.ohara.client.kafka.WorkerJson.{
   KafkaConnectorConfig,
-  KafkaConnectorCreationResponse,
+  ConnectorCreationResponse,
   KafkaConnectorInfo,
   KafkaConnectorStatus,
   KafkaPlugin,
@@ -51,14 +51,14 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     override protected def doCreate(
       executionContext: ExecutionContext,
       creation: Creation
-    ): Future[KafkaConnectorCreationResponse] =
+    ): Future[ConnectorCreationResponse] =
       if (cachedConnectors.contains(creation.name()))
         Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
       else {
         import scala.collection.JavaConverters._
         cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
         cachedConnectorsState.put(creation.name(), State.RUNNING)
-        Future.successful(KafkaConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
+        Future.successful(ConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
       }
   }
 
