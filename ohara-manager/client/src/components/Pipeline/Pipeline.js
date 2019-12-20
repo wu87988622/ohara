@@ -28,12 +28,12 @@ import { usePrevious } from 'utils/hooks';
 const Pipeline = () => {
   const history = useHistory();
   const { workspaces, currentWorkspace } = context.useWorkspace();
-  const { lastUpdated: workspaceLastUpdated } = context.useWorkspaceState();
+  const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
   const { fetchPipelines } = context.usePipelineActions();
   const {
     data: pipelines,
     currentPipeline,
-    lastUpdated: pipelineLastUpdated,
+    lastUpdated: isPipelineReady,
   } = context.usePipelineState();
   const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
@@ -63,52 +63,62 @@ const Pipeline = () => {
     });
   };
 
-  const hasWorkspace = workspaces.length > 0;
+  useEffect(() => {
+    if (!isWorkspaceReady) return;
 
-  // Check if the given workspace name is valid
-  if (workspaceName) {
-    if (!currentWorkspace) {
-      const url = hasWorkspace ? `/${workspaces[0].settings.name}` : '/';
-      history.push(url);
+    const hasWorkspace = workspaces.length > 0;
+    const hasPipeline = pipelines.length > 0;
+    const hasCurrentWorkspace = workspaces.some(
+      workspace => workspace.settings.name === workspaceName,
+    );
+    const hasCurrentPipeline = pipelines.some(
+      pipeline => pipeline.name === pipelineName,
+    );
+
+    const defaultWorkspace = hasWorkspace && workspaces[0].settings.name;
+    const defaultPipeline = hasPipeline && pipelines[0].name;
+
+    if (pipelineName && isPipelineReady) {
+      if (!hasCurrentPipeline) {
+        const url = hasPipeline
+          ? `/${workspaceName}/${defaultPipeline}`
+          : `/${workspaceName}`;
+        history.push(url);
+      }
+    } else if (isPipelineReady && hasWorkspace && hasPipeline) {
+      history.push(`/${workspaceName}/${defaultPipeline}`);
+    } else if (workspaceName) {
+      if (!hasCurrentWorkspace) {
+        const url = hasWorkspace ? `/${defaultWorkspace}` : '/';
+        history.push(url);
+      }
+    } else if (hasWorkspace) {
+      history.push(`/${defaultWorkspace}`);
     }
-  } else if (hasWorkspace) {
-    // Load a default workspace if there's one
-    history.push(`/${workspaces[0].settings.name}`);
-  }
+  }, [
+    history,
+    isPipelineReady,
+    isWorkspaceReady,
+    pipelineName,
+    pipelines,
+    workspaceName,
+    workspaces,
+  ]);
 
   useEffect(() => {
-    if (!workspaceLastUpdated) return;
+    if (!isWorkspaceReady) return;
 
-    if (hasWorkspace) {
+    if (workspaces.length > 0) {
       return setIsNewWorkspaceDialogOpen(false);
     }
 
     setIsNewWorkspaceDialogOpen(true);
-  }, [hasWorkspace, setIsNewWorkspaceDialogOpen, workspaceLastUpdated]);
+  }, [isWorkspaceReady, setIsNewWorkspaceDialogOpen, workspaces.length]);
 
   useEffect(() => {
     if (!currentWorkspace) return;
     fetchPipelines(currentWorkspace);
   }, [currentWorkspace, fetchPipelines]);
-
-  const hasPipeline = pipelines.length > 0;
-  if (pipelineName && pipelineLastUpdated) {
-    // No pipeline found, redirect back to workspace
-
-    if (!currentPipeline) {
-      const url = hasPipeline
-        ? `/${workspaceName}/${pipelines[0].name}`
-        : `/${workspaceName}`;
-      history.push(url);
-    }
-  } else if (
-    !currentPipeline &&
-    hasWorkspace &&
-    hasPipeline &&
-    pipelineLastUpdated
-  ) {
-    history.push(`/${workspaceName}/${pipelines[0].name}`);
-  }
 
   const prevPipeline = usePrevious(currentPipeline);
   // Reset toolbox states
