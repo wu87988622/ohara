@@ -57,13 +57,20 @@ export const update = async params => {
 
 export const remove = async params => {
   const { hostname } = params;
-  await axiosInstance.delete(`${url}/${hostname}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForNodeNonexistent,
-    paramRes: params,
-  });
-  const result = responseUtil(res, node);
+  const deletedRes = await axiosInstance.delete(`${url}/${hostname}`);
+
+  let result = {};
+  if (deletedRes.data.isSuccess) {
+    const res = await wait({
+      url,
+      checkFn: waitUtil.waitForNodeNonexistent,
+      paramRes: params,
+    });
+    result = responseUtil(res, node);
+  } else {
+    result = responseUtil(deletedRes, node);
+  }
+
   result.title =
     `Remove node ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');

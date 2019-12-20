@@ -27,7 +27,7 @@ import { FullScreenDialog } from 'components/common/Dialog';
 import { useNodeDialog } from 'context/NodeDialogContext';
 import { Button } from 'components/common/Form';
 import ViewNodeDialog from './ViewNodeDialog';
-import { useConfiguratorState, useNodeState, useNodeActions } from 'context';
+import { useConfiguratorState, useNodeState, useViewNodeDialog } from 'context';
 import { QuickSearch } from 'components/common/Search';
 
 const Actions = styled.div`
@@ -42,7 +42,6 @@ const Actions = styled.div`
 
 const NodeDialog = () => {
   const { data: configuratorInfo } = useConfiguratorState();
-
   const {
     isOpen: isNodeDialogOpen,
     setIsOpen: setIsNodeDialogOpen,
@@ -54,14 +53,12 @@ const NodeDialog = () => {
     setSelected,
     setHasSelect,
   } = useNodeDialog();
+  const { open: openViewNodeDialog } = useViewNodeDialog();
 
   const { data: nodes } = useNodeState();
-  const { addNode } = useNodeActions();
 
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
-  const [isViewNodeDialogOpen, setIsViewNodeDialogOpen] = useState(false);
   const [filteredNodes, setFilteredNodes] = useState([]);
-  const [node, setNode] = useState({});
 
   useEffect(() => {
     if (isEmpty(configuratorInfo) || !configuratorInfo) return;
@@ -121,8 +118,7 @@ const NodeDialog = () => {
   };
 
   const openDetailView = node => {
-    setNode(node);
-    setIsViewNodeDialogOpen(true);
+    openViewNodeDialog(node);
   };
 
   const viewButton = node => {
@@ -198,16 +194,10 @@ const NodeDialog = () => {
         <AddNodeDialog
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
-          addNode={addNode}
           mode={type}
         />
 
-        <ViewNodeDialog
-          data={node}
-          isOpen={isViewNodeDialogOpen}
-          handleClose={() => setIsViewNodeDialogOpen(false)}
-          mode={type}
-        />
+        <ViewNodeDialog mode={type} />
       </>
     </FullScreenDialog>
   );

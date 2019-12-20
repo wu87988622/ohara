@@ -19,6 +19,7 @@ import {
   fetchNodesRoutine,
   addNodeRoutine,
   deleteNodeRoutine,
+  updateNodeRoutine,
 } from './nodeRoutines';
 
 const fetchNodesCreator = (
@@ -58,8 +59,21 @@ const addNodeCreator = (state, dispatch, showMessage) => async value => {
   dispatch(addNodeRoutine.success(createNodeResponse.data));
   showMessage(createNodeResponse.title);
 };
-const updateNodeCreator = () => async () => {
-  // TODO: implement the logic for update node
+const updateNodeCreator = (state, dispatch, showMessage) => async value => {
+  if (state.isFetching) return;
+
+  dispatch(updateNodeRoutine.request());
+
+  const updateNodeResponse = await nodeApi.update(value);
+
+  if (updateNodeResponse.errors) {
+    dispatch(updateNodeRoutine.failure(updateNodeResponse.title));
+    showMessage(updateNodeResponse.title);
+    return;
+  }
+
+  dispatch(updateNodeRoutine.success(value));
+  showMessage(updateNodeResponse.title);
 };
 const deleteNodeCreator = (state, dispatch, showMessage) => async value => {
   if (state.isFetching) return;

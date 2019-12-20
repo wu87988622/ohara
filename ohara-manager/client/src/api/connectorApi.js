@@ -111,13 +111,21 @@ export const stop = async params => {
 
 export const remove = async params => {
   const { name, group } = params;
-  await axiosInstance.delete(`${url}/${name}?group=${group}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForClusterNonexistent,
-    paramRes: params,
-  });
-  const result = responseUtil(res, connector);
+  const deletedRes = await axiosInstance.delete(
+    `${url}/${name}?group=${group}`,
+  );
+
+  let result = {};
+  if (deletedRes.data.isSuccess) {
+    const res = await wait({
+      url,
+      checkFn: waitUtil.waitForClusterNonexistent,
+      paramRes: params,
+    });
+    result = responseUtil(res, connector);
+  } else {
+    result = responseUtil(deletedRes, connector);
+  }
   result.title =
     `Remove connector ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');

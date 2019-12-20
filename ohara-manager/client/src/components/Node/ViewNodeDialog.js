@@ -34,9 +34,18 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Divider from '@material-ui/core/Divider';
 
-import { FullScreenDialog } from 'components/common/Dialog';
+import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Button } from 'components/common/Form';
-import { useZookeeperState, useBrokerState, useWorkerState } from 'context';
+import {
+  useZookeeperState,
+  useBrokerState,
+  useWorkerState,
+  useNodeState,
+  useNodeActions,
+  useViewNodeDialog,
+  useEditNodeDialog,
+} from 'context';
+import EditNodeDialog from './EditNodeDialog';
 import { state } from '../../api/nodeApi';
 import { configuratorMode } from '../../api/inspectApi';
 import * as streamApi from '../../api/streamApi';
@@ -102,7 +111,18 @@ StateIcon.propTypes = {
 };
 
 const ViewNodeDialog = props => {
-  const { data: nodeData, isOpen, handleClose, mode } = props;
+  const {
+    isOpen,
+    close: closeViewNodeDialog,
+    data: nodeData,
+  } = useViewNodeDialog();
+
+  const { mode } = props;
+
+  const { open: openEditNodeDialog } = useEditNodeDialog();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { isFetching: isDeleting } = useNodeState();
+  const { deleteNode } = useNodeActions();
 
   const nodeName = get(nodeData, 'hostname', '');
   const { data: zookeepers } = useZookeeperState();
@@ -112,7 +132,7 @@ const ViewNodeDialog = props => {
   const [services, setServices] = useState([]);
 
   const fetchServices = useCallback(async () => {
-    const services = nodeData.services
+    const services = get(nodeData, 'services', [])
       // we don't want to see configurator in our node service list
       .filter(service => service.name !== 'configurator')
       .map(service =>
@@ -174,12 +194,18 @@ const ViewNodeDialog = props => {
       }),
     );
     setServices(result);
-  }, [zookeepers, brokers, workers, nodeData.services]);
+  }, [zookeepers, brokers, workers, nodeData]);
 
   useEffect(() => {
-    if (isEmpty(nodeData.services)) return;
+    if (isEmpty(nodeData) || isEmpty(nodeData.services)) return;
     fetchServices();
-  }, [nodeData.services, fetchServices]);
+  }, [nodeData, fetchServices]);
+
+  const handleDelete = () => {
+    deleteNode(nodeData);
+    setIsConfirmOpen(false);
+    closeViewNodeDialog();
+  };
 
   const renderDataBody = () => {
     if (isEmpty(services)) return null;
@@ -209,7 +235,8 @@ const ViewNodeDialog = props => {
     <FullScreenDialog
       title="View node detail"
       open={isOpen}
-      handleClose={handleClose}
+      handleClose={closeViewNodeDialog}
+      loading={isDeleting}
     >
       <Wrapper>
         <Grid container justify="space-between" alignItems="flex-end">
@@ -222,9 +249,22 @@ const ViewNodeDialog = props => {
             </Typography>
           </Grid>
           <Grid item>
-            <Button variant="outlined" color="secondary">
+            <Button
+              variant="outlined"
+              color="secondary"
+              disabled={isEmpty(nodeData)}
+              onClick={() => setIsConfirmOpen(true)}
+            >
               Delete
             </Button>
+            <DeleteDialog
+              title="Delete node?"
+              content={`Are you sure you want to delete the node: ${nodeName} ? This action cannot be undone!`}
+              open={isConfirmOpen}
+              handleClose={() => setIsConfirmOpen(false)}
+              handleConfirm={handleDelete}
+              isWorking={isDeleting}
+            />
           </Grid>
         </Grid>
         <Grid container spacing={3} className="details">
@@ -281,9 +321,15 @@ const ViewNodeDialog = props => {
                     </TableRow>
                   </TableBody>
                 </Table>
-                <Button variant="text" startIcon={<CreateIcon />}>
-                  Edit
-                </Button>
+                {mode === configuratorMode.docker && (
+                  <Button
+                    variant="text"
+                    startIcon={<CreateIcon />}
+                    onClick={() => openEditNodeDialog(nodeData)}
+                  >
+                    Edit
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -312,14 +358,13 @@ const ViewNodeDialog = props => {
           </Grid>
         </Grid>
       </Wrapper>
+
+      <EditNodeDialog />
     </FullScreenDialog>
   );
 };
 
 ViewNodeDialog.propTypes = {
-  data: PropTypes.object,
-  isOpen: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
   mode: PropTypes.string.isRequired,
 };
 export default ViewNodeDialog;

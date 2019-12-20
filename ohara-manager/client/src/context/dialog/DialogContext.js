@@ -26,14 +26,7 @@ import {
   closePeakDialogCreator,
   closeAllDialogCreator,
 } from './dialogActions';
-import {
-  EDIT_WORKSPACE_DIALOG,
-  ADD_TOPIC_DIALOG,
-  VIEW_TOPIC_DIALOG,
-  DEV_TOOL_DIALOG,
-  GRAPH_SETTING_DIALOG,
-  LIST_WORKSPACES_DIALOG,
-} from './dialogNames';
+import * as dialogNames from './dialogNames';
 import { reducer, initialState } from './dialogReducer';
 
 const DialogStateContext = React.createContext();
@@ -106,18 +99,32 @@ const createUseDialogActions = name => () => {
   };
 };
 
-const useEditWorkspaceDialog = createUseDialogActions(EDIT_WORKSPACE_DIALOG);
-const useAddTopicDialog = createUseDialogActions(ADD_TOPIC_DIALOG);
-const useViewTopicDialog = createUseDialogActions(VIEW_TOPIC_DIALOG);
-const useDevToolDialog = createUseDialogActions(DEV_TOOL_DIALOG);
-const useGraphSettingDialog = createUseDialogActions(GRAPH_SETTING_DIALOG);
-const useListWorkspacesDialog = createUseDialogActions(LIST_WORKSPACES_DIALOG);
+const useEditWorkspaceDialog = createUseDialogActions(
+  dialogNames.EDIT_WORKSPACE_DIALOG,
+);
+const useAddTopicDialog = createUseDialogActions(dialogNames.ADD_TOPIC_DIALOG);
+const useViewTopicDialog = createUseDialogActions(
+  dialogNames.VIEW_TOPIC_DIALOG,
+);
+const useViewNodeDialog = createUseDialogActions(dialogNames.VIEW_NODE_DIALOG);
+const useEditNodeDialog = createUseDialogActions(dialogNames.EDIT_NODE_DIALOG);
+const useAddNodeDialog = createUseDialogActions(dialogNames.ADD_NODE_DIALOG);
+const useDevToolDialog = createUseDialogActions(dialogNames.DEV_TOOL_DIALOG);
+const useGraphSettingDialog = createUseDialogActions(
+  dialogNames.GRAPH_SETTING_DIALOG,
+);
+const useListWorkspacesDialog = createUseDialogActions(
+  dialogNames.LIST_WORKSPACES_DIALOG,
+);
 
 export {
   DialogProvider,
   useEditWorkspaceDialog,
   useAddTopicDialog,
   useViewTopicDialog,
+  useViewNodeDialog,
+  useEditNodeDialog,
+  useAddNodeDialog,
   useDevToolDialog,
   useGraphSettingDialog,
   useListWorkspacesDialog,

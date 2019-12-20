@@ -73,10 +73,7 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         data: reject(state.data, node => {
-          return (
-            node.settings.name === action.payload.name &&
-            node.settings.group === action.payload.group
-          );
+          return node.hostname === action.payload.hostname;
         }),
         lastUpdated: new Date(),
       };

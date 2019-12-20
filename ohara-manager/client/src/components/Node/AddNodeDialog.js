@@ -27,10 +27,13 @@ import {
   maxNumber,
   composeValidators,
 } from 'utils/validate';
+import { useNodeActions } from 'context';
 import { configuratorMode } from '../../api/inspectApi';
 
 const AddNodeDialog = props => {
-  const { isOpen, handleClose, addNode, mode } = props;
+  const { isOpen, handleClose, mode } = props;
+
+  const { addNode } = useNodeActions();
 
   const onSubmit = async (values, form) => {
     const { hostname, port, ...rest } = values;
@@ -133,7 +136,6 @@ const AddNodeDialog = props => {
 AddNodeDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  addNode: PropTypes.func.isRequired,
   mode: PropTypes.string.isRequired,
 };
 export default AddNodeDialog;

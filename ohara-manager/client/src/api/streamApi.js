@@ -71,13 +71,21 @@ export const update = async params => {
 
 export const remove = async params => {
   const { name, group } = params;
-  await axiosInstance.delete(`${url}/${name}?group=${group}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForClusterNonexistent,
-    paramRes: params,
-  });
-  const result = responseUtil(res, stream);
+  const deletedRes = await axiosInstance.delete(
+    `${url}/${name}?group=${group}`,
+  );
+
+  let result = {};
+  if (deletedRes.data.isSuccess) {
+    const res = await wait({
+      url,
+      checkFn: waitUtil.waitForClusterNonexistent,
+      paramRes: params,
+    });
+    result = responseUtil(res, stream);
+  } else {
+    result = responseUtil(deletedRes, stream);
+  }
   result.title =
     `Remove stream ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
