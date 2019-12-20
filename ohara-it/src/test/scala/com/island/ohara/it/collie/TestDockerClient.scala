@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DataCollie
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, State}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest}
 import org.junit.{After, Test}
@@ -181,6 +182,33 @@ class TestDockerClient extends IntegrationTest {
     result(client.containerInspector.name(container.name).append("/tmp/ttt", "abc")) shouldBe "abc\n"
     result(client.containerInspector.name(container.name).append("/tmp/ttt", "abc")) shouldBe "abc\nabc\n"
     result(client.containerInspector.name(container.name).append("/tmp/ttt", Seq("t", "z"))) shouldBe "abc\nabc\nt\nz\n"
+  }
+
+  @Test
+  def testResources(): Unit = result(client.resources()) should not be Map.empty
+
+  @Test
+  def testResourcesOfUnavailableNode(): Unit = {
+    val c = DockerClient(
+      DataCollie(
+        Seq(
+          Node(
+            hostname = "abc",
+            port = Some(22),
+            user = Some("user"),
+            password = Some("password"),
+            services = Seq.empty,
+            state = State.AVAILABLE,
+            error = None,
+            lastModified = CommonUtils.current(),
+            resources = Seq.empty,
+            tags = Map.empty
+          )
+        )
+      )
+    )
+    try result(c.resources()) shouldBe Map.empty
+    finally c.close()
   }
 
   @After

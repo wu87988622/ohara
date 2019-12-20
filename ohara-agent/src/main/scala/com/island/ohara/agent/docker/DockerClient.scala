@@ -373,7 +373,7 @@ object DockerClient {
     override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
       agents()
         .map(_.map { agent =>
-          agent.hostname -> agent
+          agent.hostname -> (try agent
             .execute("docker info --format '{{json .}}'")
             .map(_.parseJson)
             .map(INFO_FORMAT.read)
@@ -384,7 +384,12 @@ object DockerClient {
               )
             }
             .getOrElse(Seq.empty)
-        }.toMap)
+          catch {
+            case e: Throwable =>
+              LOG.error(s"failed to get resources from ${agent.hostname}", e)
+              Seq.empty
+          })
+        }.filter(_._2.nonEmpty).toMap)
   }
   //-----------------------------[Inspector]-----------------------------//
 

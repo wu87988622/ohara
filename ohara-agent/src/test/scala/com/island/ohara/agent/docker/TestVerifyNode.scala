@@ -83,7 +83,7 @@ class TestVerifyNode extends OharaTest {
     errorMessage = CommonUtils.randomString()
     intercept[Exception] {
       Await.result(collie.verifyNode(node), 30 seconds)
-    }.getMessage should include(errorMessage)
+    }.getMessage should include("unavailable")
   }
 
   @After

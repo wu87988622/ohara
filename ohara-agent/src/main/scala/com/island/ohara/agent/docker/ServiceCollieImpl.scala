@@ -109,7 +109,8 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     dockerClient
       .resources()
       .map { resources =>
-        if (resources.contains(node.hostname)) s"succeed to check the docker resources on ${node.name}"
+        if (resources.getOrElse(node.hostname, Seq.empty).nonEmpty)
+          s"succeed to check the docker resources on ${node.name}"
         else throw new IllegalStateException(s"the docker on ${node.hostname} is unavailable")
       }
 
