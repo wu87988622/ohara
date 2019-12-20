@@ -206,6 +206,14 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     (topicInfo, count.longValue(), sizeInBytes.longValue())
   }
 
+  protected def rowData(): Row = {
+    Row.of(
+      (0 until 10).map(index => {
+        Cell.of(s"c$index", CommonUtils.randomString())
+      }): _*
+    )
+  }
+
   //------------------------------[core functions]------------------------------//
 
   @After
