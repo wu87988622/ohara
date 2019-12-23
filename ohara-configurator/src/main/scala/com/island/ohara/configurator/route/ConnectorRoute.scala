@@ -37,17 +37,41 @@ private[configurator] object ConnectorRoute {
 
   private[this] def creationToConnectorInfo(
     creation: Creation
-  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[ConnectorInfo] =
-    objectChecker.checkList.workerCluster(creation.workerClusterKey).topics(creation.topicKeys).check().map { _ =>
-      ConnectorInfo(
-        settings = creation.settings,
-        // we don't need to fetch connector from kafka since it has not existed in kafka.
-        status = None,
-        tasksStatus = Seq.empty,
-        metrics = Metrics.EMPTY,
-        lastModified = CommonUtils.current()
-      )
-    }
+  )(
+    implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext
+  ): Future[ConnectorInfo] =
+    objectChecker.checkList
+      .workerCluster(creation.workerClusterKey)
+      .topics(creation.topicKeys)
+      .check()
+      .map(_.workerClusterInfos.head)
+      // if the worker cluster is running, we try to fetch definitions and add them to the settings for the ignored key-values.
+      .flatMap {
+        case (workerClusterInfo, condition) =>
+          condition match {
+            case RUNNING =>
+              try workerCollie.workerClient(workerClusterInfo).flatMap(_.connectorDefinitions())
+              catch {
+                case e: Throwable =>
+                  LOG.error(s"failed to get definitions from worker cluster:${workerClusterInfo.key}", e)
+                  Future.successful(Seq.empty)
+              }
+            case STOPPED => Future.successful(Seq.empty)
+          }
+      }
+      .map(_.find(_.className == creation.className).map(_.settingDefinitions).getOrElse(Seq.empty))
+      .map { definitions =>
+        ConnectorInfo(
+          settings = extractDefaultValues(definitions) ++ creation.settings,
+          // we don't need to fetch connector from kafka since it has not existed in kafka.
+          status = None,
+          tasksStatus = Seq.empty,
+          metrics = Metrics.EMPTY,
+          lastModified = CommonUtils.current()
+        )
+      }
 
   private[this] def updateState(connectorInfo: ConnectorInfo)(
     implicit executionContext: ExecutionContext,
@@ -123,12 +147,14 @@ private[configurator] object ConnectorRoute {
 
   private[this] def hookOfCreation(
     implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
     executionContext: ExecutionContext
   ): HookOfCreation[Creation, ConnectorInfo] =
     creationToConnectorInfo(_)
 
   private[this] def hookOfUpdating(
     implicit objectChecker: ObjectChecker,
+    workerCollie: WorkerCollie,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, ConnectorInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ConnectorInfo]) =>

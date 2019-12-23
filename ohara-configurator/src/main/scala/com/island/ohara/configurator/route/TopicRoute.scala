@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -168,7 +169,7 @@ private[configurator] object TopicRoute {
         case None =>
           creationToTopicInfo(
             access.request
-              .settings(updating.settings)
+              .settings(keepEditableFields(updating.settings, TopicApi.DEFINITIONS))
               // the key is not in update's settings so we have to add it to settings
               .name(key.name)
               .group(key.group)

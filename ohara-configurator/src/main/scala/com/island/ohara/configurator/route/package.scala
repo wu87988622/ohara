@@ -39,7 +39,7 @@ import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import spray.json.{DeserializationException, JsArray, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsBoolean, JsNumber, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -437,6 +437,26 @@ package object route {
     executionContext: ExecutionContext
   ): Future[TopicAdmin] =
     brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
+
+  def extractDefaultValues(settingDefs: Seq[SettingDef]): Map[String, JsValue] =
+    settingDefs
+      .filter(_.hasDefault)
+      .map { definition =>
+        definition.key() -> (definition.defaultValue() match {
+          case s: String            => JsString(s)
+          case i: java.lang.Short   => JsNumber(i.toInt)
+          case i: java.lang.Integer => JsNumber(i)
+          case i: java.lang.Long    => JsNumber(i)
+          case i: java.lang.Float   => JsNumber(i.toDouble)
+          case i: java.lang.Double  => JsNumber(i)
+          case b: java.lang.Boolean => JsBoolean(b)
+          case _ =>
+            throw new UnsupportedOperationException(
+              s"this exception means that we have a new type(${definition.defaultValue().getClass.getName}) added to SettingDef but our route doesn't understand it :("
+            )
+        })
+      }
+      .toMap
 
   /**
     * a helper method to Updating request that it remove all fields declared as non-updatable.
