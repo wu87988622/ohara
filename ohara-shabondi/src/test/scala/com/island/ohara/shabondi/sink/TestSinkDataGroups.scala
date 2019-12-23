@@ -16,39 +16,18 @@
 
 package com.island.ohara.shabondi.sink
 
-import java.util
-import java.util.concurrent.{ExecutorService, Executors}
+import java.time.{Duration => JDuration}
+import java.util.concurrent.{ExecutorService, TimeUnit}
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.island.ohara.common.data.Row
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Test}
 
 import scala.compat.java8.DurationConverters
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 
-final class TestDataGroups extends BasicShabondiTest {
-  private val newThreadPool: () => ExecutorService = () =>
-    Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("testSinkRoute-%d").build())
-
-  private val countRows: (util.Queue[Row], Long, ExecutionContext) => Future[Long] =
-    (queue, executionTime, ec) =>
-      Future {
-        log.debug("countRows begin...")
-        val baseTime = System.currentTimeMillis()
-        var count    = 0L
-        var running  = true
-        while (running) {
-          val row = queue.poll()
-          if (row != null) count += 1 else Thread.sleep(100)
-          running = (System.currentTimeMillis() - baseTime) < executionTime
-        }
-        log.debug("countRows done")
-        count
-      }(ec)
-
+final class TestSinkDataGroups extends BasicShabondiTest {
   @After
   override def tearDown(): Unit = {
     super.tearDown()
@@ -99,6 +78,56 @@ final class TestDataGroups extends BasicShabondiTest {
 
       Await.result(rows, 30 seconds) should ===(rowCount)
       Await.result(rows1, 30 seconds) should ===(rowCount)
+    } finally {
+      Releasable.close(dataGroups)
+      threadPool.shutdown()
+    }
+  }
+
+  @Test
+  def testRowQueueIsIdle(): Unit = {
+    val idleTime = JDuration.ofSeconds(2)
+    val rowQueue = new RowQueue("group1")
+    multipleRows(100).foreach(rowQueue.add)
+    rowQueue.poll() should !==(null)
+    rowQueue.isIdle(idleTime) should ===(false)
+    TimeUnit.SECONDS.sleep(1)
+
+    rowQueue.poll() should !==(null)
+    rowQueue.isIdle(idleTime) should ===(false)
+    TimeUnit.SECONDS.sleep(3)
+
+    rowQueue.isIdle(idleTime) should ===(true)
+  }
+
+  @Test
+  def testFreeIdleGroup(): Unit = {
+    val threadPool: ExecutorService = newThreadPool()
+    implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
+    val topicKey1                   = createTopicKey
+    val idleTime                    = JDuration.ofSeconds(3)
+    val dataGroups                  = new SinkDataGroups(brokerProps, Seq(topicKey1.name), DurationConverters.toJava(10 seconds))
+    try {
+      val group1Name   = "group1"
+      val defaultGroup = dataGroups.defaultGroup
+      val group1       = dataGroups.createIfAbsent(group1Name)
+      dataGroups.size should ===(2)
+
+      // test for not over idle time
+      countRows(defaultGroup.queue, 1 * 1000, ec)
+      countRows(group1.queue, 1 * 1000, ec)
+      TimeUnit.SECONDS.sleep(idleTime.getSeconds - 1)
+      dataGroups.freeIdleGroup(idleTime)
+      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group1Name) should ===(true)
+
+      // test for idle time has passed
+      countRows(defaultGroup.queue, 2 * 1000, ec)
+      TimeUnit.SECONDS.sleep(idleTime.getSeconds)
+      dataGroups.freeIdleGroup(idleTime)
+      dataGroups.size should ===(1)
+      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group1Name) should ===(false)
     } finally {
       Releasable.close(dataGroups)
       threadPool.shutdown()

@@ -27,8 +27,6 @@ import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.shabondi.sink.SinkRouteHandler
-import com.island.ohara.shabondi.source.SourceRouteHandler
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
@@ -39,20 +37,14 @@ private[shabondi] trait RouteHandler extends Directives with Releasable {
   def route(): Route
 }
 
-private[shabondi] class WebServer(val config: Config) extends AbstractWebServer with Releasable {
+private[shabondi] class WebServer(val config: Config, routeHandler: RouteHandler)
+    extends AbstractWebServer
+    with Releasable {
   import Boot._
-  import DefaultDefinitions._
 
   def start(): Unit = {
     start(CommonUtils.anyLocalAddress(), config.port, ServerSettings(actorSystem), Some(actorSystem))
   }
-
-  private[this] lazy val routeHandler: RouteHandler =
-    config.serverType match {
-      case SERVER_TYPE_SOURCE => SourceRouteHandler(config)
-      case SERVER_TYPE_SINK   => SinkRouteHandler(config)
-      case t                  => throw new RuntimeException(s"Invalid server type: $t")
-    }
 
   override def routes: Route = routeHandler.route()
 

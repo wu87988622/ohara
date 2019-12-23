@@ -19,6 +19,7 @@ package com.island.ohara.shabondi
 import akka.http.scaladsl.model._
 import com.island.ohara.common.data.Row
 import com.island.ohara.kafka.Consumer
+import com.island.ohara.shabondi.source.SourceRouteHandler
 import org.junit.Test
 import spray.json._
 
@@ -36,7 +37,7 @@ final class TestRoute extends BasicShabondiTest {
   def testSourceRoute(): Unit = {
     val topicKey1 = createTopicKey
     val config    = defaultTestConfig(SERVER_TYPE_SOURCE, Seq(topicKey1))
-    val webServer = new WebServer(config)
+    val webServer = new WebServer(config, SourceRouteHandler(config))
     try {
       val requestSize = 9
       (1 to requestSize).foreach { i =>

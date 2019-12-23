@@ -16,9 +16,9 @@
 
 package com.island.ohara.shabondi.sink
 
-import java.time.Duration
+import java.time.{Duration => JDuration}
+import java.util.concurrent._
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, ExecutorService, Executors, TimeUnit}
 import java.util.{Queue => JQueue}
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
@@ -30,30 +30,44 @@ import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 
-private[sink] class DataGroup(val name: String, brokerProps: String, topicNames: Seq[String], pollTimeout: Duration)
+private[sink] class RowQueue(name: String) extends ConcurrentLinkedQueue[Row] {
+  private[sink] val lastTime = new AtomicLong(System.currentTimeMillis())
+
+  override def poll(): Row =
+    try {
+      super.poll()
+    } finally {
+      lastTime.set(System.currentTimeMillis())
+    }
+
+  def isIdle(idleTime: JDuration): Boolean =
+    System.currentTimeMillis() > (idleTime.toMillis + lastTime.get())
+}
+
+private[sink] class DataGroup(val name: String, brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration)
     extends Releasable {
-  val queue    = new ConcurrentLinkedQueue[Row]
-  val producer = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout)
+  private val log          = Logger(classOf[RowQueue])
+  val queue                = new RowQueue(name)
+  val producer             = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout)
+  private[this] val closed = new AtomicBoolean(false)
 
-  private val lastTime = new AtomicLong(0)
+  def resume(): Unit =
+    if (!closed.get) {
+      producer.resume()
+    }
 
-  def updateLastTime(): Unit = {
-    lastTime.set(System.currentTimeMillis())
-  }
+  def pause(): Unit =
+    if (!closed.get) {
+      producer.pause()
+    }
 
-  def idleTime(): Long = System.currentTimeMillis() - lastTime.get()
+  def isIdle(idleTime: JDuration): Boolean = queue.isIdle(idleTime)
 
-  def resume(): Unit = {
-    producer.resume()
-  }
-
-  def pause(): Unit = {
-    producer.pause()
-  }
-
-  override def close(): Unit = {
-    producer.close()
-  }
+  override def close(): Unit =
+    if (closed.compareAndSet(false, true)) {
+      producer.close()
+      log.info("Group {} closed.", name)
+    }
 }
 
 private[sink] object SinkDataGroups {
@@ -61,37 +75,48 @@ private[sink] object SinkDataGroups {
     new SinkDataGroups(config.brokers, config.sinkFromTopics.map(_.name()), config.sinkPollTimeout)
 }
 
-private[sink] class SinkDataGroups(brokerProps: String, topicNames: Seq[String], pollTimeout: Duration)
-    extends Releasable {
+private class SinkDataGroups(brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration) extends Releasable {
   private val threadPool: ExecutorService =
     Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("SinkDataGroups-%d").build())
 
-  private val log              = Logger(classOf[SinkDataGroups])
-  private val defaultGroupName = "__dafault__"
-  private val dataGroups       = new ConcurrentHashMap[String, DataGroup]()
+  private val log                    = Logger(classOf[SinkDataGroups])
+  private[sink] val defaultGroupName = "__dafault__"
+  private val dataGroups             = new ConcurrentHashMap[String, DataGroup]()
 
   def defaultGroup: DataGroup = createIfAbsent(defaultGroupName)
 
   def removeGroup(name: String): Boolean = {
-    if (groupExist(name)) {
-      val dataGroup = dataGroups.remove(name)
-      dataGroup.close()
+    val group = dataGroups.remove(name)
+    if (group != null) {
+      group.close()
       true
-    } else false
+    } else
+      false
   }
 
   def groupExist(name: String): Boolean =
     dataGroups.containsKey(name)
 
   def createIfAbsent(name: String): DataGroup =
-    dataGroups.computeIfAbsent(name, { n =>
-      log.info("create group: {}", n)
-      val dataGroup = new DataGroup(n, brokerProps, topicNames, pollTimeout)
-      threadPool.submit(dataGroup.producer)
-      dataGroup
-    })
+    dataGroups.computeIfAbsent(
+      name, { n =>
+        log.info("create data group: {}", n)
+        val dataGroup = new DataGroup(n, brokerProps, topicNames, pollTimeout)
+        threadPool.submit(dataGroup.producer)
+        dataGroup
+      }
+    )
 
   def size: Int = dataGroups.size()
+
+  def freeIdleGroup(idleTime: JDuration): Unit = {
+    val groups = dataGroups.elements().asScala.toSeq
+    groups.foreach { group =>
+      if (group.isIdle(idleTime)) {
+        removeGroup(group.name)
+      }
+    }
+  }
 
   override def close(): Unit = {
     dataGroups.asScala.foreach {
@@ -107,7 +132,7 @@ private[sink] class QueueProducer(
   val queue: JQueue[Row],
   val brokerProps: String,
   val topicNames: Seq[String],
-  val pollTimeout: Duration
+  val pollTimeout: JDuration
 ) extends Runnable
     with Releasable {
   private[this] val log                    = Logger(classOf[QueueProducer])
@@ -143,7 +168,7 @@ private[sink] class QueueProducer(
       } // while
     } finally {
       consumer.close()
-      log.debug("{} stopped.", this.getClass.getSimpleName)
+      log.info("stopped.")
     }
   }
 

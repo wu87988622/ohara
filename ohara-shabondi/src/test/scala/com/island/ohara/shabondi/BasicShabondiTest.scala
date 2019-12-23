@@ -16,7 +16,11 @@
 
 package com.island.ohara.shabondi
 
+import java.util
+import java.util.concurrent.{ExecutorService, Executors}
+
 import akka.http.scaladsl.testkit.RouteTestTimeout
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -29,6 +33,7 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.collection.{immutable, mutable}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 abstract class BasicShabondiTest extends WithBroker with Matchers {
@@ -40,6 +45,25 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
   implicit def default(): RouteTestTimeout = RouteTestTimeout(5 seconds)
+
+  protected val newThreadPool: () => ExecutorService = () =>
+    Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(this.getClass.getSimpleName + "-").build())
+
+  protected val countRows: (util.Queue[Row], Long, ExecutionContext) => Future[Long] =
+    (queue, executionTime, ec) =>
+      Future {
+        log.debug("countRows begin...")
+        val baseTime = System.currentTimeMillis()
+        var count    = 0L
+        var running  = true
+        while (running) {
+          val row = queue.poll()
+          if (row != null) count += 1 else Thread.sleep(100)
+          running = (System.currentTimeMillis() - baseTime) < executionTime
+        }
+        log.debug("countRows done")
+        count
+      }(ec)
 
   protected def createTopicKey = TopicKey.of("default", CommonUtils.randomString(5))
 

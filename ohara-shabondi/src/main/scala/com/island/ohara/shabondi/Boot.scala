@@ -16,9 +16,15 @@
 
 package com.island.ohara.shabondi
 
+import java.time.{Duration => JDuration}
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.shabondi.DefaultDefinitions.{SERVER_TYPE_SINK, SERVER_TYPE_SOURCE}
+import com.island.ohara.shabondi.sink.SinkRouteHandler
+import com.island.ohara.shabondi.source.SourceRouteHandler
+
 import scala.collection.JavaConverters._
 
 object Boot {
@@ -29,7 +35,7 @@ object Boot {
     try {
       val rawConfig = CommonUtils.parse(args.toSeq.asJava).asScala.toMap
       val config    = Config(rawConfig)
-      val webServer = new WebServer(config)
+      val webServer = new WebServer(config, newRouteHandler(config))
       webServer.start()
     } catch {
       case ex: Throwable =>
@@ -37,4 +43,14 @@ object Boot {
         throw ex
     }
   }
+
+  private def newRouteHandler(config: Config): RouteHandler =
+    config.serverType match {
+      case SERVER_TYPE_SOURCE => SourceRouteHandler(config)
+      case SERVER_TYPE_SINK =>
+        val handler = SinkRouteHandler(config)
+        handler.scheduleFreeIdleGroups(JDuration.ofSeconds(10), config.sinkGroupIdleTime)
+        handler
+      case t => throw new RuntimeException(s"Invalid server type: $t")
+    }
 }

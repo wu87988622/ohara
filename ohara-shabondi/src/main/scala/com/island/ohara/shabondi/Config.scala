@@ -16,7 +16,7 @@
 
 package com.island.ohara.shabondi
 
-import java.time.Duration
+import java.time.{Duration => JDuration}
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.common.setting.SettingDef.Type
@@ -42,11 +42,13 @@ private[shabondi] class Config(raw: Map[String, String]) {
 
   def sinkFromTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SINK_FROM_TOPICS_KEY)).asScala
 
-  def sinkPollTimeout: Duration = durationValue(SINK_POLL_TIMEOUT_DEF)
+  def sinkPollTimeout: JDuration = durationValue(SINK_POLL_TIMEOUT_DEF)
+
+  def sinkGroupIdleTime: JDuration = durationValue(SINK_GROUP_IDLETIME_DEF)
 
   def brokers: String = raw(BROKERS_KEY)
 
-  private def durationValue(settingDef: SettingDef): Duration =
+  private def durationValue(settingDef: SettingDef): JDuration =
     if (!raw.contains(settingDef.key)) settingDef.defaultDuration() else CommonUtils.toDuration(raw(settingDef.key))
 }
 
@@ -126,9 +128,20 @@ object DefaultDefinitions {
     .key(SINK_POLL_TIMEOUT)
     .group(coreGroup)
     .orderInGroup(orderNumber)
-    .optional(Duration.ofMillis(1500))
+    .optional(JDuration.ofMillis(1500))
     .displayName("Poll timeout")
     .documentation("The timeout value(milliseconds) that each poll from topic")
+    .build
+    .registerDefault
+
+  val SINK_GROUP_IDLETIME = "shabondi.sink.group.idletime"
+  val SINK_GROUP_IDLETIME_DEF = SettingDef.builder
+    .key(SINK_GROUP_IDLETIME)
+    .group(coreGroup)
+    .orderInGroup(orderNumber)
+    .optional(JDuration.ofMinutes(3))
+    .displayName("Data group idle time")
+    .documentation("The resource will be released automatically if the data group is not used more than idle time.")
     .build
     .registerDefault
 

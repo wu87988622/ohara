@@ -16,9 +16,9 @@
 
 package com.island.ohara.shabondi.sink
 
-import java.util.concurrent.{ExecutorService, Executors}
+import java.time.{Duration => JDuration}
+import java.util.concurrent.TimeUnit
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.shabondi._
@@ -33,9 +33,6 @@ final class TestSinkRoute extends BasicShabondiTest {
   import com.island.ohara.shabondi.JsonSupport._
   import com.island.ohara.shabondi.ShabondiRouteTestSupport._
 
-  private val newThreadPool: () => ExecutorService = () =>
-    Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("testSinkRoute-%d").build())
-
   private def pollRowsRequest(
     webServer: WebServer,
     dataGroup: String,
@@ -43,6 +40,7 @@ final class TestSinkRoute extends BasicShabondiTest {
     ec: ExecutionContext
   ): Future[Seq[Row]] =
     Future {
+      log.debug("pollRowsRequest[{}] begin...", dataGroup)
       val resultRows = ArrayBuffer.empty[Row]
       val request = dataGroup match {
         case ""   => Get(uri = "/v0/poll")
@@ -50,25 +48,27 @@ final class TestSinkRoute extends BasicShabondiTest {
       }
       var idx: Int = 0
       val baseTime = System.currentTimeMillis()
-      while ((System.currentTimeMillis() - baseTime) < timeout) {
+      var running  = true
+      while (running) {
         idx += 1
         request ~> webServer.routes ~> check {
           val result = entityAs[Seq[RowData]].map(JsonSupport.toRow)
           resultRows ++= result
         }
-        Thread.sleep(100)
+        running = (System.currentTimeMillis() - baseTime) < timeout
+        Thread.sleep(10)
       }
+      log.debug("pollRowsRequest[{}] done.", dataGroup)
       resultRows
     }(ec)
 
   @Test
   def testDefaultGroup(): Unit = {
-    val threadPool: ExecutorService = newThreadPool()
-    implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
+    implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
 
     val topicKey1 = createTopicKey
     val config    = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
-    val webServer = new WebServer(config)
+    val webServer = new WebServer(config, SinkRouteHandler(config))
     webServer.routes // create route handle first.
 
     try {
@@ -95,14 +95,14 @@ final class TestSinkRoute extends BasicShabondiTest {
       ec.shutdown()
     }
   }
+
   @Test
   def testMultipleGroup(): Unit = {
-    val threadPool: ExecutorService = newThreadPool()
-    implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
+    implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
 
     val topicKey1 = createTopicKey
     val config    = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
-    val webServer = new WebServer(config)
+    val webServer = new WebServer(config, SinkRouteHandler(config))
     webServer.routes // create route handle first.
 
     try {
@@ -133,6 +133,51 @@ final class TestSinkRoute extends BasicShabondiTest {
 
       (rows.size + rows2.size) should ===(totalCount)
       (rows1.size + rows3.size) should ===(totalCount)
+    } finally {
+      Releasable.close(webServer)
+      ec.shutdown()
+    }
+  }
+
+  @Test
+  def testSinkFreeIdleGroup(): Unit = {
+    implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
+
+    val topicKey1    = createTopicKey
+    val config       = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
+    val routeHandler = SinkRouteHandler(config)
+    val intervalTime = JDuration.ofSeconds(2)
+    val idleTime     = JDuration.ofSeconds(3)
+    routeHandler.scheduleFreeIdleGroups(intervalTime, idleTime)
+
+    val webServer  = new WebServer(config, routeHandler)
+    val dataGroups = routeHandler.dataGroups
+
+    try {
+      log.debug("Start poll request...")
+      val group1Name = "group1"
+      pollRowsRequest(webServer, "", 1 * 1000, ec)
+      pollRowsRequest(webServer, group1Name, 1 * 1000, ec)
+      TimeUnit.SECONDS.sleep(2)
+
+      log.info("There should have two data groups.")
+      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group1Name) should ===(true)
+
+      pollRowsRequest(webServer, "", 2 * 1000, ec)
+      TimeUnit.SECONDS.sleep(3)
+
+      log.info("There should have one data groups.")
+      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group1Name) should ===(false)
+
+      TimeUnit.SECONDS.sleep(4)
+      log.info("There should not have any data group.")
+      dataGroups.size should ===(0)
+      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(false)
+      dataGroups.groupExist(group1Name) should ===(false)
+
+      log.debug("finished.")
     } finally {
       Releasable.close(webServer)
       ec.shutdown()

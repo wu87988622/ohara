@@ -16,16 +16,18 @@
 
 package com.island.ohara.shabondi.sink
 
-import java.util
+import java.time.{Duration => JDuration}
 
-import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.shabondi._
+import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable.ArrayBuffer
+import scala.compat.java8.DurationConverters._
+import scala.concurrent.duration._
 
 private[shabondi] object SinkRouteHandler {
   def apply(config: Config) =
@@ -35,28 +37,31 @@ private[shabondi] object SinkRouteHandler {
 private[shabondi] class SinkRouteHandler(config: Config) extends RouteHandler {
   import Boot._
   import JsonSupport._
+  import actorSystem.dispatcher
 
-  private val log        = Logging(actorSystem, classOf[SinkRouteHandler])
-  private val dataGroups = SinkDataGroups(config)
+  private val log              = Logger(classOf[SinkRouteHandler])
+  private[sink] val dataGroups = SinkDataGroups(config)
+
+  def scheduleFreeIdleGroups(interval: JDuration, idleTime: JDuration): Unit =
+    actorSystem.scheduler.schedule(1 second, interval.toScala) {
+      log.trace("scheduled free group, total group: {} ", dataGroups.size)
+      dataGroups.freeIdleGroup(idleTime)
+    }
 
   private val exceptionHandler = ExceptionHandler {
     case ex: Throwable =>
-      log.error(ex, ex.getMessage)
+      log.error(ex.getMessage, ex)
       complete((StatusCodes.InternalServerError, ex.getMessage))
   }
 
-  private def fullyPollQueue(queue: util.Queue[Row]): Seq[Row] = {
-    if (queue.isEmpty)
-      Seq.empty[Row]
-    else {
-      val buffer    = ArrayBuffer.empty[Row]
-      var item: Row = queue.poll()
-      while (item != null) {
-        buffer += item
-        item = queue.poll()
-      }
-      buffer
+  private def fullyPollQueue(queue: RowQueue): Seq[Row] = {
+    val buffer    = ArrayBuffer.empty[Row]
+    var item: Row = queue.poll()
+    while (item != null) {
+      buffer += item
+      item = queue.poll()
     }
+    buffer
   }
 
   def route: Route = handleExceptions(exceptionHandler) {
