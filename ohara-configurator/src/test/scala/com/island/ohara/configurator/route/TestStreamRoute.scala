@@ -903,6 +903,28 @@ class TestStreamRoute extends OharaTest {
     }.getMessage should include("there is only one instance")
   }
 
+  @Test
+  def testInitHeap(): Unit =
+    result(
+      streamApi.request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
+        .initHeap(12345)
+        .create()
+    ).initHeap shouldBe 12345
+
+  @Test
+  def testMaxHeap(): Unit =
+    result(
+      streamApi.request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
+        .maxHeap(12345)
+        .create()
+    ).maxHeap shouldBe 12345
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

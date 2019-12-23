@@ -26,6 +26,12 @@ import org.junit.Before
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class WithRemoteWorkers extends WithRemoteConfigurator {
+  private[this] val zkInitHeap       = sys.env.get("ohara.it.zk.xms").map(_.toInt).getOrElse(1024)
+  private[this] val zkMaxHeap        = sys.env.get("ohara.it.zk.xmx").map(_.toInt).getOrElse(1024)
+  private[this] val bkInitHeap       = sys.env.get("ohara.it.bk.xms").map(_.toInt).getOrElse(1024)
+  private[this] val bkMaxHeap        = sys.env.get("ohara.it.bk.xmx").map(_.toInt).getOrElse(1024)
+  private[this] val wkInitHeap       = sys.env.get("ohara.it.wk.xms").map(_.toInt).getOrElse(1024)
+  private[this] val wkMaxHeap        = sys.env.get("ohara.it.wk.xmx").map(_.toInt).getOrElse(1024)
   private[this] val zkKey: ObjectKey = serviceNameHolder.generateClusterKey()
   private[this] def zkApi =
     ZookeeperApi.access
@@ -52,6 +58,8 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
     */
   protected def routes: Map[String, String] = Map.empty
 
+  protected def sharedJars: Set[ObjectKey] = Set.empty
+
   @Before
   def setupWorkers(): Unit = {
     // single zk
@@ -59,12 +67,9 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
       zkApi.request
         .key(zkKey)
         .nodeName(nodeNames.head)
-        .routes(
-          nodeNames
-            .slice(1, nodeNames.size)
-            .map(node => node -> CommonUtils.address(node))
-            .toMap ++ routes
-        )
+        .routes(routes)
+        .initHeap(zkInitHeap)
+        .maxHeap(zkMaxHeap)
         .create()
         .map(_.key)
         .flatMap(zkApi.start)
@@ -77,6 +82,8 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
         .zookeeperClusterKey(zkKey)
         .nodeNames(nodeNames.toSet)
         .routes(routes)
+        .initHeap(bkInitHeap)
+        .maxHeap(bkMaxHeap)
         .create()
         .map(_.key)
         .flatMap(bkApi.start)
@@ -91,12 +98,12 @@ abstract class WithRemoteWorkers extends WithRemoteConfigurator {
         .freePort(CommonUtils.availablePort())
         .routes(routes)
         .sharedJarKeys(sharedJars)
+        .initHeap(wkInitHeap)
+        .maxHeap(wkMaxHeap)
         .create()
         .map(_.key)
         .flatMap(wkApi.start)
     )
     await(() => result(wkApi.get(wkKey)).state.isDefined)
   }
-
-  protected def sharedJars(): Set[ObjectKey] = Set.empty
 }

@@ -19,7 +19,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsObject, JsString, JsValue}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -61,6 +61,14 @@ trait ClusterRequest {
     setting(ROUTES_KEY, JsObject(routes.map {
       case (k, v) => k -> JsString(v)
     }))
+
+  @Optional("default value is 1024")
+  def initHeap(sizeInMB: Int): ClusterRequest.this.type =
+    setting(INIT_HEAP_KEY, JsNumber(CommonUtils.requirePositiveInt(sizeInMB)))
+
+  @Optional("default value is 1024")
+  def maxHeap(sizeInMB: Int): ClusterRequest.this.type =
+    setting(MAX_HEAP_KEY, JsNumber(CommonUtils.requirePositiveInt(sizeInMB)))
 
   @Optional("extra settings is empty by default")
   def setting(key: String, value: JsValue): ClusterRequest.this.type =

@@ -124,5 +124,15 @@ trait ClusterInfo extends Data {
     case _ => matchSetting(settings, key, value)
   }
 
+  /**
+    * @return size (in MB) of init heap
+    */
+  def initHeap: Int = noJsNull(settings)(INIT_HEAP_KEY).convertTo[Int]
+
+  /**
+    * @return size (in MB) of max heap
+    */
+  def maxHeap: Int = noJsNull(settings)(MAX_HEAP_KEY).convertTo[Int]
+
   def tags: Map[String, JsValue] = noJsNull(settings)(TAGS_KEY).asJsObject.fields
 }

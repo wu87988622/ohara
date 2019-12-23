@@ -572,6 +572,14 @@ class TestWorkerRoute extends OharaTest {
       }.getMessage should include(nodeName)
     }
 
+  @Test
+  def testInitHeap(): Unit =
+    result(workerApi.request.brokerClusterKey(brokerClusterKey).nodeNames(nodeNames).initHeap(12345).create()).initHeap shouldBe 12345
+
+  @Test
+  def testMaxHeap(): Unit =
+    result(workerApi.request.brokerClusterKey(brokerClusterKey).nodeNames(nodeNames).maxHeap(12345).create()).maxHeap shouldBe 12345
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

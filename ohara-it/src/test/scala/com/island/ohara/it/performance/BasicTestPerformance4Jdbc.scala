@@ -93,7 +93,7 @@ abstract class BasicTestPerformance4Jdbc extends BasicTestPerformance {
     } finally if (needDeleteData) client.dropTable(tableName)
   }
 
-  override protected def sharedJars(): Set[ObjectKey] = {
+  override protected def sharedJars: Set[ObjectKey] = {
     val jarApi: FileInfoApi.Access = FileInfoApi.access.hostname(configuratorHostname).port(configuratorPort)
     val localFiles                 = new File(jarFolderPath)
     localFiles.list
