@@ -107,6 +107,14 @@ public abstract class RowSourceTask extends SourceTask {
   @VisibleForTesting Counter ignoredMessageNumberCounter = null;
   @VisibleForTesting Counter ignoredMessageSizeCounter = null;
   @VisibleForTesting TaskSetting taskSetting = null;
+  /**
+   * this value should be immutable after starting this connector task. It is used to generate kafka
+   * records and the serialization of jackson is expensive so we cache it.
+   */
+  @VisibleForTesting byte[] keyInBytes = null;
+
+  @VisibleForTesting
+  byte[] classNameInBytes = getClass().getName().getBytes(StandardCharsets.UTF_8);
 
   /**
    * a helper method used to handle the fucking null produced by kafka...
@@ -114,15 +122,12 @@ public abstract class RowSourceTask extends SourceTask {
    * @return kafka's source
    */
   private SourceRecord toKafka(RowSourceRecord record) {
-    ObjectKey key = taskSetting.connectorKey();
     ConnectHeaders headers = new ConnectHeaders();
     // add the header to mark the source of this data
     // we convert the string to bytes manually since we don't want to use the schema in order to
     // make this header is readable to consumer.
-    headers.addBytes(
-        Header.SOURCE_CLASS_KEY, getClass().getName().getBytes(StandardCharsets.UTF_8));
-    headers.addBytes(
-        Header.SOURCE_KEY_KEY, ObjectKey.toJsonString(key).getBytes(StandardCharsets.UTF_8));
+    headers.addBytes(Header.SOURCE_CLASS_KEY, classNameInBytes);
+    headers.addBytes(Header.SOURCE_KEY_KEY, keyInBytes);
     return new SourceRecord(
         record.sourcePartition(),
         record.sourceOffset(),
@@ -186,6 +191,8 @@ public abstract class RowSourceTask extends SourceTask {
     messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
     ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());
     ignoredMessageSizeCounter = ConnectorUtils.ignoredMessageSizeCounter(taskSetting.name());
+    keyInBytes =
+        ObjectKey.toJsonString(taskSetting.connectorKey()).getBytes(StandardCharsets.UTF_8);
     _start(taskSetting);
   }
 

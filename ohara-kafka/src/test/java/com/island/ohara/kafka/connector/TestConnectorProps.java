@@ -298,8 +298,7 @@ public class TestConnectorProps extends OharaTest {
   public void testInternalTaskConfigOfSource() {
     RowSourceConnector connector = new DumbSource();
     Assert.assertNull(connector.taskSetting);
-
-    connector.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    connector.start(ConnectorFormatter.of().connectorKey(ConnectorKey.of("g", "n")).raw());
     Assert.assertNotNull(connector.taskSetting);
   }
 
@@ -308,8 +307,17 @@ public class TestConnectorProps extends OharaTest {
     RowSourceTask task = new DumbSourceTask();
     Assert.assertNull(task.taskSetting);
 
-    task.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    task.start(ConnectorFormatter.of().connectorKey(ConnectorKey.of("g", "n")).raw());
     Assert.assertNotNull(task.taskSetting);
+  }
+
+  @Test
+  public void testInternalObjectKeyOfSourceTask() {
+    RowSourceTask task = new DumbSourceTask();
+    Assert.assertNull(task.keyInBytes);
+
+    task.start(ConnectorFormatter.of().connectorKey(ConnectorKey.of("g", "n")).raw());
+    Assert.assertNotNull(task.keyInBytes);
   }
 
   @Test
@@ -317,7 +325,7 @@ public class TestConnectorProps extends OharaTest {
     RowSinkConnector connector = new DumbSink();
     Assert.assertNull(connector.taskSetting);
 
-    connector.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    connector.start(ConnectorFormatter.of().connectorKey(ConnectorKey.of("g", "n")).raw());
     Assert.assertNotNull(connector.taskSetting);
   }
 
@@ -326,7 +334,7 @@ public class TestConnectorProps extends OharaTest {
     RowSinkTask task = new DumbSinkTask();
     Assert.assertNull(task.taskSetting);
 
-    task.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    task.start(ConnectorFormatter.of().connectorKey(ConnectorKey.of("g", "n")).raw());
     Assert.assertNotNull(task.taskSetting);
   }
 
