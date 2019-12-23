@@ -30,16 +30,15 @@ import { AddPublicTopicIcon } from 'components/common/Icon';
 
 export const createToolboxList = params => {
   const {
-    sources,
-    sinks,
-    streams,
-    topics,
+    connectors,
     sourceGraph,
     topicGraph,
     streamGraph,
     sinkGraph,
     searchResults,
   } = params;
+
+  const { sources, topics, streams, sinks } = connectors;
 
   // Create a custom element.
   joint.shapes.html = {};

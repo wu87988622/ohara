@@ -38,7 +38,7 @@ import { StyledToolbox } from './ToolboxStyles';
 import { useSnackbar } from 'context/SnackbarContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
-import { useFiles } from './ToolboxHooks';
+import { useFiles, useToolboxHeight } from './ToolboxHooks';
 import {
   enableDragAndDrop,
   createToolboxList,
@@ -88,11 +88,7 @@ const Toolbox = props => {
   const showMessage = useSnackbar();
 
   const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    fetchTopics(currentWorkspace);
-  }, [fetchTopics, currentWorkspace]);
+  const [sources, sinks] = getConnectorInfo(currentWorker);
 
   const privateTopic = {
     settings: { name: 'Pipeline Only' },
@@ -102,6 +98,31 @@ const Toolbox = props => {
     classType: 'topic',
     displayName: topic.settings.name,
   }));
+
+  const connectors = {
+    sources,
+    topics,
+    streams,
+    sinks,
+  };
+
+  const {
+    toolboxHeight,
+    toolboxRef,
+    toolboxHeaderRef,
+    panelSummaryRef,
+    panelAddButtonRef,
+  } = useToolboxHeight({
+    expanded,
+    paper,
+    searchResults,
+    connectors,
+  });
+
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    fetchTopics(currentWorkspace);
+  }, [fetchTopics, currentWorkspace]);
 
   const uploadJar = async file => {
     const response = await fileApi.create({
@@ -218,10 +239,9 @@ const Toolbox = props => {
   let topicGraph = useRef(null);
   let streamGraph = useRef(null);
 
-  const [sources, sinks] = getConnectorInfo(currentWorker);
   useEffect(() => {
     // Should we handle topic and stream here?
-    if (!sources || !sinks) return;
+    if (!connectors.sources || !connectors.sinks) return;
 
     const renderToolbox = () => {
       const sharedProps = {
@@ -262,10 +282,7 @@ const Toolbox = props => {
       });
 
       createToolboxList({
-        sources,
-        sinks,
-        topics,
-        streams,
+        connectors,
         streamGraph,
         sourceGraph,
         sinkGraph,
@@ -284,35 +301,38 @@ const Toolbox = props => {
     };
 
     renderToolbox();
-  }, [
-    graph,
-    paper,
-    searchResults,
-    sinks,
-    sources,
-    streams,
-    topics,
-    initToolboxList,
-  ]);
+  }, [connectors, graph, paper, searchResults, initToolboxList]);
 
   return (
-    <Draggable bounds="parent" handle=".box-title" key={toolboxKey}>
+    <Draggable
+      bounds="parent"
+      handle=".toolbox-title"
+      ref={toolboxRef}
+      key={toolboxKey}
+    >
       <StyledToolbox className={`toolbox ${isToolboxOpen ? 'is-open' : ''}`}>
-        <div className="title box-title">
-          <Typography variant="subtitle1">Toolbox</Typography>
-          <IconButton onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
+        <div className="toolbox-header" ref={toolboxHeaderRef}>
+          <div className="title toolbox-title">
+            <Typography variant="subtitle1">Toolbox</Typography>
+            <IconButton onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </div>
+
+          <ToolboxSearch
+            searchData={Object.values(connectors).flat()}
+            setSearchResults={setSearchResults}
+            setToolboxExpanded={setToolboxExpanded}
+          />
         </div>
 
-        <ToolboxSearch
-          searchData={[...sources, ...sinks, ...topics, ...streams]}
-          setSearchResults={setSearchResults}
-          setToolboxExpanded={setToolboxExpanded}
-        />
-        <div className="toolbox-body">
+        <div
+          className="toolbox-body"
+          style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
+        >
           <ExpansionPanel square expanded={expanded.source}>
             <ExpansionPanelSummary
+              ref={panelSummaryRef}
               expandIcon={<ExpandMoreIcon />}
               onClick={() => handleClick('source')}
             >
@@ -323,7 +343,7 @@ const Toolbox = props => {
                 <div id="source-list" className="toolbox-list"></div>
               </List>
 
-              <div className="add-button">
+              <div className="add-button" ref={panelAddButtonRef}>
                 <IconButton>
                   <AddIcon />
                 </IconButton>

@@ -35,7 +35,7 @@ export const StyledToolbox = styled.div(
       padding: ${theme.spacing(1)}px ${theme.spacing(2)}px;
       background-color: ${theme.palette.grey[100]};
 
-      &.box-title {
+      &.toolbox-title {
         cursor: move;
         display: flex;
         align-items: center;

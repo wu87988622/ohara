@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { isEmpty } from 'lodash';
 
 import * as fileApi from 'api/fileApi';
 import { hashKey } from 'utils/object';
@@ -68,4 +69,63 @@ export const useFiles = workspace => {
   }, [status, workspace]);
 
   return { streams, setStatus, files };
+};
+
+export const useToolboxHeight = ({
+  expanded,
+  paper,
+  searchResults,
+  connectors,
+}) => {
+  const [toolboxHeight, setToolboxHeight] = useState(0);
+  const toolboxRef = useRef(null);
+  const toolboxHeaderRef = useRef(null);
+  const panelSummaryRef = useRef(null);
+  const panelAddButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (!paper) return;
+
+    const paperHeight = paper.getComputedSize().height;
+    const toolboxOffsetTop = toolboxRef.current.state.y + 8; // 8 is the offset top of toolbox
+    const toolboxHeaderHeight = toolboxHeaderRef.current.clientHeight;
+    const summaryHeight = panelSummaryRef.current.clientHeight * 4; // we have 4 summaries
+    const itemHeight = 40; // The item is added by JointJS, we cannot get the height thus hard coded
+    const addButtonHeight = panelAddButtonRef.current.clientHeight;
+    const toolbarHeight = 72;
+
+    // When there's search result, we need to use it
+    let { sources, topics, streams, sinks } = isEmpty(searchResults)
+      ? connectors
+      : searchResults;
+
+    const panelHeights = {
+      source: itemHeight * sources.length + addButtonHeight,
+      topic: itemHeight * topics.length + addButtonHeight,
+      stream: itemHeight * streams.length + addButtonHeight,
+      sink: itemHeight * sinks.length + addButtonHeight,
+    };
+
+    const totalHeight = Object.keys(expanded)
+      .filter(panel => Boolean(expanded[panel])) // Get active panels
+      .map(panel => panelHeights[panel])
+      .reduce((acc, cur) => acc + cur, summaryHeight + toolboxHeaderHeight);
+
+    if (totalHeight + toolboxOffsetTop > paperHeight) {
+      const newHeight =
+        paperHeight - toolboxOffsetTop - toolbarHeight - toolboxHeaderHeight;
+      return setToolboxHeight(newHeight);
+    }
+
+    // Reset, value `0` would remove the scrollbar from Toolbox body
+    return setToolboxHeight(0);
+  }, [connectors, expanded, paper, searchResults]);
+
+  return {
+    toolboxHeight,
+    toolboxRef,
+    toolboxHeaderRef,
+    panelSummaryRef,
+    panelAddButtonRef,
+  };
 };
