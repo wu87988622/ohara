@@ -36,6 +36,7 @@ import {
   ZookeeperProvider,
   PipelineProvider,
   ConfiguratorProvider,
+  StreamProvider,
 } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
@@ -71,6 +72,7 @@ const AppProviders = ({ children }) => {
         <PipelineProvider children={children} />,
         <TopicProvider children={children} />,
         <FileProvider children={children} />,
+        <StreamProvider children={children} />,
         <NodeDialogProvider children={children} />,
       ]}
     >

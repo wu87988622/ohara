@@ -50,6 +50,9 @@ const AddTopicDialog = () => {
       numberOfReplications: Number(values.numberOfReplications),
       brokerClusterKey: getKey(currentBroker),
       group: topicGroup,
+      tags: {
+        type: 'public',
+      },
     });
     setTimeout(form.reset);
     closeDialog();

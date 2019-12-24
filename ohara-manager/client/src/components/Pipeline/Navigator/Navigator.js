@@ -68,7 +68,6 @@ const Navigator = () => {
     addPipeline({
       name: pipelineName,
       group: hashKey(currentWorkspace),
-      flows: [],
     });
 
     setTimeout(form.reset);

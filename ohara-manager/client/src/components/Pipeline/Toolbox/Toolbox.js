@@ -30,7 +30,6 @@ import * as joint from 'jointjs';
 
 import * as fileApi from 'api/fileApi';
 import * as connectorApi from 'api/connectorApi';
-import * as streamApi from 'api/streamApi';
 import * as context from 'context';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
@@ -47,6 +46,8 @@ import {
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import { TopicGraph } from '../Graph/Topic';
 import { getKey, hashKey } from 'utils/object';
+import { hash } from 'utils/sha';
+import { serviceName } from 'utils/generate';
 
 const Toolbox = props => {
   const {
@@ -66,11 +67,15 @@ const Toolbox = props => {
     currentWorkspace,
     currentBroker,
   } = context.useWorkspace();
+  const { currentPipeline } = context.usePipelineState();
+  const { updatePipeline } = context.usePipelineActions();
+  const { addStream } = context.useStreamActions();
   const { data: topicsData } = context.useTopicState();
   const { fetchTopics } = context.useTopicActions();
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
   const [isOpen, setIsOpen] = useState(false);
+  const { addTopic } = context.useTopicActions();
 
   const [zIndex, setZIndex] = useState(2);
   const [searchResults, setSearchResults] = useState(null);
@@ -91,12 +96,17 @@ const Toolbox = props => {
   const [sources, sinks] = getConnectorInfo(currentWorker);
 
   const privateTopic = {
-    settings: { name: 'Pipeline Only' },
+    settings: {
+      name: 'Pipeline Only',
+      tags: { type: 'private', label: 'Pipeline Only' },
+    },
   };
 
   const topics = [privateTopic, ...topicsData].map(topic => ({
     classType: 'topic',
     displayName: topic.settings.name,
+    type: topic.settings.tags.type,
+    label: topic.settings.tags.label,
   }));
 
   const connectors = {
@@ -157,6 +167,15 @@ const Toolbox = props => {
     tempCells.forEach(cell => cell.remove());
   };
 
+  const getLabel = datas => {
+    const topicIndex = datas
+      .map(data => data.tags)
+      .filter(data => data.type === 'private')
+      .map(data => data.label.replace('T', ''));
+    if (!topicIndex) return 'T1';
+    return `T${Number(topicIndex) + 1}`;
+  };
+
   const handleAddGraph = async newGraphName => {
     setZIndex(zIndex + 1);
 
@@ -169,6 +188,30 @@ const Toolbox = props => {
 
     switch (cellInfo.classType) {
       case 'topic':
+        const topicName = serviceName({ length: 5 });
+        addTopic({
+          name: topicName,
+          brokerClusterKey: getKey(currentBroker),
+          group: hashKey(currentWorkspace),
+          tags: {
+            type: 'private',
+            label: getLabel(topicsData),
+          },
+        });
+
+        updatePipeline({
+          name: currentPipeline.name,
+          group: currentPipeline.group,
+          endpoints: [
+            ...currentPipeline.endpoints,
+            {
+              name: topicName,
+              group: hashKey(currentWorkspace),
+              kind: 'topic',
+            },
+          ],
+        });
+
         graph.addCell(
           TopicGraph({
             ...sharedParams,
@@ -178,19 +221,43 @@ const Toolbox = props => {
 
       case 'stream':
         const [targetStream] = streamFiles
-          .map(streamFile => streamFile.classInfos)
-          .flat()
-          .filter(infos => infos.className === cellInfo.className);
-
+          .filter(streamFile =>
+            streamFile.classInfos.find(
+              classInfo => classInfo.className === cellInfo.className,
+            ),
+          )
+          .map(streamFile => {
+            const stream = {
+              ...streamFile,
+              classInfos: streamFile.classInfos.filter(
+                classInfo => classInfo.className === cellInfo.className,
+              ),
+            };
+            return stream;
+          });
         const requestParams = {
-          group: hashKey(currentWorkspace),
-          jarKey: getKey(currentWorkspace),
+          name: newGraphName,
+          group: hash(currentPipeline.name + currentPipeline.group),
+          jarKey: { name: targetStream.name, group: targetStream.group },
           brokerClusterKey: getKey(currentBroker),
           connector__class: cellInfo.className,
         };
-        const definition = targetStream;
+        const definition = targetStream.classInfos[0];
 
-        streamApi.create(requestParams, definition);
+        addStream(requestParams, definition);
+
+        updatePipeline({
+          name: currentPipeline.name,
+          group: currentPipeline.group,
+          endpoints: [
+            ...currentPipeline.endpoints,
+            {
+              name: requestParams.name,
+              group: requestParams.group,
+              kind: 'stream',
+            },
+          ],
+        });
 
         graph.addCell(
           ConnectorGraph({
@@ -204,11 +271,25 @@ const Toolbox = props => {
       case 'sink':
         const { classInfos } = currentWorker;
 
-        await connectorApi.create({
+        const connectorRes = await connectorApi.create({
           classInfos,
-          group: hashKey(currentWorkspace),
+          name: newGraphName,
+          group: hash(currentPipeline.name + currentPipeline.group),
           workerClusterKey: getKey(currentWorker),
           connector__class: cellInfo.className,
+        });
+
+        updatePipeline({
+          name: currentPipeline.name,
+          group: currentPipeline.group,
+          endpoints: [
+            ...currentPipeline.endpoints,
+            {
+              name: connectorRes.data.name,
+              group: connectorRes.data.group,
+              kind: connectorRes.data.kind,
+            },
+          ],
         });
 
         const [targetConnector] = classInfos.filter(

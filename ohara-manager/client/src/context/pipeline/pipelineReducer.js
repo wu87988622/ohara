@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { sortBy } from 'lodash';
+import { sortBy, map, isEqual } from 'lodash';
 
 import {
   initializeRoutine,
@@ -22,6 +22,7 @@ import {
   addPipelineRoutine,
   deletePipelineRoutine,
   setCurrentPipelineRoutine,
+  updatePipeineRoutine,
 } from './pipelineRoutines';
 
 const sort = pipelines => sortBy(pipelines, 'name');
@@ -98,6 +99,29 @@ const reducer = (state, action) => {
       };
 
     case deletePipelineRoutine.FAILURE:
+      return {
+        ...state,
+        isFetching: false,
+        error: action.payload || true,
+      };
+
+    case updatePipeineRoutine.REQUEST:
+      return {
+        ...state,
+        isFetching: true,
+      };
+
+    case updatePipeineRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, pipeline =>
+          isEqual(pipeline, action.payload) ? action.payload : pipeline,
+        ),
+        lastUpdated: new Date(),
+      };
+
+    case updatePipeineRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

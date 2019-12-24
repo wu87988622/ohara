@@ -71,6 +71,7 @@ const usePipelineActions = () => {
     setCurrentPipeline: actions.createSetCurrentPipeline(dispatch),
     addPipeline: actions.createAddPipeline(state, dispatch, showMessage),
     deletePipeline: actions.createDeletePipeline(state, dispatch, showMessage),
+    updatePipeline: actions.createUpdatePipeline(state, dispatch, showMessage),
   };
 };
 

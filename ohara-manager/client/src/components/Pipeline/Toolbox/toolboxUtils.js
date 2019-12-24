@@ -116,10 +116,10 @@ export const createToolboxList = params => {
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
-        displayName: topic.displayName,
+        displayName: topic.type === 'private' ? topic.label : topic.displayName,
         classType: topic.classType,
         className: index === 0 ? 'privateTopic' : 'publicTopic',
-        icon: index === 0 ? AddPrivateTopic : AddPublicTopic,
+        icon: topic.type === 'private' ? AddPrivateTopic : AddPublicTopic,
       }),
     );
   });
