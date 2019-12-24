@@ -19,7 +19,7 @@ import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import Link from '@material-ui/core/Link';
 import styled from 'styled-components';
-import { round, isEmpty, flatMap } from 'lodash';
+import { round, isEmpty, flatMap, filter } from 'lodash';
 
 import AddNodeDialog from './AddNodeDialog';
 import { SelectTable } from 'components/common/Table';
@@ -142,7 +142,15 @@ const NodeDialog = () => {
                 herf="#"
                 onClick={() => openDetailView(node)}
               >
-                {flatMap(node.services, service => service.clusterKeys).length}
+                {
+                  flatMap(
+                    filter(
+                      node.services,
+                      service => service.name !== 'configurator',
+                    ),
+                    service => service.clusterKeys,
+                  ).length
+                }
               </Link>
             </Typography>
           ),
