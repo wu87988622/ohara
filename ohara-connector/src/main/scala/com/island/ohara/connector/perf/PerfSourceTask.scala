@@ -15,9 +15,11 @@
  */
 
 package com.island.ohara.connector.perf
+import java.util.Collections
+
 import com.island.ohara.common.annotations.VisibleForTesting
-import com.island.ohara.common.data.Column
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.data.{Cell, Column, DataType, Row}
+import com.island.ohara.common.util.{ByteUtils, CommonUtils}
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -28,12 +30,39 @@ class PerfSourceTask extends RowSourceTask {
   @VisibleForTesting
   private[perf] var schema: Seq[Column] = _
   private[this] var lastPoll: Long      = -1
-  @VisibleForTesting
+
+  /**
+    * this is what we push to topics. We don't generate it repeatedly to avoid extra cost in testing.
+    */
+  private[this] var records: java.util.List[RowSourceRecord] = Collections.emptyList()
+
   override protected def _start(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)
     this.topics = settings.topicNames().asScala
     this.schema = settings.columns.asScala
     if (schema.isEmpty) schema = DEFAULT_SCHEMA
+    val row = Row.of(
+      schema.sortBy(_.order).map { c =>
+        Cell.of(
+          c.newName,
+          c.dataType match {
+            case DataType.BOOLEAN => false
+            case DataType.BYTE    => ByteUtils.toBytes(CommonUtils.current()).head
+            case DataType.BYTES   => ByteUtils.toBytes(CommonUtils.current())
+            case DataType.SHORT   => CommonUtils.current().toShort
+            case DataType.INT     => CommonUtils.current().toInt
+            case DataType.LONG    => CommonUtils.current()
+            case DataType.FLOAT   => CommonUtils.current().toFloat
+            case DataType.DOUBLE  => CommonUtils.current().toDouble
+            case DataType.STRING  => CommonUtils.randomString(props.cellSize)
+            case _                => CommonUtils.current()
+          }
+        )
+      }: _*
+    )
+    records = Collections.unmodifiableList(
+      (0 until props.batch).flatMap(_ => topics.map(RowSourceRecord.builder().row(row).topicName(_).build())).asJava
+    )
   }
 
   override protected def _stop(): Unit = {}
@@ -41,9 +70,8 @@ class PerfSourceTask extends RowSourceTask {
   override protected def _poll(): java.util.List[RowSourceRecord] = {
     val current = CommonUtils.current()
     if (current - lastPoll > props.freq.toMillis) {
-      val records = topics.map(RowSourceRecord.builder().row(row(schema)).topicName(_).build())
       lastPoll = current
-      (0 until props.batch).flatMap(_ => records).asJava
-    } else Seq.empty.asJava
+      records
+    } else Collections.emptyList()
   }
 }

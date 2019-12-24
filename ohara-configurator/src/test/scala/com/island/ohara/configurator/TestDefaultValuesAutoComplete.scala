@@ -48,7 +48,8 @@ class TestDefaultValuesAutoComplete extends WithBrokerWorker {
         .create()
     )
     connector.settings.keySet should contain("perf.batch")
-    connector.settings.keySet should contain("perf.frequence")
+    connector.settings.keySet should contain("perf.frequency")
+    connector.settings.keySet should contain("perf.cell.length")
   }
 
   @Test

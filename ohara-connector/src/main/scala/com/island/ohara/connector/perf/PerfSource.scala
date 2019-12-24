@@ -41,25 +41,7 @@ class PerfSource extends RowSourceConnector {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _definitions(): java.util.List[SettingDef] =
-    Seq(
-      SettingDef
-        .builder()
-        .displayName("Batch")
-        .documentation("The batch of perf")
-        .key(PERF_BATCH)
-        .optional(DEFAULT_BATCH)
-        .orderInGroup(0)
-        .build(),
-      SettingDef
-        .builder()
-        .displayName("Frequence")
-        .documentation("The frequence of perf")
-        .key(PERF_FREQUENCE)
-        .optional(toJavaDuration(DEFAULT_FREQUENCE))
-        .orderInGroup(1)
-        .build()
-    ).asJava
+  override protected def _definitions(): java.util.List[SettingDef] = DEFINITIONS.asJava
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }

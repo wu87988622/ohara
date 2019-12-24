@@ -16,17 +16,51 @@
 
 package com.island.ohara.connector
 
-import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{ByteUtils, CommonUtils}
+import java.util.concurrent.atomic.AtomicInteger
+
+import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.common.setting.SettingDef
 
 import scala.concurrent.duration.Duration
 
 package object perf {
-  val PERF_BATCH: String     = "perf.batch"
-  val PERF_FREQUENCE: String = "perf.frequence"
+  val PERF_BATCH_KEY: String     = "perf.batch"
+  val PERF_FREQUENCY_KEY: String = "perf.frequency"
 
-  val DEFAULT_BATCH: Int          = 10
-  val DEFAULT_FREQUENCE: Duration = Duration("1 second")
+  val PERF_BATCH_DEFAULT: Int          = 10
+  val PERF_FREQUENCY_DEFAULT: Duration = Duration("1 second")
+
+  val PERF_CELL_LENGTH_KEY: String  = "perf.cell.length"
+  val PERF_CELL_LENGTH_DEFAULT: Int = 10
+
+  private[this] val GROUP_COUNT = new AtomicInteger()
+
+  val DEFINITIONS = Seq(
+    SettingDef
+      .builder()
+      .displayName("Batch")
+      .documentation("The batch of perf")
+      .key(PERF_BATCH_KEY)
+      .optional(PERF_BATCH_DEFAULT)
+      .orderInGroup(GROUP_COUNT.getAndIncrement())
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("Frequency")
+      .documentation("The frequency of perf")
+      .key(PERF_FREQUENCY_KEY)
+      .optional(java.time.Duration.ofMillis(PERF_FREQUENCY_DEFAULT.toMillis))
+      .orderInGroup(GROUP_COUNT.getAndIncrement())
+      .build(),
+    SettingDef
+      .builder()
+      .displayName("cell length")
+      .documentation("increase this value if you prefer to large cell. Noted, it works only for string type")
+      .key(PERF_CELL_LENGTH_KEY)
+      .optional(PERF_CELL_LENGTH_DEFAULT)
+      .orderInGroup(GROUP_COUNT.getAndIncrement())
+      .build()
+  )
 
   /**
     * this is the default schema used to generate random data in perf source.
@@ -36,34 +70,5 @@ package object perf {
     Column.builder().name("a").dataType(DataType.STRING).order(0).build(),
     Column.builder().name("b").dataType(DataType.STRING).order(1).build(),
     Column.builder().name("c").dataType(DataType.STRING).order(2).build()
-  )
-
-  def toJavaDuration(d: Duration): java.time.Duration = java.time.Duration.ofMillis(d.toMillis)
-  def toScalaDuration(d: java.time.Duration): Duration =
-    Duration(d.toMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
-
-  /**
-    * generate a row according to input schema
-    * @param schema schema
-    * @return row
-    */
-  def row(schema: Seq[Column]): Row = Row.of(
-    schema.sortBy(_.order).map { c =>
-      Cell.of(
-        c.newName,
-        c.dataType match {
-          case DataType.BOOLEAN => false
-          case DataType.BYTE    => ByteUtils.toBytes(CommonUtils.current()).head
-          case DataType.BYTES   => ByteUtils.toBytes(CommonUtils.current())
-          case DataType.SHORT   => CommonUtils.current().toShort
-          case DataType.INT     => CommonUtils.current().toInt
-          case DataType.LONG    => CommonUtils.current()
-          case DataType.FLOAT   => CommonUtils.current().toFloat
-          case DataType.DOUBLE  => CommonUtils.current().toDouble
-          case DataType.STRING  => CommonUtils.current().toString
-          case _                => CommonUtils.current()
-        }
-      )
-    }: _*
   )
 }

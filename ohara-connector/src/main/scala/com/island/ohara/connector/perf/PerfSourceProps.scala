@@ -17,18 +17,24 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.kafka.connector.TaskSetting
 
-import scala.concurrent.duration.Duration
-
-case class PerfSourceProps(batch: Int, freq: Duration) {
+import scala.concurrent.duration._
+import scala.compat.java8.OptionConverters._
+case class PerfSourceProps(batch: Int, freq: Duration, cellSize: Int) {
   def toMap: Map[String, String] = Map(
-    PERF_BATCH     -> batch.toString,
-    PERF_FREQUENCE -> toJavaDuration(freq).toString
+    PERF_BATCH_KEY       -> batch.toString,
+    PERF_FREQUENCY_KEY   -> freq.toString,
+    PERF_CELL_LENGTH_KEY -> cellSize.toString
   )
 }
 
 object PerfSourceProps {
   def apply(settings: TaskSetting): PerfSourceProps = PerfSourceProps(
-    batch = settings.intOption(PERF_BATCH).orElse(DEFAULT_BATCH),
-    freq = Option(settings.durationOption(PERF_FREQUENCE).orElse(null)).fold(DEFAULT_FREQUENCE)(toScalaDuration)
+    batch = settings.intOption(PERF_BATCH_KEY).orElse(PERF_BATCH_DEFAULT),
+    freq = settings
+      .durationOption(PERF_FREQUENCY_KEY)
+      .asScala
+      .map(_.toMillis milliseconds)
+      .getOrElse(PERF_FREQUENCY_DEFAULT),
+    cellSize = settings.intOption(PERF_CELL_LENGTH_KEY).orElse(PERF_CELL_LENGTH_DEFAULT)
   )
 }

@@ -25,7 +25,6 @@ import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers._
-import spray.json.DefaultJsonProtocol._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,7 +36,8 @@ class TestPerfSource extends With3Brokers3Workers {
 
   private[this] val props = PerfSourceProps(
     batch = 5,
-    freq = 5 seconds
+    freq = 5 seconds,
+    cellSize = 1
   )
 
   private[this] val schema: Seq[Column] =
@@ -133,7 +133,7 @@ class TestPerfSource extends With3Brokers3Workers {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .columns(schema)
-        .settings(Map(PERF_FREQUENCE -> "PT5S"))
+        .settings(Map(PERF_FREQUENCY_KEY -> "PT5S"))
         .create()
     )
 
@@ -167,7 +167,7 @@ class TestPerfSource extends With3Brokers3Workers {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .columns(schema)
-        .settings(Map(PERF_BATCH -> "5"))
+        .settings(Map(PERF_BATCH_KEY -> "5"))
         .create()
     )
 
@@ -235,7 +235,7 @@ class TestPerfSource extends With3Brokers3Workers {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .columns(schema)
-        .settings(Map(PERF_FREQUENCE -> "abcd"))
+        .settings(Map(PERF_FREQUENCY_KEY -> "abcd"))
         .create()
     )
   }
@@ -252,23 +252,9 @@ class TestPerfSource extends With3Brokers3Workers {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .columns(schema)
-        .settings(Map(PERF_BATCH -> "-1"))
+        .settings(Map(PERF_BATCH_KEY -> "-1"))
         .create()
     )
     ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
-  }
-
-  @Test
-  def testDataGeneratedByPerfSource(): Unit = {
-    val name    = CommonUtils.randomString()
-    val columns = Seq(Column.builder().name(name).dataType(DataType.BOOLEAN).build())
-    // should pass
-    com.island.ohara.client.configurator.v0.toJson(row(columns)).fields(name).convertTo[Boolean]
-
-    // should pass
-    com.island.ohara.client.configurator.v0
-      .toJson(Serializer.ROW.from(Serializer.ROW.to(row(columns))))
-      .fields(name)
-      .convertTo[Boolean]
   }
 }

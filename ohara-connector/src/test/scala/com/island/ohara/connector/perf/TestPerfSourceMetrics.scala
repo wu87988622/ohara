@@ -32,7 +32,8 @@ class TestPerfSourceMetrics extends WithBrokerWorker {
 
   private[this] val props = PerfSourceProps(
     batch = 5,
-    freq = 5 seconds
+    freq = 5 seconds,
+    cellSize = 10
   )
 
   @Test

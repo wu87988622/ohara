@@ -30,13 +30,13 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 class TestPerfSourceProps extends OharaTest {
-  private[this] val props     = PerfSourceProps(10, 10 seconds)
+  private[this] val props     = PerfSourceProps(10, 10 seconds, 10)
   private[this] val topicKeys = Set(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
   private[this] val schema    = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())
 
   @Test
   def testPlainMap(): Unit = {
-    val props = PerfSourceProps(123, 10 seconds)
+    val props = PerfSourceProps(123, 10 seconds, 10)
     val copy  = PerfSourceProps(TaskSetting.of(props.toMap.asJava))
     props shouldBe copy
   }
@@ -86,21 +86,26 @@ class TestPerfSourceProps extends OharaTest {
   }
 
   @Test
-  def testEmptyBatchToDefault(): Unit = {
-    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).batch shouldBe DEFAULT_BATCH
-  }
+  def testDefaultBatch(): Unit =
+    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).batch shouldBe PERF_BATCH_DEFAULT
 
   @Test
-  def testEmptyFrequenceToDefault(): Unit = {
-    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).freq shouldBe DEFAULT_FREQUENCE
-  }
+  def testDefaultFrequency(): Unit =
+    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).freq shouldBe PERF_FREQUENCY_DEFAULT
 
   @Test
-  def testInvalidFrequence(): Unit = {
+  def testDefaultCellSize(): Unit =
+    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).cellSize shouldBe PERF_CELL_LENGTH_DEFAULT
+
+  @Test
+  def testCellSize(): Unit =
+    PerfSourceProps(TaskSetting.of(Collections.singletonMap(PERF_CELL_LENGTH_KEY, "999"))).cellSize shouldBe 999
+
+  @Test
+  def testInvalidFrequency(): Unit =
     an[NumberFormatException] should be thrownBy PerfSourceProps(
-      TaskSetting.of(Map(PERF_BATCH -> "1", PERF_FREQUENCE -> "abc").asJava)
+      TaskSetting.of(Map(PERF_BATCH_KEY -> "1", PERF_FREQUENCY_KEY -> "abc").asJava)
     )
-  }
 
   @Test
   def testInvalidProps(): Unit = {
