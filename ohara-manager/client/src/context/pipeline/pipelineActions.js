@@ -20,6 +20,7 @@ import {
   addPipelineRoutine,
   setCurrentPipelineRoutine,
   deletePipelineRoutine,
+  updatePipeineRoutine,
 } from './pipelineRoutines';
 
 import { hashKey } from 'utils/object';
@@ -91,6 +92,23 @@ const createDeletePipeline = (
   showMessage(deletePipelineResponse.title);
 };
 
+const createUpdatePipeline = (state, dispatch, showMessage) => async value => {
+  if (state.isFetching) return;
+
+  dispatch(updatePipeineRoutine.request());
+
+  const updatePipelineResponse = await pipelineApi.update(value);
+
+  if (updatePipelineResponse.errors) {
+    dispatch(updatePipeineRoutine.failure(updatePipelineResponse.title));
+    showMessage(updatePipelineResponse.title);
+    return;
+  }
+
+  dispatch(updatePipeineRoutine.success(updatePipelineResponse.data));
+  showMessage(updatePipelineResponse.title);
+};
+
 const createSetCurrentPipeline = dispatch => pipelineName => {
   dispatch(setCurrentPipelineRoutine.trigger(pipelineName));
 };
@@ -100,4 +118,5 @@ export {
   createDeletePipeline,
   createAddPipeline,
   createSetCurrentPipeline,
+  createUpdatePipeline,
 };

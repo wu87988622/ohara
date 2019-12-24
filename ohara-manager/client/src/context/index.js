@@ -81,6 +81,12 @@ import {
   ConfiguratorProvider,
   useConfiguratorState,
 } from 'context/configurator/ConfiguratorContext';
+import {
+  StreamProvider,
+  useStreamState,
+  useStreamDispatch,
+  useStreamActions,
+} from 'context/stream/StreamContext';
 
 export {
   // Broker
@@ -138,4 +144,9 @@ export {
   // Configurator
   ConfiguratorProvider,
   useConfiguratorState,
+  // Stream
+  StreamProvider,
+  useStreamState,
+  useStreamDispatch,
+  useStreamActions,
 };

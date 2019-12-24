@@ -112,16 +112,18 @@ export const createToolboxList = params => {
   const displayTopics = isNull(searchResults) ? topics : searchResults.topics;
 
   displayTopics.forEach((topic, index) => {
-    topicGraph.current.addCell(
-      new joint.shapes.html.Element({
-        position: { x: 10, y: index * 40 },
-        size: { width: 272 - 8 * 2, height: 40 },
-        displayName: topic.displayName,
-        classType: topic.classType,
-        className: index === 0 ? 'privateTopic' : 'publicTopic',
-        icon: index === 0 ? AddPrivateTopic : AddPublicTopic,
-      }),
-    );
+    if (topic.type !== 'private' || index === 0) {
+      topicGraph.current.addCell(
+        new joint.shapes.html.Element({
+          position: { x: 10, y: index * 40 },
+          size: { width: 272 - 8 * 2, height: 40 },
+          displayName: topic.displayName,
+          classType: topic.classType,
+          className: index === 0 ? 'privateTopic' : 'publicTopic',
+          icon: topic.type === 'private' ? AddPrivateTopic : AddPublicTopic,
+        }),
+      );
+    }
   });
 
   const displayStreams = isNull(searchResults)

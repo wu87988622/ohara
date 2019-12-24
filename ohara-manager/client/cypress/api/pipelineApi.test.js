@@ -69,14 +69,16 @@ const generatePipeline = async () => {
   const pipeline = {
     name: pipelineName,
     group: generate.serviceName({ prefix: 'group' }),
-    flows: [
+    endpoints: [
       {
-        from: { name: connectorSource.name, group: connectorSource.group },
-        to: [{ name: topic.name, group: topic.group }],
+        name: connectorSource.name,
+        group: connectorSource.group,
+        kind: 'source',
       },
       {
-        from: { name: topic.name, group: topic.group },
-        to: [{ name: connectorSink.name, group: connectorSink.group }],
+        name: topic.name,
+        group: topic.group,
+        kind: 'topic',
       },
     ],
     tags: {
@@ -94,10 +96,9 @@ describe('Pipeline API', () => {
     const result = await pipelineApi.create(pipeline);
     expect(result.errors).to.be.undefined;
 
-    const { flows, name, group, objects, lastModified, tags } = result.data;
-
-    expect(flows).to.be.an('array');
-    expect(flows.sort()).to.be.deep.eq(pipeline.flows.sort());
+    const { endpoints, name, group, objects, lastModified, tags } = result.data;
+    expect(endpoints).to.be.an('array');
+    expect(endpoints.sort()).to.be.deep.eq(pipeline.endpoints.sort());
 
     expect(lastModified).to.be.a('number');
 
@@ -108,7 +109,7 @@ describe('Pipeline API', () => {
     expect(group).to.eq(pipeline.group);
 
     expect(objects).to.be.an('array');
-    expect(objects).have.lengthOf(3);
+    expect(objects).have.lengthOf(2);
 
     expect(tags.name).to.eq(pipeline.name);
   });
@@ -120,10 +121,10 @@ describe('Pipeline API', () => {
     const result = await pipelineApi.get(pipeline);
     expect(result.errors).to.be.undefined;
 
-    const { flows, name, group, objects, lastModified, tags } = result.data;
+    const { endpoints, name, group, objects, lastModified, tags } = result.data;
 
-    expect(flows).to.be.an('array');
-    expect(flows.sort()).to.be.deep.eq(pipeline.flows.sort());
+    expect(endpoints).to.be.an('array');
+    expect(endpoints.sort()).to.be.deep.eq(pipeline.endpoints.sort());
 
     expect(lastModified).to.be.a('number');
 
@@ -134,7 +135,7 @@ describe('Pipeline API', () => {
     expect(group).to.eq(pipeline.group);
 
     expect(objects).to.be.an('array');
-    expect(objects).have.lengthOf(3);
+    expect(objects).have.lengthOf(2);
 
     expect(tags.name).to.eq(pipeline.name);
   });
@@ -168,7 +169,7 @@ describe('Pipeline API', () => {
   it('updatePipeline', async () => {
     const pipeline = await generatePipeline();
     const newParams = {
-      flows: [],
+      endpoints: [],
     };
     const newPipeline = { ...pipeline, ...newParams };
 
@@ -177,10 +178,10 @@ describe('Pipeline API', () => {
     const result = await pipelineApi.update(newPipeline);
     expect(result.errors).to.be.undefined;
 
-    const { flows, name, group, objects, lastModified, tags } = result.data;
+    const { endpoints, name, group, objects, lastModified, tags } = result.data;
 
-    expect(flows).to.be.an('array');
-    expect(flows).have.lengthOf(0);
+    expect(endpoints).to.be.an('array');
+    expect(endpoints).have.lengthOf(0);
 
     expect(lastModified).to.be.a('number');
 
@@ -210,7 +211,7 @@ describe('Pipeline API', () => {
     expect(refreshResult.errors).to.be.undefined;
 
     const {
-      flows,
+      endpoints,
       name,
       group,
       objects,
@@ -218,8 +219,8 @@ describe('Pipeline API', () => {
       tags,
     } = refreshResult.data;
 
-    expect(flows).to.be.an('array');
-    expect(flows).have.lengthOf(1);
+    expect(endpoints).to.be.an('array');
+    expect(endpoints).have.lengthOf(1);
 
     expect(lastModified).to.be.a('number');
 
@@ -230,7 +231,7 @@ describe('Pipeline API', () => {
     expect(group).to.eq(pipeline.group);
 
     expect(objects).to.be.an('array');
-    expect(objects).have.lengthOf(2);
+    expect(objects).have.lengthOf(1);
 
     expect(tags.name).to.eq(pipeline.name);
   });
