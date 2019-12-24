@@ -30,7 +30,6 @@ const TopicGraph = params => {
 
   let link;
   const height = className === 'publicTopic' ? 22 : 0;
-  const topicTitle = className === 'publicTopic' ? title : '';
 
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -143,7 +142,7 @@ const TopicGraph = params => {
 
   return new joint.shapes.html.Element({
     size: { width: 56, height: 56 + height },
-    title: topicTitle,
+    title,
     menuDisplay: 'none',
     position,
     classType,

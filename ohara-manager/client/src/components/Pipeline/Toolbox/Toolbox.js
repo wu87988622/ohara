@@ -171,9 +171,10 @@ const Toolbox = props => {
     const topicIndex = datas
       .map(data => data.tags)
       .filter(data => data.type === 'private')
-      .map(data => data.label.replace('T', ''));
-    if (!topicIndex) return 'T1';
-    return `T${Number(topicIndex) + 1}`;
+      .map(data => data.label.replace('T', ''))
+      .sort();
+    if (topicIndex.length === 0) return 'T1';
+    return `T${Number(topicIndex.pop()) + 1}`;
   };
 
   const handleAddGraph = async newGraphName => {
@@ -188,17 +189,22 @@ const Toolbox = props => {
 
     switch (cellInfo.classType) {
       case 'topic':
-        const topicName = serviceName({ length: 5 });
-        addTopic({
-          name: topicName,
-          brokerClusterKey: getKey(currentBroker),
-          group: hashKey(currentWorkspace),
-          tags: {
-            type: 'private',
-            label: getLabel(topicsData),
-          },
-        });
-
+        let topicName = newGraphName;
+        if (cellInfo.className !== 'publicTopic') {
+          const privateTopicName = serviceName({ length: 5 });
+          const label = getLabel(topicsData);
+          addTopic({
+            name: privateTopicName,
+            brokerClusterKey: getKey(currentBroker),
+            group: hashKey(currentWorkspace),
+            tags: {
+              type: 'private',
+              label,
+            },
+          });
+          topicName = privateTopicName;
+          sharedParams.title = label;
+        }
         updatePipeline({
           name: currentPipeline.name,
           group: currentPipeline.group,

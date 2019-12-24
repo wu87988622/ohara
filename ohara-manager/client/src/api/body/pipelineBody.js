@@ -19,13 +19,13 @@ import { string, array, number, object, option } from '../utils/validation';
 export const request = () => {
   const group = [string];
   const name = [string];
-  const flows = [array];
+  const endpoints = [array];
   const tags = [object, option];
 
   return {
     name,
     group,
-    flows,
+    endpoints,
     tags,
   };
 };
@@ -33,7 +33,7 @@ export const request = () => {
 export const response = () => {
   const group = [string];
   const name = [string];
-  const flows = [array];
+  const endpoints = [array];
   const objects = [array];
   const lastModified = [number];
   const tags = [object];
@@ -41,7 +41,7 @@ export const response = () => {
   return {
     group,
     name,
-    flows,
+    endpoints,
     objects,
     lastModified,
     tags,
