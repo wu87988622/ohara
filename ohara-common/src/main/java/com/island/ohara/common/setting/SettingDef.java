@@ -701,17 +701,11 @@ public class SettingDef implements JsonObject, Serializable {
             break;
         }
       }
-      if (this.valueType != null)
+      if (this.valueType != null && this.valueType != valueType)
         throw new IllegalArgumentException(
             "type is defined to " + this.valueType + ", new one:" + valueType);
       this.valueType = Objects.requireNonNull(valueType);
-      if (this.necessary != null)
-        throw new IllegalArgumentException(
-            "necessary is defined to " + this.necessary + ", new one:" + necessary);
       this.necessary = Objects.requireNonNull(necessary);
-      if (this.defaultValue != null)
-        throw new IllegalArgumentException(
-            "defaultValue is defined to " + this.defaultValue + ", new one:" + defaultValue);
       this.defaultValue = defaultValue;
       return this;
     }
@@ -938,7 +932,8 @@ public class SettingDef implements JsonObject, Serializable {
      */
     public Builder blacklist(Set<String> blacklist) {
       this.blacklist = Objects.requireNonNull(blacklist);
-      return checkAndSet(Type.ARRAY, Necessary.REQUIRED, null);
+      return checkAndSet(
+          Type.ARRAY, this.necessary == null ? Necessary.REQUIRED : this.necessary, null);
     }
 
     @Optional("this is no documentation for this setting by default")

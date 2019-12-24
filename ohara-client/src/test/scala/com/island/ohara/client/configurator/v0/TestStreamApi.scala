@@ -970,4 +970,19 @@ class TestStreamApi extends OharaTest {
     )
     StreamApi.STREAM_CLUSTER_INFO_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
   }
+
+  @Test
+  def emptyNodeNamesIsLegal(): Unit = StreamApi.CREATION_JSON_FORMAT.read(s"""
+                                                                             |  {
+                                                                             |    "jarKey": ${fakeJar.toJson},
+                                                                             |    "from": [
+                                                                             |    ],
+                                                                             |    "to": [
+                                                                             |    ],
+                                                                             |    "brokerClusterKey": {
+                                                                             |      "group": "g",
+                                                                             |      "name": "n"
+                                                                             |    }
+                                                                             |  }
+     """.stripMargin.parseJson).nodeNames shouldBe Set.empty
 }

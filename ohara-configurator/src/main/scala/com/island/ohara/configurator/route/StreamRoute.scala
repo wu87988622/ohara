@@ -147,6 +147,11 @@ private[configurator] object StreamRoute {
     executionContext: ExecutionContext
   ): HookOfAction[StreamClusterInfo] =
     (streamClusterInfo: StreamClusterInfo, _, _) => {
+      // This "optional" is for our UI since it does not require users to define the node names
+      // when creating pipeline. Noted that our services (zk, bk and wk) still require user to
+      // define the node names in creating.
+      if (streamClusterInfo.nodeNames.isEmpty)
+        throw DeserializationException(s"the node names can't be empty", fieldNames = List("nodeNames"))
       objectChecker.checkList
       // node names check is covered in super route
         .stream(streamClusterInfo.key)

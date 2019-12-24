@@ -158,6 +158,10 @@ public final class StreamDefUtils {
           .displayName("Node name list")
           .documentation("The used node name list of this stream")
           .blacklist(new HashSet<>(Arrays.asList("stop", "start", "pause", "resume")))
+          // This "optional" is for our UI since it does not require users to define the node names
+          // when creating pipeline. Noted that our services (zk, bk and wk) still require user to
+          // define the node names in creating.
+          .optional(Type.ARRAY)
           .build();
 
   public static final String STREAM = "stream";
