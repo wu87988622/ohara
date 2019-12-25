@@ -19,7 +19,7 @@ import { isKeyEqual, sortByName } from 'utils/object';
 
 import {
   fetchWorkspacesRoutine,
-  addWorkspaceRoutine,
+  createWorkspaceRoutine,
   updateWorkspaceRoutine,
   stageWorkspaceRoutine,
   deleteWorkspaceRoutine,
@@ -35,7 +35,7 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchWorkspacesRoutine.REQUEST:
-    case addWorkspaceRoutine.REQUEST:
+    case createWorkspaceRoutine.REQUEST:
     case updateWorkspaceRoutine.REQUEST:
     case stageWorkspaceRoutine.REQUEST:
     case deleteWorkspaceRoutine.REQUEST:
@@ -51,7 +51,7 @@ const reducer = (state, action) => {
         data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
-    case addWorkspaceRoutine.SUCCESS:
+    case createWorkspaceRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -80,7 +80,7 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case fetchWorkspacesRoutine.FAILURE:
-    case addWorkspaceRoutine.FAILURE:
+    case createWorkspaceRoutine.FAILURE:
     case updateWorkspaceRoutine.FAILURE:
     case stageWorkspaceRoutine.FAILURE:
     case deleteWorkspaceRoutine.FAILURE:

@@ -16,23 +16,40 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { isEmpty, isEqual } from 'lodash';
 
 import * as actions from './pipelineActions';
 import { useSnackbar } from 'context/SnackbarContext';
 import { initializeRoutine } from './pipelineRoutines';
 import { reducer, initialState } from './pipelineReducer';
-import { useWorkspace } from 'context';
+import { useApp } from 'context';
+import { usePrevious } from 'utils/hooks';
 
 const PipelineStateContext = React.createContext();
 const PipelineDispatchContext = React.createContext();
 
 const PipelineProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName } = useWorkspace();
+  const { data: pipelines, currentPipeline } = state;
+  const { workspaceName, pipelineName } = useApp();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
   }, [workspaceName]);
+
+  const prevCurrentPipeline = usePrevious(currentPipeline);
+  const setCurrentPipeline = actions.createSetCurrentPipeline(dispatch);
+  React.useEffect(() => {
+    if (isEmpty(pipelines) || !pipelineName) return;
+
+    const targetPipeline = pipelines.find(
+      pipeline => pipeline.name === pipelineName,
+    );
+
+    if (!isEqual(targetPipeline, prevCurrentPipeline)) {
+      setCurrentPipeline(pipelineName);
+    }
+  }, [pipelineName, pipelines, prevCurrentPipeline, setCurrentPipeline]);
 
   return (
     <PipelineStateContext.Provider value={state}>

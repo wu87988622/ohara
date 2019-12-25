@@ -20,21 +20,19 @@ import React, {
   useState,
   useEffect,
   useReducer,
-  useCallback,
 } from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty, isEqual } from 'lodash';
 
-import { useSnackbar } from 'context/SnackbarContext';
-import { useWorkerState, useBrokerState, useZookeeperState } from 'context';
-import { usePrevious } from 'utils/hooks';
 import {
-  fetchWorkspacesCreator,
-  addWorkspaceCreator,
-  updateWorkspaceCreator,
-  stageWorkspaceCreator,
-  deleteWorkspaceCreator,
-} from './workspaceActions';
+  useApp,
+  useApi,
+  useWorkerState,
+  useBrokerState,
+  useZookeeperState,
+} from 'context';
+import { usePrevious } from 'utils/hooks';
+import { createActions } from './workspaceActions';
 import { reducer, initialState } from './workspaceReducer';
 
 const WorkspaceContext = createContext();
@@ -44,6 +42,8 @@ const WorkspaceDispatchContext = createContext();
 const WorkspaceProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { data: workspaces, isFetching } = state;
+
+  const { workspaceName: name } = useApp();
   const { data: workers } = useWorkerState();
   const { data: brokers } = useBrokerState();
   const { data: zookeepers } = useZookeeperState();
@@ -55,7 +55,6 @@ const WorkspaceProvider = ({ children }) => {
    * broker => bk
    * zookeeper => zk
    */
-  const [name, setName] = useState(null);
   const [currWs, setCurrWs] = useState(null);
   const [currWk, setCurrWk] = useState(null);
   const [currBk, setCurrBk] = useState(null);
@@ -65,16 +64,13 @@ const WorkspaceProvider = ({ children }) => {
   const prevBk = usePrevious(currBk);
   const prevZk = usePrevious(currZk);
 
-  const showMessage = useSnackbar();
-
-  const fetchWorkspaces = useCallback(
-    fetchWorkspacesCreator(state, dispatch, showMessage),
-    [state],
-  );
+  const { workspaceApi } = useApi();
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+    if (!workspaceApi) return;
+    const actions = createActions({ state, dispatch, workspaceApi });
+    actions.fetchWorkspaces();
+  }, [state, workspaceApi]);
 
   // Set the current workspace
   useEffect(() => {
@@ -116,7 +112,6 @@ const WorkspaceProvider = ({ children }) => {
             currentZookeeper: currZk,
             isFetching,
             workspaceName: name,
-            setWorkspaceName: setName,
           }}
         >
           {children}
@@ -162,13 +157,8 @@ WorkspaceProvider.propTypes = {
 const useWorkspaceActions = () => {
   const state = useWorkspaceState();
   const dispatch = useWorkspaceDispatch();
-  const showMessage = useSnackbar();
-  return {
-    addWorkspace: addWorkspaceCreator(state, dispatch, showMessage),
-    updateWorkspace: updateWorkspaceCreator(state, dispatch, showMessage),
-    stageWorkspace: stageWorkspaceCreator(state, dispatch, showMessage),
-    deleteWorkspace: deleteWorkspaceCreator(state, dispatch, showMessage),
-  };
+  const { workspaceApi } = useApi();
+  return createActions({ state, dispatch, workspaceApi });
 };
 
 export {

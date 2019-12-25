@@ -102,12 +102,12 @@ const WorkspaceQuick = props => {
     setSelected,
   } = useNodeDialog();
 
-  const { addWorkspace } = useWorkspaceActions();
+  const { createWorkspace } = useWorkspaceActions();
   const { addWorker } = useWorkerActions();
   const { addBroker } = useBrokerActions();
   const { addZookeeper } = useZookeeperActions();
 
-  const { error: errorForAddWorkspace } = useWorkspaceState();
+  const { error: errorForCreateWorkspace } = useWorkspaceState();
   const { error: errorForAddWorker } = useWorkerState();
   const { error: errorForAddBroker } = useBrokerState();
   const { error: errorForAddZookeeper } = useZookeeperState();
@@ -253,12 +253,6 @@ const WorkspaceQuick = props => {
     if (errorForAddWorker) throw new Error(errorForAddWorker);
   };
 
-  const createWs = async params => {
-    const { wsKey, nodeNames } = params;
-    await addWorkspace({ ...wsKey, nodeNames });
-    if (errorForAddWorkspace) throw new Error(errorForAddWorkspace);
-  };
-
   const createQuickWorkspace = async (values, form) => {
     const { workspaceName } = values;
     const nodeNames = selected.map(select => select.name);
@@ -269,7 +263,6 @@ const WorkspaceQuick = props => {
       };
     });
 
-    const wsKey = { name: workspaceName, group: 'workspace' };
     const zkKey = { name: workspaceName, group: 'zookeeper' };
     const bkKey = { name: workspaceName, group: 'broker' };
     const wkKey = { name: workspaceName, group: 'worker' };
@@ -282,7 +275,10 @@ const WorkspaceQuick = props => {
       setProgressActiveStep(2);
       await createWk({ wkKey, bkKey, nodeNames, plugins });
       setProgressActiveStep(3);
-      await createWs({ wsKey, nodeNames });
+      await createWorkspace({ name: workspaceName, nodeNames });
+      if (errorForCreateWorkspace) {
+        throw new Error(errorForCreateWorkspace);
+      }
       setTimeout(form.reset);
       setActiveStep(0);
       setFiles([]);

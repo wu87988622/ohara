@@ -17,9 +17,7 @@
 import React, { useEffect, useState, useCallback, useReducer } from 'react';
 import moment from 'moment';
 import { isEmpty, get } from 'lodash';
-import { useParams } from 'react-router-dom';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
-
 import * as inspectApi from 'api/inspectApi';
 import * as logApi from 'api/logApi';
 import * as streamApi from 'api/streamApi';
@@ -28,6 +26,7 @@ import Body from './Body';
 import StatusBar from './StatusBar';
 import { hashKey } from 'utils/object';
 import {
+  useApp,
   useDevToolDialog,
   useWorkspace,
   useTopicState,
@@ -97,7 +96,7 @@ const listCache = new CellMeasurerCache({
 });
 
 const DevToolDialog = () => {
-  const { pipelineName } = useParams();
+  const { pipelineName } = useApp();
   const { data: topics } = useTopicState();
   const {
     currentWorkspace,

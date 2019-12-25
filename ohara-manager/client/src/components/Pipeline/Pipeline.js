@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import * as context from 'context';
 import NodeDialog from 'components/Node/NodeDialog';
@@ -23,10 +23,12 @@ import IntroDialog from './IntroDialog';
 import SettingDialog from './SettingDialog';
 import Graph from './Graph';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
+import { useApp } from 'context';
 import { usePrevious } from 'utils/hooks';
 
 const Pipeline = () => {
   const history = useHistory();
+  const { workspaceName, pipelineName } = useApp();
   const { workspaces, currentWorkspace } = context.useWorkspace();
   const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
   const { fetchPipelines } = context.usePipelineActions();
@@ -35,7 +37,6 @@ const Pipeline = () => {
     currentPipeline,
     lastUpdated: isPipelineReady,
   } = context.usePipelineState();
-  const { workspaceName, pipelineName } = useParams();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
   const [isToolboxOpen, setIsToolboxOpen] = useState(true);
   const [toolboxKey, setToolboxKey] = useState(0);

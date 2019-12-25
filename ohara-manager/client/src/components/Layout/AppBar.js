@@ -16,7 +16,6 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { isEmpty, isEqual } from 'lodash';
 import Tooltip from '@material-ui/core/Tooltip';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
@@ -27,15 +26,14 @@ import { Link } from 'react-router-dom';
 
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import {
+  useApp,
   useWorkspace,
-  usePipelineActions,
-  usePipelineState,
   useDevToolDialog,
   useListWorkspacesDialog,
 } from 'context';
 import { useNodeDialog } from 'context/NodeDialogContext';
-import { usePrevious } from 'utils/hooks';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
+import { usePrevious } from 'utils/hooks';
 
 // Import this logo as a React component
 // https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
@@ -46,9 +44,8 @@ import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
   const { workspaceName, pipelineName } = useParams();
-  const { workspaces, setWorkspaceName } = useWorkspace();
-  const { setCurrentPipeline } = usePipelineActions();
-  const { data: pipelines, currentPipeline } = usePipelineState();
+  const { setWorkspaceName, setPipelineName } = useApp();
+  const { workspaces } = useWorkspace();
   const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
   const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
   const {
@@ -58,23 +55,20 @@ const AppBar = () => {
   } = useDevToolDialog();
   const { open: openListWorkspacesDialog } = useListWorkspacesDialog();
 
+  const prevWorkspaceName = usePrevious(workspaceName);
+  const prevPipelineName = usePrevious(pipelineName);
+
   React.useEffect(() => {
-    if (isEmpty(workspaces) || !workspaceName) return;
-    setWorkspaceName(workspaceName);
-  }, [setWorkspaceName, workspaceName, workspaces]);
-
-  const prevCurrentPipeline = usePrevious(currentPipeline);
-  React.useEffect(() => {
-    if (isEmpty(pipelines) || !pipelineName) return;
-
-    const targetPipeline = pipelines.find(
-      pipeline => pipeline.name === pipelineName,
-    );
-
-    if (!isEqual(targetPipeline, prevCurrentPipeline)) {
-      setCurrentPipeline(pipelineName);
+    if (workspaceName && workspaceName !== prevWorkspaceName) {
+      setWorkspaceName(workspaceName);
     }
-  }, [pipelineName, pipelines, prevCurrentPipeline, setCurrentPipeline]);
+  }, [prevWorkspaceName, setWorkspaceName, workspaceName]);
+
+  React.useEffect(() => {
+    if (pipelineName && pipelineName !== prevPipelineName) {
+      setPipelineName(pipelineName);
+    }
+  }, [pipelineName, prevPipelineName, setPipelineName]);
 
   return (
     <>

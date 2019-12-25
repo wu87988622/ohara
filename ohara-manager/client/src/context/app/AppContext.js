@@ -20,8 +20,8 @@ import PropTypes from 'prop-types';
 const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
-  const { workspaceName, setWorkspaceName } = useState();
-  const { pipelineName, setPipelineName } = useState();
+  const [workspaceName, setWorkspaceName] = useState();
+  const [pipelineName, setPipelineName] = useState();
 
   return (
     <AppContext.Provider

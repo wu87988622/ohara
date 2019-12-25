@@ -28,6 +28,44 @@ const validate = values => {
 export const createApi = context => {
   const { showMessage } = context;
   return {
+    fetchAll: async () => {
+      const res = await objectApi.getAll({ group: DEFAULT_GROUP });
+      if (!isEmpty(res.errors)) {
+        throw new Error(`Fetch workspace list failed.`);
+      }
+      return await Promise.all(
+        map(res.data, async workspace => {
+          const stageRes = await objectApi.get({
+            name: workspace.name,
+            group: STAGE_GROUP,
+          });
+          if (!isEmpty(stageRes.errors)) {
+            throw new Error(`Fetch workspace list failed.`);
+          }
+          return generateClusterResponse({
+            values: workspace,
+            stageValues: stageRes.data,
+          });
+        }),
+      );
+    },
+    fetch: async name => {
+      const res = await objectApi.get({ name, group: DEFAULT_GROUP });
+      if (!isEmpty(res.errors)) {
+        throw new Error(`Fetch workspace ${name} failed.`);
+      }
+      const stageRes = await objectApi.get({
+        name,
+        group: STAGE_GROUP,
+      });
+      if (!isEmpty(stageRes.errors)) {
+        throw new Error(`Fetch workspace ${name} failed.`);
+      }
+      return generateClusterResponse({
+        values: res.data,
+        stageValues: stageRes.data,
+      });
+    },
     create: async values => {
       try {
         validate(values);
@@ -86,62 +124,24 @@ export const createApi = context => {
         throw e;
       }
     },
-    remove: async name => {
+    delete: async name => {
       try {
         const res = await objectApi.remove({ name, group: DEFAULT_GROUP });
         if (!isEmpty(res.errors)) {
-          throw new Error(`Remove workspace ${name} failed.`);
+          throw new Error(`Delete workspace ${name} failed.`);
         }
         const stageRes = await objectApi.remove({
           name,
           group: STAGE_GROUP,
         });
         if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Remove workspace ${name} failed.`);
+          throw new Error(`Delete workspace ${name} failed.`);
         }
-        showMessage(`Remove workspace ${values.name} successful.`);
+        showMessage(`Delete workspace ${values.name} successful.`);
       } catch (e) {
         showMessage(e.message);
         throw e;
       }
-    },
-    fetch: async name => {
-      const res = await objectApi.get({ name, group: DEFAULT_GROUP });
-      if (!isEmpty(res.errors)) {
-        throw new Error(`Fetch workspace ${name} failed.`);
-      }
-      const stageRes = await objectApi.get({
-        name,
-        group: STAGE_GROUP,
-      });
-      if (!isEmpty(stageRes.errors)) {
-        throw new Error(`Fetch workspace ${name} failed.`);
-      }
-      return generateClusterResponse({
-        values: res.data,
-        stageValues: stageRes.data,
-      });
-    },
-    fetchAll: async () => {
-      const res = await objectApi.getAll({ group: DEFAULT_GROUP });
-      if (!isEmpty(res.errors)) {
-        throw new Error(`Fetch workspace list failed.`);
-      }
-      return await Promise.all(
-        map(res.data, async workspace => {
-          const stageRes = await objectApi.get({
-            name: workspace.name,
-            group: STAGE_GROUP,
-          });
-          if (!isEmpty(stageRes.errors)) {
-            throw new Error(`Fetch workspace list failed.`);
-          }
-          return generateClusterResponse({
-            values: workspace,
-            stageValues: stageRes.data,
-          });
-        }),
-      );
     },
   };
 };
