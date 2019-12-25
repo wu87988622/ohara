@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -77,13 +76,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
-        .flows(
-          Seq(
-            Flow(
-              from = topic.key,
-              to = Set(connector.key)
-            )
-          )
+        .endpoints(
+          Seq(topic, connector)
         )
         .create()
     )
@@ -137,13 +131,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
         .port(configurator.port)
         .request
         .name(CommonUtils.randomString(10))
-        .flows(
-          Seq(
-            Flow(
-              from = topic.key,
-              to = Set(connector.key)
-            )
-          )
+        .endpoints(
+          Seq(topic, connector)
         )
         .create()
     )

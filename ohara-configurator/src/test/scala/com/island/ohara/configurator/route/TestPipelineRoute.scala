@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.ObjectKey
@@ -54,7 +53,7 @@ class TestPipelineRoute extends OharaTest {
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
 
   @Test
-  def testFlowAndObjects(): Unit = {
+  def testEndpointAndObjects(): Unit = {
     val topic = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
     )
@@ -72,12 +71,12 @@ class TestPipelineRoute extends OharaTest {
     result(connectorApi.start(connector.key))
 
     var pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.key, Set(topic.key))).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(connector, topic)).create()
     )
 
-    pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe connector.key
-    pipeline.flows.head.to shouldBe Set(topic.key)
+    pipeline.endpoints.size shouldBe 2
+    pipeline.endpoints.map(_.key) should contain(connector.key)
+    pipeline.endpoints.map(_.key) should contain(topic.key)
     pipeline.objects.size shouldBe 2
 
     result(connectorApi.stop(connector.key))
@@ -91,7 +90,7 @@ class TestPipelineRoute extends OharaTest {
     val pipelines = result(pipelineApi.list())
 
     pipelines.size shouldBe 1
-    pipelines.head.flows.size shouldBe 1
+    pipelines.head.endpoints.size shouldBe 2
     // topic is gone
     pipelines.head.objects.size shouldBe 1
 
@@ -130,11 +129,10 @@ class TestPipelineRoute extends OharaTest {
     )
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(stream.key, Set.empty)).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoint(stream).create()
     )
-    pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe stream.key
-    pipeline.flows.head.to shouldBe Set.empty
+    pipeline.endpoints.size shouldBe 1
+    pipeline.endpoints.map(_.key) should contain(stream.key)
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.className should not be None
     pipeline.jarKeys.size shouldBe 1
@@ -148,18 +146,6 @@ class TestPipelineRoute extends OharaTest {
   }
 
   @Test
-  def testNonexistentData(): Unit = {
-    val topic = result(
-      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
-    )
-    val name     = CommonUtils.randomString(10)
-    val flow     = Flow(from = topic.key, to = Set(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())))
-    val pipeline = result(pipelineApi.request.name(name).flow(flow).create())
-    // the "to" is reference to an nonexistent data
-    pipeline.objects.size shouldBe 1
-  }
-
-  @Test
   def addMultiPipelines(): Unit = {
     val topic0 = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
@@ -169,9 +155,13 @@ class TestPipelineRoute extends OharaTest {
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
     )
 
-    val pipeline0 = result(pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic0.key, topic1.key).create())
+    val pipeline0 = result(
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(topic0, topic1)).create()
+    )
 
-    val pipeline1 = result(pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic0.key, topic1.key).create())
+    val pipeline1 = result(
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(topic0, topic1)).create()
+    )
 
     val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
@@ -196,7 +186,7 @@ class TestPipelineRoute extends OharaTest {
     )
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, connector.key).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(connector, topic)).create()
     )
 
     pipeline.objects.size shouldBe 2
@@ -225,7 +215,7 @@ class TestPipelineRoute extends OharaTest {
     result(connectorApi.start(connector.key))
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(connector.key, connector.key).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(connector, connector)).create()
     )
 
     // duplicate object is removed
@@ -255,7 +245,7 @@ class TestPipelineRoute extends OharaTest {
     result(connectorApi.start(connector.key))
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, connector.key).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(connector, topic)).create()
     )
 
     pipeline.objects.size shouldBe 2
@@ -275,37 +265,35 @@ class TestPipelineRoute extends OharaTest {
   def duplicateUpdate(): Unit = {
     val count = 10
     (0 until count).foreach(
-      _ => result(pipelineApi.request.name(CommonUtils.randomString(10)).flows(Seq.empty).update())
+      _ => result(pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq.empty).update())
     )
     result(pipelineApi.list()).size shouldBe count
   }
 
   @Test
-  def updatingNonexistentNameCanNotIgnoreFlows(): Unit = {
-    val name             = CommonUtils.randomString(10)
-    val flows: Seq[Flow] = Seq.empty
-    val pipeline         = result(pipelineApi.request.name(name).flows(flows).update())
+  def updatingNonexistentNameCanNotIgnoreEndpoints(): Unit = {
+    val name     = CommonUtils.randomString(10)
+    val pipeline = result(pipelineApi.request.name(name).endpoints(Seq.empty).update())
     result(pipelineApi.list()).size shouldBe 1
     pipeline.name shouldBe name
-    pipeline.flows shouldBe flows
+    pipeline.endpoints shouldBe Set.empty
   }
 
   @Test
-  def updateOnlyFlow(): Unit = {
+  def updateOnlyEndpoint(): Unit = {
     val topic = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
     )
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, Set.empty[ObjectKey]).update()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoint(topic).update()
     )
-    pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe topic.key
-    pipeline.flows.head.to.size shouldBe 0
+    pipeline.endpoints.size shouldBe 1
+    pipeline.endpoints.map(_.key) should contain(topic.key)
 
-    val pipeline2 = result(pipelineApi.request.key(pipeline.key).flows(Seq.empty).update())
+    val pipeline2 = result(pipelineApi.request.key(pipeline.key).endpoints(Seq.empty).update())
     result(pipelineApi.list()).size shouldBe 1
     pipeline2.name shouldBe pipeline.name
-    pipeline2.flows shouldBe Seq.empty
+    pipeline2.endpoints shouldBe Set.empty
   }
 
   @Test
@@ -324,9 +312,9 @@ class TestPipelineRoute extends OharaTest {
     )
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, connector.key).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoints(Seq(topic, connector)).create()
     )
-    pipeline.flows.size shouldBe 1
+    pipeline.endpoints.size shouldBe 2
     pipeline.objects.size shouldBe 2
   }
 
@@ -383,9 +371,10 @@ class TestPipelineRoute extends OharaTest {
     )
 
     val pipeline = result(
-      pipelineApi.request.flows(Seq(Flow(topic.key, Set(topic.key)), Flow(topic.key, Set(topic.key)))).create()
+      pipelineApi.request.endpoints(Seq(topic, topic, topic, topic)).create()
     )
 
+    pipeline.endpoints.size shouldBe 1
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.key shouldBe topic.key
   }
@@ -404,7 +393,7 @@ class TestPipelineRoute extends OharaTest {
         .topicKey(topic.key)
         .create()
     )
-    val pipeline = result(pipelineApi.request.flow(Flow(connector.key, Set(topic.key))).create())
+    val pipeline = result(pipelineApi.request.endpoints(Seq(connector, topic)).create())
     pipeline.objects.size shouldBe 2
     pipeline.objects.find(_.key == connector.key).get.className shouldBe Some(className)
   }
@@ -424,9 +413,7 @@ class TestPipelineRoute extends OharaTest {
     )
     val pipeline = result(
       pipelineApi.request
-      // the first flow contains the topic in "to"
-      // the second flow contains the topic in "from"
-        .flows(Seq(Flow(connector.key, Set(topic.key)), Flow(topic.key, Set(connector.key))))
+        .endpoints(Seq(topic, connector))
         .create()
     )
     pipeline.objects.size shouldBe 2
@@ -434,11 +421,9 @@ class TestPipelineRoute extends OharaTest {
     result(connectorApi.delete(connector.key))
     result(pipelineApi.refresh(pipeline.key))
 
-    // the topic is removed so
-    // 1) the first flow should have nothing in "to"
-    // 2) the second flow should be removed since it have nothing in "from"
-    result(pipelineApi.get(pipeline.key)).flows.size shouldBe 1
-    result(pipelineApi.get(pipeline.key)).flows.head.to shouldBe Set.empty
+    // the topic is removed so the endpoint "connector" should be removed
+    result(pipelineApi.get(pipeline.key)).endpoints.size shouldBe 1
+    result(pipelineApi.get(pipeline.key)).endpoints.map(_.key) should contain(topic.key)
     result(pipelineApi.get(pipeline.key)).objects.size shouldBe 1
   }
 
@@ -447,7 +432,7 @@ class TestPipelineRoute extends OharaTest {
     val topic = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterKey(result(brokerApi.list()).head.key).create()
     )
-    val pipeline = result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create())
+    val pipeline = result(pipelineApi.request.endpoint(topic).create())
     pipeline.objects.size shouldBe 1
     // the topic is not running so no state is responded
     pipeline.objects.flatMap(_.state).size shouldBe 0
@@ -461,8 +446,8 @@ class TestPipelineRoute extends OharaTest {
   def testNameFilter(): Unit = {
     val name     = CommonUtils.randomString(10)
     val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
-    val pipeline = result(pipelineApi.request.name(name).flow(Flow(topic.key, Set(topic.key))).create())
-    (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
+    val pipeline = result(pipelineApi.request.name(name).endpoint(topic).create())
+    (0 until 3).foreach(_ => result(pipelineApi.request.endpoint(topic).create()))
     result(pipelineApi.list()).size shouldBe 4
     val pipelines = result(pipelineApi.query.name(name).execute())
     pipelines.size shouldBe 1
@@ -473,8 +458,8 @@ class TestPipelineRoute extends OharaTest {
   def testGroupFilter(): Unit = {
     val group    = CommonUtils.randomString(10)
     val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
-    val pipeline = result(pipelineApi.request.group(group).flow(Flow(topic.key, Set(topic.key))).create())
-    (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
+    val pipeline = result(pipelineApi.request.group(group).endpoint(topic).create())
+    (0 until 3).foreach(_ => result(pipelineApi.request.endpoint(topic).create()))
     result(pipelineApi.list()).size shouldBe 4
     val pipelines = result(pipelineApi.query.group(group).execute())
     pipelines.size shouldBe 1
@@ -491,8 +476,8 @@ class TestPipelineRoute extends OharaTest {
       "e" -> JsObject("a" -> JsNumber(123))
     )
     val topic    = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
-    val pipeline = result(pipelineApi.request.tags(tags).flow(Flow(topic.key, Set(topic.key))).create())
-    (0 until 3).foreach(_ => result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create()))
+    val pipeline = result(pipelineApi.request.tags(tags).endpoint(topic).create())
+    (0 until 3).foreach(_ => result(pipelineApi.request.endpoint(topic).create()))
     result(pipelineApi.list()).size shouldBe 4
     val pipelines = result(pipelineApi.query.tags(tags).execute())
     pipelines.size shouldBe 1

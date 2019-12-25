@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, SettingDef}
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -65,57 +65,6 @@ class TestPipelineApi extends OharaTest {
   def nullName(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.name(null)
 
   @Test
-  def emptyFlows(): Unit = {
-    // pass since the update request requires the empty list
-    PipelineApi.access.request.flows(Seq.empty)
-  }
-
-  @Test
-  def nullFlows(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.flows(null)
-
-  @Test
-  def parseFlow(): Unit = {
-    val from = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to   = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val flow = FLOW_JSON_FORMAT.read(s"""
-        |  {
-        |    "from": {
-        |      "group": "${from.group}",
-        |      "name": "${from.name}"
-        |    },
-        |    "to": [
-        |      {
-        |        "group": "${to.group}",
-        |        "name": "${to.name}"
-        |      }
-        |    ]
-        |  }
-        |
-    """.stripMargin.parseJson)
-    flow.from shouldBe from
-    flow.to.size shouldBe 1
-    flow.to.head shouldBe to
-  }
-
-  @Test
-  def emptyFromInFlow(): Unit = an[DeserializationException] should be thrownBy FLOW_JSON_FORMAT.read("""
-      |  {
-      |    "from": "",
-      |    "to": ["to"]
-      |  }
-      |
-    """.stripMargin.parseJson)
-
-  @Test
-  def emptyToInFlow(): Unit = an[DeserializationException] should be thrownBy FLOW_JSON_FORMAT.read("""
-      |  {
-      |    "from": "aaa",
-      |    "to": [""]
-      |  }
-      |
-    """.stripMargin.parseJson)
-
-  @Test
   def parseCreation(): Unit = {
     val creation = CREATION_JSON_FORMAT.read(s"""
                                                           |  {
@@ -124,7 +73,7 @@ class TestPipelineApi extends OharaTest {
     """.stripMargin.parseJson)
     creation.group shouldBe GROUP_DEFAULT
     creation.name.length shouldBe SettingDef.STRING_LENGTH_LIMIT
-    creation.flows shouldBe Seq.empty
+    creation.endpoints shouldBe Set.empty
 
     val group     = CommonUtils.randomString(10)
     val name      = CommonUtils.randomString(10)
@@ -137,7 +86,7 @@ class TestPipelineApi extends OharaTest {
     """.stripMargin.parseJson)
     creation2.group shouldBe group
     creation2.name shouldBe name
-    creation2.flows shouldBe Seq.empty
+    creation2.endpoints shouldBe Set.empty
     creation2.tags shouldBe Map.empty
   }
 

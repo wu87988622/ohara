@@ -31,15 +31,11 @@ object PipelineApi {
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   /**
-    * action key. it is used to auto-remove the existent objs from flows,
+    * action key. it is used to auto-remove the existent objs from endpoints,
     */
   val REFRESH_COMMAND: String = "refresh"
 
-  final case class Flow(from: ObjectKey, to: Set[ObjectKey])
-  implicit val FLOW_JSON_FORMAT: OharaJsonFormat[Flow] =
-    JsonRefiner[Flow].format(jsonFormat2(Flow)).rejectEmptyString().refine
-
-  final case class Endpoint(group: String, name: String, kind: Option[String]) {
+  final case class Endpoint(group: String, name: String, kind: String) {
     def key: ObjectKey = ObjectKey.of(group, name)
   }
   implicit val ENDPOINT_JSON_FORMAT: OharaJsonFormat[Endpoint] =
@@ -49,25 +45,17 @@ object PipelineApi {
       .rejectEmptyString()
       .refine
 
-  /**
-    * @param flows  this filed is declared as option type since ohara supports partial update. Empty array means you want to **cleanup** this
-    *               field. And none means you don't want to change any bit of this field.
-    */
   final case class Updating(
-    // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-    flows: Option[Seq[Flow]],
     endpoints: Option[Set[Endpoint]],
     tags: Option[Map[String, JsValue]]
   )
 
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonRefiner[Updating].format(jsonFormat3(Updating)).rejectEmptyString().refine
+    JsonRefiner[Updating].format(jsonFormat2(Updating)).rejectEmptyString().refine
 
   final case class Creation(
     group: String,
     name: String,
-    // TODO: remove flows (https://github.com/oharastream/ohara/issues/3530)
-    flows: Seq[Flow],
     endpoints: Set[Endpoint],
     tags: Map[String, JsValue]
   ) extends com.island.ohara.client.configurator.v0.BasicCreation
@@ -75,10 +63,9 @@ object PipelineApi {
   implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     rulesOfKey[Creation]
-      .format(jsonFormat5(Creation))
+      .format(jsonFormat4(Creation))
       .rejectEmptyString()
       .nullToEmptyObject(TAGS_KEY)
-      .nullToEmptyArray("flows")
       .nullToEmptyArray("endpoints")
       .refine
 
@@ -100,7 +87,6 @@ object PipelineApi {
   final case class Pipeline(
     group: String,
     name: String,
-    flows: Seq[Flow],
     endpoints: Set[Endpoint],
     objects: Set[ObjectAbstract],
     jarKeys: Set[ObjectKey],
@@ -108,13 +94,9 @@ object PipelineApi {
     tags: Map[String, JsValue]
   ) extends Data {
     override def kind: String = KIND
-    // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-    def _endpoints: Set[Endpoint] =
-      if (endpoints.isEmpty) flows.flatMap(f => f.to + f.from).map(o => Endpoint(o.group, o.name, None)).toSet
-      else endpoints
   }
 
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat8(Pipeline)
+  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -136,31 +118,11 @@ object PipelineApi {
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
 
-    // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
     @Optional("default value is empty")
-    def flow(from: ObjectKey, to: ObjectKey): Request = flow(from, Set(to))
-
-    // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-    @Optional("default value is empty")
-    def flow(from: ObjectKey, to: Set[ObjectKey]): Request = flow(Flow(from = from, to = to))
-
-    // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-    @Optional("default value is empty")
-    def flow(flow: Flow): Request = flows(Seq(Objects.requireNonNull(flow)))
-
-    // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-    @Optional("default value is empty")
-    def flows(flows: Seq[Flow]): Request
+    def endpoint(data: Data): Request = endpoints(Seq(data))
 
     @Optional("default value is empty")
-    def endpoint(data: Data): Request = endpoint(Endpoint(group = data.group, name = data.name, kind = Some(data.kind)))
-
-    @Optional("default value is empty")
-    def endpoint(endpoint: Endpoint): Request = endpoints(Set(Objects.requireNonNull(endpoint)))
-
-    @Optional("default value is empty")
-    def endpoints(endpoints: Set[Endpoint]): Request
-
+    def endpoints(data: Seq[Data]): Request
     @Optional("default value is empty array in creation and None in update")
     def tags(tags: Map[String, JsValue]): Request
 
@@ -201,7 +163,6 @@ object PipelineApi {
       private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String  = _
       // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-      private[this] var flows: Seq[Flow]           = _
       private[this] var endpoints: Set[Endpoint]   = _
       private[this] var tags: Map[String, JsValue] = _
 
@@ -215,16 +176,10 @@ object PipelineApi {
         this
       }
 
-      // TODO: remove this helper (https://github.com/oharastream/ohara/issues/3530)
-      override def flows(flows: Seq[Flow]): Request = {
-        if (this.flows == null) this.flows = Objects.requireNonNull(flows)
-        else this.flows ++= Objects.requireNonNull(flows)
-        this
-      }
-
-      override def endpoints(endpoints: Set[Endpoint]): Request = {
-        if (this.endpoints == null) this.endpoints = Objects.requireNonNull(endpoints)
-        else this.endpoints ++= Objects.requireNonNull(endpoints)
+      override def endpoints(data: Seq[Data]): Request = {
+        val newEndpoints = data.map(d => Endpoint(group = d.group, name = d.name, kind = d.kind)).toSet
+        if (this.endpoints == null) this.endpoints = newEndpoints
+        else this.endpoints ++= newEndpoints
         this
       }
 
@@ -241,7 +196,6 @@ object PipelineApi {
             Creation(
               group = CommonUtils.requireNonEmpty(group),
               name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
-              flows = if (flows == null) Seq.empty else flows,
               endpoints = if (endpoints == null) Set.empty else endpoints,
               tags = if (tags == null) Map.empty else tags
             )
@@ -253,7 +207,6 @@ object PipelineApi {
         UPDATING_JSON_FORMAT.read(
           UPDATING_JSON_FORMAT.write(
             Updating(
-              flows = Option(flows),
               endpoints = Option(endpoints),
               tags = Option(tags)
             )

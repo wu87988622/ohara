@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.{
   BrokerApi,
   ConnectorApi,
@@ -173,7 +172,9 @@ class TestMetrics extends WithBrokerWorker {
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, sink.key).create())
+    val pipeline = result(
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoint(topic).endpoint(sink).create()
+    )
 
     pipeline.objects.filter(_.key == sink.key).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(sink.key))
@@ -221,7 +222,9 @@ class TestMetrics extends WithBrokerWorker {
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString(10)).flow(topic.key, source.key).create())
+    val pipeline = result(
+      pipelineApi.request.name(CommonUtils.randomString(10)).endpoint(topic).endpoint(source).create()
+    )
 
     pipeline.objects.filter(_.key == source.key).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(source.key))
@@ -296,7 +299,9 @@ class TestMetrics extends WithBrokerWorker {
     val pipeline = result(
       pipelineApi.request
         .name(CommonUtils.randomString(10))
-        .flows(Seq(Flow(t1.key, Set(stream.key)), Flow(stream.key, Set(t2.key))))
+        .endpoint(t1)
+        .endpoint(t2)
+        .endpoint(stream)
         .create()
     )
 
