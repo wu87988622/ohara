@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { ApiProvider, useApi } from 'context/api/ApiContext';
+import { AppProvider, useApp } from 'context/app/AppContext';
 import {
   BrokerProvider,
   useBrokerState,
@@ -89,6 +91,12 @@ import {
 } from 'context/stream/StreamContext';
 
 export {
+  // Api
+  ApiProvider,
+  useApi,
+  // App
+  AppProvider,
+  useApp,
   // Broker
   BrokerProvider,
   useBrokerState,

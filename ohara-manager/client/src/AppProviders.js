@@ -25,6 +25,8 @@ import {
 import MuiTheme from './theme/muiTheme';
 import { ErrorBoundary } from 'components/ErrorPages';
 import {
+  ApiProvider,
+  AppProvider,
   BrokerProvider,
   DialogProvider,
   FileProvider,
@@ -59,8 +61,10 @@ const AppProviders = ({ children }) => {
         <MuiThemeProvider theme={MuiTheme} children={children} />,
         <ThemeProvider theme={MuiTheme} children={children} />,
         <ErrorBoundary children={children} />,
+        <AppProvider children={children} />,
         <DialogProvider children={children} />,
         <SnackbarProvider children={children} />,
+        <ApiProvider children={children} />,
         <ConfiguratorProvider children={children} />,
         <NodeProvider children={children} />,
         <ZookeeperProvider children={children} />,
