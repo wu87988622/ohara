@@ -14,12 +14,30 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import styled, { css } from 'styled-components';
 
-export const fetchPipelinesRoutine = createRoutine('FETCH_PIPELINES');
-export const addPipelineRoutine = createRoutine('ADD_PIPELINE');
-export const deletePipelineRoutine = createRoutine('DELETE_PIPELINE');
-export const initializeRoutine = createRoutine('INITIALIZE');
-export const setCurrentPipelineRoutine = createRoutine('SET_CURRENT_PIPELINE');
-export const updatePipelineRoutine = createRoutine('UPDATE_PIPELINE');
-export const setSelectedCellRoutine = createRoutine('SET_SELECTED_CELL');
+export const StyledDevTool = styled.div(
+  ({ theme }) => css`
+    position: absolute;
+    /* AppBar width */
+    left: 70px;
+    width: calc(100% - 70px);
+    min-width: 956px;
+    height: 50%;
+
+    /* We need to leave some space for StatusBar */
+    bottom: 26px;
+    z-index: ${theme.zIndex.modal};
+    background-color: ${theme.palette.common.white};
+
+    &.is-close {
+      display: none;
+    }
+
+    .header {
+      width: 100%;
+      height: 48px;
+      background-color: ${theme.palette.grey[50]};
+    }
+  `,
+);

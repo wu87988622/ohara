@@ -16,6 +16,7 @@
 
 import styled, { css } from 'styled-components';
 import Grid from '@material-ui/core/Grid';
+import TextField from '@material-ui/core/TextField';
 
 import { tabName } from '../DevToolDialog';
 
@@ -35,15 +36,8 @@ export const StyledHeader = styled(Grid)(
       align-items: center;
 
       .item {
-        width: 24px;
-        height: 24px;
-        color: ${theme.palette.grey[500]};
         margin: ${theme.spacing(1)}px;
         cursor: pointer;
-
-        &:hover {
-          background-color: ${theme.palette.grey[200]};
-        }
       }
     }
   `,
@@ -69,4 +63,8 @@ export const StyledSearchBody = styled.div`
     background-color: ${props => props.theme.palette.primary[600]};
     align-self: flex-end;
   }
+`;
+
+export const StyledTextField = styled(TextField)`
+  width: 230px;
 `;

@@ -51,7 +51,11 @@ const AppBar = () => {
   const { data: pipelines, currentPipeline } = usePipelineState();
   const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
   const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
-  const { open: openDevToolDialog } = useDevToolDialog();
+  const {
+    open: openDevToolDialog,
+    isOpen: isDevToolDialogOpen,
+    close: closeDevToolDialog,
+  } = useDevToolDialog();
   const { open: openListWorkspacesDialog } = useListWorkspacesDialog();
 
   React.useEffect(() => {
@@ -123,7 +127,12 @@ const AppBar = () => {
             onClick={openListWorkspacesDialog}
           />
           <AssignmentIcon className="item" />
-          <DeveloperModeIcon className="item" onClick={openDevToolDialog} />
+          <DeveloperModeIcon
+            className="item"
+            onClick={
+              isDevToolDialogOpen ? closeDevToolDialog : openDevToolDialog
+            }
+          />
           <StorageIcon
             className="nodes item"
             onClick={() => setIsNodeDialogOpen(true)}

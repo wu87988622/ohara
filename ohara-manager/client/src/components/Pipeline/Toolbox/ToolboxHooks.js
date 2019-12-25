@@ -19,6 +19,39 @@ import { isEmpty } from 'lodash';
 
 import * as fileApi from 'api/fileApi';
 import { hashKey } from 'utils/object';
+import { useTopicState, useTopicActions } from 'context';
+
+export const useTopics = workspace => {
+  const { data: topicsData } = useTopicState();
+  const { fetchTopics } = useTopicActions();
+
+  // Private topic
+  const privateTopic = {
+    settings: {
+      name: 'Pipeline Only',
+      tags: { type: 'private', label: 'Pipeline Only' },
+    },
+  };
+
+  const topics = [privateTopic, ...topicsData]
+    .map(topic => ({
+      classType: 'topic',
+      name: topic.settings.name,
+      type: topic.settings.tags.type,
+      displayName: topic.settings.tags.displayName || '',
+    }))
+    .filter(
+      // Private topics are hidden in Toolbox
+      topic => topic.type === 'public' || topic.name === 'Pipeline Only',
+    );
+
+  useEffect(() => {
+    if (!workspace) return;
+    fetchTopics(workspace);
+  }, [fetchTopics, workspace]);
+
+  return [topics, topicsData];
+};
 
 export const useFiles = workspace => {
   // We're not filtering out other jars here
@@ -45,9 +78,9 @@ export const useFiles = workspace => {
           if (streamClasses.length > 0) {
             const results = streamClasses
               .map(({ className, classType }) => {
-                const displayName = className.split('.').pop();
+                const name = className.split('.').pop();
                 return {
-                  displayName,
+                  name,
                   classType,
                   className,
                 };
@@ -84,9 +117,9 @@ export const useToolboxHeight = ({
   const panelAddButtonRef = useRef(null);
 
   useEffect(() => {
-    if (!paper) return;
+    if (!paper.current) return;
 
-    const paperHeight = paper.getComputedSize().height;
+    const paperHeight = paper.current.getComputedSize().height;
     const toolboxOffsetTop = toolboxRef.current.state.y + 8; // 8 is the offset top of toolbox
     const toolboxHeaderHeight = toolboxHeaderRef.current.clientHeight;
     const summaryHeight = panelSummaryRef.current.clientHeight * 4; // we have 4 summaries
@@ -101,6 +134,7 @@ export const useToolboxHeight = ({
 
     const panelHeights = {
       source: itemHeight * sources.length + addButtonHeight,
+      // +1 for the private topic icon
       topic: itemHeight * topics.length + addButtonHeight,
       stream: itemHeight * streams.length + addButtonHeight,
       sink: itemHeight * sinks.length + addButtonHeight,

@@ -87,7 +87,7 @@ const TopicGraph = params => {
         // The link doesn't show up in the right position, set it to
         // `transparent` and reset it back in the mousemove event
         link.attr({ line: { stroke: 'transparent' } });
-        link.addTo(graph);
+        link.addTo(graph.current);
       });
 
       this.updateBox();
@@ -96,7 +96,7 @@ const TopicGraph = params => {
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
       const bbox = this.getBBox({ useModelGeometry: true });
-      const scale = paper.scale();
+      const scale = paper.current.scale();
 
       this.$box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
@@ -115,7 +115,9 @@ const TopicGraph = params => {
         this.paper.$document.on('mousemove', function(event) {
           if (link) {
             if (!link.get('target').id) {
-              const localPoint = paper.paperToLocalPoint(paper.translate());
+              const localPoint = paper.current.paperToLocalPoint(
+                paper.current.translate(),
+              );
 
               // 290: AppBar and Navigator width
               // 72: Toolbar height

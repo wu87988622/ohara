@@ -16,16 +16,11 @@
 
 import React, { createContext, useContext, useReducer, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import Snackbar from '@material-ui/core/Snackbar';
-import Icon from '@material-ui/core/Icon';
 import IconButton from '@material-ui/core/IconButton';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
 import Slide from '@material-ui/core/Slide';
-
-const StyledCloseIcon = styled(Icon)`
-  font-size: 15px;
-`;
+import CloseIcon from '@material-ui/icons/Close';
 
 const SnackbarContext = createContext();
 
@@ -70,8 +65,13 @@ const SnackbarProvider = ({ children }) => {
         <SnackbarContent
           message={state.message}
           action={[
-            <IconButton key="close" color="inherit" onClick={handleClose}>
-              <StyledCloseIcon className="fas fa-times" />
+            <IconButton
+              size="small"
+              key="close"
+              color="inherit"
+              onClick={handleClose}
+            >
+              <CloseIcon fontSize="small" />
             </IconButton>,
           ]}
         />

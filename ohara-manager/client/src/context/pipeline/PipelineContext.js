@@ -68,10 +68,11 @@ const usePipelineActions = () => {
 
   return {
     fetchPipelines: actions.createFetchPipelines(state, dispatch, showMessage),
-    setCurrentPipeline: actions.createSetCurrentPipeline(dispatch),
     addPipeline: actions.createAddPipeline(state, dispatch, showMessage),
     deletePipeline: actions.createDeletePipeline(state, dispatch, showMessage),
     updatePipeline: actions.createUpdatePipeline(state, dispatch, showMessage),
+    setCurrentPipeline: actions.createSetCurrentPipeline(dispatch),
+    setSelectedCell: actions.createSetSelectedCell(dispatch),
   };
 };
 

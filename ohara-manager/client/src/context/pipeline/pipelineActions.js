@@ -15,14 +15,7 @@
  */
 
 import * as pipelineApi from 'api/pipelineApi';
-import {
-  fetchPipelinesRoutine,
-  addPipelineRoutine,
-  setCurrentPipelineRoutine,
-  deletePipelineRoutine,
-  updatePipeineRoutine,
-} from './pipelineRoutines';
-
+import * as routines from './pipelineRoutines';
 import { hashKey } from 'utils/object';
 
 const createFetchPipelines = (
@@ -32,31 +25,31 @@ const createFetchPipelines = (
 ) => async workspace => {
   if (state.isFetching || state.lastUpdated || state.error) return;
 
-  dispatch(fetchPipelinesRoutine.request());
+  dispatch(routines.fetchPipelinesRoutine.request());
   const pipelines = await pipelineApi.getAll({ group: hashKey(workspace) });
 
   if (pipelines.errors) {
-    dispatch(fetchPipelinesRoutine.failure(pipelines.title));
+    dispatch(routines.fetchPipelinesRoutine.failure(pipelines.title));
     showMessage(pipelines.title);
     return;
   }
 
-  dispatch(fetchPipelinesRoutine.success(pipelines.data));
+  dispatch(routines.fetchPipelinesRoutine.success(pipelines.data));
 };
 
 const createAddPipeline = (state, dispatch, showMessage) => async values => {
   if (state.isFetching) return;
 
-  dispatch(addPipelineRoutine.request());
+  dispatch(routines.addPipelineRoutine.request());
   const pipeline = await pipelineApi.create(values);
 
   if (pipeline.errors) {
-    dispatch(addPipelineRoutine.failure(pipeline.title));
+    dispatch(routines.addPipelineRoutine.failure(pipeline.title));
     showMessage(pipeline.title);
     return;
   }
 
-  dispatch(addPipelineRoutine.success(pipeline.data));
+  dispatch(routines.addPipelineRoutine.success(pipeline.data));
   showMessage(pipeline.title);
 };
 
@@ -67,7 +60,7 @@ const createDeletePipeline = (
 ) => async pipeline => {
   if (state.isFetching) return;
 
-  dispatch(deletePipelineRoutine.request());
+  dispatch(routines.deletePipelineRoutine.request());
 
   // TODO: stop all connectors before processing to delete pipeline. Tracked in
   // https://github.com/oharastream/ohara/issues/3331
@@ -78,13 +71,15 @@ const createDeletePipeline = (
   });
 
   if (deletePipelineResponse.errors) {
-    dispatch(deletePipelineRoutine.failure(deletePipelineResponse.title));
+    dispatch(
+      routines.deletePipelineRoutine.failure(deletePipelineResponse.title),
+    );
     showMessage(deletePipelineResponse.title);
     return;
   }
 
   dispatch(
-    deletePipelineRoutine.success({
+    routines.deletePipelineRoutine.success({
       name: pipeline.name,
       group: pipeline.group,
     }),
@@ -95,22 +90,28 @@ const createDeletePipeline = (
 const createUpdatePipeline = (state, dispatch, showMessage) => async value => {
   if (state.isFetching) return;
 
-  dispatch(updatePipeineRoutine.request());
+  dispatch(routines.updatePipelineRoutine.request());
 
   const updatePipelineResponse = await pipelineApi.update(value);
 
   if (updatePipelineResponse.errors) {
-    dispatch(updatePipeineRoutine.failure(updatePipelineResponse.title));
+    dispatch(
+      routines.updatePipelineRoutine.failure(updatePipelineResponse.title),
+    );
     showMessage(updatePipelineResponse.title);
     return;
   }
 
-  dispatch(updatePipeineRoutine.success(updatePipelineResponse.data));
+  dispatch(routines.updatePipelineRoutine.success(updatePipelineResponse.data));
   showMessage(updatePipelineResponse.title);
 };
 
 const createSetCurrentPipeline = dispatch => pipelineName => {
-  dispatch(setCurrentPipelineRoutine.trigger(pipelineName));
+  dispatch(routines.setCurrentPipelineRoutine.trigger(pipelineName));
+};
+
+const createSetSelectedCell = dispatch => cellName => {
+  dispatch(routines.setSelectedCellRoutine.trigger(cellName));
 };
 
 export {
@@ -119,4 +120,5 @@ export {
   createAddPipeline,
   createSetCurrentPipeline,
   createUpdatePipeline,
+  createSetSelectedCell,
 };

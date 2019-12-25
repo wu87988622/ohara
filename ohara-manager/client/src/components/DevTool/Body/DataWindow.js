@@ -16,7 +16,6 @@
 
 import { isEmpty } from 'lodash';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
@@ -29,6 +28,7 @@ import * as logApi from 'api/logApi';
 import * as brokerApi from 'api/brokerApi';
 
 import { tabName } from '../DevToolDialog';
+import { hashKey } from 'utils/object';
 
 // the react-virtualized <List> cached row style
 const cache = new CellMeasurerCache({
@@ -39,14 +39,11 @@ const cache = new CellMeasurerCache({
 const DataWindow = props => {
   const { location } = props;
   const searchParams = new URLSearchParams(location.search);
-  const { workspaceName } = useParams();
-  const { findByWorkspaceName } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
 
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [topicResult, setTopicResult] = useState([]);
   const [logData, setLogData] = useState([]);
-
-  const currentWorkspace = findByWorkspaceName(workspaceName);
 
   const type = searchParams.get('type') || '';
 
@@ -67,7 +64,7 @@ const DataWindow = props => {
     let data = [];
     const response = await inspectApi.getTopicData({
       name: topicName,
-      group: currentWorkspace.settings.name,
+      group: hashKey(currentWorkspace),
       limit: topicLimit,
       timeout: topicTimeout,
     });

@@ -23,13 +23,13 @@ import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
 import { useSnackbar } from 'context/SnackbarContext';
 import { Paper, PaperWrapper } from './GraphStyles';
-import { usePrevious } from 'utils/hooks';
+import { usePrevious, useMountEffect } from 'utils/hooks';
 import { updateCurrentCell, createConnection } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
+import { usePipelineActions, usePipelineState } from 'context';
 
 const Graph = props => {
   const { palette } = useTheme();
-  const [hasSelectedCell, setHasSelectedCell] = useState(false);
   const [initToolboxList, setInitToolboxList] = useState(0);
   const {
     setZoom,
@@ -40,6 +40,8 @@ const Graph = props => {
   } = useZoom();
 
   const { setCenter, isCentered, setIsCentered } = useCenter();
+  const { setSelectedCell } = usePipelineActions();
+  const { selectedCell } = usePipelineState();
   const showMessage = useSnackbar();
 
   const {
@@ -58,7 +60,7 @@ const Graph = props => {
   let dragStartPosition = useRef(null);
   let currentCell = useRef(null);
 
-  useEffect(() => {
+  useMountEffect(() => {
     const renderGraph = () => {
       graph.current = new joint.dia.Graph();
       paper.current = new joint.dia.Paper({
@@ -108,7 +110,11 @@ const Graph = props => {
           },
         };
 
-        setHasSelectedCell(true);
+        const { title, classType } = cellView.model.attributes;
+        setSelectedCell({
+          name: title,
+          classType,
+        });
 
         if (!cellView.$box) return;
 
@@ -208,7 +214,7 @@ const Graph = props => {
         resetAll();
         resetLink();
         currentCell.current = null;
-        setHasSelectedCell(false);
+        setSelectedCell(null);
       });
 
       paper.current.on('cell:pointerup blank:pointerup', () => {
@@ -248,13 +254,7 @@ const Graph = props => {
     };
 
     renderGraph();
-  }, [
-    palette.common.white,
-    palette.grey,
-    palette.primary.main,
-    setIsCentered,
-    showMessage,
-  ]);
+  });
 
   const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {
@@ -319,7 +319,7 @@ const Graph = props => {
             setIsCentered(true);
           }
         }}
-        hasSelectedCell={hasSelectedCell}
+        hasSelectedCell={Boolean(selectedCell)}
       />
       <PaperWrapper>
         <Paper id="paper"></Paper>
@@ -328,8 +328,8 @@ const Graph = props => {
           expanded={toolboxExpanded}
           handleClick={handleToolboxClick}
           handleClose={handleToolboxClose}
-          paper={paper.current}
-          graph={graph.current}
+          paper={paper}
+          graph={graph}
           toolboxKey={toolboxKey}
           setToolboxExpanded={setToolboxExpanded}
           initToolboxList={initToolboxList}

@@ -45,3 +45,6 @@ export const useDebounce = (value, delay) => {
 
   return debouncedValue;
 };
+
+// Only runs the effect on mount without eslint warning from "react-hooks/exhaustive-deps" rule
+export const useMountEffect = callback => useEffect(callback, []);

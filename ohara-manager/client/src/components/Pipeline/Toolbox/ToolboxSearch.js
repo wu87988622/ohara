@@ -53,10 +53,10 @@ const ToolboxSearch = ({
       let streams = [];
 
       searchData.forEach(data => {
-        const { displayName, classType } = data;
-        const name = displayName.toLowerCase();
+        const { name, classType } = data;
+        const lowercaseName = name.toLowerCase();
 
-        if (name.includes(debouncedSearchTerm)) {
+        if (lowercaseName.includes(debouncedSearchTerm)) {
           if (classType === 'source') sources.push(data);
           if (classType === 'topic') topics.push(data);
           if (classType === 'stream') streams.push(data);

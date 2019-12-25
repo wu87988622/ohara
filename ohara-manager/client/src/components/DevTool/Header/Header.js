@@ -14,103 +14,35 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
-import moment from 'moment';
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import styled, { css } from 'styled-components';
+import moment from 'moment';
+import { isEmpty } from 'lodash';
 
 import RefreshIcon from '@material-ui/icons/Refresh';
 import SearchIcon from '@material-ui/icons/Search';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@material-ui/icons/Close';
+import IconButton from '@material-ui/core/IconButton';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import Grid from '@material-ui/core/Grid';
 import Popover from '@material-ui/core/Popover';
-import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
-import Typography from '@material-ui/core/Typography';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
-import InputBase from '@material-ui/core/InputBase';
-
-import { StyledHeader, StyledSearchBody } from './HeaderStyles';
-import { tabName } from '../DevToolDialog';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import * as logApi from 'api/logApi';
-
-const StyledTextField = styled(TextField)`
-  width: 230px;
-`;
-
-const BootstrapInput = styled(InputBase)(
-  ({ theme }) => css`
-    width: 160px;
-    border-width: 1px;
-    border-style: solid;
-    border-color: ${theme.palette.grey[200]};
-    margin: ${theme.spacing(1)}px;
-  `,
-);
-const DialogSelect = props => {
-  const {
-    index,
-    currentTab,
-    value,
-    onChange,
-    list,
-    setAnchor,
-    anchor = null,
-    disabled = false,
-  } = props;
-  return (
-    <Typography component="div" hidden={index !== currentTab}>
-      <FormControl disabled={disabled}>
-        <Select
-          value={value}
-          onOpen={setAnchor}
-          onChange={onChange}
-          input={<BootstrapInput />}
-          MenuProps={{
-            getContentAnchorEl: null,
-            anchorEl: anchor,
-            anchorOrigin: {
-              vertical: 'bottom',
-              horizontal: 'center',
-            },
-            transformOrigin: {
-              vertical: 'top',
-              horizontal: 'center',
-            },
-          }}
-        >
-          {list.map(item => {
-            return (
-              <MenuItem value={item} key={item}>
-                {item}
-              </MenuItem>
-            );
-          })}
-        </Select>
-      </FormControl>
-    </Typography>
-  );
-};
-DialogSelect.propTypes = {
-  index: PropTypes.string.isRequired,
-  currentTab: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  list: PropTypes.array.isRequired,
-  setAnchor: PropTypes.func.isRequired,
-  anchor: PropTypes.any,
-  disabled: PropTypes.bool,
-};
+import DevToolSelect from './DevToolSelect';
+import { tabName } from '../DevToolDialog';
+import { Button } from 'components/common/Form';
+import {
+  StyledHeader,
+  StyledSearchBody,
+  StyledTextField,
+} from './HeaderStyles';
 
 const Header = props => {
   const { tabIndex, data, topics, ...others } = props;
@@ -132,20 +64,8 @@ const Header = props => {
     setSelectAnchor(event.currentTarget);
   };
 
-  const handleSelectTopic = (event, object) => {
-    setDataDispatch({ topicName: object.key });
-  };
-
-  const handleSelectService = (event, object) => {
-    setDataDispatch({ service: object.key });
-  };
-
-  const handleSelectServiceNodes = (event, object) => {
-    setDataDispatch({ hostname: object.key });
-  };
-
-  const handleSelectStreams = (event, object) => {
-    setDataDispatch({ stream: object.key });
+  const handleSelect = (event, selectName) => {
+    setDataDispatch({ [selectName]: event.target.value });
   };
 
   const handleRefresh = () => {
@@ -179,7 +99,7 @@ const Header = props => {
     }
   };
 
-  const handleButtonClick = () => {
+  const handleQueryButtonClick = () => {
     if (tabIndex === tabName.topic) {
       fetchTopicData(data.topicLimit);
     } else {
@@ -218,6 +138,16 @@ const Header = props => {
     }
   };
 
+  const isButtonDisabled = data => {
+    const { type, topicName, service, isLoading, stream } = data;
+
+    // true -> disabled
+    if (isLoading) return true;
+    if (type === 'topics' && !topicName) return true;
+    if (type === 'logs' && !service) return true;
+    if (type === 'logs' && (service === 'stream' && !stream)) return true;
+  };
+
   return (
     <StyledHeader
       container
@@ -232,55 +162,102 @@ const Header = props => {
           textColor="primary"
           onChange={handleTabChange}
         >
-          <Tab value={tabName.topic} label={tabName.topic} />
-          <Tab value={tabName.log} label={tabName.log} />
+          <Tab
+            value={tabName.topic}
+            label={tabName.topic}
+            disabled={data.isLoading}
+          />
+          <Tab
+            value={tabName.log}
+            label={tabName.log}
+            disabled={data.isLoading}
+          />
         </Tabs>
       </Grid>
+
       <Grid item xs={8} lg={7}>
         <div className="items">
-          <DialogSelect
+          <DevToolSelect
             index={tabName.topic}
             currentTab={tabIndex}
             value={data.topicName}
-            onChange={handleSelectTopic}
+            onChange={event => handleSelect(event, 'topicName')}
             list={topics.map(topic => topic.settings.name)}
             setAnchor={handleSelectAnchor}
             anchor={selectAnchor}
           />
-          <DialogSelect
+          <DevToolSelect
             index={tabName.log}
             currentTab={tabIndex}
             value={data.service}
-            onChange={handleSelectService}
+            onChange={event => handleSelect(event, 'service')}
             list={Object.keys(logApi.services)}
             setAnchor={handleSelectAnchor}
             anchor={selectAnchor}
           />
-          {data.service === 'stream' ? (
-            <DialogSelect
+          {data.service === 'stream' && (
+            <DevToolSelect
               index={tabName.log}
               currentTab={tabIndex}
               value={data.stream}
-              onChange={handleSelectStreams}
+              onChange={event => handleSelect(event, 'stream')}
               list={data.streams}
               setAnchor={handleSelectAnchor}
               anchor={selectAnchor}
             />
-          ) : null}
-          <DialogSelect
+          )}
+
+          <DevToolSelect
             disabled={
               !data.service || (data.service === 'stream' && !data.stream)
             }
             index={tabName.log}
             currentTab={tabIndex}
             value={data.hostname}
-            onChange={handleSelectServiceNodes}
+            onChange={event => handleSelect(event, 'hostname')}
             list={data.hosts}
             setAnchor={handleSelectAnchor}
             anchor={selectAnchor}
           />
-          <RefreshIcon className="item" onClick={handleRefresh} />
-          <SearchIcon className="item" onClick={handleSearchClick} />
+
+          <IconButton
+            className="item"
+            disabled={isButtonDisabled(data)}
+            onClick={handleRefresh}
+            size="small"
+          >
+            <Tooltip title="Fetch the data again" enterDelay={1000}>
+              <RefreshIcon />
+            </Tooltip>
+          </IconButton>
+
+          <IconButton
+            disabled={isButtonDisabled(data)}
+            className="item"
+            onClick={handleSearchClick}
+            size="small"
+          >
+            <Tooltip title="Query with different parameters" enterDelay={1000}>
+              <SearchIcon />
+            </Tooltip>
+          </IconButton>
+
+          <IconButton
+            className="item"
+            onClick={handleOpenNewWindow}
+            size="small"
+          >
+            <Tooltip title="Open in a new window" enterDelay={1000}>
+              <OpenInNewIcon />
+            </Tooltip>
+          </IconButton>
+
+          <IconButton className="item" onClick={closeDialog} size="small">
+            <Tooltip title="Close this panel" enterDelay={1000}>
+              <CloseIcon />
+            </Tooltip>
+          </IconButton>
+
           <Popover
             open={Boolean(searchAnchor)}
             anchorEl={searchAnchor}
@@ -307,7 +284,7 @@ const Header = props => {
                 />
                 <Button
                   variant="contained"
-                  onClick={handleButtonClick}
+                  onClick={handleQueryButtonClick}
                   disabled={isEmpty(data.topicName)}
                 >
                   QUERY
@@ -383,8 +360,7 @@ const Header = props => {
                   />
                 </RadioGroup>
                 <Button
-                  variant="contained"
-                  onClick={handleButtonClick}
+                  onClick={handleQueryButtonClick}
                   disabled={isEmpty(data.service)}
                 >
                   QUERY
@@ -392,8 +368,6 @@ const Header = props => {
               </StyledSearchBody>
             )}
           </Popover>
-          <OpenInNewIcon className="item" onClick={handleOpenNewWindow} />
-          <CloseIcon className="item" onClick={closeDialog} />
         </div>
       </Grid>
     </StyledHeader>
@@ -403,6 +377,8 @@ const Header = props => {
 Header.propTypes = {
   tabIndex: PropTypes.string.isRequired,
   data: PropTypes.shape({
+    type: PropTypes.string.isRequired,
+    isLoading: PropTypes.bool.isRequired,
     service: PropTypes.string.isRequired,
     topicLimit: PropTypes.number,
     topicName: PropTypes.string,

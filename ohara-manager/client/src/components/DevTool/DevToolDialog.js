@@ -14,45 +14,28 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
-import moment from 'moment';
 import React, { useEffect, useState, useCallback, useReducer } from 'react';
-import styled, { css } from 'styled-components';
+import moment from 'moment';
+import { isEmpty, get } from 'lodash';
 import { useParams } from 'react-router-dom';
-
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 
-import { useDevToolDialog, useWorkspace, useTopicState } from 'context';
 import * as inspectApi from 'api/inspectApi';
 import * as logApi from 'api/logApi';
 import * as streamApi from 'api/streamApi';
 import Header from './Header';
 import Body from './Body';
 import StatusBar from './StatusBar';
-
-const StyledDevTool = styled.div(
-  ({ theme }) => css`
-    position: absolute;
-    left: 70px;
-    width: calc(100% - 70px);
-    min-width: 956px;
-    height: 468px;
-    /* We need to leave some space for StatusBar */
-    bottom: 26px;
-    z-index: ${theme.zIndex.modal};
-    background-color: ${theme.palette.common.white};
-
-    &.is-close {
-      display: none;
-    }
-
-    .header {
-      width: 100%;
-      height: 48px;
-      background-color: ${theme.palette.grey[50]};
-    }
-  `,
-);
+import { hashKey } from 'utils/object';
+import {
+  useDevToolDialog,
+  useWorkspace,
+  useTopicState,
+  usePipelineState,
+  usePipelineActions,
+} from 'context';
+import { usePrevious } from 'utils/hooks';
+import { StyledDevTool } from './DevToolDialogStyles';
 
 export const tabName = {
   topic: 'topics',
@@ -62,10 +45,12 @@ export const tabName = {
 const initialState = {
   type: tabName.topic,
   isLoading: false,
+
   /* topics tab */
   topicName: '',
   topicLimit: 10,
   topicData: [],
+
   /* logs tab */
   service: '',
   streams: [],
@@ -114,19 +99,48 @@ const listCache = new CellMeasurerCache({
 const DevToolDialog = () => {
   const { pipelineName } = useParams();
   const { data: topics } = useTopicState();
-  const { currentWorkspace, currentBroker, currentZookeeper } = useWorkspace();
+  const {
+    currentWorkspace,
+    currentWorker,
+    currentBroker,
+    currentZookeeper,
+  } = useWorkspace();
 
   const [tabIndex, setTabIndex] = useState('topics');
   const { isOpen, close: closeDialog } = useDevToolDialog();
 
+  const { selectedCell } = usePipelineState();
+  const { setSelectedCell } = usePipelineActions();
   const [data, setDataDispatch] = useReducer(reducer, initialState);
 
+  const getService = classType => {
+    if (classType === 'source' || classType === 'sink') return 'worker';
+    if (classType === 'topic') return 'broker';
+    if (classType === 'stream') return 'stream';
+  };
+
   useEffect(() => {
-    const isClient = typeof window === 'object';
-    if (!isClient) {
-      return false;
+    // The selected cell could be other connector types do a quick check here
+    if (!selectedCell || !isOpen) return;
+
+    const isTopic = get(selectedCell, 'classType', null) === 'topic';
+
+    if (isTopic) {
+      if (data.type === 'logs') {
+        return setDataDispatch({
+          topicName: selectedCell.name,
+          service: 'broker',
+        });
+      }
+      return setDataDispatch({ topicName: selectedCell.name });
     }
 
+    setTabIndex(tabName.log);
+    const service = getService(selectedCell.classType);
+    setDataDispatch({ type: tabName.log, service });
+  }, [data.type, isOpen, selectedCell, topics]);
+
+  useEffect(() => {
     function handleResize() {
       // when window resize, we force re-render the log data height
       // give it a little delay to avoid performance issue
@@ -142,7 +156,7 @@ const DevToolDialog = () => {
       setDataDispatch({ isLoading: true });
       const response = await inspectApi.getTopicData({
         name: data.topicName,
-        group: currentWorkspace.settings.name,
+        group: hashKey(currentWorkspace),
         limit: topicLimit,
         timeout: 5000,
       });
@@ -161,14 +175,32 @@ const DevToolDialog = () => {
     [data.topicName, currentWorkspace],
   );
 
+  const prevTopicName = usePrevious(data.topicName);
   useEffect(() => {
     if (isEmpty(data.topicName) || isEmpty(currentWorkspace)) return;
+    if (prevTopicName === data.topicName) return;
+    if (data.isLoading) return;
+
     fetchTopicData();
-  }, [data.topicName, currentWorkspace, fetchTopicData]);
+  }, [
+    currentWorkspace,
+    data.isLoading,
+    data.topicName,
+    fetchTopicData,
+    prevTopicName,
+  ]);
+
+  const zookeeperName = get(currentZookeeper, 'settings.name', '');
+  const zookeeperGroup = get(currentZookeeper, 'settings.group', '');
+  const brokerName = get(currentBroker, 'settings.name', '');
+  const brokerGroup = get(currentBroker, 'settings.group', '');
+  const workerName = get(currentWorker, 'settings.name', '');
+  const workerGroup = get(currentWorker, 'settings.group', '');
+  const workspaceName = get(currentWorkspace, 'settings.name', '');
 
   const fetchLogs = useCallback(
     async (timeSeconds = 600, hostname = '') => {
-      let response = {};
+      let response;
       setDataDispatch({ isLoading: true });
       switch (data.service) {
         case 'configurator':
@@ -178,37 +210,38 @@ const DevToolDialog = () => {
           break;
         case 'zookeeper':
           response = await logApi.getZookeeperLog({
-            name: currentZookeeper.settings.name,
-            group: currentZookeeper.settings.group,
+            name: zookeeperName,
+            group: zookeeperGroup,
             sinceSeconds: timeSeconds,
           });
           break;
         case 'broker':
           response = await logApi.getBrokerLog({
-            name: currentBroker.settings.name,
-            group: currentBroker.settings.group,
+            name: brokerName,
+            group: brokerGroup,
             sinceSeconds: timeSeconds,
           });
           break;
         case 'worker':
           response = await logApi.getWorkerLog({
-            name: currentWorkspace.settings.name,
-            group: currentWorkspace.settings.group,
+            name: workerName,
+            group: workerGroup,
             sinceSeconds: timeSeconds,
           });
           break;
         case 'stream':
-          if (!isEmpty(data.stream) && !isEmpty(pipelineName)) {
+          if (data.stream && pipelineName) {
             response = await logApi.getStreamLog({
               name: data.stream,
-              group: currentWorkspace.settings.name + pipelineName,
+              group: workspaceName + pipelineName,
               sinceSeconds: timeSeconds,
             });
           }
           break;
         default:
       }
-      if (!response.errors) {
+
+      if (response && !response.errors) {
         const logResponse = response.data;
         setDataDispatch({ hosts: logResponse.logs.map(log => log.hostname) });
 
@@ -232,15 +265,20 @@ const DevToolDialog = () => {
           setDataDispatch({ hostLog: [] });
         }
       }
+
       setDataDispatch({ isLoading: false });
     },
     [
+      brokerGroup,
+      brokerName,
       data.service,
       data.stream,
-      currentBroker,
-      currentZookeeper,
-      currentWorkspace,
       pipelineName,
+      workerGroup,
+      workerName,
+      workspaceName,
+      zookeeperGroup,
+      zookeeperName,
     ],
   );
 
@@ -265,9 +303,10 @@ const DevToolDialog = () => {
         fetchStreams();
       }
     }
-  }, [currentWorkspace, data.service, fetchLogs, fetchStreams]);
+  }, [currentWorkspace, data.service, data.stream, fetchLogs, fetchStreams]);
 
   const handleTabChange = (event, currentTab) => {
+    setSelectedCell(null);
     setTabIndex(currentTab);
     setDataDispatch({ type: currentTab });
   };

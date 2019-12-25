@@ -16,20 +16,14 @@
 
 import { sortBy, map, isEqual } from 'lodash';
 
-import {
-  initializeRoutine,
-  fetchPipelinesRoutine,
-  addPipelineRoutine,
-  deletePipelineRoutine,
-  setCurrentPipelineRoutine,
-  updatePipeineRoutine,
-} from './pipelineRoutines';
+import * as routines from './pipelineRoutines';
 
 const sort = pipelines => sortBy(pipelines, 'name');
 
 const initialState = {
   data: [],
   currentPipeline: null,
+  selectedCell: null,
   isFetching: false,
   lastUpdated: null,
   error: null,
@@ -37,13 +31,13 @@ const initialState = {
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchPipelinesRoutine.REQUEST:
+    case routines.fetchPipelinesRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
 
-    case fetchPipelinesRoutine.SUCCESS:
+    case routines.fetchPipelinesRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -51,21 +45,21 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
 
-    case fetchPipelinesRoutine.FAILURE:
+    case routines.fetchPipelinesRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload || true,
       };
 
-    case addPipelineRoutine.REQUEST:
+    case routines.addPipelineRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
         error: null,
       };
 
-    case addPipelineRoutine.SUCCESS:
+    case routines.addPipelineRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -73,20 +67,20 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
 
-    case addPipelineRoutine.FAILURE:
+    case routines.addPipelineRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload || true,
       };
 
-    case deletePipelineRoutine.REQUEST:
+    case routines.deletePipelineRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
 
-    case deletePipelineRoutine.SUCCESS:
+    case routines.deletePipelineRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -98,20 +92,20 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
 
-    case deletePipelineRoutine.FAILURE:
+    case routines.deletePipelineRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload || true,
       };
 
-    case updatePipeineRoutine.REQUEST:
+    case routines.updatePipelineRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
 
-    case updatePipeineRoutine.SUCCESS:
+    case routines.updatePipelineRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -121,21 +115,27 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
 
-    case updatePipeineRoutine.FAILURE:
+    case routines.updatePipelineRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload || true,
       };
 
-    case setCurrentPipelineRoutine.TRIGGER:
+    case routines.setCurrentPipelineRoutine.TRIGGER:
       return {
         ...state,
         currentPipeline:
           state.data.find(data => data.name === action.payload) || null,
       };
 
-    case initializeRoutine.TRIGGER:
+    case routines.setSelectedCellRoutine.TRIGGER:
+      return {
+        ...state,
+        selectedCell: action.payload,
+      };
+
+    case routines.initializeRoutine.TRIGGER:
       return initialState;
 
     default:

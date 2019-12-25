@@ -24,9 +24,11 @@ import WavesIcon from '@material-ui/icons/Waves';
 import * as $ from 'jquery';
 import * as joint from 'jointjs';
 
+import * as generate from 'utils/generate';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import TopicGraph from '../Graph/Topic/TopicGraph';
 import { AddPublicTopicIcon } from 'components/common/Icon';
+import { getKey, hashKey } from 'utils/object';
 
 export const createToolboxList = params => {
   const {
@@ -76,7 +78,7 @@ export const createToolboxList = params => {
 
     updateBox() {
       // Updating the HTML with a data stored in the cell model.
-      this.$box.find('.display-name').text(this.model.get('displayName'));
+      this.$box.find('.display-name').text(this.model.get('name'));
       this.$box.find('.icon').html(this.model.get('icon'));
     },
   });
@@ -101,7 +103,7 @@ export const createToolboxList = params => {
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
-        displayName: source.displayName,
+        name: source.name,
         classType: source.classType,
         icon: sourceIcon,
         className: source.className,
@@ -112,18 +114,16 @@ export const createToolboxList = params => {
   const displayTopics = isNull(searchResults) ? topics : searchResults.topics;
 
   displayTopics.forEach((topic, index) => {
-    if (topic.type !== 'private' || index === 0) {
-      topicGraph.current.addCell(
-        new joint.shapes.html.Element({
-          position: { x: 10, y: index * 40 },
-          size: { width: 272 - 8 * 2, height: 40 },
-          displayName: topic.displayName,
-          classType: topic.classType,
-          className: index === 0 ? 'privateTopic' : 'publicTopic',
-          icon: topic.type === 'private' ? AddPrivateTopic : AddPublicTopic,
-        }),
-      );
-    }
+    topicGraph.current.addCell(
+      new joint.shapes.html.Element({
+        position: { x: 10, y: index * 40 },
+        size: { width: 272 - 8 * 2, height: 40 },
+        name: topic.name,
+        classType: topic.classType,
+        className: index === 0 ? 'privateTopic' : 'publicTopic',
+        icon: topic.type === 'private' ? AddPrivateTopic : AddPublicTopic,
+      }),
+    );
   });
 
   const displayStreams = isNull(searchResults)
@@ -135,7 +135,7 @@ export const createToolboxList = params => {
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
-        displayName: stream.displayName,
+        name: stream.name,
         classType: stream.classType,
         icon: streamIcon,
         className: stream.className,
@@ -150,7 +150,7 @@ export const createToolboxList = params => {
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
-        displayName: sink.displayName,
+        name: sink.name,
         classType: sink.classType,
         icon: sinkIcon,
         className: sink.className,
@@ -166,6 +166,12 @@ export const enableDragAndDrop = params => {
     paper,
     setCellInfo,
     setIsOpen: openAddConnectorDialog,
+    currentPipeline,
+    topicsData,
+    addTopic,
+    currentBroker,
+    currentWorkspace,
+    updatePipeline,
   } = params;
 
   toolPapers.forEach(toolPaper => {
@@ -217,36 +223,38 @@ export const enableDragAndDrop = params => {
       $('#paper').on('mouseup.fly', event => {
         const x = event.pageX;
         const y = event.pageY;
-        const target = paper.$el.offset();
+        const target = paper.current.$el.offset();
 
         const isInsidePaper =
           x > target.left &&
-          x < target.left + paper.$el.width() &&
+          x < target.left + paper.current.$el.width() &&
           y > target.top &&
-          y < target.top + paper.$el.height();
+          y < target.top + paper.current.$el.height();
 
         // Dropped over paper ?
         if (isInsidePaper) {
-          openAddConnectorDialog(true);
-
-          const localPoint = paper.paperToLocalPoint(paper.translate());
-          const scale = paper.scale();
+          const localPoint = paper.current.paperToLocalPoint(
+            paper.current.translate(),
+          );
+          const scale = paper.current.scale();
           const newX = (x - target.left - offset.x) / scale.sx + localPoint.x;
           const newY = (y - target.top - offset.y) / scale.sy + localPoint.y;
 
           const {
             classType,
-            displayName,
             className,
+            name,
             icon,
           } = cellView.model.attributes;
+
+          const isTopic = classType === 'topic';
 
           // These info will be used when creating a cell
           setCellInfo(prevState => ({
             ...prevState,
             classType,
             className,
-            displayedClassName: displayName,
+            displayedClassName: name,
             icon,
             position: {
               ...prevState.position,
@@ -255,20 +263,17 @@ export const enableDragAndDrop = params => {
             },
           }));
 
-          // A temporary cell which gives users a better idea of
-          // where the graph will be added at. It will be removed
-          // once the real graph is added
           const params = {
             position: { x: newX, y: newY },
-            isTemporary: true, // A temp graph
-            title: 'newgraph',
+            isTemporary: !isTopic, // Display a temp cell for all connectors but topic
+            title: !isTopic ? 'newgraph' : name, // Same here, display a temp name for all connectors except topic
             graph,
             paper,
             cellInfo: {
               classType,
               className,
               icon,
-              displayedClassName: displayName,
+              displayedClassName: name,
               position: {
                 x: newX,
                 y: newY,
@@ -276,12 +281,67 @@ export const enableDragAndDrop = params => {
             },
           };
 
-          const newCell =
-            classType === 'topic' ? TopicGraph(params) : ConnectorGraph(params);
+          const getPrivateTopicDisplayNames = topics => {
+            const topicIndex = topics
+              .map(topic => topic.tags)
+              .filter(topic => topic.type === 'private')
+              .map(topic => topic.displayName.replace('T', ''))
+              .sort();
 
-          graph.addCell(newCell);
+            if (topicIndex.length === 0) return 'T1';
+            return `T${Number(topicIndex.pop()) + 1}`;
+          };
+
+          if (isTopic) {
+            const privateTopicName = generate.serviceName({ length: 5 });
+            const isPublicTopic = className === 'publicTopic';
+            const displayName = isPublicTopic
+              ? name
+              : getPrivateTopicDisplayNames(topicsData);
+
+            if (!isPublicTopic) {
+              addTopic({
+                name: privateTopicName,
+                brokerClusterKey: getKey(currentBroker),
+                group: hashKey(currentWorkspace),
+                tags: {
+                  type: 'private',
+                  displayName,
+                },
+              });
+            }
+
+            updatePipeline({
+              name: currentPipeline.name,
+              group: currentPipeline.group,
+              endpoints: [
+                ...currentPipeline.endpoints,
+                {
+                  name: privateTopicName,
+                  group: hashKey(currentWorkspace),
+                  kind: 'topic',
+                },
+              ],
+            });
+
+            graph.current.addCell(
+              TopicGraph({
+                graph,
+                paper,
+                title: displayName,
+                cellInfo: params.cellInfo,
+              }),
+            );
+          } else {
+            openAddConnectorDialog(true);
+
+            // A temporary cell which gives users a better idea of
+            // where the graph will be added at. It will be removed
+            // once the real graph is added
+            const newCell = ConnectorGraph(params);
+            graph.current.addCell(newCell);
+          }
         }
-
         // Clean up
         $('#paper')
           .off('mousemove.fly')
@@ -304,13 +364,13 @@ export const getConnectorInfo = worker => {
       const displayClassName = className.split('.').pop();
       if (info.classType === 'source') {
         return sources.push({
-          displayName: displayClassName,
+          name: displayClassName,
           classType,
           className,
         });
       }
 
-      sinks.push({ displayName: displayClassName, classType, className });
+      sinks.push({ name: displayClassName, classType, className });
     });
   }
 

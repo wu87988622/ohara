@@ -37,17 +37,15 @@ import { StyledToolbox } from './ToolboxStyles';
 import { useSnackbar } from 'context/SnackbarContext';
 import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
-import { useFiles, useToolboxHeight } from './ToolboxHooks';
+import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
 import {
   enableDragAndDrop,
   createToolboxList,
   getConnectorInfo,
 } from './toolboxUtils';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
-import { TopicGraph } from '../Graph/Topic';
 import { getKey, hashKey } from 'utils/object';
 import { hash } from 'utils/sha';
-import { serviceName } from 'utils/generate';
 
 const Toolbox = props => {
   const {
@@ -70,8 +68,7 @@ const Toolbox = props => {
   const { currentPipeline } = context.usePipelineState();
   const { updatePipeline } = context.usePipelineActions();
   const { addStream } = context.useStreamActions();
-  const { data: topicsData } = context.useTopicState();
-  const { fetchTopics } = context.useTopicActions();
+
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
   const [isOpen, setIsOpen] = useState(false);
@@ -94,20 +91,7 @@ const Toolbox = props => {
 
   const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
   const [sources, sinks] = getConnectorInfo(currentWorker);
-
-  const privateTopic = {
-    settings: {
-      name: 'Pipeline Only',
-      tags: { type: 'private', label: 'Pipeline Only' },
-    },
-  };
-
-  const topics = [privateTopic, ...topicsData].map(topic => ({
-    classType: 'topic',
-    displayName: topic.settings.name,
-    type: topic.settings.tags.type,
-    label: topic.settings.tags.label,
-  }));
+  const [topics, topicsData] = useTopics(currentWorkspace);
 
   const connectors = {
     sources,
@@ -128,11 +112,6 @@ const Toolbox = props => {
     searchResults,
     connectors,
   });
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    fetchTopics(currentWorkspace);
-  }, [fetchTopics, currentWorkspace]);
 
   const uploadJar = async file => {
     const response = await fileApi.create({
@@ -161,20 +140,10 @@ const Toolbox = props => {
 
   const removeTempCell = () => {
     // Remove temporary cells
-    const tempCells = graph
+    const tempCells = graph.current
       .getCells()
       .filter(cell => Boolean(cell.attributes.isTemporary));
     tempCells.forEach(cell => cell.remove());
-  };
-
-  const getLabel = datas => {
-    const topicIndex = datas
-      .map(data => data.tags)
-      .filter(data => data.type === 'private')
-      .map(data => data.label.replace('T', ''))
-      .sort();
-    if (topicIndex.length === 0) return 'T1';
-    return `T${Number(topicIndex.pop()) + 1}`;
   };
 
   const handleAddGraph = async newGraphName => {
@@ -188,43 +157,6 @@ const Toolbox = props => {
     };
 
     switch (cellInfo.classType) {
-      case 'topic':
-        let topicName = newGraphName;
-        if (cellInfo.className !== 'publicTopic') {
-          const privateTopicName = serviceName({ length: 5 });
-          const label = getLabel(topicsData);
-          addTopic({
-            name: privateTopicName,
-            brokerClusterKey: getKey(currentBroker),
-            group: hashKey(currentWorkspace),
-            tags: {
-              type: 'private',
-              label,
-            },
-          });
-          topicName = privateTopicName;
-          sharedParams.title = label;
-        }
-        updatePipeline({
-          name: currentPipeline.name,
-          group: currentPipeline.group,
-          endpoints: [
-            ...currentPipeline.endpoints,
-            {
-              name: topicName,
-              group: hashKey(currentWorkspace),
-              kind: 'topic',
-            },
-          ],
-        });
-
-        graph.addCell(
-          TopicGraph({
-            ...sharedParams,
-          }),
-        );
-        break;
-
       case 'stream':
         const [targetStream] = streamFiles
           .filter(streamFile =>
@@ -265,7 +197,7 @@ const Toolbox = props => {
           ],
         });
 
-        graph.addCell(
+        graph.current.addCell(
           ConnectorGraph({
             ...sharedParams,
           }),
@@ -302,7 +234,7 @@ const Toolbox = props => {
           classInfo => classInfo.className === cellInfo.className,
         );
 
-        graph.addCell(
+        graph.current.addCell(
           ConnectorGraph({
             ...sharedParams,
             openSettingDialog,
@@ -384,11 +316,30 @@ const Toolbox = props => {
         setCellInfo,
         setIsOpen,
         graph,
+        currentPipeline,
+        topicsData,
+        addTopic,
+        currentBroker,
+        currentWorkspace,
+        updatePipeline,
       });
     };
 
     renderToolbox();
-  }, [connectors, graph, paper, searchResults, initToolboxList]);
+  }, [
+    addTopic,
+    connectors,
+    currentBroker,
+    currentPipeline,
+    currentWorkspace,
+    graph,
+    paper,
+    searchResults,
+    topicsData,
+    updatePipeline,
+    initToolboxList,
+    topics,
+  ]);
 
   return (
     <Draggable
