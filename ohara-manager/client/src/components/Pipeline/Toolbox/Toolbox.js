@@ -31,21 +31,18 @@ import * as joint from 'jointjs';
 import * as fileApi from 'api/fileApi';
 import * as connectorApi from 'api/connectorApi';
 import * as context from 'context';
+import * as utils from './toolboxUtils';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
+import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
+import ToolboxUploadButton from './ToolboxUploadButton';
 import { StyledToolbox } from './ToolboxStyles';
-import { useSnackbar } from 'context/SnackbarContext';
-import { Label } from 'components/common/Form';
 import { AddTopicDialog } from 'components/Topic';
 import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
-import {
-  enableDragAndDrop,
-  createToolboxList,
-  getConnectorInfo,
-} from './toolboxUtils';
-import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import { getKey, hashKey } from 'utils/object';
 import { hash } from 'utils/sha';
+
+import { Tabs, SubTabs } from 'components/Workspace/Edit';
 
 const Toolbox = props => {
   const {
@@ -68,6 +65,7 @@ const Toolbox = props => {
   const { currentPipeline } = context.usePipelineState();
   const { updatePipeline } = context.usePipelineActions();
   const { addStream } = context.useStreamActions();
+  const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
@@ -87,10 +85,10 @@ const Toolbox = props => {
     },
   });
 
-  const showMessage = useSnackbar();
+  const showMessage = context.useSnackbar();
 
-  const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
-  const [sources, sinks] = getConnectorInfo(currentWorker);
+  const { streams, files: streamFiles } = useFiles(currentWorkspace);
+  const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
 
   const connectors = {
@@ -120,11 +118,14 @@ const Toolbox = props => {
     });
 
     showMessage(response.title);
-    setStatus('loading');
+    openEditWorkspaceDialog({ tab: Tabs.SETTINGS, subTab: SubTabs.PLUGINS });
   };
 
   const handleFileSelect = event => {
-    const file = event.target.files[0];
+    const [file] = event.target.files;
+
+    if (!file) return;
+
     const isDuplicate = streamFiles.some(
       streamFile => streamFile.name === file.name,
     );
@@ -133,9 +134,7 @@ const Toolbox = props => {
       return showMessage('The jar name is already taken!');
     }
 
-    if (event.target.files[0]) {
-      uploadJar(file);
-    }
+    uploadJar(file);
   };
 
   const removeTempCell = () => {
@@ -300,7 +299,7 @@ const Toolbox = props => {
         ...sharedProps,
       });
 
-      createToolboxList({
+      utils.createToolboxList({
         connectors,
         streamGraph,
         sourceGraph,
@@ -310,7 +309,7 @@ const Toolbox = props => {
       });
 
       // Add the ability to drag and drop connectors/streams/topics
-      enableDragAndDrop({
+      utils.enableDragAndDrop({
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
         paper, // main paper
         setCellInfo,
@@ -381,14 +380,11 @@ const Toolbox = props => {
                 <div id="source-list" className="toolbox-list"></div>
               </List>
 
-              <div className="add-button" ref={panelAddButtonRef}>
-                <IconButton>
-                  <AddIcon />
-                </IconButton>
-                <Typography variant="subtitle2">
-                  Add source connectors
-                </Typography>
-              </div>
+              <ToolboxUploadButton
+                buttonText="Add source connectors"
+                onChange={handleFileSelect}
+                ref={panelAddButtonRef}
+              />
             </ExpansionPanelDetails>
           </ExpansionPanel>
 
@@ -429,25 +425,11 @@ const Toolbox = props => {
                 <div id="stream-list" className="toolbox-list"></div>
               </List>
 
-              <div className="add-button">
-                <input
-                  id="fileInput"
-                  accept=".jar"
-                  type="file"
-                  onChange={handleFileSelect}
-                  onClick={event => {
-                    /* Allow file to be added multiple times */
-                    event.target.value = null;
-                  }}
-                />
-                <IconButton>
-                  <Label htmlFor="fileInput">
-                    <AddIcon />
-                  </Label>
-                </IconButton>
-
-                <Typography variant="subtitle2">Add streams</Typography>
-              </div>
+              <ToolboxUploadButton
+                buttonText="Add streams"
+                onChange={handleFileSelect}
+                ref={panelAddButtonRef}
+              />
             </ExpansionPanelDetails>
           </ExpansionPanel>
 
@@ -464,12 +446,11 @@ const Toolbox = props => {
                 <div id="sink-list" className="toolbox-list"></div>
               </List>
 
-              <div className="add-button">
-                <IconButton>
-                  <AddIcon />
-                </IconButton>
-                <Typography variant="subtitle2">Add sink connectors</Typography>
-              </div>
+              <ToolboxUploadButton
+                buttonText="Add sink connectors"
+                onChange={handleFileSelect}
+                ref={panelAddButtonRef}
+              />
             </ExpansionPanelDetails>
           </ExpansionPanel>
         </div>

@@ -90,6 +90,8 @@ import {
   useStreamActions,
 } from 'context/stream/StreamContext';
 
+import { useSnackbar } from './SnackbarContext';
+
 export {
   // Api
   ApiProvider,
@@ -157,4 +159,6 @@ export {
   useStreamState,
   useStreamDispatch,
   useStreamActions,
+  // snackBar
+  useSnackbar,
 };

@@ -119,13 +119,16 @@ const useListWorkspacesDialog = createUseDialogActions(
 
 export {
   DialogProvider,
+  // Workspace
   useEditWorkspaceDialog,
+  useListWorkspacesDialog,
+  // Topic
   useAddTopicDialog,
   useViewTopicDialog,
+  // Node
   useViewNodeDialog,
   useEditNodeDialog,
   useAddNodeDialog,
   useDevToolDialog,
   useGraphSettingDialog,
-  useListWorkspacesDialog,
 };
