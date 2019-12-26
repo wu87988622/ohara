@@ -58,6 +58,8 @@ import {
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
+import { hashWith } from 'utils/sha';
+import { WORKSPACE } from 'context/api';
 
 const StyledPaper = styled(Paper)(
   ({ theme }) => css`
@@ -142,9 +144,11 @@ const WorkspaceQuick = props => {
   };
 
   const onDrop = async (file, values) => {
+    const parentKey = { group: WORKSPACE, name: values.workspaceName };
     const result = await fileApi.create({
-      group: values.workspaceName,
+      group: hashWith(WORKSPACE, values.workspaceName),
       file: file[0],
+      tags: { parentKey },
     });
     let fileInfo = {};
     if (!result.errors) {

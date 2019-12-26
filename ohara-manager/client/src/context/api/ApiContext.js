@@ -21,6 +21,7 @@ import { useSnackbar } from 'context/SnackbarContext';
 import { useApp } from 'context';
 
 import { createApi as createBrokerApi } from './brokerApi';
+import { createApi as createFileApi } from './fileApi';
 import { createApi as createWorkerApi } from './workerApi';
 import { createApi as createWorkspaceApi } from './workspaceApi';
 import { createApi as createZookeeperApi } from './zookeeperApi';
@@ -51,7 +52,7 @@ const ApiProvider = ({ children }) => {
     };
     setBrokerApi(createBrokerApi(context));
     setConnectorApi();
-    setFileApi();
+    setFileApi(createFileApi(context));
     setLogApi();
     setNodeApi();
     setPipelineApi();

@@ -19,7 +19,7 @@ import { reject } from 'lodash';
 import {
   initializeRoutine,
   fetchFilesRoutine,
-  uploadFileRoutine,
+  createFileRoutine,
   deleteFileRoutine,
 } from './fileRoutines';
 
@@ -34,7 +34,11 @@ const sortedFiles = Files => Files.sort((a, b) => a.name.localeCompare(b.name));
 
 const reducer = (state, action) => {
   switch (action.type) {
+    case initializeRoutine.TRIGGER:
+      return initialState;
     case fetchFilesRoutine.REQUEST:
+    case createFileRoutine.REQUEST:
+    case deleteFileRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -46,35 +50,12 @@ const reducer = (state, action) => {
         data: action.payload,
         lastUpdated: new Date(),
       };
-    case fetchFilesRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload,
-      };
-    case uploadFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: undefined,
-      };
-    case uploadFileRoutine.SUCCESS:
+    case createFileRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: sortedFiles([...state.data, action.payload]),
         lastUpdated: new Date(),
-      };
-    case uploadFileRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload,
-      };
-    case deleteFileRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
       };
     case deleteFileRoutine.SUCCESS:
       return {
@@ -88,14 +69,15 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
+    case fetchFilesRoutine.FAILURE:
+    case createFileRoutine.FAILURE:
     case deleteFileRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload,
       };
-    case initializeRoutine.TRIGGER:
-      return initialState;
+
     default:
       return state;
   }

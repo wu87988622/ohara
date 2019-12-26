@@ -16,14 +16,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
-import { useWorkspace } from 'context';
+import { useApp, useApi } from 'context';
 import { initializeRoutine } from './fileRoutines';
-import {
-  createFetchFiles,
-  createUploadFile,
-  createDeleteFile,
-} from './fileActions';
+import { createActions } from './fileActions';
 import { reducer, initialState } from './fileReducer';
 
 const FileStateContext = React.createContext();
@@ -31,7 +26,7 @@ const FileDispatchContext = React.createContext();
 
 const FileProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName } = useWorkspace();
+  const { workspaceName } = useApp();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
@@ -69,12 +64,8 @@ FileProvider.propTypes = {
 const useFileActions = () => {
   const state = useFileState();
   const dispatch = useFileDispatch();
-  const showMessage = useSnackbar();
-  return {
-    fetchFiles: createFetchFiles(state, dispatch, showMessage),
-    uploadFile: createUploadFile(state, dispatch, showMessage),
-    deleteFile: createDeleteFile(state, dispatch, showMessage),
-  };
+  const { fileApi } = useApi();
+  return createActions({ state, dispatch, fileApi });
 };
 
 export { FileProvider, useFileState, useFileActions };

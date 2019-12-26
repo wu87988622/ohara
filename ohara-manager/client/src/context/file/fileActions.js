@@ -15,90 +15,48 @@
  */
 
 import { some } from 'lodash';
+import * as routines from './fileRoutines';
 
-import * as fileApi from 'api/fileApi';
-import {
-  fetchFilesRoutine,
-  uploadFileRoutine,
-  deleteFileRoutine,
-} from './fileRoutines';
-
-const createFetchFiles = (
-  state,
-  dispatch,
-  showMessage,
-) => async workspaceName => {
-  if (state.isFetching || state.lastUpdated || state.error) return;
-
-  dispatch(fetchFilesRoutine.request());
-  const result = await fileApi.getAll({ group: workspaceName });
-
-  if (result.errors) {
-    dispatch(fetchFilesRoutine.failure(result.title));
-    showMessage(result.title);
-    return;
-  }
-
-  dispatch(fetchFilesRoutine.success(result.data));
+export const createActions = context => {
+  const { state, dispatch, fileApi } = context;
+  return {
+    fetchFiles: async () => {
+      const routine = routines.fetchFilesRoutine;
+      if (state.isFetching || state.lastUpdated || state.error) return;
+      try {
+        dispatch(routine.request());
+        const data = await fileApi.fetchAll();
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    createFile: async file => {
+      const routine = routines.createFileRoutine;
+      if (state.isFetching) return;
+      try {
+        const { data: files } = state;
+        // check duplicate
+        if (some(files, { name: file.name })) {
+          throw new Error(`The file name ${file.name} already exists!`);
+        }
+        dispatch(routine.request());
+        const data = await fileApi.create(file);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    deleteFile: async name => {
+      const routine = routines.deleteFileRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await fileApi.delete(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+  };
 };
-
-const createUploadFile = (state, dispatch, showMessage) => async (
-  workspaceName,
-  file,
-) => {
-  if (state.isFetching) return;
-
-  const { data: files } = state;
-  const isDuplicate = () => some(files, { name: file.name });
-
-  if (isDuplicate()) {
-    showMessage(`The file name ${file.name} already exists!`);
-    return;
-  }
-
-  dispatch(uploadFileRoutine.request());
-  const createFileResponse = await fileApi.create({
-    group: workspaceName,
-    file,
-  });
-
-  // Failed to upload, route to failure
-  if (createFileResponse.errors) {
-    dispatch(uploadFileRoutine.failure(createFileResponse.title));
-    showMessage(createFileResponse.title);
-    return;
-  }
-
-  // File successfully uploaded, display success message
-  dispatch(uploadFileRoutine.success(createFileResponse.data));
-  showMessage(createFileResponse.title);
-};
-
-const createDeleteFile = (state, dispatch, showMessage) => async (
-  name,
-  group,
-) => {
-  if (state.isFetching) return;
-
-  dispatch(deleteFileRoutine.request());
-  const deleteFileResponse = await fileApi.remove({
-    name,
-    group,
-  });
-
-  if (deleteFileResponse.errors) {
-    dispatch(deleteFileRoutine.failure(deleteFileResponse.title));
-    showMessage(deleteFileResponse.title);
-    return;
-  }
-
-  dispatch(
-    deleteFileRoutine.success({
-      name,
-      group,
-    }),
-  );
-  showMessage(deleteFileResponse.title);
-};
-
-export { createFetchFiles, createUploadFile, createDeleteFile };

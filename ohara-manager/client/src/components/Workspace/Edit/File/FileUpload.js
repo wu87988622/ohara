@@ -16,11 +16,10 @@
 
 import React, { useRef, cloneElement } from 'react';
 import PropTypes from 'prop-types';
-import { get } from 'lodash';
 import styled from 'styled-components';
 import Button from '@material-ui/core/Button';
 
-import { useWorkspace, useFileActions } from 'context';
+import { useFileActions } from 'context';
 
 const Wrapper = styled.div`
   .input {
@@ -29,8 +28,7 @@ const Wrapper = styled.div`
 `;
 
 const FileUpload = ({ children, accept = '.jar' }) => {
-  const { currentWorkspace } = useWorkspace();
-  const { uploadFile } = useFileActions();
+  const { createFile } = useFileActions();
   const inputEl = useRef(null);
 
   const Trigger = () => {
@@ -51,11 +49,8 @@ const FileUpload = ({ children, accept = '.jar' }) => {
   };
 
   const handleFileSelect = event => {
-    const workspaceName = get(currentWorkspace, 'settings.name');
     const file = event.target.files[0];
-    if (workspaceName && event.target.files[0]) {
-      uploadFile(workspaceName, file);
-    }
+    if (file) createFile(file);
   };
 
   return (

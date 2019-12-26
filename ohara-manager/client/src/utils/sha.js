@@ -15,6 +15,7 @@
  */
 
 import sha from 'sha.js';
+import { get, join, isEmpty, map } from 'lodash';
 
 const defaultHashOptions = {
   algorithm: 'sha256',
@@ -27,5 +28,12 @@ export const hash = (input = '', options = defaultHashOptions) =>
     .update(input)
     .digest(options.encode)
     .substring(0, options.maxLength + 1);
+
+export const hashBy = (object, paths = []) => {
+  if (isEmpty(paths)) throw new Error('The paths must not be an empty.');
+  return hash(join(map(paths, path => get(object, path))));
+};
+
+export const hashWith = (...args) => hash(join(args));
 
 export const hashByGroupAndName = (group, name) => hash(`${group}${name}`);
