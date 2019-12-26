@@ -20,7 +20,7 @@ import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.common.data.Row
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.shabondi._
 import org.junit.Test
 
@@ -165,19 +165,9 @@ final class TestSinkRoute extends BasicShabondiTest {
       dataGroups.groupExist(group1Name) should ===(true)
 
       pollRowsRequest(webServer, "", 2 * 1000, ec)
-      TimeUnit.SECONDS.sleep(3)
-
-      log.info("There should have one data groups.")
-      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
-      dataGroups.groupExist(group1Name) should ===(false)
-
-      TimeUnit.SECONDS.sleep(4)
-      log.info("There should not have any data group.")
-      dataGroups.size should ===(0)
-      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(false)
-      dataGroups.groupExist(group1Name) should ===(false)
-
-      log.debug("finished.")
+      CommonUtils.await(() => !dataGroups.groupExist(group1Name), java.time.Duration.ofSeconds(10))
+      CommonUtils.await(() => !dataGroups.groupExist(dataGroups.defaultGroupName), java.time.Duration.ofSeconds(10))
+      dataGroups.size shouldBe 0
     } finally {
       Releasable.close(webServer)
       ec.shutdown()
