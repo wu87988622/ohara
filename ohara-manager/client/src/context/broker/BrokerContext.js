@@ -16,14 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
-import {
-  fetchBrokersCreator,
-  addBrokerCreator,
-  updateBrokerCreator,
-  stageBrokerCreator,
-  deleteBrokerCreator,
-} from './brokerActions';
+import { useApi } from 'context';
+import { createActions } from './brokerActions';
 import { reducer, initialState } from './brokerReducer';
 
 const BrokerStateContext = React.createContext();
@@ -31,16 +25,13 @@ const BrokerDispatchContext = React.createContext();
 
 const BrokerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const showMessage = useSnackbar();
-
-  const fetchBrokers = React.useCallback(
-    fetchBrokersCreator(state, dispatch, showMessage),
-    [state],
-  );
+  const { brokerApi } = useApi();
 
   React.useEffect(() => {
-    fetchBrokers();
-  }, [fetchBrokers]);
+    if (!brokerApi) return;
+    const actions = createActions({ state, dispatch, brokerApi });
+    actions.fetchBrokers();
+  }, [state, brokerApi]);
 
   return (
     <BrokerStateContext.Provider value={state}>
@@ -74,13 +65,8 @@ const useBrokerDispatch = () => {
 const useBrokerActions = () => {
   const state = useBrokerState();
   const dispatch = useBrokerDispatch();
-  const showMessage = useSnackbar();
-  return {
-    addBroker: addBrokerCreator(state, dispatch, showMessage),
-    updateBroker: updateBrokerCreator(state, dispatch, showMessage),
-    stageBroker: stageBrokerCreator(state, dispatch, showMessage),
-    deleteBroker: deleteBrokerCreator(state, dispatch, showMessage),
-  };
+  const { brokerApi } = useApi();
+  return createActions({ state, dispatch, brokerApi });
 };
 
 export { BrokerProvider, useBrokerState, useBrokerDispatch, useBrokerActions };

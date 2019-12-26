@@ -17,15 +17,19 @@
 import { createRoutine } from 'redux-routines';
 
 const fetchZookeepersRoutine = createRoutine('FETCH_ZOOKEEPERS');
-const addZookeeperRoutine = createRoutine('ADD_ZOOKEEPER');
+const createZookeeperRoutine = createRoutine('CREATE_ZOOKEEPER');
 const updateZookeeperRoutine = createRoutine('UPDATE_ZOOKEEPER');
 const stageZookeeperRoutine = createRoutine('STAGE_ZOOKEEPER');
 const deleteZookeeperRoutine = createRoutine('DELETE_ZOOKEEPER');
+const startZookeeperRoutine = createRoutine('START_ZOOKEEPER');
+const stopZookeeperRoutine = createRoutine('STOP_ZOOKEEPER');
 
 export {
   fetchZookeepersRoutine,
-  addZookeeperRoutine,
+  createZookeeperRoutine,
   updateZookeeperRoutine,
   stageZookeeperRoutine,
   deleteZookeeperRoutine,
+  startZookeeperRoutine,
+  stopZookeeperRoutine,
 };

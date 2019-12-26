@@ -14,65 +14,64 @@
  * limitations under the License.
  */
 
-import {
-  fetchWorkspacesRoutine,
-  createWorkspaceRoutine,
-  updateWorkspaceRoutine,
-  stageWorkspaceRoutine,
-  deleteWorkspaceRoutine,
-} from './workspaceRoutines';
+import * as routines from './workspaceRoutines';
 
 export const createActions = context => {
   const { state, dispatch, workspaceApi } = context;
   return {
     fetchWorkspaces: async () => {
+      const routine = routines.fetchWorkspacesRoutine;
       if (state.isFetching || state.lastUpdated || state.error) return;
       try {
-        dispatch(fetchWorkspacesRoutine.request());
+        dispatch(routine.request());
         const data = await workspaceApi.fetchAll();
-        dispatch(fetchWorkspacesRoutine.success(data));
+        dispatch(routine.success(data));
       } catch (e) {
-        dispatch(fetchWorkspacesRoutine.failure(e.message));
+        dispatch(routine.failure(e.message));
       }
     },
     createWorkspace: async values => {
+      const routine = routines.createWorkspaceRoutine;
       if (state.isFetching) return;
       try {
-        dispatch(createWorkspaceRoutine.request());
+        dispatch(routine.request());
         const data = await workspaceApi.create(values);
-        dispatch(createWorkspaceRoutine.success(data));
+        dispatch(routine.success(data));
       } catch (e) {
-        dispatch(createWorkspaceRoutine.failure(e.message));
+        dispatch(routine.failure(e.message));
       }
     },
     updateWorkspace: async values => {
+      const routine = routines.updateWorkspaceRoutine;
       if (state.isFetching) return;
       try {
-        dispatch(updateWorkspaceRoutine.request());
+        dispatch(routine.request());
         const data = await workspaceApi.update(values);
-        dispatch(updateWorkspaceRoutine.success(data));
+        dispatch(routine.success(data));
       } catch (e) {
-        dispatch(updateWorkspaceRoutine.failure(e.message));
+        dispatch(routine.failure(e.message));
       }
     },
     stageWorkspace: async values => {
+      const routine = routines.stageWorkspaceRoutine;
       if (state.isFetching) return;
       try {
-        dispatch(stageWorkspaceRoutine.request());
+        dispatch(routine.request());
         const data = await workspaceApi.stage(values);
-        dispatch(stageWorkspaceRoutine.success(data));
+        dispatch(routine.success(data));
       } catch (e) {
-        dispatch(stageWorkspaceRoutine.failure(e.message));
+        dispatch(routine.failure(e.message));
       }
     },
     deleteWorkspace: async name => {
+      const routine = routines.deleteWorkspaceRoutine;
       if (state.isFetching) return;
       try {
-        dispatch(deleteWorkspaceRoutine.request());
+        dispatch(routine.request());
         const data = await workspaceApi.remove(name);
-        dispatch(deleteWorkspaceRoutine.success(data));
+        dispatch(routine.success(data));
       } catch (e) {
-        dispatch(deleteWorkspaceRoutine.failure(e.message));
+        dispatch(routine.failure(e.message));
       }
     },
   };

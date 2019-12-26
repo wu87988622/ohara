@@ -16,14 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
-import {
-  fetchZookeepersCreator,
-  addZookeeperCreator,
-  updateZookeeperCreator,
-  stageZookeeperCreator,
-  deleteZookeeperCreator,
-} from './zookeeperActions';
+import { useApi } from 'context';
+import { createActions } from './zookeeperActions';
 import { reducer, initialState } from './zookeeperReducer';
 
 const ZookeeperStateContext = React.createContext();
@@ -31,16 +25,13 @@ const ZookeeperDispatchContext = React.createContext();
 
 const ZookeeperProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const showMessage = useSnackbar();
-
-  const fetchZookeepers = React.useCallback(
-    fetchZookeepersCreator(state, dispatch, showMessage),
-    [state],
-  );
+  const { zookeeperApi } = useApi();
 
   React.useEffect(() => {
-    fetchZookeepers();
-  }, [fetchZookeepers]);
+    if (!zookeeperApi) return;
+    const actions = createActions({ state, dispatch, zookeeperApi });
+    actions.fetchZookeepers();
+  }, [state, zookeeperApi]);
 
   return (
     <ZookeeperStateContext.Provider value={state}>
@@ -78,13 +69,8 @@ const useZookeeperDispatch = () => {
 const useZookeeperActions = () => {
   const state = useZookeeperState();
   const dispatch = useZookeeperDispatch();
-  const showMessage = useSnackbar();
-  return {
-    addZookeeper: addZookeeperCreator(state, dispatch, showMessage),
-    updateZookeeper: updateZookeeperCreator(state, dispatch, showMessage),
-    stageZookeeper: stageZookeeperCreator(state, dispatch, showMessage),
-    deleteZookeeper: deleteZookeeperCreator(state, dispatch, showMessage),
-  };
+  const { zookeeperApi } = useApi();
+  return createActions({ state, dispatch, zookeeperApi });
 };
 
 export {

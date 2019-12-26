@@ -16,14 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
-import {
-  fetchWorkersCreator,
-  addWorkerCreator,
-  updateWorkerCreator,
-  stageWorkerCreator,
-  deleteWorkerCreator,
-} from './workerActions';
+import { useApi } from 'context';
+import { createActions } from './workerActions';
 import { reducer, initialState } from './workerReducer';
 
 const WorkerStateContext = React.createContext();
@@ -31,16 +25,13 @@ const WorkerDispatchContext = React.createContext();
 
 const WorkerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const showMessage = useSnackbar();
-
-  const fetchWorkers = React.useCallback(
-    fetchWorkersCreator(state, dispatch, showMessage),
-    [state],
-  );
+  const { workerApi } = useApi();
 
   React.useEffect(() => {
-    fetchWorkers();
-  }, [fetchWorkers]);
+    if (!workerApi) return;
+    const actions = createActions({ state, dispatch, workerApi });
+    actions.fetchWorkers();
+  }, [state, workerApi]);
 
   return (
     <WorkerStateContext.Provider value={state}>
@@ -74,13 +65,8 @@ const useWorkerDispatch = () => {
 const useWorkerActions = () => {
   const state = useWorkerState();
   const dispatch = useWorkerDispatch();
-  const showMessage = useSnackbar();
-  return {
-    addWorker: addWorkerCreator(state, dispatch, showMessage),
-    updateWorker: updateWorkerCreator(state, dispatch, showMessage),
-    stageWorker: stageWorkerCreator(state, dispatch, showMessage),
-    deleteWorker: deleteWorkerCreator(state, dispatch, showMessage),
-  };
+  const { workerApi } = useApi();
+  return createActions({ state, dispatch, workerApi });
 };
 
 export { WorkerProvider, useWorkerState, useWorkerDispatch, useWorkerActions };

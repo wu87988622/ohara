@@ -18,10 +18,12 @@ import { map, reject } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchBrokersRoutine,
-  addBrokerRoutine,
+  createBrokerRoutine,
   updateBrokerRoutine,
   stageBrokerRoutine,
   deleteBrokerRoutine,
+  startBrokerRoutine,
+  stopBrokerRoutine,
 } from './brokerRoutines';
 
 const initialState = {
@@ -35,10 +37,12 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchBrokersRoutine.REQUEST:
-    case addBrokerRoutine.REQUEST:
+    case createBrokerRoutine.REQUEST:
     case updateBrokerRoutine.REQUEST:
     case stageBrokerRoutine.REQUEST:
     case deleteBrokerRoutine.REQUEST:
+    case startBrokerRoutine.REQUEST:
+    case stopBrokerRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -51,7 +55,7 @@ const reducer = (state, action) => {
         data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
-    case addBrokerRoutine.SUCCESS:
+    case createBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -60,6 +64,8 @@ const reducer = (state, action) => {
       };
     case updateBrokerRoutine.SUCCESS:
     case stageBrokerRoutine.SUCCESS:
+    case startBrokerRoutine.SUCCESS:
+    case stopBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -83,10 +89,12 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case fetchBrokersRoutine.FAILURE:
-    case addBrokerRoutine.FAILURE:
+    case createBrokerRoutine.FAILURE:
     case updateBrokerRoutine.FAILURE:
     case stageBrokerRoutine.FAILURE:
     case deleteBrokerRoutine.FAILURE:
+    case startBrokerRoutine.FAILURE:
+    case stopBrokerRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

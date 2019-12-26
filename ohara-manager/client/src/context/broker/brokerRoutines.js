@@ -17,15 +17,19 @@
 import { createRoutine } from 'redux-routines';
 
 const fetchBrokersRoutine = createRoutine('FETCH_BROKERS');
-const addBrokerRoutine = createRoutine('ADD_BROKER');
+const createBrokerRoutine = createRoutine('CREATE_BROKER');
 const updateBrokerRoutine = createRoutine('UPDATE_BROKER');
 const stageBrokerRoutine = createRoutine('STAGE_BROKER');
 const deleteBrokerRoutine = createRoutine('DELETE_BROKER');
+const startBrokerRoutine = createRoutine('START_BROKER');
+const stopBrokerRoutine = createRoutine('STOP_BROKER');
 
 export {
   fetchBrokersRoutine,
-  addBrokerRoutine,
+  createBrokerRoutine,
   updateBrokerRoutine,
   stageBrokerRoutine,
   deleteBrokerRoutine,
+  startBrokerRoutine,
+  stopBrokerRoutine,
 };

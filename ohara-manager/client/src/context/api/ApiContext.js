@@ -19,7 +19,11 @@ import PropTypes from 'prop-types';
 
 import { useSnackbar } from 'context/SnackbarContext';
 import { useApp } from 'context';
+
+import { createApi as createBrokerApi } from './brokerApi';
+import { createApi as createWorkerApi } from './workerApi';
 import { createApi as createWorkspaceApi } from './workspaceApi';
+import { createApi as createZookeeperApi } from './zookeeperApi';
 
 const ApiContext = createContext();
 
@@ -45,7 +49,7 @@ const ApiProvider = ({ children }) => {
       pipelineName,
       showMessage,
     };
-    setBrokerApi();
+    setBrokerApi(createBrokerApi(context));
     setConnectorApi();
     setFileApi();
     setLogApi();
@@ -53,9 +57,9 @@ const ApiProvider = ({ children }) => {
     setPipelineApi();
     setStreamApi();
     setTopicApi();
-    setWorkerApi();
+    setWorkerApi(createWorkerApi(context));
     setWorkspaceApi(createWorkspaceApi(context));
-    setZookeeperApi();
+    setZookeeperApi(createZookeeperApi(context));
   }, [workspaceName, pipelineName, showMessage]);
 
   return (

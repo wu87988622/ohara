@@ -14,203 +14,94 @@
  * limitations under the License.
  */
 
-import { get, has, map, omit } from 'lodash';
+import { map } from 'lodash';
+import * as routines from './zookeeperRoutines';
 
-import * as zookeeperApi from 'api/zookeeperApi';
-import * as inspectApi from 'api/inspectApi';
-import * as objectApi from 'api/objectApi';
-import {
-  fetchZookeepersRoutine,
-  addZookeeperRoutine,
-  stageZookeeperRoutine,
-} from './zookeeperRoutines';
-import { getKey, findByGroupAndName } from 'utils/object';
-
-const ZOOKEEPER = 'zookeeper';
-
-const checkRequired = values => {
-  if (!has(values, 'name')) {
-    throw new Error("Values is missing required member 'name'");
-  }
-};
-
-const transformToStagingZookeeper = object => ({
-  settings: omit(object, 'tags'),
-  stagingSettings: get(object, 'tags'),
-});
-
-const combineZookeeper = (zookeeper, zookeeperInfo, stagingZookeeper) => {
-  if (!has(zookeeper, 'settings')) {
-    throw new Error("zookeeper is missing required member 'settings'");
-  }
-  if (!has(zookeeperInfo, 'settingDefinitions')) {
-    throw new Error(
-      "zookeeperInfo is missing required member 'settingDefinitions'",
-    );
-  }
-  if (!has(stagingZookeeper, 'stagingSettings')) {
-    throw new Error(
-      "stagingZookeeper is missing required member 'stagingSettings'",
-    );
-  }
+export const createActions = context => {
+  const { state, dispatch, zookeeperApi } = context;
   return {
-    serviceType: ZOOKEEPER,
-    ...zookeeper,
-    ...zookeeperInfo,
-    stagingSettings: stagingZookeeper.stagingSettings,
+    fetchZookeepers: async () => {
+      const routine = routines.fetchZookeepersRoutine;
+      if (state.isFetching || state.lastUpdated || state.error) return;
+      try {
+        dispatch(routine.request());
+        const zookeepers = await zookeeperApi.fetchAll();
+        const data = map(zookeepers, zookeeper => ({
+          ...zookeeper,
+          serviceType: 'zookeeper',
+        }));
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    createZookeeper: async values => {
+      const routine = routines.createZookeeperRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const createRes = await zookeeperApi.create(values);
+        const startRes = await zookeeperApi.start(values.name);
+        const data = { ...createRes, ...startRes };
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    updateZookeeper: async values => {
+      const routine = routines.updateZookeeperRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await zookeeperApi.update(values);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    stageZookeeper: async values => {
+      const routine = routines.stageZookeeperRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await zookeeperApi.stage(values);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    deleteZookeeper: async name => {
+      const routine = routines.deleteZookeeperRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await zookeeperApi.delete(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    startZookeeper: async name => {
+      const routine = routines.startZookeeperRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await zookeeperApi.start(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    stopZookeeper: async name => {
+      const routine = routines.stopZookeeperRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await zookeeperApi.stop(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
   };
-};
-
-const fetchZookeepersCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = fetchZookeepersRoutine,
-) => async () => {
-  if (state.isFetching || state.lastUpdated || state.error) return;
-
-  try {
-    dispatch(routine.request());
-
-    const resultForFetchZookeepers = await zookeeperApi.getAll();
-    if (resultForFetchZookeepers.errors) {
-      throw new Error(resultForFetchZookeepers.title);
-    }
-
-    const zookeepers = await Promise.all(
-      map(resultForFetchZookeepers.data, async zookeeper => {
-        const key = getKey(zookeeper);
-
-        const resultForFetchZookeeperInfo = await inspectApi.getZookeeperInfo(
-          key,
-        );
-        if (resultForFetchZookeeperInfo.errors) {
-          throw new Error(resultForFetchZookeeperInfo.title);
-        }
-
-        const resultForFetchStagingZookeeper = await objectApi.get(key);
-        if (resultForFetchStagingZookeeper.errors) {
-          throw new Error(resultForFetchStagingZookeeper.title);
-        }
-
-        const zookeeperInfo = resultForFetchZookeeperInfo.data;
-        const stagingZookeeper = transformToStagingZookeeper(
-          resultForFetchStagingZookeeper.data,
-        );
-        return combineZookeeper(zookeeper, zookeeperInfo, stagingZookeeper);
-      }),
-    );
-    dispatch(routine.success(zookeepers));
-  } catch (e) {
-    dispatch(routine.failure(e.message));
-    showMessage(e.message);
-  }
-};
-
-const addZookeeperCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = addZookeeperRoutine,
-) => async values => {
-  if (state.isFetching) return;
-
-  try {
-    checkRequired(values);
-    const ensuredValues = { ...values, group: ZOOKEEPER };
-    dispatch(routine.request());
-
-    const resultForCreateZookeeper = await zookeeperApi.create(ensuredValues);
-    if (resultForCreateZookeeper.errors) {
-      throw new Error(resultForCreateZookeeper.title);
-    }
-
-    const resultForStartZookeeper = await zookeeperApi.start(ensuredValues);
-    if (resultForStartZookeeper.errors) {
-      throw new Error(resultForStartZookeeper.title);
-    }
-
-    const zookeeper = resultForCreateZookeeper.data;
-    const settings = zookeeper.settings;
-    const stagingData = { ...settings, tags: omit(settings, 'tags') };
-
-    const resultForStageZookeeper = await objectApi.create(stagingData);
-    if (resultForStageZookeeper.errors) {
-      throw new Error(resultForStageZookeeper.title);
-    }
-
-    const resultForFetchZookeeperInfo = await inspectApi.getZookeeperInfo(
-      ensuredValues,
-    );
-    if (resultForFetchZookeeperInfo.errors) {
-      throw new Error(resultForFetchZookeeperInfo.title);
-    }
-
-    const zookeeperInfo = resultForFetchZookeeperInfo.data;
-    const stagingZookeeper = transformToStagingZookeeper(
-      resultForStageZookeeper.data,
-    );
-    dispatch(
-      routine.success(
-        combineZookeeper(zookeeper, zookeeperInfo, stagingZookeeper),
-      ),
-    );
-  } catch (e) {
-    dispatch(routine.failure(e.message));
-    showMessage(e.message);
-  }
-};
-
-const updateZookeeperCreator = () => async () => {
-  // TODO: implement the logic for update zookeeper
-};
-
-const deleteZookeeperCreator = () => async () => {
-  // TODO: implement the logic for delete zookeeper
-};
-
-const stageZookeeperCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = stageZookeeperRoutine,
-) => async values => {
-  if (state.isFetching) return;
-
-  try {
-    checkRequired(values);
-    const group = ZOOKEEPER;
-    const name = values.name;
-    const targetZookeeper = findByGroupAndName(state.data, group, name);
-    const ensuredValues = {
-      name,
-      group,
-      tags: {
-        ...omit(targetZookeeper.settings, 'tags'),
-        ...omit(targetZookeeper.stagingSettings, 'tags'),
-        ...omit(values, 'tags'),
-      },
-    };
-
-    const resultForStageZookeeper = await objectApi.update(ensuredValues);
-    if (resultForStageZookeeper.errors) {
-      throw new Error(resultForStageZookeeper.title);
-    }
-
-    const stagingZookeeper = transformToStagingZookeeper(
-      resultForStageZookeeper.data,
-    );
-    dispatch(routine.success(stagingZookeeper));
-  } catch (e) {
-    dispatch(routine.failure(e.message));
-    showMessage(e.message);
-  }
-};
-
-export {
-  fetchZookeepersCreator,
-  addZookeeperCreator,
-  updateZookeeperCreator,
-  deleteZookeeperCreator,
-  stageZookeeperCreator,
 };

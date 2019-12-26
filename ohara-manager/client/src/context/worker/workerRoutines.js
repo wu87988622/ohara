@@ -17,15 +17,19 @@
 import { createRoutine } from 'redux-routines';
 
 const fetchWorkersRoutine = createRoutine('FETCH_WORKERS');
-const addWorkerRoutine = createRoutine('ADD_WORKER');
+const createWorkerRoutine = createRoutine('CREATE_WORKER');
 const updateWorkerRoutine = createRoutine('UPDATE_WORKER');
 const stageWorkerRoutine = createRoutine('STAGE_WORKER');
 const deleteWorkerRoutine = createRoutine('DELETE_WORKER');
+const startWorkerRoutine = createRoutine('START_WORKER');
+const stopWorkerRoutine = createRoutine('STOP_WORKER');
 
 export {
   fetchWorkersRoutine,
-  addWorkerRoutine,
+  createWorkerRoutine,
   updateWorkerRoutine,
   stageWorkerRoutine,
   deleteWorkerRoutine,
+  startWorkerRoutine,
+  stopWorkerRoutine,
 };

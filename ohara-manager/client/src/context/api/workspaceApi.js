@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-import { isEmpty, has, values, map } from 'lodash';
+import { isEmpty, values, map } from 'lodash';
 import * as objectApi from 'api/objectApi';
-import { stageGroup, generateClusterResponse } from './utils';
+import { generateClusterResponse, stageGroup, validate } from './utils';
+import { WORKSPACE } from './index';
 
-const DEFAULT_GROUP = 'workspace';
-const STAGE_GROUP = stageGroup(DEFAULT_GROUP);
-
-const validate = values => {
-  if (!has(values, 'name')) throw new Error('....');
-};
+const STAGE_GROUP = stageGroup(WORKSPACE);
 
 export const createApi = context => {
   const { showMessage } = context;
   return {
     fetchAll: async () => {
-      const res = await objectApi.getAll({ group: DEFAULT_GROUP });
+      const res = await objectApi.getAll({ group: WORKSPACE });
       if (!isEmpty(res.errors)) {
         throw new Error(`Fetch workspace list failed.`);
       }
@@ -50,7 +46,7 @@ export const createApi = context => {
       );
     },
     fetch: async name => {
-      const res = await objectApi.get({ name, group: DEFAULT_GROUP });
+      const res = await objectApi.get({ name, group: WORKSPACE });
       if (!isEmpty(res.errors)) {
         throw new Error(`Fetch workspace ${name} failed.`);
       }
@@ -69,7 +65,7 @@ export const createApi = context => {
     create: async values => {
       try {
         validate(values);
-        const res = await objectApi.create({ ...values, group: DEFAULT_GROUP });
+        const res = await objectApi.create({ ...values, group: WORKSPACE });
         if (!isEmpty(res.errors)) {
           throw new Error(`Create workspace ${values.name} failed.`);
         }
@@ -94,7 +90,7 @@ export const createApi = context => {
     update: async values => {
       try {
         validate(values);
-        const res = await objectApi.update({ ...values, group: DEFAULT_GROUP });
+        const res = await objectApi.update({ ...values, group: WORKSPACE });
         if (!isEmpty(res.errors)) {
           throw new Error(`Save workspace ${values.name} failed.`);
         }
@@ -126,7 +122,7 @@ export const createApi = context => {
     },
     delete: async name => {
       try {
-        const res = await objectApi.remove({ name, group: DEFAULT_GROUP });
+        const res = await objectApi.remove({ name, group: WORKSPACE });
         if (!isEmpty(res.errors)) {
           throw new Error(`Delete workspace ${name} failed.`);
         }

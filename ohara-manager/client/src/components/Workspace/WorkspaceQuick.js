@@ -103,14 +103,14 @@ const WorkspaceQuick = props => {
   } = useNodeDialog();
 
   const { createWorkspace } = useWorkspaceActions();
-  const { addWorker } = useWorkerActions();
-  const { addBroker } = useBrokerActions();
-  const { addZookeeper } = useZookeeperActions();
+  const { createWorker } = useWorkerActions();
+  const { createBroker } = useBrokerActions();
+  const { createZookeeper } = useZookeeperActions();
 
   const { error: errorForCreateWorkspace } = useWorkspaceState();
-  const { error: errorForAddWorker } = useWorkerState();
-  const { error: errorForAddBroker } = useBrokerState();
-  const { error: errorForAddZookeeper } = useZookeeperState();
+  const { error: errorForCreateWorker } = useWorkerState();
+  const { error: errorForCreateBroker } = useBrokerState();
+  const { error: errorForCreateZookeeper } = useZookeeperState();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -220,37 +220,28 @@ const WorkspaceQuick = props => {
     return result;
   };
 
-  const createZk = async params => {
-    const { zkKey, nodeNames } = params;
-    await addZookeeper({
-      ...zkKey,
-      nodeNames:
-        nodeNames.length > 3
-          ? getRandoms(nodeNames, 3)
-          : getRandoms(nodeNames, 1),
-    });
-    if (errorForAddZookeeper) throw new Error(errorForAddZookeeper);
+  const createZk = async values => {
+    const randomNodeNames =
+      values.nodeNames.length > 3
+        ? getRandoms(values.nodeNames, 3)
+        : getRandoms(values.nodeNames, 1);
+    await createZookeeper({ ...values, nodeNames: randomNodeNames });
+    if (errorForCreateZookeeper) throw new Error(errorForCreateZookeeper);
   };
 
-  const createBk = async params => {
-    const { bkKey, zkKey, nodeNames } = params;
-    await addBroker({
-      ...bkKey,
-      zookeeperClusterKey: zkKey,
-      nodeNames,
-    });
-    if (errorForAddBroker) throw new Error(errorForAddBroker);
+  const createBk = async values => {
+    await createBroker(values);
+    if (errorForCreateBroker) throw new Error(errorForCreateBroker);
   };
 
-  const createWk = async params => {
-    const { wkKey, bkKey, nodeNames, plugins } = params;
-    await addWorker({
-      ...wkKey,
-      brokerClusterKey: bkKey,
-      nodeNames,
-      pluginKeys: plugins,
-    });
-    if (errorForAddWorker) throw new Error(errorForAddWorker);
+  const createWk = async values => {
+    await createWorker(values);
+    if (errorForCreateWorker) throw new Error(errorForCreateWorker);
+  };
+
+  const createWs = async values => {
+    await createWorkspace(values);
+    if (errorForCreateWorkspace) throw new Error(errorForCreateWorkspace);
   };
 
   const createQuickWorkspace = async (values, form) => {
@@ -263,22 +254,15 @@ const WorkspaceQuick = props => {
       };
     });
 
-    const zkKey = { name: workspaceName, group: 'zookeeper' };
-    const bkKey = { name: workspaceName, group: 'broker' };
-    const wkKey = { name: workspaceName, group: 'worker' };
-
     try {
       setProgressOpen(true);
-      await createZk({ zkKey, nodeNames });
+      await createZk({ name: workspaceName, nodeNames });
       setProgressActiveStep(1);
-      await createBk({ bkKey, zkKey, nodeNames });
+      await createBk({ name: workspaceName, nodeNames });
       setProgressActiveStep(2);
-      await createWk({ wkKey, bkKey, nodeNames, plugins });
+      await createWk({ name: workspaceName, nodeNames, pluginKeys: plugins });
       setProgressActiveStep(3);
-      await createWorkspace({ name: workspaceName, nodeNames });
-      if (errorForCreateWorkspace) {
-        throw new Error(errorForCreateWorkspace);
-      }
+      await createWs({ name: workspaceName, nodeNames });
       setTimeout(form.reset);
       setActiveStep(0);
       setFiles([]);

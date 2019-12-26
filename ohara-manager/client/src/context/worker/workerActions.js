@@ -14,193 +14,94 @@
  * limitations under the License.
  */
 
-import { get, has, map, omit } from 'lodash';
+import { map } from 'lodash';
+import * as routines from './workerRoutines';
 
-import * as workerApi from 'api/workerApi';
-import * as inspectApi from 'api/inspectApi';
-import * as objectApi from 'api/objectApi';
-import {
-  fetchWorkersRoutine,
-  addWorkerRoutine,
-  stageWorkerRoutine,
-} from './workerRoutines';
-import { getKey, findByGroupAndName } from 'utils/object';
-
-const WORKER = 'worker';
-
-const checkRequired = values => {
-  if (!has(values, 'name')) {
-    throw new Error("Values is missing required member 'name'");
-  }
-};
-
-const transformToStagingWorker = object => ({
-  settings: omit(object, 'tags'),
-  stagingSettings: get(object, 'tags'),
-});
-
-const combineWorker = (worker, workerInfo, stagingWorker) => {
-  if (!has(worker, 'settings')) {
-    throw new Error("worker is missing required member 'settings'");
-  }
-  if (!has(workerInfo, 'settingDefinitions')) {
-    throw new Error(
-      "workerInfo is missing required member 'settingDefinitions'",
-    );
-  }
-  if (!has(stagingWorker, 'stagingSettings')) {
-    throw new Error(
-      "stagingWorker is missing required member 'stagingSettings'",
-    );
-  }
+export const createActions = context => {
+  const { state, dispatch, workerApi } = context;
   return {
-    serviceType: WORKER,
-    ...worker,
-    ...workerInfo,
-    stagingSettings: stagingWorker.stagingSettings,
+    fetchWorkers: async () => {
+      const routine = routines.fetchWorkersRoutine;
+      if (state.isFetching || state.lastUpdated || state.error) return;
+      try {
+        dispatch(routine.request());
+        const workers = await workerApi.fetchAll();
+        const data = map(workers, worker => ({
+          ...worker,
+          serviceType: 'worker',
+        }));
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    createWorker: async values => {
+      const routine = routines.createWorkerRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const createRes = await workerApi.create(values);
+        const startRes = await workerApi.start(values.name);
+        const data = { ...createRes, ...startRes };
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    updateWorker: async values => {
+      const routine = routines.updateWorkerRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await workerApi.update(values);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    stageWorker: async values => {
+      const routine = routines.stageWorkerRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await workerApi.stage(values);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    deleteWorker: async name => {
+      const routine = routines.deleteWorkerRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await workerApi.delete(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    startWorker: async name => {
+      const routine = routines.startWorkerRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await workerApi.start(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    stopWorker: async name => {
+      const routine = routines.stopWorkerRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await workerApi.stop(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
   };
-};
-
-const fetchWorkersCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = fetchWorkersRoutine,
-) => async () => {
-  if (state.isFetching || state.lastUpdated || state.error) return;
-
-  try {
-    dispatch(routine.request());
-
-    const resultForFetchWorkers = await workerApi.getAll();
-    if (resultForFetchWorkers.errors) {
-      throw new Error(resultForFetchWorkers.title);
-    }
-
-    const workers = await Promise.all(
-      map(resultForFetchWorkers.data, async worker => {
-        const key = getKey(worker);
-
-        const resultForFetchWorkerInfo = await inspectApi.getWorkerInfo(key);
-        if (resultForFetchWorkerInfo.errors) {
-          throw new Error(resultForFetchWorkerInfo.title);
-        }
-
-        const resultForFetchStagingWorker = await objectApi.get(key);
-        if (resultForFetchStagingWorker.errors) {
-          throw new Error(resultForFetchStagingWorker.title);
-        }
-
-        const workerInfo = resultForFetchWorkerInfo.data;
-        const stagingWorker = transformToStagingWorker(
-          resultForFetchStagingWorker.data,
-        );
-        return combineWorker(worker, workerInfo, stagingWorker);
-      }),
-    );
-    dispatch(routine.success(workers));
-  } catch (e) {
-    dispatch(routine.failure(e.message));
-    showMessage(e.message);
-  }
-};
-
-const addWorkerCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = addWorkerRoutine,
-) => async values => {
-  if (state.isFetching) return;
-
-  try {
-    checkRequired(values);
-    const ensuredValues = { ...values, group: WORKER };
-    dispatch(routine.request());
-
-    const resultForCreateWorker = await workerApi.create(ensuredValues);
-    if (resultForCreateWorker.errors) {
-      throw new Error(resultForCreateWorker.title);
-    }
-
-    const resultForStartWorker = await workerApi.start(ensuredValues);
-    if (resultForStartWorker.errors) {
-      throw new Error(resultForStartWorker.title);
-    }
-
-    const worker = resultForCreateWorker.data;
-    const settings = worker.settings;
-    const stagingData = { ...settings, tags: omit(settings, 'tags') };
-
-    const resultForStageWorker = await objectApi.create(stagingData);
-    if (resultForStageWorker.errors) {
-      throw new Error(resultForStageWorker.title);
-    }
-
-    const resultForFetchWorkerInfo = await inspectApi.getWorkerInfo(
-      ensuredValues,
-    );
-    if (resultForFetchWorkerInfo.errors) {
-      throw new Error(resultForFetchWorkerInfo.title);
-    }
-
-    const workerInfo = resultForFetchWorkerInfo.data;
-    const stagingWorker = transformToStagingWorker(resultForStageWorker.data);
-    dispatch(routine.success(combineWorker(worker, workerInfo, stagingWorker)));
-  } catch (e) {
-    dispatch(routine.failure(e.message));
-    showMessage(e.message);
-  }
-};
-
-const updateWorkerCreator = () => async () => {
-  // TODO: implement the logic for update worker
-};
-
-const deleteWorkerCreator = () => async () => {
-  // TODO: implement the logic for delete worker
-};
-
-const stageWorkerCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = stageWorkerRoutine,
-) => async values => {
-  if (state.isFetching) return;
-
-  try {
-    checkRequired(values);
-    const group = WORKER;
-    const name = values.name;
-    const targetWorker = findByGroupAndName(state.data, group, name);
-    const ensuredValues = {
-      name,
-      group,
-      tags: {
-        ...omit(targetWorker.settings, 'tags'),
-        ...omit(targetWorker.stagingSettings, 'tags'),
-        ...omit(values, 'tags'),
-      },
-    };
-
-    const resultForStageWorker = await objectApi.update(ensuredValues);
-    if (resultForStageWorker.errors) {
-      throw new Error(resultForStageWorker.title);
-    }
-
-    const stagingWorker = transformToStagingWorker(resultForStageWorker.data);
-    dispatch(routine.success(stagingWorker));
-  } catch (e) {
-    dispatch(routine.failure(e.message));
-    showMessage(e.message);
-  }
-};
-
-export {
-  fetchWorkersCreator,
-  addWorkerCreator,
-  updateWorkerCreator,
-  deleteWorkerCreator,
-  stageWorkerCreator,
 };

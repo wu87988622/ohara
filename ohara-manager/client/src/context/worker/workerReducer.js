@@ -18,10 +18,12 @@ import { map, reject } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchWorkersRoutine,
-  addWorkerRoutine,
+  createWorkerRoutine,
   updateWorkerRoutine,
   stageWorkerRoutine,
   deleteWorkerRoutine,
+  startWorkerRoutine,
+  stopWorkerRoutine,
 } from './workerRoutines';
 
 const initialState = {
@@ -35,10 +37,12 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchWorkersRoutine.REQUEST:
-    case addWorkerRoutine.REQUEST:
+    case createWorkerRoutine.REQUEST:
     case updateWorkerRoutine.REQUEST:
     case stageWorkerRoutine.REQUEST:
     case deleteWorkerRoutine.REQUEST:
+    case startWorkerRoutine.REQUEST:
+    case stopWorkerRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -51,7 +55,7 @@ const reducer = (state, action) => {
         data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
-    case addWorkerRoutine.SUCCESS:
+    case createWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -60,6 +64,8 @@ const reducer = (state, action) => {
       };
     case updateWorkerRoutine.SUCCESS:
     case stageWorkerRoutine.SUCCESS:
+    case startWorkerRoutine.SUCCESS:
+    case stopWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -83,10 +89,12 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case fetchWorkersRoutine.FAILURE:
-    case addWorkerRoutine.FAILURE:
+    case createWorkerRoutine.FAILURE:
     case updateWorkerRoutine.FAILURE:
     case stageWorkerRoutine.FAILURE:
     case deleteWorkerRoutine.FAILURE:
+    case startWorkerRoutine.FAILURE:
+    case stopWorkerRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

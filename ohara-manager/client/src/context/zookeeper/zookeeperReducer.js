@@ -18,10 +18,12 @@ import { map, reject } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchZookeepersRoutine,
-  addZookeeperRoutine,
+  createZookeeperRoutine,
   updateZookeeperRoutine,
   stageZookeeperRoutine,
   deleteZookeeperRoutine,
+  startZookeeperRoutine,
+  stopZookeeperRoutine,
 } from './zookeeperRoutines';
 
 const initialState = {
@@ -35,10 +37,12 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case fetchZookeepersRoutine.REQUEST:
-    case addZookeeperRoutine.REQUEST:
+    case createZookeeperRoutine.REQUEST:
     case updateZookeeperRoutine.REQUEST:
     case stageZookeeperRoutine.REQUEST:
     case deleteZookeeperRoutine.REQUEST:
+    case startZookeeperRoutine.REQUEST:
+    case stopZookeeperRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -51,7 +55,7 @@ const reducer = (state, action) => {
         data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
-    case addZookeeperRoutine.SUCCESS:
+    case createZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -60,6 +64,8 @@ const reducer = (state, action) => {
       };
     case updateZookeeperRoutine.SUCCESS:
     case stageZookeeperRoutine.SUCCESS:
+    case startZookeeperRoutine.SUCCESS:
+    case stopZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -83,10 +89,12 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case fetchZookeepersRoutine.FAILURE:
-    case addZookeeperRoutine.FAILURE:
+    case createZookeeperRoutine.FAILURE:
     case updateZookeeperRoutine.FAILURE:
     case stageZookeeperRoutine.FAILURE:
     case deleteZookeeperRoutine.FAILURE:
+    case startZookeeperRoutine.FAILURE:
+    case stopZookeeperRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

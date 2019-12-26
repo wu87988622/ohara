@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-import { forEach, map, isEmpty } from 'lodash';
+import { forEach, has, map, isEmpty } from 'lodash';
 
 import { getDefinition } from 'api/utils/definitionsUtils';
+
+export const validate = values => {
+  if (!has(values, 'name'))
+    throw new Error('The values must contain the name property');
+};
 
 // for workspace stage object, we use a "prefix" to identify it
 export const stageGroup = group => 'stage'.concat(group);
