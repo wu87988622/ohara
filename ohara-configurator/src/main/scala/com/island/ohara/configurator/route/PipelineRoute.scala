@@ -100,7 +100,7 @@ private[configurator] object PipelineRoute {
     topicAdmin
       .exist(data.key)
       .map(
-        try if (_) Some(TopicApi.TopicState.RUNNING) else None
+        try if (_) Some(TopicApi.State.RUNNING) else None
         finally topicAdmin.close()
       )
       .map(_.map(_.name))

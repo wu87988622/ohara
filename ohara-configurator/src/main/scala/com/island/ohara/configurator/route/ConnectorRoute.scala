@@ -66,6 +66,9 @@ private[configurator] object ConnectorRoute {
         ConnectorInfo(
           settings = extractDefaultValues(definitions) ++ creation.settings,
           // we don't need to fetch connector from kafka since it has not existed in kafka.
+          state = None,
+          nodeName = None,
+          error = None,
           status = None,
           tasksStatus = Seq.empty,
           metrics = Metrics.EMPTY,
@@ -98,6 +101,9 @@ private[configurator] object ConnectorRoute {
               workerCollie.workerClient(workerClusterInfo).flatMap { workerClient =>
                 workerClient.status(connectorInfo.key).map { connectorInfoFromKafka =>
                   connectorInfo.copy(
+                    state = Some(State.forName(connectorInfoFromKafka.connector.state)),
+                    error = connectorInfoFromKafka.connector.trace,
+                    nodeName = Some(connectorInfoFromKafka.connector.workerHostname),
                     status = Some(
                       Status(
                         state = State.forName(connectorInfoFromKafka.connector.state),

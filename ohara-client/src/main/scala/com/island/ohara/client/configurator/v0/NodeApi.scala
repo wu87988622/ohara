@@ -167,6 +167,8 @@ object NodeApi {
     def _password: String                      = password.getOrElse(throw new NoSuchElementException(msg("password")))
     override def name: String                  = hostname
     override def kind: String                  = KIND
+
+    override protected def raw: Map[String, JsValue] = NODE_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   object Node {

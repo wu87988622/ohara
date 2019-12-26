@@ -69,6 +69,10 @@ class TestControlConnector extends WithBrokerWorker {
     result(topicApi.start(topic.key))
     (0 until 3).foreach(_ => result(connectorApi.start(sink.key)))
 
+    result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
+    result(connectorApi.get(sink.key)).nodeName.get shouldBe CommonUtils.hostname()
+    result(connectorApi.get(sink.key)).error shouldBe None
+
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       await(

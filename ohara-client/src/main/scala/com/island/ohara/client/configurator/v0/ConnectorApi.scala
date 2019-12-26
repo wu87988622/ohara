@@ -21,7 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.{Data, QueryRequest}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroup, SettingDef, TopicKey}
+import com.island.ohara.common.setting._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
@@ -181,15 +181,15 @@ object ConnectorApi {
     */
   final case class ConnectorInfo(
     settings: Map[String, JsValue],
+    state: Option[State],
+    nodeName: Option[String],
+    error: Option[String],
+    // remove "status" (https://github.com/oharastream/ohara/issues/3621)
     status: Option[Status],
     tasksStatus: Seq[Status],
     metrics: Metrics,
     lastModified: Long
   ) extends Data {
-    override protected def matched(key: String, value: String): Boolean = key match {
-      case _ => matchSetting(settings, key, value)
-    }
-
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: ConnectorKey = settings.key
@@ -210,11 +210,13 @@ object ConnectorApi {
     def workerClusterKey: ObjectKey         = settings.workerClusterKey
     def topicKeys: Set[TopicKey]            = settings.topicKeys
     override def tags: Map[String, JsValue] = settings.tags
+
+    override protected def raw: Map[String, JsValue] = CONNECTOR_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] =
     new RootJsonFormat[ConnectorInfo] {
-      private[this] val format                        = jsonFormat5(ConnectorInfo)
+      private[this] val format                        = jsonFormat8(ConnectorInfo)
       override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
       override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
     }
@@ -309,12 +311,7 @@ object ConnectorApi {
   }
 
   sealed trait Query extends BasicQuery[ConnectorInfo] {
-    def setting(key: String, value: JsValue): Query =
-      set(key, value match {
-        case JsString(s) => s
-        case _           => value.toString
-      })
-
+    def state(value: State): Query = setting("state", value.name)
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
 

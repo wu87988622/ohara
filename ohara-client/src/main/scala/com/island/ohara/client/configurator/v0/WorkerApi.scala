@@ -282,6 +282,8 @@ object WorkerApi {
     override def ports: Set[Int] = settings.ports
 
     override def kind: String = KIND
+
+    override protected def raw: Map[String, JsValue] = WORKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   /**

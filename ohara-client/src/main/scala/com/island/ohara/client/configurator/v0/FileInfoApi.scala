@@ -117,6 +117,8 @@ object FileInfoApi {
     def streamClassInfos: Seq[ClassInfo] = classInfos.streamClassInfos
 
     override def kind: String = KIND
+
+    override protected def raw: Map[String, JsValue] = FILE_INFO_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   private[this] val URL_KEY         = "url"

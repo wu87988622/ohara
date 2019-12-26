@@ -147,6 +147,8 @@ object StreamApi {
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys
     def connectionProps: String      = settings.connectionProps
+
+    override protected def raw: Map[String, JsValue] = STREAM_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: OharaJsonFormat[StreamClusterInfo] =

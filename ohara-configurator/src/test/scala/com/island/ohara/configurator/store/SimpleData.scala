@@ -21,4 +21,6 @@ import spray.json.JsValue
 
 case class SimpleData(group: String, name: String, lastModified: Long, kind: String) extends Data {
   override def tags: Map[String, JsValue] = Map.empty
+
+  override protected def raw: Map[String, JsValue] = Map.empty
 }

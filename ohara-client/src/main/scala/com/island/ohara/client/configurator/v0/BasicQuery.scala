@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.common.util.CommonUtils
-import spray.json.{JsObject, JsValue}
+import spray.json.{JsObject, JsString, JsValue}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,28 +31,28 @@ import scala.concurrent.{ExecutionContext, Future}
 trait BasicQuery[T] {
   private[this] val paras: mutable.Map[String, String] = mutable.Map[String, String]()
 
-  def name(value: String): BasicQuery.this.type = set("name", value)
+  def name(value: String): BasicQuery.this.type = setting("name", value)
 
-  def group(value: String): BasicQuery.this.type = set("group", value)
+  def group(value: String): BasicQuery.this.type = setting("group", value)
 
-  /**
-    * partial alignment to the "tags".
-    * This is a specific query parameter offering partial alignment. By contrast, other queries address complete match.
-    * @param tag
-    * @return this query
-    */
-  def tag(tag: Map[String, JsValue]): BasicQuery.this.type = set("tag", JsObject(tag).toString())
+  def noState: BasicQuery.this.type = setting("state", "none")
 
   /**
     * complete match to the "tags"
     * @param tags
     * @return this query
     */
-  def tags(tags: Map[String, JsValue]): BasicQuery.this.type = set("tags", JsObject(tags).toString())
+  def tags(tags: Map[String, JsValue]): BasicQuery.this.type = setting("tags", JsObject(tags).toString())
 
-  def lastModified(value: Long): BasicQuery.this.type = set("lastModified", value.toString)
+  def lastModified(value: Long): BasicQuery.this.type = setting("lastModified", value.toString)
 
-  protected def set(key: String, value: String): BasicQuery.this.type = {
+  def setting(key: String, value: JsValue): BasicQuery.this.type =
+    setting(key, value match {
+      case JsString(s) => s
+      case _           => value.toString
+    })
+
+  protected def setting(key: String, value: String): BasicQuery.this.type = {
     paras += (CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value))
     this
   }

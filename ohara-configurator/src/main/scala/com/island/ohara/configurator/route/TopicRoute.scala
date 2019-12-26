@@ -85,7 +85,7 @@ private[configurator] object TopicRoute {
                       topicAdmin
                         .topics()
                         .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
-                        .map(_.partitionInfos        -> Some(TopicState.RUNNING))
+                        .map(_.partitionInfos        -> Some(State.RUNNING))
                     else Future.successful(Seq.empty -> None)
                   )
                   // pre-close topic admin

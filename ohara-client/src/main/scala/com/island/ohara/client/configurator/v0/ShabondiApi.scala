@@ -52,6 +52,8 @@ final object ShabondiApi {
 
     // TODO: Does shabondi need the tags? by chia
     override def tags: Map[String, JsValue] = Map.empty
+
+    override protected def raw: Map[String, JsValue] = SHABONDI_DESCRIPTION_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   final case class ShabondiProperty(to: Option[Seq[String]], port: Option[Int])

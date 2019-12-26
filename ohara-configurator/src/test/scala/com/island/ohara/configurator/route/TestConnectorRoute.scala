@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator.route
 
+import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.OharaTest
@@ -594,6 +595,46 @@ class TestConnectorRoute extends OharaTest {
     intercept[IllegalArgumentException] {
       result(connectorApi.start(connector.key))
     }.getMessage should include("another broker cluster")
+  }
+
+  @Test
+  def testPartialFilter(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    val tags1 = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val tags2 = tags1 - "e"
+    val connector = result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .workerClusterKey(workerClusterInfo.key)
+        .tags(tags1)
+        .create()
+    )
+    result(topicApi.start(topic.key))
+    result(connectorApi.start(connector.key))
+    (0 until 3).foreach(
+      _ =>
+        result(
+          connectorApi.request
+            .topicKey(topic.key)
+            .className("com.island.ohara.connector.ftp.FtpSink")
+            .workerClusterKey(workerClusterInfo.key)
+            .tags(tags2)
+            .create()
+        )
+    )
+    result(connectorApi.list()).size shouldBe 4
+    result(connectorApi.query.state(State.RUNNING).execute()).size shouldBe 1
+    result(connectorApi.query.noState.execute()).size shouldBe 3
+    result(connectorApi.query.tags(tags1).execute()).size shouldBe 1
+    result(connectorApi.query.tags(tags2).execute()).size shouldBe 4
+    result(connectorApi.query.tags(tags2).name(connector.name).execute()).size shouldBe 1
   }
 
   @After

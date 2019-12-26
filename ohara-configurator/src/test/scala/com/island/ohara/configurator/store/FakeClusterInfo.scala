@@ -40,4 +40,6 @@ case class FakeClusterInfo(override val name: String) extends ClusterInfo {
   override def error: Option[String] = None
 
   override def settings: Map[String, JsValue] = throw new UnsupportedOperationException
+
+  override protected def raw: Map[String, JsValue] = Map.empty
 }

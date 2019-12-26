@@ -87,6 +87,8 @@ object ObjectApi {
     override def hashCode(): Int = settings.hashCode()
 
     override def toString: String = settings.toString()
+
+    override protected def raw: Map[String, JsValue] = settings
   }
 
   object ObjectInfo {

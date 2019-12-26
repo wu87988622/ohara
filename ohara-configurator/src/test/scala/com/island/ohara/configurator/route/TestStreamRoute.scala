@@ -728,11 +728,11 @@ class TestStreamRoute extends OharaTest {
     )
     result(streamApi.list()).size shouldBe 4
     result(streamApi.start(stream.key))
-    val streams = result(streamApi.query.state("running").execute())
+    val streams = result(streamApi.query.state("RUNNING").execute())
     streams.size shouldBe 1
     streams.find(_.key == stream.key) should not be None
 
-    result(streamApi.query.group(CommonUtils.randomString(10)).state("running").execute()).size shouldBe 0
+    result(streamApi.query.group(CommonUtils.randomString(10)).state("RUNNING").execute()).size shouldBe 0
     result(streamApi.query.state("none").execute()).size shouldBe 3
   }
 
@@ -744,7 +744,7 @@ class TestStreamRoute extends OharaTest {
     result(topicApi.start(to.key))
     val stream = result(
       streamApi.request
-        .nodeName(nodeNames.head)
+        .nodeNames(nodeNames)
         .fromTopicKey(from.key)
         .toTopicKey(to.key)
         .jarKey(fileInfo.key)
@@ -755,7 +755,7 @@ class TestStreamRoute extends OharaTest {
       _ =>
         result(
           streamApi.request
-            .nodeNames(nodeNames)
+            .nodeName(nodeNames.head)
             .fromTopicKey(from.key)
             .toTopicKey(to.key)
             .jarKey(fileInfo.key)
@@ -766,10 +766,9 @@ class TestStreamRoute extends OharaTest {
     )
     result(streamApi.list()).size shouldBe 4
     result(streamApi.start(stream.key))
-    val streams = result(streamApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    val streams = result(streamApi.query.aliveNodes(nodeNames).execute())
     streams.size shouldBe 1
     streams.head.key shouldBe stream.key
-    result(streamApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
   }
 
   @Test

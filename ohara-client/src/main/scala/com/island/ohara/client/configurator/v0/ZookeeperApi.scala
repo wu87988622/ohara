@@ -178,6 +178,8 @@ object ZookeeperApi {
     def initLimit: Int                                                            = settings.initLimit
     def syncLimit: Int                                                            = settings.syncLimit
     def dataDir: String                                                           = settings.dataDir
+
+    override protected def raw: Map[String, JsValue] = ZOOKEEPER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   /**

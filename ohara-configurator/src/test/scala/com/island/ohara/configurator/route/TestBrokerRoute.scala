@@ -522,7 +522,7 @@ class TestBrokerRoute extends OharaTest {
       result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
     }
     result(brokerApi.list()).size shouldBe 4
-    val brokers = result(brokerApi.query.state("running").execute())
+    val brokers = result(brokerApi.query.state("RUNNING").execute())
     brokers.size shouldBe 1
     brokers.head.key shouldBe broker.key
   }
@@ -531,15 +531,15 @@ class TestBrokerRoute extends OharaTest {
   def testAliveNodesFilter(): Unit = {
     val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
     result(zookeeperApi.start(zookeeper.key))
-    val broker = result(brokerApi.request.nodeName(nodeNames.head).zookeeperClusterKey(zookeeper.key).create())
+    val broker = result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zookeeper.key).create())
     result(brokerApi.start(broker.key))
     (0 until 3).foreach { _ =>
-      val zk = result(zookeeperApi.request.nodeNames(nodeNames).create())
+      val zk = result(zookeeperApi.request.nodeName(nodeNames.head).create())
       result(zookeeperApi.start(zk.key))
       result(brokerApi.request.nodeNames(nodeNames).zookeeperClusterKey(zk.key).create())
     }
     result(brokerApi.list()).size shouldBe 4
-    val brokers = result(brokerApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    val brokers = result(brokerApi.query.aliveNodes(nodeNames).execute())
     brokers.size shouldBe 1
     brokers.head.key shouldBe broker.key
   }

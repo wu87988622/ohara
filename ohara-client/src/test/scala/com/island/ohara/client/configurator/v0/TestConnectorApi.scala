@@ -134,6 +134,9 @@ class TestConnectorApi extends OharaTest {
         GROUP_KEY                  -> JsString(CommonUtils.randomString()),
         NAME_KEY                   -> JsString(CommonUtils.randomString())
       ),
+      state = None,
+      nodeName = None,
+      error = None,
       status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -153,6 +156,9 @@ class TestConnectorApi extends OharaTest {
         .topicKey(TopicKey.of("g", "n"))
         .creation
         .settings,
+      state = None,
+      nodeName = None,
+      error = None,
       status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -673,6 +679,9 @@ class TestConnectorApi extends OharaTest {
   def settingsDisappearFromJson(): Unit = {
     val cluster = ConnectorInfo(
       settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      state = None,
+      error = None,
+      nodeName = None,
       status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -685,6 +694,9 @@ class TestConnectorApi extends OharaTest {
   def testInfoJsonRepresentation(): Unit = {
     val cluster = ConnectorInfo(
       settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      state = None,
+      error = None,
+      nodeName = None,
       status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,

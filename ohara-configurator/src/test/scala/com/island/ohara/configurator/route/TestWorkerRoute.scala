@@ -503,22 +503,22 @@ class TestWorkerRoute extends OharaTest {
     (0 until 3).foreach(_ => result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()))
     result(workerApi.list()).size shouldBe 4
     result(workerApi.start(worker.key))
-    val workers = result(workerApi.query.state("running").execute())
+    val workers = result(workerApi.query.state("RUNNING").execute())
     workers.size shouldBe 1
     workers.find(_.key == worker.key) should not be None
 
-    result(workerApi.query.group(CommonUtils.randomString()).state("running").execute()).size shouldBe 0
+    result(workerApi.query.group(CommonUtils.randomString()).state("RUNNING").execute()).size shouldBe 0
     result(workerApi.query.state("none").execute()).size shouldBe 3
   }
 
   @Test
   def testAliveNodesFilter(): Unit = {
-    val worker = result(workerApi.request.nodeName(nodeNames.head).brokerClusterKey(brokerClusterKey).create())
+    val worker = result(workerApi.request.nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create())
     (0 until 3).foreach(
       _ =>
         result(
           workerApi.request
-            .nodeNames(nodeNames)
+            .nodeName(nodeNames.head)
             .brokerClusterKey(brokerClusterKey)
             .create()
             .flatMap(z => workerApi.start(z.key))
@@ -526,10 +526,9 @@ class TestWorkerRoute extends OharaTest {
     )
     result(workerApi.list()).size shouldBe 4
     result(workerApi.start(worker.key))
-    val workers = result(workerApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    val workers = result(workerApi.query.aliveNodes(nodeNames).execute())
     workers.size shouldBe 1
     workers.head.key shouldBe worker.key
-    result(workerApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
   }
 
   @Test

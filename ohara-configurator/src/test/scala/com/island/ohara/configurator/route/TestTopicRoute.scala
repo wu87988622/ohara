@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
+import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, State}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
@@ -385,21 +385,21 @@ class TestTopicRoute extends OharaTest {
     result(topicApi.start(topic.key))
     val res = result(topicApi.get(topic.key))
     res.name shouldBe name
-    res.state.get shouldBe TopicState.RUNNING
+    res.state.get shouldBe State.RUNNING
 
     // stop and delete action sequentially should remove the topic totally
     result(topicApi.stop(topic.key))
-    result(topicApi.get(topic.key)).state.isEmpty shouldBe true
+    result(topicApi.get(topic.key)).state shouldBe None
     result(topicApi.delete(topic.key))
     result(topicApi.list()).size shouldBe 0
 
     // pass
     result(topicApi.request.name(name).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(topic.key))
-    result(topicApi.get(topic.key)).state.get shouldBe TopicState.RUNNING
+    result(topicApi.get(topic.key)).state.get shouldBe State.RUNNING
 
     result(topicApi.stop(topic.key))
-    result(topicApi.get(topic.key)).state.isEmpty shouldBe true
+    result(topicApi.get(topic.key)).state shouldBe None
   }
 
   @Test
@@ -497,7 +497,7 @@ class TestTopicRoute extends OharaTest {
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.name(name).state(TopicState.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.name(name).state(State.RUNNING).execute()).size shouldBe 0
   }
 
   @Test
@@ -510,7 +510,7 @@ class TestTopicRoute extends OharaTest {
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.group(group).state(TopicState.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.group(group).state(State.RUNNING).execute()).size shouldBe 0
   }
 
   @Test
@@ -529,7 +529,7 @@ class TestTopicRoute extends OharaTest {
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.tags(tags).state(TopicState.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.tags(tags).state(State.RUNNING).execute()).size shouldBe 0
   }
 
   @Test
@@ -538,13 +538,13 @@ class TestTopicRoute extends OharaTest {
     (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create()))
     result(topicApi.list()).size shouldBe 4
     result(topicApi.start(topic.key))
-    val topics = result(topicApi.query.state(TopicState.RUNNING).execute())
+    val topics = result(topicApi.query.state(State.RUNNING).execute())
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.group(CommonUtils.randomString()).state(TopicState.RUNNING).execute()).size shouldBe 0
-    result(topicApi.query.group(topic.group).state(TopicState.RUNNING).execute()).size shouldBe 1
-    result(topicApi.query.state(TopicState.NONE).execute()).size shouldBe 3
+    result(topicApi.query.group(CommonUtils.randomString()).state(State.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.group(topic.group).state(State.RUNNING).execute()).size shouldBe 1
+    result(topicApi.query.noState.execute()).size shouldBe 3
   }
 
   @Test
@@ -571,6 +571,26 @@ class TestTopicRoute extends OharaTest {
 
     result(brokerApi.start(broker.key))
     result(topicApi.start(topic.key))
+  }
+
+  @Test
+  def testPartialFilter(): Unit = {
+    val tags1 = Map(
+      "a" -> JsString("b"),
+      "b" -> JsNumber(123),
+      "c" -> JsTrue,
+      "d" -> JsArray(JsString("B")),
+      "e" -> JsObject("a" -> JsNumber(123))
+    )
+    val tags2 = tags1 - "e"
+    val topic = result(topicApi.request.tags(tags1).brokerClusterKey(brokerClusterInfo.key).create())
+    result(topicApi.start(topic.key))
+    (0 until 3).foreach(_ => result(topicApi.request.tags(tags2).brokerClusterKey(brokerClusterInfo.key).create()))
+    result(topicApi.list()).size shouldBe 4
+    result(topicApi.query.state(State.RUNNING).execute()).size shouldBe 1
+    result(topicApi.query.tags(tags1).execute()).size shouldBe 1
+    result(topicApi.query.tags(tags2).execute()).size shouldBe 4
+    result(topicApi.query.tags(tags2).name(topic.name).execute()).size shouldBe 1
   }
 
   @After

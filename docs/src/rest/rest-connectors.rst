@@ -62,12 +62,9 @@ The following information are updated by Ohara.
 #. group (**string**) — connector’s group
 #. name (**string**) — connector’s name
 #. lastModified (**long**) — the last time to update this connector
-#. status (**option(object)**) — the status of this connector. If the connector is not started, you won’t see this field
-
-    - state (**string**) — the state of a started connector
-    - nodeName (**string**) — the node hosting this connector
-    - error (**option(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won’t get this field.
-
+#. state (**option(string)**) — the state of a started connector
+#. nodeName (**option(string)**) — the node hosting this connector
+#. error (**option(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won’t get this field.
 #. tasksStatus (**Array(object)**) — the tasks status of this connector
 
     - tasksStatus[i].state (**string**) — the state of a started task.
@@ -109,7 +106,9 @@ Example Request
   .. code-block:: json
 
     {
-      "name":"pc",
+      "name":"perf",
+      "topicKeys": ["t0"],
+      "workerClusterKey": "wk",
       "connector.class":"com.island.ohara.connector.perf.PerfSource"
     }
 
@@ -117,21 +116,38 @@ Example Response
   .. code-block:: json
 
     {
-      "name": "pc",
-      "lastModified": 1567520697909,
-      "metrics": {
-        "meters": []
-      },
-      "group": "default",
-      "topicKeys": [],
+      "header.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "author": "root",
+      "topicKeys": [
+        {
+          "group": "default",
+          "name": "t0"
+        }
+      ],
+      "name": "perf",
+      "check.rule": "NONE",
+      "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "lastModified": 1577282907085,
       "tags": {},
+      "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "perf.cell.length": 10,
+      "tasks.max": 1,
+      "perf.batch": 10,
+      "perf.frequency": "1000 milliseconds",
+      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
+      "version": "0.9.0-SNAPSHOT",
+      "columns": [],
+      "metrics": {
+        "meters": [],
+      },
       "workerClusterKey": {
         "group": "default",
         "name": "wk"
       },
-      "tasks.max": 1,
-      "connector.class": "com.island.ohara.connector.perf.PerfSource",
-      "columns": []
+      "tasksStatus": [],
+      "kind": "source",
+      "group": "default"
     }
 
 update the settings of connector
@@ -147,11 +163,8 @@ Example Request
   .. code-block:: json
 
     {
-      "topicKeys":[
-        {
-          "group": "default",
-          "name": "tp"
-        }
+      "topicKeys": [
+        "t1"
       ]
     }
 
@@ -159,26 +172,38 @@ Example Response
   .. code-block:: json
 
     {
-      "name": "pc",
-      "lastModified": 1567520826794,
-      "metrics": {
-        "meters": []
-      },
-      "group": "default",
+      "header.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "author": "root",
       "topicKeys": [
         {
           "group": "default",
-          "name": "tp"
+          "name": "t1"
         }
       ],
+      "name": "perf",
+      "check.rule": "NONE",
+      "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "lastModified": 1577283010533,
       "tags": {},
+      "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "perf.cell.length": 10,
+      "tasks.max": 1,
+      "perf.batch": 10,
+      "perf.frequency": "1000 milliseconds",
+      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
+      "version": "0.9.0-SNAPSHOT",
+      "columns": [],
+      "metrics": {
+        "meters": [],
+      },
       "workerClusterKey": {
         "group": "default",
         "name": "wk"
       },
-      "tasks.max": 1,
-      "connector.class": "com.island.ohara.connector.perf.PerfSource",
-      "columns": []
+      "tasksStatus": [],
+      "kind": "source",
+      "group": "default"
     }
 
 
@@ -200,29 +225,40 @@ Example Response
 
     [
       {
-        "name": "pc",
-        "lastModified": 1567520826794,
-        "metrics": {
-          "meters": []
-        },
-        "group": "default",
+        "header.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+        "author": "root",
         "topicKeys": [
           {
             "group": "default",
-            "name": "tp"
+            "name": "t1"
           }
         ],
+        "name": "perf",
+        "check.rule": "NONE",
+        "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+        "lastModified": 1577283010533,
         "tags": {},
+        "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+        "perf.cell.length": 10,
+        "tasks.max": 1,
+        "perf.batch": 10,
+        "perf.frequency": "1000 milliseconds",
+        "connector.class": "com.island.ohara.connector.perf.PerfSource",
+        "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
+        "version": "0.9.0-SNAPSHOT",
+        "columns": [],
+        "metrics": {
+          "meters": [],
+        },
         "workerClusterKey": {
           "group": "default",
           "name": "wk"
         },
-        "tasks.max": 1,
-        "connector.class": "com.island.ohara.connector.perf.PerfSource",
-        "columns": []
+        "tasksStatus": [],
+        "kind": "source",
+        "group": "default"
       }
     ]
-
 
 .. _rest-connectors-delete:
 
@@ -255,26 +291,38 @@ Example Response
   .. code-block:: json
 
     {
-      "name": "pc",
-      "lastModified": 1567520826794,
-      "metrics": {
-        "meters": []
-      },
-      "group": "default",
+      "header.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "author": "root",
       "topicKeys": [
         {
           "group": "default",
-          "name": "tp"
+          "name": "t1"
         }
       ],
+      "name": "perf",
+      "check.rule": "NONE",
+      "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "lastModified": 1577283010533,
       "tags": {},
+      "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+      "perf.cell.length": 10,
+      "tasks.max": 1,
+      "perf.batch": 10,
+      "perf.frequency": "1000 milliseconds",
+      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
+      "version": "0.9.0-SNAPSHOT",
+      "columns": [],
+      "metrics": {
+        "meters": [],
+      },
       "workerClusterKey": {
         "group": "default",
         "name": "wk"
       },
-      "tasks.max": 1,
-      "connector.class": "com.island.ohara.connector.perf.PerfSource",
-      "columns": []
+      "tasksStatus": [],
+      "kind": "source",
+      "group": "default"
     }
 
 start a connector

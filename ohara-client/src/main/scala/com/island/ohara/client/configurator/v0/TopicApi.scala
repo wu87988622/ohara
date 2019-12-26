@@ -170,15 +170,14 @@ object TopicApi {
 
   import MetricsApi._
 
-  abstract sealed class TopicState(val name: String) extends Serializable
-  object TopicState extends Enum[TopicState] {
-    case object NONE    extends TopicState("NONE")
-    case object RUNNING extends TopicState("RUNNING")
+  abstract sealed class State(val name: String) extends Serializable
+  object State extends Enum[State] {
+    case object RUNNING extends State("RUNNING")
   }
 
-  implicit val TOPIC_STATE_FORMAT: RootJsonFormat[TopicState] = new RootJsonFormat[TopicState] {
-    override def read(json: JsValue): TopicState = TopicState.forName(json.convertTo[String].toUpperCase)
-    override def write(obj: TopicState): JsValue = JsString(obj.name)
+  implicit val STATE_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
+    override def read(json: JsValue): State = State.forName(json.convertTo[String].toUpperCase)
+    override def write(obj: State): JsValue = JsString(obj.name)
   }
 
   final case class PartitionInfo(
@@ -196,14 +195,9 @@ object TopicApi {
     settings: Map[String, JsValue],
     partitionInfos: Seq[PartitionInfo],
     metrics: Metrics,
-    state: Option[TopicState],
+    state: Option[State],
     lastModified: Long
   ) extends Data {
-    override protected def matched(key: String, value: String): Boolean = key match {
-      case "state" => matchOptionString(state.map(_.name), value)
-      case _       => matchSetting(settings, key, value)
-    }
-
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: TopicKey = TopicKey.of(group, name)
@@ -233,6 +227,8 @@ object TopicApi {
       case (key, value) =>
         DEFINITIONS.filter(_.group() == EXTRA_GROUP).exists(_.key() == key)
     }
+
+    override protected def raw: Map[String, JsValue] = TOPIC_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
@@ -319,15 +315,9 @@ object TopicApi {
 
   sealed trait Query extends BasicQuery[TopicInfo] {
     import spray.json._
-    def state(value: TopicState): Query = set("state", value.name)
+    def state(value: State): Query = setting("state", value.name)
 
     def brokerClusterKey(key: ObjectKey): Query = setting(BROKER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(key).parseJson)
-
-    def setting(key: String, value: JsValue): Query =
-      set(key, value match {
-        case JsString(s) => s
-        case _           => value.toString
-      })
 
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }

@@ -208,6 +208,8 @@ object BrokerApi {
     def numberOfReplications4OffsetsTopic: Int = settings.numberOfReplications4OffsetsTopic
     def numberOfNetworkThreads: Int            = settings.numberOfNetworkThreads
     def numberOfIoThreads: Int                 = settings.numberOfIoThreads
+
+    override protected def raw: Map[String, JsValue] = BROKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   /**

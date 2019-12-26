@@ -78,15 +78,9 @@ object ClusterAccess {
   trait Query[Res <: ClusterInfo] extends BasicQuery[Res] {
     import spray.json._
 
-    def state(value: String): Query.this.type = set("state", value)
+    def state(value: String): Query.this.type = setting("state", value)
 
     def aliveNodes(value: Set[String]): Query.this.type =
-      set("aliveNodes", JsArray(value.map(JsString(_)).toVector).toString())
-
-    def setting(key: String, value: JsValue): Query.this.type =
-      set(key, value match {
-        case JsString(s) => s
-        case _           => value.toString
-      })
+      setting("aliveNodes", JsArray(value.map(JsString(_)).toVector).toString())
   }
 }

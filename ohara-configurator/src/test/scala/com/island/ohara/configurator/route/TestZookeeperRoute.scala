@@ -394,19 +394,6 @@ class TestZookeeperRoute extends OharaTest {
   }
 
   @Test
-  def testTagFilter(): Unit = {
-    result(zookeeperApi.request.tags(Map("a" -> JsString("b"), "b" -> JsNumber(123))).nodeNames(nodeNames).create())
-
-    result(zookeeperApi.request.tags(Map("a" -> JsString("b"), "c" -> JsNumber(123))).nodeNames(nodeNames).create())
-
-    result(zookeeperApi.query.tag(Map("a" -> JsString("b"))).execute()).size shouldBe 2
-
-    result(zookeeperApi.query.tag(Map("b" -> JsNumber(123))).execute()).size shouldBe 1
-
-    result(zookeeperApi.query.tag(Map("c" -> JsNumber(123))).execute()).size shouldBe 1
-  }
-
-  @Test
   def testTagsFilter(): Unit = {
     val tags = Map(
       "a" -> JsString("b"),
@@ -429,26 +416,25 @@ class TestZookeeperRoute extends OharaTest {
     (0 until 3).foreach(_ => result(zookeeperApi.request.nodeNames(nodeNames).create()))
     result(zookeeperApi.list()).size shouldBe 5
     result(zookeeperApi.start(zookeeper.key))
-    val zookeepers = result(zookeeperApi.query.state("running").execute())
+    val zookeepers = result(zookeeperApi.query.state("RUNNING").execute())
     zookeepers.size shouldBe 2
     zookeepers.find(_.key == zookeeper.key) should not be None
 
-    result(zookeeperApi.query.group(CommonUtils.randomString()).state("running").execute()).size shouldBe 0
+    result(zookeeperApi.query.group(CommonUtils.randomString()).state("RUNNING").execute()).size shouldBe 0
     result(zookeeperApi.query.state("none").execute()).size shouldBe 3
   }
 
   @Test
   def testAliveNodesFilter(): Unit = {
-    val zookeeper = result(zookeeperApi.request.nodeName(nodeNames.head).create())
+    val zookeeper = result(zookeeperApi.request.nodeNames(nodeNames).create())
     (0 until 3).foreach(
-      _ => result(zookeeperApi.request.nodeNames(nodeNames).create().flatMap(z => zookeeperApi.start(z.key)))
+      _ => result(zookeeperApi.request.nodeName(nodeNames.head).create().flatMap(z => zookeeperApi.start(z.key)))
     )
     result(zookeeperApi.list()).size shouldBe 5
     result(zookeeperApi.start(zookeeper.key))
-    val zookeepers = result(zookeeperApi.query.aliveNodes(Set(nodeNames.head)).execute())
+    val zookeepers = result(zookeeperApi.query.aliveNodes(nodeNames).execute())
     zookeepers.size shouldBe 1
     zookeepers.head.key shouldBe zookeeper.key
-    result(zookeeperApi.query.aliveNodes(nodeNames).execute()).size shouldBe 3
   }
 
   @Test

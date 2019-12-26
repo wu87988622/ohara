@@ -22,9 +22,8 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.setting.ObjectKey
-import spray.json.{JsArray, JsString, JsValue}
-import spray.json._
 import spray.json.DefaultJsonProtocol._
+import spray.json.JsValue
 
 /**
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
@@ -107,21 +106,6 @@ trait ClusterInfo extends Data {
       c.copy(settings = WorkerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
     case c: StreamClusterInfo =>
       c.copy(settings = StreamApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
-  }
-
-  /**
-    * the default comparison for all clusters.
-    */
-  override protected def matched(key: String, value: String): Boolean = key match {
-    case "state" => matchOptionString(state, value)
-    case "aliveNodes" =>
-      value.parseJson match {
-        case JsArray(es) =>
-          if (es.forall(_.isInstanceOf[JsString])) es.map(_.convertTo[String]).toSet == aliveNodes
-          else false
-        case _ => false
-      }
-    case _ => matchSetting(settings, key, value)
   }
 
   /**

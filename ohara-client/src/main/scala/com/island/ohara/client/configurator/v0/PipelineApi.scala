@@ -81,7 +81,9 @@ object PipelineApi {
     metrics: Metrics,
     lastModified: Long,
     tags: Map[String, JsValue]
-  ) extends Data
+  ) {
+    def key: ObjectKey = ObjectKey.of(group, name)
+  }
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat9(ObjectAbstract)
 
   final case class Pipeline(
@@ -94,6 +96,8 @@ object PipelineApi {
     tags: Map[String, JsValue]
   ) extends Data {
     override def kind: String = KIND
+
+    override protected def raw: Map[String, JsValue] = PIPELINE_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)

@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator
 
 import com.island.ohara.common.setting.ObjectKey
-import spray.json.JsValue
+import spray.json.{JsValue, _}
 
 /**
   * This is the basic type which can be stored by configurator.
@@ -37,15 +37,7 @@ trait Data {
   def kind: String
   def tags: Map[String, JsValue]
 
-  /**
-    * compare the fields of sub instance.
-    * @param key field name
-    * @param value field value
-    * @return true if it is matched. otherwise, false
-    */
-  protected def matched(key: String, value: String): Boolean = false
-
-  import spray.json._
+  protected def raw: Map[String, JsValue]
 
   /**
     * by default, the query compare only "name", "group", "tags" and lastModified.
@@ -53,31 +45,48 @@ trait Data {
     * @return true if the query matches this object. otherwise, false
     */
   final def matched(request: QueryRequest): Boolean =
-    try request.raw.forall {
-      case (key, value) =>
-        key match {
-          case "name" => value == name
-          case "group" =>
-            value == group
-          // partial alignment
-          case "tag" =>
-            value.parseJson.asJsObject.fields.forall {
-              case (key, value) => tags.get(key).contains(value)
-            }
-          // complete alignment
-          case "tags"         => value.parseJson.asJsObject == JsObject(tags)
-          case "lastModified" => value.toLong == lastModified
+    request.raw.forall {
+      case (key, value) => matchSetting(raw, key, value)
+    }
 
-          /**
-            * this field belongs to sub class so we count on the implementation of sub class.
-            */
-          case _ =>
-            matched(key, value)
-        }
-    } catch {
-      /**
-        * this means the key is not a part of data :(
-        */
-      case _: MatchError => false
+  /**
+    * there are many objects containing "settings", and it is filterable so we separate the related code for reusing.
+    *
+    * @param settings settings
+    * @param key key
+    * @param value string of json representation. Noted the string of json string is pure "string" (no quote)
+    * @return true if the key-value is matched. Otherwise, false
+    */
+  private[this] def matchSetting(settings: Map[String, JsValue], key: String, value: String): Boolean =
+    try if (value.toLowerCase == "none") !settings.contains(key)
+    else
+      settings.get(key).exists {
+        // it is impossible to have JsNull since our json format does a great job :)
+        case JsString(s)  => s == value
+        case JsNumber(i)  => i == BigDecimal(value)
+        case JsBoolean(b) => b == value.toBoolean
+        case js: JsArray =>
+          value.parseJson match {
+            // include the part of elements => true
+            // otherwise => false
+            case other: JsArray => other.elements.forall(v => js.elements.contains(v))
+            case _              => false
+          }
+        case js: JsObject =>
+          value.parseJson match {
+            case other: JsObject =>
+              other.fields.forall {
+                case (k, v) =>
+                  matchSetting(js.fields, k, v match {
+                    case JsString(s) => s
+                    case _           => v.toString()
+                  })
+              }
+            case _ => false
+          }
+        case JsNull => value.toLowerCase == "none"
+        case _      => false
+      } catch {
+      case _: Throwable => false
     }
 }

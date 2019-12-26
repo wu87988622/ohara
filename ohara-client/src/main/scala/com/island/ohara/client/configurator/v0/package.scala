@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator
 
 import com.island.ohara.common.data.{Cell, Row}
 import com.island.ohara.common.setting.SettingDef.Type
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, PropGroup, SettingDef, TopicKey}
+import com.island.ohara.common.setting._
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsValue, RootJsonFormat, _}
@@ -271,44 +271,6 @@ package object v0 {
       .rejectEmpty()
       .toRefiner
       .refine
-
-  /**
-    * there are many objects containing "settings", and it is filterable so we separate the related code for reusing.
-    *
-    * @param settings settings
-    * @param key key
-    * @param value string of json representation. Noted the string of json string is pure "string" (no quote)
-    * @return true if the key-value is matched. Otherwise, false
-    */
-  def matchSetting(settings: Map[String, JsValue], key: String, value: String): Boolean = settings.get(key).exists {
-    // it is impossible to have JsNull since our json format does a great job :)
-    case JsString(s)  => s == value
-    case JsNumber(i)  => i == BigDecimal(value)
-    case JsBoolean(b) => b == value.toBoolean
-    case js: JsArray =>
-      value.parseJson match {
-        case other: JsArray => other == js
-        case _              => false
-      }
-    case js: JsObject =>
-      value.parseJson match {
-        case other: JsObject => other == js
-        case _               => false
-      }
-    case _ => false
-  }
-
-  /**
-    * Compare the optional argument.
-    *
-    * Noted that it returns true if the optionString is empty and the query value is "none"
-    * Noted that the comparison is case-insensitive
-    * @param optionString option argument
-    * @param value query value
-    * @return true if matched. Otherwise, false
-    */
-  def matchOptionString(optionString: Option[String], value: String): Boolean =
-    optionString.exists(_.toLowerCase == value.toLowerCase) || (optionString.isEmpty && value.toLowerCase == "none")
 
   private[this] def toJson(value: Any): JsValue = value match {
     //--------[primitive type]--------//
