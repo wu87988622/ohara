@@ -33,7 +33,7 @@ import { configuratorMode } from '../../api/inspectApi';
 const AddNodeDialog = props => {
   const { isOpen, handleClose, mode } = props;
 
-  const { addNode } = useNodeActions();
+  const { createNode } = useNodeActions();
 
   const onSubmit = async (values, form) => {
     const { hostname, port, ...rest } = values;
@@ -44,7 +44,7 @@ const AddNodeDialog = props => {
       ...rest,
     };
 
-    addNode(params);
+    createNode(params);
     setTimeout(form.reset);
     handleClose();
   };

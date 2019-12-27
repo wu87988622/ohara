@@ -16,14 +16,7 @@
 
 import { createRoutine } from 'redux-routines';
 
-const fetchNodesRoutine = createRoutine('FETCH_NODES');
-const addNodeRoutine = createRoutine('ADD_NODE');
-const updateNodeRoutine = createRoutine('UPDATE_NODE');
-const deleteNodeRoutine = createRoutine('DELETE_NODE');
-
-export {
-  fetchNodesRoutine,
-  addNodeRoutine,
-  updateNodeRoutine,
-  deleteNodeRoutine,
-};
+export const fetchNodesRoutine = createRoutine('FETCH_NODES');
+export const createNodeRoutine = createRoutine('CREATE_NODE');
+export const updateNodeRoutine = createRoutine('UPDATE_NODE');
+export const deleteNodeRoutine = createRoutine('DELETE_NODE');

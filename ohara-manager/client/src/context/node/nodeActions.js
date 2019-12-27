@@ -14,87 +14,54 @@
  * limitations under the License.
  */
 
-import * as nodeApi from 'api/nodeApi';
-import {
-  fetchNodesRoutine,
-  addNodeRoutine,
-  deleteNodeRoutine,
-  updateNodeRoutine,
-} from './nodeRoutines';
+import * as routines from './nodeRoutines';
 
-const fetchNodesCreator = (
-  state,
-  dispatch,
-  showMessage,
-  routine = fetchNodesRoutine,
-) => async () => {
-  if (state.isFetching || state.lastUpdated || state.error) return;
-
-  dispatch(routine.request());
-  const result = await nodeApi.getAll();
-
-  if (result.errors) {
-    dispatch(routine.failure(result.title));
-    showMessage(result.title);
-    return;
-  }
-
-  dispatch(routine.success(result.data));
-};
-
-const addNodeCreator = (state, dispatch, showMessage) => async value => {
-  if (state.isFetching) return;
-
-  dispatch(addNodeRoutine.request());
-  const createNodeResponse = await nodeApi.create(value);
-
-  // Failed to create, show a custom error message
-  if (createNodeResponse.errors) {
-    dispatch(addNodeRoutine.failure(createNodeResponse.title));
-    showMessage(createNodeResponse.title);
-    return;
-  }
-
-  // Node successfully created, display success message
-  dispatch(addNodeRoutine.success(createNodeResponse.data));
-  showMessage(createNodeResponse.title);
-};
-const updateNodeCreator = (state, dispatch, showMessage) => async value => {
-  if (state.isFetching) return;
-
-  dispatch(updateNodeRoutine.request());
-
-  const updateNodeResponse = await nodeApi.update(value);
-
-  if (updateNodeResponse.errors) {
-    dispatch(updateNodeRoutine.failure(updateNodeResponse.title));
-    showMessage(updateNodeResponse.title);
-    return;
-  }
-
-  dispatch(updateNodeRoutine.success(value));
-  showMessage(updateNodeResponse.title);
-};
-const deleteNodeCreator = (state, dispatch, showMessage) => async value => {
-  if (state.isFetching) return;
-
-  dispatch(deleteNodeRoutine.request());
-
-  const deleteNodeResponse = await nodeApi.remove(value);
-
-  if (deleteNodeResponse.errors) {
-    dispatch(deleteNodeRoutine.failure(deleteNodeResponse.title));
-    showMessage(deleteNodeResponse.title);
-    return;
-  }
-
-  dispatch(deleteNodeRoutine.success(value));
-  showMessage(deleteNodeResponse.title);
-};
-
-export {
-  fetchNodesCreator,
-  addNodeCreator,
-  updateNodeCreator,
-  deleteNodeCreator,
+export const createActions = context => {
+  const { state, dispatch, nodeApi } = context;
+  return {
+    fetchNodes: async () => {
+      const routine = routines.fetchNodesRoutine;
+      if (state.isFetching || state.lastUpdated || state.error) return;
+      try {
+        dispatch(routine.request());
+        const data = await nodeApi.fetchAll();
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    createNode: async values => {
+      const routine = routines.createNodeRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await nodeApi.create(values);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    updateNode: async values => {
+      const routine = routines.updateNodeRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await nodeApi.update(values);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    deleteNode: async hostname => {
+      const routine = routines.deleteNodeRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await nodeApi.delete(hostname);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+  };
 };

@@ -16,13 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
-import {
-  fetchNodesCreator,
-  addNodeCreator,
-  updateNodeCreator,
-  deleteNodeCreator,
-} from './nodeActions';
+import { useApi } from 'context';
+import { createActions } from './nodeActions';
 import { reducer, initialState } from './nodeReducer';
 
 const NodeStateContext = React.createContext();
@@ -30,16 +25,13 @@ const NodeDispatchContext = React.createContext();
 
 const NodeProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const showMessage = useSnackbar();
-
-  const fetchNodes = React.useCallback(
-    fetchNodesCreator(state, dispatch, showMessage),
-    [state],
-  );
+  const { nodeApi } = useApi();
 
   React.useEffect(() => {
-    fetchNodes();
-  }, [fetchNodes]);
+    if (!nodeApi) return;
+    const actions = createActions({ state, dispatch, nodeApi });
+    actions.fetchNodes();
+  }, [state, nodeApi]);
 
   return (
     <NodeStateContext.Provider value={state}>
@@ -73,12 +65,8 @@ const useNodeDispatch = () => {
 const useNodeActions = () => {
   const state = useNodeState();
   const dispatch = useNodeDispatch();
-  const showMessage = useSnackbar();
-  return {
-    addNode: addNodeCreator(state, dispatch, showMessage),
-    updateNode: updateNodeCreator(state, dispatch, showMessage),
-    deleteNode: deleteNodeCreator(state, dispatch, showMessage),
-  };
+  const { nodeApi } = useApi();
+  return createActions({ state, dispatch, nodeApi });
 };
 
 export { NodeProvider, useNodeState, useNodeDispatch, useNodeActions };

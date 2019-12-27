@@ -15,13 +15,7 @@
  */
 
 import { map, reject, sortBy, isEqualWith } from 'lodash';
-
-import {
-  fetchNodesRoutine,
-  addNodeRoutine,
-  updateNodeRoutine,
-  deleteNodeRoutine,
-} from './nodeRoutines';
+import * as routines from './nodeRoutines';
 
 const initialState = {
   data: [],
@@ -30,36 +24,36 @@ const initialState = {
   error: null,
 };
 
-const sort = nodes => sortBy(nodes, 'settings.name');
+const sort = nodes => sortBy(nodes, 'settings.hostname');
 
 const isEqual = (object, other) =>
-  isEqualWith(object, other, ['settings.name', 'settings.group']);
+  isEqualWith(object, other, ['settings.hostname']);
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchNodesRoutine.REQUEST:
-    case addNodeRoutine.REQUEST:
-    case updateNodeRoutine.REQUEST:
-    case deleteNodeRoutine.REQUEST:
+    case routines.fetchNodesRoutine.REQUEST:
+    case routines.createNodeRoutine.REQUEST:
+    case routines.updateNodeRoutine.REQUEST:
+    case routines.deleteNodeRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
-    case fetchNodesRoutine.SUCCESS:
+    case routines.fetchNodesRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: sort(action.payload),
         lastUpdated: new Date(),
       };
-    case addNodeRoutine.SUCCESS:
+    case routines.createNodeRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case updateNodeRoutine.SUCCESS:
+    case routines.updateNodeRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -68,7 +62,7 @@ const reducer = (state, action) => {
         ),
         lastUpdated: new Date(),
       };
-    case deleteNodeRoutine.SUCCESS:
+    case routines.deleteNodeRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -77,10 +71,10 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
-    case fetchNodesRoutine.FAILURE:
-    case addNodeRoutine.FAILURE:
-    case updateNodeRoutine.FAILURE:
-    case deleteNodeRoutine.FAILURE:
+    case routines.fetchNodesRoutine.FAILURE:
+    case routines.createNodeRoutine.FAILURE:
+    case routines.updateNodeRoutine.FAILURE:
+    case routines.deleteNodeRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
