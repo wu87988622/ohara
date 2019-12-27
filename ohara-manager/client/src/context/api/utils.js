@@ -35,6 +35,7 @@ export const generateClusterResponse = ({
     settings: {},
     stagingSettings: {},
     settingDefinitions: [],
+    classInfos: [],
   };
   if (!isEmpty(inspectInfo)) {
     const definitions = getDefinition(inspectInfo);

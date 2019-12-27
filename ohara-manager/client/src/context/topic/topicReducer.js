@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import { reject } from 'lodash';
+import { map, reject } from 'lodash';
 
-import {
-  initializeRoutine,
-  fetchTopicsRoutine,
-  addTopicRoutine,
-  deleteTopicRoutine,
-} from './topicRoutines';
+import * as routines from './topicRoutines';
+import { isKeyEqual, sortByName } from 'utils/object';
 
 const initialState = {
   isFetching: false,
@@ -30,54 +26,45 @@ const initialState = {
   error: null,
 };
 
-const sortedTopics = topics =>
-  topics.sort((a, b) => a.settings.name.localeCompare(b.settings.name));
-
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchTopicsRoutine.REQUEST:
+    case routines.initializeRoutine.TRIGGER:
+      return initialState;
+    case routines.fetchTopicsRoutine.REQUEST:
+    case routines.createTopicRoutine.REQUEST:
+    case routines.updateTopicRoutine.REQUEST:
+    case routines.deleteTopicRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
+        error: null,
       };
-    case fetchTopicsRoutine.SUCCESS:
+    case routines.fetchTopicsRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: action.payload,
+        data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
-    case fetchTopicsRoutine.FAILURE:
+    case routines.createTopicRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
-      };
-    case addTopicRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: undefined,
-      };
-    case addTopicRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sortedTopics([...state.data, action.payload]),
+        data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case addTopicRoutine.FAILURE:
+    case routines.updateTopicRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        data: map(state.data, topic =>
+          isKeyEqual(topic, action.payload)
+            ? { ...topic, ...action.payload }
+            : topic,
+        ),
+        lastUpdated: new Date(),
       };
-    case deleteTopicRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-    case deleteTopicRoutine.SUCCESS:
+    case routines.deleteTopicRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -89,14 +76,15 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
-    case deleteTopicRoutine.FAILURE:
+    case routines.fetchTopicsRoutine.FAILURE:
+    case routines.createTopicRoutine.FAILURE:
+    case routines.updateTopicRoutine.FAILURE:
+    case routines.deleteTopicRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,
         error: action.payload,
       };
-    case initializeRoutine.TRIGGER:
-      return initialState;
     default:
       return state;
   }

@@ -28,7 +28,7 @@ import * as generate from 'utils/generate';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import TopicGraph from '../Graph/Topic/TopicGraph';
 import { AddPublicTopicIcon } from 'components/common/Icon';
-import { getKey, hashKey } from 'utils/object';
+import { hashKey } from 'utils/object';
 
 export const createToolboxList = params => {
   const {
@@ -168,8 +168,7 @@ export const enableDragAndDrop = params => {
     setIsOpen: openAddConnectorDialog,
     currentPipeline,
     topicsData,
-    addTopic,
-    currentBroker,
+    createTopic,
     currentWorkspace,
     updatePipeline,
   } = params;
@@ -283,7 +282,7 @@ export const enableDragAndDrop = params => {
 
           const getPrivateTopicDisplayNames = topics => {
             const topicIndex = topics
-              .map(topic => topic.tags)
+              .map(topic => topic.settings.tags)
               .filter(topic => topic.type === 'private')
               .map(topic => topic.displayName.replace('T', ''))
               .sort();
@@ -300,10 +299,8 @@ export const enableDragAndDrop = params => {
               : getPrivateTopicDisplayNames(topicsData);
 
             if (!isPublicTopic) {
-              addTopic({
+              createTopic({
                 name: privateTopicName,
-                brokerClusterKey: getKey(currentBroker),
-                group: hashKey(currentWorkspace),
                 tags: {
                   type: 'private',
                   displayName,

@@ -70,7 +70,7 @@ const Toolbox = props => {
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
   const [isOpen, setIsOpen] = useState(false);
-  const { addTopic } = context.useTopicActions();
+  const { createTopic } = context.useTopicActions();
 
   const [zIndex, setZIndex] = useState(2);
   const [searchResults, setSearchResults] = useState(null);
@@ -317,8 +317,7 @@ const Toolbox = props => {
         graph,
         currentPipeline,
         topicsData,
-        addTopic,
-        currentBroker,
+        createTopic,
         currentWorkspace,
         updatePipeline,
       });
@@ -326,7 +325,7 @@ const Toolbox = props => {
 
     renderToolbox();
   }, [
-    addTopic,
+    createTopic,
     connectors,
     currentBroker,
     currentPipeline,

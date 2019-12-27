@@ -17,14 +17,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useSnackbar } from 'context/SnackbarContext';
-import { useWorkspace } from 'context';
 import { initializeRoutine } from './topicRoutines';
-import {
-  createFetchTopics,
-  createAddTopic,
-  createDeleteTopic,
-} from './topicActions';
+import { useApi, useApp } from 'context';
+import { createActions } from './topicActions';
 import { reducer, initialState } from './topicReducer';
 
 const TopicStateContext = React.createContext();
@@ -32,11 +27,18 @@ const TopicDispatchContext = React.createContext();
 
 const TopicProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName } = useWorkspace();
+  const { workspaceName } = useApp();
+  const { topicApi } = useApi();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
   }, [workspaceName]);
+
+  React.useEffect(() => {
+    if (!workspaceName || !topicApi) return;
+    const actions = createActions({ state, dispatch, topicApi });
+    actions.fetchTopics();
+  }, [state, workspaceName, topicApi]);
 
   return (
     <TopicStateContext.Provider value={state}>
@@ -70,12 +72,8 @@ TopicProvider.propTypes = {
 const useTopicActions = () => {
   const state = useTopicState();
   const dispatch = useTopicDispatch();
-  const showMessage = useSnackbar();
-  return {
-    fetchTopics: createFetchTopics(state, dispatch, showMessage),
-    addTopic: createAddTopic(state, dispatch, showMessage),
-    deleteTopic: createDeleteTopic(state, dispatch, showMessage),
-  };
+  const { topicApi } = useApi();
+  return createActions({ state, dispatch, topicApi });
 };
 
 export { TopicProvider, useTopicState, useTopicDispatch, useTopicActions };

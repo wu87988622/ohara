@@ -22,6 +22,7 @@ import { useApp } from 'context';
 
 import { createApi as createBrokerApi } from './brokerApi';
 import { createApi as createFileApi } from './fileApi';
+import { createApi as createTopicApi } from './topicApi';
 import { createApi as createWorkerApi } from './workerApi';
 import { createApi as createConnectorApi } from './connectorApi';
 import { createApi as createWorkspaceApi } from './workspaceApi';
@@ -58,7 +59,7 @@ const ApiProvider = ({ children }) => {
     setNodeApi();
     setPipelineApi();
     setStreamApi();
-    setTopicApi();
+    setTopicApi(createTopicApi(context));
     setWorkerApi(createWorkerApi(context));
     setWorkspaceApi(createWorkspaceApi(context));
     setZookeeperApi(createZookeeperApi(context));

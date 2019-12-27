@@ -19,12 +19,7 @@ import { Form, Field } from 'react-final-form';
 
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
-import {
-  useWorkspace,
-  useTopicState,
-  useTopicActions,
-  useAddTopicDialog,
-} from 'context';
+import { useTopicState, useTopicActions, useAddTopicDialog } from 'context';
 
 import {
   required,
@@ -32,24 +27,19 @@ import {
   validServiceName,
   composeValidators,
 } from 'utils/validate';
-import { getKey, hashKey } from 'utils/object';
 
 const AddTopicDialog = () => {
-  const { currentWorkspace, currentBroker } = useWorkspace();
   const { isFetching: isSaving } = useTopicState();
-  const { addTopic } = useTopicActions();
+  const { createTopic } = useTopicActions();
 
   const { isOpen: isDialogOpen, close: closeDialog } = useAddTopicDialog();
 
   const onSubmit = async (values, form) => {
     const { name: topicName } = values;
-    const topicGroup = hashKey(currentWorkspace);
-    addTopic({
+    createTopic({
       name: topicName,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
-      brokerClusterKey: getKey(currentBroker),
-      group: topicGroup,
       tags: {
         type: 'public',
       },
