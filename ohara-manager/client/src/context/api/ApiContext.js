@@ -23,6 +23,7 @@ import { useApp } from 'context';
 import { createApi as createBrokerApi } from './brokerApi';
 import { createApi as createFileApi } from './fileApi';
 import { createApi as createWorkerApi } from './workerApi';
+import { createApi as createConnectorApi } from './connectorApi';
 import { createApi as createWorkspaceApi } from './workspaceApi';
 import { createApi as createZookeeperApi } from './zookeeperApi';
 
@@ -51,7 +52,7 @@ const ApiProvider = ({ children }) => {
       showMessage,
     };
     setBrokerApi(createBrokerApi(context));
-    setConnectorApi();
+    setConnectorApi(createConnectorApi(context));
     setFileApi(createFileApi(context));
     setLogApi();
     setNodeApi();

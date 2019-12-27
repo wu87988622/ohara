@@ -23,6 +23,12 @@ import {
   useBrokerActions,
 } from 'context/broker/BrokerContext';
 import {
+  ConnectorProvider,
+  useConnectorState,
+  useConnectorDispatch,
+  useConnectorActions,
+} from 'context/connector/ConnectorContext';
+import {
   DialogProvider,
   useAddTopicDialog,
   useViewTopicDialog,
@@ -104,6 +110,11 @@ export {
   useBrokerState,
   useBrokerDispatch,
   useBrokerActions,
+  // Connector
+  ConnectorProvider,
+  useConnectorState,
+  useConnectorDispatch,
+  useConnectorActions,
   // Dialog
   DialogProvider,
   useViewTopicDialog,

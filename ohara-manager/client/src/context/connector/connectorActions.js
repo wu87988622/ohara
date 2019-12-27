@@ -14,61 +14,84 @@
  * limitations under the License.
  */
 
-import * as routines from './workspaceRoutines';
+import * as routines from './connectorRoutines';
 
 export const createActions = context => {
-  const { state, dispatch, workspaceApi } = context;
+  const { state, dispatch, connectorApi } = context;
+
   return {
-    fetchWorkspaces: async () => {
-      const routine = routines.fetchWorkspacesRoutine;
+    fetchConnectors: async () => {
+      const routine = routines.fetchConnectorsRoutine;
       if (state.isFetching || state.lastUpdated || state.error) return;
       try {
         dispatch(routine.request());
-        const data = await workspaceApi.fetchAll();
+        const data = connectorApi.fetchAll();
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
     },
-    createWorkspace: async values => {
-      const routine = routines.createWorkspaceRoutine;
+    createConnector: async values => {
+      const routine = routines.createConnectorRoutine;
       if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await workspaceApi.create(values);
+        const data = await connectorApi.create(values);
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
     },
-    updateWorkspace: async values => {
-      const routine = routines.updateWorkspaceRoutine;
+    updateConnector: async values => {
+      const routine = routines.updateConnectorRoutine;
       if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await workspaceApi.update(values);
+        const data = await connectorApi.update(values);
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
     },
-    stageWorkspace: async values => {
-      const routine = routines.stageWorkspaceRoutine;
+    stageConnector: async values => {
+      const routine = routines.stageConnectorRoutine;
       if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await workspaceApi.stage(values);
+        const data = await connectorApi.stage(values);
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
     },
-    deleteWorkspace: async name => {
-      const routine = routines.deleteWorkspaceRoutine;
+    deleteConnector: async name => {
+      const routine = routines.deleteConnectorRoutine;
       if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await workspaceApi.delete(name);
+        const data = await connectorApi.delete(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    startConnector: async name => {
+      const routine = routines.startConnectorRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await connectorApi.start(name);
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    stopConnector: async name => {
+      const routine = routines.stopConnectorRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await connectorApi.stop(name);
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));
