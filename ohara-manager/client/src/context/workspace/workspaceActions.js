@@ -15,6 +15,7 @@
  */
 
 import * as routines from './workspaceRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, workspaceApi } = context;
@@ -26,8 +27,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workspaceApi.fetchAll();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createWorkspace: async values => {
@@ -37,8 +40,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workspaceApi.create(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateWorkspace: async values => {
@@ -48,8 +53,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workspaceApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stageWorkspace: async values => {
@@ -59,8 +66,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workspaceApi.stage(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteWorkspace: async name => {
@@ -70,8 +79,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workspaceApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

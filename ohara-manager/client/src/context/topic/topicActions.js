@@ -15,6 +15,7 @@
  */
 
 import * as routines from './topicRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, topicApi } = context;
@@ -26,8 +27,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await topicApi.fetchAll();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createTopic: async values => {
@@ -39,8 +42,10 @@ export const createActions = context => {
         await topicApi.start(values.name);
         const data = await topicApi.fetch(values.name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateTopic: async values => {
@@ -50,8 +55,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await topicApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteTopic: async name => {
@@ -62,8 +69,10 @@ export const createActions = context => {
         await topicApi.stop(name);
         const data = await topicApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

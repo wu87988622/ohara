@@ -16,6 +16,7 @@
 
 import { some } from 'lodash';
 import * as routines from './fileRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, fileApi } = context;
@@ -27,8 +28,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await fileApi.fetchAll();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createFile: async file => {
@@ -43,8 +46,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await fileApi.create(file);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteFile: async name => {
@@ -54,8 +59,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await fileApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

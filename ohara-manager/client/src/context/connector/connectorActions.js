@@ -15,6 +15,7 @@
  */
 
 import * as routines from './connectorRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, connectorApi } = context;
@@ -27,8 +28,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = connectorApi.fetchAll();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createConnector: async values => {
@@ -38,8 +41,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await connectorApi.create(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateConnector: async values => {
@@ -49,8 +54,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await connectorApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stageConnector: async values => {
@@ -60,8 +67,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await connectorApi.stage(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteConnector: async name => {
@@ -71,8 +80,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await connectorApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     startConnector: async name => {
@@ -82,8 +93,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await connectorApi.start(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stopConnector: async name => {
@@ -93,8 +106,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await connectorApi.stop(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

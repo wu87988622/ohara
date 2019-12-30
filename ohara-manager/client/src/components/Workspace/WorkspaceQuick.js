@@ -46,13 +46,9 @@ import WorkspaceCard from './Card/WorkspaceCard';
 
 import { useNodeDialog } from 'context/NodeDialogContext';
 import {
-  useWorkspaceState,
   useWorkspaceActions,
-  useWorkerState,
   useWorkerActions,
-  useBrokerState,
   useBrokerActions,
-  useZookeeperState,
   useZookeeperActions,
 } from 'context';
 import InputField from 'components/common/Form/InputField';
@@ -108,11 +104,6 @@ const WorkspaceQuick = props => {
   const { createWorker } = useWorkerActions();
   const { createBroker } = useBrokerActions();
   const { createZookeeper } = useZookeeperActions();
-
-  const { error: errorForCreateWorkspace } = useWorkspaceState();
-  const { error: errorForCreateWorker } = useWorkerState();
-  const { error: errorForCreateBroker } = useBrokerState();
-  const { error: errorForCreateZookeeper } = useZookeeperState();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -229,23 +220,26 @@ const WorkspaceQuick = props => {
       values.nodeNames.length > 3
         ? getRandoms(values.nodeNames, 3)
         : getRandoms(values.nodeNames, 1);
-    await createZookeeper({ ...values, nodeNames: randomNodeNames });
-    if (errorForCreateZookeeper) throw new Error(errorForCreateZookeeper);
+    const result = await createZookeeper({
+      ...values,
+      nodeNames: randomNodeNames,
+    });
+    if (result.error) throw new Error(result.error);
   };
 
   const createBk = async values => {
-    await createBroker(values);
-    if (errorForCreateBroker) throw new Error(errorForCreateBroker);
+    const result = await createBroker(values);
+    if (result.error) throw new Error(result.error);
   };
 
   const createWk = async values => {
-    await createWorker(values);
-    if (errorForCreateWorker) throw new Error(errorForCreateWorker);
+    const result = await createWorker(values);
+    if (result.error) throw new Error(result.error);
   };
 
   const createWs = async values => {
-    await createWorkspace(values);
-    if (errorForCreateWorkspace) throw new Error(errorForCreateWorkspace);
+    const result = await createWorkspace(values);
+    if (result.error) throw new Error(result.error);
   };
 
   const createQuickWorkspace = async (values, form) => {

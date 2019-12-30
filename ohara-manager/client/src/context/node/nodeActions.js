@@ -15,6 +15,7 @@
  */
 
 import * as routines from './nodeRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, nodeApi } = context;
@@ -26,8 +27,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await nodeApi.fetchAll();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createNode: async values => {
@@ -37,8 +40,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await nodeApi.create(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateNode: async values => {
@@ -48,8 +53,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await nodeApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteNode: async hostname => {
@@ -59,8 +66,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await nodeApi.delete(hostname);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

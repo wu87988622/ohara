@@ -16,6 +16,7 @@
 
 import { map } from 'lodash';
 import * as routines from './workerRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, workerApi } = context;
@@ -31,8 +32,10 @@ export const createActions = context => {
           serviceType: 'worker',
         }));
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createWorker: async values => {
@@ -44,8 +47,10 @@ export const createActions = context => {
         const startRes = await workerApi.start(values.name);
         const data = { ...createRes, ...startRes };
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateWorker: async values => {
@@ -55,8 +60,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workerApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stageWorker: async values => {
@@ -66,8 +73,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workerApi.stage(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteWorker: async name => {
@@ -77,8 +86,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workerApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     startWorker: async name => {
@@ -88,8 +99,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workerApi.start(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stopWorker: async name => {
@@ -99,8 +112,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await workerApi.stop(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

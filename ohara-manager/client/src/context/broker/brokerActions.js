@@ -16,6 +16,7 @@
 
 import { map } from 'lodash';
 import * as routines from './brokerRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, brokerApi } = context;
@@ -31,8 +32,10 @@ export const createActions = context => {
           serviceType: 'broker',
         }));
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createBroker: async values => {
@@ -44,8 +47,10 @@ export const createActions = context => {
         const startRes = await brokerApi.start(values.name);
         const data = { ...createRes, ...startRes };
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateBroker: async values => {
@@ -55,8 +60,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await brokerApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stageBroker: async values => {
@@ -66,8 +73,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await brokerApi.stage(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteBroker: async name => {
@@ -77,8 +86,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await brokerApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     startBroker: async name => {
@@ -88,8 +99,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await brokerApi.start(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stopBroker: async name => {
@@ -99,8 +112,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await brokerApi.stop(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

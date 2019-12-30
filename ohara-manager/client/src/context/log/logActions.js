@@ -15,6 +15,7 @@
  */
 
 import * as routines from './logRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, logApi } = context;
@@ -26,8 +27,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await logApi.fetchConfigurator();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     fetchZookeeperLog: async values => {
@@ -37,8 +40,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await logApi.fetchZookeeper(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     fetchBrokerLog: async values => {
@@ -48,8 +53,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await logApi.fetchBroker(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     fetchWorkerLog: async values => {
@@ -59,8 +66,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await logApi.fetchWorker(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     fetchStreamLog: async values => {
@@ -70,8 +79,10 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await logApi.fetchStream(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };
