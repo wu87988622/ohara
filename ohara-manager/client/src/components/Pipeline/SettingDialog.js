@@ -189,7 +189,7 @@ const SettingDialog = props => {
     return values;
   };
 
-  const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
+  const { RenderForm, formHandleSubmit, fieldsRef } = RenderDefinitions({
     Definitions: groups.sort(),
     onSubmit,
   });
@@ -216,8 +216,8 @@ const SettingDialog = props => {
     if (selected) {
       //in react useEffect componentDidUpdate default event is scrollToTop,so we need setTimeout wait to scroll.
       setTimeout(() => {
-        if (refs[selected]) {
-          refs[selected].current.scrollIntoView({
+        if (fieldsRef.current[selected]) {
+          fieldsRef.current[selected].current.scrollIntoView({
             behavior: 'smooth',
             block: 'start',
           });

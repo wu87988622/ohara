@@ -15,16 +15,18 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { get, sortBy } from 'lodash';
+import { get, sortBy, noop } from 'lodash';
 import styled, { css } from 'styled-components';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import { Form } from 'react-final-form';
 
 import { useWorkspace } from 'context';
 import { useEditWorkspaceDialog } from 'context';
 import { Segments } from 'components/Workspace/Edit';
 import { QuickSearch } from 'components/common/Search';
+import { RenderDefinition } from 'components/common/Definitions';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
@@ -107,9 +109,18 @@ const Settings = () => {
           <Typography variant="h4" gutterBottom>
             Worker
           </Typography>
-          {workerDefinitions.map(definition =>
-            renderField('worker', definition),
-          )}
+          <Form
+            onSubmit={noop}
+            render={({ handleSubmit }) => {
+              return (
+                <form onSubmit={handleSubmit}>
+                  {workerDefinitions.map(definition =>
+                    RenderDefinition({ def: definition }),
+                  )}
+                </form>
+              );
+            }}
+          />
         </Grid>
         <Grid item ref={bkEl}>
           <Typography variant="h4" gutterBottom>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useRef } from 'react';
+import React, { useRef, createRef } from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
 import RenderDefinition from './RenderDefinition';
@@ -30,27 +30,28 @@ const RenderDefinitions = props => {
   const formRef = useRef(null);
   const formHandleSubmit = () =>
     formRef.current.dispatchEvent(new Event('submit'));
-  const refs = {};
 
   const displayDefinitions = Definitions.filter(def => !def.internal);
+  const fieldsRef = useRef(
+    displayDefinitions.reduce((refs, key) => {
+      return { ...refs, [key]: createRef() };
+    }, {}),
+  );
 
   const RenderForm = (
     <Form
       onSubmit={onSubmit}
       initialValues={initialValues}
-      render={({ handleSubmit, form }) => {
+      render={({ handleSubmit }) => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>
             {displayDefinitions.map(def => {
-              const { definitionField, ref } = RenderDefinition({
+              return RenderDefinition({
                 def,
                 topics,
                 files,
+                ref: fieldsRef.current[def.key],
               });
-
-              refs[def.key] = ref;
-
-              return definitionField;
             })}
           </form>
         );
@@ -58,7 +59,7 @@ const RenderDefinitions = props => {
     />
   );
 
-  return { RenderForm, formHandleSubmit, refs };
+  return { RenderForm, formHandleSubmit, fieldsRef };
 };
 
 RenderDefinitions.propTypes = {

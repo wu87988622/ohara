@@ -43,7 +43,7 @@ import { validWithDef } from 'utils/validate';
 import { READ_ONLY, CREATE_ONLY, EDITABLE } from './Permission';
 
 const RenderDefinition = props => {
-  const { def, topics, files, defType, ref = {} } = props;
+  const { def, topics, files, defType, ref } = props;
 
   const RenderField = params => {
     const {
@@ -76,20 +76,21 @@ const RenderDefinition = props => {
         break;
     }
 
-    return (
-      <Field
-        refs={ref}
-        tableKeys={tableKeys}
-        key={key}
-        name={key}
-        label={displayName}
-        helperText={documentation}
-        component={input}
-        disabled={disabled}
-        required={necessary === 'REQUIRED'}
-        validate={validWithDef(params)}
-      />
-    );
+    const fieldProps = {
+      key,
+      name: key,
+      tableKeys,
+      label: displayName,
+      helperText: documentation,
+      component: input,
+      disabled,
+      required: necessary === 'REQUIRED',
+      validate: validWithDef(params),
+    };
+
+    if (ref) fieldProps.refs = ref;
+
+    return <Field {...fieldProps} />;
   };
 
   const renderDefinitionField = () => {
@@ -181,9 +182,7 @@ const RenderDefinition = props => {
     }
   };
 
-  const definitionField = renderDefinitionField();
-
-  return { definitionField, ref };
+  return renderDefinitionField();
 };
 
 export default RenderDefinition;

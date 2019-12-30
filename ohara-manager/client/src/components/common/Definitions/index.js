@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import RenderDefinition from './RenderDefinition';
 import RenderDefinitions from './RenderDefinitions';
 
-export { RenderDefinitions };
+export { RenderDefinition, RenderDefinitions };
