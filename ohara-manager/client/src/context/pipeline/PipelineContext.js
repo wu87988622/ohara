@@ -18,12 +18,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty, isEqual } from 'lodash';
 
-import * as actions from './pipelineActions';
-import { useSnackbar } from 'context/SnackbarContext';
-import { initializeRoutine } from './pipelineRoutines';
 import { reducer, initialState } from './pipelineReducer';
-import { useApp } from 'context';
+import { useApp, useApi } from 'context';
 import { usePrevious } from 'utils/hooks';
+import { createActions } from './pipelineActions';
 
 const PipelineStateContext = React.createContext();
 const PipelineDispatchContext = React.createContext();
@@ -31,25 +29,25 @@ const PipelineDispatchContext = React.createContext();
 const PipelineProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const { data: pipelines, currentPipeline } = state;
-  const { workspaceName, pipelineName } = useApp();
+  const { pipelineName } = useApp();
+  const { pipelineApi } = useApi();
+
+  const prevPipeline = usePrevious(currentPipeline);
 
   React.useEffect(() => {
-    dispatch(initializeRoutine.trigger());
-  }, [workspaceName]);
+    if (!pipelineApi) return;
+    const actions = createActions({ state, dispatch, pipelineApi });
+    actions.fetchPipelines();
+  }, [state, pipelineApi]);
 
-  const prevCurrentPipeline = usePrevious(currentPipeline);
-  const setCurrentPipeline = actions.createSetCurrentPipeline(dispatch);
   React.useEffect(() => {
     if (isEmpty(pipelines) || !pipelineName) return;
-
-    const targetPipeline = pipelines.find(
-      pipeline => pipeline.name === pipelineName,
-    );
-
-    if (!isEqual(targetPipeline, prevCurrentPipeline)) {
-      setCurrentPipeline(pipelineName);
+    const actions = createActions({ state, dispatch, pipelineApi });
+    const found = pipelines.find(pipeline => pipeline.name === pipelineName);
+    if (!isEqual(found, prevPipeline)) {
+      actions.setCurrentPipeline(found);
     }
-  }, [pipelineName, pipelines, prevCurrentPipeline, setCurrentPipeline]);
+  }, [pipelineName, pipelines, prevPipeline, state, pipelineApi]);
 
   return (
     <PipelineStateContext.Provider value={state}>
@@ -78,23 +76,15 @@ const usePipelineDispatch = () => {
   return context;
 };
 
+PipelineProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 const usePipelineActions = () => {
   const state = usePipelineState();
   const dispatch = usePipelineDispatch();
-  const showMessage = useSnackbar();
-
-  return {
-    fetchPipelines: actions.createFetchPipelines(state, dispatch, showMessage),
-    addPipeline: actions.createAddPipeline(state, dispatch, showMessage),
-    deletePipeline: actions.createDeletePipeline(state, dispatch, showMessage),
-    updatePipeline: actions.createUpdatePipeline(state, dispatch, showMessage),
-    setCurrentPipeline: actions.createSetCurrentPipeline(dispatch),
-    setSelectedCell: actions.createSetSelectedCell(dispatch),
-  };
-};
-
-PipelineProvider.propTypes = {
-  children: PropTypes.node.isRequired,
+  const { pipelineApi } = useApi();
+  return createActions({ state, dispatch, pipelineApi });
 };
 
 export {

@@ -19,7 +19,7 @@ import { string, array, number, object, option } from '../utils/validation';
 export const request = () => {
   const group = [string];
   const name = [string];
-  const endpoints = [array];
+  const endpoints = [array, option];
   const tags = [object, option];
 
   return {

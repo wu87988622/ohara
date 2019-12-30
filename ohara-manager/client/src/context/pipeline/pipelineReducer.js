@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { sortBy, map, isEqual } from 'lodash';
+import { map, sortBy, reject, isEqual } from 'lodash';
 
 import * as routines from './pipelineRoutines';
 
@@ -22,7 +22,6 @@ const sort = pipelines => sortBy(pipelines, 'name');
 
 const initialState = {
   data: [],
-  currentPipeline: null,
   selectedCell: null,
   isFetching: false,
   lastUpdated: null,
@@ -31,97 +30,8 @@ const initialState = {
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case routines.fetchPipelinesRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-
-    case routines.fetchPipelinesRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sort(action.payload),
-        lastUpdated: new Date(),
-      };
-
-    case routines.fetchPipelinesRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload || true,
-      };
-
-    case routines.addPipelineRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: null,
-      };
-
-    case routines.addPipelineRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sort([...state.data, action.payload]),
-        lastUpdated: new Date(),
-      };
-
-    case routines.addPipelineRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload || true,
-      };
-
-    case routines.deletePipelineRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-
-    case routines.deletePipelineRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: state.data.filter(
-          pipeline =>
-            pipeline.name !== action.payload.name &&
-            pipeline.group !== action.payload.name,
-        ),
-        lastUpdated: new Date(),
-      };
-
-    case routines.deletePipelineRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload || true,
-      };
-
-    case routines.updatePipelineRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-      };
-
-    case routines.updatePipelineRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: map(state.data, pipeline =>
-          isEqual(pipeline, action.payload) ? action.payload : pipeline,
-        ),
-        lastUpdated: new Date(),
-      };
-
-    case routines.updatePipelineRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload || true,
-      };
-
+    case routines.initializeRoutine.TRIGGER:
+      return initialState;
     case routines.setCurrentPipelineRoutine.TRIGGER:
       return {
         ...state,
@@ -134,9 +44,58 @@ const reducer = (state, action) => {
         ...state,
         selectedCell: action.payload,
       };
-
-    case routines.initializeRoutine.TRIGGER:
-      return initialState;
+    case routines.fetchPipelinesRoutine.REQUEST:
+    case routines.createPipelineRoutine.REQUEST:
+    case routines.updatePipelineRoutine.REQUEST:
+    case routines.deletePipelineRoutine.REQUEST:
+      return {
+        ...state,
+        isFetching: true,
+      };
+    case routines.fetchPipelinesRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: sort(action.payload),
+        lastUpdated: new Date(),
+      };
+    case routines.createPipelineRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: sort([...state.data, action.payload]),
+        lastUpdated: new Date(),
+      };
+    case routines.updatePipelineRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, pipeline =>
+          isEqual(pipeline, action.payload) ? action.payload : pipeline,
+        ),
+        lastUpdated: new Date(),
+      };
+    case routines.deletePipelineRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: reject(
+          state.data,
+          pipeline =>
+            pipeline.name === action.payload.name ||
+            pipeline.group === action.payload.group,
+        ),
+        lastUpdated: new Date(),
+      };
+    case routines.fetchPipelinesRoutine.FAILURE:
+    case routines.createPipelineRoutine.FAILURE:
+    case routines.deletePipelineRoutine.FAILURE:
+    case routines.updatePipelineRoutine.FAILURE:
+      return {
+        ...state,
+        isFetching: false,
+        error: action.payload || true,
+      };
 
     default:
       return state;
