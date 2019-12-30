@@ -16,13 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
-import {
-  fetchStreamsCreator,
-  addStreamCreator,
-  updateStreamCreator,
-  deleteStreamCreator,
-} from './streamActions';
+import { createActions } from './streamActions';
+import { useApi, useApp } from 'context';
 import { reducer, initialState } from './streamReducer';
 
 const StreamStateContext = React.createContext();
@@ -30,16 +25,14 @@ const StreamDispatchContext = React.createContext();
 
 const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const showMessage = useSnackbar();
-
-  const fetchStreams = React.useCallback(
-    fetchStreamsCreator(state, dispatch, showMessage),
-    [state],
-  );
+  const { workspaceName, pipelineName } = useApp();
+  const { streamApi } = useApi();
 
   React.useEffect(() => {
-    fetchStreams();
-  }, [fetchStreams]);
+    if (!workspaceName || !pipelineName) return;
+    const actions = createActions({ state, dispatch, streamApi });
+    actions.fetchStreams();
+  }, [workspaceName, pipelineName, state, streamApi]);
 
   return (
     <StreamStateContext.Provider value={state}>
@@ -73,12 +66,8 @@ const useStreamDispatch = () => {
 const useStreamActions = () => {
   const state = useStreamState();
   const dispatch = useStreamDispatch();
-  const showMessage = useSnackbar();
-  return {
-    addStream: addStreamCreator(state, dispatch, showMessage),
-    updateStream: updateStreamCreator(state, dispatch, showMessage),
-    deleteStream: deleteStreamCreator(state, dispatch, showMessage),
-  };
+  const { streamApi } = useApi();
+  return createActions({ state, dispatch, streamApi });
 };
 
 export { StreamProvider, useStreamState, useStreamDispatch, useStreamActions };

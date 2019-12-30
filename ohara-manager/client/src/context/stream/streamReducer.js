@@ -16,12 +16,7 @@
 
 import { map, reject } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
-import {
-  fetchStreamsRoutine,
-  addStreamRoutine,
-  updateStreamRoutine,
-  deleteStreamRoutine,
-} from './streamRoutines';
+import * as routines from './streamRoutines';
 
 const initialState = {
   data: [],
@@ -32,50 +27,51 @@ const initialState = {
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case fetchStreamsRoutine.REQUEST:
-    case addStreamRoutine.REQUEST:
-    case updateStreamRoutine.REQUEST:
-    case deleteStreamRoutine.REQUEST:
+    case routines.fetchStreamsRoutine.REQUEST:
+    case routines.createStreamRoutine.REQUEST:
+    case routines.updateStreamRoutine.REQUEST:
+    case routines.deleteStreamRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
+        error: null,
       };
-    case fetchStreamsRoutine.SUCCESS:
+    case routines.fetchStreamsRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
-    case addStreamRoutine.SUCCESS:
+    case routines.createStreamRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-    case updateStreamRoutine.SUCCESS:
+    case routines.updateStreamRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: map(state.data, stream =>
-          isKeyEqual(stream, action.payload) ? action.payload : stream,
+          isKeyEqual(stream, action.payload)
+            ? { ...stream, ...action.payload }
+            : stream,
         ),
         lastUpdated: new Date(),
       };
-    case deleteStreamRoutine.SUCCESS:
+    case routines.deleteStreamRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, stream => {
-          return stream.name === action.payload.name;
-        }),
+        data: reject(state.data, stream => isKeyEqual(stream, action.payload)),
         lastUpdated: new Date(),
       };
-    case fetchStreamsRoutine.FAILURE:
-    case addStreamRoutine.FAILURE:
-    case updateStreamRoutine.FAILURE:
-    case deleteStreamRoutine.FAILURE:
+    case routines.fetchStreamsRoutine.FAILURE:
+    case routines.createStreamRoutine.FAILURE:
+    case routines.updateStreamRoutine.FAILURE:
+    case routines.deleteStreamRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

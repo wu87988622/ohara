@@ -17,13 +17,17 @@
 import { createRoutine } from 'redux-routines';
 
 const fetchStreamsRoutine = createRoutine('FETCH_STREAMS');
-const addStreamRoutine = createRoutine('ADD_STREAM');
+const createStreamRoutine = createRoutine('CREATE_STREAM');
 const updateStreamRoutine = createRoutine('UPDATE_STREAM');
 const deleteStreamRoutine = createRoutine('DELETE_STREAM');
+const startStreamRoutine = createRoutine('START_STREAM');
+const stopStreamRoutine = createRoutine('STOP_STREAM');
 
 export {
   fetchStreamsRoutine,
-  addStreamRoutine,
+  createStreamRoutine,
   updateStreamRoutine,
   deleteStreamRoutine,
+  startStreamRoutine,
+  stopStreamRoutine,
 };
