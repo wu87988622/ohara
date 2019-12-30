@@ -30,7 +30,8 @@ import {
  * ex1:
  * {
  *   name: 'EDIT_WORKSPACE_DIALOG',
- *   data: { tab: 'overview' }
+ *   data: { tab: 'overview' },
+ *   createdAt: 1577681120
  * }
  *
  * ex2:
@@ -41,7 +42,8 @@ import {
  *     group: 'abc',
  *     numberOfPartitions: 1,
  *     ...
- *   }
+ *   },
+ *   createdAt: 1577681120
  * }
  *
  * The name property is necessary and can be a string or Symbol.
@@ -58,7 +60,10 @@ const reducer = (state, action) => {
     case openDialogRoutine.TRIGGER:
       return {
         ...state,
-        dialogs: [...state.dialogs, action.payload],
+        dialogs: [
+          ...state.dialogs,
+          { ...action.payload, createdAt: new Date() },
+        ],
       };
     case setDialogDataRoutine.TRIGGER: {
       if (!some(state.dialogs, ['name', action.payload.name])) {

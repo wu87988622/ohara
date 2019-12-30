@@ -14,35 +14,36 @@
  * limitations under the License.
  */
 
-import { find, get, has, sortBy } from 'lodash';
+import { find, get, has, pick, sortBy } from 'lodash';
 import { hashByGroupAndName } from './sha';
 
-export const getKey = object => {
-  return {
-    name: get(object, 'settings.name'),
-    group: get(object, 'settings.group'),
-  };
+export const checkObject = object => {
+  if (!has(object, 'group' || !has(object, 'name')))
+    throw new Error('The object must consist of name and group.');
 };
 
-export const isKeyEqual = (object, other) =>
-  get(object, 'settings.name') === get(other, 'settings.name') &&
-  get(object, 'settings.group') === get(other, 'settings.group');
+export const checkKey = key => {
+  if (!has(key, 'group' || !has(key, 'name')))
+    throw new Error(
+      'The key must consist of name and group. ex: { name: "", group: "" }',
+    );
+};
 
-export const sortByName = objects => sortBy(objects, 'settings.name');
+export const getKey = object => pick(object, ['group', 'name']);
+
+export const isKeyEqual = (object, other) =>
+  get(object, 'name') === get(other, 'name') &&
+  get(object, 'group') === get(other, 'group');
+
+export const sortByName = objects => sortBy(objects, 'name');
 
 export const hashKey = object => {
-  if (!has(object, 'settings.group' || !has(object, 'settings.name')))
+  if (!has(object, 'group' || !has(object, 'name')))
     throw new Error(
-      'To calculate the hash key, the settings.group and settings.name must be provided.',
+      'To calculate the hash key, the group and name must be provided.',
     );
-  return hashByGroupAndName(
-    get(object, 'settings.group'),
-    get(object, 'settings.name'),
-  );
+  return hashByGroupAndName(get(object, 'group'), get(object, 'name'));
 };
 
 export const findByGroupAndName = (objects, group, name) =>
-  find(
-    objects,
-    o => get(o, 'settings.group') === group && get(o, 'settings.name') === name,
-  );
+  find(objects, o => get(o, 'group') === group && get(o, 'name') === name);

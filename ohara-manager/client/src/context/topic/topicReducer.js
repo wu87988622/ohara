@@ -68,12 +68,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, topic => {
-          return (
-            topic.settings.name === action.payload.name &&
-            topic.settings.group === action.payload.group
-          );
-        }),
+        data: reject(state.data, topic => isKeyEqual(topic, action.payload)),
         lastUpdated: new Date(),
       };
     case routines.fetchTopicsRoutine.FAILURE:

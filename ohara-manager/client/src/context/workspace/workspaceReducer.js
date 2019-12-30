@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { map, reject } from 'lodash';
+import { map, omit, reject } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
 
 import {
@@ -59,13 +59,23 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case updateWorkspaceRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, workspace =>
+          isKeyEqual(workspace, action.payload)
+            ? { ...workspace, ...omit(action.payload, 'stagingSettings') }
+            : workspace,
+        ),
+        lastUpdated: new Date(),
+      };
     case stageWorkspaceRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: map(state.data, workspace =>
           isKeyEqual(workspace, action.payload)
-            ? { ...workspace, ...action.payload }
+            ? { ...workspace, stagingSettings: action.payload.stagingSettings }
             : workspace,
         ),
         lastUpdated: new Date(),

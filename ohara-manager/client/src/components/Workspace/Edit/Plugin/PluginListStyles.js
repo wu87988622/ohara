@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-import { Nodes } from './Nodes';
-import Settings from './Settings';
-import SettingsMenu from './SettingsMenu';
+import styled, { css } from 'styled-components';
 
-export { Nodes, Settings, SettingsMenu };
+export const Wrapper = styled.div(
+  ({ theme }) => css`
+    .filters {
+      margin-bottom: ${theme.spacing(3)}px;
+      .checkboxes {
+        margin-left: ${theme.spacing(3)}px;
+      }
+    }
+  `,
+);

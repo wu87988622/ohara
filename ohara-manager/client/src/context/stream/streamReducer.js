@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { map, reject, sortBy, isEqualWith } from 'lodash';
-
+import { map, reject } from 'lodash';
+import { isKeyEqual, sortByName } from 'utils/object';
 import {
   fetchStreamsRoutine,
   addStreamRoutine,
@@ -29,11 +29,6 @@ const initialState = {
   lastUpdated: null,
   error: null,
 };
-
-const sort = streams => sortBy(streams, 'settings.name');
-
-const isEqual = (object, other) =>
-  isEqualWith(object, other, ['settings.name', 'settings.group']);
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -49,14 +44,14 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: sort(action.payload),
+        data: sortByName(action.payload),
         lastUpdated: new Date(),
       };
     case addStreamRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: sort([...state.data, action.payload]),
+        data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
     case updateStreamRoutine.SUCCESS:
@@ -64,7 +59,7 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         data: map(state.data, stream =>
-          isEqual(stream, action.payload) ? action.payload : stream,
+          isKeyEqual(stream, action.payload) ? action.payload : stream,
         ),
         lastUpdated: new Date(),
       };

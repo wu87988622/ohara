@@ -121,13 +121,22 @@ const NodeCard = ({ node }) => {
               <ServiceSwitch
                 cluster={currentZookeeper}
                 nodeName={node.hostname}
+                type="zookeeper"
               />
             </Grid>
             <Grid item xs={4}>
-              <ServiceSwitch cluster={currentBroker} nodeName={node.hostname} />
+              <ServiceSwitch
+                cluster={currentBroker}
+                nodeName={node.hostname}
+                type="broker"
+              />
             </Grid>
             <Grid item xs={4}>
-              <ServiceSwitch cluster={currentWorker} nodeName={node.hostname} />
+              <ServiceSwitch
+                cluster={currentWorker}
+                nodeName={node.hostname}
+                type="worker"
+              />
             </Grid>
           </Grid>
         </CardActions>

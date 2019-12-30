@@ -22,9 +22,9 @@ import { SubTabs } from 'components/Workspace/Edit';
 import {
   SettingsMenu,
   Nodes,
-  Plugins,
   Settings,
 } from 'components/Workspace/Edit/Settings';
+import { PluginList } from 'components/Workspace/Edit/Plugin';
 import TabPanel from './TabPanel';
 
 function SettingsTab() {
@@ -42,7 +42,7 @@ function SettingsTab() {
             <Settings />
           </TabPanel>
           <TabPanel index={subTab} value={SubTabs.PLUGINS}>
-            <Plugins />
+            <PluginList />
           </TabPanel>
           <TabPanel index={subTab} value={SubTabs.NODES}>
             <Nodes />

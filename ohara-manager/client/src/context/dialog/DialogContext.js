@@ -116,6 +116,9 @@ const useGraphSettingDialog = createUseDialogActions(
 const useListWorkspacesDialog = createUseDialogActions(
   dialogNames.LIST_WORKSPACES_DIALOG,
 );
+const useAddPluginDialog = createUseDialogActions(
+  dialogNames.ADD_PLUGIN_DIALOG,
+);
 
 export {
   DialogProvider,
@@ -131,4 +134,5 @@ export {
   useAddNodeDialog,
   useDevToolDialog,
   useGraphSettingDialog,
+  useAddPluginDialog,
 };

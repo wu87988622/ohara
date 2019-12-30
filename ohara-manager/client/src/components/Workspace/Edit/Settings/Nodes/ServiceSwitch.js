@@ -28,7 +28,7 @@ import {
 } from 'context';
 import Badge from 'components/common/Badge';
 
-const ServiceSwitch = ({ cluster, nodeName }) => {
+const ServiceSwitch = ({ cluster, nodeName, type }) => {
   const { stageWorker } = useWorkerActions();
   const { stageBroker } = useBrokerActions();
   const { stageZookeeper } = useZookeeperActions();
@@ -50,26 +50,25 @@ const ServiceSwitch = ({ cluster, nodeName }) => {
       : pull(value, nodeName);
 
     const {
-      serviceType,
       settings: { name, group },
     } = cluster;
 
     const data = { name, group, nodeNames };
-    if (serviceType === 'worker') stageWorker(data);
-    if (serviceType === 'broker') stageBroker(data);
-    if (serviceType === 'zookeeper') stageZookeeper(data);
+    if (type === 'worker') stageWorker(data);
+    if (type === 'broker') stageBroker(data);
+    if (type === 'zookeeper') stageZookeeper(data);
   };
 
   return (
     <>
       <FormControlLabel
-        value={cluster.serviceType}
+        value={type}
         control={
           <Switch color="primary" checked={checked} onChange={handleChange} />
         }
         label={
           <Badge variant="dot" invisible={!dirty} color="warning">
-            {cluster.serviceType}
+            {type}
           </Badge>
         }
         labelPlacement="bottom"
@@ -81,7 +80,6 @@ const ServiceSwitch = ({ cluster, nodeName }) => {
 ServiceSwitch.propTypes = {
   nodeName: PropTypes.string.isRequired,
   cluster: PropTypes.shape({
-    serviceType: PropTypes.string.isRequired,
     settings: PropTypes.shape({
       name: PropTypes.string.isRequired,
       group: PropTypes.string.isRequired,
@@ -91,6 +89,7 @@ ServiceSwitch.propTypes = {
       nodeName: PropTypes.array,
     }),
   }),
+  type: PropTypes.string.isRequired,
 };
 
 export default ServiceSwitch;

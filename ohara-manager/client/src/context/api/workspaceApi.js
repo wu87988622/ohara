@@ -14,71 +14,52 @@
  * limitations under the License.
  */
 
-import { isEmpty, values, map } from 'lodash';
+import { isEmpty, map, omit, values } from 'lodash';
 import * as objectApi from 'api/objectApi';
-import { generateClusterResponse, stageGroup, validate } from './utils';
+import { generateClusterResponse, validate } from './utils';
 import { WORKSPACE } from './index';
-
-const STAGE_GROUP = stageGroup(WORKSPACE);
 
 export const createApi = context => {
   const { showMessage } = context;
+  const group = WORKSPACE;
   return {
     fetchAll: async () => {
-      const res = await objectApi.getAll({ group: WORKSPACE });
+      const res = await objectApi.getAll({ group });
       if (!isEmpty(res.errors)) {
         throw new Error(`Fetch workspace list failed.`);
       }
-      return await Promise.all(
-        map(res.data, async workspace => {
-          const stageRes = await objectApi.get({
-            name: workspace.name,
-            group: STAGE_GROUP,
-          });
-          if (!isEmpty(stageRes.errors)) {
-            throw new Error(`Fetch workspace list failed.`);
-          }
-          return generateClusterResponse({
-            values: workspace,
-            stageValues: stageRes.data,
-          });
-        }),
-      );
+      return map(res.data, object => {
+        return generateClusterResponse({
+          values: object.tags,
+          stageValues: omit(object, 'tags'),
+        });
+      });
     },
     fetch: async name => {
-      const res = await objectApi.get({ name, group: WORKSPACE });
+      const res = await objectApi.get({ name, group });
       if (!isEmpty(res.errors)) {
         throw new Error(`Fetch workspace ${name} failed.`);
       }
-      const stageRes = await objectApi.get({
-        name,
-        group: STAGE_GROUP,
-      });
-      if (!isEmpty(stageRes.errors)) {
-        throw new Error(`Fetch workspace ${name} failed.`);
-      }
       return generateClusterResponse({
-        values: res.data,
-        stageValues: stageRes.data,
+        values: res.data.tags,
+        stageValues: omit(res.data, 'tags'),
       });
     },
     create: async values => {
       try {
         validate(values);
-        const res = await objectApi.create({ ...values, group: WORKSPACE });
+        const ensuredValues = { ...values, group };
+        // keep a reference in tags
+        const res = await objectApi.create({
+          ...ensuredValues,
+          tags: ensuredValues,
+        });
         if (!isEmpty(res.errors)) {
           throw new Error(`Create workspace ${values.name} failed.`);
         }
-        const stageRes = await objectApi.create({
-          ...values,
-          group: STAGE_GROUP,
-        });
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Create workspace ${values.name} failed.`);
-        }
         const data = generateClusterResponse({
-          values: res.data,
-          stageValues: stageRes.data,
+          values: res.data.tags,
+          stageValues: omit(res.data, 'tags'),
         });
         showMessage(`Create workspace ${values.name} successful.`);
         return data;
@@ -90,13 +71,17 @@ export const createApi = context => {
     update: async values => {
       try {
         validate(values);
-        const res = await objectApi.update({ ...values, group: WORKSPACE });
+        const res = await objectApi.update({
+          name: values.name,
+          group,
+          tags: values,
+        });
         if (!isEmpty(res.errors)) {
           throw new Error(`Save workspace ${values.name} failed.`);
         }
-        const data = generateClusterResponse({ values: res.data });
+        const data = generateClusterResponse({ values: res.data.tags });
         showMessage(`Save workspace ${values.name} successful.`);
-        return data;
+        return { ...data, name: values.name, group };
       } catch (e) {
         showMessage(e.message);
         throw e;
@@ -105,16 +90,13 @@ export const createApi = context => {
     stage: async values => {
       try {
         validate(values);
-        const stageRes = await objectApi.update({
-          ...values,
-          group: STAGE_GROUP,
-        });
-        if (!isEmpty(stageRes.errors)) {
+        const res = await objectApi.update({ ...values, group });
+        if (!isEmpty(res.errors)) {
           throw new Error(`Save workspace ${values.name} failed.`);
         }
-        const data = generateClusterResponse({ stageValues: stageRes.data });
+        const data = generateClusterResponse({ stageValues: res.data });
         showMessage(`Save workspace ${values.name} successful.`);
-        return data;
+        return { ...data, name: values.name, group };
       } catch (e) {
         showMessage(e.message);
         throw e;
@@ -122,15 +104,8 @@ export const createApi = context => {
     },
     delete: async name => {
       try {
-        const res = await objectApi.remove({ name, group: WORKSPACE });
+        const res = await objectApi.remove({ name, group });
         if (!isEmpty(res.errors)) {
-          throw new Error(`Delete workspace ${name} failed.`);
-        }
-        const stageRes = await objectApi.remove({
-          name,
-          group: STAGE_GROUP,
-        });
-        if (!isEmpty(stageRes.errors)) {
           throw new Error(`Delete workspace ${name} failed.`);
         }
         showMessage(`Delete workspace ${values.name} successful.`);

@@ -79,10 +79,10 @@ const Settings = () => {
     get(currentZookeeper, 'settingDefinitions'),
   );
 
-  const renderField = definition => (
+  const renderField = (service, definition) => (
     <TextField
-      key={definition.key}
-      id={definition.key}
+      key={`${service}-${definition.key}`}
+      id={`${service}-${definition.key}`}
       label={definition.displayName}
       helperText={definition.documentation}
       fullWidth
@@ -107,19 +107,25 @@ const Settings = () => {
           <Typography variant="h4" gutterBottom>
             Worker
           </Typography>
-          {workerDefinitions.map(definition => renderField(definition))}
+          {workerDefinitions.map(definition =>
+            renderField('worker', definition),
+          )}
         </Grid>
         <Grid item ref={bkEl}>
           <Typography variant="h4" gutterBottom>
             Broker
           </Typography>
-          {brokerDefinitions.map(definition => renderField(definition))}
+          {brokerDefinitions.map(definition =>
+            renderField('broker', definition),
+          )}
         </Grid>
         <Grid item ref={zkEl}>
           <Typography variant="h4" gutterBottom>
             Zookeeper
           </Typography>
-          {zookeeperDefinitions.map(definition => renderField(definition))}
+          {zookeeperDefinitions.map(definition =>
+            renderField('zookeeper', definition),
+          )}
         </Grid>
       </Grid>
     </Wrapper>

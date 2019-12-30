@@ -266,7 +266,7 @@ const WorkspaceQuick = props => {
       setProgressActiveStep(2);
       await createWk({ name: workspaceName, nodeNames, pluginKeys: plugins });
       setProgressActiveStep(3);
-      await createWs({ name: workspaceName, nodeNames });
+      await createWs({ name: workspaceName, nodeNames, pluginKeys: plugins });
       setTimeout(form.reset);
       setActiveStep(0);
       setFiles([]);

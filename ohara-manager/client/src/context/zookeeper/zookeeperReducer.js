@@ -80,12 +80,9 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, zookeeper => {
-          return (
-            zookeeper.settings.name === action.payload.name &&
-            zookeeper.settings.group === action.payload.group
-          );
-        }),
+        data: reject(state.data, zookeeper =>
+          isKeyEqual(zookeeper, action.payload),
+        ),
         lastUpdated: new Date(),
       };
     case fetchZookeepersRoutine.FAILURE:

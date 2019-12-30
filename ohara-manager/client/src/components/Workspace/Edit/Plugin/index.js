@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import AddPluginCard from './AddPluginCard';
+import PluginCard from './PluginCard';
+import PluginList from './PluginList';
+import PluginSelector from './PluginSelector';
 
-const Plugins = () => {
-  return <>Plugins</>;
-};
-
-export default Plugins;
+export { AddPluginCard, PluginCard, PluginList, PluginSelector };

@@ -80,12 +80,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, worker => {
-          return (
-            worker.settings.name === action.payload.name &&
-            worker.settings.group === action.payload.group
-          );
-        }),
+        data: reject(state.data, worker => isKeyEqual(worker, action.payload)),
         lastUpdated: new Date(),
       };
     case fetchWorkersRoutine.FAILURE:

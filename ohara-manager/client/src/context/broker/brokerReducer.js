@@ -80,12 +80,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, broker => {
-          return (
-            broker.settings.name === action.payload.name &&
-            broker.settings.group === action.payload.group
-          );
-        }),
+        data: reject(state.data, broker => isKeyEqual(broker, action.payload)),
         lastUpdated: new Date(),
       };
     case fetchBrokersRoutine.FAILURE:

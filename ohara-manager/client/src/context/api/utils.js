@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { forEach, has, map, isEmpty } from 'lodash';
+import { has, isEmpty, keys, pick } from 'lodash';
 
 import { getDefinition } from 'api/utils/definitionsUtils';
 
@@ -26,42 +26,23 @@ export const validate = values => {
 // for workspace stage object, we use a "prefix" to identify it
 export const stageGroup = group => 'stage'.concat(group);
 
-export const generateClusterResponse = ({
-  values = {},
-  stageValues = {},
-  inspectInfo = {},
-} = {}) => {
-  let result = {
-    settings: {},
-    stagingSettings: {},
-    settingDefinitions: [],
-    classInfos: [],
-  };
-  if (!isEmpty(inspectInfo)) {
-    const definitions = getDefinition(inspectInfo);
-    const definitionKeys = Object.keys(definitions);
-    if (!isEmpty(values)) {
-      forEach(values, (value, key) => {
-        definitionKeys.find(d => d === key)
-          ? (result.settings[key] = value)
-          : (result[key] = value);
-      });
-    }
-    if (!isEmpty(stageValues)) {
-      forEach(stageValues, (value, key) => {
-        if (definitionKeys.find(d => d === key))
-          result.stagingSettings[key] = value;
-      });
-    }
-    result.settingDefinitions = map(definitions, value => value);
-  } else {
-    if (!isEmpty(values)) result.settings = values;
-    if (!isEmpty(stageValues)) result.stagingSettings = stageValues;
+export const generateClusterResponse = params => {
+  const { values = {}, stageValues = {}, inspectInfo = {} } = params;
+
+  if (isEmpty(inspectInfo)) {
+    return {
+      ...values,
+      // Flatten settings, remove them when appropriate
+      settings: values,
+      stagingSettings: stageValues,
+      ...inspectInfo,
+    };
   }
 
-  if (!isEmpty(inspectInfo.imageName)) result.imageName = inspectInfo.imageName;
-  if (!isEmpty(inspectInfo.classInfos))
-    result.classInfos = inspectInfo.classInfos;
-
-  return result;
+  const definitions = getDefinition(inspectInfo);
+  const definitionKeys = keys(definitions);
+  // Flatten settings, remove them when appropriate
+  const settings = pick(values, definitionKeys);
+  const stagingSettings = pick(stageValues, definitionKeys);
+  return { ...values, settings, stagingSettings, ...inspectInfo };
 };

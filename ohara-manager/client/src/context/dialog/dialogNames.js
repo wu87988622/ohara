@@ -23,3 +23,4 @@ export const ADD_NODE_DIALOG = Symbol();
 export const DEV_TOOL_DIALOG = Symbol();
 export const GRAPH_SETTING_DIALOG = Symbol();
 export const LIST_WORKSPACES_DIALOG = Symbol();
+export const ADD_PLUGIN_DIALOG = Symbol();
