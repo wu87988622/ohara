@@ -28,6 +28,7 @@ import { createApi as createWorkerApi } from './workerApi';
 import { createApi as createConnectorApi } from './connectorApi';
 import { createApi as createWorkspaceApi } from './workspaceApi';
 import { createApi as createZookeeperApi } from './zookeeperApi';
+import { createApi as createLogApi } from './logApi';
 
 const ApiContext = createContext();
 
@@ -56,7 +57,7 @@ const ApiProvider = ({ children }) => {
     setBrokerApi(createBrokerApi(context));
     setConnectorApi(createConnectorApi(context));
     setFileApi(createFileApi(context));
-    setLogApi();
+    setLogApi(createLogApi(context));
     setNodeApi(createNodeApi(context));
     setPipelineApi();
     setStreamApi();
