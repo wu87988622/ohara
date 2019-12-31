@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { map, reject } from 'lodash';
-import { isKeyEqual, sortByName } from 'utils/object';
+import { map, omit, reject } from 'lodash';
+import { isEqualByKey, sortByName } from 'utils/object';
 import {
   fetchZookeepersRoutine,
   createZookeeperRoutine,
@@ -63,15 +63,25 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case updateZookeeperRoutine.SUCCESS:
-    case stageZookeeperRoutine.SUCCESS:
     case startZookeeperRoutine.SUCCESS:
     case stopZookeeperRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: map(state.data, zookeeper =>
-          isKeyEqual(zookeeper, action.payload)
-            ? { ...zookeeper, ...action.payload }
+          isEqualByKey(zookeeper, action.payload)
+            ? { ...zookeeper, ...omit(action.payload, 'stagingSettings') }
+            : zookeeper,
+        ),
+        lastUpdated: new Date(),
+      };
+    case stageZookeeperRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, zookeeper =>
+          isEqualByKey(zookeeper, action.payload)
+            ? { ...zookeeper, stagingSettings: action.payload.stagingSettings }
             : zookeeper,
         ),
         lastUpdated: new Date(),
@@ -81,7 +91,7 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         data: reject(state.data, zookeeper =>
-          isKeyEqual(zookeeper, action.payload),
+          isEqualByKey(zookeeper, action.payload),
         ),
         lastUpdated: new Date(),
       };

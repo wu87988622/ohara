@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { map, reject } from 'lodash';
-import { isKeyEqual, sortByName } from 'utils/object';
+import { map, omit, reject } from 'lodash';
+import { isEqualByKey, sortByName } from 'utils/object';
 import {
   fetchBrokersRoutine,
   createBrokerRoutine,
@@ -63,15 +63,25 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case updateBrokerRoutine.SUCCESS:
-    case stageBrokerRoutine.SUCCESS:
     case startBrokerRoutine.SUCCESS:
     case stopBrokerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: map(state.data, broker =>
-          isKeyEqual(broker, action.payload)
-            ? { ...broker, ...action.payload }
+          isEqualByKey(broker, action.payload)
+            ? { ...broker, ...omit(action.payload, 'stagingSettings') }
+            : broker,
+        ),
+        lastUpdated: new Date(),
+      };
+    case stageBrokerRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, broker =>
+          isEqualByKey(broker, action.payload)
+            ? { ...broker, stagingSettings: action.payload.stagingSettings }
             : broker,
         ),
         lastUpdated: new Date(),
@@ -80,7 +90,9 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, broker => isKeyEqual(broker, action.payload)),
+        data: reject(state.data, broker =>
+          isEqualByKey(broker, action.payload),
+        ),
         lastUpdated: new Date(),
       };
     case fetchBrokersRoutine.FAILURE:

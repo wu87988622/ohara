@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { map, reject } from 'lodash';
-import { isKeyEqual, sortByName } from 'utils/object';
+import { map, omit, reject } from 'lodash';
+import { isEqualByKey, sortByName } from 'utils/object';
 import {
   fetchWorkersRoutine,
   createWorkerRoutine,
@@ -63,15 +63,25 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case updateWorkerRoutine.SUCCESS:
-    case stageWorkerRoutine.SUCCESS:
     case startWorkerRoutine.SUCCESS:
     case stopWorkerRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: map(state.data, worker =>
-          isKeyEqual(worker, action.payload)
-            ? { ...worker, ...action.payload }
+          isEqualByKey(worker, action.payload)
+            ? { ...worker, ...omit(action.payload, 'stagingSettings') }
+            : worker,
+        ),
+        lastUpdated: new Date(),
+      };
+    case stageWorkerRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: map(state.data, worker =>
+          isEqualByKey(worker, action.payload)
+            ? { ...worker, stagingSettings: action.payload.stagingSettings }
             : worker,
         ),
         lastUpdated: new Date(),
@@ -80,7 +90,9 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: reject(state.data, worker => isKeyEqual(worker, action.payload)),
+        data: reject(state.data, worker =>
+          isEqualByKey(worker, action.payload),
+        ),
         lastUpdated: new Date(),
       };
     case fetchWorkersRoutine.FAILURE:

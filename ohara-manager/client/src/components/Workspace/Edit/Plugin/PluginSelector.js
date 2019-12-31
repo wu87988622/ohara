@@ -31,7 +31,7 @@ import {
   useWorkspace,
   useAddPluginDialog,
   useFileState,
-  useWorkspaceActions,
+  useWorkerActions,
 } from 'context';
 import { QuickSearch } from 'components/common/Search';
 import { FileUpload } from '../File';
@@ -44,13 +44,13 @@ import {
 } from './PluginSelectorStyles';
 
 function PluginSelector() {
-  const { currentWorkspace } = useWorkspace();
-  const workspaceName = get(currentWorkspace, 'name');
-  const pluginKeys = get(currentWorkspace, 'stagingSettings.pluginKeys');
+  const { currentWorker } = useWorkspace();
+  const workerName = get(currentWorker, 'name');
+  const pluginKeys = get(currentWorker, 'stagingSettings.pluginKeys', []);
 
   const { isOpen, close } = useAddPluginDialog();
   const { data: files = [] } = useFileState();
-  const { stageWorkspace } = useWorkspaceActions();
+  const { stageWorker } = useWorkerActions();
 
   const [filteredFiles, setFilteredFiles] = useState([]);
   const [checked, setChecked] = useState({});
@@ -82,7 +82,7 @@ function PluginSelector() {
     const newPluginKeys = files
       .filter(file => includes(checkedKeys, file.name))
       .map(file => pick(file, ['group', 'name']));
-    await stageWorkspace({ name: workspaceName, pluginKeys: newPluginKeys });
+    await stageWorker({ name: workerName, pluginKeys: newPluginKeys });
     close();
   };
 

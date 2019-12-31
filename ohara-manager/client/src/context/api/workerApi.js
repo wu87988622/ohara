@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { isEmpty, map } from 'lodash';
+import { map } from 'lodash';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as workerApi from 'api/workerApi';
+import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
 import { WORKER, BROKER } from './index';
 
@@ -28,20 +29,17 @@ export const createApi = context => {
     fetchAll: async () => {
       const params = { group };
       const res = await workerApi.getAll(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new Error(res.title);
+
       return await Promise.all(
         map(res.data, async worker => {
           const params = { name: worker.name, group };
           const stageRes = await objectApi.get(params);
-          if (!isEmpty(stageRes.errors)) {
-            throw new Error(stageRes.title);
-          }
+          if (stageRes.errors) throw new Error(stageRes.title);
+
           const infoRes = await inspectApi.getWorkerInfo(params);
-          if (!isEmpty(infoRes.errors)) {
-            throw new Error(infoRes.title);
-          }
+          if (infoRes.errors) throw new Error(infoRes.title);
+
           return generateClusterResponse({
             values: worker,
             stageValues: stageRes.data,
@@ -53,17 +51,14 @@ export const createApi = context => {
     fetch: async name => {
       const params = { name, group };
       const res = await workerApi.get(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new Error(res.title);
+
       const stageRes = await objectApi.get(params);
-      if (!isEmpty(stageRes.errors)) {
-        throw new Error(stageRes.title);
-      }
+      if (stageRes.errors) throw new Error(stageRes.title);
+
       const infoRes = await inspectApi.getWorkerInfo(params);
-      if (!isEmpty(infoRes.errors)) {
-        throw new Error(infoRes.title);
-      }
+      if (infoRes.errors) throw new Error(infoRes.title);
+
       return generateClusterResponse({
         values: res.data,
         stageValues: stageRes.data,
@@ -73,23 +68,17 @@ export const createApi = context => {
     create: async values => {
       try {
         validate(values);
-        const params = {
-          ...values,
-          group,
-          brokerClusterKey: { name: values.name, group: BROKER },
-        };
-        const res = await workerApi.create(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const stageRes = await objectApi.create(params);
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(stageRes.title);
-        }
-        const infoRes = await inspectApi.getWorkerInfo(params);
-        if (!isEmpty(infoRes.errors)) {
-          throw new Error(infoRes.title);
-        }
+        const brokerClusterKey = { group: BROKER, name: values.name };
+        const ensuredValues = { ...values, group, brokerClusterKey };
+        const res = await workerApi.create(ensuredValues);
+        if (res.errors) throw new Error(res.title);
+
+        const stageRes = await objectApi.create(res.data);
+        if (stageRes.errors) throw new Error(stageRes.title);
+
+        const infoRes = await inspectApi.getWorkerInfo(ensuredValues);
+        if (infoRes.errors) throw new Error(infoRes.title);
+
         const data = generateClusterResponse({
           values: res.data,
           stageValues: stageRes.data,
@@ -105,11 +94,10 @@ export const createApi = context => {
     update: async values => {
       try {
         validate(values);
-        const params = { ...values, group };
-        const res = await workerApi.update(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
+        const ensuredValues = { ...values, group };
+        const res = await workerApi.update(ensuredValues);
+        if (res.errors) throw new Error(res.title);
+
         const data = generateClusterResponse({ values: res.data });
         showMessage(res.title);
         return data;
@@ -121,14 +109,15 @@ export const createApi = context => {
     stage: async values => {
       try {
         validate(values);
-        const params = { ...values, group };
-        const stageRes = await objectApi.update(params);
-        if (!isEmpty(stageRes.errors)) {
+        const ensuredValues = { ...values, group };
+        const stageRes = await objectApi.update(ensuredValues);
+        if (stageRes.errors)
           throw new Error(`Save worker ${values.name} failed.`);
-        }
+
         const data = generateClusterResponse({ stageValues: stageRes.data });
+        const key = getKey(stageRes.data);
         showMessage(`Save worker ${values.name} successful.`);
-        return data;
+        return { ...data, ...key };
       } catch (e) {
         showMessage(e.message);
         throw e;
@@ -138,13 +127,11 @@ export const createApi = context => {
       try {
         const params = { name, group };
         const res = await workerApi.remove(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
+        if (res.errors) throw new Error(res.title);
+
         const stageRes = await objectApi.remove(params);
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(res.title);
-        }
+        if (stageRes.errors) throw new Error(res.title);
+
         showMessage(res.title);
         return params;
       } catch (e) {
@@ -156,9 +143,8 @@ export const createApi = context => {
       try {
         const params = { name, group };
         const res = await workerApi.start(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
+        if (res.errors) throw new Error(res.title);
+
         const data = generateClusterResponse({ values: res.data });
         showMessage(res.title);
         return data;
@@ -171,9 +157,8 @@ export const createApi = context => {
       try {
         const params = { name, group };
         const res = await workerApi.stop(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
+        if (res.errors) throw new Error(res.title);
+
         const data = generateClusterResponse({ values: res.data });
         showMessage(res.title);
         return data;

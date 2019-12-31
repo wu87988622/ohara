@@ -28,10 +28,10 @@ import { QuickSearch } from 'components/common/Search';
 import { Wrapper } from './PluginListStyles';
 
 const PluginList = () => {
-  const { currentWorkspace: ws } = useWorkspace();
+  const { currentWorker } = useWorkspace();
   const { data: files } = useFileState();
-  const originalPluginKeys = get(ws, 'pluginKeys');
-  const stagingPluginKeys = get(ws, 'stagingSettings.pluginKeys');
+  const originalPluginKeys = get(currentWorker, 'pluginKeys');
+  const stagingPluginKeys = get(currentWorker, 'stagingSettings.pluginKeys');
 
   const plugins = useMemo(() => {
     if (isEmpty(files)) return [];

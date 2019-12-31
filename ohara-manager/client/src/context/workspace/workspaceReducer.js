@@ -15,7 +15,7 @@
  */
 
 import { map, omit, reject } from 'lodash';
-import { isKeyEqual, sortByName } from 'utils/object';
+import { isEqualByKey, sortByName } from 'utils/object';
 
 import {
   fetchWorkspacesRoutine,
@@ -63,7 +63,7 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         data: map(state.data, workspace =>
-          isKeyEqual(workspace, action.payload)
+          isEqualByKey(workspace, action.payload)
             ? { ...workspace, ...omit(action.payload, 'stagingSettings') }
             : workspace,
         ),
@@ -74,7 +74,7 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         data: map(state.data, workspace =>
-          isKeyEqual(workspace, action.payload)
+          isEqualByKey(workspace, action.payload)
             ? { ...workspace, stagingSettings: action.payload.stagingSettings }
             : workspace,
         ),
@@ -85,7 +85,7 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         data: reject(state.data, workspace =>
-          isKeyEqual(workspace, action.payload),
+          isEqualByKey(workspace, action.payload),
         ),
         lastUpdated: new Date(),
       };

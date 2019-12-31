@@ -14,36 +14,31 @@
  * limitations under the License.
  */
 
-import { find, get, has, pick, sortBy } from 'lodash';
+import { pick, sortBy, isEqual } from 'lodash';
 import { hashByGroupAndName } from './sha';
-
-export const checkObject = object => {
-  if (!has(object, 'group' || !has(object, 'name')))
-    throw new Error('The object must consist of name and group.');
-};
-
-export const checkKey = key => {
-  if (!has(key, 'group' || !has(key, 'name')))
-    throw new Error(
-      'The key must consist of name and group. ex: { name: "", group: "" }',
-    );
-};
 
 export const getKey = object => pick(object, ['group', 'name']);
 
-export const isKeyEqual = (object, other) =>
-  get(object, 'name') === get(other, 'name') &&
-  get(object, 'group') === get(other, 'group');
+/**
+ * @deprecated
+ *
+ * Please use isEqualByKey(object, other) instead
+ */
+export const isKeyEqual = (object, other) => isEqualByKey(object, other);
+
+export const isEqualByKey = (object, other) =>
+  isEqual(getKey(object), getKey(other));
 
 export const sortByName = objects => sortBy(objects, 'name');
 
-export const hashKey = object => {
-  if (!has(object, 'group' || !has(object, 'name')))
-    throw new Error(
-      'To calculate the hash key, the group and name must be provided.',
-    );
-  return hashByGroupAndName(get(object, 'group'), get(object, 'name'));
-};
+/**
+ * @deprecated
+ *
+ * Please use hash(object) instead
+ */
+export const hashKey = object => hash(object);
 
-export const findByGroupAndName = (objects, group, name) =>
-  find(objects, o => get(o, 'group') === group && get(o, 'name') === name);
+export const hash = object => {
+  const key = getKey(object);
+  return hashByGroupAndName(key.group, key.name);
+};

@@ -27,7 +27,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 
-import { useWorkspace, useWorkspaceActions } from 'context';
+import { useWorkspace, useWorkerActions } from 'context';
 import { DeleteDialog } from 'components/common/Dialog';
 import { Wrapper } from './PluginCardStyles';
 
@@ -55,11 +55,11 @@ function PluginCard({ plugin }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting] = useState(false);
 
-  const { currentWorkspace } = useWorkspace();
-  const { stageWorkspace } = useWorkspaceActions();
+  const { currentWorker } = useWorkspace();
+  const { stageWorker } = useWorkerActions();
 
-  const workspaceName = get(currentWorkspace, 'name');
-  const pluginKeys = get(currentWorkspace, 'stagingSettings.pluginKeys');
+  const workerName = get(currentWorker, 'name');
+  const pluginKeys = get(currentWorker, 'stagingSettings.pluginKeys');
 
   const displayTitle = plugin.name.substring(0, plugin.name.lastIndexOf('.'));
 
@@ -98,7 +98,7 @@ function PluginCard({ plugin }) {
   const handleDeleteClick = async () => {
     const newPluginKeys = reject(pluginKeys, pick(plugin, ['group', 'name']));
     setIsConfirmOpen(false);
-    await stageWorkspace({ name: workspaceName, pluginKeys: newPluginKeys });
+    await stageWorker({ name: workerName, pluginKeys: newPluginKeys });
   };
 
   return (
