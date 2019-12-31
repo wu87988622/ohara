@@ -45,14 +45,14 @@ const ViewTopicDialog = () => {
   const { deleteTopic } = useTopicActions();
 
   const handleDelete = () => {
-    const name = get(topic, 'settings.name');
-    const group = get(topic, 'settings.group');
+    const name = get(topic, 'name');
+    const group = get(topic, 'group');
     deleteTopic(name, group);
     setIsConfirmOpen(false);
     closeDialog();
   };
 
-  const topicName = get(topic, 'settings.name', '');
+  const topicName = get(topic, 'name', '');
   const usedByPipelines = []; // TODO: fetch pipelines
 
   return (
@@ -106,13 +106,13 @@ const ViewTopicDialog = () => {
                     <TableRow>
                       <TableCell>Partitions</TableCell>
                       <TableCell>
-                        {get(topic, 'settings.numberOfPartitions', 0)}
+                        {get(topic, 'numberOfPartitions', 0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Replications</TableCell>
                       <TableCell>
-                        {get(topic, 'settings.numberOfReplications', 0)}
+                        {get(topic, 'numberOfReplications', 0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>

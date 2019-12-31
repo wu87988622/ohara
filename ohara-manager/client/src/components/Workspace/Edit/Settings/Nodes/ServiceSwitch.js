@@ -35,7 +35,7 @@ const ServiceSwitch = ({ cluster, nodeName, type }) => {
 
   if (!cluster) return <></>;
 
-  const currentValue = get(cluster, 'settings.nodeNames', []);
+  const currentValue = get(cluster, 'nodeNames', []);
   const stagingValue = get(cluster, 'stagingSettings.nodeNames', []);
 
   const value = stagingValue || currentValue;

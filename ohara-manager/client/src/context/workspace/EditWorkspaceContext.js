@@ -73,9 +73,9 @@ const EditWorkspaceProvider = ({ children }) => {
   useEffect(() => {
     if (!currWk || !currBk || !currZk || !allNodesInOhara) return;
     const usedNodeNames = merge(
-      get(currWk, 'settings.nodeNames'),
-      get(currBk, 'settings.nodeNames'),
-      get(currZk, 'settings.nodeNames'),
+      get(currWk, 'nodeNames'),
+      get(currBk, 'nodeNames'),
+      get(currZk, 'nodeNames'),
       get(currWk, 'stagingSettings.nodeNames'),
       get(currBk, 'stagingSettings.nodeNames'),
       get(currZk, 'stagingSettings.nodeNames'),

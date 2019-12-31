@@ -42,5 +42,5 @@ export const hashByGroupAndName = (group, name) => {
       `The group or name must not be empty, actual: {${group}, ${name}}`,
     );
   }
-  hashWith(group, name);
+  return hashWith(group, name);
 };

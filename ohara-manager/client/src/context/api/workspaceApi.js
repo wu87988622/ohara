@@ -104,11 +104,13 @@ export const createApi = context => {
     },
     delete: async name => {
       try {
-        const res = await objectApi.remove({ name, group });
+        const params = { name, group };
+        const res = await objectApi.remove(params);
         if (!isEmpty(res.errors)) {
           throw new Error(`Delete workspace ${name} failed.`);
         }
         showMessage(`Delete workspace ${values.name} successful.`);
+        return params;
       } catch (e) {
         showMessage(e.message);
         throw e;

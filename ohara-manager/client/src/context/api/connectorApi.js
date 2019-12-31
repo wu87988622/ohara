@@ -19,7 +19,7 @@ import * as connectorApi from 'api/connectorApi';
 import * as objectApi from 'api/objectApi';
 import * as inspectApi from 'api/inspectApi';
 import { generateClusterResponse } from './utils';
-import { WORKER } from './index';
+import { WORKER, WORKSPACE } from './index';
 import { hashByGroupAndName } from 'utils/sha';
 
 const validateName = values => {
@@ -34,13 +34,14 @@ const validateClassName = values => {
 
 export const createApi = context => {
   const { workspaceName, pipelineName, showMessage } = context;
-  const connectorGroup = hashByGroupAndName(workspaceName, pipelineName);
+  if (!workspaceName || !pipelineName) return;
+
+  const pipelineGroup = hashByGroupAndName(WORKSPACE, workspaceName);
+  const group = hashByGroupAndName(pipelineGroup, pipelineName);
+  const workerClusterKey = { group: WORKER, name: workspaceName };
 
   const getDefinition = async className => {
-    const workerInfo = await inspectApi.getWorkerInfo({
-      group: WORKER,
-      name: workspaceName,
-    });
+    const workerInfo = await inspectApi.getWorkerInfo(workerClusterKey);
     if (!isEmpty(workerInfo.errors)) {
       throw new Error(workerInfo.title);
     }
@@ -61,15 +62,15 @@ export const createApi = context => {
         validateClassName(values);
         const res = await connectorApi.create({
           ...values,
-          group: connectorGroup,
-          workerClusterKey: { group: WORKER, name: workspaceName },
+          group,
+          workerClusterKey,
         });
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
         }
         const stageRes = await objectApi.create({
           ...values,
-          group: connectorGroup,
+          group,
         });
         if (!isEmpty(stageRes.errors)) {
           throw new Error(`Create connector stage ${values.name} failed.`);
@@ -92,7 +93,7 @@ export const createApi = context => {
         validateName(values);
         const res = await connectorApi.update({
           ...values,
-          group: connectorGroup,
+          group,
         });
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -110,7 +111,7 @@ export const createApi = context => {
         validateName(values);
         const stageRes = await objectApi.update({
           ...values,
-          group: connectorGroup,
+          group,
         });
         if (!isEmpty(stageRes.errors)) {
           throw new Error(`Save connector stage ${values.name} failed.`);
@@ -125,32 +126,32 @@ export const createApi = context => {
     },
     delete: async name => {
       try {
-        const res = await connectorApi.remove({ name, group: connectorGroup });
+        const params = { name, group };
+        const res = await connectorApi.remove(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
         }
         const stageRes = await objectApi.remove({
           name,
-          group: connectorGroup,
+          group,
         });
         if (!isEmpty(stageRes.errors)) {
           throw new Error(`Remove connector stage ${name} failed.`);
         }
         showMessage(res.title);
+        return params;
       } catch (e) {
         showMessage(e.message);
         throw e;
       }
     },
     fetch: async name => {
-      const res = await connectorApi.get({ name, group: connectorGroup });
+      const params = { name, group };
+      const res = await connectorApi.get(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
-      const stageRes = await objectApi.get({
-        name,
-        group: connectorGroup,
-      });
+      const stageRes = await objectApi.get(params);
       if (!isEmpty(stageRes.errors)) {
         throw new Error(res.title);
       }
@@ -162,22 +163,22 @@ export const createApi = context => {
       });
     },
     fetchAll: async () => {
-      const res = await connectorApi.getAll({ group: connectorGroup });
+      const res = await connectorApi.getAll({ group });
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
       return await Promise.all(
-        map(res.data, async workspace => {
+        map(res.data, async connector => {
           const stageRes = await objectApi.get({
-            name: workspace.name,
-            group: connectorGroup,
+            name: connector.name,
+            group,
           });
           if (!isEmpty(stageRes.errors)) {
             throw new Error(`Fetch connector stage list failed.`);
           }
-          const info = await getDefinition(workspace.connector__class);
+          const info = await getDefinition(connector.connector__class);
           return generateClusterResponse({
-            values: workspace,
+            values: connector,
             stageValues: stageRes.data,
             inspectInfo: info,
           });

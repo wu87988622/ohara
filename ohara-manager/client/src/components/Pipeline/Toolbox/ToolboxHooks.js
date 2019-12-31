@@ -42,7 +42,7 @@ export const useTopics = workspace => {
     }))
     .filter(
       // Private topics are hidden in Toolbox
-      topic => topic.type === 'public' || topic.name === 'Pipeline Only',
+      topic => topic.type === 'shared' || topic.name === 'Pipeline Only',
     );
 
   useEffect(() => {

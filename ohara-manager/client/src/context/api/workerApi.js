@@ -23,16 +23,17 @@ import { WORKER, BROKER } from './index';
 
 export const createApi = context => {
   const { showMessage } = context;
+  const group = WORKER;
   return {
     fetchAll: async () => {
-      const params = { group: WORKER };
+      const params = { group };
       const res = await workerApi.getAll(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
       return await Promise.all(
         map(res.data, async worker => {
-          const params = { name: worker.name, group: WORKER };
+          const params = { name: worker.name, group };
           const stageRes = await objectApi.get(params);
           if (!isEmpty(stageRes.errors)) {
             throw new Error(stageRes.title);
@@ -50,7 +51,7 @@ export const createApi = context => {
       );
     },
     fetch: async name => {
-      const params = { name, group: WORKER };
+      const params = { name, group };
       const res = await workerApi.get(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
@@ -74,7 +75,7 @@ export const createApi = context => {
         validate(values);
         const params = {
           ...values,
-          group: WORKER,
+          group,
           brokerClusterKey: { name: values.name, group: BROKER },
         };
         const res = await workerApi.create(params);
@@ -104,7 +105,7 @@ export const createApi = context => {
     update: async values => {
       try {
         validate(values);
-        const params = { ...values, group: WORKER };
+        const params = { ...values, group };
         const res = await workerApi.update(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -120,7 +121,7 @@ export const createApi = context => {
     stage: async values => {
       try {
         validate(values);
-        const params = { ...values, group: WORKER };
+        const params = { ...values, group };
         const stageRes = await objectApi.update(params);
         if (!isEmpty(stageRes.errors)) {
           throw new Error(`Save worker ${values.name} failed.`);
@@ -135,7 +136,7 @@ export const createApi = context => {
     },
     delete: async name => {
       try {
-        const params = { name, group: WORKER };
+        const params = { name, group };
         const res = await workerApi.remove(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -145,6 +146,7 @@ export const createApi = context => {
           throw new Error(res.title);
         }
         showMessage(res.title);
+        return params;
       } catch (e) {
         showMessage(e.message);
         throw e;
@@ -152,7 +154,7 @@ export const createApi = context => {
     },
     start: async name => {
       try {
-        const params = { name, group: WORKER };
+        const params = { name, group };
         const res = await workerApi.start(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -167,7 +169,7 @@ export const createApi = context => {
     },
     stop: async name => {
       try {
-        const params = { name, group: WORKER };
+        const params = { name, group };
         const res = await workerApi.stop(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);

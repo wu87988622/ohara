@@ -60,7 +60,7 @@ function WorkspaceList() {
   const history = useHistory();
   const { isOpen, close } = useListWorkspacesDialog();
   const { workspaces, currentWorkspace } = useWorkspace();
-  const currWorkspaceName = get(currentWorkspace, 'settings.name');
+  const currWorkspaceName = get(currentWorkspace, 'name');
   const [topics, setTopics] = useState(null);
 
   useEffect(() => {
@@ -79,8 +79,8 @@ function WorkspaceList() {
 
   const pickBrokerKey = object => {
     return {
-      name: get(object, 'settings.brokerClusterKey.name'),
-      group: get(object, 'settings.brokerClusterKey.group'),
+      name: get(object, 'brokerClusterKey.name'),
+      group: get(object, 'brokerClusterKey.group'),
     };
   };
 
@@ -96,8 +96,8 @@ function WorkspaceList() {
         <Wrapper>
           <Grid container spacing={2}>
             {workspaces.map(workspace => {
-              const name = get(workspace, 'settings.name');
-              const nodeNames = get(workspace, 'settings.nodeNames');
+              const name = get(workspace, 'name');
+              const nodeNames = get(workspace, 'nodeNames');
               const lastModified = get(workspace, 'lastModified');
 
               const avatarText = name.substring(0, 2).toUpperCase();

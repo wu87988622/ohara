@@ -41,7 +41,7 @@ const AddTopicDialog = () => {
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
       tags: {
-        type: 'public',
+        type: 'shared',
       },
     });
     setTimeout(form.reset);

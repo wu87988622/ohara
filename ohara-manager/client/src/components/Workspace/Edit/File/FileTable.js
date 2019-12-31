@@ -36,12 +36,12 @@ const FileTable = () => {
 
   useEffect(() => {
     if (!currentWorkspace) return;
-    fetchFiles(currentWorkspace.settings.name);
+    fetchFiles(currentWorkspace.name);
   }, [fetchFiles, currentWorkspace]);
 
   const tableHeaders = [
     'Name',
-    'Used by',
+    'Used',
     'File size(KB)',
     'Last modified',
     'Actions',

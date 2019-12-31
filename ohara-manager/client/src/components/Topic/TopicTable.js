@@ -18,6 +18,9 @@ import React, { useEffect } from 'react';
 import { get } from 'lodash';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
+import Chip from '@material-ui/core/Chip';
+import LockIcon from '@material-ui/icons/LockOutlined';
+import ShareIcon from '@material-ui/icons/Share';
 
 import {
   useWorkspace,
@@ -28,6 +31,7 @@ import {
 import { Table } from 'components/common/Table';
 import { Button } from 'components/common/Form';
 import ViewTopicDialog from './ViewTopicDialog';
+import { Wrapper } from './TopicTableStyles';
 
 function TopicTable() {
   const { open: openViewTopicDialog } = useViewTopicDialog();
@@ -51,36 +55,44 @@ function TopicTable() {
     'Actions',
   ];
   return (
-    <>
+    <Wrapper>
       <Table headers={tableHeaders} title="All Topics">
-        {topics.map(topic => (
-          <TableRow key={get(topic, 'settings.name', '')}>
-            <TableCell>{get(topic, 'settings.name', '')}</TableCell>
-            <TableCell>
-              {get(topic, 'settings.numberOfPartitions', 0)}
-            </TableCell>
-            <TableCell>
-              {get(topic, 'settings.numberOfReplications', 0)}
-            </TableCell>
-            <TableCell></TableCell>
-            <TableCell></TableCell>
-            <TableCell>{get(topic, 'state', 'Unknown')}</TableCell>
-            <TableCell align="right">
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  openViewTopicDialog(topic);
-                }}
-              >
-                View
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
+        {topics.map(topic => {
+          const isShared = get(topic, 'tags.type') === 'shared';
+          return (
+            <TableRow key={get(topic, 'name', '')}>
+              <TableCell>{get(topic, 'name', '')}</TableCell>
+              <TableCell>{get(topic, 'numberOfPartitions', 0)}</TableCell>
+              <TableCell>{get(topic, 'numberOfReplications', 0)}</TableCell>
+              <TableCell></TableCell>
+              <TableCell>
+                <Chip
+                  variant="outlined"
+                  size="small"
+                  icon={isShared ? <ShareIcon /> : <LockIcon />}
+                  label={isShared ? 'Shared' : 'Private'}
+                  color={isShared ? 'primary' : 'secondary'}
+                  className={isShared ? 'shared' : 'private'}
+                />
+              </TableCell>
+              <TableCell>{get(topic, 'state', 'Unknown')}</TableCell>
+              <TableCell align="right">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    openViewTopicDialog(topic);
+                  }}
+                >
+                  View
+                </Button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </Table>
       <ViewTopicDialog />
-    </>
+    </Wrapper>
   );
 }
 

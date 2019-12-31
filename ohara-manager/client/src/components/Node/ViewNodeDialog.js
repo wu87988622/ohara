@@ -157,7 +157,7 @@ const ViewNodeDialog = props => {
             delete service.key;
             return Object.assign(service, {
               status: get(
-                zookeepers.find(zk => zk.settings.name === service.name),
+                zookeepers.find(zk => zk.name === service.name),
                 'state',
                 'Unknown',
               ),
@@ -166,7 +166,7 @@ const ViewNodeDialog = props => {
             delete service.key;
             return Object.assign(service, {
               status: get(
-                brokers.find(bk => bk.settings.name === service.name),
+                brokers.find(bk => bk.name === service.name),
                 'state',
                 'Unknown',
               ),
@@ -175,7 +175,7 @@ const ViewNodeDialog = props => {
             delete service.key;
             return Object.assign(service, {
               status: get(
-                workers.find(wk => wk.settings.name === service.name),
+                workers.find(wk => wk.name === service.name),
                 'state',
                 'Unknown',
               ),

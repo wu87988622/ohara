@@ -24,10 +24,9 @@ const initialState = {
   error: null,
 };
 
-const sort = nodes => sortBy(nodes, 'settings.hostname');
+const sort = nodes => sortBy(nodes, 'hostname');
 
-const isEqual = (object, other) =>
-  isEqualWith(object, other, ['settings.hostname']);
+const isEqual = (object, other) => isEqualWith(object, other, ['hostname']);
 
 const reducer = (state, action) => {
   switch (action.type) {

@@ -23,16 +23,17 @@ import { ZOOKEEPER } from './index';
 
 export const createApi = context => {
   const { showMessage } = context;
+  const group = ZOOKEEPER;
   return {
     fetchAll: async () => {
-      const params = { group: ZOOKEEPER };
+      const params = { group };
       const res = await zookeeperApi.getAll(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
       return await Promise.all(
         map(res.data, async zookeeper => {
-          const params = { name: zookeeper.name, group: ZOOKEEPER };
+          const params = { name: zookeeper.name, group };
           const stageRes = await objectApi.get(params);
           if (!isEmpty(stageRes.errors)) {
             throw new Error(stageRes.title);
@@ -50,7 +51,7 @@ export const createApi = context => {
       );
     },
     fetch: async name => {
-      const params = { name, group: ZOOKEEPER };
+      const params = { name, group };
       const res = await zookeeperApi.get(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
@@ -72,7 +73,7 @@ export const createApi = context => {
     create: async values => {
       try {
         validate(values);
-        const params = { ...values, group: ZOOKEEPER };
+        const params = { ...values, group };
         const res = await zookeeperApi.create(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -100,7 +101,7 @@ export const createApi = context => {
     update: async values => {
       try {
         validate(values);
-        const params = { ...values, group: ZOOKEEPER };
+        const params = { ...values, group };
         const res = await zookeeperApi.update(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -116,7 +117,7 @@ export const createApi = context => {
     stage: async values => {
       try {
         validate(values);
-        const params = { ...values, group: ZOOKEEPER };
+        const params = { ...values, group };
         const stageRes = await objectApi.update(params);
         if (!isEmpty(stageRes.errors)) {
           throw new Error(`Save zookeeper ${values.name} failed.`);
@@ -131,7 +132,7 @@ export const createApi = context => {
     },
     delete: async name => {
       try {
-        const params = { name, group: ZOOKEEPER };
+        const params = { name, group };
         const res = await zookeeperApi.remove(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -141,6 +142,7 @@ export const createApi = context => {
           throw new Error(res.title);
         }
         showMessage(res.title);
+        return params;
       } catch (e) {
         showMessage(e.message);
         throw e;
@@ -148,7 +150,7 @@ export const createApi = context => {
     },
     start: async name => {
       try {
-        const params = { name, group: ZOOKEEPER };
+        const params = { name, group };
         const res = await zookeeperApi.start(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
@@ -163,7 +165,7 @@ export const createApi = context => {
     },
     stop: async name => {
       try {
-        const params = { name, group: ZOOKEEPER };
+        const params = { name, group };
         const res = await zookeeperApi.stop(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);

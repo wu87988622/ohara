@@ -30,7 +30,7 @@ import { Wrapper } from './PluginListStyles';
 const PluginList = () => {
   const { currentWorkspace: ws } = useWorkspace();
   const { data: files } = useFileState();
-  const originalPluginKeys = get(ws, 'settings.pluginKeys');
+  const originalPluginKeys = get(ws, 'pluginKeys');
   const stagingPluginKeys = get(ws, 'stagingSettings.pluginKeys');
 
   const plugins = useMemo(() => {

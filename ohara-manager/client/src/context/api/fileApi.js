@@ -22,6 +22,8 @@ import { WORKSPACE } from './index';
 
 export const createApi = context => {
   const { workspaceName, showMessage } = context;
+  if (!workspaceName) return;
+
   const group = hashByGroupAndName(WORKSPACE, workspaceName);
   const parentKey = { group: WORKSPACE, name: workspaceName };
   return {

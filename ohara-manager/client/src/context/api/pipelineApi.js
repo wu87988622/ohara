@@ -80,6 +80,7 @@ export const createApi = context => {
           throw new Error(res.title);
         }
         showMessage(res.title);
+        return params;
       } catch (e) {
         showMessage(e.message);
         throw e;

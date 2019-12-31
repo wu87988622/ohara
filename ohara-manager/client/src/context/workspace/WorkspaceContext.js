@@ -74,28 +74,28 @@ const WorkspaceProvider = ({ children }) => {
   // Set the current workspace
   React.useEffect(() => {
     if (!workspaceName || isEmpty(workspaces)) return;
-    const found = workspaces.find(ws => ws.settings.name === workspaceName);
+    const found = workspaces.find(ws => ws.name === workspaceName);
     if (!isEqual(found, prevWs)) setCurrWs(found);
   }, [workspaceName, workspaces, prevWs]);
 
   // Set the current worker
   React.useEffect(() => {
     if (!workspaceName || isEmpty(workers)) return;
-    const found = workers.find(wk => wk.settings.name === workspaceName);
+    const found = workers.find(wk => wk.name === workspaceName);
     if (!isEqual(found, prevWk)) setCurrWk(found);
   }, [workspaceName, workers, prevWk]);
 
   // Set the current broker
   React.useEffect(() => {
     if (!workspaceName || isEmpty(brokers)) return;
-    const found = brokers.find(bk => bk.settings.name === workspaceName);
+    const found = brokers.find(bk => bk.name === workspaceName);
     if (!isEqual(found, prevBk)) setCurrBk(found);
   }, [workspaceName, brokers, prevBk]);
 
   // Set the current zookeeper
   React.useEffect(() => {
     if (!workspaceName || isEmpty(zookeepers)) return;
-    const found = zookeepers.find(zk => zk.settings.name === workspaceName);
+    const found = zookeepers.find(zk => zk.name === workspaceName);
     if (!isEqual(found, prevZk)) setCurrZk(found);
   }, [workspaceName, zookeepers, prevZk]);
 
