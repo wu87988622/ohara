@@ -23,7 +23,7 @@ import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefUtils
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -934,7 +934,6 @@ class TestStreamApi extends OharaTest {
                                                                                                                             |  }
       """.stripMargin.parseJson)
 
-  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = StreamClusterInfo(

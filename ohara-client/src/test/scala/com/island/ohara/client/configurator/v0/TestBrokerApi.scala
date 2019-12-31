@@ -18,10 +18,10 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.BrokerApi._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.setting.SettingDef.Permission
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.CommonUtils
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
@@ -722,7 +722,6 @@ class TestBrokerApi extends OharaTest {
                                                                                                                             |  }
       """.stripMargin.parseJson)
 
-  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = BrokerClusterInfo(

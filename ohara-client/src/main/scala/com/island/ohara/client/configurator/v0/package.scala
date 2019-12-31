@@ -81,6 +81,11 @@ package object v0 {
   val MAX_HEAP_KEY: String = "xmx"
 
   /**
+    * the objects containing custom settings have this field.
+    */
+  val SETTINGS_KEY: String = "settings"
+
+  /**
     * Noted: there are other two definition having "nodeNames""
     * 1) StreamDefinitions.NODE_NAMES_DEFINITION
     */
@@ -396,8 +401,7 @@ package object v0 {
 
   private[v0] def flattenSettings(obj: JsObject): JsObject =
     JsObject(
-      // TODO: remove the "settings" key (https://github.com/oharastream/ohara/issues/3574)
-      noJsNull((obj.fields ++ obj.fields.get("settings").map(_.asJsObject.fields).getOrElse(Map.empty)))
+      noJsNull(obj.fields ++ obj.fields.get(SETTINGS_KEY).map(_.asJsObject.fields).getOrElse(Map.empty) - SETTINGS_KEY)
     )
 
   private[this] val runtimeKeys = Set(
@@ -409,7 +413,7 @@ package object v0 {
     "metrics",
     "status",
     "tasksStatus",
-    "settings"
+    SETTINGS_KEY
   )
 
   /**
@@ -419,5 +423,5 @@ package object v0 {
     * @return filtered objs
     */
   private[v0] def extractSetting(obj: JsObject): JsObject =
-    JsObject(noJsNull(obj.fields + ("settings" -> JsObject(obj.fields.filterNot(e => runtimeKeys.contains(e._1))))))
+    JsObject(noJsNull(obj.fields + (SETTINGS_KEY -> JsObject(obj.fields.filterNot(e => runtimeKeys.contains(e._1))))))
 }

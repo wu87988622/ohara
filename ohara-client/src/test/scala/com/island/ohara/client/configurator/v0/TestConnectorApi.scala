@@ -25,7 +25,7 @@ import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, PropGroup, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, _}
@@ -674,7 +674,6 @@ class TestConnectorApi extends OharaTest {
   def groupDefinitionShouldBeNonUpdatable(): Unit =
     ConnectorApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
-  @Ignore("enable this test case https://github.com/oharastream/ohara/issues/3574")
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = ConnectorInfo(

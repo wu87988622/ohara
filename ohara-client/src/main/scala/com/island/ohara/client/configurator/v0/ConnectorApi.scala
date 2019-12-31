@@ -184,7 +184,7 @@ object ConnectorApi {
     state: Option[State],
     nodeName: Option[String],
     error: Option[String],
-    // remove "status" (https://github.com/oharastream/ohara/issues/3621)
+    // TODO: remove "status" (https://github.com/oharastream/ohara/issues/3621)
     status: Option[Status],
     tasksStatus: Seq[Status],
     metrics: Metrics,
