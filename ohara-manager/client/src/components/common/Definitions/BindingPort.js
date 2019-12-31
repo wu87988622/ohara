@@ -43,7 +43,6 @@ const BindingPort = props => {
       ref={refs}
       InputProps={restInput}
       fullWidth
-      variant="filled"
       onChange={onChange}
       name={name}
       value={_value}

@@ -43,7 +43,6 @@ const Duration = props => {
       {...rest}
       ref={refs}
       fullWidth
-      variant="filled"
       onChange={onChange}
       name={name}
       value={value}

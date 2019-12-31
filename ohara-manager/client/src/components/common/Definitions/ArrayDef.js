@@ -22,7 +22,7 @@ import styled, { css } from 'styled-components';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-const SttledAutocomplete = styled(Autocomplete)(
+const StyledAutocomplete = styled(Autocomplete)(
   () => css`
     .MuiFilledInput-root {
       background-color: Transparent;
@@ -42,10 +42,9 @@ const ArrayDef = props => {
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
   return (
-    <SttledAutocomplete
+    <StyledAutocomplete
       ref={refs}
       multiple
-      id="tags-filled"
       freeSolo
       renderTags={(value, getTagProps) => {
         onChange(value);
@@ -61,7 +60,6 @@ const ArrayDef = props => {
             InputProps={restInput}
             placeholder={'Please press enter to add'}
             fullWidth
-            variant="filled"
             name={name}
             helperText={hasError ? meta.error : helperText}
             error={hasError}

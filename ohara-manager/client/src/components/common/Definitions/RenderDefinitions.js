@@ -32,11 +32,7 @@ const RenderDefinitions = props => {
     formRef.current.dispatchEvent(new Event('submit'));
 
   const displayDefinitions = Definitions.filter(def => !def.internal);
-  const fieldsRef = useRef(
-    displayDefinitions.reduce((refs, key) => {
-      return { ...refs, [key]: createRef() };
-    }, {}),
-  );
+  const refs = {};
 
   const RenderForm = (
     <Form
@@ -46,11 +42,12 @@ const RenderDefinitions = props => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>
             {displayDefinitions.map(def => {
+              refs[def.key] = createRef();
               return RenderDefinition({
                 def,
                 topics,
                 files,
-                ref: fieldsRef.current[def.key],
+                ref: refs[def.key],
               });
             })}
           </form>
@@ -59,7 +56,7 @@ const RenderDefinitions = props => {
     />
   );
 
-  return { RenderForm, formHandleSubmit, fieldsRef };
+  return { RenderForm, formHandleSubmit, refs };
 };
 
 RenderDefinitions.propTypes = {

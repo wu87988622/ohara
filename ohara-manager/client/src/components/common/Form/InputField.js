@@ -44,7 +44,6 @@ const InputField = props => {
     <InputWrap>
       <StyledTextField
         {...rest}
-        variant="filled"
         onChange={onChange}
         name={name}
         InputProps={restInput}

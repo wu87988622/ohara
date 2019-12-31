@@ -36,7 +36,6 @@ const ObjectKey = props => {
       <TextField
         {...rest}
         ref={refs}
-        variant="filled"
         onChange={onChange}
         name={name + 'Name'}
         InputProps={restInput}
@@ -48,7 +47,6 @@ const ObjectKey = props => {
       />
       <TextField
         {...rest}
-        variant="filled"
         onChange={onChange}
         name={name + 'Group'}
         InputProps={restInput}

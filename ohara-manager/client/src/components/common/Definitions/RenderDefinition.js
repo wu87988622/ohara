@@ -43,7 +43,7 @@ import { validWithDef } from 'utils/validate';
 import { READ_ONLY, CREATE_ONLY, EDITABLE } from './Permission';
 
 const RenderDefinition = props => {
-  const { def, topics, files, defType, ref } = props;
+  const { def, topics, files, defType, ref, fieldProps = {} } = props;
 
   const RenderField = params => {
     const {
@@ -76,7 +76,8 @@ const RenderDefinition = props => {
         break;
     }
 
-    const fieldProps = {
+    const ensuredFieldProps = {
+      ...fieldProps,
       key,
       name: key,
       tableKeys,
@@ -88,9 +89,9 @@ const RenderDefinition = props => {
       validate: validWithDef(params),
     };
 
-    if (ref) fieldProps.refs = ref;
+    if (ref) ensuredFieldProps.refs = ref;
 
-    return <Field {...fieldProps} />;
+    return <Field {...ensuredFieldProps} />;
   };
 
   const renderDefinitionField = () => {

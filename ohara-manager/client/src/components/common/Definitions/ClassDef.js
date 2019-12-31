@@ -36,7 +36,6 @@ const ClassDef = props => {
       ref={refs}
       fullWidth
       InputProps={restInput}
-      variant="filled"
       onChange={onChange}
       name={name}
       value={value}

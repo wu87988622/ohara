@@ -18,7 +18,6 @@ import React, { useEffect, useRef } from 'react';
 import { get, sortBy, noop } from 'lodash';
 import styled, { css } from 'styled-components';
 import Grid from '@material-ui/core/Grid';
-import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import { Form } from 'react-final-form';
 
@@ -81,21 +80,6 @@ const Settings = () => {
     get(currentZookeeper, 'settingDefinitions'),
   );
 
-  const renderField = (service, definition) => (
-    <TextField
-      key={`${service}-${definition.key}`}
-      id={`${service}-${definition.key}`}
-      label={definition.displayName}
-      helperText={definition.documentation}
-      fullWidth
-      margin="normal"
-      InputLabelProps={{
-        shrink: true,
-      }}
-      disabled={!definition.editable}
-    />
-  );
-
   return (
     <Wrapper>
       <Grid container justify="space-between" alignItems="center">
@@ -115,7 +99,13 @@ const Settings = () => {
               return (
                 <form onSubmit={handleSubmit}>
                   {workerDefinitions.map(definition =>
-                    RenderDefinition({ def: definition }),
+                    RenderDefinition({
+                      def: definition,
+                      fieldProps: {
+                        id: `worker-${definition.key}`,
+                        margin: 'normal',
+                      },
+                    }),
                   )}
                 </form>
               );
@@ -126,17 +116,47 @@ const Settings = () => {
           <Typography variant="h4" gutterBottom>
             Broker
           </Typography>
-          {brokerDefinitions.map(definition =>
-            renderField('broker', definition),
-          )}
+          <Form
+            onSubmit={noop}
+            render={({ handleSubmit }) => {
+              return (
+                <form onSubmit={handleSubmit}>
+                  {brokerDefinitions.map(definition =>
+                    RenderDefinition({
+                      def: definition,
+                      fieldProps: {
+                        id: `broker-${definition.key}`,
+                        margin: 'normal',
+                      },
+                    }),
+                  )}
+                </form>
+              );
+            }}
+          />
         </Grid>
         <Grid item ref={zkEl}>
           <Typography variant="h4" gutterBottom>
             Zookeeper
           </Typography>
-          {zookeeperDefinitions.map(definition =>
-            renderField('zookeeper', definition),
-          )}
+          <Form
+            onSubmit={noop}
+            render={({ handleSubmit }) => {
+              return (
+                <form onSubmit={handleSubmit}>
+                  {zookeeperDefinitions.map(definition =>
+                    RenderDefinition({
+                      def: definition,
+                      fieldProps: {
+                        id: `zookeeper-${definition.key}`,
+                        margin: 'normal',
+                      },
+                    }),
+                  )}
+                </form>
+              );
+            }}
+          />
         </Grid>
       </Grid>
     </Wrapper>

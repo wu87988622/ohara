@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useRef, Fragment } from 'react';
+import React, { useRef, Fragment, createRef } from 'react';
 import { capitalize } from 'lodash';
 import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
@@ -35,9 +35,9 @@ const RenderDefinitions = props => {
   const formRef = useRef(null);
   const formHandleSubmit = () =>
     formRef.current.dispatchEvent(new Event('submit'));
-  const refs = {};
-
   const displayDefinitions = Definitions.filter(def => !def.internal);
+
+  const refs = {};
 
   const RenderForm = (
     <Form
@@ -52,21 +52,14 @@ const RenderDefinitions = props => {
                 <Fragment key={title}>
                   <Typography variant="h4">{capitalize(title)}</Typography>
                   {defs.map(def => {
-                    const ref = React.createRef();
-                    const {
-                      definitionField,
-                      ref: currentRef,
-                    } = RenderDefinition({
+                    refs[def.key] = createRef();
+                    return RenderDefinition({
                       def,
                       topics,
                       files,
-                      ref,
+                      ref: refs[def.key],
                       defType: EDITABLE,
                     });
-
-                    refs[def.key] = currentRef;
-
-                    return definitionField;
                   })}
                 </Fragment>
               );

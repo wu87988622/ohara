@@ -31,7 +31,6 @@ const PositiveInt = props => {
       {...rest}
       ref={refs}
       fullWidth
-      variant="filled"
       onChange={onChange}
       name={name}
       InputProps={{ inputProps: { min: 0 }, ...restInput }}

@@ -18,11 +18,6 @@ import { createMuiTheme } from '@material-ui/core/styles';
 
 const MuiTheme = createMuiTheme({
   overrides: {
-    MuiInputBase: {
-      input: {
-        background: 'white',
-      },
-    },
     MuiFilledInput: {
       input: {
         paddingRight: 0,

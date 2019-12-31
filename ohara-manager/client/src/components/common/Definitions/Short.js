@@ -33,7 +33,6 @@ const Short = props => {
       {...rest}
       ref={refs}
       fullWidth
-      variant="filled"
       onChange={onChange}
       name={name}
       InputProps={{ inputProps: { min: -32768, max: 32767 }, ...restInput }}
