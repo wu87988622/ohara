@@ -14,91 +14,90 @@
  * limitations under the License.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useReducer,
-} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty, isEqual } from 'lodash';
 
-import {
-  useApp,
-  useApi,
-  useWorkerState,
-  useBrokerState,
-  useZookeeperState,
-} from 'context';
+import * as context from 'context';
 import { usePrevious } from 'utils/hooks';
 import { createActions } from './workspaceActions';
 import { reducer, initialState } from './workspaceReducer';
 
-const WorkspaceContext = createContext();
-const WorkspaceStateContext = createContext();
-const WorkspaceDispatchContext = createContext();
+const WorkspaceContext = React.createContext();
+const WorkspaceStateContext = React.createContext();
+const WorkspaceDispatchContext = React.createContext();
 
 const WorkspaceProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = React.useReducer(reducer, initialState);
   const { data: workspaces, isFetching } = state;
 
-  const { workspaceName: name } = useApp();
-  const { data: workers } = useWorkerState();
-  const { data: brokers } = useBrokerState();
-  const { data: zookeepers } = useZookeeperState();
+  const { workspaceName, pipelineName } = context.useApp();
+  const { data: workers } = context.useWorkerState();
+  const { data: brokers } = context.useBrokerState();
+  const { data: zookeepers } = context.useZookeeperState();
+  const { data: pipelines } = context.usePipelineState();
+  const { workspaceApi } = context.useApi();
 
   /**
-   * Short terms:
+   * Abbreviations:
    * workspace => ws
    * worker => wk
    * broker => bk
    * zookeeper => zk
+   * pipeline => pi
    */
-  const [currWs, setCurrWs] = useState(null);
-  const [currWk, setCurrWk] = useState(null);
-  const [currBk, setCurrBk] = useState(null);
-  const [currZk, setCurrZk] = useState(null);
+
+  const [currWs, setCurrWs] = React.useState(null);
+  const [currWk, setCurrWk] = React.useState(null);
+  const [currBk, setCurrBk] = React.useState(null);
+  const [currZk, setCurrZk] = React.useState(null);
+  const [currPi, setCurrPi] = React.useState(null);
   const prevWs = usePrevious(currWs);
   const prevWk = usePrevious(currWk);
   const prevBk = usePrevious(currBk);
   const prevZk = usePrevious(currZk);
+  const prevPi = usePrevious(currPi);
 
-  const { workspaceApi } = useApi();
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (!workspaceApi) return;
     const actions = createActions({ state, dispatch, workspaceApi });
     actions.fetchWorkspaces();
   }, [state, workspaceApi]);
 
+  // Set current pipeline
+  React.useEffect(() => {
+    if (!pipelineName || isEmpty(pipelines)) return;
+    const found = pipelines.find(pi => pi.name === pipelineName);
+    if (!isEqual(found, prevPi)) setCurrPi(found);
+  }, [pipelineName, pipelines, prevPi, workspaces]);
+
   // Set the current workspace
-  useEffect(() => {
-    if (!name || isEmpty(workspaces)) return;
-    const found = workspaces.find(ws => ws.settings.name === name);
+  React.useEffect(() => {
+    if (!workspaceName || isEmpty(workspaces)) return;
+    const found = workspaces.find(ws => ws.settings.name === workspaceName);
     if (!isEqual(found, prevWs)) setCurrWs(found);
-  }, [name, workspaces, prevWs]);
+  }, [workspaceName, workspaces, prevWs]);
 
   // Set the current worker
-  useEffect(() => {
-    if (!name || isEmpty(workers)) return;
-    const found = workers.find(wk => wk.settings.name === name);
+  React.useEffect(() => {
+    if (!workspaceName || isEmpty(workers)) return;
+    const found = workers.find(wk => wk.settings.name === workspaceName);
     if (!isEqual(found, prevWk)) setCurrWk(found);
-  }, [name, workers, prevWk]);
+  }, [workspaceName, workers, prevWk]);
 
   // Set the current broker
-  useEffect(() => {
-    if (!name || isEmpty(brokers)) return;
-    const found = brokers.find(bk => bk.settings.name === name);
+  React.useEffect(() => {
+    if (!workspaceName || isEmpty(brokers)) return;
+    const found = brokers.find(bk => bk.settings.name === workspaceName);
     if (!isEqual(found, prevBk)) setCurrBk(found);
-  }, [name, brokers, prevBk]);
+  }, [workspaceName, brokers, prevBk]);
 
   // Set the current zookeeper
-  useEffect(() => {
-    if (!name || isEmpty(zookeepers)) return;
-    const found = zookeepers.find(zk => zk.settings.name === name);
+  React.useEffect(() => {
+    if (!workspaceName || isEmpty(zookeepers)) return;
+    const found = zookeepers.find(zk => zk.settings.name === workspaceName);
     if (!isEqual(found, prevZk)) setCurrZk(found);
-  }, [name, zookeepers, prevZk]);
+  }, [workspaceName, zookeepers, prevZk]);
 
   return (
     <WorkspaceStateContext.Provider value={state}>
@@ -110,8 +109,9 @@ const WorkspaceProvider = ({ children }) => {
             currentWorker: currWk,
             currentBroker: currBk,
             currentZookeeper: currZk,
+            currentPipeline: currPi,
             isFetching,
-            workspaceName: name,
+            workspaceName,
           }}
         >
           {children}
@@ -122,11 +122,10 @@ const WorkspaceProvider = ({ children }) => {
 };
 
 const useWorkspace = () => {
-  const context = useContext(WorkspaceContext);
+  const context = React.useContext(WorkspaceContext);
   if (context === undefined) {
     throw new Error('useWorkspace must be used within a WorkspaceProvider');
   }
-
   return context;
 };
 
@@ -157,7 +156,7 @@ WorkspaceProvider.propTypes = {
 const useWorkspaceActions = () => {
   const state = useWorkspaceState();
   const dispatch = useWorkspaceDispatch();
-  const { workspaceApi } = useApi();
+  const { workspaceApi } = context.useApi();
   return createActions({ state, dispatch, workspaceApi });
 };
 

@@ -33,10 +33,14 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import Tooltip from '@material-ui/core/Tooltip';
 import { useHistory } from 'react-router-dom';
+import _ from 'lodash';
 
+import * as context from 'context';
+import { Progress } from 'components/common/Progress';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
-import * as context from 'context';
+import { makeRequest } from './ToolbarUtils';
+import { useDeleteServices } from './ToolbarHooks';
 
 const Toolbar = props => {
   const {
@@ -53,10 +57,12 @@ const Toolbar = props => {
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
   const [isMetricsDisplayed, setIsMetricsDisplayed] = React.useState(true);
-
-  const { currentPipeline, error } = context.usePipelineState();
+  const [isDeletingPipeline, setIsDeletingPipeline] = React.useState(false);
+  const { error } = context.useWorkspace();
   const { deletePipeline } = context.usePipelineActions();
-  const { currentWorkspace } = context.useWorkspace();
+  const { currentWorkspace, currentPipeline } = context.useWorkspace();
+
+  const { steps, activeStep, deleteServices } = useDeleteServices();
   const history = useHistory();
 
   const handleZoomClick = event => {
@@ -76,8 +82,23 @@ const Toolbar = props => {
     setPipelineAnchorEl(event.currentTarget);
   };
 
+  const handlePipelineStart = async () => {
+    await makeRequest(currentPipeline, 'start');
+    handlePipelineControlsClose();
+  };
+
+  const handlePipelineStop = async () => {
+    await makeRequest(currentPipeline, 'stop');
+    handlePipelineControlsClose();
+  };
+
   const handlePipelineDelete = async () => {
-    await deletePipeline(currentPipeline);
+    setIsDeletingPipeline(true);
+    const { objects: services } = currentPipeline;
+
+    await deleteServices(services);
+    deletePipeline(currentPipeline);
+    setIsDeletingPipeline(false);
 
     if (!error) history.push(`/${currentWorkspace.settings.name}`);
     handlePipelineControlsClose();
@@ -222,17 +243,11 @@ const Toolbar = props => {
           open={Boolean(pipelineAnchorEl)}
           onClose={handlePipelineControlsClose}
         >
-          <MenuItem onClick={handlePipelineControlsClose}>
+          <MenuItem onClick={handlePipelineStart}>
             Start all components
           </MenuItem>
-          <MenuItem onClick={handlePipelineControlsClose}>
-            Stop all components
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handlePipelineDelete();
-            }}
-          >
+          <MenuItem onClick={handlePipelineStop}>Stop all components</MenuItem>
+          <MenuItem onClick={handlePipelineDelete}>
             Delete this pipeline
           </MenuItem>
         </Menu>
@@ -251,6 +266,16 @@ const Toolbar = props => {
 
         <Typography variant="body2">Metrics</Typography>
       </div>
+
+      {// Display the progress when deleting if there are running objects
+      !_.isEmpty(steps) && (
+        <Progress
+          open={isDeletingPipeline}
+          createTitle={`Deleting pipeline ${currentPipeline.name}`}
+          steps={steps}
+          activeStep={activeStep}
+        />
+      )}
     </StyledToolbar>
   );
 };

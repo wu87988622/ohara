@@ -16,6 +16,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import _ from 'lodash';
 
 import * as context from 'context';
 import NodeDialog from 'components/Node/NodeDialog';
@@ -29,12 +30,15 @@ import { usePrevious } from 'utils/hooks';
 const Pipeline = () => {
   const history = useHistory();
   const { workspaceName, pipelineName } = useApp();
-  const { workspaces, currentWorkspace } = context.useWorkspace();
+  const {
+    workspaces,
+    currentWorkspace,
+    currentPipeline,
+  } = context.useWorkspace();
   const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
   const { fetchPipelines } = context.usePipelineActions();
   const {
     data: pipelines,
-    currentPipeline,
     lastUpdated: isPipelineReady,
   } = context.usePipelineState();
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
@@ -108,7 +112,6 @@ const Pipeline = () => {
 
   useEffect(() => {
     if (!isWorkspaceReady) return;
-
     if (workspaces.length > 0) {
       return setIsNewWorkspaceDialogOpen(false);
     }
@@ -124,11 +127,13 @@ const Pipeline = () => {
   const prevPipeline = usePrevious(currentPipeline);
   // Reset toolbox states
   useEffect(() => {
-    if (currentPipeline !== prevPipeline) {
-      setToolboxExpanded(initialState);
-      // re-renders Toolbox
-      setToolboxKey(prevKey => prevKey + 1);
-    }
+    const currentPipelineName = _.get(currentPipeline, 'name', '');
+    const prevPipelineName = _.get(prevPipeline, 'name', '');
+    if (currentPipelineName === prevPipelineName) return;
+
+    setToolboxExpanded(initialState);
+    // re-renders Toolbox
+    setToolboxKey(prevKey => prevKey + 1);
   }, [currentPipeline, initialState, prevPipeline]);
 
   return (

@@ -122,10 +122,14 @@ export const Paper = styled.div(
           color: white;
         }
       }
+      
       .title {
         ${theme.typography.h5}
         color:${theme.palette.text.primary};
         margin-top: ${theme.spacing(2)}px;
+        width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .type {

@@ -21,14 +21,13 @@ import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import StorageIcon from '@material-ui/icons/Storage';
 import WavesIcon from '@material-ui/icons/Waves';
-import * as $ from 'jquery';
 import * as joint from 'jointjs';
+import $ from 'jquery';
 
 import * as generate from 'utils/generate';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import TopicGraph from '../Graph/Topic/TopicGraph';
 import { AddPublicTopicIcon } from 'components/common/Icon';
-import { hashKey } from 'utils/object';
 
 export const createToolboxList = params => {
   const {
@@ -169,7 +168,6 @@ export const enableDragAndDrop = params => {
     currentPipeline,
     topicsData,
     createTopic,
-    currentWorkspace,
     updatePipeline,
   } = params;
 
@@ -219,7 +217,7 @@ export const enableDragAndDrop = params => {
         });
       });
 
-      $('#paper').on('mouseup.fly', event => {
+      $('#paper').on('mouseup.fly', async event => {
         const x = event.pageX;
         const y = event.pageY;
         const target = paper.current.$el.offset();
@@ -298,24 +296,28 @@ export const enableDragAndDrop = params => {
               ? name
               : getPrivateTopicDisplayNames(topicsData);
 
+            let topicGroup;
             if (!isPublicTopic) {
-              createTopic({
+              const { data } = await createTopic({
                 name: privateTopicName,
                 tags: {
                   type: 'private',
                   displayName,
                 },
               });
+
+              if (data) {
+                topicGroup = data.group;
+              }
             }
 
-            updatePipeline({
+            await updatePipeline({
               name: currentPipeline.name,
-              group: currentPipeline.group,
               endpoints: [
                 ...currentPipeline.endpoints,
                 {
                   name: privateTopicName,
-                  group: hashKey(currentWorkspace),
+                  group: topicGroup,
                   kind: 'topic',
                 },
               ],

@@ -16,23 +16,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty, isEqual } from 'lodash';
 
 import { reducer, initialState } from './pipelineReducer';
-import { useApp, useApi } from 'context';
-import { usePrevious } from 'utils/hooks';
+import { useApi, useApp } from 'context';
 import { createActions } from './pipelineActions';
+import { initializeRoutine } from './pipelineRoutines';
 
 const PipelineStateContext = React.createContext();
 const PipelineDispatchContext = React.createContext();
 
 const PipelineProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { data: pipelines, currentPipeline } = state;
-  const { pipelineName } = useApp();
   const { pipelineApi } = useApi();
-
-  const prevPipeline = usePrevious(currentPipeline);
+  const { workspaceName } = useApp();
 
   React.useEffect(() => {
     if (!pipelineApi) return;
@@ -40,14 +36,10 @@ const PipelineProvider = ({ children }) => {
     actions.fetchPipelines();
   }, [state, pipelineApi]);
 
+  // Reset pipeline state on workspace change
   React.useEffect(() => {
-    if (isEmpty(pipelines) || !pipelineName) return;
-    const actions = createActions({ state, dispatch, pipelineApi });
-    const found = pipelines.find(pipeline => pipeline.name === pipelineName);
-    if (!isEqual(found, prevPipeline)) {
-      actions.setCurrentPipeline(found);
-    }
-  }, [pipelineName, pipelines, prevPipeline, state, pipelineApi]);
+    dispatch(initializeRoutine.trigger());
+  }, [workspaceName]);
 
   return (
     <PipelineStateContext.Provider value={state}>

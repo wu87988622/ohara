@@ -42,8 +42,6 @@ import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { getKey, hashKey } from 'utils/object';
 import { hash } from 'utils/sha';
 
-import { Tabs, SubTabs } from 'components/Workspace/Edit';
-
 const Toolbox = props => {
   const {
     isOpen: isToolboxOpen,
@@ -61,11 +59,10 @@ const Toolbox = props => {
     currentWorker,
     currentWorkspace,
     currentBroker,
+    currentPipeline,
   } = context.useWorkspace();
-  const { currentPipeline } = context.usePipelineState();
   const { updatePipeline } = context.usePipelineActions();
   const { addStream } = context.useStreamActions();
-  const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
@@ -87,7 +84,7 @@ const Toolbox = props => {
 
   const showMessage = context.useSnackbar();
 
-  const { streams, files: streamFiles } = useFiles(currentWorkspace);
+  const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
 
@@ -118,7 +115,6 @@ const Toolbox = props => {
     });
 
     showMessage(response.title);
-    openEditWorkspaceDialog({ tab: Tabs.SETTINGS, subTab: SubTabs.PLUGINS });
   };
 
   const handleFileSelect = event => {
@@ -135,6 +131,7 @@ const Toolbox = props => {
     }
 
     uploadJar(file);
+    setStatus('loading');
   };
 
   const removeTempCell = () => {
@@ -182,10 +179,8 @@ const Toolbox = props => {
         const definition = targetStream.classInfos[0];
 
         addStream(requestParams, definition);
-
         updatePipeline({
           name: currentPipeline.name,
-          group: currentPipeline.group,
           endpoints: [
             ...currentPipeline.endpoints,
             {
@@ -218,7 +213,6 @@ const Toolbox = props => {
 
         updatePipeline({
           name: currentPipeline.name,
-          group: currentPipeline.group,
           endpoints: [
             ...currentPipeline.endpoints,
             {
@@ -259,7 +253,7 @@ const Toolbox = props => {
 
   useEffect(() => {
     // Should we handle topic and stream here?
-    if (!connectors.sources || !connectors.sinks) return;
+    if (!connectors) return;
 
     const renderToolbox = () => {
       const sharedProps = {
@@ -311,14 +305,13 @@ const Toolbox = props => {
       // Add the ability to drag and drop connectors/streams/topics
       utils.enableDragAndDrop({
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
-        paper, // main paper
+        paper,
         setCellInfo,
         setIsOpen,
         graph,
         currentPipeline,
         topicsData,
         createTopic,
-        currentWorkspace,
         updatePipeline,
       });
     };
@@ -329,7 +322,6 @@ const Toolbox = props => {
     connectors,
     currentBroker,
     currentPipeline,
-    currentWorkspace,
     graph,
     paper,
     searchResults,

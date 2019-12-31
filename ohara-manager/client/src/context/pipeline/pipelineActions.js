@@ -72,9 +72,6 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
-    setCurrentPipeline: pipelineName => {
-      dispatch(routines.setCurrentPipelineRoutine.trigger(pipelineName));
-    },
     setSelectedCell: cellName => {
       dispatch(routines.setSelectedCellRoutine.trigger(cellName));
     },

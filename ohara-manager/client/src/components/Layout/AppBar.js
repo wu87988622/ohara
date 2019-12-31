@@ -15,45 +15,37 @@
  */
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, NavLink } from 'react-router-dom';
 import Tooltip from '@material-ui/core/Tooltip';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import StorageIcon from '@material-ui/icons/Storage';
 import AddIcon from '@material-ui/icons/Add';
-import { Link } from 'react-router-dom';
+import IconButton from '@material-ui/core/IconButton';
 
+import * as context from 'context';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
-import {
-  useApp,
-  useWorkspace,
-  useDevToolDialog,
-  useListWorkspacesDialog,
-} from 'context';
 import { useNodeDialog } from 'context/NodeDialogContext';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
 import { usePrevious } from 'utils/hooks';
-
-// Import this logo as a React component
-// https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
 import { ReactComponent as Logo } from 'images/logo.svg';
-import { Header, Tools, WorkspaceList, StyledNavLink } from './Styles';
+import { StyledAppBar } from './AppBarStyles';
 
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
   const { workspaceName, pipelineName } = useParams();
-  const { setWorkspaceName, setPipelineName } = useApp();
-  const { workspaces } = useWorkspace();
+  const { setWorkspaceName, setPipelineName } = context.useApp();
+  const { workspaces } = context.useWorkspace();
   const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
   const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
   const {
     open: openDevToolDialog,
     isOpen: isDevToolDialogOpen,
     close: closeDevToolDialog,
-  } = useDevToolDialog();
-  const { open: openListWorkspacesDialog } = useListWorkspacesDialog();
+  } = context.useDevToolDialog();
+  const { open: openListWorkspacesDialog } = context.useListWorkspacesDialog();
 
   const prevWorkspaceName = usePrevious(workspaceName);
   const prevPipelineName = usePrevious(pipelineName);
@@ -71,14 +63,14 @@ const AppBar = () => {
   }, [pipelineName, prevPipelineName, setPipelineName]);
 
   return (
-    <>
-      <Header>
+    <StyledAppBar>
+      <header>
         <div className="brand">
           <Link to="/">
             <Logo width="38" height="38" />
           </Link>
         </div>
-        <WorkspaceList>
+        <div className="workspace-list">
           {workspaces.map(worker => {
             const { name } = worker.settings;
             const displayName = name.substring(0, 2).toUpperCase();
@@ -90,13 +82,13 @@ const AppBar = () => {
                 placement="right"
                 enterDelay={1000}
               >
-                <StyledNavLink
+                <NavLink
                   activeClassName="active-link"
                   className="workspace-name item"
                   to={`/${name}`}
                 >
                   {displayName}
-                </StyledNavLink>
+                </NavLink>
               </Tooltip>
             );
           })}
@@ -113,29 +105,46 @@ const AppBar = () => {
               <AddIcon />
             </div>
           </Tooltip>
-        </WorkspaceList>
+        </div>
 
-        <Tools>
-          <AppsIcon
-            className="workspace item"
-            onClick={openListWorkspacesDialog}
-          />
-          <AssignmentIcon className="item" />
-          <DeveloperModeIcon
-            className="item"
-            onClick={
-              isDevToolDialogOpen ? closeDevToolDialog : openDevToolDialog
-            }
-          />
-          <StorageIcon
-            className="nodes item"
-            onClick={() => setIsNodeDialogOpen(true)}
-          />
-        </Tools>
-      </Header>
+        <div className="tools">
+          <Tooltip title="Workspace list" placement="right" enterDelay={1000}>
+            <IconButton
+              className="workspace item"
+              onClick={openListWorkspacesDialog}
+            >
+              <AppsIcon />
+            </IconButton>
+          </Tooltip>
+
+          <IconButton disabled className="item">
+            <AssignmentIcon />
+          </IconButton>
+
+          <Tooltip title="Developer Tools" placement="right" enterDelay={1000}>
+            <IconButton
+              className="item"
+              onClick={
+                isDevToolDialogOpen ? closeDevToolDialog : openDevToolDialog
+              }
+            >
+              <DeveloperModeIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Node list" placement="right" enterDelay={1000}>
+            <IconButton
+              className="nodes item"
+              onClick={() => setIsNodeDialogOpen(true)}
+            >
+              <StorageIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
+      </header>
 
       <ListWorkspacesDialog />
-    </>
+    </StyledAppBar>
   );
 };
 

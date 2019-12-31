@@ -17,8 +17,8 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import * as joint from 'jointjs';
-import * as $ from 'jquery';
-import * as _ from 'lodash';
+import $ from 'jquery';
+import _ from 'lodash';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import StopIcon from '@material-ui/icons/Stop';
 import BuildIcon from '@material-ui/icons/Build';

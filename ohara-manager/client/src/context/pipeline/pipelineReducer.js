@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-import { map, sortBy, reject, isEqual } from 'lodash';
+import _ from 'lodash';
 
 import * as routines from './pipelineRoutines';
 
-const sort = pipelines => sortBy(pipelines, 'name');
+const sort = pipelines => _.sortBy(pipelines, 'name');
+
+// The objects filed returned by the pipelines API now contains objects
+// which are not supposed to be appeared. Filtering out these objects
+// in the frontend for now
+const filterOutObjects = pipelines =>
+  pipelines.map(pipeline => {
+    return {
+      ...pipeline,
+      objects: pipeline.objects.filter(object => object.kind !== 'object'),
+    };
+  });
 
 const initialState = {
   data: [],
@@ -32,12 +43,6 @@ const reducer = (state, action) => {
   switch (action.type) {
     case routines.initializeRoutine.TRIGGER:
       return initialState;
-    case routines.setCurrentPipelineRoutine.TRIGGER:
-      return {
-        ...state,
-        currentPipeline:
-          state.data.find(data => data.name === action.payload) || null,
-      };
 
     case routines.setSelectedCellRoutine.TRIGGER:
       return {
@@ -56,7 +61,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: sort(action.payload),
+        data: sort(filterOutObjects(action.payload)),
         lastUpdated: new Date(),
       };
     case routines.createPipelineRoutine.SUCCESS:
@@ -66,20 +71,30 @@ const reducer = (state, action) => {
         data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
+
     case routines.updatePipelineRoutine.SUCCESS:
+      const newData = state.data.map(pipeline => {
+        if (
+          pipeline.name === action.payload.name &&
+          pipeline.group === action.payload.group
+        ) {
+          return { ...pipeline, ...action.payload };
+        }
+
+        return pipeline;
+      });
+
       return {
         ...state,
         isFetching: false,
-        data: map(state.data, pipeline =>
-          isEqual(pipeline, action.payload) ? action.payload : pipeline,
-        ),
+        data: filterOutObjects(newData),
         lastUpdated: new Date(),
       };
     case routines.deletePipelineRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
-        data: reject(
+        data: _.reject(
           state.data,
           pipeline =>
             pipeline.name === action.payload.name ||

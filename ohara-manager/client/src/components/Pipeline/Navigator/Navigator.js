@@ -40,7 +40,6 @@ import {
   StyledSubtitle1,
   PipelineList,
 } from './NavigatorStyles';
-import { hashKey } from 'utils/object';
 
 const Navigator = () => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -49,7 +48,7 @@ const Navigator = () => {
   const [isExpanded, setIsExpanded] = useState(true);
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
   const { data: pipelines } = context.usePipelineState();
-  const { addPipeline } = context.usePipelineActions();
+  const { createPipeline } = context.usePipelineActions();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -64,12 +63,8 @@ const Navigator = () => {
     handleClose();
   };
 
-  const onSubmit = async ({ pipelineName }, form) => {
-    addPipeline({
-      name: pipelineName,
-      group: hashKey(currentWorkspace),
-    });
-
+  const onSubmit = async ({ pipelineName: name }, form) => {
+    createPipeline({ name });
     setTimeout(form.reset);
     setIsOpen(false);
   };

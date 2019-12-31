@@ -118,7 +118,7 @@ const Graph = props => {
 
         if (!cellView.$box) return;
 
-        resetAll(paper.current);
+        resetAll();
         cellView.highlight();
         cellView.model.attributes.menuDisplay = 'block';
         cellView.updateBox();
@@ -132,9 +132,9 @@ const Graph = props => {
               currentLink,
               cellView,
               graph,
+              paper,
               showMessage,
               resetLink,
-              paper,
               setInitToolboxList,
             });
           }
@@ -224,7 +224,7 @@ const Graph = props => {
         }
 
         updateCurrentCell(currentCell);
-        // setIsCentered(false);
+        setIsCentered(false);
         paper.current.$el.removeClass('is-being-grabbed');
       });
     };
