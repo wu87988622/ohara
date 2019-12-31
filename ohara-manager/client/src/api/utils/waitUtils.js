@@ -43,9 +43,9 @@ export const waitForConnectStop = res => {
 
 export const waitForClusterNonexistent = (res, params) => {
   const { name, group } = params;
-  const result = res.data.result
-    .map(res => res.settings)
-    .some(settings => settings.name === name && settings.group === group);
+  const result = res.data.result.some(
+    res => res.name === name && res.group === group,
+  );
   return !result;
 };
 
@@ -64,11 +64,11 @@ export const waitForObjectNonexistent = (res, params) => {
 };
 
 export const waitForNodeReady = (res, node) => {
-  const nodeNames = res.data.result.settings.nodeNames;
+  const nodeNames = res.data.result.nodeNames;
   return nodeNames.includes(node);
 };
 
 export const waitForNodeNonexistentInCluster = (res, node) => {
-  const nodeNames = res.data.result.settings.nodeNames;
+  const nodeNames = res.data.result.nodeNames;
   return !nodeNames.includes(node);
 };

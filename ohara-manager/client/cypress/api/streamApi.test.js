@@ -95,7 +95,7 @@ describe('Stream API', () => {
       jarKey,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -159,7 +159,7 @@ describe('Stream API', () => {
       jarKey,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -214,7 +214,7 @@ describe('Stream API', () => {
     const result = await streamApi.getAll();
     expect(result.errors).to.be.undefined;
 
-    const streams = result.data.map(zk => zk.settings.name);
+    const streams = result.data.map(zk => zk.name);
     expect(streams.includes(stream1.name)).to.be.true;
     expect(streams.includes(stream2.name)).to.be.true;
   });
@@ -227,7 +227,7 @@ describe('Stream API', () => {
     const result = await streamApi.remove(stream);
     expect(result.errors).to.be.undefined;
 
-    const streams = result.data.map(stream => stream.settings.name);
+    const streams = result.data.map(stream => stream.name);
     expect(streams.includes(stream.name)).to.be.false;
 
     // delete a running stream
@@ -264,7 +264,7 @@ describe('Stream API', () => {
       jarKey,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -332,7 +332,7 @@ describe('Stream API', () => {
     const runningStreamRes = await streamApi.start(stream);
     expect(runningStreamRes.errors).to.be.undefined;
     expect(runningStreamRes.data.state).to.eq('RUNNING');
-    expect(runningStreamRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningStreamRes.data.nodeNames).have.lengthOf(1);
 
     const stopStreamRes = await streamApi.stop(stream);
     expect(stopStreamRes.errors).to.be.undefined;
@@ -340,7 +340,7 @@ describe('Stream API', () => {
 
     const result = await streamApi.remove(stream);
     expect(result.errors).to.be.undefined;
-    const streams = result.data.map(stream => stream.settings.name);
+    const streams = result.data.map(stream => stream.name);
     expect(streams.includes(stream.name)).to.be.false;
   });
 });

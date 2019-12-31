@@ -52,7 +52,7 @@ export const createServices = async ({
       await zkApi.create(zookeeper);
       // zookeeper api will make sure the service is starting, we can skip the checking
       const zkRes = await zkApi.start(zookeeper);
-      if (!zkRes.errors) result.zookeeper = zkRes.data.settings;
+      if (!zkRes.errors) result.zookeeper = zkRes.data;
 
       if (withBroker) {
         const broker = {
@@ -67,7 +67,7 @@ export const createServices = async ({
         await bkApi.create(broker);
         // broker api will make sure the service is starting, we can skip the checking
         const bkRes = await bkApi.start(broker);
-        if (!bkRes.errors) result.broker = bkRes.data.settings;
+        if (!bkRes.errors) result.broker = bkRes.data;
 
         if (withWorker) {
           const worker = {
@@ -82,7 +82,7 @@ export const createServices = async ({
           await wkApi.create(worker);
           // worker api will make sure the service is starting, we can skip the checking
           const wkRes = await wkApi.start(worker);
-          if (!wkRes.errors) result.worker = wkRes.data.settings;
+          if (!wkRes.errors) result.worker = wkRes.data;
         }
       }
     }
@@ -100,12 +100,8 @@ export const deleteAllServices = async () => {
   const connects = connectRes.data;
   // we don't care the execute order of each individual connect was done or not.
   // Using Promise.all() to make sure all connects were stopped & deleted.
-  await Promise.all(
-    connects.map(connect => connectorApi.stop(connect.settings)),
-  );
-  await Promise.all(
-    connects.map(connect => connectorApi.remove(connect.settings)),
-  );
+  await Promise.all(connects.map(connect => connectorApi.stop(connect)));
+  await Promise.all(connects.map(connect => connectorApi.remove(connect)));
 
   // delete all workers
   const workerRes = await wkApi.getAll();
@@ -115,8 +111,8 @@ export const deleteAllServices = async () => {
   const workers = workerRes.data;
   // we don't care the execute order of each individual worker was done or not.
   // Using Promise.all() to make sure all workers were stopped & deleted.
-  await Promise.all(workers.map(wk => wkApi.stop(wk.settings)));
-  await Promise.all(workers.map(wk => wkApi.remove(wk.settings)));
+  await Promise.all(workers.map(wk => wkApi.stop(wk)));
+  await Promise.all(workers.map(wk => wkApi.remove(wk)));
 
   // delete all streams
   const streamRes = await streamApi.getAll();
@@ -126,8 +122,8 @@ export const deleteAllServices = async () => {
   const streams = streamRes.data;
   // we don't care the execute order of each individual stream was done or not.
   // Using Promise.all() to make sure all streams were stopped & deleted.
-  await Promise.all(streams.map(stream => streamApi.stop(stream.settings)));
-  await Promise.all(streams.map(stream => streamApi.remove(stream.settings)));
+  await Promise.all(streams.map(stream => streamApi.stop(stream)));
+  await Promise.all(streams.map(stream => streamApi.remove(stream)));
 
   // delete all topics
   const topicRes = await topicApi.getAll();
@@ -137,8 +133,8 @@ export const deleteAllServices = async () => {
   const topics = topicRes.data;
   // we don't care the execute order of each individual topic was done or not.
   // Using Promise.all() to make sure all topics were stopped & deleted.
-  await Promise.all(topics.map(topic => topicApi.stop(topic.settings)));
-  await Promise.all(topics.map(topic => topicApi.remove(topic.settings)));
+  await Promise.all(topics.map(topic => topicApi.stop(topic)));
+  await Promise.all(topics.map(topic => topicApi.remove(topic)));
 
   // delete all brokers
   const brokerRes = await bkApi.getAll();
@@ -148,8 +144,8 @@ export const deleteAllServices = async () => {
   const brokers = brokerRes.data;
   // we don't care the execute order of each individual broker was done or not.
   // Using Promise.all() to make sure all brokers were stopped & deleted.
-  await Promise.all(brokers.map(bk => bkApi.stop(bk.settings)));
-  await Promise.all(brokers.map(bk => bkApi.remove(bk.settings)));
+  await Promise.all(brokers.map(bk => bkApi.stop(bk)));
+  await Promise.all(brokers.map(bk => bkApi.remove(bk)));
 
   // delete all zookeepers
   const zookeeperRes = await zkApi.getAll();
@@ -159,8 +155,8 @@ export const deleteAllServices = async () => {
   const zookeepers = zookeeperRes.data;
   // we don't care the execute order of each individual zookeeper was done or not.
   // Using Promise.all() to make sure all zookeepers were stopped & deleted.
-  await Promise.all(zookeepers.map(zk => zkApi.stop(zk.settings)));
-  await Promise.all(zookeepers.map(zk => zkApi.remove(zk.settings)));
+  await Promise.all(zookeepers.map(zk => zkApi.stop(zk)));
+  await Promise.all(zookeepers.map(zk => zkApi.remove(zk)));
 
   // delete all nodes
   const nodeRes = await nodeApi.getAll();

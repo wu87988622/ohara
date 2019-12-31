@@ -68,7 +68,7 @@ describe('Broker API', () => {
       imageName,
       zookeeperClusterKey,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -117,7 +117,7 @@ describe('Broker API', () => {
       imageName,
       zookeeperClusterKey,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -159,7 +159,7 @@ describe('Broker API', () => {
     const result = await bkApi.getAll();
     expect(result.errors).to.be.undefined;
 
-    const brokers = result.data.map(bk => bk.settings.name);
+    const brokers = result.data.map(bk => bk.name);
     expect(brokers.includes(bkClusterOne.name)).to.be.true;
     expect(brokers.includes(bkClusterTwo.name)).to.be.true;
   });
@@ -172,7 +172,7 @@ describe('Broker API', () => {
     const result = await bkApi.remove(bkCluster);
     expect(result.errors).to.be.undefined;
 
-    const brokers = result.data.map(bk => bk.settings.name);
+    const brokers = result.data.map(bk => bk.name);
     expect(brokers.includes(bkCluster.name)).to.be.false;
 
     // delete a running broker
@@ -208,7 +208,7 @@ describe('Broker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -264,7 +264,7 @@ describe('Broker API', () => {
     const runningBkRes = await bkApi.start(bkCluster);
     expect(runningBkRes.errors).to.be.undefined;
     expect(runningBkRes.data.state).to.eq('RUNNING');
-    expect(runningBkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningBkRes.data.nodeNames).have.lengthOf(1);
 
     const stopBkRes = await bkApi.stop(bkCluster);
     expect(stopBkRes.errors).to.be.undefined;
@@ -272,7 +272,7 @@ describe('Broker API', () => {
 
     const result = await bkApi.remove(bkCluster);
     expect(result.errors).to.be.undefined;
-    const brokers = result.data.map(bk => bk.settings.name);
+    const brokers = result.data.map(bk => bk.name);
     expect(brokers.includes(bkCluster.name)).to.be.false;
   });
 
@@ -287,7 +287,7 @@ describe('Broker API', () => {
     const runningBkRes = await bkApi.start(bkCluster);
     expect(runningBkRes.errors).to.be.undefined;
     expect(runningBkRes.data.state).to.eq('RUNNING');
-    expect(runningBkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningBkRes.data.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, bkCluster, {
@@ -305,7 +305,7 @@ describe('Broker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).have.lengthOf(2);
@@ -348,7 +348,7 @@ describe('Broker API', () => {
     const runningBkRes = await bkApi.start(bkCluster);
     expect(runningBkRes.errors).to.be.undefined;
     expect(runningBkRes.data.state).to.eq('RUNNING');
-    expect(runningBkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningBkRes.data.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, bkCluster, {
@@ -358,8 +358,8 @@ describe('Broker API', () => {
     expect(twoNodeBkData.errors).to.be.undefined;
     expect(twoNodeBkData.data.aliveNodes).to.be.an('array');
     expect(twoNodeBkData.data.aliveNodes).have.lengthOf(2);
-    expect(twoNodeBkData.data.settings.nodeNames).to.be.an('array');
-    expect(twoNodeBkData.data.settings.nodeNames).have.lengthOf(2);
+    expect(twoNodeBkData.data.nodeNames).to.be.an('array');
+    expect(twoNodeBkData.data.nodeNames).have.lengthOf(2);
 
     const result = await bkApi.removeNode(newParams);
     expect(result.errors).to.be.undefined;
@@ -373,7 +373,7 @@ describe('Broker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(lastModified).to.be.a('number');
 

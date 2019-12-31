@@ -77,7 +77,7 @@ describe('Connector API', () => {
       topicKeys,
       workerClusterKey,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
@@ -127,7 +127,7 @@ describe('Connector API', () => {
       topicKeys,
       workerClusterKey,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
@@ -169,7 +169,7 @@ describe('Connector API', () => {
     const result = await connectorApi.getAll();
     expect(result.errors).to.be.undefined;
 
-    const connectors = result.data.map(connector => connector.settings.name);
+    const connectors = result.data.map(connector => connector.name);
     expect(connectors.includes(connectorOne.name)).to.be.true;
     expect(connectors.includes(connectorTwo.name)).to.be.true;
   });
@@ -182,7 +182,7 @@ describe('Connector API', () => {
     const result = await connectorApi.remove(connector);
     expect(result.errors).to.be.undefined;
 
-    const brokers = result.data.map(connector => connector.settings.name);
+    const brokers = result.data.map(connector => connector.name);
     expect(brokers.includes(connector.name)).to.be.false;
 
     // delete a running connector
@@ -221,7 +221,7 @@ describe('Connector API', () => {
       perf__batch,
       tasks__max,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
@@ -290,7 +290,7 @@ describe('Connector API', () => {
 
     const result = await connectorApi.remove(connector);
     expect(result.errors).to.be.undefined;
-    const connectors = result.data.map(connector => connector.settings.name);
+    const connectors = result.data.map(connector => connector.name);
     expect(connectors.includes(connector.name)).to.be.false;
   });
 });

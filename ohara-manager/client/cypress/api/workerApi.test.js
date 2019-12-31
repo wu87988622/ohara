@@ -72,7 +72,7 @@ describe('Worker API', () => {
       imageName,
       brokerClusterKey,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -148,7 +148,7 @@ describe('Worker API', () => {
       imageName,
       brokerClusterKey,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -206,7 +206,7 @@ describe('Worker API', () => {
     const result = await wkApi.getAll();
     expect(result.errors).to.be.undefined;
 
-    const workers = result.data.map(wk => wk.settings.name);
+    const workers = result.data.map(wk => wk.name);
     expect(workers.includes(wkClusterOne.name)).to.be.true;
     expect(workers.includes(wkClusterTwo.name)).to.be.true;
   });
@@ -219,7 +219,7 @@ describe('Worker API', () => {
     const result = await wkApi.remove(wkCluster);
     expect(result.errors).to.be.undefined;
 
-    const workers = result.data.map(wk => wk.settings.name);
+    const workers = result.data.map(wk => wk.name);
     expect(workers.includes(wkCluster.name)).to.be.false;
 
     // delete a running worker
@@ -254,7 +254,7 @@ describe('Worker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -309,7 +309,7 @@ describe('Worker API', () => {
     const runningWkRes = await wkApi.start(wkCluster);
     expect(runningWkRes.errors).to.be.undefined;
     expect(runningWkRes.data.state).to.eq('RUNNING');
-    expect(runningWkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningWkRes.data.nodeNames).have.lengthOf(1);
 
     const stopWkRes = await wkApi.stop(wkCluster);
     expect(stopWkRes.errors).to.be.undefined;
@@ -317,7 +317,7 @@ describe('Worker API', () => {
 
     const result = await wkApi.remove(wkCluster);
     expect(result.errors).to.be.undefined;
-    const workers = result.data.map(wk => wk.settings.name);
+    const workers = result.data.map(wk => wk.name);
     expect(workers.includes(wkCluster.name)).to.be.false;
   });
 
@@ -332,7 +332,7 @@ describe('Worker API', () => {
     const runningWkRes = await wkApi.start(wkCluster);
     expect(runningWkRes.errors).to.be.undefined;
     expect(runningWkRes.data.state).to.eq('RUNNING');
-    expect(runningWkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningWkRes.data.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, wkCluster, {
@@ -350,7 +350,7 @@ describe('Worker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes.length).to.eq(2);
@@ -392,7 +392,7 @@ describe('Worker API', () => {
     const runningWkRes = await wkApi.start(wkCluster);
     expect(runningWkRes.errors).to.be.undefined;
     expect(runningWkRes.data.state).to.eq('RUNNING');
-    expect(runningWkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningWkRes.data.nodeNames).have.lengthOf(1);
 
     const { node: newNode } = await createServices({ withNode: true });
     const newParams = Object.assign({}, wkCluster, {
@@ -403,8 +403,8 @@ describe('Worker API', () => {
 
     expect(twoNodeWkData.data.aliveNodes).to.be.an('array');
     expect(twoNodeWkData.data.aliveNodes).have.lengthOf(2);
-    expect(twoNodeWkData.data.settings.nodeNames).to.be.an('array');
-    expect(twoNodeWkData.data.settings.nodeNames).have.lengthOf(2);
+    expect(twoNodeWkData.data.nodeNames).to.be.an('array');
+    expect(twoNodeWkData.data.nodeNames).have.lengthOf(2);
 
     const result = await wkApi.removeNode(newParams);
     expect(result.errors).to.be.undefined;
@@ -418,7 +418,7 @@ describe('Worker API', () => {
       jmxPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(lastModified).to.be.a('number');
 

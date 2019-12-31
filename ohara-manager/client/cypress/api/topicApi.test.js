@@ -59,7 +59,7 @@ describe('Topic API', () => {
       group,
       name,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(partitionInfos).to.be.an('array');
 
@@ -101,7 +101,7 @@ describe('Topic API', () => {
       group,
       name,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(partitionInfos).to.be.an('array');
 
@@ -137,7 +137,7 @@ describe('Topic API', () => {
     const result = await topicApi.getAll();
     expect(result.errors).to.be.undefined;
 
-    const topics = result.data.map(topic => topic.settings.name);
+    const topics = result.data.map(topic => topic.name);
     expect(topics.includes(topic1.name)).to.be.true;
     expect(topics.includes(topic2.name)).to.be.true;
   });
@@ -150,7 +150,7 @@ describe('Topic API', () => {
     const result = await topicApi.remove(topic);
     expect(result.errors).to.be.undefined;
 
-    const topics = result.data.map(topic => topic.settings.name);
+    const topics = result.data.map(topic => topic.name);
     expect(topics.includes(topic.name)).to.be.false;
 
     // delete a running topic
@@ -183,7 +183,7 @@ describe('Topic API', () => {
       group,
       name,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(partitionInfos).to.be.an('array');
 
@@ -243,7 +243,7 @@ describe('Topic API', () => {
 
     const result = await topicApi.remove(topic);
     expect(result.errors).to.be.undefined;
-    const topics = result.data.map(topic => topic.settings.name);
+    const topics = result.data.map(topic => topic.name);
     expect(topics.includes(topic.name)).to.be.false;
   });
 });

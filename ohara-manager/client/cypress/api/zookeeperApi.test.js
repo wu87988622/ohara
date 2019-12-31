@@ -53,7 +53,7 @@ describe('Zookeeper API', () => {
       peerPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -99,7 +99,7 @@ describe('Zookeeper API', () => {
       peerPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -138,7 +138,7 @@ describe('Zookeeper API', () => {
     const result = await zkApi.getAll();
     expect(result.errors).to.be.undefined;
 
-    const zookeepers = result.data.map(zk => zk.settings.name);
+    const zookeepers = result.data.map(zk => zk.name);
     expect(zookeepers.includes(zkClusterOne.name)).to.be.true;
     expect(zookeepers.includes(zkClusterTwo.name)).to.be.true;
   });
@@ -151,7 +151,7 @@ describe('Zookeeper API', () => {
     const result = await zkApi.remove(zkCluster);
     expect(result.errors).to.be.undefined;
 
-    const zookeepers = result.data.map(zk => zk.settings.name);
+    const zookeepers = result.data.map(zk => zk.name);
     expect(zookeepers.includes(zkCluster.name)).to.be.false;
 
     // delete a running zookeeper
@@ -189,7 +189,7 @@ describe('Zookeeper API', () => {
       peerPort,
       imageName,
       tags,
-    } = result.data.settings;
+    } = result.data;
 
     expect(aliveNodes).to.be.an('array');
     expect(aliveNodes).to.be.empty;
@@ -247,7 +247,7 @@ describe('Zookeeper API', () => {
     const runningZkRes = await zkApi.start(zkCluster);
     expect(runningZkRes.errors).to.be.undefined;
     expect(runningZkRes.data.state).to.eq('RUNNING');
-    expect(runningZkRes.data.settings.nodeNames).have.lengthOf(1);
+    expect(runningZkRes.data.nodeNames).have.lengthOf(1);
 
     const stopZkRes = await zkApi.stop(zkCluster);
     expect(stopZkRes.errors).to.be.undefined;
@@ -255,7 +255,7 @@ describe('Zookeeper API', () => {
 
     const result = await zkApi.remove(zkCluster);
     expect(result.errors).to.be.undefined;
-    const zookeepers = result.data.map(zk => zk.settings.name);
+    const zookeepers = result.data.map(zk => zk.name);
     expect(zookeepers.includes(zkCluster.name)).to.be.false;
   });
 });
