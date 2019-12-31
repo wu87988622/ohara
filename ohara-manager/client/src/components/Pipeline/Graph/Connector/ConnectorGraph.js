@@ -31,10 +31,12 @@ const ConnectorGraph = params => {
     graph,
     paper,
     isTemporary = false,
+    isFetch = false,
     openSettingDialog,
     setData,
     classInfo,
     cellInfo,
+    id,
   } = params;
 
   const { classType, position, icon, displayedClassName } = cellInfo;
@@ -93,6 +95,7 @@ const ConnectorGraph = params => {
     },
     onRender() {
       if (this.$box) this.$box.remove();
+
       const boxMarkup = joint.util.template(this.template)();
       const $box = (this.$box = $(boxMarkup));
       this.listenTo(this.paper, 'scale translate', this.updateBox);
@@ -177,12 +180,21 @@ const ConnectorGraph = params => {
   });
 
   return new joint.shapes.html.Element({
+    id: id ? id : undefined,
     size: { width: 240, height: 100 },
     menuDisplay: 'none',
     position,
     title,
     classType,
     isTemporary,
+    isFetch,
+    params: _.omit(params, [
+      'graph',
+      'paper',
+      'openSettingDialog',
+      'setData',
+      'classInfo',
+    ]),
   });
 };
 export default ConnectorGraph;

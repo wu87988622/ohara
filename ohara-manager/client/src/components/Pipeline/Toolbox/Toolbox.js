@@ -240,7 +240,6 @@ const Toolbox = props => {
       default:
         break;
     }
-
     removeTempCell();
     showMessage(`${newGraphName} has been added`);
     setIsOpen(false);
