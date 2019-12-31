@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
+import { get, map, merge } from 'lodash';
 import * as routines from './pipelineRoutines';
 import * as action from 'utils/action';
+import { hashByGroupAndName } from 'utils/sha';
+import { WORKSPACE } from 'context/api';
 
 export const createActions = context => {
-  const { state, dispatch, pipelineApi } = context;
+  const {
+    state,
+    dispatch,
+    pipelineApi,
+    workspaceName,
+    currentPipeline,
+  } = context;
   return {
     fetchPipelines: async () => {
       const routine = routines.fetchPipelinesRoutine;
@@ -51,7 +60,36 @@ export const createActions = context => {
       if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await pipelineApi.update(values);
+        // get all endpoints from current pipeline
+        const currentEndpoints = get(currentPipeline, 'endpoints', []);
+        // we need to merge all endpoints in order to update object
+        // group value is decided by component kind
+        const mergedEndpoints = merge(
+          currentEndpoints,
+          map(get(values, 'endpoints'), endpoint => {
+            let group = null;
+            switch (endpoint.kind) {
+              case 'source':
+              case 'sink':
+              case 'stream':
+                group = hashByGroupAndName(
+                  currentPipeline.group,
+                  currentPipeline.name,
+                );
+                break;
+              case 'topic':
+                group = hashByGroupAndName(WORKSPACE, workspaceName);
+                break;
+              default:
+                break;
+            }
+            return { ...endpoint, group };
+          }),
+        );
+        const data = await pipelineApi.update({
+          ...values,
+          endpoints: mergedEndpoints,
+        });
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {

@@ -15,7 +15,7 @@
  */
 
 import sha from 'sha.js';
-import { get, join, isEmpty, map } from 'lodash';
+import { join, isNil } from 'lodash';
 
 const defaultHashOptions = {
   algorithm: 'sha256',
@@ -23,17 +23,24 @@ const defaultHashOptions = {
   maxLength: 8,
 };
 
-export const hash = (input = '', options = defaultHashOptions) =>
+// private function
+const hash = (input = '', options = defaultHashOptions) =>
   sha(options.algorithm)
     .update(input)
     .digest(options.encode)
     .substring(0, options.maxLength + 1);
+const hashWith = (...args) => hash(join(args, ''));
 
-export const hashBy = (object, paths = []) => {
-  if (isEmpty(paths)) throw new Error('The paths must not be an empty.');
-  return hash(join(map(paths, path => get(object, path))));
+/**
+ * hash the group + name
+ * @param {*} group object group
+ * @param {*} name object name
+ */
+export const hashByGroupAndName = (group, name) => {
+  if (isNil(group) || isNil(name)) {
+    throw new Error(
+      `The group or name must not be empty, actual: {${group}, ${name}}`,
+    );
+  }
+  hashWith(group, name);
 };
-
-export const hashWith = (...args) => hash(join(args));
-
-export const hashByGroupAndName = (group, name) => hash(`${group}${name}`);

@@ -40,7 +40,7 @@ import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
 import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { getKey, hashKey } from 'utils/object';
-import { hash } from 'utils/sha';
+import { hashByGroupAndName } from 'utils/sha';
 
 const Toolbox = props => {
   const {
@@ -62,7 +62,7 @@ const Toolbox = props => {
     currentPipeline,
   } = context.useWorkspace();
   const { updatePipeline } = context.usePipelineActions();
-  const { addStream } = context.useStreamActions();
+  const { createStream } = context.useStreamActions();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
@@ -171,21 +171,19 @@ const Toolbox = props => {
           });
         const requestParams = {
           name: newGraphName,
-          group: hash(currentPipeline.name + currentPipeline.group),
           jarKey: { name: targetStream.name, group: targetStream.group },
           brokerClusterKey: getKey(currentBroker),
           connector__class: cellInfo.className,
         };
         const definition = targetStream.classInfos[0];
 
-        addStream(requestParams, definition);
+        createStream(requestParams, definition);
         updatePipeline({
           name: currentPipeline.name,
           endpoints: [
             ...currentPipeline.endpoints,
             {
               name: requestParams.name,
-              group: requestParams.group,
               kind: 'stream',
             },
           ],
@@ -206,7 +204,10 @@ const Toolbox = props => {
         const connectorRes = await connectorApi.create({
           classInfos,
           name: newGraphName,
-          group: hash(currentPipeline.name + currentPipeline.group),
+          group: hashByGroupAndName(
+            currentPipeline.group,
+            currentPipeline.name,
+          ),
           workerClusterKey: getKey(currentWorker),
           connector__class: cellInfo.className,
         });
@@ -217,7 +218,6 @@ const Toolbox = props => {
             ...currentPipeline.endpoints,
             {
               name: connectorRes.data.name,
-              group: connectorRes.data.group,
               kind: connectorRes.data.kind,
             },
           ],

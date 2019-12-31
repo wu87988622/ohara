@@ -202,7 +202,7 @@ const ViewNodeDialog = props => {
   }, [nodeData, fetchServices]);
 
   const handleDelete = () => {
-    deleteNode(nodeData);
+    deleteNode(nodeName);
     setIsConfirmOpen(false);
     closeViewNodeDialog();
   };

@@ -18,7 +18,7 @@ import { isEmpty, map } from 'lodash';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as topicApi from 'api/topicApi';
-import { hashWith } from 'utils/sha';
+import { hashByGroupAndName } from 'utils/sha';
 import { generateClusterResponse, validate } from './utils';
 import { BROKER, WORKSPACE } from './index';
 
@@ -26,7 +26,7 @@ export const createApi = context => {
   const { workspaceName, showMessage } = context;
   if (!workspaceName) return;
 
-  const group = hashWith(WORKSPACE, workspaceName);
+  const group = hashByGroupAndName(WORKSPACE, workspaceName);
   const brokerClusterKey = { group: BROKER, name: workspaceName };
   const parentKey = { group: WORKSPACE, name: workspaceName };
   return {
