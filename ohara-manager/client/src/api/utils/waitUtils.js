@@ -31,16 +31,6 @@ export const waitForStop = res => {
   return state === undefined;
 };
 
-export const waitForConnectRunning = res => {
-  const { status } = res.data.result;
-  return status.state === 'RUNNING';
-};
-
-export const waitForConnectStop = res => {
-  const { status } = res.data.result;
-  return status === undefined;
-};
-
 export const waitForClusterNonexistent = (res, params) => {
   const { name, group } = params;
   const result = res.data.result.some(

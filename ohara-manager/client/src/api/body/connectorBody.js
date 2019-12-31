@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { number, array, object } from '../utils/validation';
+import { number, string, array, object, option } from '../utils/validation';
 import { createBody, getDefinition } from '../utils/definitionsUtils';
 
 export let definitions = undefined;
@@ -28,9 +28,9 @@ export const request = params => {
 export const response = () => {
   const lastModified = [number];
   const metrics = [object];
-  const status = [object];
-  const settings = [object];
+  const state = [string, option];
+  const nodeName = [string, option];
   const tasksStatus = [array];
 
-  return { lastModified, metrics, settings, status, tasksStatus };
+  return { lastModified, metrics, state, nodeName, tasksStatus };
 };

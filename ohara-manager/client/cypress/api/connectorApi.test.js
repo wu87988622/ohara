@@ -189,7 +189,7 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
     const runningRes = await connectorApi.start(connector);
     expect(runningRes.errors).to.be.undefined;
-    expect(runningRes.data.status.state).to.eq('RUNNING');
+    expect(runningRes.data.state).to.eq('RUNNING');
 
     await connectorApi.stop(connector);
     await connectorApi.remove(connector);
@@ -265,11 +265,12 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
     const undefinedConnectorRes = await connectorApi.get(connector);
     expect(undefinedConnectorRes.errors).to.be.undefined;
-    expect(undefinedConnectorRes.data.status).to.be.undefined;
+    expect(undefinedConnectorRes.data.state).to.be.undefined;
 
     const runningConnectorRes = await connectorApi.start(connector);
     expect(runningConnectorRes.errors).to.be.undefined;
-    expect(runningConnectorRes.data.status.state).to.eq('RUNNING');
+    expect(runningConnectorRes.data.state).to.eq('RUNNING');
+    expect(runningConnectorRes.data.nodeName).to.not.be.empty;
   });
 
   it('stopConnector', async () => {
@@ -278,15 +279,16 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
     const undefinedConnectorRes = await connectorApi.get(connector);
     expect(undefinedConnectorRes.errors).to.be.undefined;
-    expect(undefinedConnectorRes.data.status).to.be.undefined;
+    expect(undefinedConnectorRes.data.state).to.be.undefined;
 
     const runningConnectorRes = await connectorApi.start(connector);
     expect(runningConnectorRes.errors).to.be.undefined;
-    expect(runningConnectorRes.data.status.state).to.eq('RUNNING');
+    expect(runningConnectorRes.data.state).to.eq('RUNNING');
+    expect(runningConnectorRes.data.nodeName).to.not.be.empty;
 
     const stopConnectorRes = await connectorApi.stop(connector);
     expect(stopConnectorRes.errors).to.be.undefined;
-    expect(stopConnectorRes.data.status).to.be.undefined;
+    expect(stopConnectorRes.data.state).to.be.undefined;
 
     const result = await connectorApi.remove(connector);
     expect(result.errors).to.be.undefined;

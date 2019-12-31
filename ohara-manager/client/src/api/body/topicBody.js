@@ -28,7 +28,6 @@ export const request = params => {
 export const response = () => {
   const lastModified = [number];
   const metrics = [object];
-  const settings = [object];
 
-  return { lastModified, metrics, settings };
+  return { lastModified, metrics };
 };

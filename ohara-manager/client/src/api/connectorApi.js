@@ -73,7 +73,7 @@ export const start = async params => {
   await axiosInstance.put(`${url}/${name}/start?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForConnectRunning,
+    checkFn: waitUtil.waitForRunning,
   });
   const result = responseUtil(res, connector);
   result.title =
@@ -100,7 +100,7 @@ export const stop = async params => {
   await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
   const res = await wait({
     url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForConnectStop,
+    checkFn: waitUtil.waitForStop,
   });
   const result = responseUtil(res, connector);
   result.title =

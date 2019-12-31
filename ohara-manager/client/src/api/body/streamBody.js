@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { number, array, object } from '../utils/validation';
+import { number, array } from '../utils/validation';
 import { createBody, getDefinition } from '../utils/definitionsUtils';
 
 export let definitions = undefined;
@@ -28,7 +28,6 @@ export const request = params => {
 export const response = () => {
   const aliveNodes = [array];
   const lastModified = [number];
-  const settings = [object];
   const metrics = {
     meters: [array],
   };
@@ -36,7 +35,6 @@ export const response = () => {
   return {
     aliveNodes,
     lastModified,
-    settings,
     metrics,
   };
 };

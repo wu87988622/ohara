@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { number, array, object, string } from '../utils/validation';
+import { number, array, string } from '../utils/validation';
 import { createBody, getDefinition } from '../utils/definitionsUtils';
 
 export let definitions = undefined;
@@ -30,13 +30,11 @@ export const response = () => {
   const state = [string];
   const error = [string];
   const lastModified = [number];
-  const settings = [object];
 
   return {
     aliveNodes,
     state,
     error,
     lastModified,
-    settings,
   };
 };
