@@ -25,11 +25,18 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 const TopicGraph = params => {
-  const { title, paper, graph, isTemporary = false, cellInfo } = params;
+  const {
+    title,
+    paper,
+    graph,
+    isTemporary = false,
+    isFetch = false,
+    cellInfo,
+    id,
+  } = params;
   const { classType, className, position } = cellInfo;
 
   let link;
-  const height = className === 'publicTopic' ? 22 : 0;
 
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -143,12 +150,21 @@ const TopicGraph = params => {
   });
 
   return new joint.shapes.html.Element({
-    size: { width: 56, height: 56 + height },
+    id: id ? id : undefined,
+    size: { width: 56, height: 76 },
     title,
     menuDisplay: 'none',
     position,
     classType,
     isTemporary,
+    isFetch,
+    params: _.omit(params, [
+      'graph',
+      'paper',
+      'openSettingDialog',
+      'setData',
+      'classInfo',
+    ]),
   });
 };
 export default TopicGraph;

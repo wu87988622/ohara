@@ -18,6 +18,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
+import { get } from 'lodash';
 
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
@@ -26,7 +27,14 @@ import { Paper, PaperWrapper } from './GraphStyles';
 import { usePrevious, useMountEffect } from 'utils/hooks';
 import { updateCurrentCell, createConnection } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
-import { usePipelineActions, usePipelineState } from 'context';
+import {
+  usePipelineActions,
+  usePipelineState,
+  useGraphSettingDialog,
+  useWorkspace,
+} from 'context';
+import ConnectorGraph from './Connector/ConnectorGraph';
+import TopicGraph from '../Graph/Topic/TopicGraph';
 
 const Graph = props => {
   const { palette } = useTheme();
@@ -40,8 +48,10 @@ const Graph = props => {
   } = useZoom();
 
   const { setCenter, isCentered, setIsCentered } = useCenter();
-  const { setSelectedCell } = usePipelineActions();
-  const { selectedCell } = usePipelineState();
+  const { setSelectedCell, updatePipeline } = usePipelineActions();
+  const { currentWorker } = useWorkspace();
+  const { selectedCell, currentPipeline } = usePipelineState();
+  const { open: openSettingDialog, setData } = useGraphSettingDialog();
   const showMessage = useSnackbar();
 
   const {
@@ -62,44 +72,48 @@ const Graph = props => {
 
   useMountEffect(() => {
     const renderGraph = () => {
-      graph.current = new joint.dia.Graph();
-      paper.current = new joint.dia.Paper({
-        el: document.getElementById('paper'),
-        model: graph.current,
-        width: '100%',
-        height: '100%',
+      const namespace = joint.shapes;
+      graph.current = new joint.dia.Graph({}, { cellNamespace: namespace });
+      paper.current = new joint.dia.Paper(
+        {
+          el: document.getElementById('paper'),
+          model: graph.current,
+          width: '100%',
+          height: '100%',
 
-        // Grid settings
-        gridSize: 10,
-        drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
+          // Grid settings
+          gridSize: 10,
+          drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
 
-        background: { color: palette.common.white },
+          background: { color: palette.common.white },
 
-        // Tweak the default highlighting to match our theme
-        highlighting: {
-          default: {
-            name: 'stroke',
-            options: {
-              padding: 4,
-              rx: 4,
-              ry: 4,
-              attrs: {
-                'stroke-width': 2,
-                stroke: palette.primary.main,
+          // Tweak the default highlighting to match our theme
+          highlighting: {
+            default: {
+              name: 'stroke',
+              options: {
+                padding: 4,
+                rx: 4,
+                ry: 4,
+                attrs: {
+                  'stroke-width': 2,
+                  stroke: palette.primary.main,
+                },
               },
             },
           },
+
+          // Ensures the link should always link to a valid target
+          linkPinning: false,
+
+          // Fix es6 module issue with JointJS
+          cellViewNamespace: joint.shapes,
+
+          // prevent graph from stepping outside of the paper
+          restrictTranslate: true,
         },
-
-        // Ensures the link should always link to a valid target
-        linkPinning: false,
-
-        // Fix es6 module issue with JointJS
-        cellViewNamespace: joint.shapes,
-
-        // prevent graph from stepping outside of the paper
-        restrictTranslate: true,
-      });
+        { cellNamespace: namespace },
+      );
 
       paper.current.on('cell:pointerclick', cellView => {
         currentCell.current = {
@@ -217,15 +231,52 @@ const Graph = props => {
         setSelectedCell(null);
       });
 
-      paper.current.on('cell:pointerup blank:pointerup', () => {
+      paper.current.on('cell:pointerup blank:pointerup', event => {
         if (dragStartPosition.current) {
           delete dragStartPosition.current.x;
           delete dragStartPosition.current.y;
         }
 
+        if (
+          get(event, 'options.model.attributes.type', null) === 'html.Element'
+        ) {
+          updatePipeline({
+            name: currentPipeline.name,
+            group: currentPipeline.group,
+            tags: graph.current.toJSON(),
+          });
+        }
+
         updateCurrentCell(currentCell);
         setIsCentered(false);
         paper.current.$el.removeClass('is-being-grabbed');
+      });
+
+      graph.current.on('change:target', link => {
+        if (link.get('target').id) {
+          updatePipeline({
+            name: currentPipeline.name,
+            group: currentPipeline.group,
+            tags: graph.current.toJSON(),
+          });
+        }
+      });
+
+      graph.current.on('add', cell => {
+        if (cell.attributes.isTemporary) return;
+        if (cell.attributes.isFetch) return;
+        if (cell.attributes.type === 'standard.Link') {
+          if (!cell.get('attributes.target.id', null)) return;
+        }
+        updatePipeline({
+          name: currentPipeline.name,
+          group: currentPipeline.group,
+          tags: {
+            cells: graph.current
+              .toJSON()
+              .cells.filter(cell => !cell.isTemporary),
+          },
+        });
       });
     };
 
@@ -255,6 +306,84 @@ const Graph = props => {
 
     renderGraph();
   });
+
+  useEffect(() => {
+    const cells = currentPipeline.tags.cells ? currentPipeline.tags.cells : [];
+
+    cells
+      .filter(cell => cell.type === 'html.Element')
+      .forEach(cell => {
+        if (
+          graph.current != null &&
+          paper.current !== null &&
+          currentWorker !== null
+        ) {
+          switch (cell.classType) {
+            case 'source':
+            case 'sink':
+            case 'stream':
+              const className = cell.params.cellInfo.className;
+              const classInfo = currentWorker.classInfos.filter(
+                classInfo => classInfo.className === className,
+              )[0];
+
+              graph.current.addCell(
+                ConnectorGraph({
+                  ...cell.params,
+                  id: cell.id,
+                  paper,
+                  graph,
+                  openSettingDialog,
+                  setData,
+                  classInfo,
+                  isFetch: true,
+                  cellInfo: {
+                    ...cell.params.cellInfo,
+                    position: cell.position,
+                  },
+                  setInitToolboxList,
+                }),
+              );
+              break;
+
+            case 'topic':
+              graph.current.addCell(
+                TopicGraph({
+                  ...cell.params,
+                  id: cell.id,
+                  graph,
+                  paper,
+                  isFetch: true,
+                  cellInfo: {
+                    ...cell.params.cellInfo,
+                    position: cell.position,
+                  },
+                }),
+              );
+              break;
+
+            default:
+              break;
+          }
+        }
+      });
+    if (graph.current.getElements().length > 0) {
+      cells
+        .filter(cell => cell.type === 'standard.Link')
+        .forEach(cell => {
+          const link = new joint.shapes.standard.Link();
+          link.source({ id: cell.source.id });
+          link.target({ id: cell.target.id });
+          link.attr({
+            line: { stroke: '#9e9e9e' },
+          });
+          link.addTo(graph.current);
+        });
+    }
+
+    setInitToolboxList(prevState => prevState + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPipeline.tags.cells, currentWorker]);
 
   const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {

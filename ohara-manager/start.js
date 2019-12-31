@@ -26,8 +26,8 @@ const { API_ROOT, PORT } = require('./config');
 
 /* eslint-disable no-console */
 const app = express();
-
-app.use(bodyParser.json());
+// The same limit as the backend setting
+app.use(bodyParser.json({ limit: '10mb' }));
 // Gzip static assets
 app.use(compression());
 
