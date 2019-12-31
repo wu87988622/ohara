@@ -75,5 +75,31 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
+    startTopic: async name => {
+      const routine = routines.startTopicRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await topicApi.start(name);
+        dispatch(routine.success(data));
+        return action.success(data);
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+        return action.failure(e.message);
+      }
+    },
+    stopTopic: async name => {
+      const routine = routines.stopTopicRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await topicApi.stop(name);
+        dispatch(routine.success(data));
+        return action.success(data);
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+        return action.failure(e.message);
+      }
+    },
   };
 };

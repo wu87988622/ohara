@@ -66,7 +66,7 @@ const WorkspaceProvider = ({ children }) => {
 
   // Set current pipeline
   React.useEffect(() => {
-    if (!pipelineName || isEmpty(pipelines)) return;
+    if (!pipelineName || isEmpty(pipelines)) return setCurrPi(null); // Ensure the current pipeline is cleaned up when there's no pipeline available
     const found = pipelines.find(pi => pi.name === pipelineName);
     if (!isEqual(found, prevPi)) setCurrPi(found);
   }, [pipelineName, pipelines, prevPi, workspaces]);

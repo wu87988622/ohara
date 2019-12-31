@@ -27,21 +27,19 @@ export const useTopics = workspace => {
 
   // Private topic
   const privateTopic = {
-    settings: {
-      name: 'Pipeline Only',
-      tags: { type: 'private', label: 'Pipeline Only' },
-    },
+    name: 'Pipeline Only',
+    tags: { type: 'private', label: 'Pipeline Only' },
   };
 
   const topics = [privateTopic, ...topicsData]
     .map(topic => ({
       classType: 'topic',
-      name: topic.settings.name,
-      type: topic.settings.tags.type,
-      displayName: topic.settings.tags.displayName || '',
+      name: topic.name,
+      type: topic.tags.type,
+      displayName: topic.tags.displayName || '',
     }))
     .filter(
-      // Private topics are hidden in Toolbox
+      // Private topics are hidden from Toolbox
       topic => topic.type === 'shared' || topic.name === 'Pipeline Only',
     );
 

@@ -185,5 +185,35 @@ export const createApi = context => {
         }),
       );
     },
+    start: async name => {
+      try {
+        const params = { name, group };
+        const res = await connectorApi.start(params);
+        if (!isEmpty(res.errors)) {
+          throw new Error(res.title);
+        }
+        const data = generateClusterResponse({ values: res.data });
+        showMessage(res.title);
+        return data;
+      } catch (e) {
+        showMessage(e.message);
+        throw e;
+      }
+    },
+    stop: async name => {
+      try {
+        const params = { name, group };
+        const res = await connectorApi.stop(params);
+        if (!isEmpty(res.errors)) {
+          throw new Error(res.title);
+        }
+        const data = generateClusterResponse({ values: res.data });
+        showMessage(res.title);
+        return data;
+      } catch (e) {
+        showMessage(e.message);
+        throw e;
+      }
+    },
   };
 };

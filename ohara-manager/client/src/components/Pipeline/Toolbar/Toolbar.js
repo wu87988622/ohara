@@ -39,7 +39,6 @@ import * as context from 'context';
 import { Progress } from 'components/common/Progress';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
-import { makeRequest } from './ToolbarUtils';
 import { useDeleteServices } from './ToolbarHooks';
 
 const Toolbar = props => {
@@ -58,9 +57,10 @@ const Toolbar = props => {
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
   const [isMetricsDisplayed, setIsMetricsDisplayed] = React.useState(true);
   const [isDeletingPipeline, setIsDeletingPipeline] = React.useState(false);
-  const { error } = context.useWorkspace();
   const { deletePipeline } = context.usePipelineActions();
-  const { currentWorkspace, currentPipeline } = context.useWorkspace();
+  const { startConnector, stopConnector } = context.useConnectorActions();
+  const { startStream, stopStream } = context.useStreamActions();
+  const { currentWorkspace, currentPipeline, error } = context.useWorkspace();
 
   const { steps, activeStep, deleteServices } = useDeleteServices();
   const history = useHistory();
@@ -82,6 +82,29 @@ const Toolbar = props => {
     setPipelineAnchorEl(event.currentTarget);
   };
 
+  const makeRequest = (pipeline, action) => {
+    const { objects: services } = pipeline;
+
+    const connectors = services.filter(
+      service => service.kind === 'source' || service.kind === 'sink',
+    );
+    const streams = services.filter(service => service.kind === 'stream');
+
+    let connectorPromises = [];
+    let streamsPromises = [];
+
+    if (action === 'start') {
+      connectorPromises = connectors.map(({ name }) => startConnector(name));
+      streamsPromises = streams.map(({ name }) => startStream(name));
+    } else {
+      connectorPromises = connectors.map(({ name }) => stopConnector(name));
+      streamsPromises = streams.map(({ name }) => stopStream(name));
+    }
+    return Promise.all([...connectorPromises, ...streamsPromises]).then(
+      result => result,
+    );
+  };
+
   const handlePipelineStart = async () => {
     await makeRequest(currentPipeline, 'start');
     handlePipelineControlsClose();
@@ -94,13 +117,13 @@ const Toolbar = props => {
 
   const handlePipelineDelete = async () => {
     setIsDeletingPipeline(true);
-    const { objects: services } = currentPipeline;
+    const { objects: services, name } = currentPipeline;
 
     await deleteServices(services);
-    deletePipeline(currentPipeline);
+    deletePipeline(name);
     setIsDeletingPipeline(false);
 
-    if (!error) history.push(`/${currentWorkspace.settings.name}`);
+    if (!error) history.push(`/${currentWorkspace.name}`);
     handlePipelineControlsClose();
   };
 

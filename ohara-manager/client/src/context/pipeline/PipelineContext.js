@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { reducer, initialState } from './pipelineReducer';
-import { useApi, useApp, useWorkspaceState } from 'context';
+import { useApi, useApp, useWorkspace } from 'context';
 import { createActions } from './pipelineActions';
 import { initializeRoutine } from './pipelineRoutines';
 
@@ -77,7 +77,7 @@ const usePipelineActions = () => {
   const dispatch = usePipelineDispatch();
   const { pipelineApi } = useApi();
   const { workspaceName } = useApp();
-  const { currentPipeline } = useWorkspaceState();
+  const { currentPipeline } = useWorkspace();
   return createActions({
     state,
     dispatch,

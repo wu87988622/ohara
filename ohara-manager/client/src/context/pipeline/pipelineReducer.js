@@ -17,6 +17,7 @@
 import _ from 'lodash';
 
 import * as routines from './pipelineRoutines';
+import { isKeyEqual } from 'utils/object';
 
 const sort = pipelines => _.sortBy(pipelines, 'name');
 
@@ -73,16 +74,11 @@ const reducer = (state, action) => {
       };
 
     case routines.updatePipelineRoutine.SUCCESS:
-      const newData = state.data.map(pipeline => {
-        if (
-          pipeline.name === action.payload.name &&
-          pipeline.group === action.payload.group
-        ) {
-          return { ...pipeline, ...action.payload };
-        }
-
-        return pipeline;
-      });
+      const newData = state.data.map(pipeline =>
+        isKeyEqual(pipeline, action.payload)
+          ? { ...pipeline, ...action.payload }
+          : pipeline,
+      );
 
       return {
         ...state,
@@ -94,11 +90,8 @@ const reducer = (state, action) => {
       return {
         ...state,
         isFetching: false,
-        data: _.reject(
-          state.data,
-          pipeline =>
-            pipeline.name === action.payload.name ||
-            pipeline.group === action.payload.group,
+        data: state.data.filter(
+          pipeline => !isKeyEqual(pipeline, action.payload),
         ),
         lastUpdated: new Date(),
       };

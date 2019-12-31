@@ -20,7 +20,7 @@ import * as objectApi from 'api/objectApi';
 import * as streamApi from 'api/streamApi';
 import { hashByGroupAndName } from 'utils/sha';
 import { generateClusterResponse, validate } from './utils';
-import { BROKER } from './index';
+import { BROKER, WORKSPACE } from './index';
 
 const validateJarKey = values => {
   if (!has(values, 'jarKey'))
@@ -31,7 +31,8 @@ export const createApi = context => {
   const { workspaceName, pipelineName, showMessage } = context;
   if (!workspaceName || !pipelineName) return;
 
-  const group = hashByGroupAndName(workspaceName, pipelineName);
+  const pipelineGroup = hashByGroupAndName(WORKSPACE, workspaceName);
+  const group = hashByGroupAndName(pipelineGroup, pipelineName);
   const brokerClusterKey = { group: BROKER, name: workspaceName };
   return {
     fetchAll: async () => {

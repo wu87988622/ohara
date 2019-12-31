@@ -74,31 +74,32 @@ const Pipeline = () => {
     const hasWorkspace = workspaces.length > 0;
     const hasPipeline = pipelines.length > 0;
     const hasCurrentWorkspace = workspaces.some(
-      workspace => workspace.settings.name === workspaceName,
+      workspace => workspace.name === workspaceName,
     );
     const hasCurrentPipeline = pipelines.some(
       pipeline => pipeline.name === pipelineName,
     );
 
-    const defaultWorkspace = hasWorkspace && workspaces[0].settings.name;
-    const defaultPipeline = hasPipeline && pipelines[0].name;
-
     if (pipelineName && isPipelineReady) {
       if (!hasCurrentPipeline) {
         const url = hasPipeline
-          ? `/${workspaceName}/${defaultPipeline}`
+          ? `/${workspaceName}/${pipelines[0].name}`
           : `/${workspaceName}`;
         history.push(url);
+      } else {
+        history.push(`/${workspaceName}/${pipelineName}`);
       }
     } else if (isPipelineReady && hasWorkspace && hasPipeline) {
-      history.push(`/${workspaceName}/${defaultPipeline}`);
+      history.push(`/${workspaceName}/${pipelines[0].name}`);
     } else if (workspaceName) {
       if (!hasCurrentWorkspace) {
-        const url = hasWorkspace ? `/${defaultWorkspace}` : '/';
+        const url = hasWorkspace ? `/${workspaces[0].name}` : '/';
         history.push(url);
+      } else {
+        history.push(`/${workspaceName}`);
       }
     } else if (hasWorkspace) {
-      history.push(`/${defaultWorkspace}`);
+      history.push(`/${workspaces[0].name}`);
     }
   }, [
     history,

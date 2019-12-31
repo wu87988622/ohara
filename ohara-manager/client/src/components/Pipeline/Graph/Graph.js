@@ -49,8 +49,8 @@ const Graph = props => {
 
   const { setCenter, isCentered, setIsCentered } = useCenter();
   const { setSelectedCell, updatePipeline } = usePipelineActions();
-  const { currentWorker } = useWorkspace();
-  const { selectedCell, currentPipeline } = usePipelineState();
+  const { currentWorker, currentPipeline } = useWorkspace();
+  const { selectedCell } = usePipelineState();
   const { open: openSettingDialog, setData } = useGraphSettingDialog();
   const showMessage = useSnackbar();
 
@@ -308,6 +308,7 @@ const Graph = props => {
   });
 
   useEffect(() => {
+    if (!currentPipeline) return;
     const cells = currentPipeline.tags.cells ? currentPipeline.tags.cells : [];
 
     cells

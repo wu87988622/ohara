@@ -280,7 +280,7 @@ export const enableDragAndDrop = params => {
 
           const getPrivateTopicDisplayNames = topics => {
             const topicIndex = topics
-              .map(topic => topic.settings.tags)
+              .map(topic => topic.tags)
               .filter(topic => topic.type === 'private')
               .map(topic => topic.displayName.replace('T', ''))
               .sort();

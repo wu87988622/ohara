@@ -29,7 +29,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import * as joint from 'jointjs';
 
 import * as fileApi from 'api/fileApi';
-import * as connectorApi from 'api/connectorApi';
 import * as context from 'context';
 import * as utils from './toolboxUtils';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
@@ -40,7 +39,6 @@ import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
 import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { getKey, hashKey } from 'utils/object';
-import { hashByGroupAndName } from 'utils/sha';
 
 const Toolbox = props => {
   const {
@@ -68,6 +66,7 @@ const Toolbox = props => {
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
   const [isOpen, setIsOpen] = useState(false);
   const { createTopic } = context.useTopicActions();
+  const { createConnector } = context.useConnectorActions();
 
   const [zIndex, setZIndex] = useState(2);
   const [searchResults, setSearchResults] = useState(null);
@@ -178,7 +177,7 @@ const Toolbox = props => {
         const definition = targetStream.classInfos[0];
 
         createStream(requestParams, definition);
-        updatePipeline({
+        await updatePipeline({
           name: currentPipeline.name,
           endpoints: [
             ...currentPipeline.endpoints,
@@ -201,18 +200,12 @@ const Toolbox = props => {
       case 'sink':
         const { classInfos } = currentWorker;
 
-        const connectorRes = await connectorApi.create({
-          classInfos,
+        const connectorRes = await createConnector({
           name: newGraphName,
-          group: hashByGroupAndName(
-            currentPipeline.group,
-            currentPipeline.name,
-          ),
-          workerClusterKey: getKey(currentWorker),
           connector__class: cellInfo.className,
         });
 
-        updatePipeline({
+        await updatePipeline({
           name: currentPipeline.name,
           endpoints: [
             ...currentPipeline.endpoints,

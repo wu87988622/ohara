@@ -17,12 +17,18 @@
 import React from 'react';
 import _ from 'lodash';
 
-import * as connectorApi from 'api/connectorApi';
-import * as streamApi from 'api/streamApi';
+import {
+  useConnectorActions,
+  useTopicActions,
+  useStreamActions,
+} from 'context';
 
 export const useDeleteServices = () => {
   const [steps, setSteps] = React.useState([]);
   const [activeStep, setActiveStep] = React.useState(0);
+  const { deleteConnector, stopConnector } = useConnectorActions();
+  const { deleteTopic, stopTopic } = useTopicActions();
+  const { deleteStream, stopStream } = useStreamActions();
 
   const deleteServices = async services => {
     const runningServices = services.filter(
@@ -39,22 +45,27 @@ export const useDeleteServices = () => {
     let index = 0;
     while (index < services.length) {
       const service = services[index];
-      const { kind, name, group } = service;
+      const { kind, name } = service;
       const isRunning = Boolean(service.state);
-      const isConnector = kind === 'source' || kind === 'sink';
 
       // Connectors and stream apps are the only services that
       // we're going to delete
-      if (isConnector) {
-        if (isRunning) await connectorApi.stop({ group, name });
+      if (kind === 'source' || kind === 'sink') {
+        if (isRunning) await stopConnector(name);
 
-        await connectorApi.remove({ group, name });
+        await deleteConnector(name);
+      }
+
+      if (kind === 'topic') {
+        if (isRunning) await stopTopic(name);
+
+        await deleteTopic(name);
       }
 
       if (kind === 'stream') {
-        if (isRunning) await streamApi.stop({ group, name });
+        if (isRunning) await stopStream(name);
 
-        await streamApi.remove({ group, name });
+        await deleteStream(name);
       }
 
       index++;

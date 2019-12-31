@@ -71,8 +71,7 @@ const AppBar = () => {
           </Link>
         </div>
         <div className="workspace-list">
-          {workspaces.map(worker => {
-            const { name } = worker.settings;
+          {workspaces.map(({ name }) => {
             const displayName = name.substring(0, 2).toUpperCase();
 
             return (
