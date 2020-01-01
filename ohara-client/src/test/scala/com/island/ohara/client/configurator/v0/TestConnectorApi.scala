@@ -137,7 +137,6 @@ class TestConnectorApi extends OharaTest {
       state = None,
       nodeName = None,
       error = None,
-      status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
@@ -159,7 +158,6 @@ class TestConnectorApi extends OharaTest {
       state = None,
       nodeName = None,
       error = None,
-      status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
@@ -681,7 +679,6 @@ class TestConnectorApi extends OharaTest {
       state = None,
       error = None,
       nodeName = None,
-      status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
@@ -696,7 +693,6 @@ class TestConnectorApi extends OharaTest {
       state = None,
       error = None,
       nodeName = None,
-      status = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()

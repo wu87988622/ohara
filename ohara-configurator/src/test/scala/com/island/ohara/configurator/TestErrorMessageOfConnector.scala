@@ -64,10 +64,10 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
 
     result(connectorApi.start(connector.key))
 
-    CommonUtils.await(() => result(connectorApi.get(connector.key)).status.isDefined, java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.key)).status.get.state shouldBe State.FAILED
-    result(connectorApi.get(connector.key)).status.flatMap(_.error) should not be None
+    result(connectorApi.get(connector.key)).state.get shouldBe State.FAILED
+    result(connectorApi.get(connector.key)).error should not be None
 
     // test state in pipeline
     val pipeline = result(
@@ -119,10 +119,10 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
 
     result(connectorApi.start(connector.key))
 
-    CommonUtils.await(() => result(connectorApi.get(connector.key)).status.isDefined, java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.key)).status.get.state shouldBe State.RUNNING
-    result(connectorApi.get(connector.key)).status.flatMap(_.error) shouldBe None
+    result(connectorApi.get(connector.key)).state.get shouldBe State.RUNNING
+    result(connectorApi.get(connector.key)).error shouldBe None
 
     // test state in pipeline
     val pipeline = result(

@@ -83,22 +83,22 @@ class TestControlConnector extends WithBrokerWorker {
           }
       )
       await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
-      result(connectorApi.get(sink.key)).status.get.state shouldBe State.RUNNING
+      result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ => result(connectorApi.pause(sink.key)))
       await(() => result(workerClient.status(sink.key)).connector.state == State.PAUSED.name)
-      result(connectorApi.get(sink.key)).status.get.state shouldBe State.PAUSED
+      result(connectorApi.get(sink.key)).state.get shouldBe State.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ => result(connectorApi.resume(sink.key)))
       await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
-      result(connectorApi.get(sink.key)).status.get.state shouldBe State.RUNNING
+      result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => result(connectorApi.stop(sink.key)))
       await(() => if (result(workerClient.nonExist(sink.key))) true else false)
-      result(connectorApi.get(sink.key)).status shouldBe None
+      result(connectorApi.get(sink.key)).state shouldBe None
     } finally {
       if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
     }
@@ -157,7 +157,7 @@ class TestControlConnector extends WithBrokerWorker {
       // test stop. the connector should be removed
       result(connectorApi.stop(sink.key))
       await(() => if (result(workerClient.nonExist(sink.key))) true else false)
-      await(() => result(connectorApi.get(sink.key)).status.isEmpty)
+      await(() => result(connectorApi.get(sink.key)).state.isEmpty)
     } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
   }
 
@@ -221,9 +221,9 @@ class TestControlConnector extends WithBrokerWorker {
 
     result(topicApi.start(topic.key))
     result(connectorApi.start(sink.key))
-    await(() => result(connectorApi.get(sink.key)).status.nonEmpty)
+    await(() => result(connectorApi.get(sink.key)).state.nonEmpty)
     await(() => result(connectorApi.get(sink.key)).tasksStatus.nonEmpty)
-    result(connectorApi.get(sink.key)).status.get.nodeName == CommonUtils.hostname()
+    result(connectorApi.get(sink.key)).nodeName.get == CommonUtils.hostname()
     result(connectorApi.get(sink.key)).tasksStatus.foreach(_.nodeName shouldBe CommonUtils.hostname())
   }
 

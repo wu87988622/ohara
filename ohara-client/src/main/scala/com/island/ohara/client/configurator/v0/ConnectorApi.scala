@@ -184,8 +184,6 @@ object ConnectorApi {
     state: Option[State],
     nodeName: Option[String],
     error: Option[String],
-    // TODO: remove "status" (https://github.com/oharastream/ohara/issues/3621)
-    status: Option[Status],
     tasksStatus: Seq[Status],
     metrics: Metrics,
     lastModified: Long
@@ -216,7 +214,7 @@ object ConnectorApi {
 
   implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] =
     new RootJsonFormat[ConnectorInfo] {
-      private[this] val format                        = jsonFormat8(ConnectorInfo)
+      private[this] val format                        = jsonFormat7(ConnectorInfo)
       override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
       override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
     }

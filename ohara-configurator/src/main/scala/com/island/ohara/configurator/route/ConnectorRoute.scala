@@ -69,7 +69,6 @@ private[configurator] object ConnectorRoute {
           state = None,
           nodeName = None,
           error = None,
-          status = None,
           tasksStatus = Seq.empty,
           metrics = Metrics.EMPTY,
           lastModified = CommonUtils.current()
@@ -92,7 +91,9 @@ private[configurator] object ConnectorRoute {
             case STOPPED =>
               Future.successful(
                 connectorInfo.copy(
-                  status = None,
+                  state = None,
+                  error = None,
+                  nodeName = None,
                   tasksStatus = Seq.empty,
                   metrics = Metrics.EMPTY
                 )
@@ -104,13 +105,6 @@ private[configurator] object ConnectorRoute {
                     state = Some(State.forName(connectorInfoFromKafka.connector.state)),
                     error = connectorInfoFromKafka.connector.trace,
                     nodeName = Some(connectorInfoFromKafka.connector.workerHostname),
-                    status = Some(
-                      Status(
-                        state = State.forName(connectorInfoFromKafka.connector.state),
-                        error = connectorInfoFromKafka.connector.trace,
-                        nodeName = connectorInfoFromKafka.connector.workerHostname
-                      )
-                    ),
                     tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
                       Status(
                         state = State.forName(taskStatus.state),
@@ -130,7 +124,9 @@ private[configurator] object ConnectorRoute {
         case e: Throwable =>
           LOG.debug(s"failed to fetch stats for $connectorInfo", e)
           connectorInfo.copy(
-            status = None,
+            state = None,
+            error = None,
+            nodeName = None,
             tasksStatus = Seq.empty,
             metrics = Metrics.EMPTY
           )
