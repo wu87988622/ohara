@@ -46,13 +46,22 @@ export const create = async (params, body = {}) => {
 
 export const start = async params => {
   const { name, group } = params;
-  await axiosInstance.put(`${url}/${name}/start?group=${group}`);
-  await wait({
-    url: `${URL.INSPECT_URL}/${inspect.kind.worker}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForConnectReady,
-  });
-  const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
-  const result = responseUtil(res, worker);
+  const startRes = await axiosInstance.put(
+    `${url}/${name}/start?group=${group}`,
+  );
+
+  let result = {};
+  if (startRes.data.isSuccess) {
+    await wait({
+      url: `${URL.INSPECT_URL}/${inspect.kind.worker}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForConnectReady,
+    });
+    const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+    result = responseUtil(res, worker);
+  } else {
+    result = responseUtil(startRes, worker);
+  }
+
   result.title =
     `Start worker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
@@ -74,12 +83,20 @@ export const update = async params => {
 
 export const stop = async params => {
   const { name, group } = params;
-  await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForStop,
-  });
-  const result = responseUtil(res, worker);
+  const stopRes = await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
+
+  let result = {};
+  if (stopRes.data.isSuccess) {
+    await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForStop,
+    });
+    const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+    result = responseUtil(res, worker);
+  } else {
+    result = responseUtil(stopRes, worker);
+  }
+
   result.title =
     `Stop worker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
@@ -129,13 +146,23 @@ export const getAll = async (params = {}) => {
 
 export const addNode = async params => {
   const { name, group, nodeName } = params;
-  await axiosInstance.put(`${url}/${name}/${nodeName}?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForNodeReady,
-    paramRes: nodeName,
-  });
-  const result = responseUtil(res, worker);
+  const addNodeRes = await axiosInstance.put(
+    `${url}/${name}/${nodeName}?group=${group}`,
+  );
+
+  let result = {};
+  if (addNodeRes.data.isSuccess) {
+    await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForNodeReady,
+      paramRes: nodeName,
+    });
+    const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+    result = responseUtil(res, worker);
+  } else {
+    result = responseUtil(addNodeRes, worker);
+  }
+
   result.title =
     `Add node to worker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
@@ -144,13 +171,23 @@ export const addNode = async params => {
 
 export const removeNode = async params => {
   const { name, group, nodeName } = params;
-  await axiosInstance.delete(`${url}/${name}/${nodeName}?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForNodeNonexistentInCluster,
-    paramRes: nodeName,
-  });
-  const result = responseUtil(res, worker);
+  const removeNodeRes = await axiosInstance.delete(
+    `${url}/${name}/${nodeName}?group=${group}`,
+  );
+
+  let result = {};
+  if (removeNodeRes.data.isSuccess) {
+    await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForNodeNonexistentInCluster,
+      paramRes: nodeName,
+    });
+    const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+    result = responseUtil(res, worker);
+  } else {
+    result = responseUtil(removeNodeRes, worker);
+  }
+
   result.title =
     `Remove node from worker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');

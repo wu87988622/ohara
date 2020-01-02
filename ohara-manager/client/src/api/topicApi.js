@@ -47,12 +47,21 @@ export const create = async params => {
 
 export const start = async params => {
   const { name, group } = params;
-  await axiosInstance.put(`${url}/${name}/start?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForRunning,
-  });
-  const result = responseUtil(res, topic);
+  const startRes = await axiosInstance.put(
+    `${url}/${name}/start?group=${group}`,
+  );
+
+  let result = {};
+  if (startRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForRunning,
+    });
+    result = responseUtil(res, topic);
+  } else {
+    result = responseUtil(startRes, topic);
+  }
+
   result.title =
     `Start topic ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
@@ -74,12 +83,19 @@ export const update = async params => {
 
 export const stop = async params => {
   const { name, group } = params;
-  await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForStop,
-  });
-  const result = responseUtil(res, topic);
+  const stopRes = await axiosInstance.put(`${url}/${name}/stop?group=${group}`);
+
+  let result = {};
+  if (stopRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForStop,
+    });
+    result = responseUtil(res, topic);
+  } else {
+    result = responseUtil(stopRes, topic);
+  }
+
   result.title =
     `Stop topic ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');

@@ -47,13 +47,20 @@ export const update = async params => {
 
 export const remove = async params => {
   const { name, group } = params;
-  await axiosInstance.delete(`${url}/${name}?group=${group}`);
-  const res = await wait({
-    url,
-    checkFn: waitUtil.waitForObjectNonexistent,
-    paramRes: params,
-  });
-  const result = responseUtil(res, objBody);
+  const deleteRes = await axiosInstance.delete(`${url}/${name}?group=${group}`);
+
+  let result = {};
+  if (deleteRes.data.isSuccess) {
+    const res = await wait({
+      url,
+      checkFn: waitUtil.waitForObjectNonexistent,
+      paramRes: params,
+    });
+    result = responseUtil(res, objBody);
+  } else {
+    result = responseUtil(deleteRes, objBody);
+  }
+
   result.title =
     `Remove object ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');

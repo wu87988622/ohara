@@ -46,12 +46,21 @@ export const create = async (params, body = {}) => {
 
 export const start = async params => {
   const { name, group } = params;
-  await axiosInstance.put(`${url}/${name}/start?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForRunning,
-  });
-  const result = responseUtil(res, broker);
+  const startRes = await axiosInstance.put(
+    `${url}/${name}/start?group=${group}`,
+  );
+
+  let result = {};
+  if (startRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForRunning,
+    });
+    result = responseUtil(res, broker);
+  } else {
+    result = responseUtil(startRes, broker);
+  }
+
   result.title =
     `Start broker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
@@ -128,13 +137,22 @@ export const getAll = async (params = {}) => {
 
 export const addNode = async params => {
   const { name, group, nodeName } = params;
-  await axiosInstance.put(`${url}/${name}/${nodeName}?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForNodeReady,
-    paramRes: nodeName,
-  });
-  const result = responseUtil(res, broker);
+  const addNodeRes = await axiosInstance.put(
+    `${url}/${name}/${nodeName}?group=${group}`,
+  );
+
+  let result = {};
+  if (addNodeRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForNodeReady,
+      paramRes: nodeName,
+    });
+    result = responseUtil(res, broker);
+  } else {
+    result = responseUtil(addNodeRes, broker);
+  }
+
   result.title =
     `Add node to broker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
@@ -143,13 +161,22 @@ export const addNode = async params => {
 
 export const removeNode = async params => {
   const { name, group, nodeName } = params;
-  await axiosInstance.delete(`${url}/${name}/${nodeName}?group=${group}`);
-  const res = await wait({
-    url: `${url}/${name}?group=${group}`,
-    checkFn: waitUtil.waitForNodeNonexistentInCluster,
-    paramRes: nodeName,
-  });
-  const result = responseUtil(res, broker);
+  const removeNodeRes = await axiosInstance.delete(
+    `${url}/${name}/${nodeName}?group=${group}`,
+  );
+
+  let result = {};
+  if (removeNodeRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForNodeNonexistentInCluster,
+      paramRes: nodeName,
+    });
+    result = responseUtil(res, broker);
+  } else {
+    result = responseUtil(removeNodeRes, broker);
+  }
+
   result.title =
     `Remove node from broker ${getKey(params)} ` +
     (result.errors ? 'failed.' : 'successful.');
