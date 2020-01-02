@@ -49,8 +49,10 @@ import scala.concurrent.duration._
   *    so please don't change it.
   */
 abstract class BasicTestPerformance extends WithRemoteWorkers {
-  protected val log: Logger      = Logger(classOf[BasicTestPerformance])
-  private[this] val wholeTimeout = 1200
+  protected val log: Logger                    = Logger(classOf[BasicTestPerformance])
+  private[this] val wholeTimeout               = 1200
+  private[this] val connectorKey: ConnectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5))
+  private[this] val topicKey: TopicKey         = TopicKey.of("benchmark", CommonUtils.randomString(5))
 
   @Rule
   override def timeout: Timeout = Timeout.seconds(wholeTimeout) // 20 minutes
@@ -114,10 +116,9 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
   /**
     * create and start the topic.
-    * @param topicKey topic key
     * @return topic info
     */
-  protected def createTopic(topicKey: TopicKey): TopicInfo = {
+  protected def createTopic(): TopicInfo = {
     result(
       topicApi.request
         .key(topicKey)
@@ -133,8 +134,6 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   }
 
   protected def setupConnector(
-    connectorKey: ConnectorKey,
-    topicKey: TopicKey,
     className: String,
     settings: Map[String, JsValue]
   ): ConnectorInfo = {
@@ -214,6 +213,15 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     )
   }
 
+  /**
+    * When connector is running have used some resource such folder or file.
+    * for example: after running connector complete, can't delete the data.
+    *
+    * This function is after get metrics data, you can run other operating.
+    * example delete data.
+    */
+  protected def afterStoppingConnector(): Unit = {}
+
   //------------------------------[core functions]------------------------------//
 
   @After
@@ -243,6 +251,21 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
     // record topic meters
     recordCsv(path("topic"), result(topicApi.list()).flatMap(_.metrics.meters))
+
+    // Have setup connector on the worker.
+    // Need to stop the connector on the worker.
+    result(connectorApi.list()).foreach(
+      connector =>
+        await(
+          () => {
+            result(connectorApi.stop(connector.key))
+            true
+          },
+          true
+        )
+    )
+
+    afterStoppingConnector()
   }
 
   private[this] def recordCsv(file: File, meters: Seq[Meter]): Unit =

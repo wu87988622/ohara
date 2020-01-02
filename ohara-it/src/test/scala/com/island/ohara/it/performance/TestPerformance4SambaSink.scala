@@ -17,16 +17,16 @@
 package com.island.ohara.it.performance
 
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
-import com.island.ohara.connector.ftp.FtpSink
+import com.island.ohara.connector.smb.SmbSink
 import com.island.ohara.it.category.PerformanceGroup
 import com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions
-import spray.json.JsString
 import org.junit.Test
 import org.junit.experimental.categories.Category
+import spray.json.JsString
 
 @Category(Array(classOf[PerformanceGroup]))
-class TestPerformance4FtpSink extends BasicTestPerformance4Ftp {
-  private[this] val dataDir: String      = "/tmp"
+class TestPerformance4SambaSink extends BasicTestPerformance4Samba {
+  private[this] val outputDir: String    = "output"
   private[this] var topicInfo: TopicInfo = _
 
   @Test
@@ -34,14 +34,14 @@ class TestPerformance4FtpSink extends BasicTestPerformance4Ftp {
     topicInfo = createTopic()
     produce(topicInfo)
     setupConnector(
-      className = classOf[FtpSink].getName(),
-      settings = ftpSettings
-        + (CsvConnectorDefinitions.OUTPUT_FOLDER_KEY -> JsString(createFtpFolder(dataDir)))
+      className = classOf[SmbSink].getName(),
+      settings = sambaSettings
+        + (CsvConnectorDefinitions.OUTPUT_FOLDER_KEY -> JsString(createSambaFolder(outputDir)))
     )
     sleepUntilEnd()
   }
 
   override def afterStoppingConnector(): Unit = {
-    if (cleanupTestData) recursiveRemoveFolder(s"${dataDir}/${topicInfo.topicNameOnKafka}")
+    if (needDeleteData) removeSambaFolder(s"${outputDir}/${topicInfo.topicNameOnKafka}")
   }
 }
