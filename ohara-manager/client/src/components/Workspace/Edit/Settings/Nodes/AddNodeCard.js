@@ -23,7 +23,7 @@ import CardActionArea from '@material-ui/core/CardActionArea';
 import Typography from '@material-ui/core/Typography';
 import StorageIcon from '@material-ui/icons/Storage';
 
-const WorkspaceCard = props => {
+const AddNodeCard = props => {
   const { onClick, sm = false, title, content } = props;
 
   const StyledNodeCard = styled(Card)(
@@ -50,10 +50,9 @@ const WorkspaceCard = props => {
 
   const StyledCardActionArea = styled(CardActionArea)(
     ({ theme }) => css`
-      width: ${sm && theme.spacing(33)}px;
+      width: 50%;
       min-height: ${sm && theme.spacing(25)}px;
-      float: ${sm && 'left'};
-      margin: ${sm && theme.spacing(1.5)}px;
+      padding: ${sm && theme.spacing(1.5)}px;
     `,
   );
 
@@ -74,10 +73,10 @@ const WorkspaceCard = props => {
   );
 };
 
-WorkspaceCard.propTypes = {
+AddNodeCard.propTypes = {
   onClick: PropTypes.func,
   sm: PropTypes.bool,
   title: PropTypes.string.isRequired,
   content: PropTypes.string.isRequired,
 };
-export default WorkspaceCard;
+export default AddNodeCard;

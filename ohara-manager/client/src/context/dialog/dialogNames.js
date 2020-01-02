@@ -17,6 +17,7 @@
 export const EDIT_WORKSPACE_DIALOG = Symbol();
 export const ADD_TOPIC_DIALOG = Symbol();
 export const VIEW_TOPIC_DIALOG = Symbol();
+export const LIST_NODE_DIALOG = Symbol();
 export const VIEW_NODE_DIALOG = Symbol();
 export const EDIT_NODE_DIALOG = Symbol();
 export const ADD_NODE_DIALOG = Symbol();

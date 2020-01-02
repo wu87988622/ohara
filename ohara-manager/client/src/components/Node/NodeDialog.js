@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import Link from '@material-ui/core/Link';
 import styled from 'styled-components';
-import { round, isEmpty, flatMap, filter } from 'lodash';
+import { get, round, isEmpty, flatMap, filter, noop } from 'lodash';
 
-import AddNodeDialog from './AddNodeDialog';
 import { SelectTable } from 'components/common/Table';
 import { FullScreenDialog } from 'components/common/Dialog';
-import { useNodeDialog } from 'context/NodeDialogContext';
 import { Button } from 'components/common/Form';
+import AddNodeDialog from './AddNodeDialog';
 import ViewNodeDialog from './ViewNodeDialog';
-import { useConfiguratorState, useNodeState, useViewNodeDialog } from 'context';
+import {
+  useConfiguratorState,
+  useListNodeDialog,
+  useViewNodeDialog,
+  useNodeState,
+} from 'context';
 import { QuickSearch } from 'components/common/Search';
 
 const Actions = styled.div`
@@ -42,28 +46,24 @@ const Actions = styled.div`
 
 const NodeDialog = () => {
   const { data: configuratorInfo } = useConfiguratorState();
-  const {
-    isOpen: isNodeDialogOpen,
-    setIsOpen: setIsNodeDialogOpen,
-    type,
-    setType,
-    hasSelect,
-    hasSave,
-    selected,
-    setSelected,
-    setHasSelect,
-  } = useNodeDialog();
-  const { open: openViewNodeDialog } = useViewNodeDialog();
-
   const { data: nodes } = useNodeState();
+
+  const {
+    isOpen: isListNodeDialogOpen,
+    close: closeListNodeDialog,
+    data,
+    setData,
+  } = useListNodeDialog();
+  const hasSelect = get(data, 'hasSelect', false);
+  const hasSave = get(data, 'hasSave', false);
+  const selected = get(data, 'selected', []);
+  const blockedNodes = get(data, 'blockedNodes', []);
+  const save = get(data, 'save', noop);
+
+  const { open: openViewNodeDialog } = useViewNodeDialog();
 
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
   const [filteredNodes, setFilteredNodes] = useState([]);
-
-  useEffect(() => {
-    if (isEmpty(configuratorInfo) || !configuratorInfo) return;
-    setType(configuratorInfo.mode);
-  }, [setType, configuratorInfo]);
 
   const getResources = node => {
     const headers = getHeader();
@@ -158,17 +158,18 @@ const NodeDialog = () => {
         };
       });
 
+  const blockedRows = rows.filter(row => {
+    return blockedNodes.map(node => node.hostname).includes(row.name);
+  });
+
   return (
     <FullScreenDialog
       title="Nodes"
-      open={isNodeDialogOpen}
-      handleClose={() => {
-        setSelected([]);
-        setHasSelect(false);
-        setIsNodeDialogOpen(false);
-      }}
+      open={isListNodeDialogOpen}
+      handleClose={closeListNodeDialog}
       handleSave={() => {
-        setIsNodeDialogOpen(false);
+        save(data);
+        closeListNodeDialog();
       }}
       hasSave={hasSave}
     >
@@ -196,16 +197,19 @@ const NodeDialog = () => {
           title="All Nodes"
           hasSelect={hasSelect}
           selected={selected}
-          setSelected={setSelected}
+          setSelected={rows => setData({ ...data, selected: rows })}
+          blockedRows={blockedRows}
         />
 
         <AddNodeDialog
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
-          mode={type}
+          mode={!isEmpty(configuratorInfo) ? configuratorInfo.mode : 'k8s'}
         />
 
-        <ViewNodeDialog mode={type} />
+        <ViewNodeDialog
+          mode={!isEmpty(configuratorInfo) ? configuratorInfo.mode : 'k8s'}
+        />
       </>
     </FullScreenDialog>
   );

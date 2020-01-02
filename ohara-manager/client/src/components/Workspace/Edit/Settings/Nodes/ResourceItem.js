@@ -34,7 +34,10 @@ const ResourceItem = ({ name, value, unit, used }) => {
           <Typography>{name}</Typography>
         </Grid>
         <Grid item xs={6}>
-          <Tooltip title={`${roundUsed}% used`} placement="right">
+          <Tooltip
+            title={used ? `${roundUsed}% used` : `${roundValue} ${unit}`}
+            placement="right"
+          >
             <Typography align="right" component="div">
               <NumberFormat
                 value={roundValue}
@@ -43,11 +46,13 @@ const ResourceItem = ({ name, value, unit, used }) => {
                 thousandSeparator
               />
 
-              <LinearProgress
-                variant="determinate"
-                color={roundUsed < 80 ? 'primary' : 'secondary'}
-                value={roundUsed}
-              />
+              {used && (
+                <LinearProgress
+                  variant="determinate"
+                  color={roundUsed < 80 ? 'primary' : 'secondary'}
+                  value={roundUsed}
+                />
+              )}
             </Typography>
           </Tooltip>
         </Grid>
@@ -60,7 +65,7 @@ ResourceItem.propTypes = {
   name: PropTypes.string.isRequired,
   value: PropTypes.number.isRequired,
   unit: PropTypes.string.isRequired,
-  used: PropTypes.number.isRequired,
+  used: PropTypes.number,
 };
 
 export default ResourceItem;

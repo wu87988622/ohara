@@ -30,3 +30,4 @@ export * from 'context/workspace/WorkspaceContext';
 export * from 'context/workspace/EditWorkspaceContext';
 export * from 'context/zookeeper/ZookeeperContext';
 export * from 'context/SnackbarContext';
+export * from 'context/NewWorkspaceContext';

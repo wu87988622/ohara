@@ -24,8 +24,6 @@ import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
 
 import * as context from 'context';
-import { useNewWorkspace } from 'context/NewWorkspaceContext';
-import { useNodeDialog } from 'context/NodeDialogContext';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
 import { usePrevious } from 'utils/hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
@@ -38,8 +36,8 @@ const AppBar = () => {
   const { workspaceName, pipelineName } = useParams();
   const { setWorkspaceName, setPipelineName } = context.useApp();
   const { workspaces } = context.useWorkspace();
-  const { setIsOpen: setIsNewWorkspaceOpen } = useNewWorkspace();
-  const { setIsOpen: setIsNodeDialogOpen } = useNodeDialog();
+  const { setIsOpen: setIsNewWorkspaceOpen } = context.useNewWorkspace();
+  const { open: openListNodeDialog } = context.useListNodeDialog();
   const {
     open: openDevToolDialog,
     isOpen: isDevToolDialogOpen,
@@ -125,10 +123,7 @@ const AppBar = () => {
           </Tooltip>
 
           <Tooltip title="Node list" placement="right">
-            <IconButton
-              className="nodes item"
-              onClick={() => setIsNodeDialogOpen(true)}
-            >
+            <IconButton className="nodes item" onClick={openListNodeDialog}>
               <StorageIcon />
             </IconButton>
           </Tooltip>

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get, includes, uniq, pull } from 'lodash';
+import { get, includes, uniq, pull, union } from 'lodash';
 
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
@@ -38,7 +38,7 @@ const ServiceSwitch = ({ cluster, nodeName, type }) => {
   const currentValue = get(cluster, 'nodeNames', []);
   const stagingValue = get(cluster, 'stagingSettings.nodeNames', []);
 
-  const value = stagingValue || currentValue;
+  const value = union(stagingValue, currentValue);
   const initialValue = currentValue;
   const checked = includes(value, nodeName);
   const initialChecked = includes(initialValue, nodeName);

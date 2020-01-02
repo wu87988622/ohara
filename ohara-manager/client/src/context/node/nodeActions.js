@@ -72,5 +72,18 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
+    refreshNodes: async () => {
+      const routine = routines.fetchNodesRoutine;
+      if (state.isFetching) return;
+      try {
+        dispatch(routine.request());
+        const data = await nodeApi.fetchAll();
+        dispatch(routine.success(data));
+        return action.success(data);
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+        return action.failure(e.message);
+      }
+    },
   };
 };

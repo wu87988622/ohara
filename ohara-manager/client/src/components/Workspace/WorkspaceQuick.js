@@ -16,6 +16,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { get } from 'lodash';
 
 import Step from '@material-ui/core/Step';
 import Card from '@material-ui/core/Card';
@@ -44,12 +45,13 @@ import FileCard from './Card/FileCard';
 import SelectCard from './Card/SelectCard';
 import WorkspaceCard from './Card/WorkspaceCard';
 
-import { useNodeDialog } from 'context/NodeDialogContext';
 import {
   useWorkspaceActions,
   useWorkerActions,
   useBrokerActions,
   useZookeeperActions,
+  useNodeActions,
+  useListNodeDialog,
 } from 'context';
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
@@ -92,18 +94,15 @@ const WorkspaceQuick = props => {
   const [files, setFiles] = useState([]);
   const [progressOpen, setProgressOpen] = useState(false);
   const [progressActiveStop, setProgressActiveStep] = useState(0);
-  const {
-    setIsOpen: setIsNodeDialogOpen,
-    setHasSelect,
-    setHasSave,
-    selected,
-    setSelected,
-  } = useNodeDialog();
+  const { isOpen, open: openNodeDialog } = useListNodeDialog();
+  const [dialogData, setDialogData] = React.useState({});
+  const selectedNodes = get(dialogData, 'selected', []);
 
   const { createWorkspace } = useWorkspaceActions();
   const { createWorker } = useWorkerActions();
   const { createBroker } = useBrokerActions();
   const { createZookeeper } = useZookeeperActions();
+  const { refreshNodes } = useNodeActions();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -114,10 +113,6 @@ const WorkspaceQuick = props => {
     'Create this workspace',
   ];
   const { open, handelOpen } = props;
-  if (open) {
-    setHasSave(true);
-    setHasSelect(true);
-  }
 
   const handleNext = activeStep => {
     setActiveStep(activeStep + 1);
@@ -128,10 +123,12 @@ const WorkspaceQuick = props => {
   };
 
   const removeNodeCard = node => {
-    const newNodes = selected.filter(
+    const newNodes = selectedNodes.filter(
       select => select[Object.keys(select)[0]] !== node[Object.keys(node)[0]],
     );
-    setSelected(newNodes);
+    if (open) {
+      setDialogData({ ...dialogData, selected: newNodes });
+    }
   };
 
   const onDrop = async (file, values) => {
@@ -195,7 +192,7 @@ const WorkspaceQuick = props => {
         return !isUndefined(error);
 
       case 1:
-        return !selected.length > 0;
+        return !selectedNodes.length > 0;
 
       default:
         return false;
@@ -244,7 +241,7 @@ const WorkspaceQuick = props => {
 
   const createQuickWorkspace = async (values, form) => {
     const { workspaceName } = values;
-    const nodeNames = selected.map(select => select.name);
+    const nodeNames = selectedNodes.map(select => select.name);
     const plugins = files.map(file => {
       return {
         name: file.file,
@@ -261,6 +258,9 @@ const WorkspaceQuick = props => {
       await createWk({ name: workspaceName, nodeNames, pluginKeys: plugins });
       setProgressActiveStep(3);
       await createWs({ name: workspaceName, nodeNames });
+      // after workspace creation successful, we need to refresh the node list
+      // in order to get the newest service information of node
+      await refreshNodes();
       setTimeout(form.reset);
       setActiveStep(0);
       setFiles([]);
@@ -295,15 +295,26 @@ const WorkspaceQuick = props => {
         return (
           <Card>
             <CardContent>{'Workspace nodes'}</CardContent>
-            {selected.length > 0 ? (
+            {selectedNodes.length > 0 ? (
               <>
                 {WorkspaceCard({
-                  onClick: setIsNodeDialogOpen,
+                  onClick: () => {
+                    if (!isOpen) {
+                      const data = {
+                        ...dialogData,
+                        hasSave: true,
+                        hasSelect: true,
+                        save: setDialogData,
+                      };
+                      setDialogData(data);
+                      openNodeDialog(data);
+                    }
+                  },
                   title: 'Select nodes',
                   content: 'Click here to select nodes',
                   sm: true,
                 })}
-                {selected.map(node => {
+                {selectedNodes.map(node => {
                   return SelectCard({
                     rows: node,
                     handleClose: removeNodeCard,
@@ -313,7 +324,18 @@ const WorkspaceQuick = props => {
             ) : (
               <CardContent>
                 {WorkspaceCard({
-                  onClick: setIsNodeDialogOpen,
+                  onClick: () => {
+                    if (!isOpen) {
+                      const data = {
+                        ...dialogData,
+                        hasSave: true,
+                        hasSelect: true,
+                        save: setDialogData,
+                      };
+                      setDialogData(data);
+                      openNodeDialog(data);
+                    }
+                  },
                   title: 'Select nodes',
                   content: 'Click here to select nodes',
                 })}
@@ -369,7 +391,7 @@ const WorkspaceQuick = props => {
                     <StyledTableRow>
                       <TableCell>{'Node Names'}</TableCell>
                       <TableCell>
-                        {selected.map(selected => selected.name).join(',')}
+                        {selectedNodes.map(selected => selected.name).join(',')}
                       </TableCell>
                     </StyledTableRow>
                     <StyledTableRow>
@@ -400,7 +422,6 @@ const WorkspaceQuick = props => {
               title="Create workspace - Quick"
               open={open}
               handleClose={() => {
-                setHasSelect(false);
                 handelOpen(false);
 
                 form.reset();

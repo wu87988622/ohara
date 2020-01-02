@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { isEmpty } from 'lodash';
 import PropTypes from 'prop-types';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -86,6 +87,7 @@ const SelectTableToolbar = props => {
 const SelectTable = props => {
   const {
     rows,
+    blockedRows,
     headCells,
     title,
     hasSelect = false,
@@ -98,10 +100,12 @@ const SelectTable = props => {
       setSelected(rows);
       return;
     }
-    setSelected([]);
+    setSelected(blockedRows);
   };
 
   const handleClick = (event, row) => {
+    if (isItemDisabled(row)) return;
+
     const selectedIndex = selected
       .map(select => select[Object.keys(select)[0]])
       .indexOf(row[Object.keys(row)[0]]);
@@ -126,6 +130,13 @@ const SelectTable = props => {
     selected
       .map(select => select[Object.keys(select)[0]])
       .indexOf(row[Object.keys(row)[0]]) !== -1;
+
+  const isItemDisabled = row => {
+    return (
+      !isEmpty(blockedRows) &&
+      blockedRows.map(blockedRow => blockedRow.name).includes(row.name)
+    );
+  };
 
   return (
     <div>
@@ -161,7 +172,11 @@ const SelectTable = props => {
                   >
                     {hasSelect && (
                       <TableCell padding="checkbox">
-                        <Checkbox checked={isItemSelected} color="primary" />
+                        <Checkbox
+                          checked={isItemSelected}
+                          color="primary"
+                          disabled={isItemDisabled(row)}
+                        />
                       </TableCell>
                     )}
                     {keys
@@ -203,6 +218,7 @@ SelectTableToolbar.propTypes = {
 
 SelectTable.propTypes = {
   rows: PropTypes.array.isRequired,
+  blockedRows: PropTypes.array,
   headCells: PropTypes.array.isRequired,
   title: PropTypes.string.isRequired,
   hasSelect: PropTypes.bool,

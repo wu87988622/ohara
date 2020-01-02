@@ -106,6 +106,7 @@ const useAddTopicDialog = createUseDialogActions(dialogNames.ADD_TOPIC_DIALOG);
 const useViewTopicDialog = createUseDialogActions(
   dialogNames.VIEW_TOPIC_DIALOG,
 );
+const useListNodeDialog = createUseDialogActions(dialogNames.LIST_NODE_DIALOG);
 const useViewNodeDialog = createUseDialogActions(dialogNames.VIEW_NODE_DIALOG);
 const useEditNodeDialog = createUseDialogActions(dialogNames.EDIT_NODE_DIALOG);
 const useAddNodeDialog = createUseDialogActions(dialogNames.ADD_NODE_DIALOG);
@@ -129,9 +130,11 @@ export {
   useAddTopicDialog,
   useViewTopicDialog,
   // Node
+  useListNodeDialog,
   useViewNodeDialog,
   useEditNodeDialog,
   useAddNodeDialog,
+  // Others
   useDevToolDialog,
   useGraphSettingDialog,
   useAddPluginDialog,

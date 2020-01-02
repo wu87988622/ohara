@@ -15,21 +15,66 @@
  */
 
 import React from 'react';
-import { map } from 'lodash';
+import { get, map } from 'lodash';
 
 import Grid from '@material-ui/core/Grid';
-import { useEditWorkspace } from 'context';
+import {
+  useEditWorkspace,
+  useWorkspace,
+  useListNodeDialog,
+  useNodeState,
+} from 'context';
 import NodeCard from './NodeCard';
+import AddNodeCard from './AddNodeCard';
 
 const Nodes = () => {
   const { stagingNodes } = useEditWorkspace();
+  const { currentWorkspace } = useWorkspace();
+  const { open: openListNodeDialog } = useListNodeDialog();
+  const { data: allNodes } = useNodeState();
+  const [dialogData, setDialogData] = React.useState({});
+
+  const selectedNodes = get(
+    dialogData,
+    'selected',
+    allNodes
+      .filter(node =>
+        currentWorkspace.settings.nodeNames.includes(node.hostname),
+      )
+      .map(node => {
+        return {
+          name: node.hostname,
+        };
+      }),
+  );
+
+  const handleClick = () => {
+    const data = {
+      selected: selectedNodes,
+      ...dialogData,
+      hasSelect: true,
+      hasSave: true,
+      blockedNodes: stagingNodes,
+      save: setDialogData,
+    };
+    setDialogData(data);
+    openListNodeDialog(data);
+  };
 
   return (
     <>
       <Grid container spacing={3}>
-        {map(stagingNodes, node => (
-          <Grid item xs={6} key={node.hostname}>
-            <NodeCard node={node} />
+        {AddNodeCard({
+          onClick: handleClick,
+          title: 'Add nodes',
+          content: 'Click here to add nodes',
+          sm: true,
+        })}
+        {map(selectedNodes, selectedNode => (
+          <Grid item xs={6} key={selectedNode.name}>
+            <NodeCard
+              node={allNodes.find(node => node.hostname === selectedNode.name)}
+            />
           </Grid>
         ))}
       </Grid>
