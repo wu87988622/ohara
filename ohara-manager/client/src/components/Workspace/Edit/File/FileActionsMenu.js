@@ -30,7 +30,7 @@ import { useFileState, useFileActions } from 'context';
 import { DeleteDialog } from 'components/common/Dialog';
 import FileDownload from './FileDownload';
 
-const FileActionsMenu = ({ file }) => {
+const FileActionsMenu = ({ file, deleteDisabled }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const downloadEl = useRef(null);
 
@@ -78,7 +78,10 @@ const FileActionsMenu = ({ file }) => {
           </ListItemIcon>
           <ListItemText primary="Download" />
         </MenuItem>
-        <MenuItem onClick={() => setIsDeleteDialogOpen(true)}>
+        <MenuItem
+          onClick={() => setIsDeleteDialogOpen(true)}
+          disabled={deleteDisabled}
+        >
           <ListItemIcon>
             <DeleteForeverIcon />
           </ListItemIcon>
@@ -104,5 +107,6 @@ FileActionsMenu.propTypes = {
     group: PropTypes.string.isRequired,
     url: PropTypes.string.isRequired,
   }).isRequired,
+  deleteDisabled: PropTypes.bool,
 };
 export default FileActionsMenu;

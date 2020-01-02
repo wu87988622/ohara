@@ -14,30 +14,22 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
-import { get } from 'lodash';
+import React, { useState } from 'react';
 import Grid from '@material-ui/core/Grid';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import NumberFormat from 'react-number-format';
+import CheckIcon from '@material-ui/icons/Check';
 
-import { useWorkspace, useFileState, useFileActions } from 'context';
 import { Table } from 'components/common/Table';
 import { QuickSearch } from 'components/common/Search';
+import { useFiles } from 'components/Workspace/Edit/hooks';
 import FileActionsMenu from './FileActionsMenu';
-import { getDateFromTimestamp } from 'utils/date';
 import { Wrapper } from './FileTableStyles';
 
 const FileTable = () => {
-  const { currentWorkspace } = useWorkspace();
-  const { data: files } = useFileState();
-  const { fetchFiles } = useFileActions();
+  const files = useFiles();
   const [filteredFiles, setFilteredFiles] = useState([]);
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    fetchFiles(currentWorkspace.name);
-  }, [fetchFiles, currentWorkspace]);
 
   const tableHeaders = [
     'Name',
@@ -58,23 +50,22 @@ const FileTable = () => {
       </Grid>
       <Table headers={tableHeaders} title="All Files">
         {filteredFiles.map(file => {
-          const name = get(file, 'name', '');
-          const size = get(file, 'size', 0);
-          const lastModified = getDateFromTimestamp(get(file, 'lastModified'));
           return (
-            <TableRow key={name}>
-              <TableCell>{name}</TableCell>
-              <TableCell></TableCell>
+            <TableRow key={file.name}>
+              <TableCell>{file.name}</TableCell>
+              <TableCell>
+                {file.isUsed && <CheckIcon className="checkIcon" />}
+              </TableCell>
               <TableCell>
                 <NumberFormat
-                  value={size}
+                  value={file.size}
                   displayType="text"
                   thousandSeparator
                 />
               </TableCell>
-              <TableCell>{lastModified}</TableCell>
+              <TableCell>{file.lastModified}</TableCell>
               <TableCell align="right">
-                <FileActionsMenu file={file} />
+                <FileActionsMenu file={file} deleteDisabled={file.isUsed} />
               </TableCell>
             </TableRow>
           );

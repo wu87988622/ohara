@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 
-import { get, isEmpty, includes, keys, pickBy, pick } from 'lodash';
+import { get } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -27,61 +27,58 @@ import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import AddIcon from '@material-ui/icons/Add';
 
-import {
-  useWorkspace,
-  useAddPluginDialog,
-  useFileState,
-  useWorkerActions,
-} from 'context';
+import { useWorkspace, useAddPluginDialog, useWorkerActions } from 'context';
 import { QuickSearch } from 'components/common/Search';
+import {
+  useCandidatePlugins,
+  useSelectedPlugins,
+} from 'components/Workspace/Edit/hooks';
 import { FileUpload } from '../File';
 import {
   StyledDialogTitle,
   StyledDialogContent,
   StyledDialogActions,
-  FileFilter,
-  FileList,
+  PluginFilter,
+  PluginList,
 } from './PluginSelectorStyles';
+import { someByKey } from 'utils/object';
 
 function PluginSelector() {
   const { currentWorker } = useWorkspace();
   const workerName = get(currentWorker, 'name');
-  const pluginKeys = get(currentWorker, 'stagingSettings.pluginKeys', []);
 
   const { isOpen, close } = useAddPluginDialog();
-  const { data: files = [] } = useFileState();
   const { stageWorker } = useWorkerActions();
 
-  const [filteredFiles, setFilteredFiles] = useState([]);
+  const candidatePlugins = useCandidatePlugins();
+  const selectedPlugins = useSelectedPlugins();
+  const [filteredPlugins, setFilteredPlugins] = useState([]);
   const [checked, setChecked] = useState({});
 
   React.useEffect(() => {
-    if (isEmpty(files)) return;
-
     setChecked(
-      files
-        .map(f => f.name)
-        .reduce(
-          (checked, fileName) => ({
-            ...checked,
-            [fileName]: pluginKeys.some(
-              pluginKey => pluginKey.name === fileName,
-            ),
-          }),
-          {},
-        ),
+      candidatePlugins.reduce(
+        (checked, plugin) => ({
+          ...checked,
+          [plugin.name]: someByKey(selectedPlugins, plugin),
+        }),
+        {},
+      ),
     );
-  }, [isOpen, files, pluginKeys]);
+  }, [candidatePlugins, selectedPlugins, isOpen]);
 
   const handleChange = name => event => {
     setChecked({ ...checked, [name]: event.target.checked });
   };
 
   const handleSave = async () => {
-    const checkedKeys = keys(pickBy(checked, value => value === true));
-    const newPluginKeys = files
-      .filter(file => includes(checkedKeys, file.name))
-      .map(file => pick(file, ['group', 'name']));
+    const selectedPlugins = candidatePlugins.filter(
+      plugin => checked[plugin.name] === true,
+    );
+    const newPluginKeys = selectedPlugins.map(plugin => ({
+      group: plugin.group,
+      name: plugin.name,
+    }));
     await stageWorker({ name: workerName, pluginKeys: newPluginKeys });
     close();
   };
@@ -96,30 +93,30 @@ function PluginSelector() {
           </IconButton>
         </StyledDialogTitle>
         <DialogTitle>
-          <FileFilter>
+          <PluginFilter>
             <QuickSearch
-              data={files}
+              data={candidatePlugins}
               keys={['name']}
-              setResults={setFilteredFiles}
-              className="file-filter"
+              setResults={setFilteredPlugins}
+              className="plugin-filter"
             />
-          </FileFilter>
+          </PluginFilter>
         </DialogTitle>
 
         <StyledDialogContent>
-          <FileList>
-            {filteredFiles.map(file => (
-              <div key={file.name}>
+          <PluginList>
+            {filteredPlugins.map(plugin => (
+              <div key={plugin.name}>
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={checked[file.name]}
-                      onChange={handleChange(file.name)}
-                      value={file.name}
+                      checked={checked[plugin.name]}
+                      onChange={handleChange(plugin.name)}
+                      value={plugin.name}
                       color="primary"
                     />
                   }
-                  label={file.name}
+                  label={plugin.name}
                 />
               </div>
             ))}
@@ -139,7 +136,7 @@ function PluginSelector() {
                 }
               />
             </>
-          </FileList>
+          </PluginList>
         </StyledDialogContent>
 
         <StyledDialogActions>

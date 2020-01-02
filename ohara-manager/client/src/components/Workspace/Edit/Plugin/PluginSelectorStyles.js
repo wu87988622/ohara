@@ -43,13 +43,13 @@ export const StyledDialogActions = styled(DialogActions)(
   `,
 );
 
-export const FileFilter = styled.div(
+export const PluginFilter = styled.div(
   ({ theme }) => css`
     width: ${theme.spacing(30)}px;
   `,
 );
 
-export const FileList = styled.div(
+export const PluginList = styled.div(
   ({ theme }) => css`
     min-height: calc(100vh - ${theme.spacing(40)}px);
     .checkboxes {

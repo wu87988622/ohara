@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { pick, sortBy, isEqual } from 'lodash';
+import { pick, sortBy, some, isEqual } from 'lodash';
 import { hashByGroupAndName } from './sha';
 
 export const getKey = object => pick(object, ['group', 'name']);
@@ -42,3 +42,6 @@ export const hash = object => {
   const key = getKey(object);
   return hashByGroupAndName(key.group, key.name);
 };
+
+export const someByKey = (objects, target) =>
+  some(objects, obj => isEqual(getKey(obj), getKey(target)));

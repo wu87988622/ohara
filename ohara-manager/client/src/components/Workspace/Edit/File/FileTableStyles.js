@@ -21,5 +21,8 @@ export const Wrapper = styled.div(
     .actions {
       margin-bottom: ${theme.spacing(3)}px;
     }
+    .checkIcon {
+      color: ${theme.palette.success.main};
+    }
   `,
 );

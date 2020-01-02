@@ -65,14 +65,12 @@ function PluginCard({ plugin }) {
 
   const getDisplayStatus = status => {
     switch (status) {
-      case 'same':
-        return 'activated';
       case 'add':
         return 'will be added after restart';
       case 'remove':
         return 'will be removed after restart';
       default:
-        return '';
+        return 'activated';
     }
   };
 
