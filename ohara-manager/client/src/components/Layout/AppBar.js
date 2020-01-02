@@ -16,7 +16,6 @@
 
 import React from 'react';
 import { useParams, Link, NavLink } from 'react-router-dom';
-import Tooltip from '@material-ui/core/Tooltip';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -31,6 +30,7 @@ import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
 import { usePrevious } from 'utils/hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { StyledAppBar } from './AppBarStyles';
+import { Tooltip } from 'components/common/Tooltip';
 
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
@@ -75,12 +75,7 @@ const AppBar = () => {
             const displayName = name.substring(0, 2).toUpperCase();
 
             return (
-              <Tooltip
-                key={name}
-                title={name}
-                placement="right"
-                enterDelay={1000}
-              >
+              <Tooltip key={name} title={name} placement="right">
                 <NavLink
                   activeClassName="active-link"
                   className="workspace-name item"
@@ -92,11 +87,7 @@ const AppBar = () => {
             );
           })}
 
-          <Tooltip
-            title="Create a new workspace"
-            placement="right"
-            enterDelay={1000}
-          >
+          <Tooltip title="Create a new workspace" placement="right">
             <div
               className="add-workspace item"
               onClick={() => setIsNewWorkspaceOpen(true)}
@@ -107,7 +98,7 @@ const AppBar = () => {
         </div>
 
         <div className="tools">
-          <Tooltip title="Workspace list" placement="right" enterDelay={1000}>
+          <Tooltip title="Workspace list" placement="right">
             <IconButton
               className="workspace item"
               onClick={openListWorkspacesDialog}
@@ -116,11 +107,13 @@ const AppBar = () => {
             </IconButton>
           </Tooltip>
 
-          <IconButton disabled className="item">
-            <AssignmentIcon />
-          </IconButton>
+          <Tooltip title="Event logs" placement="right">
+            <IconButton disabled className="item">
+              <AssignmentIcon />
+            </IconButton>
+          </Tooltip>
 
-          <Tooltip title="Developer Tools" placement="right" enterDelay={1000}>
+          <Tooltip title="Developer Tools" placement="right">
             <IconButton
               className="item"
               onClick={
@@ -131,7 +124,7 @@ const AppBar = () => {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Node list" placement="right" enterDelay={1000}>
+          <Tooltip title="Node list" placement="right">
             <IconButton
               className="nodes item"
               onClick={() => setIsNodeDialogOpen(true)}

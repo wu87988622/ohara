@@ -16,11 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import Chip from '@material-ui/core/Chip';
 import Grid from '@material-ui/core/Grid';
-import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
+
+import { Tooltip } from 'components/common/Tooltip';
 
 const ServiceItem = ({ name: serviceName, clusterKey, self = false }) => {
   const { name, group } = clusterKey;
@@ -37,11 +37,7 @@ const ServiceItem = ({ name: serviceName, clusterKey, self = false }) => {
         </Grid>
         <Grid item xs={6}>
           <Typography align="right" component="div">
-            <Tooltip
-              title={`${group} / ${name}`}
-              enterDelay={500}
-              placement="right"
-            >
+            <Tooltip title={`${group} / ${name}`} placement="right">
               <span> {name}</span>
             </Tooltip>
           </Typography>

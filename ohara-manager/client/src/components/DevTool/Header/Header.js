@@ -32,12 +32,12 @@ import TextField from '@material-ui/core/TextField';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Tooltip from '@material-ui/core/Tooltip';
 
 import * as logApi from 'api/logApi';
 import DevToolSelect from './DevToolSelect';
 import { tabName } from '../DevToolDialog';
 import { Button } from 'components/common/Form';
+import { Tooltip } from 'components/common/Tooltip';
 import {
   StyledHeader,
   StyledSearchBody,
@@ -220,43 +220,43 @@ const Header = props => {
             anchor={selectAnchor}
           />
 
-          <IconButton
-            className="item"
-            disabled={isButtonDisabled(data)}
-            onClick={handleRefresh}
-            size="small"
-          >
-            <Tooltip title="Fetch the data again" enterDelay={1000}>
+          <Tooltip title="Fetch the data again">
+            <IconButton
+              className="item"
+              disabled={isButtonDisabled(data)}
+              onClick={handleRefresh}
+              size="small"
+            >
               <RefreshIcon />
-            </Tooltip>
-          </IconButton>
+            </IconButton>
+          </Tooltip>
 
-          <IconButton
-            disabled={isButtonDisabled(data)}
-            className="item"
-            onClick={handleSearchClick}
-            size="small"
-          >
-            <Tooltip title="Query with different parameters" enterDelay={1000}>
+          <Tooltip title="Query with different parameters">
+            <IconButton
+              disabled={isButtonDisabled(data)}
+              className="item"
+              onClick={handleSearchClick}
+              size="small"
+            >
               <SearchIcon />
-            </Tooltip>
-          </IconButton>
+            </IconButton>
+          </Tooltip>
 
-          <IconButton
-            className="item"
-            onClick={handleOpenNewWindow}
-            size="small"
-          >
-            <Tooltip title="Open in a new window" enterDelay={1000}>
+          <Tooltip title="Open in a new window">
+            <IconButton
+              className="item"
+              onClick={handleOpenNewWindow}
+              size="small"
+            >
               <OpenInNewIcon />
-            </Tooltip>
-          </IconButton>
+            </IconButton>
+          </Tooltip>
 
-          <IconButton className="item" onClick={closeDialog} size="small">
-            <Tooltip title="Close this panel" enterDelay={1000}>
+          <Tooltip title="Close this panel">
+            <IconButton className="item" onClick={closeDialog} size="small">
               <CloseIcon />
-            </Tooltip>
-          </IconButton>
+            </IconButton>
+          </Tooltip>
 
           <Popover
             open={Boolean(searchAnchor)}

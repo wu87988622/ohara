@@ -31,7 +31,6 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-import Tooltip from '@material-ui/core/Tooltip';
 import { useHistory } from 'react-router-dom';
 import _ from 'lodash';
 
@@ -40,6 +39,7 @@ import { Progress } from 'components/common/Progress';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 import { useDeleteServices } from './ToolbarHooks';
+import { Tooltip } from 'components/common/Tooltip';
 
 const Toolbar = props => {
   const {
@@ -148,22 +148,22 @@ const Toolbar = props => {
       <div className="toolbox-controls">
         <ButtonGroup size="small">
           <Button onClick={() => onToolboxClick('source')}>
-            <Tooltip title="Open Toolbox source panel" enterDelay={1000}>
+            <Tooltip title="Open Toolbox source panel">
               <FlightTakeoffIcon color="action" />
             </Tooltip>
           </Button>
           <Button onClick={() => onToolboxClick('topic')}>
-            <Tooltip title="Open Toolbox topic panel" enterDelay={1000}>
+            <Tooltip title="Open Toolbox topic panel">
               <StorageIcon color="action" />
             </Tooltip>
           </Button>
           <Button onClick={() => onToolboxClick('stream')}>
-            <Tooltip title="Open Toolbox stream panel" enterDelay={1000}>
+            <Tooltip title="Open Toolbox stream panel">
               <WavesIcon color="action" />
             </Tooltip>
           </Button>
           <Button onClick={() => onToolboxClick('sink')}>
-            <Tooltip title="Open Toolbox sink panel" enterDelay={1000}>
+            <Tooltip title="Open Toolbox sink panel">
               <FlightLandIcon color="action" />
             </Tooltip>
           </Button>
@@ -177,7 +177,7 @@ const Toolbar = props => {
               onClick={() => handleZoom(paperScale, 'out')}
               disabled={paperScale <= 0.02}
             >
-              <Tooltip title="Zoom out" enterDelay={1000}>
+              <Tooltip title="Zoom out">
                 <RemoveIcon color="action" />
               </Tooltip>
             </Button>
@@ -193,7 +193,7 @@ const Toolbar = props => {
               onClick={() => handleZoom(paperScale, 'in')}
               disabled={paperScale >= 2}
             >
-              <Tooltip title="Zoom in" enterDelay={1000}>
+              <Tooltip title="Zoom in">
                 <AddIcon color="action" />
               </Tooltip>
             </Button>
@@ -213,37 +213,31 @@ const Toolbar = props => {
         </div>
 
         <div className="fit">
-          <Button
-            onClick={handleFit}
-            variant="outlined"
-            color="default"
-            size="small"
-          >
-            <Tooltip
-              title="Resize the paper to fit the content"
-              enterDelay={1000}
+          <Tooltip title="Resize the paper to fit the content">
+            <Button
+              onClick={handleFit}
+              variant="outlined"
+              color="default"
+              size="small"
             >
               <FullscreenIcon color="action" />
-            </Tooltip>
-          </Button>
+            </Button>
+          </Tooltip>
           <Typography variant="body2">Fit</Typography>
         </div>
 
         <div className="center">
-          <Button
-            onClick={handleCenter}
-            variant="outlined"
-            color="default"
-            size="small"
-            disabled={!hasSelectedCell}
-          >
-            <Tooltip
-              title="Move selected graph to the center"
-              enterDelay={1000}
+          <Tooltip title="Move selected graph to the center">
+            <Button
+              onClick={handleCenter}
+              variant="outlined"
+              color="default"
+              size="small"
+              disabled={!hasSelectedCell}
             >
               <FullscreenExitIcon color="action" />
-            </Tooltip>
-          </Button>
+            </Button>
+          </Tooltip>
           <Typography variant="body2">Center</Typography>
         </div>
       </div>

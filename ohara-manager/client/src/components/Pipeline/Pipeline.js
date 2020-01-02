@@ -162,7 +162,9 @@ const Pipeline = () => {
         </>
       )}
 
-      <IntroDialog />
+      <IntroDialog
+        easyModeText={workspaces.length > 0 ? 'QUICK CREATE' : 'QUICK START'}
+      />
       <NodeDialog />
       <SettingDialog
         open={openSettingDialog}

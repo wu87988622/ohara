@@ -17,12 +17,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { round } from 'lodash';
-
 import Grid from '@material-ui/core/Grid';
-import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import NumberFormat from 'react-number-format';
+
+import { Tooltip } from 'components/common/Tooltip';
 
 const ResourceItem = ({ name, value, unit, used }) => {
   const roundValue = round(value);
@@ -34,11 +34,7 @@ const ResourceItem = ({ name, value, unit, used }) => {
           <Typography>{name}</Typography>
         </Grid>
         <Grid item xs={6}>
-          <Tooltip
-            title={`${roundUsed}% used`}
-            enterDelay={500}
-            placement="right"
-          >
+          <Tooltip title={`${roundUsed}% used`} placement="right">
             <Typography align="right" component="div">
               <NumberFormat
                 value={roundValue}

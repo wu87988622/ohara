@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 import Typography from '@material-ui/core/Typography';
@@ -26,13 +27,10 @@ import Slide from '@material-ui/core/Slide';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
-// Import this logo as a React component
-// https://create-react-app.dev/docs/adding-images-fonts-and-files/#adding-svgs
-import { ReactComponent as Logo } from 'images/logo.svg';
-
 import DrabblePaper from 'components/common/Dialog/DrabblePaper';
-import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import WorkspaceQuick from '../Workspace/WorkspaceQuick';
+import { ReactComponent as Logo } from 'images/logo.svg';
+import { useNewWorkspace } from 'context/NewWorkspaceContext';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -78,9 +76,9 @@ const StyledDialogActions = styled(DialogActions)(
   `,
 );
 
-const MuiDialog = () => {
+const MuiDialog = ({ easyModeText }) => {
   const { isOpen, setIsOpen } = useNewWorkspace();
-  const [quickModeIsOpen, setQuickModeIsOpen] = useState(false);
+  const [quickModeIsOpen, setQuickModeIsOpen] = React.useState(false);
 
   const onClose = () => setIsOpen(false);
 
@@ -126,7 +124,7 @@ const MuiDialog = () => {
             variant="contained"
             autoFocus
           >
-            QUICK START
+            {easyModeText}
           </Button>
           or
           <Button onClick={onClick} color="primary">
@@ -137,6 +135,10 @@ const MuiDialog = () => {
       <WorkspaceQuick open={quickModeIsOpen} handelOpen={handleQuickOpen} />
     </>
   );
+};
+
+MuiDialog.propTypes = {
+  easyModeText: PropTypes.string.isRequired,
 };
 
 export default MuiDialog;

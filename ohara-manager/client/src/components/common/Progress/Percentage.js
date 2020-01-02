@@ -16,9 +16,10 @@
 
 import React from 'react';
 import { isString } from 'lodash';
-import Tooltip from '@material-ui/core/Tooltip';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
+
+import { Tooltip } from 'components/common/Tooltip';
 
 const Percentage = (values, key) => {
   if (!isString(values)) {
