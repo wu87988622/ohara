@@ -62,21 +62,23 @@ const App = () => {
             path="/:workspaceName?/:pipelineName?/view"
             component={DataWindow}
           />
+
           <Container className="container">
             <Route
               exact
               path="/:workspaceName?/:pipelineName?"
               component={AppBar}
             />
+
+            <Route
+              exact
+              path="/:workspaceName?/:pipelineName?"
+              component={Navigator}
+            />
             <Route
               exact
               path="/:workspaceName?/:pipelineName?"
               component={DevToolDialog}
-            />
-            <Route
-              exact
-              path="/:workspaceName/:pipelineName?"
-              component={Navigator}
             />
 
             <Main>

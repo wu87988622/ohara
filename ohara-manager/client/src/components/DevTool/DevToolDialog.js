@@ -24,17 +24,10 @@ import * as streamApi from 'api/streamApi';
 import Header from './Header';
 import Body from './Body';
 import StatusBar from './StatusBar';
-import { hashKey } from 'utils/object';
-import {
-  useApp,
-  useDevToolDialog,
-  useWorkspace,
-  useTopicState,
-  usePipelineState,
-  usePipelineActions,
-} from 'context';
+import * as context from 'context';
 import { usePrevious } from 'utils/hooks';
 import { StyledDevTool } from './DevToolDialogStyles';
+import { hashByGroupAndName } from 'utils/sha';
 
 export const tabName = {
   topic: 'topics',
@@ -96,21 +89,15 @@ const listCache = new CellMeasurerCache({
 });
 
 const DevToolDialog = () => {
-  const { pipelineName } = useApp();
-  const { data: topics } = useTopicState();
-  const {
-    currentWorkspace,
-    currentWorker,
-    currentBroker,
-    currentZookeeper,
-  } = useWorkspace();
-
   const [tabIndex, setTabIndex] = useState('topics');
-  const { isOpen, close: closeDialog } = useDevToolDialog();
-
-  const { selectedCell } = usePipelineState();
-  const { setSelectedCell } = usePipelineActions();
   const [data, setDataDispatch] = useReducer(reducer, initialState);
+
+  const { pipelineName, workspaceName } = context.useApp();
+  const { data: topics } = context.useTopicState();
+  const { currentWorkspace } = context.useWorkspace();
+  const { isOpen, close: closeDialog } = context.useDevToolDialog();
+  const { selectedCell } = context.usePipelineState();
+  const { setSelectedCell } = context.usePipelineActions();
 
   const getService = classType => {
     if (classType === 'source' || classType === 'sink') return 'worker';
@@ -153,9 +140,18 @@ const DevToolDialog = () => {
   const fetchTopicData = useCallback(
     async (topicLimit = 10) => {
       setDataDispatch({ isLoading: true });
+
+      // We're displaying private topic names by using their displayNames
+      // However, they're stored in the backend by their names, so we need to
+      // A quick swap here.
+      const privateTopic =
+        // Only private topics are able to use capital letters as name
+        data.topicName.startsWith('T') &&
+        topics.find(topic => topic.tags.displayName === data.topicName);
+
       const response = await inspectApi.getTopicData({
-        name: data.topicName,
-        group: hashKey(currentWorkspace),
+        name: privateTopic ? privateTopic.name : data.topicName,
+        group: hashByGroupAndName('workspace', workspaceName),
         limit: topicLimit,
         timeout: 5000,
       });
@@ -171,7 +167,7 @@ const DevToolDialog = () => {
       }
       setDataDispatch({ isLoading: false });
     },
-    [data.topicName, currentWorkspace],
+    [data.topicName, topics, workspaceName],
   );
 
   const prevTopicName = usePrevious(data.topicName);
@@ -189,14 +185,6 @@ const DevToolDialog = () => {
     prevTopicName,
   ]);
 
-  const zookeeperName = get(currentZookeeper, 'settings.name', '');
-  const zookeeperGroup = get(currentZookeeper, 'settings.group', '');
-  const brokerName = get(currentBroker, 'settings.name', '');
-  const brokerGroup = get(currentBroker, 'settings.group', '');
-  const workerName = get(currentWorker, 'settings.name', '');
-  const workerGroup = get(currentWorker, 'settings.group', '');
-  const workspaceName = get(currentWorkspace, 'settings.name', '');
-
   const fetchLogs = useCallback(
     async (timeSeconds = 600, hostname = '') => {
       let response;
@@ -209,30 +197,33 @@ const DevToolDialog = () => {
           break;
         case 'zookeeper':
           response = await logApi.getZookeeperLog({
-            name: zookeeperName,
-            group: zookeeperGroup,
+            name: workspaceName,
+            group: 'zookeeper',
             sinceSeconds: timeSeconds,
           });
           break;
         case 'broker':
           response = await logApi.getBrokerLog({
-            name: brokerName,
-            group: brokerGroup,
+            name: workspaceName,
+            group: 'broker',
             sinceSeconds: timeSeconds,
           });
+
           break;
         case 'worker':
           response = await logApi.getWorkerLog({
-            name: workerName,
-            group: workerGroup,
+            name: workspaceName,
+            group: 'worker',
             sinceSeconds: timeSeconds,
           });
           break;
         case 'stream':
+          const pipelineGroup = hashByGroupAndName('workspace', workspaceName);
+
           if (data.stream && pipelineName) {
             response = await logApi.getStreamLog({
               name: data.stream,
-              group: workspaceName + pipelineName,
+              group: hashByGroupAndName(pipelineGroup, pipelineName),
               sinceSeconds: timeSeconds,
             });
           }
@@ -267,32 +258,23 @@ const DevToolDialog = () => {
 
       setDataDispatch({ isLoading: false });
     },
-    [
-      brokerGroup,
-      brokerName,
-      data.service,
-      data.stream,
-      pipelineName,
-      workerGroup,
-      workerName,
-      workspaceName,
-      zookeeperGroup,
-      zookeeperName,
-    ],
+    [data.service, data.stream, pipelineName, workspaceName],
   );
 
   const fetchStreams = useCallback(async () => {
     if (!isEmpty(currentWorkspace) && !isEmpty(pipelineName)) {
+      const pipelineGroup = hashByGroupAndName('workspace', workspaceName);
+
       const streamInfos = await streamApi.getAll({
-        group: currentWorkspace.settings.name + pipelineName,
+        group: hashByGroupAndName(pipelineGroup, pipelineName),
       });
       if (!streamInfos.errors) {
         setDataDispatch({
-          streams: streamInfos.data.map(info => info.settings.name),
+          streams: streamInfos.data.map(info => info.name),
         });
       }
     }
-  }, [currentWorkspace, pipelineName]);
+  }, [currentWorkspace, pipelineName, workspaceName]);
 
   useEffect(() => {
     if (isEmpty(currentWorkspace)) return;

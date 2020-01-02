@@ -21,6 +21,7 @@ export * from 'context/configurator/ConfiguratorContext';
 export * from 'context/connector/ConnectorContext';
 export * from 'context/dialog/DialogContext';
 export * from 'context/file/FileContext';
+export * from 'context/log/LogContext';
 export * from 'context/node/NodeContext';
 export * from 'context/pipeline/PipelineContext';
 export * from 'context/stream/StreamContext';

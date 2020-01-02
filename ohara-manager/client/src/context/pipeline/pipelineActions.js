@@ -110,8 +110,8 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
-    setSelectedCell: cellName => {
-      dispatch(routines.setSelectedCellRoutine.trigger(cellName));
+    setSelectedCell: cell => {
+      dispatch(routines.setSelectedCellRoutine.trigger(cell));
     },
   };
 };

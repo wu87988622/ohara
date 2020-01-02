@@ -123,9 +123,16 @@ const Header = props => {
 
   const handleOpenNewWindow = () => {
     if (tabIndex === tabName.topic) {
+      const privateTopic =
+        // Only private topics are able to use capital letters as name
+        data.topicName.startsWith('T') &&
+        topics.find(topic => topic.tags.displayName === data.topicName);
+
       if (data.topicName)
         window.open(
-          `${window.location}/view?type=${tabName.topic}&topic=${data.topicName}&limit=${data.topicLimit}`,
+          `${window.location}/view?type=${tabName.topic}&topic=${
+            privateTopic ? privateTopic.name : data.topicName
+          }&limit=${data.topicLimit}`,
         );
     } else {
       if (data.hostLog) {
@@ -138,7 +145,7 @@ const Header = props => {
     }
   };
 
-  const isButtonDisabled = data => {
+  const getDisableState = data => {
     const { type, topicName, service, isLoading, stream } = data;
 
     // true -> disabled
@@ -182,9 +189,15 @@ const Header = props => {
             currentTab={tabIndex}
             value={data.topicName}
             onChange={event => handleSelect(event, 'topicName')}
-            list={topics.map(topic => topic.settings.name)}
+            list={topics.map(topic => {
+              // Private topic names are stored in tags, the name field is randomly generated.
+              return topic.tags.type === 'shared'
+                ? topic.name
+                : topic.tags.displayName;
+            })}
             setAnchor={handleSelectAnchor}
             anchor={selectAnchor}
+            disabled={data.isLoading}
           />
           <DevToolSelect
             index={tabName.log}
@@ -194,6 +207,7 @@ const Header = props => {
             list={Object.keys(logApi.services)}
             setAnchor={handleSelectAnchor}
             anchor={selectAnchor}
+            disabled={data.isLoading}
           />
           {data.service === 'stream' && (
             <DevToolSelect
@@ -204,12 +218,15 @@ const Header = props => {
               list={data.streams}
               setAnchor={handleSelectAnchor}
               anchor={selectAnchor}
+              disabled={data.isLoading}
             />
           )}
 
           <DevToolSelect
             disabled={
-              !data.service || (data.service === 'stream' && !data.stream)
+              !data.service ||
+              (data.service === 'stream' && !data.stream) ||
+              data.isLoading
             }
             index={tabName.log}
             currentTab={tabIndex}
@@ -223,7 +240,7 @@ const Header = props => {
           <Tooltip title="Fetch the data again">
             <IconButton
               className="item"
-              disabled={isButtonDisabled(data)}
+              disabled={getDisableState(data)}
               onClick={handleRefresh}
               size="small"
             >
@@ -233,7 +250,7 @@ const Header = props => {
 
           <Tooltip title="Query with different parameters">
             <IconButton
-              disabled={isButtonDisabled(data)}
+              disabled={getDisableState(data)}
               className="item"
               onClick={handleSearchClick}
               size="small"
@@ -247,6 +264,7 @@ const Header = props => {
               className="item"
               onClick={handleOpenNewWindow}
               size="small"
+              disabled={data.type === 'topics' && !data.topicName}
             >
               <OpenInNewIcon />
             </IconButton>

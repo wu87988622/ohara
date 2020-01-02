@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
 import React, { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
-
+import { isEmpty } from 'lodash';
+import { useLocation, useParams } from 'react-router-dom';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { WindowScroller } from 'react-virtualized/dist/commonjs/WindowScroller';
 
-import { useWorkspace } from 'context';
-import DataTable from './DataTable';
 import * as inspectApi from 'api/inspectApi';
 import * as logApi from 'api/logApi';
-import * as brokerApi from 'api/brokerApi';
-
+import DataTable from './DataTable';
 import { tabName } from '../DevToolDialog';
-import { hashKey } from 'utils/object';
+import { hashByGroupAndName } from 'utils/sha';
+import { useSnackbar } from 'context';
 
 // the react-virtualized <List> cached row style
 const cache = new CellMeasurerCache({
@@ -36,14 +34,15 @@ const cache = new CellMeasurerCache({
   fixedWidth: true,
 });
 
-const DataWindow = props => {
-  const { location } = props;
-  const searchParams = new URLSearchParams(location.search);
-  const { currentWorkspace } = useWorkspace();
+const DataWindow = () => {
+  const location = useLocation();
+  const { workspaceName, pipelineName } = useParams();
 
+  const searchParams = new URLSearchParams(location.search);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [topicResult, setTopicResult] = useState([]);
   const [logData, setLogData] = useState([]);
+  const showMessage = useSnackbar();
 
   const type = searchParams.get('type') || '';
 
@@ -56,7 +55,6 @@ const DataWindow = props => {
   const hostname = searchParams.get('hostname') || '';
   const timeSeconds = searchParams.get('timeSeconds') || '';
   const stream = searchParams.get('stream') || '';
-  const pipelineName = searchParams.get('pipelineName') || '';
 
   const fetchTopicData = useCallback(async () => {
     if (type !== tabName.topic) return;
@@ -64,7 +62,7 @@ const DataWindow = props => {
     let data = [];
     const response = await inspectApi.getTopicData({
       name: topicName,
-      group: hashKey(currentWorkspace),
+      group: hashByGroupAndName('workspace', workspaceName),
       limit: topicLimit,
       timeout: topicTimeout,
     });
@@ -79,79 +77,88 @@ const DataWindow = props => {
 
     setTopicResult(data);
     setIsLoadingData(false);
-  }, [type, topicName, topicLimit, topicTimeout, currentWorkspace]);
+  }, [type, topicName, workspaceName, topicLimit, topicTimeout]);
 
   useEffect(() => {
-    if (!topicName || !currentWorkspace) return;
+    if (!topicName) return;
     fetchTopicData();
-  }, [topicName, currentWorkspace, fetchTopicData]);
-
-  const fetchLogs = useCallback(async () => {
-    let response = {};
-    setIsLoadingData(true);
-    switch (service) {
-      case 'configurator':
-        response = await logApi.getConfiguratorLog({
-          sinceSeconds: timeSeconds,
-        });
-        break;
-      case 'zookeeper':
-        const bkInfo = await brokerApi.get(
-          currentWorkspace.settings.brokerClusterKey,
-        );
-        if (!bkInfo.errors) {
-          response = await logApi.getZookeeperLog({
-            name: bkInfo.data.settings.zookeeperClusterKey.name,
-            group: bkInfo.data.settings.zookeeperClusterKey.group,
-            sinceSeconds: timeSeconds,
-          });
-        }
-        break;
-      case 'broker':
-        response = await logApi.getBrokerLog({
-          name: currentWorkspace.settings.brokerClusterKey.name,
-          group: currentWorkspace.settings.brokerClusterKey.group,
-          sinceSeconds: timeSeconds,
-        });
-        break;
-      case 'worker':
-        response = await logApi.getWorkerLog({
-          name: currentWorkspace.settings.name,
-          group: currentWorkspace.settings.group,
-          sinceSeconds: timeSeconds,
-        });
-        break;
-      case 'stream':
-        if (!isEmpty(stream) && !isEmpty(pipelineName)) {
-          response = await logApi.getStreamLog({
-            name: stream,
-            group: currentWorkspace.settings.name + pipelineName,
-            sinceSeconds: timeSeconds,
-          });
-        }
-        break;
-      default:
-    }
-    if (!response.errors) {
-      const result = response.data.logs
-        // the hostname log should be unique, it is OK to "filter" the result
-        .filter(log => log.hostname === hostname)
-        .map(log => log.value.split('\n'));
-      if (!isEmpty(result)) {
-        setLogData(result[0]);
-      }
-    }
-    setIsLoadingData(false);
-  }, [service, hostname, stream, timeSeconds, currentWorkspace, pipelineName]);
+  }, [topicName, fetchTopicData]);
 
   useEffect(() => {
-    if (isEmpty(service) || !currentWorkspace) return;
+    if (isEmpty(service)) return;
+
+    const fetchLogs = async () => {
+      let response;
+      setIsLoadingData(true);
+      switch (service) {
+        case 'configurator':
+          response = await logApi.getConfiguratorLog({
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'zookeeper':
+          response = await logApi.getZookeeperLog({
+            name: workspaceName,
+            group: 'zookeeper',
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'broker':
+          response = await logApi.getBrokerLog({
+            name: workspaceName,
+            group: 'broker',
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'worker':
+          response = await logApi.getWorkerLog({
+            name: workspaceName,
+            group: 'worker',
+            sinceSeconds: timeSeconds,
+          });
+          break;
+        case 'stream':
+          const pipelineGroup = hashByGroupAndName('workspace', workspaceName);
+          if (!isEmpty(stream) && !isEmpty(pipelineName)) {
+            response = await logApi.getStreamLog({
+              name: stream,
+              group: hashByGroupAndName(pipelineGroup, pipelineName),
+              sinceSeconds: timeSeconds,
+            });
+          }
+          break;
+        default:
+      }
+
+      showMessage(response.title);
+      setIsLoadingData(false);
+
+      if (response && !response.errors) {
+        const result = response.data.logs
+          // the hostname log should be unique, it is OK to "filter" the result
+          .filter(log => log.hostname === hostname)
+          .map(log => log.value.split('\n'));
+
+        if (!isEmpty(result)) setLogData(result[0]);
+        return;
+      }
+
+      response.errors && showMessage(response.title);
+    };
 
     fetchLogs();
-  }, [service, currentWorkspace, fetchLogs]);
+  }, [
+    hostname,
+    pipelineName,
+    service,
+    showMessage,
+    stream,
+    timeSeconds,
+    workspaceName,
+  ]);
 
   // we don't generate the data view if no query parameters existed
-  if (!currentWorkspace || !location.search) return null;
+  if (!workspaceName || !pipelineName || !location.search) return null;
 
   switch (type) {
     case tabName.topic:
