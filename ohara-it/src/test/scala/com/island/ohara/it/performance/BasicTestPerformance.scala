@@ -220,7 +220,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     * This function is after get metrics data, you can run other operating.
     * example delete data.
     */
-  protected def afterStoppingConnector(): Unit = {}
+  protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit = {}
 
   //------------------------------[core functions]------------------------------//
 
@@ -250,7 +250,8 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       )
 
     // record topic meters
-    recordCsv(path("topic"), result(topicApi.list()).flatMap(_.metrics.meters))
+    val topicInfos = result(topicApi.list())
+    recordCsv(path("topic"), topicInfos.flatMap(_.metrics.meters))
 
     // Have setup connector on the worker.
     // Need to stop the connector on the worker.
@@ -265,7 +266,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
         )
     )
 
-    afterStoppingConnector()
+    afterStoppingConnectors(connectorInfos, topicInfos)
   }
 
   private[this] def recordCsv(file: File, meters: Seq[Meter]): Unit =
