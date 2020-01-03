@@ -24,17 +24,17 @@ const Tabs = {
 };
 
 const SubTabs = {
-  SETTINGS: Symbol(),
-  PLUGINS: Symbol(),
-  NODES: Symbol(),
-  NONE: Symbol(),
+  SETTINGS: 'settings',
+  PLUGINS: 'plugins',
+  NODES: 'nodes',
+  NONE: 'none',
 };
 
 const Segments = {
-  WORKER: Symbol(),
-  BROKER: Symbol(),
-  ZOOKEEPER: Symbol(),
-  NONE: Symbol(),
+  WORKER: 'worker',
+  BROKER: 'broker',
+  ZOOKEEPER: 'zookeeper',
+  NONE: 'none',
 };
 
 export { EditWorkspace, Tabs, SubTabs, Segments };

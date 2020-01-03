@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react';
-import { get, isEmpty } from 'lodash';
+import { get } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -32,6 +32,7 @@ import NumberFormat from 'react-number-format';
 
 import { useViewTopicDialog, useTopicState, useTopicActions } from 'context';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
+import TopicChip from './TopicChip';
 import { Wrapper } from './ViewTopicDialogStyles';
 
 const ViewTopicDialog = () => {
@@ -52,8 +53,9 @@ const ViewTopicDialog = () => {
     closeDialog();
   };
 
-  const topicName = get(topic, 'name', '');
+  const displayName = get(topic, 'displayName');
   const usedByPipelines = []; // TODO: fetch pipelines
+  const isShared = get(topic, 'isShared');
 
   return (
     <FullScreenDialog
@@ -68,22 +70,22 @@ const ViewTopicDialog = () => {
             <Typography component="h2" variant="overline" gutterBottom>
               Topics
             </Typography>
-            <Typography component="h1" variant="h3">
-              {topicName}
+            <Typography component="div" variant="h3">
+              {displayName}
             </Typography>
           </Grid>
           <Grid item>
             <Button
               variant="outlined"
               color="secondary"
-              disabled={isEmpty(topicName) || !isEmpty(usedByPipelines)}
+              disabled={isShared}
               onClick={() => setIsConfirmOpen(true)}
             >
               Delete
             </Button>
             <DeleteDialog
               title="Delete topic?"
-              content={`Are you sure you want to delete the topic: ${topicName} ? This action cannot be undone!`}
+              content={`Are you sure you want to delete the topic: ${displayName} ? This action cannot be undone!`}
               open={isConfirmOpen}
               handleClose={() => setIsConfirmOpen(false)}
               handleConfirm={handleDelete}
@@ -101,7 +103,7 @@ const ViewTopicDialog = () => {
                   <TableBody>
                     <TableRow>
                       <TableCell>Name</TableCell>
-                      <TableCell>{topicName}</TableCell>
+                      <TableCell>{displayName}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Partitions</TableCell>
@@ -117,7 +119,9 @@ const ViewTopicDialog = () => {
                     </TableRow>
                     <TableRow>
                       <TableCell>Type</TableCell>
-                      <TableCell>{}</TableCell>
+                      <TableCell>
+                        <TopicChip isShared={isShared} />
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>State</TableCell>
@@ -128,7 +132,7 @@ const ViewTopicDialog = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={8}>
             <Card>
               <CardHeader title="Metrics" />
               <Divider />
@@ -162,29 +166,32 @@ const ViewTopicDialog = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={4}>
-            <Card>
-              <CardHeader title="Used by pipelines" />
-              <Divider />
-              <CardContent>
-                <Table>
-                  <TableBody>
-                    {usedByPipelines.map(pipeline => {
-                      const pipelineName = get(pipeline, 'name');
-                      return (
-                        <TableRow>
-                          <TableCell>{pipelineName}</TableCell>
-                          <TableCell align="right">
-                            <Link>Open</Link>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </Grid>
+          {/* Completed in the next version, so hide it first */}
+          {false && (
+            <Grid item xs={4}>
+              <Card>
+                <CardHeader title="Used by pipelines" />
+                <Divider />
+                <CardContent>
+                  <Table>
+                    <TableBody>
+                      {usedByPipelines.map(pipeline => {
+                        const pipelineName = get(pipeline, 'name');
+                        return (
+                          <TableRow>
+                            <TableCell>{pipelineName}</TableCell>
+                            <TableCell align="right">
+                              <Link>Open</Link>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
         </Grid>
       </Wrapper>
     </FullScreenDialog>

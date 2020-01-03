@@ -30,9 +30,11 @@ export const useTopics = () => {
 
   return useMemo(() => {
     return topics.map(topic => {
+      const isShared = get(topic, 'tags.type') === 'shared';
       return {
         ...topic,
-        isShared: get(topic, 'tags.type') === 'shared',
+        isShared,
+        displayName: isShared ? topic.name : get(topic, 'tags.displayName'),
       };
     });
   }, [topics]);

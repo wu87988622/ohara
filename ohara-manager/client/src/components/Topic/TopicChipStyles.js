@@ -18,11 +18,21 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
-    .filters {
-      margin-bottom: ${theme.spacing(3)}px;
+    .shared {
+      color: ${theme.palette.success.main};
+      border: 1px solid ${theme.palette.success.main};
+    }
 
-      .checkboxes {
-        margin-left: ${theme.spacing(3)}px;
+    .private {
+      color: ${theme.palette.warning.main};
+      border: 1px solid ${theme.palette.warning.main};
+    }
+
+    .MuiChip-root {
+      border-radius: ${theme.spacing(0.5)}px;
+
+      .MuiSvgIcon-root {
+        font-size: 1rem;
       }
     }
   `,

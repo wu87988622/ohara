@@ -18,14 +18,11 @@ import React, { useMemo, useState } from 'react';
 import { get, filter, isEmpty, map } from 'lodash';
 
 import Checkbox from '@material-ui/core/Checkbox';
-import Chip from '@material-ui/core/Chip';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
-import LockIcon from '@material-ui/icons/LockOutlined';
-import ShareIcon from '@material-ui/icons/Share';
 
 import { useViewTopicDialog } from 'context';
 import { Table } from 'components/common/Table';
@@ -34,6 +31,7 @@ import { QuickSearch } from 'components/common/Search';
 import ViewTopicDialog from './ViewTopicDialog';
 import { useTopics } from './hooks';
 import { Wrapper } from './TopicListStyles';
+import TopicChip from './TopicChip';
 import { someByKey } from 'utils/object';
 
 const CHECKBOXES = {
@@ -71,7 +69,8 @@ function TopicList() {
     'Name',
     'Partitions',
     'Replications',
-    'Used by pipelines',
+    // Completed in the next version, so hide it first
+    // 'Used by pipelines',
     'Type',
     'State',
     'Actions',
@@ -102,19 +101,13 @@ function TopicList() {
         {map(filteredTopics, topic => {
           return (
             <TableRow key={get(topic, 'name')}>
-              <TableCell>{get(topic, 'name')}</TableCell>
+              <TableCell>{get(topic, 'displayName')}</TableCell>
               <TableCell>{get(topic, 'numberOfPartitions', 0)}</TableCell>
               <TableCell>{get(topic, 'numberOfReplications', 0)}</TableCell>
-              <TableCell></TableCell>
+              {/* Completed in the next version, so hide it first */}
+              {/* <TableCell></TableCell> */}
               <TableCell>
-                <Chip
-                  variant="outlined"
-                  size="small"
-                  icon={topic.isShared ? <ShareIcon /> : <LockIcon />}
-                  label={topic.isShared ? 'Shared' : 'Private'}
-                  color={topic.isShared ? 'primary' : 'secondary'}
-                  className={topic.isShared ? 'shared' : 'private'}
-                />
+                <TopicChip isShared={topic.isShared} />
               </TableCell>
               <TableCell>{get(topic, 'state', 'Unknown')}</TableCell>
               <TableCell align="right">
