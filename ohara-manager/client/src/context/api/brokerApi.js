@@ -20,11 +20,10 @@ import * as objectApi from 'api/objectApi';
 import * as brokerApi from 'api/brokerApi';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
-import { BROKER, ZOOKEEPER } from './index';
 
 export const createApi = context => {
-  const { showMessage } = context;
-  const group = BROKER;
+  const { brokerGroup: group, zookeeperGroup, showMessage } = context;
+
   return {
     fetchAll: async () => {
       const params = { group };
@@ -68,7 +67,10 @@ export const createApi = context => {
     create: async values => {
       try {
         validate(values);
-        const zookeeperClusterKey = { group: ZOOKEEPER, name: values.name };
+        const zookeeperClusterKey = {
+          group: zookeeperGroup,
+          name: values.name,
+        };
         const ensuredValues = { ...values, group, zookeeperClusterKey };
         const res = await brokerApi.create(ensuredValues);
         if (res.errors) throw new Error(res.title);

@@ -20,11 +20,9 @@ import * as objectApi from 'api/objectApi';
 import * as zookeeperApi from 'api/zookeeperApi';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
-import { ZOOKEEPER } from './index';
 
 export const createApi = context => {
-  const { showMessage } = context;
-  const group = ZOOKEEPER;
+  const { zookeeperGroup: group, showMessage } = context;
 
   return {
     fetchAll: async () => {

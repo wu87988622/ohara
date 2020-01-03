@@ -17,16 +17,15 @@
 import { get, map, merge } from 'lodash';
 import * as routines from './pipelineRoutines';
 import * as action from 'utils/action';
-import { hashByGroupAndName } from 'utils/sha';
-import { WORKSPACE } from 'context/api';
 
 export const createActions = context => {
   const {
     state,
     dispatch,
     pipelineApi,
-    workspaceName,
     currentPipeline,
+    streamGroup,
+    topicGroup,
   } = context;
   return {
     fetchPipelines: async () => {
@@ -72,13 +71,10 @@ export const createActions = context => {
               case 'source':
               case 'sink':
               case 'stream':
-                group = hashByGroupAndName(
-                  currentPipeline.group,
-                  currentPipeline.name,
-                );
+                group = streamGroup;
                 break;
               case 'topic':
-                group = hashByGroupAndName(WORKSPACE, workspaceName);
+                group = topicGroup;
                 break;
               default:
                 break;

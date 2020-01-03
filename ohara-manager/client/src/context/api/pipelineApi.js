@@ -15,16 +15,14 @@
  */
 
 import { isEmpty } from 'lodash';
-import { hashByGroupAndName } from 'utils/sha';
 import * as pipelineApi from 'api/pipelineApi';
 import { validate } from './utils';
-import { WORKSPACE } from './index';
 
 export const createApi = context => {
-  const { workspaceName, showMessage } = context;
-  if (!workspaceName) return;
+  const { pipelineGroup, showMessage } = context;
+  if (!pipelineGroup) return;
 
-  const group = hashByGroupAndName(WORKSPACE, workspaceName);
+  const group = pipelineGroup;
   return {
     fetchAll: async () => {
       const params = { group };

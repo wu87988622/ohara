@@ -18,11 +18,10 @@ import { map, omit, values } from 'lodash';
 import * as objectApi from 'api/objectApi';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
-import { WORKSPACE } from './index';
 
 export const createApi = context => {
-  const { showMessage } = context;
-  const group = WORKSPACE;
+  const { workspaceGroup: group, showMessage } = context;
+
   return {
     fetchAll: async () => {
       const res = await objectApi.getAll({ group });

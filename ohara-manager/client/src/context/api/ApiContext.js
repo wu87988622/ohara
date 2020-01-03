@@ -35,7 +35,7 @@ import { createApi as createStreamApi } from './streamApi';
 const ApiContext = createContext();
 
 const ApiProvider = ({ children }) => {
-  const { workspaceName, pipelineName } = useApp();
+  const { workspaceName, pipelineName, groups } = useApp();
   const showMessage = useSnackbar();
 
   const [brokerApi, setBrokerApi] = useState();
@@ -54,6 +54,7 @@ const ApiProvider = ({ children }) => {
     const context = {
       workspaceName,
       pipelineName,
+      ...groups,
       showMessage,
     };
     setBrokerApi(createBrokerApi(context));
@@ -67,7 +68,7 @@ const ApiProvider = ({ children }) => {
     setWorkerApi(createWorkerApi(context));
     setWorkspaceApi(createWorkspaceApi(context));
     setZookeeperApi(createZookeeperApi(context));
-  }, [workspaceName, pipelineName, showMessage]);
+  }, [workspaceName, pipelineName, groups, showMessage]);
 
   return (
     <ApiContext.Provider

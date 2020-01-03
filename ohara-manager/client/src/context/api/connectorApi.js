@@ -19,8 +19,6 @@ import * as connectorApi from 'api/connectorApi';
 import * as objectApi from 'api/objectApi';
 import * as inspectApi from 'api/inspectApi';
 import { generateClusterResponse } from './utils';
-import { WORKER, WORKSPACE } from './index';
-import { hashByGroupAndName } from 'utils/sha';
 
 const validateName = values => {
   if (!has(values, 'name'))
@@ -33,12 +31,11 @@ const validateClassName = values => {
 };
 
 export const createApi = context => {
-  const { workspaceName, pipelineName, showMessage } = context;
-  if (!workspaceName || !pipelineName) return;
+  const { connectorGroup, workerGroup, workspaceName, showMessage } = context;
+  if (!connectorGroup || !workerGroup || !workspaceName) return;
 
-  const pipelineGroup = hashByGroupAndName(WORKSPACE, workspaceName);
-  const group = hashByGroupAndName(pipelineGroup, pipelineName);
-  const workerClusterKey = { group: WORKER, name: workspaceName };
+  const group = connectorGroup;
+  const workerClusterKey = { group: workerGroup, name: workspaceName };
 
   const getDefinition = async className => {
     const workerInfo = await inspectApi.getWorkerInfo(workerClusterKey);

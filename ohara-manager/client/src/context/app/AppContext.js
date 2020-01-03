@@ -14,14 +14,40 @@
  * limitations under the License.
  */
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { hashByGroupAndName } from 'utils/sha';
+import { BROKER, WORKER, WORKSPACE, ZOOKEEPER } from 'context/api';
 
 const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
-  const [workspaceName, setWorkspaceName] = useState();
-  const [pipelineName, setPipelineName] = useState();
+  const [workspaceName, setWorkspaceName] = useState(null);
+  const [pipelineName, setPipelineName] = useState(null);
+
+  const [connectorGroup, setConnectorGroup] = useState(null);
+  const [fileGroup, setFileGroup] = useState(null);
+  const [pipelineGroup, setPipelineGroup] = useState(null);
+  const [streamGroup, setStreamGroup] = useState(null);
+  const [topicGroup, setTopicGroup] = useState(null);
+
+  useEffect(() => {
+    const group = workspaceName
+      ? hashByGroupAndName(WORKSPACE, workspaceName)
+      : null;
+    setFileGroup(group);
+    setPipelineGroup(group);
+    setTopicGroup(group);
+  }, [workspaceName]);
+
+  useEffect(() => {
+    const group =
+      pipelineGroup && pipelineName
+        ? hashByGroupAndName(pipelineGroup, pipelineName)
+        : null;
+    setConnectorGroup(group);
+    setStreamGroup(group);
+  }, [pipelineGroup, pipelineName]);
 
   return (
     <AppContext.Provider
@@ -30,6 +56,17 @@ const AppProvider = ({ children }) => {
         setWorkspaceName,
         pipelineName,
         setPipelineName,
+        groups: {
+          brokerGroup: BROKER,
+          connectorGroup,
+          fileGroup,
+          pipelineGroup,
+          streamGroup,
+          topicGroup,
+          workerGroup: WORKER,
+          workspaceGroup: WORKSPACE,
+          zookeeperGroup: ZOOKEEPER,
+        },
       }}
     >
       {children}

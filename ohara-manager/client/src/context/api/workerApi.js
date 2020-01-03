@@ -20,11 +20,10 @@ import * as objectApi from 'api/objectApi';
 import * as workerApi from 'api/workerApi';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
-import { WORKER, BROKER } from './index';
 
 export const createApi = context => {
-  const { showMessage } = context;
-  const group = WORKER;
+  const { workerGroup: group, brokerGroup, showMessage } = context;
+
   return {
     fetchAll: async () => {
       const params = { group };
@@ -68,7 +67,7 @@ export const createApi = context => {
     create: async values => {
       try {
         validate(values);
-        const brokerClusterKey = { group: BROKER, name: values.name };
+        const brokerClusterKey = { group: brokerGroup, name: values.name };
         const ensuredValues = { ...values, group, brokerClusterKey };
         const res = await workerApi.create(ensuredValues);
         if (res.errors) throw new Error(res.title);

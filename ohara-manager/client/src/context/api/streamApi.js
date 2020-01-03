@@ -18,9 +18,7 @@ import { isEmpty, has, map } from 'lodash';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as streamApi from 'api/streamApi';
-import { hashByGroupAndName } from 'utils/sha';
 import { generateClusterResponse, validate } from './utils';
-import { BROKER, WORKSPACE } from './index';
 
 const validateJarKey = values => {
   if (!has(values, 'jarKey'))
@@ -28,12 +26,11 @@ const validateJarKey = values => {
 };
 
 export const createApi = context => {
-  const { workspaceName, pipelineName, showMessage } = context;
-  if (!workspaceName || !pipelineName) return;
+  const { brokerGroup, streamGroup, workspaceName, showMessage } = context;
+  if (!brokerGroup || !streamGroup || !workspaceName) return;
 
-  const pipelineGroup = hashByGroupAndName(WORKSPACE, workspaceName);
-  const group = hashByGroupAndName(pipelineGroup, pipelineName);
-  const brokerClusterKey = { group: BROKER, name: workspaceName };
+  const group = streamGroup;
+  const brokerClusterKey = { group: brokerGroup, name: workspaceName };
   return {
     fetchAll: async () => {
       const params = { group };

@@ -17,12 +17,10 @@
 import { isEmpty } from 'lodash';
 import * as logApi from 'api/logApi';
 import { validate } from './utils';
-import { hashByGroupAndName } from 'utils/sha';
-import { WORKER, BROKER, ZOOKEEPER } from './index';
 
 export const createApi = context => {
-  const { workspaceName, pipelineName } = context;
-  if (!workspaceName || !pipelineName) return;
+  const { brokerGroup, streamGroup, workerGroup, zookeeperGroup } = context;
+  if (!brokerGroup || !streamGroup || !workerGroup || !zookeeperGroup) return;
 
   return {
     fetchConfigurator: async values => {
@@ -35,7 +33,7 @@ export const createApi = context => {
     },
     fetchZookeeper: async values => {
       validate(values);
-      const params = { ...values, group: ZOOKEEPER };
+      const params = { ...values, group: zookeeperGroup };
       const res = await logApi.getZookeeperLog(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
@@ -44,7 +42,7 @@ export const createApi = context => {
     },
     fetchBroker: async values => {
       validate(values);
-      const params = { ...values, group: BROKER };
+      const params = { ...values, group: brokerGroup };
       const res = await logApi.getBrokerLog(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
@@ -53,7 +51,7 @@ export const createApi = context => {
     },
     fetchWorker: async values => {
       validate(values);
-      const params = { ...values, group: WORKER };
+      const params = { ...values, group: workerGroup };
       const res = await logApi.getWorkerLog(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
@@ -61,9 +59,8 @@ export const createApi = context => {
       return res.data;
     },
     fetchStream: async values => {
-      const group = hashByGroupAndName(workspaceName, pipelineName);
       validate(values);
-      const params = { ...values, group };
+      const params = { ...values, group: streamGroup };
       const res = await logApi.getStreamLog(params);
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);

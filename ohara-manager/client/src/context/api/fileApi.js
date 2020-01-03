@@ -17,15 +17,14 @@
 import { isEmpty } from 'lodash';
 import * as fileApi from 'api/fileApi';
 import { validate } from './utils';
-import { hashByGroupAndName } from 'utils/sha';
-import { WORKSPACE } from './index';
 
 export const createApi = context => {
-  const { workspaceName, showMessage } = context;
-  if (!workspaceName) return;
+  const { fileGroup, workspaceGroup, workspaceName, showMessage } = context;
+  if (!fileGroup || !workspaceGroup || !workspaceName) return;
 
-  const group = hashByGroupAndName(WORKSPACE, workspaceName);
-  const parentKey = { group: WORKSPACE, name: workspaceName };
+  const group = fileGroup;
+  const parentKey = { group: workspaceGroup, name: workspaceName };
+
   return {
     fetchAll: async () => {
       const params = { group };

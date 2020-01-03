@@ -76,14 +76,14 @@ const usePipelineActions = () => {
   const state = usePipelineState();
   const dispatch = usePipelineDispatch();
   const { pipelineApi } = useApi();
-  const { workspaceName } = useApp();
+  const { groups } = useApp();
   const { currentPipeline } = useWorkspace();
   return createActions({
     state,
     dispatch,
     pipelineApi,
-    workspaceName,
     currentPipeline,
+    ...groups,
   });
 };
 
