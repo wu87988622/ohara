@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import TopicTable from './TopicTable';
+import TopicList from './TopicList';
 import AddTopicDialog from './AddTopicDialog';
 
-export { TopicTable, AddTopicDialog };
+export { TopicList, AddTopicDialog };

@@ -18,6 +18,14 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
+    .filters {
+      margin-bottom: ${theme.spacing(3)}px;
+
+      .checkboxes {
+        margin-left: ${theme.spacing(3)}px;
+      }
+    }
+
     .MuiChip-root {
       border-radius: ${theme.spacing(0.5)}px;
 

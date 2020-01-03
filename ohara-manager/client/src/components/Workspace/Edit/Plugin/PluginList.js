@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import { map } from 'lodash';
+import React, { useState, useMemo } from 'react';
+import { filter, isEmpty, map, some } from 'lodash';
 
 import Grid from '@material-ui/core/Grid';
 import FormGroup from '@material-ui/core/FormGroup';
@@ -27,15 +27,65 @@ import { QuickSearch } from 'components/common/Search';
 import { Wrapper } from './PluginListStyles';
 import { usePlugins } from 'components/Workspace/Edit/hooks';
 
+import { someByKey } from 'utils/object';
+
+const CHECKBOXES = {
+  CONNECTOR: 'connector',
+  STREAM: 'stream',
+  OTHERS: 'others',
+};
+
 const PluginList = () => {
   const plugins = usePlugins();
-  const [filteredPlugins, setFilteredPlugins] = useState([]);
   const [checked, setChecked] = useState({
-    connector: false,
-    others: false,
+    [CHECKBOXES.CONNECTOR]: false,
+    [CHECKBOXES.STREAM]: false,
+    [CHECKBOXES.OTHERS]: false,
   });
+  const [searchResult, setSearchResult] = useState([]);
 
-  const handleChange = name => event => {
+  const filteredPlugins = useMemo(() => {
+    if (isEmpty(plugins)) return;
+
+    const predicateBySearch = plugin => someByKey(searchResult, plugin);
+    const predicateByCheckbox = plugin => {
+      if (some(checked)) {
+        const { classInfos } = plugin;
+        if (
+          checked[CHECKBOXES.CONNECTOR] &&
+          some(
+            classInfos,
+            classInfo =>
+              classInfo.classType === 'source' ||
+              classInfo.classType === 'sink',
+          )
+        ) {
+          return true;
+        } else if (
+          checked[CHECKBOXES.STREAM] &&
+          some(classInfos, classInfo => classInfo.classType === 'stream')
+        ) {
+          return true;
+        } else if (checked[CHECKBOXES.OTHERS] && isEmpty(classInfos)) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    return filter(
+      plugins,
+      plugin => predicateBySearch(plugin) && predicateByCheckbox(plugin),
+    );
+  }, [plugins, checked, searchResult]);
+
+  const handleSearchChange = result => {
+    setSearchResult(result);
+  };
+
+  const handleCheckboxChange = name => event => {
     setChecked({ ...checked, [name]: event.target.checked });
   };
 
@@ -45,26 +95,37 @@ const PluginList = () => {
         <QuickSearch
           data={plugins}
           keys={['name']}
-          setResults={setFilteredPlugins}
+          setResults={handleSearchChange}
         />
         <FormGroup row className="checkboxes">
           <FormControlLabel
             control={
               <Checkbox
-                checked={checked.connector}
-                onChange={handleChange('connector')}
-                value="connector"
+                checked={checked[CHECKBOXES.CONNECTOR]}
+                onChange={handleCheckboxChange(CHECKBOXES.CONNECTOR)}
+                value={CHECKBOXES.CONNECTOR}
                 color="primary"
               />
             }
-            label="Connector only"
+            label="Connector"
           />
           <FormControlLabel
             control={
               <Checkbox
-                checked={checked.others}
-                onChange={handleChange('others')}
-                value="others"
+                checked={checked[CHECKBOXES.STREAM]}
+                onChange={handleCheckboxChange(CHECKBOXES.STREAM)}
+                value={CHECKBOXES.STREAM}
+                color="primary"
+              />
+            }
+            label="Stream"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={checked[CHECKBOXES.OTHERS]}
+                onChange={handleCheckboxChange(CHECKBOXES.OTHERS)}
+                value={CHECKBOXES.OTHERS}
                 color="primary"
               />
             }

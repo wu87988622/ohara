@@ -155,8 +155,8 @@ function PluginCard({ plugin }) {
 PluginCard.propTypes = {
   plugin: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    size: PropTypes.number.isRequired,
-    status: PropTypes.string.isRequired,
+    size: PropTypes.number,
+    status: PropTypes.string,
   }),
 };
 

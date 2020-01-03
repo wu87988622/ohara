@@ -15,47 +15,13 @@
  */
 
 import React from 'react';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Paper from '@material-ui/core/Paper';
-import IconButton from '@material-ui/core/IconButton';
-import SearchIcon from '@material-ui/icons/Search';
-import InputBase from '@material-ui/core/InputBase';
 
-import { TopicTable } from 'components/Topic';
-import { StyledActions, StyledActionItem } from './TopicsTabStyles';
-
-function TopicActions() {
-  return (
-    <StyledActions>
-      <StyledActionItem>
-        <Paper component="form">
-          <IconButton aria-label="search-topic">
-            <SearchIcon />
-          </IconButton>
-          <InputBase
-            placeholder="Search Topics"
-            inputProps={{ 'aria-label': 'search topics' }}
-          />
-        </Paper>
-      </StyledActionItem>
-      <StyledActionItem>
-        <FormControlLabel
-          control={
-            <Checkbox checked={true} value="sharedOnly" color="primary" />
-          }
-          label="Shared only"
-        />
-      </StyledActionItem>
-    </StyledActions>
-  );
-}
+import { TopicList } from 'components/Topic';
 
 function TopicsTab() {
   return (
     <>
-      <TopicActions />
-      <TopicTable />
+      <TopicList />
     </>
   );
 }
