@@ -108,7 +108,7 @@ export const Paper = styled.div(
         display: flex;
       }
 
-      .circle {
+      .icon {
         width: 40px;
         height: 40px;
         border-radius: 100%;
@@ -124,7 +124,7 @@ export const Paper = styled.div(
       }
       
       .title {
-        ${theme.typography.h5}
+        font-size: ${theme.typography.h5};
         color:${theme.palette.text.primary};
         margin-top: ${theme.spacing(2)}px;
         width: 150px;
@@ -133,8 +133,33 @@ export const Paper = styled.div(
       }
 
       .type {
-        ${theme.typography.body2}
+        font-size: ${theme.typography.body2};
         color:${theme.palette.text.secondary};
+      }
+
+      .metrics {
+        border-top: 1px solid ${theme.palette.divider};
+
+        .field {
+          display: flex;
+          padding: ${theme.spacing(0.5, 2)};
+          border-bottom: 1px solid ${theme.palette.divider};
+
+        }
+
+        .field-name {
+          &:first-letter {
+            text-transform: capitalize;
+          }
+        }
+
+        .field:last-child {
+          border-bottom: none;
+        }
+
+        .field-value {
+          margin-left: auto
+        }
       }
       
       .status {
@@ -155,8 +180,8 @@ export const Paper = styled.div(
         ${theme.typography.h5}
         color:${theme.palette.text.primary};
         text-align:center;
-        
-}
+      }
+
       .topic-menu {
         width: 24px;
         position: absolute;

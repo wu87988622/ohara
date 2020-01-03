@@ -15,30 +15,35 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useTheme } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
+import { useTheme } from '@material-ui/core/styles';
 import { get } from 'lodash';
 
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
-import { useSnackbar } from 'context/SnackbarContext';
-import { Paper, PaperWrapper } from './GraphStyles';
-import { usePrevious, useMountEffect } from 'utils/hooks';
-import { updateCurrentCell, createConnection } from './graphUtils';
-import { useZoom, useCenter } from './GraphHooks';
-import {
-  usePipelineActions,
-  usePipelineState,
-  useGraphSettingDialog,
-  useWorkspace,
-} from 'context';
 import ConnectorGraph from './Connector/ConnectorGraph';
 import TopicGraph from '../Graph/Topic/TopicGraph';
+import * as context from 'context';
+import { Paper, PaperWrapper } from './GraphStyles';
+import { usePrevious, useMountEffect, useLocalStorage } from 'utils/hooks';
+import { updateCurrentCell, createConnection } from './graphUtils';
+import { useZoom, useCenter } from './GraphHooks';
 
 const Graph = props => {
   const { palette } = useTheme();
   const [initToolboxList, setInitToolboxList] = useState(0);
+  const [isMetricsOn, setIsMetricsOn] = useLocalStorage(
+    'isPipelineMetricsOn',
+    null,
+  );
+
+  const { setSelectedCell, updatePipeline } = context.usePipelineActions();
+  const { currentWorker, currentPipeline } = context.useWorkspace();
+  const { selectedCell } = context.usePipelineState();
+  const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
+  const showMessage = context.useSnackbar();
+
   const {
     setZoom,
     paperScale,
@@ -48,11 +53,6 @@ const Graph = props => {
   } = useZoom();
 
   const { setCenter, isCentered, setIsCentered } = useCenter();
-  const { setSelectedCell, updatePipeline } = usePipelineActions();
-  const { currentWorker, currentPipeline } = useWorkspace();
-  const { selectedCell } = usePipelineState();
-  const { open: openSettingDialog, setData } = useGraphSettingDialog();
-  const showMessage = useSnackbar();
 
   const {
     isToolboxOpen,
@@ -242,7 +242,6 @@ const Graph = props => {
         ) {
           updatePipeline({
             name: currentPipeline.name,
-            group: currentPipeline.group,
             tags: graph.current.toJSON(),
           });
         }
@@ -256,7 +255,6 @@ const Graph = props => {
         if (link.get('target').id) {
           updatePipeline({
             name: currentPipeline.name,
-            group: currentPipeline.group,
             tags: graph.current.toJSON(),
           });
         }
@@ -270,7 +268,6 @@ const Graph = props => {
         }
         updatePipeline({
           name: currentPipeline.name,
-          group: currentPipeline.group,
           tags: {
             cells: graph.current
               .toJSON()
@@ -308,6 +305,13 @@ const Graph = props => {
   });
 
   useEffect(() => {
+    if (isMetricsOn === null) {
+      // Defaults to true
+      setIsMetricsOn(true);
+    }
+  }, [isMetricsOn, setIsMetricsOn]);
+
+  useEffect(() => {
     if (!currentPipeline) return;
     const cells = currentPipeline.tags.cells ? currentPipeline.tags.cells : [];
 
@@ -315,7 +319,7 @@ const Graph = props => {
       .filter(cell => cell.type === 'html.Element')
       .forEach(cell => {
         if (
-          graph.current != null &&
+          graph.current !== null &&
           paper.current !== null &&
           currentWorker !== null
         ) {
@@ -327,6 +331,10 @@ const Graph = props => {
               const classInfo = currentWorker.classInfos.filter(
                 classInfo => classInfo.className === className,
               )[0];
+              const targetCell = currentPipeline.objects.find(
+                object =>
+                  object.name === cell.title && object.kind === cell.classType,
+              );
 
               graph.current.addCell(
                 ConnectorGraph({
@@ -338,6 +346,8 @@ const Graph = props => {
                   setData,
                   classInfo,
                   isFetch: true,
+                  isMetricsOn,
+                  metrics: targetCell.metrics,
                   cellInfo: {
                     ...cell.params.cellInfo,
                     position: cell.position,
@@ -440,6 +450,8 @@ const Graph = props => {
         paperScale={paperScale}
         handleZoom={setZoom}
         handleFit={() => setIsFitToContent(true)}
+        isMetricsOn={isMetricsOn}
+        setIsMetricsOn={setIsMetricsOn}
         handleCenter={() => {
           // We don't want to re-center again
           if (!isCentered) {

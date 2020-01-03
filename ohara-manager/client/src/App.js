@@ -32,7 +32,7 @@ const Container = styled.div`
   display: flex;
 
   /* 
-    Make AppBar can stretch to the bottom of the browser view even if the content
+    Make sure AppBar can stretch to the bottom of the browser view even if the content
     height is not enough to do so
   */
   min-height: 100vh;

@@ -51,11 +51,12 @@ const Toolbar = props => {
     handleFit,
     handleCenter,
     hasSelectedCell,
+    setIsMetricsOn,
+    isMetricsOn,
   } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
-  const [isMetricsDisplayed, setIsMetricsDisplayed] = React.useState(true);
   const [isDeletingPipeline, setIsDeletingPipeline] = React.useState(false);
   const { deletePipeline } = context.usePipelineActions();
   const { startConnector, stopConnector } = context.useConnectorActions();
@@ -270,19 +271,20 @@ const Toolbar = props => {
         </Menu>
       </div>
 
-      <div className="metrics-controls">
-        <FormControlLabel
-          control={
-            <Switch
-              checked={isMetricsDisplayed}
-              onChange={() => setIsMetricsDisplayed(prevState => !prevState)}
-              color="primary"
-            />
-          }
-        />
-
-        <Typography variant="body2">Metrics</Typography>
-      </div>
+      {isMetricsOn !== null && (
+        <div className="metrics-controls">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isMetricsOn}
+                onChange={() => setIsMetricsOn(prevState => !prevState)}
+                color="primary"
+              />
+            }
+          />
+          <Typography variant="body2">Metrics</Typography>
+        </div>
+      )}
 
       {// Display the progress when deleting if there are running objects
       !_.isEmpty(steps) && (
@@ -306,6 +308,8 @@ Toolbar.propTypes = {
   handleFit: PropTypes.func.isRequired,
   handleCenter: PropTypes.func.isRequired,
   hasSelectedCell: PropTypes.bool.isRequired,
+  setIsMetricsOn: PropTypes.func.isRequired,
+  isMetricsOn: PropTypes.bool,
 };
 
 export default Toolbar;

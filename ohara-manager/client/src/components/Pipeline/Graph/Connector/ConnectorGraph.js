@@ -37,6 +37,10 @@ const ConnectorGraph = params => {
     classInfo,
     cellInfo,
     id,
+    isMetricsOn = true,
+    metrics = {
+      meters: [],
+    },
   } = params;
 
   const { classType, position, icon, displayedClassName } = cellInfo;
@@ -62,20 +66,62 @@ const ConnectorGraph = params => {
   const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
+  const isMetricsDisplayed = metrics.meters.length > 0 && isMetricsOn;
+  const getMetrics = isMetricsDisplayed => {
+    if (!isMetricsDisplayed) return;
+
+    // Make sure we're getting
+    // 1. Same metrics data every time by sorting
+    // 2. And removing duplicate items
+    // 3. Finally, just pick the values that need to be displayed
+    const results = _.map(
+      _.sortBy(_.uniqBy(metrics.meters, 'name'), 'name'),
+      _.partialRight(_.pick, ['document', 'value']),
+    );
+    return results;
+  };
+
+  const displayMetrics = getMetrics(isMetricsDisplayed);
+
+  // The user will be able to choose two metrics items with our UI
+  // in the future, but for now, we're picking the first two items
+  // from the list
+  const firstFieldName = _.get(displayMetrics, '[0].document', '');
+  const firstFieldValue = _.get(displayMetrics, '[0].value', 0);
+  const secondFieldName = _.get(displayMetrics, '[1].document', '');
+  const secondFieldValue = _.get(displayMetrics, '[1].value', 0);
+
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
       <div class="connector">
         <div class="header">
-          <div class="circle">${icon}</div>
+          <div class="icon">${icon}</div>
           <div class="title-wrapper">
             <div class="title"></div>
               <div class="type">${displayedClassName}</div>
             </div>
           </div>
+
+          ${
+            isMetricsDisplayed
+              ? `<div class="metrics">
+            <div class="field">
+              <span class="field-name">${firstFieldName}</span>
+              <span class="field-value">${firstFieldValue.toLocaleString()}</span>
+            </div>
+            <div class="field">
+            <span class="field-name">${secondFieldName}</span>
+            <span class="field-value">${secondFieldValue.toLocaleString()}</span>
+          </div>
+          </div>`
+              : ''
+          }
+         
         <div class="status">
           <span>${'Status'}</span>
           <span>${'Stopped'}</span>
         </div>
+
         <div class="connector-menu">
           ${
             // Sink cannot create connection form itself to others
@@ -180,8 +226,8 @@ const ConnectorGraph = params => {
   });
 
   return new joint.shapes.html.Element({
-    id: id ? id : undefined,
-    size: { width: 240, height: 100 },
+    id: id ? id : undefined, // undefined -> id is controlled by JointJS
+    size: { width: 240, height: isMetricsDisplayed ? 160 : 100 },
     menuDisplay: 'none',
     position,
     title,
