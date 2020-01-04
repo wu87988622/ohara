@@ -18,26 +18,11 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{DataCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.StreamRoute
-import com.island.ohara.metrics.basic.{Counter, CounterMBean}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends FakeCollie(dataCollie) with StreamCollie {
-  override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
-    // we fake counters since stream is not really running in fake collie mode
-    Seq(
-      Counter
-        .builder()
-        .group(StreamRoute.STREAM_GROUP)
-        .name("fakeCounter")
-        .value(CommonUtils.randomInteger().toLong)
-        .build()
-    )
-
   override def creator: StreamCollie.ClusterCreator =
     (_, creation) =>
       if (clusterCache.asScala.exists(_._1 == creation.key))

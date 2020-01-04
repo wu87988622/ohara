@@ -24,17 +24,14 @@ import com.island.ohara.client.configurator.v0.ClusterStatus.Kind
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.StreamApi.Creation
 import com.island.ohara.client.configurator.v0.{ClusterStatus, StreamApi}
 import com.island.ohara.common.setting.ObjectKey
-import com.island.ohara.metrics.BeanChannel
-import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.Stream
 import com.island.ohara.streams.config.StreamSetting
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -159,16 +156,6 @@ trait StreamCollie extends Collie {
             }
         }
     }
-
-  /**
-    * Get all counter beans from cluster
-    * @param cluster cluster
-    * @return counter beans
-    */
-  def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
-    cluster.aliveNodes.flatMap { node =>
-      BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
-    }.toSeq
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
