@@ -27,6 +27,7 @@ const RenderDefinitions = props => {
     topics = [],
     files = [],
   } = props;
+
   const formRef = useRef(null);
   const formHandleSubmit = () =>
     formRef.current.dispatchEvent(new Event('submit'));

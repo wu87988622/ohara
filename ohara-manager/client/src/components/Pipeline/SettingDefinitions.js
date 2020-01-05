@@ -35,7 +35,6 @@ const RenderDefinitions = props => {
   const formRef = useRef(null);
   const formHandleSubmit = () =>
     formRef.current.dispatchEvent(new Event('submit'));
-  const displayDefinitions = Definitions.filter(def => !def.internal);
 
   const refs = {};
 
@@ -46,21 +45,23 @@ const RenderDefinitions = props => {
       render={({ handleSubmit, form }) => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>
-            {displayDefinitions.map(defs => {
+            {Definitions.map(defs => {
               const title = defs[0].group;
               return (
                 <Fragment key={title}>
                   <Typography variant="h4">{capitalize(title)}</Typography>
-                  {defs.map(def => {
-                    refs[def.key] = createRef();
-                    return RenderDefinition({
-                      def,
-                      topics,
-                      files,
-                      ref: refs[def.key],
-                      defType: EDITABLE,
-                    });
-                  })}
+                  {defs
+                    .filter(def => !def.internal)
+                    .map(def => {
+                      refs[def.key] = createRef();
+                      return RenderDefinition({
+                        def,
+                        topics,
+                        files,
+                        ref: refs[def.key],
+                        defType: EDITABLE,
+                      });
+                    })}
                 </Fragment>
               );
             })}

@@ -31,6 +31,7 @@ import { updateCurrentCell, createConnection } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
 
 const Graph = props => {
+  const { useConnectorActions, useTopicActions } = props;
   const { palette } = useTheme();
   const [initToolboxList, setInitToolboxList] = useState(0);
   const [isMetricsOn, setIsMetricsOn] = useLocalStorage(
@@ -42,6 +43,12 @@ const Graph = props => {
   const { currentWorker, currentPipeline } = context.useWorkspace();
   const { selectedCell } = context.usePipelineState();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
+  const {
+    startConnector,
+    stopConnector,
+    deleteConnector,
+  } = useConnectorActions();
+  const { stopTopic, deleteTopic } = useTopicActions();
   const showMessage = context.useSnackbar();
 
   const {
@@ -69,6 +76,11 @@ const Graph = props => {
   let paper = useRef(null);
   let dragStartPosition = useRef(null);
   let currentCell = useRef(null);
+  let currentPipelineRef = useRef(null);
+
+  useEffect(() => {
+    currentPipelineRef.current = currentPipeline;
+  }, [currentPipeline]);
 
   useMountEffect(() => {
     const renderGraph = () => {
@@ -240,12 +252,21 @@ const Graph = props => {
         if (
           get(event, 'options.model.attributes.type', null) === 'html.Element'
         ) {
-          updatePipeline({
-            name: currentPipeline.name,
-            tags: graph.current.toJSON(),
-          });
-        }
+          const originCell = currentPipelineRef.current.tags.cells.filter(
+            cell => cell.id === event.options.model.attributes.id,
+          )[0];
 
+          if (
+            event.options.model.attributes.position.x !==
+              originCell.position.x ||
+            event.options.model.attributes.position.y !== originCell.position.y
+          ) {
+            updatePipeline({
+              name: currentPipeline.name,
+              tags: graph.current.toJSON(),
+            });
+          }
+        }
         updateCurrentCell(currentCell);
         setIsCentered(false);
         paper.current.$el.removeClass('is-being-grabbed');
@@ -328,10 +349,10 @@ const Graph = props => {
             case 'sink':
             case 'stream':
               const className = cell.params.cellInfo.className;
-              const classInfo = currentWorker.classInfos.filter(
+              const classInfo = currentWorker.classInfos.find(
                 classInfo => classInfo.className === className,
-              )[0];
-              const targetCell = currentPipeline.objects.find(
+              );
+              const targetCell = currentPipelineRef.current.objects.find(
                 object =>
                   object.name === cell.title && object.kind === cell.classType,
               );
@@ -347,12 +368,15 @@ const Graph = props => {
                   classInfo,
                   isFetch: true,
                   isMetricsOn,
-                  metrics: targetCell.metrics,
+                  metrics: targetCell ? targetCell.metrics : [],
                   cellInfo: {
                     ...cell.params.cellInfo,
                     position: cell.position,
                   },
                   setInitToolboxList,
+                  startConnector,
+                  stopConnector,
+                  deleteConnector,
                 }),
               );
               break;
@@ -369,6 +393,8 @@ const Graph = props => {
                     ...cell.params.cellInfo,
                     position: cell.position,
                   },
+                  stopTopic,
+                  deleteTopic,
                 }),
               );
               break;
@@ -495,6 +521,8 @@ Graph.propTypes = {
   handleToolboxClose: PropTypes.func.isRequired,
   toolboxKey: PropTypes.number.isRequired,
   setToolboxExpanded: PropTypes.func.isRequired,
+  useConnectorActions: PropTypes.func.isRequired,
+  useTopicActions: PropTypes.func.isRequired,
 };
 
 export default Graph;

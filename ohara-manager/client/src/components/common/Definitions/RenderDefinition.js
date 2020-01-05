@@ -40,10 +40,21 @@ import PositiveDouble from './PositiveDouble';
 import PositiveLong from './PositiveLong';
 import PositiveShort from './PositiveShort';
 import { validWithDef } from 'utils/validate';
-import { READ_ONLY, CREATE_ONLY, EDITABLE } from './Permission';
+import { CREATE_ONLY, EDITABLE } from './Permission';
 
 const RenderDefinition = props => {
   const { def, topics, files, defType, ref, fieldProps = {} } = props;
+
+  const finalTopics = topics.map(topic => {
+    const { name, tags } = topic;
+    const finalTopic = { name: '', tags: { displayName: '' } };
+    if (tags.type === 'private') {
+      finalTopic.name = tags.displayName;
+      finalTopic.tags.displayName = name;
+    }
+
+    return finalTopic;
+  });
 
   const RenderField = params => {
     const {
@@ -54,22 +65,22 @@ const RenderDefinition = props => {
       necessary,
       permission,
       tableKeys = [],
+      list = [],
     } = params;
 
     let disabled = false;
 
     switch (permission) {
-      case READ_ONLY:
+      case 'READ_ONLY':
         disabled = true;
         break;
 
-      case CREATE_ONLY:
-        disabled = defType === CREATE_ONLY ? false : true;
+      case 'CREATE_ONLY':
+        disabled = defType !== CREATE_ONLY;
         break;
 
-      case EDITABLE:
-        disabled = defType === EDITABLE ? false : true;
-        disabled = true;
+      case 'EDITABLE':
+        disabled = defType !== EDITABLE;
         break;
 
       default:
@@ -79,6 +90,7 @@ const RenderDefinition = props => {
     const ensuredFieldProps = {
       ...fieldProps,
       key,
+      list,
       name: key,
       tableKeys,
       label: displayName,
@@ -164,13 +176,16 @@ const RenderDefinition = props => {
           return RenderField({ ...def, input: StringDef });
       }
     } else {
-      // eslint-disable-next-line default-case
       switch (def.reference) {
         case 'TOPIC':
-          return RenderField({ ...def, input: Reference, topics });
+          return RenderField({
+            ...def,
+            input: Reference,
+            list: finalTopics,
+          });
 
         case 'FILE':
-          return RenderField({ ...def, input: Reference, files });
+          return RenderField({ ...def, input: Reference, list: files });
 
         case 'ZOOKEEPER_CLUSTER':
         case 'BROKER_CLUSTER':

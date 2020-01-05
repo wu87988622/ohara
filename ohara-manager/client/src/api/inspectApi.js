@@ -54,6 +54,48 @@ export const configuratorMode = {
   k8s: 'K8S',
 };
 
+const converterDotToLodash = params => {
+  const { settingDefinitions = [], classInfos = [] } = params.data;
+  const converter = def => {
+    const obj = def;
+    Object.keys(def)
+      .filter(key => key === 'key' || key === 'group')
+      .forEach(key => {
+        switch (obj[key]) {
+          case 'group':
+            obj.internal = true;
+            break;
+
+          default:
+            if (obj.key.indexOf('.') !== -1) {
+              obj.key = obj.key.replace(/\./g, '__');
+            }
+            break;
+        }
+      });
+    return obj;
+  };
+
+  const lodashSettingDefinitions = settingDefinitions.map(def =>
+    converter(def),
+  );
+  const lodashClassInfos = classInfos.map(classInfo => {
+    const objs = classInfo;
+    objs.settingDefinitions = classInfo.settingDefinitions.map(def =>
+      converter(def),
+    );
+    return objs;
+  });
+  if (lodashSettingDefinitions.length > 0) {
+    params.data.settingDefinitions = lodashSettingDefinitions;
+  }
+  if (lodashClassInfos.length > 0) {
+    params.data.classInfos = lodashClassInfos;
+  }
+
+  return params;
+};
+
 const fetchServiceInfo = async (kind, params) => {
   const reqUrl = !isEmpty(params)
     ? `${url}/${kind}/${params.name}?group=${params.group}`
@@ -63,7 +105,10 @@ const fetchServiceInfo = async (kind, params) => {
   result.title =
     `Inspect ${kind} ${getKey(params)} info ` +
     (result.errors ? 'failed.' : 'successful.');
-  return result;
+
+  const converterResult = converterDotToLodash(result);
+
+  return converterResult;
 };
 
 export const getConfiguratorInfo = async () => {

@@ -38,6 +38,7 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
 import RenderDefinitions from './SettingDefinitions';
+import { useConnectorState, useConnectorActions, useTopicState } from 'context';
 
 const StyleTitle = styled(MuiDialogTitle)(
   ({ theme }) => css`
@@ -158,6 +159,12 @@ const SettingDialog = props => {
   const { title = '', classInfo = {} } = data;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
+  const { data: currentConnectors } = useConnectorState();
+  const { data: currentTopics } = useTopicState();
+  const { updateConnector } = useConnectorActions();
+  const targetConnector = currentConnectors.filter(
+    connector => connector.className === classInfo.className,
+  )[0];
 
   const groupBy = array => {
     if (!array) return [];
@@ -184,13 +191,37 @@ const SettingDialog = props => {
     padding: 1px;
   `;
 
-  const onSubmit = async (values, form) => {
-    form.reset();
-    return values;
+  const onSubmit = async values => {
+    if (values.topicKeys) {
+      if (values.topicKeys.startsWith('T')) {
+        const privateTopic = currentTopics.filter(
+          topic => topic.tags.displayName === values.topicKeys,
+        )[0];
+
+        values.topicKeys = [
+          { name: privateTopic.name, group: privateTopic.group },
+        ];
+      } else {
+        const publicTopic = currentTopics.filter(
+          topic => topic.name === values.topicKeys,
+        )[0];
+        values.topicKeys = [
+          { name: publicTopic.name, group: publicTopic.group },
+        ];
+      }
+    }
+    await updateConnector({
+      name: targetConnector.name,
+      group: targetConnector.group,
+      ...values,
+    });
+    handleClose();
   };
 
   const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
+    topics: currentTopics,
     Definitions: groups.sort(),
+    initialValues: targetConnector,
     onSubmit,
   });
 
@@ -249,9 +280,8 @@ const SettingDialog = props => {
           <StyleDiv>
             {groups.sort().map((group, index) => {
               const title = group[0].group;
-              const defs = group.filter(
-                def => !def.internal || def.key !== 'group',
-              );
+              const defs = group.filter(def => !def.internal);
+
               if (defs.length > 0) {
                 return (
                   <StyleExpansionPanel

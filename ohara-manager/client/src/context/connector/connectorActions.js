@@ -26,7 +26,7 @@ export const createActions = context => {
       if (state.isFetching || state.lastUpdated || state.error) return;
       try {
         dispatch(routine.request());
-        const data = connectorApi.fetchAll();
+        const data = await connectorApi.fetchAll();
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {

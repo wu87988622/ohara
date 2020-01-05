@@ -33,6 +33,9 @@ const TopicGraph = params => {
     isFetch = false,
     cellInfo,
     id,
+    stopTopic,
+    deleteTopic,
+    name,
   } = params;
   const { classType, className, position } = cellInfo;
 
@@ -81,11 +84,6 @@ const TopicGraph = params => {
 
       $box.appendTo(this.paper.el);
 
-      // Bind remove event to our custom icon
-      this.$box
-        .find('#topic-remove')
-        .on('click', _.bind(this.model.remove, this.model));
-
       const modelId = this.model.id;
       this.$box.find('#topic-link').on('mousedown', function() {
         link = new joint.shapes.standard.Link();
@@ -96,6 +94,15 @@ const TopicGraph = params => {
         link.attr({ line: { stroke: 'transparent' } });
         link.addTo(graph.current);
       });
+
+      this.$box.find('#topic-remove').on('mousedown', async function() {
+        await stopTopic(name);
+        await deleteTopic(name);
+      });
+
+      this.$box
+        .find('#topic-remove')
+        .on('click', _.bind(this.model.remove, this.model));
 
       this.updateBox();
       return this;
@@ -164,6 +171,8 @@ const TopicGraph = params => {
       'openSettingDialog',
       'setData',
       'classInfo',
+      'stopTopic',
+      'deleteTopic',
     ]),
   });
 };
