@@ -41,6 +41,10 @@ const ConnectorGraph = params => {
     metrics = {
       meters: [],
     },
+    name,
+    startConnector,
+    stopConnector,
+    deleteConnector,
   } = params;
 
   const { classType, position, icon, displayedClassName } = cellInfo;
@@ -148,11 +152,6 @@ const ConnectorGraph = params => {
 
       $box.appendTo(this.paper.el);
 
-      // Bind remove event to our custom icon
-      this.$box
-        .find('#connector-remove')
-        .on('click', _.bind(this.model.remove, this.model));
-
       const modelId = this.model.id;
       this.$box.find('#connector-link').on('mousedown', function() {
         link = new joint.shapes.standard.Link();
@@ -171,6 +170,22 @@ const ConnectorGraph = params => {
           classInfo,
         });
       });
+
+      this.$box.find('#connector-start').on('mousedown', () => {
+        startConnector(name);
+      });
+
+      this.$box.find('#connector-stop').on('mousedown', () => {
+        stopConnector(name);
+      });
+
+      this.$box.find('#connector-remove').on('mousedown', () => {
+        deleteConnector(name);
+      });
+
+      this.$box
+        .find('#connector-remove')
+        .on('click', _.bind(this.model.remove, this.model));
 
       this.updateBox();
       return this;
@@ -240,6 +255,9 @@ const ConnectorGraph = params => {
       'openSettingDialog',
       'setData',
       'classInfo',
+      'startConnector',
+      'stopConnector',
+      'deleteConnector',
     ]),
   });
 };

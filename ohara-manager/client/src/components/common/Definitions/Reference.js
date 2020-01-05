@@ -22,7 +22,7 @@ import TextField from '@material-ui/core/TextField';
 
 const Reference = props => {
   const {
-    input: { name, onChange, value },
+    input: { name, onChange, value = [], ...restInput },
     meta = {},
     helperText,
     disables = [],
@@ -32,8 +32,11 @@ const Reference = props => {
   } = omit(props, ['tableKeys']);
 
   const placeholder = 'Please select...';
-  const _list = [placeholder, ...list];
-  const _value = value ? value : placeholder;
+  const _list = [
+    { name: placeholder, tags: { displayName: placeholder } },
+    ...list,
+  ];
+  const _value = value.length > 0 ? value : placeholder;
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
@@ -47,13 +50,18 @@ const Reference = props => {
       value={_value}
       helperText={hasError ? meta.error : helperText}
       error={hasError}
-      type="text"
+      InputProps={restInput}
+      select
     >
       {_list.map(item => {
-        const disabled = disables.includes(item);
+        const disabled = disables.includes(item.name);
         return (
-          <MenuItem disabled={disabled} key={item} value={item}>
-            {item}
+          <MenuItem
+            disabled={disabled}
+            key={item.name}
+            value={item.tags.displayName}
+          >
+            {item.name}
           </MenuItem>
         );
       })}
@@ -69,6 +77,7 @@ Reference.propTypes = {
       PropTypes.string,
       PropTypes.number,
       PropTypes.object,
+      PropTypes.array,
     ]).isRequired,
   }).isRequired,
   meta: PropTypes.shape({

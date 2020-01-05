@@ -168,6 +168,8 @@ export const enableDragAndDrop = params => {
     currentPipeline,
     topicsData,
     createTopic,
+    stopTopic,
+    deleteTopic,
     updatePipeline,
   } = params;
 
@@ -325,8 +327,11 @@ export const enableDragAndDrop = params => {
 
             graph.current.addCell(
               TopicGraph({
+                name: privateTopicName,
                 graph,
                 paper,
+                stopTopic,
+                deleteTopic,
                 title: displayName,
                 cellInfo: params.cellInfo,
               }),

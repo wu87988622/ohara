@@ -61,11 +61,16 @@ const Toolbox = props => {
   } = context.useWorkspace();
   const { updatePipeline } = context.usePipelineActions();
   const { createStream } = context.useStreamActions();
+  const {
+    startConnector,
+    stopConnector,
+    deleteConnector,
+  } = context.useConnectorActions();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
   const [isOpen, setIsOpen] = useState(false);
-  const { createTopic } = context.useTopicActions();
+  const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
   const { createConnector } = context.useConnectorActions();
 
   const [zIndex, setZIndex] = useState(2);
@@ -226,6 +231,10 @@ const Toolbox = props => {
             openSettingDialog,
             setData,
             classInfo: targetConnector,
+            name: connectorRes.data.name,
+            startConnector,
+            stopConnector,
+            deleteConnector,
           }),
         );
         break;
@@ -304,6 +313,8 @@ const Toolbox = props => {
         currentPipeline,
         topicsData,
         createTopic,
+        stopTopic,
+        deleteTopic,
         updatePipeline,
       });
     };
@@ -321,6 +332,8 @@ const Toolbox = props => {
     updatePipeline,
     initToolboxList,
     topics,
+    stopTopic,
+    deleteTopic,
   ]);
 
   return (

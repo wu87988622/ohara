@@ -356,6 +356,7 @@ const createAxios = () => {
       if (response.data) {
         response.data = regularObject(response.data, '.', '__');
       }
+
       return {
         meta: {
           status: response.status,
