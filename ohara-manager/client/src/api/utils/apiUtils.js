@@ -199,7 +199,10 @@ export const requestUtil = (params, api, definitionsBody) => {
     definitions: api.definitions,
   };
   requestBody = typeUtil(warnReasons, data);
-  if (!isEmpty(warnReasons)) {
+  const isDevelopment =
+    process.env.OHARA_MANAGER_NODE_ENV === 'development' ||
+    process.env.NODE_ENV === 'development';
+  if (!isEmpty(warnReasons) && isDevelopment) {
     // since request does not "response" anything
     // we need to print the warnings to console
     warnReasons.forEach(warn => console.log(warn));
