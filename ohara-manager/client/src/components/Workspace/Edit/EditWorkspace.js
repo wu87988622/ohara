@@ -29,6 +29,7 @@ import {
   useEditWorkspaceDialog,
   useAddTopicDialog,
   useEditWorkspace,
+  useWorkspace,
 } from 'context';
 
 import { Tabs as WorkspaceTabs } from '.';
@@ -46,6 +47,7 @@ const EditWorkspace = () => {
     setData: setEditWorkspaceDialogData,
   } = useEditWorkspaceDialog();
   const { open: openAddTopicDialog } = useAddTopicDialog();
+  const { currentWorkspace } = useWorkspace();
   const { dirties } = useEditWorkspace();
 
   const handleChange = (event, newTab) => {
@@ -57,7 +59,7 @@ const EditWorkspace = () => {
   return (
     <>
       <FullScreenDialog
-        title="Your workspace for oharadevteam"
+        title={`Workspace ${currentWorkspace.name}`}
         open={isEditWorkspaceDialogOpen}
         handleClose={closeEditWorkspaceDialog}
       >
@@ -81,7 +83,8 @@ const EditWorkspace = () => {
                 UPLOAD FILE
               </Button>
             </FileUpload>
-            <MoreActions />
+            {/* Feature is disabled because it's not implemented in 0.9 */
+            false && <MoreActions />}
           </Grid>
           <RestartIndicator invisible={dirties.all === 0} />
           <Tabs
@@ -90,33 +93,46 @@ const EditWorkspace = () => {
             indicatorColor="primary"
             textColor="primary"
           >
-            <Tab
-              label={WorkspaceTabs.OVERVIEW}
-              value={WorkspaceTabs.OVERVIEW}
-            />
+            {/* Feature is disabled because it's not implemented in 0.9 */
+            false && (
+              <Tab
+                label={WorkspaceTabs.OVERVIEW}
+                value={WorkspaceTabs.OVERVIEW}
+              />
+            )}
+
             <Tab label={WorkspaceTabs.TOPICS} value={WorkspaceTabs.TOPICS} />
             <Tab label={WorkspaceTabs.FILES} value={WorkspaceTabs.FILES} />
-            <Tab
-              label={
-                <Badge
-                  badgeContent={dirties.all}
-                  invisible={dirties.all === 0}
-                  color="warning"
-                >
-                  {WorkspaceTabs.SETTINGS}
-                </Badge>
-              }
-              value={WorkspaceTabs.SETTINGS}
-            />
+
+            {/* Feature is disabled because it's not implemented in 0.9 */
+            false && (
+              <Tab
+                label={
+                  <Badge
+                    badgeContent={dirties.all}
+                    invisible={dirties.all === 0}
+                    color="warning"
+                  >
+                    {WorkspaceTabs.SETTINGS}
+                  </Badge>
+                }
+                value={WorkspaceTabs.SETTINGS}
+              />
+            )}
           </Tabs>
+
           <Divider />
-          <TabPanel
-            value={tab}
-            index={WorkspaceTabs.OVERVIEW}
-            className="tab-panel"
-          >
-            Overview
-          </TabPanel>
+
+          {/* Feature is disabled because it's not implemented in 0.9 */
+          false && (
+            <TabPanel
+              value={tab}
+              index={WorkspaceTabs.OVERVIEW}
+              className="tab-panel"
+            >
+              Overview
+            </TabPanel>
+          )}
           <TabPanel
             value={tab}
             index={WorkspaceTabs.TOPICS}
@@ -131,13 +147,17 @@ const EditWorkspace = () => {
           >
             <FilesTab />
           </TabPanel>
-          <TabPanel
-            value={tab}
-            index={WorkspaceTabs.SETTINGS}
-            className="tab-panel"
-          >
-            <SettingsTab />
-          </TabPanel>
+
+          {/* Feature is disabled because it's not implemented in 0.9 */
+          false && (
+            <TabPanel
+              value={tab}
+              index={WorkspaceTabs.SETTINGS}
+              className="tab-panel"
+            >
+              <SettingsTab />
+            </TabPanel>
+          )}
         </Wrapper>
       </FullScreenDialog>
       <AddTopicDialog />

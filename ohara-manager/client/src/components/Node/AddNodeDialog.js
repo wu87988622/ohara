@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { MODE } from 'const';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
+import { MODE } from 'const';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {

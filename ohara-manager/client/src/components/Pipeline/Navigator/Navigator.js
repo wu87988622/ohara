@@ -87,30 +87,43 @@ const Navigator = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
+        {/* Feature is disabled because it's not implemented in 0.9 */
+        false && (
+          <MenuItem
+            className="overview"
+            key={EditWorkspaceTabs.OVERVIEW}
+            onClick={handleMenuItemClick(EditWorkspaceTabs.OVERVIEW)}
+          >
+            Overview
+          </MenuItem>
+        )}
+
         <MenuItem
-          key={EditWorkspaceTabs.OVERVIEW}
-          onClick={handleMenuItemClick(EditWorkspaceTabs.OVERVIEW)}
-        >
-          Overview
-        </MenuItem>
-        <MenuItem
+          className="topics"
           key={EditWorkspaceTabs.TOPICS}
           onClick={handleMenuItemClick(EditWorkspaceTabs.TOPICS)}
         >
           Topics
         </MenuItem>
         <MenuItem
+          className="files"
           key={EditWorkspaceTabs.FILES}
           onClick={handleMenuItemClick(EditWorkspaceTabs.FILES)}
         >
           Files
         </MenuItem>
-        <MenuItem
-          key={EditWorkspaceTabs.SETTINGS}
-          onClick={handleMenuItemClick(EditWorkspaceTabs.SETTINGS)}
-        >
-          Settings
-        </MenuItem>
+
+        {/* Feature is disabled because it's not implemented in 0.9 */
+
+        false && (
+          <MenuItem
+            className="settings"
+            key={EditWorkspaceTabs.SETTINGS}
+            onClick={handleMenuItemClick(EditWorkspaceTabs.SETTINGS)}
+          >
+            Settings
+          </MenuItem>
+        )}
       </Menu>
 
       <Form

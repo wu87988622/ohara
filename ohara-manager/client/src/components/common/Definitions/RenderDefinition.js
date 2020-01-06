@@ -32,7 +32,7 @@ import PositiveInt from './PositiveInt';
 import ClassDef from './ClassDef';
 import Long from './Long';
 import Short from './Short';
-import Doubel from './Double';
+import Double from './Double';
 import ArrayDef from './ArrayDef';
 import ObjectKey from './ObjectKey';
 import ObjectKeys from './ObjectKeys';
@@ -43,7 +43,7 @@ import { validWithDef } from 'utils/validate';
 import { CREATE_ONLY, EDITABLE } from './Permission';
 
 const RenderDefinition = props => {
-  const { def, topics, files, defType, ref, fieldProps = {} } = props;
+  const { def, topics = [], files, defType, ref, fieldProps = {} } = props;
 
   const finalTopics = topics.map(topic => {
     const { name, tags } = topic;
@@ -152,7 +152,7 @@ const RenderDefinition = props => {
           return RenderField({ ...def, input: Short });
 
         case 'DOUBLE':
-          return RenderField({ ...def, input: Doubel });
+          return RenderField({ ...def, input: Double });
 
         case 'ARRAY':
           return RenderField({ ...def, input: ArrayDef });

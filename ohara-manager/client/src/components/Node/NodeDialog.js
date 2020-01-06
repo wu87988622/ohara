@@ -33,13 +33,14 @@ import {
   useNodeState,
 } from 'context';
 import { QuickSearch } from 'components/common/Search';
+import { MODE } from 'const';
 
 const Actions = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: ${props => props.theme.spacing(4)}px;
 
-  button {
+  .add-node-button {
     margin-left: auto;
   }
 `;
@@ -183,12 +184,16 @@ const NodeDialog = () => {
               setResults={setFilteredNodes}
             />
           </Typography>
-          <Button
-            onClick={() => setIsAddNodeDialogOpen(true)}
-            startIcon={<AddIcon />}
-          >
-            ADD NODE
-          </Button>
+
+          {configuratorInfo.mode !== MODE.k8s && (
+            <Button
+              className="add-node-button"
+              onClick={() => setIsAddNodeDialogOpen(true)}
+              startIcon={<AddIcon />}
+            >
+              ADD NODE
+            </Button>
+          )}
         </Actions>
 
         <SelectTable
@@ -204,11 +209,11 @@ const NodeDialog = () => {
         <AddNodeDialog
           isOpen={isAddNodeDialogOpen}
           handleClose={() => setIsAddNodeDialogOpen(false)}
-          mode={!isEmpty(configuratorInfo) ? configuratorInfo.mode : 'k8s'}
+          mode={!isEmpty(configuratorInfo) ? configuratorInfo.mode : MODE.k8s}
         />
 
         <ViewNodeDialog
-          mode={!isEmpty(configuratorInfo) ? configuratorInfo.mode : 'k8s'}
+          mode={!isEmpty(configuratorInfo) ? configuratorInfo.mode : MODE.k8s}
         />
       </>
     </FullScreenDialog>

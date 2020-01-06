@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { MODE } from 'const';
 import React, { useState, useCallback, useEffect } from 'react';
 import { get, round, isEmpty, capitalize } from 'lodash';
 import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
-
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import Error from '@material-ui/icons/Error';
 import CreateIcon from '@material-ui/icons/Create';
@@ -35,20 +33,13 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Divider from '@material-ui/core/Divider';
 
+import EditNodeDialog from './EditNodeDialog';
+import * as context from 'context';
+import * as streamApi from '../../api/streamApi';
+import { MODE } from 'const';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Button } from 'components/common/Form';
-import {
-  useZookeeperState,
-  useBrokerState,
-  useWorkerState,
-  useNodeState,
-  useNodeActions,
-  useViewNodeDialog,
-  useEditNodeDialog,
-} from 'context';
-import EditNodeDialog from './EditNodeDialog';
 import { state } from '../../api/nodeApi';
-import * as streamApi from '../../api/streamApi';
 
 const Wrapper = styled.div(
   ({ theme }) => css`
@@ -115,19 +106,20 @@ const ViewNodeDialog = props => {
     isOpen,
     close: closeViewNodeDialog,
     data: nodeData,
-  } = useViewNodeDialog();
+  } = context.useViewNodeDialog();
 
   const { mode } = props;
 
-  const { open: openEditNodeDialog } = useEditNodeDialog();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const { isFetching: isDeleting } = useNodeState();
-  const { deleteNode } = useNodeActions();
+  const { open: openEditNodeDialog } = context.useEditNodeDialog();
+  const { data: configuratorInfo } = context.useConfiguratorState();
+  const { isFetching: isDeleting } = context.useNodeState();
+  const { deleteNode } = context.useNodeActions();
 
   const nodeName = get(nodeData, 'hostname', '');
-  const { data: zookeepers } = useZookeeperState();
-  const { data: brokers } = useBrokerState();
-  const { data: workers } = useWorkerState();
+  const { data: zookeepers } = context.useZookeeperState();
+  const { data: brokers } = context.useBrokerState();
+  const { data: workers } = context.useWorkerState();
 
   const [services, setServices] = useState([]);
 
@@ -249,22 +241,27 @@ const ViewNodeDialog = props => {
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="outlined"
-              color="secondary"
-              disabled={isEmpty(nodeData)}
-              onClick={() => setIsConfirmOpen(true)}
-            >
-              Delete
-            </Button>
-            <DeleteDialog
-              title="Delete node?"
-              content={`Are you sure you want to delete the node: ${nodeName} ? This action cannot be undone!`}
-              open={isConfirmOpen}
-              handleClose={() => setIsConfirmOpen(false)}
-              handleConfirm={handleDelete}
-              isWorking={isDeleting}
-            />
+            {configuratorInfo.mode !== MODE.k8s && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  disabled={isEmpty(nodeData)}
+                  onClick={() => setIsConfirmOpen(true)}
+                >
+                  Delete
+                </Button>
+
+                <DeleteDialog
+                  title="Delete node?"
+                  content={`Are you sure you want to delete the node: ${nodeName} ? This action cannot be undone!`}
+                  open={isConfirmOpen}
+                  handleClose={() => setIsConfirmOpen(false)}
+                  handleConfirm={handleDelete}
+                  isWorking={isDeleting}
+                />
+              </>
+            )}
           </Grid>
         </Grid>
         <Grid container spacing={3} className="details">

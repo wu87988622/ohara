@@ -98,7 +98,7 @@ const AppBar = () => {
         <div className="tools">
           <Tooltip title="Workspace list" placement="right">
             <IconButton
-              className="workspace item"
+              className="workspace-list item"
               onClick={openListWorkspacesDialog}
             >
               <AppsIcon />
@@ -106,14 +106,14 @@ const AppBar = () => {
           </Tooltip>
 
           <Tooltip title="Event logs" placement="right">
-            <IconButton disabled className="item">
+            <IconButton disabled className="event-logs item">
               <AssignmentIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Developer Tools" placement="right">
             <IconButton
-              className="item"
+              className="developer-tools item"
               onClick={
                 isDevToolDialogOpen ? closeDevToolDialog : openDevToolDialog
               }
@@ -123,7 +123,7 @@ const AppBar = () => {
           </Tooltip>
 
           <Tooltip title="Node list" placement="right">
-            <IconButton className="nodes item" onClick={openListNodeDialog}>
+            <IconButton className="node-list item" onClick={openListNodeDialog}>
               <StorageIcon />
             </IconButton>
           </Tooltip>

@@ -32,7 +32,7 @@ import WorkspaceQuick from '../Workspace/WorkspaceQuick';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 
-const Transition = React.forwardRef(function Transition(props, ref) {
+const Transition = React.forwardRef((props, ref) => {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
@@ -70,28 +70,31 @@ const StyledDialogActions = styled(DialogActions)(
     justify-content: flex-start;
     padding: ${theme.spacing(1)}px ${theme.spacing(3)}px ${theme.spacing(3)}px;
 
-    .quick-start-button {
+    .quick-mode-button {
       margin-right: ${theme.spacing(2)}px;
+    }
+
+    /* Feature is disabled because it's not implemented in 0.9 */
+    .expert-mode-button {
+      display: none;
     }
   `,
 );
 
-const MuiDialog = ({ easyModeText }) => {
+const MuiDialog = ({ quickModeText }) => {
   const { isOpen, setIsOpen } = useNewWorkspace();
-  const [quickModeIsOpen, setQuickModeIsOpen] = React.useState(false);
+  const [isQuickModeDialogOpen, setIsQuickModeDialogOpen] = React.useState(
+    false,
+  );
 
-  const onClose = () => setIsOpen(false);
-
-  // This should be implemented later in #3157
+  // Export mode, not implement yet
   const onClick = () => {};
-
-  const handleQuickOpen = open => setQuickModeIsOpen(open);
 
   return (
     <>
       <Dialog
         open={isOpen}
-        onClose={onClose}
+        onClose={() => setIsOpen(false)}
         maxWidth="sm"
         PaperComponent={DrabblePaper}
         TransitionComponent={Transition}
@@ -105,7 +108,7 @@ const MuiDialog = ({ easyModeText }) => {
               <span className="name">Ohara Stream</span>
             </Typography>
           </div>
-          <IconButton className="close-button" onClick={onClose}>
+          <IconButton className="close-button" onClick={() => setIsOpen(false)}>
             <CloseIcon />
           </IconButton>
         </StyledDialogTitle>
@@ -118,27 +121,33 @@ const MuiDialog = ({ easyModeText }) => {
         </StyledDialogContent>
         <StyledDialogActions>
           <Button
-            className="quick-start-button"
-            onClick={() => handleQuickOpen(true)}
+            className="quick-mode-button"
+            onClick={() => setIsQuickModeDialogOpen(true)}
             color="primary"
             variant="contained"
             autoFocus
           >
-            {easyModeText}
+            {quickModeText}
           </Button>
-          or
-          <Button onClick={onClick} color="primary">
+          <Button
+            className="expert-mode-button"
+            onClick={onClick}
+            color="primary"
+          >
             CREATE A WORKSPACE IN EXPERT MODE
           </Button>
         </StyledDialogActions>
       </Dialog>
-      <WorkspaceQuick open={quickModeIsOpen} handelOpen={handleQuickOpen} />
+      <WorkspaceQuick
+        open={isQuickModeDialogOpen}
+        handelOpen={setIsQuickModeDialogOpen}
+      />
     </>
   );
 };
 
 MuiDialog.propTypes = {
-  easyModeText: PropTypes.string.isRequired,
+  quickModeText: PropTypes.string.isRequired,
 };
 
 export default MuiDialog;
