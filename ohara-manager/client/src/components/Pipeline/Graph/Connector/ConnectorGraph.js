@@ -25,6 +25,8 @@ import BuildIcon from '@material-ui/icons/Build';
 import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
+import { KIND } from 'const';
+
 const ConnectorGraph = params => {
   const {
     title,
@@ -129,7 +131,7 @@ const ConnectorGraph = params => {
         <div class="connector-menu">
           ${
             // Sink cannot create connection form itself to others
-            classType !== 'sink'
+            classType !== KIND.sink
               ? `<Button id="connector-link">${linkIcon}</Button>`
               : ''
           }

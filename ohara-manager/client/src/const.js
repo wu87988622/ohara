@@ -14,7 +14,21 @@
  * limitations under the License.
  */
 
-export const WORKSPACE = 'workspace';
-export const ZOOKEEPER = 'zookeeper';
-export const BROKER = 'broker';
-export const WORKER = 'worker';
+// kind of all objects
+export const KIND = {
+  configurator: 'configurator',
+  zookeeper: 'zookeeper',
+  broker: 'broker',
+  worker: 'worker',
+  stream: 'stream',
+  sink: 'sink',
+  source: 'source',
+  topic: 'topic',
+  object: 'object',
+};
+
+export const MODE = {
+  fake: 'FAKE',
+  docker: 'DOCKER',
+  k8s: 'K8S',
+};

@@ -57,7 +57,6 @@ import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
 import { hashByGroupAndName } from 'utils/sha';
-import { WORKSPACE } from 'context/api';
 
 const StyledPaper = styled(Paper)(
   ({ theme }) => css`
@@ -131,10 +130,18 @@ const WorkspaceQuick = props => {
     }
   };
 
+  // TODO: remove this in https://github.com/oharastream/ohara/issues/3609
+  const GROUP = {
+    workspace: 'workspace',
+    zookeeper: 'zookeeper',
+    broker: 'broker',
+    worker: 'worker',
+  };
+
   const onDrop = async (file, values) => {
-    const parentKey = { group: WORKSPACE, name: values.workspaceName };
+    const parentKey = { group: GROUP.workspace, name: values.workspaceName };
     const result = await fileApi.create({
-      group: hashByGroupAndName(WORKSPACE, values.workspaceName),
+      group: hashByGroupAndName(GROUP.workspace, values.workspaceName),
       file: file[0],
       tags: { parentKey },
     });

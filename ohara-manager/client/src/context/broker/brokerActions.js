@@ -15,6 +15,8 @@
  */
 
 import { map } from 'lodash';
+
+import { KIND } from 'const';
 import * as routines from './brokerRoutines';
 import * as action from 'utils/action';
 
@@ -29,7 +31,7 @@ export const createActions = context => {
         const brokers = await brokerApi.fetchAll();
         const data = map(brokers, broker => ({
           ...broker,
-          serviceType: 'broker',
+          serviceType: KIND.broker,
         }));
         dispatch(routine.success(data));
         return action.success(data);

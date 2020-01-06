@@ -15,6 +15,8 @@
  */
 
 import { map } from 'lodash';
+
+import { KIND } from 'const';
 import * as routines from './workerRoutines';
 import * as action from 'utils/action';
 
@@ -29,7 +31,7 @@ export const createActions = context => {
         const workers = await workerApi.fetchAll();
         const data = map(workers, worker => ({
           ...worker,
-          serviceType: 'worker',
+          serviceType: KIND.worker,
         }));
         dispatch(routine.success(data));
         return action.success(data);

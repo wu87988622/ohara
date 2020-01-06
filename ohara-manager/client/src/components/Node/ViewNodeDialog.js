@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { MODE } from 'const';
 import React, { useState, useCallback, useEffect } from 'react';
 import { get, round, isEmpty, capitalize } from 'lodash';
 import PropTypes from 'prop-types';
@@ -47,7 +48,6 @@ import {
 } from 'context';
 import EditNodeDialog from './EditNodeDialog';
 import { state } from '../../api/nodeApi';
-import { configuratorMode } from '../../api/inspectApi';
 import * as streamApi from '../../api/streamApi';
 
 const Wrapper = styled.div(
@@ -279,7 +279,7 @@ const ViewNodeDialog = props => {
                       <TableCell>Hostname</TableCell>
                       <TableCell>{nodeName}</TableCell>
                     </TableRow>
-                    {mode !== configuratorMode.k8s && (
+                    {mode !== MODE.k8s && (
                       <>
                         <TableRow>
                           <TableCell>Port</TableCell>
@@ -321,7 +321,7 @@ const ViewNodeDialog = props => {
                     </TableRow>
                   </TableBody>
                 </Table>
-                {mode === configuratorMode.docker && (
+                {mode === MODE.docker && (
                   <Button
                     variant="text"
                     startIcon={<CreateIcon />}

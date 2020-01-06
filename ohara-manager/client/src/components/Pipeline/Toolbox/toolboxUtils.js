@@ -24,6 +24,7 @@ import WavesIcon from '@material-ui/icons/Waves';
 import * as joint from 'jointjs';
 import $ from 'jquery';
 
+import { KIND } from 'const';
 import * as generate from 'utils/generate';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import TopicGraph from '../Graph/Topic/TopicGraph';
@@ -246,7 +247,7 @@ export const enableDragAndDrop = params => {
             icon,
           } = cellView.model.attributes;
 
-          const isTopic = classType === 'topic';
+          const isTopic = classType === KIND.topic;
 
           // These info will be used when creating a cell
           setCellInfo(prevState => ({
@@ -320,7 +321,7 @@ export const enableDragAndDrop = params => {
                 {
                   name: privateTopicName,
                   group: topicGroup,
-                  kind: 'topic',
+                  kind: KIND.topic,
                 },
               ],
             });
@@ -366,7 +367,7 @@ export const getConnectorInfo = worker => {
     worker.classInfos.forEach(info => {
       const { className, classType } = info;
       const displayClassName = className.split('.').pop();
-      if (info.classType === 'source') {
+      if (info.classType === KIND.source) {
         return sources.push({
           name: displayClassName,
           classType,

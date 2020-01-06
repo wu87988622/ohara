@@ -15,6 +15,8 @@
  */
 
 import { get, map, merge } from 'lodash';
+
+import { KIND } from 'const';
 import * as routines from './pipelineRoutines';
 import * as action from 'utils/action';
 
@@ -68,12 +70,12 @@ export const createActions = context => {
           map(get(values, 'endpoints'), endpoint => {
             let group = null;
             switch (endpoint.kind) {
-              case 'source':
-              case 'sink':
-              case 'stream':
+              case KIND.source:
+              case KIND.sink:
+              case KIND.stream:
                 group = streamGroup;
                 break;
-              case 'topic':
+              case KIND.topic:
                 group = topicGroup;
                 break;
               default:

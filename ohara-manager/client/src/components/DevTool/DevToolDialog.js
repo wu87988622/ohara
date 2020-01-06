@@ -18,6 +18,8 @@ import React, { useEffect, useState, useCallback, useReducer } from 'react';
 import moment from 'moment';
 import { isEmpty, get } from 'lodash';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
+
+import { KIND } from 'const';
 import * as inspectApi from 'api/inspectApi';
 import * as logApi from 'api/logApi';
 import * as streamApi from 'api/streamApi';
@@ -100,16 +102,17 @@ const DevToolDialog = () => {
   const { setSelectedCell } = context.usePipelineActions();
 
   const getService = classType => {
-    if (classType === 'source' || classType === 'sink') return 'worker';
-    if (classType === 'topic') return 'broker';
-    if (classType === 'stream') return 'stream';
+    if (classType === KIND.source || classType === KIND.sink)
+      return KIND.worker;
+    if (classType === KIND.topic) return KIND.broker;
+    if (classType === KIND.stream) return KIND.stream;
   };
 
   useEffect(() => {
     // The selected cell could be other connector types do a quick check here
     if (!selectedCell || !isOpen) return;
 
-    const isTopic = get(selectedCell, 'classType', null) === 'topic';
+    const isTopic = get(selectedCell, 'classType', null) === KIND.topic;
 
     if (isTopic) {
       if (data.type === 'logs') {

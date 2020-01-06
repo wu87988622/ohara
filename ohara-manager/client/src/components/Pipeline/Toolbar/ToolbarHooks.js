@@ -17,6 +17,7 @@
 import React from 'react';
 import _ from 'lodash';
 
+import { KIND } from 'const';
 import {
   useConnectorActions,
   useTopicActions,
@@ -32,7 +33,7 @@ export const useDeleteServices = () => {
 
   const deleteServices = async services => {
     const runningServices = services.filter(
-      service => service.kind !== 'topic' && Boolean(service.state),
+      service => service.kind !== KIND.topic && Boolean(service.state),
     );
 
     // If there's no running objects, don't display the process bar
@@ -50,19 +51,19 @@ export const useDeleteServices = () => {
 
       // Connectors and stream apps are the only services that
       // we're going to delete
-      if (kind === 'source' || kind === 'sink') {
+      if (kind === KIND.source || kind === KIND.sink) {
         if (isRunning) await stopConnector(name);
 
         await deleteConnector(name);
       }
 
-      if (kind === 'topic') {
+      if (kind === KIND.topic) {
         if (isRunning) await stopTopic(name);
 
         await deleteTopic(name);
       }
 
-      if (kind === 'stream') {
+      if (kind === KIND.stream) {
         if (isRunning) await stopStream(name);
 
         await deleteStream(name);

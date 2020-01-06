@@ -16,9 +16,9 @@
 
 /* eslint-disable no-unused-expressions */
 
+import { KIND } from '../../src/const';
 import * as generate from '../../src/utils/generate';
 import * as fileApi from '../../src/api/fileApi';
-import * as inspectApi from '../../src/api/inspectApi';
 import { deleteAllServices } from '../utils';
 
 const generateFile = () => {
@@ -71,7 +71,7 @@ describe('File API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq(inspectApi.classType.source);
+        expect(classType).to.eq(KIND.source);
 
         expect(settingDefinitions).to.be.an('array');
         expect(settingDefinitions.length > 0).to.be.true;
@@ -137,7 +137,7 @@ describe('File API', () => {
           expect(className).to.be.a('string');
 
           expect(classType).to.be.a('string');
-          expect(classType).to.eq(inspectApi.classType.source);
+          expect(classType).to.eq(KIND.source);
 
           expect(settingDefinitions).to.be.an('array');
           expect(settingDefinitions.length > 0).to.be.true;

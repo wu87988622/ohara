@@ -16,6 +16,7 @@
 
 import _ from 'lodash';
 
+import { KIND } from 'const';
 import * as routines from './pipelineRoutines';
 import { isKeyEqual } from 'utils/object';
 
@@ -28,7 +29,7 @@ const filterOutObjects = pipelines =>
   pipelines.map(pipeline => {
     return {
       ...pipeline,
-      objects: pipeline.objects.filter(object => object.kind !== 'object'),
+      objects: pipeline.objects.filter(object => object.kind !== KIND.object),
     };
   });
 

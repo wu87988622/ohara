@@ -15,6 +15,7 @@
  */
 
 import { isEmpty, has, map } from 'lodash';
+
 import * as connectorApi from 'api/connectorApi';
 import * as objectApi from 'api/objectApi';
 import * as inspectApi from 'api/inspectApi';

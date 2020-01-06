@@ -34,6 +34,7 @@ import Switch from '@material-ui/core/Switch';
 import { useHistory } from 'react-router-dom';
 import _ from 'lodash';
 
+import { KIND } from 'const';
 import * as context from 'context';
 import { Progress } from 'components/common/Progress';
 import { StyledToolbar } from './ToolbarStyles';
@@ -87,9 +88,9 @@ const Toolbar = props => {
     const { objects: services } = pipeline;
 
     const connectors = services.filter(
-      service => service.kind === 'source' || service.kind === 'sink',
+      service => service.kind === KIND.source || service.kind === KIND.sink,
     );
-    const streams = services.filter(service => service.kind === 'stream');
+    const streams = services.filter(service => service.kind === KIND.stream);
 
     let connectorPromises = [];
     let streamsPromises = [];

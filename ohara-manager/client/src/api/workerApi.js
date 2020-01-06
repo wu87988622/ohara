@@ -15,6 +15,8 @@
  */
 
 import { isEmpty } from 'lodash';
+
+import { KIND } from '../const';
 import * as worker from './body/workerBody';
 import {
   getKey,
@@ -53,7 +55,7 @@ export const start = async params => {
   let result = {};
   if (startRes.data.isSuccess) {
     await wait({
-      url: `${URL.INSPECT_URL}/${inspect.kind.worker}/${name}?group=${group}`,
+      url: `${URL.INSPECT_URL}/${KIND.worker}/${name}?group=${group}`,
       checkFn: waitUtil.waitForConnectReady,
     });
     const res = await axiosInstance.get(`${url}/${name}?group=${group}`);

@@ -15,6 +15,8 @@
  */
 
 import { map } from 'lodash';
+
+import { KIND } from 'const';
 import * as routines from './zookeeperRoutines';
 import * as action from 'utils/action';
 
@@ -29,7 +31,7 @@ export const createActions = context => {
         const zookeepers = await zookeeperApi.fetchAll();
         const data = map(zookeepers, zookeeper => ({
           ...zookeeper,
-          serviceType: 'zookeeper',
+          serviceType: KIND.zookeeper,
         }));
         dispatch(routine.success(data));
         return action.success(data);

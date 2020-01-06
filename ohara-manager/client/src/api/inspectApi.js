@@ -30,7 +30,7 @@ import {
 import * as URL from './utils/url';
 
 const url = URL.INSPECT_URL;
-export const kind = {
+export const inspectKind = {
   configurator: 'configurator',
   zookeeper: 'zookeeper',
   broker: 'broker',
@@ -40,18 +40,6 @@ export const kind = {
   rdb: 'rdb',
   topic: 'topic',
   file: 'files',
-};
-
-export const classType = {
-  stream: 'stream',
-  sink: 'sink',
-  source: 'source',
-};
-
-export const configuratorMode = {
-  fake: 'FAKE',
-  docker: 'DOCKER',
-  k8s: 'K8S',
 };
 
 const converterDotToLodash = params => {
@@ -112,41 +100,41 @@ const fetchServiceInfo = async (kind, params) => {
 };
 
 export const getConfiguratorInfo = async () => {
-  const res = await axiosInstance.get(`${url}/${kind.configurator}`);
+  const res = await axiosInstance.get(`${url}/${inspectKind.configurator}`);
   const result = responseUtil(res, inspectConfiguratorBody);
   result.title =
-    `Inspect ${kind.configurator} info ` +
+    `Inspect ${inspectKind.configurator} info ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const getZookeeperInfo = async (params = {}) => {
-  return fetchServiceInfo(kind.zookeeper, params);
+  return fetchServiceInfo(inspectKind.zookeeper, params);
 };
 
 export const getBrokerInfo = async (params = {}) => {
-  return fetchServiceInfo(kind.broker, params);
+  return fetchServiceInfo(inspectKind.broker, params);
 };
 
 export const getWorkerInfo = async (params = {}) => {
-  return fetchServiceInfo(kind.worker, params);
+  return fetchServiceInfo(inspectKind.worker, params);
 };
 
 export const getStreamsInfo = async (params = {}) => {
-  return fetchServiceInfo(kind.stream, params);
+  return fetchServiceInfo(inspectKind.stream, params);
 };
 
 export const getManagerInfo = async () => {
-  const res = await axiosInstance.get(`${url}/${kind.manager}`);
+  const res = await axiosInstance.get(`${url}/${inspectKind.manager}`);
   const result = responseUtil(res, inspectManagerBody);
   result.title =
-    `Inspect ${kind.manager} info ` +
+    `Inspect ${inspectKind.manager} info ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const getFileInfoWithoutUpload = async params => {
-  const fileUrl = `${url}/${kind.file}`;
+  const fileUrl = `${url}/${inspectKind.file}`;
 
   const requestBody = requestUtil(params, file);
   const config = {
@@ -164,7 +152,7 @@ export const getFileInfoWithoutUpload = async params => {
   const res = await axiosInstance.post(fileUrl, formData, config);
   const result = responseUtil(res, file);
   result.title =
-    `Inspect ${kind.file} ${getKey(params)} info ` +
+    `Inspect ${inspectKind.file} ${getKey(params)} info ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
@@ -172,21 +160,22 @@ export const getFileInfoWithoutUpload = async params => {
 export const getTopicData = async params => {
   const { name, ...others } = params;
   const topicUrl =
-    `${url}/${kind.topic}/${name}` + URL.toQueryParameters(others);
+    `${url}/${inspectKind.topic}/${name}` + URL.toQueryParameters(others);
   const res = await axiosInstance.post(topicUrl);
   const result = responseUtil(res, inspectTopicBody);
   result.title =
-    `Inspect ${kind.topic} ${getKey(params)} info ` +
+    `Inspect ${inspectKind.topic} ${getKey(params)} info ` +
     (result.errors ? 'failed.' : 'successful.');
   return result;
 };
 
 export const getRdbData = async params => {
-  const rdbUrl = `${url}/${kind.rdb}`;
+  const rdbUrl = `${url}/${inspectKind.rdb}`;
   const requestBody = requestUtil(params, inspectRdbBody);
   const res = await axiosInstance.post(rdbUrl, requestBody);
   const result = responseUtil(res, inspectRdbBody);
   result.title =
-    `Inspect ${kind.rdb} info ` + (result.errors ? 'failed.' : 'successful.');
+    `Inspect ${inspectKind.rdb} info ` +
+    (result.errors ? 'failed.' : 'successful.');
   return result;
 };

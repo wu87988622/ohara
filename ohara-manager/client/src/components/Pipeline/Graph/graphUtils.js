@@ -16,6 +16,7 @@
 
 import * as joint from 'jointjs';
 
+import { KIND } from 'const';
 import { TopicGraph } from '../Graph/Topic';
 
 export const updateCurrentCell = currentCell => {
@@ -72,11 +73,11 @@ export const createConnection = params => {
     // A cell cannot connect to itself, not throwing a
     // message out here since the behavior is not obvious
     resetLink();
-  } else if (targetType === 'source') {
+  } else if (targetType === KIND.source) {
     handleError(`Target ${targetTitle} is a source!`);
   } else if (
     sourceType === targetType &&
-    (sourceType !== 'stream' && targetType !== 'stream')
+    (sourceType !== KIND.stream && targetType !== KIND.stream)
   ) {
     handleError(
       `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
@@ -87,16 +88,16 @@ export const createConnection = params => {
     const predecessors = graph.current.getPredecessors(targetCell);
     const successors = graph.current.getSuccessors(sourceCell);
     const sourceHasTarget = successors.some(
-      successor => successor.attributes.classType === 'topic',
+      successor => successor.attributes.classType === KIND.topic,
     );
     const targetHasSource = predecessors.some(
-      predecessor => predecessor.attributes.classType === 'topic',
+      predecessor => predecessor.attributes.classType === KIND.topic,
     );
 
     // Following are complex connection logic, each source and target
     // have different rules of whether or not it can be connected with
     // another cell
-    if (sourceType === 'source' && targetType === 'sink') {
+    if (sourceType === KIND.source && targetType === KIND.sink) {
       if (sourceHasTarget) {
         return handleError(
           `The source ${sourceTitle} is already connected to a target`,
@@ -109,7 +110,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'source' && targetType === 'stream') {
+    if (sourceType === KIND.source && targetType === KIND.stream) {
       if (sourceHasTarget) {
         return handleError(
           `The source ${sourceTitle} is already connected to a target`,
@@ -122,7 +123,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'source' && targetType === 'topic') {
+    if (sourceType === KIND.source && targetType === KIND.topic) {
       if (sourceHasTarget) {
         return handleError(
           `The source ${sourceTitle} is already connected to a target`,
@@ -130,7 +131,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'topic' && targetType === 'sink') {
+    if (sourceType === KIND.topic && targetType === KIND.sink) {
       if (targetHasSource) {
         return handleError(
           `The target ${targetTitle} is already connected to a source`,
@@ -138,7 +139,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'topic' && targetType === 'stream') {
+    if (sourceType === KIND.topic && targetType === KIND.stream) {
       if (targetHasSource) {
         return handleError(
           `The target ${targetTitle} is already connected to a source`,
@@ -146,7 +147,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'stream' && targetType === 'topic') {
+    if (sourceType === KIND.stream && targetType === KIND.topic) {
       if (sourceHasTarget) {
         return handleError(
           `The source ${sourceTitle} is already connected to a target`,
@@ -154,7 +155,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'stream' && targetType === 'sink') {
+    if (sourceType === KIND.stream && targetType === KIND.sink) {
       if (sourceHasTarget) {
         return handleError(
           `The source ${sourceTitle} is already connected to a sink`,
@@ -168,7 +169,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === 'stream' && targetType === 'stream') {
+    if (sourceType === KIND.stream && targetType === KIND.stream) {
       if (sourceHasTarget) {
         return handleError(
           `The source ${sourceTitle} is already connected to a sink`,
@@ -185,10 +186,10 @@ export const createConnection = params => {
     // Create a topic between two cells that are about to connect
     // And only the below sources/targets have this behavior
     if (
-      (sourceType === 'source' && targetType === 'sink') ||
-      (sourceType === 'source' && targetType === 'stream') ||
-      (sourceType === 'stream' && targetType === 'sink') ||
-      (sourceType === 'stream' && targetType === 'stream')
+      (sourceType === KIND.source && targetType === KIND.sink) ||
+      (sourceType === KIND.source && targetType === KIND.stream) ||
+      (sourceType === KIND.stream && targetType === KIND.sink) ||
+      (sourceType === KIND.stream && targetType === KIND.stream)
     ) {
       const sourcePosition = sourceCell.position();
       const targetPosition = targetCell.position();
@@ -204,7 +205,7 @@ export const createConnection = params => {
               x: topicX,
               y: topicY,
             },
-            classType: 'topic',
+            classType: KIND.topic,
             className: 'privateTopic', // This topic should always be a private topic
           },
           graph,

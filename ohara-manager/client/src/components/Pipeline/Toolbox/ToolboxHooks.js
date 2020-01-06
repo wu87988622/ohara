@@ -17,6 +17,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { isEmpty } from 'lodash';
 
+import { KIND } from 'const';
 import * as fileApi from 'api/fileApi';
 import { hashKey } from 'utils/object';
 import { useTopicState, useTopicActions } from 'context';
@@ -33,7 +34,7 @@ export const useTopics = workspace => {
 
   const topics = [privateTopic, ...topicsData]
     .map(topic => ({
-      classType: 'topic',
+      classType: KIND.topic,
       name: topic.name,
       type: topic.tags.type,
       displayName: topic.tags.displayName || '',
@@ -71,7 +72,7 @@ export const useFiles = workspace => {
           const streamClasses = result.data
             .map(file => file.classInfos)
             .flat()
-            .filter(cls => cls.classType === 'stream');
+            .filter(cls => cls.classType === KIND.stream);
 
           if (streamClasses.length > 0) {
             const results = streamClasses

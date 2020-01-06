@@ -20,6 +20,7 @@ import * as joint from 'jointjs';
 import { useTheme } from '@material-ui/core/styles';
 import { get } from 'lodash';
 
+import { KIND } from 'const';
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
 import ConnectorGraph from './Connector/ConnectorGraph';
@@ -345,9 +346,9 @@ const Graph = props => {
           currentWorker !== null
         ) {
           switch (cell.classType) {
-            case 'source':
-            case 'sink':
-            case 'stream':
+            case KIND.source:
+            case KIND.sink:
+            case KIND.stream:
               const className = cell.params.cellInfo.className;
               const classInfo = currentWorker.classInfos.find(
                 classInfo => classInfo.className === className,
@@ -381,7 +382,7 @@ const Graph = props => {
               );
               break;
 
-            case 'topic':
+            case KIND.topic:
               graph.current.addCell(
                 TopicGraph({
                   ...cell.params,

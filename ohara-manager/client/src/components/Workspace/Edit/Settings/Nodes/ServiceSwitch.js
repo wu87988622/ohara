@@ -17,10 +17,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { get, includes, uniq, pull, union } from 'lodash';
-
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
+import { KIND } from 'const';
 import {
   useWorkerActions,
   useBrokerActions,
@@ -54,9 +54,9 @@ const ServiceSwitch = ({ cluster, nodeName, type }) => {
     } = cluster;
 
     const data = { name, group, nodeNames };
-    if (type === 'worker') stageWorker(data);
-    if (type === 'broker') stageBroker(data);
-    if (type === 'zookeeper') stageZookeeper(data);
+    if (type === KIND.worker) stageWorker(data);
+    if (type === KIND.broker) stageBroker(data);
+    if (type === KIND.zookeeper) stageZookeeper(data);
   };
 
   return (

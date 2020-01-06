@@ -17,6 +17,7 @@
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+import { KIND } from '../../src/const';
 import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
 import * as connectorApi from '../../src/api/connectorApi';
@@ -73,12 +74,12 @@ const generatePipeline = async () => {
       {
         name: connectorSource.name,
         group: connectorSource.group,
-        kind: 'source',
+        kind: KIND.source,
       },
       {
         name: topic.name,
         group: topic.group,
-        kind: 'topic',
+        kind: KIND.topic,
       },
     ],
     tags: {
@@ -202,7 +203,7 @@ describe('Pipeline API', () => {
     const result = await pipelineApi.create(pipeline);
     expect(result.errors).to.be.undefined;
 
-    const source = result.data.objects.find(obj => obj.kind === 'source');
+    const source = result.data.objects.find(obj => obj.kind === KIND.source);
 
     await connectorApi.stop({ name: source.name, group: source.group });
     await connectorApi.remove({ name: source.name, group: source.group });

@@ -17,7 +17,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { hashByGroupAndName } from 'utils/sha';
-import { BROKER, WORKER, WORKSPACE, ZOOKEEPER } from 'context/api';
+
+// default group of services
+const GROUP = {
+  workspace: 'workspace',
+  zookeeper: 'zookeeper',
+  broker: 'broker',
+  worker: 'worker',
+};
 
 const AppContext = createContext();
 
@@ -33,7 +40,7 @@ const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const group = workspaceName
-      ? hashByGroupAndName(WORKSPACE, workspaceName)
+      ? hashByGroupAndName(GROUP.workspace, workspaceName)
       : null;
     setFileGroup(group);
     setPipelineGroup(group);
@@ -57,15 +64,15 @@ const AppProvider = ({ children }) => {
         pipelineName,
         setPipelineName,
         groups: {
-          brokerGroup: BROKER,
+          brokerGroup: GROUP.broker,
           connectorGroup,
           fileGroup,
           pipelineGroup,
           streamGroup,
           topicGroup,
-          workerGroup: WORKER,
-          workspaceGroup: WORKSPACE,
-          zookeeperGroup: ZOOKEEPER,
+          workerGroup: GROUP.worker,
+          workspaceGroup: GROUP.workspace,
+          zookeeperGroup: GROUP.zookeeper,
         },
       }}
     >

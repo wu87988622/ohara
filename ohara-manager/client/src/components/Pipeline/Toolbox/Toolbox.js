@@ -28,6 +28,7 @@ import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
 import * as joint from 'jointjs';
 
+import { KIND } from 'const';
 import * as fileApi from 'api/fileApi';
 import * as context from 'context';
 import * as utils from './toolboxUtils';
@@ -157,7 +158,7 @@ const Toolbox = props => {
     };
 
     switch (cellInfo.classType) {
-      case 'stream':
+      case KIND.stream:
         const [targetStream] = streamFiles
           .filter(streamFile =>
             streamFile.classInfos.find(
@@ -188,7 +189,7 @@ const Toolbox = props => {
             ...currentPipeline.endpoints,
             {
               name: requestParams.name,
-              kind: 'stream',
+              kind: KIND.stream,
             },
           ],
         });
@@ -201,8 +202,8 @@ const Toolbox = props => {
 
         break;
 
-      case 'source':
-      case 'sink':
+      case KIND.source:
+      case KIND.sink:
         const { classInfos } = currentWorker;
 
         const connectorRes = await createConnector({

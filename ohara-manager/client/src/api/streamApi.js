@@ -15,6 +15,8 @@
  */
 
 import { isEmpty } from 'lodash';
+
+import { KIND } from '../const';
 import * as stream from './body/streamBody';
 import {
   getKey,
@@ -26,7 +28,6 @@ import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
 import * as file from './fileApi';
-import { classType } from './inspectApi';
 
 const url = URL.STREAM_URL;
 
@@ -41,9 +42,7 @@ export const create = async (params, body = {}) => {
       const { classInfos } = result.data;
       // we only support one stream class right now
       // find the first match result
-      const classes = classInfos.filter(
-        info => info.classType === classType.stream,
-      );
+      const classes = classInfos.filter(info => info.classType === KIND.stream);
       if (classes.length > 0) body = classes[0];
     }
   }

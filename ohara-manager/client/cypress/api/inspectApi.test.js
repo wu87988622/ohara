@@ -17,6 +17,7 @@
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+import { KIND, MODE } from '../../src/const';
 import * as generate from '../../src/utils/generate';
 import * as inspect from '../../src/api/inspectApi';
 import { createServices, deleteAllServices } from '../utils';
@@ -31,7 +32,7 @@ describe('Inspect API', () => {
 
     // we're using fake configurator in our tests; so this value should be "FAKE"
     expect(mode).to.be.a('string');
-    expect(mode).to.eq(inspect.configuratorMode.fake);
+    expect(mode).to.eq(MODE.fake);
 
     expect(branch).to.be.a('string');
 
@@ -74,19 +75,19 @@ describe('Inspect API', () => {
 
     const infoZookeeper = await inspect.getZookeeperInfo();
     expect(infoZookeeper.errors).to.be.undefined;
-    expectResult(inspect.kind.zookeeper, infoZookeeper);
+    expectResult(inspect.inspectKind.zookeeper, infoZookeeper);
 
     const infoBroker = await inspect.getBrokerInfo();
     expect(infoBroker.errors).to.be.undefined;
-    expectResult(inspect.kind.broker, infoBroker);
+    expectResult(inspect.inspectKind.broker, infoBroker);
 
     const infoWorker = await inspect.getWorkerInfo();
     expect(infoWorker.errors).to.be.undefined;
-    expectResult(inspect.kind.worker, infoWorker);
+    expectResult(inspect.inspectKind.worker, infoWorker);
 
     const infoStream = await inspect.getStreamsInfo();
     expect(infoStream.errors).to.be.undefined;
-    expectResult(inspect.kind.stream, infoStream);
+    expectResult(inspect.inspectKind.stream, infoStream);
   });
 
   it('fetchServiceDefinitionByName', async () => {
@@ -110,15 +111,15 @@ describe('Inspect API', () => {
 
     const infoZookeeper = await inspect.getZookeeperInfo(zookeeper);
     expect(infoZookeeper.errors).to.be.undefined;
-    expectResult(inspect.kind.zookeeper, infoZookeeper);
+    expectResult(inspect.inspectKind.zookeeper, infoZookeeper);
 
     const infoBroker = await inspect.getBrokerInfo(broker);
     expect(infoBroker.errors).to.be.undefined;
-    expectResult(inspect.kind.broker, infoBroker);
+    expectResult(inspect.inspectKind.broker, infoBroker);
 
     const infoWorker = await inspect.getWorkerInfo(worker);
     expect(infoWorker.errors).to.be.undefined;
-    expectResult(inspect.kind.worker, infoWorker);
+    expectResult(inspect.inspectKind.worker, infoWorker);
   });
 
   it('fetchTopicDefinition', async () => {
@@ -137,7 +138,7 @@ describe('Inspect API', () => {
       expect(className).to.be.a('string');
 
       expect(classType).to.be.a('string');
-      expect(classType).to.eq('topic');
+      expect(classType).to.eq(KIND.topic);
 
       expect(settingDefinitions).to.be.an('array');
       expect(settingDefinitions.length > 0).to.be.true;
@@ -165,7 +166,7 @@ describe('Inspect API', () => {
       expect(className).to.be.a('string');
 
       expect(classType).to.be.a('string');
-      expect(['source', 'sink']).to.include(classType);
+      expect([KIND.source, KIND.sink]).to.include(classType);
 
       expect(settingDefinitions).to.be.an('array');
       expect(settingDefinitions.length > 0).to.be.true;
@@ -208,7 +209,7 @@ describe('Inspect API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq(inspect.classType.stream);
+        expect(classType).to.eq(KIND.stream);
 
         expect(settingDefinitions).to.be.an('array');
         expect(settingDefinitions.length > 0).to.be.true;
@@ -263,7 +264,7 @@ describe('Inspect API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq(inspect.classType.source);
+        expect(classType).to.eq(KIND.source);
 
         expect(settingDefinitions).to.be.an('array');
         expect(settingDefinitions.length > 0).to.be.true;
@@ -318,7 +319,7 @@ describe('Inspect API', () => {
         expect(className).to.be.a('string');
 
         expect(classType).to.be.a('string');
-        expect(classType).to.eq(inspect.classType.sink);
+        expect(classType).to.eq(KIND.sink);
 
         expect(settingDefinitions).to.be.an('array');
         expect(settingDefinitions.length > 0).to.be.true;

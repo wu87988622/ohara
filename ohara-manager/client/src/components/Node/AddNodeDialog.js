@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { MODE } from 'const';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
@@ -28,7 +29,6 @@ import {
   composeValidators,
 } from 'utils/validate';
 import { useNodeActions } from 'context';
-import { configuratorMode } from '../../api/inspectApi';
 
 const AddNodeDialog = props => {
   const { isOpen, handleClose, mode } = props;
@@ -80,7 +80,7 @@ const AddNodeDialog = props => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              {mode !== configuratorMode.k8s && (
+              {mode !== MODE.k8s && (
                 <>
                   <Field
                     name="port"

@@ -15,6 +15,7 @@
  */
 
 import { isEmpty } from 'lodash';
+
 import * as logApi from 'api/logApi';
 import { validate } from './utils';
 

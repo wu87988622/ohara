@@ -22,6 +22,7 @@ import IconButton from '@material-ui/core/IconButton';
 import styled, { css } from 'styled-components';
 import { isEmpty } from 'lodash';
 
+import { KIND } from 'const';
 import { usePrevious, useDebounce } from 'utils/hooks';
 
 const StyledToolboxSearch = styled.div(
@@ -57,10 +58,10 @@ const ToolboxSearch = ({
         const lowercaseName = name.toLowerCase();
 
         if (lowercaseName.includes(debouncedSearchTerm)) {
-          if (classType === 'source') sources.push(data);
-          if (classType === 'topic') topics.push(data);
-          if (classType === 'stream') streams.push(data);
-          if (classType === 'sink') sinks.push(data);
+          if (classType === KIND.source) sources.push(data);
+          if (classType === KIND.topic) topics.push(data);
+          if (classType === KIND.stream) streams.push(data);
+          if (classType === KIND.sink) sinks.push(data);
         }
       });
 

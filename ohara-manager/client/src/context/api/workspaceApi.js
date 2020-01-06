@@ -15,6 +15,7 @@
  */
 
 import { map, omit, values } from 'lodash';
+
 import * as objectApi from 'api/objectApi';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
