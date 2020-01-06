@@ -98,10 +98,17 @@ function WorkspaceList() {
             {workspaces.map(workspace => {
               const name = get(workspace, 'name');
               const nodeNames = get(workspace, 'nodeNames');
-              const lastModified = get(workspace, 'lastModified');
+
+              const lastModified = get(
+                workspace,
+                // TODO: Displaying `stagingSettings` for now. This is not the correct
+                // place to get the date, we should come back and fix this
+                'stagingSettings.lastModified',
+              );
 
               const avatarText = name.substring(0, 2).toUpperCase();
               const updatedText = moment(toNumber(lastModified)).fromNow();
+
               const isActive = name === currWorkspaceName;
               const brokerKey = pickBrokerKey(workspace);
               const count = {
@@ -126,16 +133,20 @@ function WorkspaceList() {
                     />
                     <CardContent>
                       <Grid container spacing={2}>
-                        <Grid item xs={4}>
+                        <Grid item xs={6}>
                           <Statistic value={count.nodes} label="Nodes" />
                         </Grid>
-                        <Grid item xs={4}>
-                          <Statistic
-                            value={count.pipelines}
-                            label="Pipelines"
-                          />
-                        </Grid>
-                        <Grid item xs={4}>
+
+                        {/* Feature is disabled because it's not implemented in 0.9 */
+                        false && (
+                          <Grid item xs={4}>
+                            <Statistic
+                              value={count.pipelines}
+                              label="Pipelines"
+                            />
+                          </Grid>
+                        )}
+                        <Grid item xs={6}>
                           <Statistic value={count.topics} label="Topics" />
                         </Grid>
                       </Grid>

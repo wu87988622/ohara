@@ -64,7 +64,7 @@ const Navigator = () => {
   };
 
   const onSubmit = async ({ pipelineName: name }, form) => {
-    createPipeline({ name });
+    await createPipeline({ name });
     setTimeout(form.reset);
     setIsOpen(false);
   };

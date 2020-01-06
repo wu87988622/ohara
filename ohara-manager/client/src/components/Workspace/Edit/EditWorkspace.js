@@ -55,7 +55,6 @@ const EditWorkspace = () => {
   };
 
   const tab = get(editWorkspaceDialogData, 'tab', 'overview');
-
   return (
     <>
       <FullScreenDialog
@@ -78,7 +77,10 @@ const EditWorkspace = () => {
             >
               ADD TOPIC
             </Button>
-            <FileUpload>
+            <FileUpload
+              handleTabChange={handleChange}
+              shouldRedirect={tab !== WorkspaceTabs.FILES}
+            >
               <Button variant="outlined" color="primary" className="button">
                 UPLOAD FILE
               </Button>

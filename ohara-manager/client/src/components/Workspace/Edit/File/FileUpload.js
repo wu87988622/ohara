@@ -19,7 +19,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Button from '@material-ui/core/Button';
 
-import { useFileActions } from 'context';
+import { useFileActions, useSnackbar } from 'context';
+import { Tabs as WorkspaceTabs } from '../';
 
 const Wrapper = styled.div`
   .input {
@@ -27,8 +28,14 @@ const Wrapper = styled.div`
   }
 `;
 
-const FileUpload = ({ children, accept = '.jar' }) => {
+const FileUpload = ({
+  children,
+  shouldRedirect,
+  handleTabChange,
+  accept = '.jar',
+}) => {
   const { createFile } = useFileActions();
+  const showMessage = useSnackbar();
   const inputEl = useRef(null);
 
   const Trigger = () => {
@@ -48,9 +55,18 @@ const FileUpload = ({ children, accept = '.jar' }) => {
     );
   };
 
-  const handleFileSelect = event => {
+  const handleFileSelect = async event => {
     const file = event.target.files[0];
-    if (file) createFile(file);
+    if (file) {
+      const { error } = await createFile(file);
+
+      // A custom error is thrown in the action creator, and so we need to handle
+      // it here as API errors are normally handled in the context API layer.
+      // If we're not doing so, the custom error will be swallowed and thus not
+      // showing up in the UI at all
+      if (error) return showMessage(error);
+      if (shouldRedirect) handleTabChange(null, WorkspaceTabs.FILES);
+    }
   };
 
   return (
@@ -72,6 +88,8 @@ const FileUpload = ({ children, accept = '.jar' }) => {
 };
 
 FileUpload.propTypes = {
+  shouldRedirect: PropTypes.bool.isRequired,
+  handleTabChange: PropTypes.func.isRequired,
   children: PropTypes.node,
   accept: PropTypes.string,
 };
