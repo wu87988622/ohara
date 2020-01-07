@@ -83,7 +83,7 @@ public abstract class RowSourceTask extends SourceTask {
    * offsets automatically. This hook is provided for systems that also need to store offsets
    * internally in their own system.
    */
-  protected void _commit() {
+  protected void commitOffsets() {
     // do nothing
   }
 
@@ -219,7 +219,7 @@ public abstract class RowSourceTask extends SourceTask {
 
   @Override
   public final void commit() {
-    _commit();
+    commitOffsets();
   }
 
   // TODO: We do a extra conversion here (bytes => Row)... by chia
