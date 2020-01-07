@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { omit } from 'lodash';
+import { omit, isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
@@ -28,7 +28,18 @@ const Tags = props => {
     ...rest
   } = omit(props, ['tableKeys']);
 
-  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
+  let hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
+  let jsonValue = value;
+  try {
+    jsonValue = JSON.stringify(JSON.parse(value), 0, 2);
+  } catch (error) {
+    if (isEqual(jsonValue, {})) {
+      jsonValue = '{}';
+    } else {
+      hasError = true;
+      meta.error = 'Invalid JSON format';
+    }
+  }
 
   return (
     <TextField
@@ -39,7 +50,7 @@ const Tags = props => {
       variant="outlined"
       onChange={onChange}
       name={name}
-      value={value}
+      value={jsonValue}
       helperText={hasError ? meta.error : helperText}
       error={hasError}
       multiline

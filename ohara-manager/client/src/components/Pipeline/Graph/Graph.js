@@ -288,6 +288,7 @@ const Graph = props => {
         if (cell.attributes.type === 'standard.Link') {
           if (!cell.get('attributes.target.id', null)) return;
         }
+
         updatePipeline({
           name: currentPipeline.name,
           tags: {
@@ -378,6 +379,8 @@ const Graph = props => {
                   startConnector,
                   stopConnector,
                   deleteConnector,
+                  updatePipeline,
+                  currentPipeline: currentPipelineRef.current,
                 }),
               );
               break;
@@ -396,6 +399,8 @@ const Graph = props => {
                   },
                   stopTopic,
                   deleteTopic,
+                  updatePipeline,
+                  currentPipeline: currentPipelineRef.current,
                 }),
               );
               break;

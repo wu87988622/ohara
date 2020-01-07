@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { omit } from 'lodash';
+import { omit, isObject } from 'lodash';
 import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
@@ -36,7 +36,13 @@ const Reference = props => {
     { name: placeholder, tags: { displayName: placeholder } },
     ...list,
   ];
-  const _value = value.length > 0 ? value : placeholder;
+
+  const _value =
+    value.length > 0 && list.length > 0
+      ? list.find(topic =>
+          topic.tags.displayName === isObject(value) ? value.name : value,
+        ).tags.displayName
+      : placeholder;
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 

@@ -51,6 +51,9 @@ const converterDotToLodash = params => {
       .forEach(key => {
         switch (obj[key]) {
           case 'group':
+          case 'zookeeperClusterKey':
+          case 'workerClusterKey':
+          case 'brokerClusterKey':
             obj.internal = true;
             break;
 

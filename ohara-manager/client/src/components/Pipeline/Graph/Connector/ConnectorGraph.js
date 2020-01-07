@@ -47,6 +47,8 @@ const ConnectorGraph = params => {
     startConnector,
     stopConnector,
     deleteConnector,
+    updatePipeline,
+    currentPipeline,
   } = params;
 
   const { classType, position, icon, displayedClassName } = cellInfo;
@@ -72,7 +74,8 @@ const ConnectorGraph = params => {
   const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
-  const isMetricsDisplayed = metrics.meters.length > 0 && isMetricsOn;
+  const isMetricsDisplayed = metrics.length > 0 && isMetricsOn;
+
   const getMetrics = isMetricsDisplayed => {
     if (!isMetricsDisplayed) return;
 
@@ -181,13 +184,23 @@ const ConnectorGraph = params => {
         stopConnector(name);
       });
 
-      this.$box.find('#connector-remove').on('mousedown', () => {
-        deleteConnector(name);
-      });
-
       this.$box
         .find('#connector-remove')
         .on('click', _.bind(this.model.remove, this.model));
+
+      this.$box.find('#connector-remove').on('mousedown', async () => {
+        await deleteConnector(name);
+
+        const removedEndpoints = currentPipeline.endpoints.filter(
+          endpoint => endpoint.name !== name,
+        );
+
+        await updatePipeline({
+          name: currentPipeline.name,
+          endpoints: removedEndpoints,
+          tags: graph.current.toJSON(),
+        });
+      });
 
       this.updateBox();
       return this;

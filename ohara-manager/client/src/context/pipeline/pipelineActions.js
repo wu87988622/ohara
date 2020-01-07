@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-import { get, map, merge } from 'lodash';
-
-import { KIND } from 'const';
+import { get, map } from 'lodash';
 import * as routines from './pipelineRoutines';
 import * as action from 'utils/action';
 
 export const createActions = context => {
-  const {
-    state,
-    dispatch,
-    pipelineApi,
-    currentPipeline,
-    streamGroup,
-    topicGroup,
-  } = context;
+  const { state, dispatch, pipelineApi, streamGroup, topicGroup } = context;
   return {
     fetchPipelines: async () => {
       const routine = routines.fetchPipelinesRoutine;
@@ -61,32 +52,29 @@ export const createActions = context => {
       if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        // get all endpoints from current pipeline
-        const currentEndpoints = get(currentPipeline, 'endpoints', []);
+
         // we need to merge all endpoints in order to update object
         // group value is decided by component kind
-        const mergedEndpoints = merge(
-          currentEndpoints,
-          map(get(values, 'endpoints'), endpoint => {
-            let group = null;
-            switch (endpoint.kind) {
-              case KIND.source:
-              case KIND.sink:
-              case KIND.stream:
-                group = streamGroup;
-                break;
-              case KIND.topic:
-                group = topicGroup;
-                break;
-              default:
-                break;
-            }
-            return { ...endpoint, group };
-          }),
-        );
+        const newEndPoints = map(get(values, 'endpoints'), endpoint => {
+          let group = null;
+          switch (endpoint.kind) {
+            case 'source':
+            case 'sink':
+            case 'stream':
+              group = streamGroup;
+              break;
+            case 'topic':
+              group = topicGroup;
+              break;
+            default:
+              break;
+          }
+          return { ...endpoint, group };
+        });
+
         const data = await pipelineApi.update({
           ...values,
-          endpoints: mergedEndpoints,
+          endpoints: values.endpoints && newEndPoints,
         });
         dispatch(routine.success(data));
         return action.success(data);
