@@ -355,7 +355,7 @@ Example Response
       },
       "tags": {},
       "offset.storage.topic": "f1f6ae812c",
-      "imageName": "oharastream/connect-worker:0.8.0-SNAPSHOT",
+      "imageName": "oharastream/connect-worker:$|version|",
       "group.id": "16f3408f84",
       "status.storage.replication.factor": 1,
       "offset.storage.replication.factor": 1,

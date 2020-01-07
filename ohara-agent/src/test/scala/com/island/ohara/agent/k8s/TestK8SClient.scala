@@ -50,7 +50,7 @@ class TestK8SClient extends OharaTest {
                     |        "containers": [
                     |          {
                     |            "name": "ohara",
-                    |            "image": "oharastream/broker:0.9.0-SNAPSHOT",
+                    |            "image": "oharastream/broker:0.10.0-SNAPSHOT",
                     |            "ports": [
                     |              {
                     |                "hostPort": 43507,

@@ -136,7 +136,7 @@ Example Response
       "perf.frequency": "1000 milliseconds",
       "connector.class": "com.island.ohara.connector.perf.PerfSource",
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
-      "version": "0.9.0-SNAPSHOT",
+      "version": "$|version|",
       "columns": [],
       "metrics": {
         "meters": [],
@@ -192,7 +192,7 @@ Example Response
       "perf.frequency": "1000 milliseconds",
       "connector.class": "com.island.ohara.connector.perf.PerfSource",
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
-      "version": "0.9.0-SNAPSHOT",
+      "version": "$|version|",
       "columns": [],
       "metrics": {
         "meters": [],
@@ -245,7 +245,7 @@ Example Response
         "perf.frequency": "1000 milliseconds",
         "connector.class": "com.island.ohara.connector.perf.PerfSource",
         "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
-        "version": "0.9.0-SNAPSHOT",
+        "version": "$|version|",
         "columns": [],
         "metrics": {
           "meters": [],
@@ -311,7 +311,7 @@ Example Response
       "perf.frequency": "1000 milliseconds",
       "connector.class": "com.island.ohara.connector.perf.PerfSource",
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
-      "version": "0.9.0-SNAPSHOT",
+      "version": "$|version|",
       "columns": [],
       "metrics": {
         "meters": [],
