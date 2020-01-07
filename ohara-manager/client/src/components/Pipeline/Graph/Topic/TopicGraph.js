@@ -36,6 +36,8 @@ const TopicGraph = params => {
     stopTopic,
     deleteTopic,
     name,
+    updatePipeline,
+    currentPipeline,
   } = params;
   const { classType, className, position } = cellInfo;
 
@@ -95,14 +97,24 @@ const TopicGraph = params => {
         link.addTo(graph.current);
       });
 
-      this.$box.find('#topic-remove').on('mousedown', async function() {
-        await stopTopic(name);
-        await deleteTopic(name);
-      });
-
       this.$box
         .find('#topic-remove')
         .on('click', _.bind(this.model.remove, this.model));
+
+      this.$box.find('#topic-remove').on('mousedown', async function() {
+        await stopTopic(name);
+        await deleteTopic(name);
+
+        const removedEndpoints = currentPipeline.endpoints.filter(
+          endpoint => endpoint.name !== name,
+        );
+
+        await updatePipeline({
+          name: currentPipeline.name,
+          endpoints: removedEndpoints,
+          tags: graph.current.toJSON(),
+        });
+      });
 
       this.updateBox();
       return this;

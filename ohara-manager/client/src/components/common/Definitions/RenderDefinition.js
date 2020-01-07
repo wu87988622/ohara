@@ -51,6 +51,11 @@ const RenderDefinition = props => {
     if (tags.type === 'private') {
       finalTopic.name = tags.displayName;
       finalTopic.tags.displayName = name;
+      finalTopic.tags.type = tags.type;
+    } else {
+      finalTopic.name = name;
+      finalTopic.tags.displayName = name;
+      finalTopic.tags.type = tags.type;
     }
 
     return finalTopic;
@@ -186,11 +191,6 @@ const RenderDefinition = props => {
 
         case 'FILE':
           return RenderField({ ...def, input: Reference, list: files });
-
-        case 'ZOOKEEPER_CLUSTER':
-        case 'BROKER_CLUSTER':
-        case 'WORKER_CLUSTER':
-          return;
 
         default:
           return RenderField({ ...def, input: Reference });

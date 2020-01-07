@@ -236,6 +236,8 @@ const Toolbox = props => {
             startConnector,
             stopConnector,
             deleteConnector,
+            updatePipeline,
+            currentPipeline,
           }),
         );
         break;

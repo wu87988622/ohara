@@ -335,6 +335,8 @@ export const enableDragAndDrop = params => {
                 deleteTopic,
                 title: displayName,
                 cellInfo: params.cellInfo,
+                currentPipeline,
+                updatePipeline,
               }),
             );
           } else {
