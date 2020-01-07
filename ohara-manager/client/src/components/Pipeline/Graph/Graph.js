@@ -329,8 +329,8 @@ const Graph = props => {
 
   useEffect(() => {
     if (isMetricsOn === null) {
-      // Defaults to true
-      setIsMetricsOn(true);
+      // Defaults to false
+      setIsMetricsOn(false);
     }
   }, [isMetricsOn, setIsMetricsOn]);
 
