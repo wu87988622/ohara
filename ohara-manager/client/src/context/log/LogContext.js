@@ -65,7 +65,11 @@ const useLogActions = () => {
   const state = useLogState();
   const dispatch = useLogDispatch();
   const { logApi } = useApi();
-  return createActions({ state, dispatch, logApi });
+  return React.useMemo(() => createActions({ state, dispatch, logApi }), [
+    state,
+    dispatch,
+    logApi,
+  ]);
 };
 
 export { LogProvider, useLogState, useLogDispatch, useLogActions };

@@ -36,7 +36,6 @@ const Pipeline = () => {
     currentPipeline,
   } = context.useWorkspace();
   const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
-  const { fetchPipelines } = context.usePipelineActions();
   const {
     data: pipelines,
     lastUpdated: isPipelineReady,
@@ -119,11 +118,6 @@ const Pipeline = () => {
 
     setIsNewWorkspaceDialogOpen(true);
   }, [isWorkspaceReady, setIsNewWorkspaceDialogOpen, workspaces.length]);
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    fetchPipelines(currentWorkspace);
-  }, [currentWorkspace, fetchPipelines]);
 
   const prevPipeline = usePrevious(currentPipeline);
   // Reset toolbox states

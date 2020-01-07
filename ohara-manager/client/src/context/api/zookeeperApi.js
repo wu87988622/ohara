@@ -23,8 +23,10 @@ import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
 
 export const createApi = context => {
-  const { zookeeperGroup: group, showMessage } = context;
+  const { zookeeperGroup, showMessage } = context;
+  if (!zookeeperGroup) return;
 
+  const group = zookeeperGroup;
   return {
     fetchAll: async () => {
       const params = { group };

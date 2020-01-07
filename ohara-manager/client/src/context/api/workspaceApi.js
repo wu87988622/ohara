@@ -21,8 +21,10 @@ import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
 
 export const createApi = context => {
-  const { workspaceGroup: group, showMessage } = context;
+  const { workspaceGroup, showMessage } = context;
+  if (!workspaceGroup) return;
 
+  const group = workspaceGroup;
   return {
     fetchAll: async () => {
       const res = await objectApi.getAll({ group });

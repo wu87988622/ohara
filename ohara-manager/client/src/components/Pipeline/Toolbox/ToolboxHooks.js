@@ -20,11 +20,10 @@ import { isEmpty } from 'lodash';
 import { KIND } from 'const';
 import * as fileApi from 'api/fileApi';
 import { hashKey } from 'utils/object';
-import { useTopicState, useTopicActions } from 'context';
+import { useTopicState } from 'context';
 
-export const useTopics = workspace => {
+export const useTopics = () => {
   const { data: topicsData } = useTopicState();
-  const { fetchTopics } = useTopicActions();
 
   // Private topic
   const privateTopic = {
@@ -43,11 +42,6 @@ export const useTopics = workspace => {
       // Private topics are hidden from Toolbox
       topic => topic.type === 'shared' || topic.name === 'Pipeline Only',
     );
-
-  useEffect(() => {
-    if (!workspace) return;
-    fetchTopics(workspace);
-  }, [fetchTopics, workspace]);
 
   return [topics, topicsData];
 };

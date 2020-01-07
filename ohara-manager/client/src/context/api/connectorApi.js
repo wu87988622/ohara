@@ -32,11 +32,11 @@ const validateClassName = values => {
 };
 
 export const createApi = context => {
-  const { connectorGroup, workerGroup, workspaceName, showMessage } = context;
-  if (!connectorGroup || !workerGroup || !workspaceName) return;
+  const { connectorGroup, workerKey, showMessage } = context;
+  if (!connectorGroup || !workerKey) return;
 
   const group = connectorGroup;
-  const workerClusterKey = { group: workerGroup, name: workspaceName };
+  const workerClusterKey = workerKey;
 
   const getDefinition = async className => {
     const workerInfo = await inspectApi.getWorkerInfo(workerClusterKey);

@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { get } from 'lodash';
-import { useWorkspace, useTopicState, useTopicActions } from 'context';
+import { useTopicState } from 'context';
 
 export const useTopics = () => {
-  const { currentWorkspace } = useWorkspace();
   const { data: topics } = useTopicState();
-  const { fetchTopics } = useTopicActions();
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    fetchTopics();
-  }, [fetchTopics, currentWorkspace]);
 
   return useMemo(() => {
     return topics.map(topic => {

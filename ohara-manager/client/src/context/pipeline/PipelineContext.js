@@ -76,15 +76,20 @@ const usePipelineActions = () => {
   const state = usePipelineState();
   const dispatch = usePipelineDispatch();
   const { pipelineApi } = useApi();
-  const { groups } = useApp();
+  const { streamGroup, topicGroup } = useApp();
   const { currentPipeline } = useWorkspace();
-  return createActions({
-    state,
-    dispatch,
-    pipelineApi,
-    currentPipeline,
-    ...groups,
-  });
+  return React.useMemo(
+    () =>
+      createActions({
+        state,
+        dispatch,
+        pipelineApi,
+        currentPipeline,
+        streamGroup,
+        topicGroup,
+      }),
+    [state, dispatch, pipelineApi, currentPipeline, streamGroup, topicGroup],
+  );
 };
 
 export {

@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { createActions } from './streamActions';
-import { useApi, useApp } from 'context';
+import { useApi } from 'context';
 import { reducer, initialState } from './streamReducer';
 
 const StreamStateContext = React.createContext();
@@ -25,14 +25,13 @@ const StreamDispatchContext = React.createContext();
 
 const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName, pipelineName } = useApp();
   const { streamApi } = useApi();
 
   React.useEffect(() => {
-    if (!workspaceName || !pipelineName) return;
+    if (!streamApi) return;
     const actions = createActions({ state, dispatch, streamApi });
     actions.fetchStreams();
-  }, [workspaceName, pipelineName, state, streamApi]);
+  }, [state, streamApi]);
 
   return (
     <StreamStateContext.Provider value={state}>
@@ -67,7 +66,11 @@ const useStreamActions = () => {
   const state = useStreamState();
   const dispatch = useStreamDispatch();
   const { streamApi } = useApi();
-  return createActions({ state, dispatch, streamApi });
+  return React.useMemo(() => createActions({ state, dispatch, streamApi }), [
+    state,
+    dispatch,
+    streamApi,
+  ]);
 };
 
 export { StreamProvider, useStreamState, useStreamDispatch, useStreamActions };

@@ -27,11 +27,11 @@ const validateJarKey = values => {
 };
 
 export const createApi = context => {
-  const { brokerGroup, streamGroup, workspaceName, showMessage } = context;
-  if (!brokerGroup || !streamGroup || !workspaceName) return;
+  const { streamGroup, brokerKey, showMessage } = context;
+  if (!streamGroup || !brokerKey) return;
 
   const group = streamGroup;
-  const brokerClusterKey = { group: brokerGroup, name: workspaceName };
+  const brokerClusterKey = brokerKey;
   return {
     fetchAll: async () => {
       const params = { group };

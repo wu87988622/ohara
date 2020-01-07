@@ -66,7 +66,11 @@ const useWorkerActions = () => {
   const state = useWorkerState();
   const dispatch = useWorkerDispatch();
   const { workerApi } = useApi();
-  return createActions({ state, dispatch, workerApi });
+  return React.useMemo(() => createActions({ state, dispatch, workerApi }), [
+    state,
+    dispatch,
+    workerApi,
+  ]);
 };
 
 export { WorkerProvider, useWorkerState, useWorkerDispatch, useWorkerActions };

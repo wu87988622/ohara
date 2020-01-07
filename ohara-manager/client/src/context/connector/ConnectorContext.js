@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import React, {
+  createContext,
+  useReducer,
+  useContext,
+  useEffect,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
 import { createActions } from './connectorActions';
@@ -70,7 +76,11 @@ const useConnectorActions = () => {
   const state = useConnectorState();
   const dispatch = useConnectorDispatch();
   const { connectorApi } = useApi();
-  return createActions({ state, dispatch, connectorApi });
+  return useMemo(() => createActions({ state, dispatch, connectorApi }), [
+    state,
+    dispatch,
+    connectorApi,
+  ]);
 };
 
 export {

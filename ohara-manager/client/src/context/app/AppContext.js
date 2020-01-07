@@ -18,30 +18,39 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { hashByGroupAndName } from 'utils/sha';
 
-// default group of services
-const GROUP = {
-  workspace: 'workspace',
-  zookeeper: 'zookeeper',
-  broker: 'broker',
-  worker: 'worker',
-};
-
 const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
   const [workspaceName, setWorkspaceName] = useState(null);
   const [pipelineName, setPipelineName] = useState(null);
 
+  const workspaceGroup = 'workspace';
+  const zookeeperGroup = 'zookeeper';
+  const brokerGroup = 'broker';
+  const workerGroup = 'worker';
   const [connectorGroup, setConnectorGroup] = useState(null);
   const [fileGroup, setFileGroup] = useState(null);
   const [pipelineGroup, setPipelineGroup] = useState(null);
   const [streamGroup, setStreamGroup] = useState(null);
   const [topicGroup, setTopicGroup] = useState(null);
 
+  const [brokerKey, setBrokerKey] = useState(null);
+  const [workerKey, setWorkerKey] = useState(null);
+  const [workspaceKey, setWorkspaceKey] = useState(null);
+  const [zookeeperKey, setZookeeperKey] = useState(null);
+
   useEffect(() => {
-    const group = workspaceName
-      ? hashByGroupAndName(GROUP.workspace, workspaceName)
-      : null;
+    setBrokerKey(workspaceName && { group: brokerGroup, name: workspaceName });
+    setWorkerKey(workspaceName && { group: workerGroup, name: workspaceName });
+    setWorkspaceKey(
+      workspaceName && { group: workspaceGroup, name: workspaceName },
+    );
+    setZookeeperKey(
+      workspaceName && { group: zookeeperGroup, name: workspaceName },
+    );
+
+    const group =
+      workspaceName && hashByGroupAndName(workspaceGroup, workspaceName);
     setFileGroup(group);
     setPipelineGroup(group);
     setTopicGroup(group);
@@ -49,9 +58,9 @@ const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const group =
-      pipelineGroup && pipelineName
-        ? hashByGroupAndName(pipelineGroup, pipelineName)
-        : null;
+      pipelineGroup &&
+      pipelineName &&
+      hashByGroupAndName(pipelineGroup, pipelineName);
     setConnectorGroup(group);
     setStreamGroup(group);
   }, [pipelineGroup, pipelineName]);
@@ -59,21 +68,26 @@ const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        // name
         workspaceName,
         setWorkspaceName,
         pipelineName,
         setPipelineName,
-        groups: {
-          brokerGroup: GROUP.broker,
-          connectorGroup,
-          fileGroup,
-          pipelineGroup,
-          streamGroup,
-          topicGroup,
-          workerGroup: GROUP.worker,
-          workspaceGroup: GROUP.workspace,
-          zookeeperGroup: GROUP.zookeeper,
-        },
+        // group
+        brokerGroup,
+        connectorGroup,
+        fileGroup,
+        pipelineGroup,
+        streamGroup,
+        topicGroup,
+        workerGroup,
+        workspaceGroup,
+        zookeeperGroup,
+        // key
+        brokerKey,
+        workerKey,
+        workspaceKey,
+        zookeeperKey,
       }}
     >
       {children}

@@ -20,11 +20,11 @@ import * as fileApi from 'api/fileApi';
 import { validate } from './utils';
 
 export const createApi = context => {
-  const { fileGroup, workspaceGroup, workspaceName, showMessage } = context;
-  if (!fileGroup || !workspaceGroup || !workspaceName) return;
+  const { fileGroup, workspaceKey, showMessage } = context;
+  if (!fileGroup || !workspaceKey) return;
 
   const group = fileGroup;
-  const parentKey = { group: workspaceGroup, name: workspaceName };
+  const parentKey = workspaceKey;
 
   return {
     fetchAll: async () => {

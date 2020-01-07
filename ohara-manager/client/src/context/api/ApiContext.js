@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useSnackbar } from 'context/SnackbarContext';
 import { useApp } from 'context';
-
 import { createApi as createBrokerApi } from './brokerApi';
 import { createApi as createFileApi } from './fileApi';
 import { createApi as createNodeApi } from './nodeApi';
@@ -35,40 +34,79 @@ import { createApi as createStreamApi } from './streamApi';
 const ApiContext = createContext();
 
 const ApiProvider = ({ children }) => {
-  const { workspaceName, pipelineName, groups } = useApp();
+  const {
+    brokerGroup,
+    connectorGroup,
+    fileGroup,
+    pipelineGroup,
+    streamGroup,
+    topicGroup,
+    workerGroup,
+    workspaceGroup,
+    zookeeperGroup,
+    brokerKey,
+    workerKey,
+    workspaceKey,
+  } = useApp();
   const showMessage = useSnackbar();
 
-  const [brokerApi, setBrokerApi] = useState();
-  const [connectorApi, setConnectorApi] = useState();
-  const [fileApi, setFileApi] = useState();
-  const [logApi, setLogApi] = useState();
-  const [nodeApi, setNodeApi] = useState();
-  const [pipelineApi, setPipelineApi] = useState();
-  const [streamApi, setStreamApi] = useState();
-  const [topicApi, setTopicApi] = useState();
-  const [workerApi, setWorkerApi] = useState();
-  const [workspaceApi, setWorkspaceApi] = useState();
-  const [zookeeperApi, setZookeeperApi] = useState();
+  const brokerApi = useMemo(
+    () => createBrokerApi({ brokerGroup, zookeeperGroup, showMessage }),
+    [brokerGroup, zookeeperGroup, showMessage],
+  );
 
-  useEffect(() => {
-    const context = {
-      workspaceName,
-      pipelineName,
-      ...groups,
-      showMessage,
-    };
-    setBrokerApi(createBrokerApi(context));
-    setConnectorApi(createConnectorApi(context));
-    setFileApi(createFileApi(context));
-    setLogApi(createLogApi(context));
-    setNodeApi(createNodeApi(context));
-    setPipelineApi(createPipelineApi(context));
-    setStreamApi(createStreamApi(context));
-    setTopicApi(createTopicApi(context));
-    setWorkerApi(createWorkerApi(context));
-    setWorkspaceApi(createWorkspaceApi(context));
-    setZookeeperApi(createZookeeperApi(context));
-  }, [workspaceName, pipelineName, groups, showMessage]);
+  const connectorApi = useMemo(
+    () => createConnectorApi({ connectorGroup, workerKey, showMessage }),
+    [connectorGroup, workerKey, showMessage],
+  );
+
+  const fileApi = useMemo(
+    () => createFileApi({ fileGroup, workspaceKey, showMessage }),
+    [fileGroup, workspaceKey, showMessage],
+  );
+
+  const logApi = useMemo(
+    () =>
+      createLogApi({
+        brokerGroup,
+        streamGroup,
+        workerGroup,
+        zookeeperGroup,
+      }),
+    [brokerGroup, streamGroup, workerGroup, zookeeperGroup],
+  );
+
+  const nodeApi = useMemo(() => createNodeApi({ showMessage }), [showMessage]);
+
+  const pipelineApi = useMemo(
+    () => createPipelineApi({ pipelineGroup, showMessage }),
+    [pipelineGroup, showMessage],
+  );
+
+  const streamApi = useMemo(
+    () => createStreamApi({ streamGroup, brokerKey, showMessage }),
+    [streamGroup, brokerKey, showMessage],
+  );
+
+  const topicApi = useMemo(
+    () => createTopicApi({ topicGroup, brokerKey, workspaceKey, showMessage }),
+    [topicGroup, brokerKey, workspaceKey, showMessage],
+  );
+
+  const workerApi = useMemo(
+    () => createWorkerApi({ workerGroup, brokerGroup, showMessage }),
+    [workerGroup, brokerGroup, showMessage],
+  );
+
+  const workspaceApi = useMemo(
+    () => createWorkspaceApi({ workspaceGroup, showMessage }),
+    [workspaceGroup, showMessage],
+  );
+
+  const zookeeperApi = useMemo(
+    () => createZookeeperApi({ zookeeperGroup, showMessage }),
+    [zookeeperGroup, showMessage],
+  );
 
   return (
     <ApiContext.Provider

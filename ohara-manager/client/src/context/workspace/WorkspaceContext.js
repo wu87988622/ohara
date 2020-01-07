@@ -157,7 +157,11 @@ const useWorkspaceActions = () => {
   const state = useWorkspaceState();
   const dispatch = useWorkspaceDispatch();
   const { workspaceApi } = context.useApi();
-  return createActions({ state, dispatch, workspaceApi });
+  return React.useMemo(() => createActions({ state, dispatch, workspaceApi }), [
+    state,
+    dispatch,
+    workspaceApi,
+  ]);
 };
 
 export {

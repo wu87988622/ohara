@@ -65,7 +65,11 @@ const useFileActions = () => {
   const state = useFileState();
   const dispatch = useFileDispatch();
   const { fileApi } = useApi();
-  return createActions({ state, dispatch, fileApi });
+  return React.useMemo(() => createActions({ state, dispatch, fileApi }), [
+    state,
+    dispatch,
+    fileApi,
+  ]);
 };
 
 export { FileProvider, useFileState, useFileActions };

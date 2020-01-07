@@ -66,7 +66,11 @@ const useBrokerActions = () => {
   const state = useBrokerState();
   const dispatch = useBrokerDispatch();
   const { brokerApi } = useApi();
-  return createActions({ state, dispatch, brokerApi });
+  return React.useMemo(() => createActions({ state, dispatch, brokerApi }), [
+    state,
+    dispatch,
+    brokerApi,
+  ]);
 };
 
 export { BrokerProvider, useBrokerState, useBrokerDispatch, useBrokerActions };

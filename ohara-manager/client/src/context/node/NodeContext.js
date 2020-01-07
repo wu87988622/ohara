@@ -66,7 +66,11 @@ const useNodeActions = () => {
   const state = useNodeState();
   const dispatch = useNodeDispatch();
   const { nodeApi } = useApi();
-  return createActions({ state, dispatch, nodeApi });
+  return React.useMemo(() => createActions({ state, dispatch, nodeApi }), [
+    state,
+    dispatch,
+    nodeApi,
+  ]);
 };
 
 export { NodeProvider, useNodeState, useNodeDispatch, useNodeActions };

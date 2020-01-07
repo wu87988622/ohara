@@ -70,7 +70,11 @@ const useZookeeperActions = () => {
   const state = useZookeeperState();
   const dispatch = useZookeeperDispatch();
   const { zookeeperApi } = useApi();
-  return createActions({ state, dispatch, zookeeperApi });
+  return React.useMemo(() => createActions({ state, dispatch, zookeeperApi }), [
+    state,
+    dispatch,
+    zookeeperApi,
+  ]);
 };
 
 export {

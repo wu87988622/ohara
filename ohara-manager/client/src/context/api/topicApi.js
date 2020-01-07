@@ -22,18 +22,12 @@ import * as topicApi from 'api/topicApi';
 import { generateClusterResponse, validate } from './utils';
 
 export const createApi = context => {
-  const {
-    brokerGroup,
-    topicGroup,
-    workspaceGroup,
-    workspaceName,
-    showMessage,
-  } = context;
-  if (!brokerGroup || !topicGroup || !workspaceGroup || !workspaceName) return;
+  const { topicGroup, brokerKey, workspaceKey, showMessage } = context;
+  if (!topicGroup || !brokerKey || !workspaceKey) return;
 
   const group = topicGroup;
-  const brokerClusterKey = { group: brokerGroup, name: workspaceName };
-  const parentKey = { group: workspaceGroup, name: workspaceName };
+  const brokerClusterKey = brokerKey;
+  const parentKey = workspaceKey;
   return {
     fetchAll: async () => {
       const params = { group };

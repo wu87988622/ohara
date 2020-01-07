@@ -35,10 +35,10 @@ const TopicProvider = ({ children }) => {
   }, [workspaceName]);
 
   React.useEffect(() => {
-    if (!workspaceName || !topicApi) return;
+    if (!topicApi) return;
     const actions = createActions({ state, dispatch, topicApi });
     actions.fetchTopics();
-  }, [state, workspaceName, topicApi]);
+  }, [state, topicApi]);
 
   return (
     <TopicStateContext.Provider value={state}>
@@ -73,7 +73,11 @@ const useTopicActions = () => {
   const state = useTopicState();
   const dispatch = useTopicDispatch();
   const { topicApi } = useApi();
-  return createActions({ state, dispatch, topicApi });
+  return React.useMemo(() => createActions({ state, dispatch, topicApi }), [
+    state,
+    dispatch,
+    topicApi,
+  ]);
 };
 
 export { TopicProvider, useTopicState, useTopicDispatch, useTopicActions };
