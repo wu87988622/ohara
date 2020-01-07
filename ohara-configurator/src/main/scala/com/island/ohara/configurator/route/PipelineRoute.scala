@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
@@ -43,7 +43,6 @@ import com.island.ohara.client.configurator.v0.{
   WorkerApi,
   ZookeeperApi
 }
-import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook._
@@ -54,102 +53,99 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
   private[this] lazy val LOG = Logger(PipelineRoute.getClass)
 
-  private[this] def toAbstract(data: ConnectorInfo, clusterInfo: WorkerClusterInfo, workerClient: WorkerClient)(
-    implicit executionContext: ExecutionContext,
-    meterCache: MeterCache
-  ): Future[ObjectAbstract] =
-    workerClient
-      .connectorDefinition(data.className)
-      .map(
-        classInfo =>
-          ObjectAbstract(
-            group = data.group,
-            name = data.name,
-            kind = classInfo.classType,
-            className = Some(data.className),
-            state = None,
-            error = None,
-            // the group of counter is equal to connector's name (this is a part of kafka's core setting)
-            // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
-            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.key.connectorNameOnKafka, Seq.empty)),
-            lastModified = data.lastModified,
-            tags = data.tags
-          )
-      )
-      .flatMap { obj =>
-        workerClient
-          .status(data.key)
-          .map { connectorInfo =>
-            obj.copy(
-              state = Some(connectorInfo.connector.state),
-              error = connectorInfo.connector.trace
-            )
-          }
-          // we don't put this recovery in the final chain since we want to keep the definitions fetched from kafka
-          .recover {
-            case e: Throwable =>
-              LOG.debug(s"failed to fetch obj for $data", e)
-              obj
-          }
-      }
-
-  private[this] def toAbstract(data: TopicInfo, clusterInfo: BrokerClusterInfo, topicAdmin: TopicAdmin)(
-    implicit meterCache: MeterCache,
-    executionContext: ExecutionContext
-  ): Future[ObjectAbstract] = {
-    topicAdmin
-      .exist(data.key)
-      .map(
-        try if (_) Some(TopicApi.State.RUNNING) else None
-        finally topicAdmin.close()
-      )
-      .map(_.map(_.name))
-      .map(
-        state =>
-          ObjectAbstract(
-            group = data.group,
-            name = data.name,
-            kind = data.kind,
-            className = None,
-            state = state,
-            error = None,
-            // noted we create a topic with name rather than name
-            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
-            lastModified = data.lastModified,
-            tags = data.tags
-          )
-      )
-  }
-
   private[this] def toAbstract(obj: Data)(
     implicit dataStore: DataStore,
+    serviceCollie: ServiceCollie,
     brokerCollie: BrokerCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     executionContext: ExecutionContext,
     meterCache: MeterCache
   ): Future[ObjectAbstract] = obj match {
     case data: ConnectorInfo =>
       workerClient(data.workerClusterKey).flatMap {
-        case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
+        case (clusterInfo, workerClient) =>
+          workerClient
+            .connectorDefinition(data.className)
+            .map(
+              classInfo =>
+                ObjectAbstract(
+                  group = data.group,
+                  name = data.name,
+                  kind = classInfo.classType,
+                  className = Some(data.className),
+                  state = None,
+                  error = None,
+                  // the group of counter is equal to connector's name (this is a part of kafka's core setting)
+                  // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
+                  metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.key.connectorNameOnKafka, Seq.empty)),
+                  lastModified = data.lastModified,
+                  tags = data.tags
+                )
+            )
+            .flatMap { obj =>
+              workerClient
+                .status(data.key)
+                .map { connectorInfo =>
+                  obj.copy(
+                    state = Some(connectorInfo.connector.state),
+                    error = connectorInfo.connector.trace
+                  )
+                }
+                // we don't put this recovery in the final chain since we want to keep the definitions fetched from kafka
+                .recover {
+                  case e: Throwable =>
+                    LOG.debug(s"failed to fetch obj for $data", e)
+                    obj
+                }
+            }
       }
     case data: TopicInfo =>
       topicAdmin(data.brokerClusterKey).flatMap {
-        case (cluster, admin) => toAbstract(data, cluster, admin)
+        case (clusterInfo, topicAdmin) =>
+          topicAdmin
+            .exist(data.key)
+            .map(
+              try if (_) Some(TopicApi.State.RUNNING) else None
+              finally topicAdmin.close()
+            )
+            .map(_.map(_.name))
+            .map(
+              state =>
+                ObjectAbstract(
+                  group = data.group,
+                  name = data.name,
+                  kind = data.kind,
+                  className = None,
+                  state = state,
+                  error = None,
+                  // noted we create a topic with name rather than name
+                  metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
+                  lastModified = data.lastModified,
+                  tags = data.tags
+                )
+            )
       }
-    case data: StreamClusterInfo =>
-      streamCollie
-        .cluster(data.key)
-        .map { status =>
+    case data @ (_: ZookeeperClusterInfo | _: BrokerClusterInfo | _: WorkerClusterInfo | _: StreamClusterInfo) =>
+      serviceCollie
+        .clusters()
+        .map { clusters =>
+          val status = clusters.find(_.kind.toString.toLowerCase == data.kind.toLowerCase)
           ObjectAbstract(
             group = data.group,
             name = data.name,
             kind = data.kind,
-            className = Some(data.className),
-            state = status.state,
-            error = status.error,
-            metrics = Metrics(meterCache.meters(data).getOrElse(StreamRoute.STREAM_GROUP, Seq.empty)),
+            className = data match {
+              case clusterInfo: StreamClusterInfo => Some(clusterInfo.className)
+              case _                              => None
+            },
+            state = status.flatMap(_.state),
+            error = status.flatMap(_.error),
+            metrics = data match {
+              case clusterInfo: StreamClusterInfo =>
+                Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_GROUP, Seq.empty))
+              case _ => Metrics.EMPTY
+            },
             lastModified = data.lastModified,
             tags = data.tags
           )
@@ -181,15 +177,43 @@ private[configurator] object PipelineRoute {
     */
   private[this] def updateObjectsAndJarKeys(pipeline: Pipeline)(
     implicit brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MeterCache
   ): Future[Pipeline] =
     Future
-      .traverse(pipeline.endpoints.map(_.key))(store.raws)
+      .traverse(pipeline.endpoints) { d =>
+        d.kind match {
+          case ConnectorApi.KIND =>
+            store.get[ConnectorInfo](d.key)
+          case TopicApi.KIND =>
+            store.get[TopicInfo](d.key)
+          case ZookeeperApi.KIND =>
+            store.get[ZookeeperClusterInfo](d.key)
+          case BrokerApi.KIND =>
+            store.get[BrokerClusterInfo](d.key)
+          case WorkerApi.KIND =>
+            store.get[WorkerClusterInfo](d.key)
+          case StreamApi.KIND =>
+            store.get[StreamClusterInfo](d.key)
+          case ShabondiApi.KIND =>
+            store.get[ShabondiDescription](d.key)
+          case FileInfoApi.KIND =>
+            store.get[FileInfo](d.key)
+          case PipelineApi.KIND =>
+            store.get[Pipeline](d.key)
+          case ObjectApi.KIND =>
+            store.get[ObjectInfo](d.key)
+          case NodeApi.KIND =>
+            store.get[Node](d.key)
+          case _ =>
+            // TODO: this is a workaround if we forget to add the object match in adding new APIs ...
+            store.raws(d.key).map(_.headOption)
+        }
+      }
       .map(_.flatten.toSet)
       .flatMap(Future.traverse(_) { obj =>
         toAbstract(obj).recover {
@@ -232,8 +256,8 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookOfGet(
     implicit brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
@@ -242,8 +266,8 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookOfList(
     implicit brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
@@ -253,8 +277,8 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookOfCreation(
     implicit brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
@@ -275,8 +299,8 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookOfUpdating(
     implicit brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
@@ -349,8 +373,8 @@ private[configurator] object PipelineRoute {
 
   def apply(
     implicit brokerCollie: BrokerCollie,
+    serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    streamCollie: StreamCollie,
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,

@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
@@ -135,14 +135,9 @@ class TestPipelineRoute extends OharaTest {
     pipeline.endpoints.map(_.key) should contain(stream.key)
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.className should not be None
+    pipeline.objects.head.error shouldBe None
     pipeline.jarKeys.size shouldBe 1
     pipeline.jarKeys.head shouldBe fileInfo.key
-
-    // stream is not running so the objects have error
-    result(pipelineApi.get(pipeline.key)).objects.head.error should not be None
-
-    result(streamApi.start(stream.key))
-    result(pipelineApi.get(pipeline.key)).objects.head.error shouldBe None
   }
 
   @Test
@@ -508,6 +503,26 @@ class TestPipelineRoute extends OharaTest {
     result(pipelineApi.refresh(pipeline.key))
     result(pipelineApi.get(pipeline.key)).endpoints.size shouldBe 1
     result(pipelineApi.get(pipeline.key)).objects.size shouldBe 1
+  }
+
+  @Test
+  def testDuplicateAbstractions(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(result(brokerApi.list()).head.key).create())
+    val connector = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .numberOfTasks(1)
+        .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
+        .key(ConnectorKey.of(topic.key.group(), topic.key.name()))
+        .create()
+    )
+    connector.key shouldBe topic.key
+    val pipeline = result(pipelineApi.request.endpoint(topic).create())
+    pipeline.endpoints.size shouldBe 1
+    pipeline.objects.size shouldBe 1
+    pipeline.objects.head.kind shouldBe TopicApi.KIND
   }
 
   @After
