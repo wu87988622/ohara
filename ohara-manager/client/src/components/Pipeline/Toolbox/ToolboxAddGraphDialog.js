@@ -27,8 +27,8 @@ import { required, validServiceName, composeValidators } from 'utils/validate';
 const ToolboxAddGraphDialog = props => {
   const { isOpen, handleClose, handleConfirm, classType } = props;
 
-  const onSubmit = (values, form) => {
-    handleConfirm(values.newGraph);
+  const onSubmit = async (values, form) => {
+    await handleConfirm(values.newGraph);
     setTimeout(form.reset);
   };
 
@@ -48,6 +48,7 @@ const ToolboxAddGraphDialog = props => {
             title={`Add a new ${classType}`}
             confirmText="ADD"
             confirmDisabled={submitting || pristine || invalid}
+            loading={submitting}
           >
             <DialogContentText>
               Please note that once the name is added, it will become
@@ -61,6 +62,7 @@ const ToolboxAddGraphDialog = props => {
                 label={`${capitalize(classType)} Name`}
                 component={InputField}
                 validate={composeValidators(required, validServiceName)}
+                disabled={submitting}
                 autoFocus
                 required
               />

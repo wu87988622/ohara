@@ -47,6 +47,19 @@ const StyledDialogActions = styled(DialogActions)`
     ${props => props.theme.spacing(3)}px ${props => props.theme.spacing(3)}px;
 `;
 
+const ConfirmButtonWrapper = styled.div`
+  position: relative;
+`;
+
+const Progress = styled(CircularProgress)`
+  color: green;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -8px;
+  margin-left: -8px;
+`;
+
 const MuiDialog = props => {
   const {
     open,
@@ -83,15 +96,17 @@ const MuiDialog = props => {
         {showActions && (
           <StyledDialogActions>
             <Button onClick={handleClose}>{cancelText}</Button>
-            <Button
-              onClick={handleConfirm}
-              disabled={confirmDisabled}
-              color="primary"
-              variant="contained"
-            >
-              {!loading && confirmText}
-              {loading && <CircularProgress size={24} />}
-            </Button>
+            <ConfirmButtonWrapper>
+              <Button
+                onClick={handleConfirm}
+                disabled={confirmDisabled}
+                color="primary"
+                variant="contained"
+              >
+                {confirmText}
+              </Button>
+              {loading && <Progress size={14} />}
+            </ConfirmButtonWrapper>
           </StyledDialogActions>
         )}
       </div>

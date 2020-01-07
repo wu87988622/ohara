@@ -31,7 +31,7 @@ const StyledDialogTitle = styled(DialogTitle)`
   cursor: move;
 `;
 
-const ButtonWrapper = styled.div`
+const ConfirmButtonWrapper = styled.div`
   position: relative;
 `;
 
@@ -83,7 +83,7 @@ const AlertDialog = props => {
           <Button disabled={isWorking} onClick={handleClose}>
             {cancelText}
           </Button>
-          <ButtonWrapper>
+          <ConfirmButtonWrapper>
             <ConfirmButton
               disabled={isWorking}
               onClick={handleConfirm}
@@ -94,7 +94,7 @@ const AlertDialog = props => {
               {confirmText}
             </ConfirmButton>
             {isWorking && <Progress data-testid="dialog-loader" size={14} />}
-          </ButtonWrapper>
+          </ConfirmButtonWrapper>
         </DialogActions>
       </div>
     </Dialog>
