@@ -37,8 +37,8 @@ const Container = styled.div`
   */
   min-height: 100vh;
 
-  /* Resolution under 1024px is not supported, display a scrollbar */
-  min-width: 1024px;
+  /* Resolution under 1280px is not supported, display a scrollbar */
+  min-width: ${props => props.theme.breakpoints.width('lg')}px;
 `;
 
 const Main = styled.main`
