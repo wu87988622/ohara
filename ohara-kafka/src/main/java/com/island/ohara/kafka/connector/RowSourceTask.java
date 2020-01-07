@@ -28,6 +28,7 @@ import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.Header;
 import com.island.ohara.metrics.basic.Counter;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -142,6 +143,9 @@ public abstract class RowSourceTask extends SourceTask {
         headers);
   }
 
+  /** the conversion is too expensive so we keep this mapping. */
+  @VisibleForTesting final Map<SourceRecord, RowSourceRecord> cachedRecords = new HashMap<>();
+
   @Override
   public final List<SourceRecord> poll() {
     List<RowSourceRecord> records = _poll();
@@ -162,7 +166,12 @@ public abstract class RowSourceTask extends SourceTask {
                         false,
                         ignoredMessageNumberCounter,
                         ignoredMessageSizeCounter))
-            .map(this::toKafka)
+            .map(
+                record -> {
+                  SourceRecord kafkaRecord = toKafka(record);
+                  cachedRecords.put(kafkaRecord, record);
+                  return kafkaRecord;
+                })
             .collect(Collectors.toList());
 
     if (messageNumberCounter != null) messageNumberCounter.addAndGet(raw.size());
@@ -216,7 +225,20 @@ public abstract class RowSourceTask extends SourceTask {
   // TODO: We do a extra conversion here (bytes => Row)... by chia
   @Override
   public final void commitRecord(SourceRecord record) {
-    _commitRecord(RowSourceRecord.of(record));
+    RowSourceRecord r = cachedRecords.remove(record);
+    // It is impossible to observer the null since we cache all records in #poll method.
+    // However, we all hate the null so the workaround is to create a new record :(
+    if (r == null) {
+      RowSourceRecord.Builder builder = RowSourceRecord.builder();
+      builder.topicName(record.topic());
+      if (record.sourceOffset() != null) builder.sourceOffset(record.sourceOffset());
+      if (record.sourcePartition() != null) builder.sourcePartition(record.sourcePartition());
+      if (record.kafkaPartition() != null) builder.partition(record.kafkaPartition());
+      if (record.timestamp() != null) builder.timestamp(record.timestamp());
+      builder.row(Serializer.ROW.from((byte[]) record.key()));
+      r = builder.build();
+    }
+    _commitRecord(r);
   }
 
   @Override

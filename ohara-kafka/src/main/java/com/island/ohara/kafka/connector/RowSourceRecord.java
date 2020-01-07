@@ -18,13 +18,11 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.kafka.connect.source.SourceRecord;
 
 /** A wrap to SourceRecord. Currently, only value columns and value are changed. */
 public class RowSourceRecord {
@@ -88,24 +86,6 @@ public class RowSourceRecord {
    */
   public static RowSourceRecord of(String topic, Row row) {
     return builder().row(row).topicName(topic).build();
-  }
-
-  /**
-   * a helper method used to handle the fucking null produced by kafka...
-   *
-   * @param record kafka's source
-   * @return ohara's source
-   */
-  static RowSourceRecord of(SourceRecord record) {
-    Builder builder = new Builder();
-    builder.topicName(record.topic());
-    // kakfa fucking love null!!! We have got to handle the null manually....
-    if (record.sourceOffset() != null) builder.sourceOffset(record.sourceOffset());
-    if (record.sourcePartition() != null) builder.sourcePartition(record.sourcePartition());
-    if (record.kafkaPartition() != null) builder.partition(record.kafkaPartition());
-    if (record.timestamp() != null) builder.timestamp(record.timestamp());
-    builder.row(Serializer.ROW.from((byte[]) record.key()));
-    return builder.build();
   }
 
   public static Builder builder() {

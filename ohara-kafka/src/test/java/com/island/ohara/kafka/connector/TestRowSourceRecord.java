@@ -16,16 +16,20 @@
 
 package com.island.ohara.kafka.connector;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.OharaTest;
+import com.island.ohara.common.setting.ConnectorKey;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.connector.json.ConnectorFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestRowSourceRecord extends OharaTest {
@@ -118,5 +122,32 @@ public class TestRowSourceRecord extends OharaTest {
         .build()
         .sourceOffset()
         .remove("a");
+  }
+
+  @Test
+  public void testCachedRecords() {
+    RowSourceRecord record =
+        RowSourceRecord.builder()
+            .row(Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString())))
+            .topicName(CommonUtils.randomString(10))
+            .build();
+    RowSourceTask task =
+        new DumbSourceTask() {
+          @Override
+          protected List<RowSourceRecord> _poll() {
+            return Collections.singletonList(record);
+          }
+        };
+    task.start(
+        ConnectorFormatter.of()
+            .connectorKey(ConnectorKey.of("a", "b"))
+            .checkRule(SettingDef.CheckRule.PERMISSIVE)
+            .raw());
+    Assert.assertEquals(1, task.poll().size());
+    Assert.assertEquals(1, task.cachedRecords.size());
+    // this loop will remove the elements in the cache so we have to clone another list to prevent
+    // ConcurrentModificationException
+    new ArrayList<>(task.cachedRecords.keySet()).forEach(task::commitRecord);
+    Assert.assertEquals(0, task.cachedRecords.size());
   }
 }
