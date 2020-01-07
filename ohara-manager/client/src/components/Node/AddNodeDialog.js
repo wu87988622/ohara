@@ -80,7 +80,7 @@ const AddNodeDialog = props => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              {mode !== MODE.k8s && (
+              {mode === MODE.docker && (
                 <>
                   <Field
                     name="port"

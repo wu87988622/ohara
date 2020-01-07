@@ -28,7 +28,6 @@ import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
 import * as joint from 'jointjs';
 
-import { KIND } from 'const';
 import * as fileApi from 'api/fileApi';
 import * as context from 'context';
 import * as utils from './toolboxUtils';
@@ -36,6 +35,7 @@ import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import ToolboxUploadButton from './ToolboxUploadButton';
+import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
 import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
@@ -70,10 +70,11 @@ const Toolbox = props => {
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
-  const [isOpen, setIsOpen] = useState(false);
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
   const { createConnector } = context.useConnectorActions();
+  const showMessage = context.useSnackbar();
 
+  const [isOpen, setIsOpen] = useState(false);
   const [zIndex, setZIndex] = useState(2);
   const [searchResults, setSearchResults] = useState(null);
   const [cellInfo, setCellInfo] = useState({
@@ -86,9 +87,6 @@ const Toolbox = props => {
       y: 0,
     },
   });
-
-  const showMessage = context.useSnackbar();
-
   const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
@@ -256,8 +254,7 @@ const Toolbox = props => {
   let streamGraph = useRef(null);
 
   useEffect(() => {
-    // Should we handle topic and stream here?
-    if (!connectors) return;
+    if (!connectors.sources || !connectors.sinks) return;
 
     const renderToolbox = () => {
       const sharedProps = {

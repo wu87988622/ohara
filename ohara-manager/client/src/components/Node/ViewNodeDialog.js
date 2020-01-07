@@ -241,7 +241,7 @@ const ViewNodeDialog = props => {
             </Typography>
           </Grid>
           <Grid item>
-            {configuratorInfo.mode !== MODE.k8s && (
+            {configuratorInfo.mode === MODE.docker && (
               <>
                 <Button
                   variant="outlined"
@@ -276,7 +276,7 @@ const ViewNodeDialog = props => {
                       <TableCell>Hostname</TableCell>
                       <TableCell>{nodeName}</TableCell>
                     </TableRow>
-                    {mode !== MODE.k8s && (
+                    {mode === MODE.docker && (
                       <>
                         <TableRow>
                           <TableCell>Port</TableCell>

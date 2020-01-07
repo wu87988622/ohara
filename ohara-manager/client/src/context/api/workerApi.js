@@ -145,7 +145,14 @@ export const createApi = context => {
         const res = await workerApi.start(params);
         if (res.errors) throw new Error(res.title);
 
-        const data = generateClusterResponse({ values: res.data });
+        const infoRes = await inspectApi.getWorkerInfo(params);
+        if (infoRes.errors) throw new Error(infoRes.title);
+
+        const data = generateClusterResponse({
+          values: res.data,
+          inspectInfo: infoRes.data,
+        });
+
         showMessage(res.title);
         return data;
       } catch (e) {

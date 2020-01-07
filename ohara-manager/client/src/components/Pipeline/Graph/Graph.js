@@ -370,7 +370,7 @@ const Graph = props => {
                   classInfo,
                   isFetch: true,
                   isMetricsOn,
-                  metrics: targetCell ? targetCell.metrics : [],
+                  metrics: targetCell && targetCell.metrics,
                   cellInfo: {
                     ...cell.params.cellInfo,
                     position: cell.position,
