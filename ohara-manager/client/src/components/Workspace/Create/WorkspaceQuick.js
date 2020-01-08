@@ -42,9 +42,9 @@ import {
   composeValidators,
 } from 'utils/validate';
 import * as fileApi from 'api/fileApi';
-import FileCard from './Card/FileCard';
-import SelectCard from './Card/SelectCard';
-import WorkspaceCard from './Card/WorkspaceCard';
+import FileCard from '../Card/FileCard';
+import SelectCard from '../Card/SelectCard';
+import WorkspaceCard from '../Card/WorkspaceCard';
 
 import {
   useWorkspaceActions,
@@ -59,6 +59,7 @@ import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
 import { hashByGroupAndName } from 'utils/sha';
+import { useUniqueName } from './hooks';
 
 const StyledPaper = styled(Paper)(
   ({ theme }) => css`
@@ -105,6 +106,7 @@ const WorkspaceQuick = props => {
   const { createZookeeper } = useZookeeperActions();
   const { refreshNodes } = useNodeActions();
   const { workspaces } = useWorkspace();
+  const defaultWorkspaceName = useUniqueName();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -299,6 +301,7 @@ const WorkspaceQuick = props => {
             margin="normal"
             helperText="Assistive text"
             component={StyledTextField}
+            initialValue={defaultWorkspaceName}
             autoFocus
             required
             validate={composeValidators(...workspaceNameRules)}

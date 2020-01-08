@@ -28,7 +28,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import DrabblePaper from 'components/common/Dialog/DrabblePaper';
-import WorkspaceQuick from '../Workspace/WorkspaceQuick';
+import WorkspaceQuick from '../Workspace/Create/WorkspaceQuick';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 

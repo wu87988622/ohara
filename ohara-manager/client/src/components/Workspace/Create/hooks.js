@@ -14,8 +14,17 @@
  * limitations under the License.
  */
 
-import WorkspaceQuick from './Create/WorkspaceQuick';
-import WorkspaceList from './WorkspaceList';
-import { EditWorkspace } from './Edit';
+import { useMemo } from 'react';
+import { some } from 'lodash';
 
-export { WorkspaceQuick, EditWorkspace, WorkspaceList };
+import { useWorkspace } from 'context';
+
+export const useUniqueName = (prefix = 'quickworkspace') => {
+  const { workspaces = [] } = useWorkspace();
+  return useMemo(() => {
+    for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {
+      const name = `${prefix}${postfix}`;
+      if (!some(workspaces, { name })) return name;
+    }
+  }, [prefix, workspaces]);
+};
