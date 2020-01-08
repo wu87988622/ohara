@@ -72,7 +72,7 @@ object LogRoute {
                 try line
                 finally line = fileReader.readLine()
             },
-            CommonUtils.current() - sinceSeconds
+            CommonUtils.current() - (sinceSeconds * 1000)
           )
         } finally Releasable.close(fileReader)
     }
