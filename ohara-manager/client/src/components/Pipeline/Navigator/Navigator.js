@@ -165,13 +165,20 @@ const Navigator = () => {
         <ExpansionPanelSummary
           disableRipple
           onClick={event => {
-            // Only toggles the panel with button (which has the role attr)
-            // not the whole div. This prevents users accidentally clicking
+            // Only toggles the panel with button not the whole div.
+            // This prevents users from accidentally clicking
             // on the div when they're trying to click on the `+` icon in
             // order to create a new pipeline.
-            if (event.target.getAttribute('role')) {
-              setIsExpanded(!isExpanded);
-            }
+
+            const { nodeName, className } = event.target;
+            const isSvg = nodeName === 'svg' || nodeName === 'path';
+
+            // SVG elements also have `className`, but it's not a string 😳
+            const isIcon =
+              typeof className.includes === 'function' &&
+              className.includes('MuiExpansionPanelSummary-expandIcon');
+
+            if (isSvg || isIcon) setIsExpanded(!isExpanded);
           }}
           expandIcon={<ExpandMoreIcon />}
         >
