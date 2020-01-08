@@ -137,10 +137,10 @@ const SelectCard = props => {
             );
           })}
       </CardContent>
-      {has(rows.tags, 'classes') && (
+      {has(rows, 'classInfos') && (
         <>
-          {Object.keys(groupBy(rows.tags.classes, 'classType')).map(key => {
-            const array = groupBy(rows.tags.classes, 'classType')[key];
+          {Object.keys(groupBy(rows.classInfos, 'classType')).map(key => {
+            const array = groupBy(rows.classInfos, 'classType')[key];
             return (
               <StyledExpansionPanel key={key}>
                 <StyledExpansionPanelSummary
