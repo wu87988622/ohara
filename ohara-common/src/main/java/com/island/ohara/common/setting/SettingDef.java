@@ -722,6 +722,11 @@ public class SettingDef implements JsonObject, Serializable {
       return checkAndSet(valueType, Necessary.REQUIRED, null);
     }
 
+    public Builder required(Set<String> recommendedValues) {
+      this.recommendedValues = Objects.requireNonNull(recommendedValues);
+      return checkAndSet(Type.STRING, Necessary.REQUIRED, null);
+    }
+
     /**
      * set the type and announce the empty/null value is legal
      *

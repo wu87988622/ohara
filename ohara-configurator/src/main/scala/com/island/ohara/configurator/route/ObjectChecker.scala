@@ -29,7 +29,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.configurator.route.ObjectChecker.ChickList
+import com.island.ohara.configurator.route.ObjectChecker.CheckList
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import com.island.ohara.configurator.store.DataStore
 
@@ -43,7 +43,7 @@ import scala.reflect.ClassTag
   * unify all resource checks and produces unified error message.
   */
 trait ObjectChecker {
-  def checkList: ChickList
+  def checkList: CheckList
 }
 
 object ObjectChecker {
@@ -81,43 +81,43 @@ object ObjectChecker {
           .mkString(",")}"
       )
 
-  trait ChickList {
+  trait CheckList {
     //---------------[topic]---------------//
 
     /**
       * check all topics. It invokes a loop to all topics and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allTopics(): ChickList
+    def allTopics(): CheckList
 
     /**
       * check the properties of topic.
       * @param key topic key
       * @return this check list
       */
-    def topic(key: TopicKey): ChickList = topics(Set(key), None)
+    def topic(key: TopicKey): CheckList = topics(Set(key), None)
 
     /**
       * check both properties and status of topic.
       * @param key topic key
       * @return this check list
       */
-    def topic(key: TopicKey, condition: Condition): ChickList = topics(Set(key), Some(condition))
+    def topic(key: TopicKey, condition: Condition): CheckList = topics(Set(key), Some(condition))
 
     /**
       * check whether input topics have been stored in Configurator
       * @param keys topic keys
       * @return this check list
       */
-    def topics(keys: Set[TopicKey]): ChickList = topics(keys, None)
+    def topics(keys: Set[TopicKey]): CheckList = topics(keys, None)
 
     /**
       * check whether input topics condition.
       * @param keys topic keys
       * @return this check list
       */
-    def topics(keys: Set[TopicKey], condition: Condition): ChickList = topics(keys, Some(condition))
-    protected def topics(keys: Set[TopicKey], condition: Option[Condition]): ChickList
+    def topics(keys: Set[TopicKey], condition: Condition): CheckList = topics(keys, Some(condition))
+    protected def topics(keys: Set[TopicKey], condition: Option[Condition]): CheckList
 
     //---------------[connector]---------------//
 
@@ -125,43 +125,43 @@ object ObjectChecker {
       * check all connectors. It invokes a loop to all connectors and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allConnectors(): ChickList
+    def allConnectors(): CheckList
 
     /**
       * check the properties of connector.
       * @param key connector key
       * @return this check list
       */
-    def connector(key: ConnectorKey): ChickList = connectors(Set(key), None)
+    def connector(key: ConnectorKey): CheckList = connectors(Set(key), None)
 
     /**
       * check both properties and status of connector.
       * @param key connector key
       * @return this check list
       */
-    def connector(key: ConnectorKey, condition: Condition): ChickList = connectors(Set(key), Some(condition))
-    protected def connectors(keys: Set[ConnectorKey], condition: Option[Condition]): ChickList
+    def connector(key: ConnectorKey, condition: Condition): CheckList = connectors(Set(key), Some(condition))
+    protected def connectors(keys: Set[ConnectorKey], condition: Option[Condition]): CheckList
 
     //---------------[file]---------------//
     /**
       * check all files.
       * @return check list
       */
-    def allFiles(): ChickList
+    def allFiles(): CheckList
 
     /**
       * check the properties of file.
       * @param key file key
       * @return this check list
       */
-    def file(key: ObjectKey): ChickList = files(Set(key))
+    def file(key: ObjectKey): CheckList = files(Set(key))
 
     /**
       * check the properties of files.
       * @param keys files key
       * @return this check list
       */
-    def files(keys: Set[ObjectKey]): ChickList
+    def files(keys: Set[ObjectKey]): CheckList
 
     //---------------[node]---------------//
 
@@ -169,35 +169,35 @@ object ObjectChecker {
       * check all nodes.
       * @return check list
       */
-    def allNodes(): ChickList
+    def allNodes(): CheckList
 
     /**
       * check the properties of node.
       * @param hostname hostname
       * @return this check list
       */
-    def nodeName(hostname: String): ChickList = nodeNames(Set(hostname))
+    def nodeName(hostname: String): CheckList = nodeNames(Set(hostname))
 
     /**
       * check the properties of nodes.
       * @param hostNames node names
       * @return this check list
       */
-    def nodeNames(hostNames: Set[String]): ChickList = nodes(hostNames.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
+    def nodeNames(hostNames: Set[String]): CheckList = nodes(hostNames.map(n => ObjectKey.of(GROUP_DEFAULT, n)))
 
     /**
       * check the properties of nodes.
       * @param key node key
       * @return this check list
       */
-    def node(key: ObjectKey): ChickList = nodes(Set(key))
+    def node(key: ObjectKey): CheckList = nodes(Set(key))
 
     /**
       * check the properties of nodes.
       * @param keys nodes key
       * @return this check list
       */
-    def nodes(keys: Set[ObjectKey]): ChickList
+    def nodes(keys: Set[ObjectKey]): CheckList
 
     //---------------[zookeeper]---------------//
 
@@ -205,23 +205,23 @@ object ObjectChecker {
       * check all zookeepers. It invokes a loop to all zookeepers and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allZookeepers(): ChickList
+    def allZookeepers(): CheckList
 
     /**
       * check the properties of zookeeper cluster.
       * @param key zookeeper cluster key
       * @return this check list
       */
-    def zookeeperCluster(key: ObjectKey): ChickList = zookeeperClusters(Set(key), None)
+    def zookeeperCluster(key: ObjectKey): CheckList = zookeeperClusters(Set(key), None)
 
     /**
       * check both properties and status of zookeeper cluster.
       * @param key zookeeper cluster key
       * @return this check list
       */
-    def zookeeperCluster(key: ObjectKey, condition: Condition): ChickList = zookeeperClusters(Set(key), Some(condition))
+    def zookeeperCluster(key: ObjectKey, condition: Condition): CheckList = zookeeperClusters(Set(key), Some(condition))
 
-    protected def zookeeperClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
+    protected def zookeeperClusters(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
 
     //---------------[broker]---------------//
 
@@ -229,23 +229,23 @@ object ObjectChecker {
       * check all brokers. It invokes a loop to all brokers and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allBrokers(): ChickList
+    def allBrokers(): CheckList
 
     /**
       * check the properties of broker cluster.
       * @param key broker cluster key
       * @return this check list
       */
-    def brokerCluster(key: ObjectKey): ChickList = brokerClusters(Set(key), None)
+    def brokerCluster(key: ObjectKey): CheckList = brokerClusters(Set(key), None)
 
     /**
       * check both properties and status of broker cluster.
       * @param key broker cluster key
       * @return this check list
       */
-    def brokerCluster(key: ObjectKey, condition: Condition): ChickList = brokerClusters(Set(key), Some(condition))
+    def brokerCluster(key: ObjectKey, condition: Condition): CheckList = brokerClusters(Set(key), Some(condition))
 
-    protected def brokerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
+    protected def brokerClusters(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
 
     //---------------[worker]---------------//
 
@@ -253,23 +253,23 @@ object ObjectChecker {
       * check all workers. It invokes a loop to all workers and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allWorkers(): ChickList
+    def allWorkers(): CheckList
 
     /**
       * check the properties of worker cluster.
       * @param key worker cluster key
       * @return this check list
       */
-    def workerCluster(key: ObjectKey): ChickList = workerClusters(Set(key), None)
+    def workerCluster(key: ObjectKey): CheckList = workerClusters(Set(key), None)
 
     /**
       * check both properties and status of worker cluster.
       * @param key worker cluster key
       * @return this check list
       */
-    def workerCluster(key: ObjectKey, condition: Condition): ChickList = workerClusters(Set(key), Some(condition))
+    def workerCluster(key: ObjectKey, condition: Condition): CheckList = workerClusters(Set(key), Some(condition))
 
-    protected def workerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
+    protected def workerClusters(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
 
     //---------------[stream app]---------------//
 
@@ -277,23 +277,23 @@ object ObjectChecker {
       * check all streams. It invokes a loop to all streams and then fetch their state - a expensive operation!!!
       * @return check list
       */
-    def allStreams(): ChickList
+    def allStreams(): CheckList
 
     /**
       * check the properties of stream cluster.
       * @param key stream cluster key
       * @return this check list
       */
-    def stream(key: ObjectKey): ChickList = streams(Set(key), None)
+    def stream(key: ObjectKey): CheckList = streams(Set(key), None)
 
     /**
       * check both properties and status of stream cluster.
       * @param key stream cluster key
       * @return this check list
       */
-    def stream(key: ObjectKey, condition: Condition): ChickList = streams(Set(key), Some(condition))
+    def stream(key: ObjectKey, condition: Condition): CheckList = streams(Set(key), Some(condition))
 
-    protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): ChickList
+    protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
     //---------------[final check]---------------//
     /**
       * throw exception if the input assurances don't pass. Otherwise, return the resources.
@@ -313,7 +313,7 @@ object ObjectChecker {
 
   def apply()(implicit store: DataStore, serviceCollie: ServiceCollie, adminCleaner: AdminCleaner): ObjectChecker =
     new ObjectChecker {
-      override def checkList: ChickList = new ChickList {
+      override def checkList: CheckList = new CheckList {
         private[this] var requireAllNodes      = false
         private[this] val requiredNodes        = mutable.Set[ObjectKey]()
         private[this] var requireAllFiles      = false
@@ -579,82 +579,82 @@ object ObjectChecker {
               }
             }
 
-        override protected def topics(keys: Set[TopicKey], condition: Option[Condition]): ChickList = {
+        override protected def topics(keys: Set[TopicKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredTopics += (key -> condition))
           this
         }
 
-        override protected def connectors(keys: Set[ConnectorKey], condition: Option[Condition]): ChickList = {
+        override protected def connectors(keys: Set[ConnectorKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredConnectors += (key -> condition))
           this
         }
 
-        override def nodes(keys: Set[ObjectKey]): ChickList = {
+        override def nodes(keys: Set[ObjectKey]): CheckList = {
           requiredNodes ++= keys
           this
         }
 
-        override def files(keys: Set[ObjectKey]): ChickList = {
+        override def files(keys: Set[ObjectKey]): CheckList = {
           requiredFiles ++= keys
           this
         }
 
-        override protected def zookeeperClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
+        override protected def zookeeperClusters(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredZookeepers += (key -> condition))
           this
         }
 
-        override protected def brokerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
+        override protected def brokerClusters(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredBrokers += (key -> condition))
           this
         }
 
-        override protected def workerClusters(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
+        override protected def workerClusters(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredWorkers += (key -> condition))
           this
         }
 
-        override protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): ChickList = {
+        override protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredStreams += (key -> condition))
           this
         }
 
-        override def allTopics(): ChickList = {
+        override def allTopics(): CheckList = {
           this.requireAllTopics = true
           this
         }
 
-        override def allConnectors(): ChickList = {
+        override def allConnectors(): CheckList = {
           this.requireAllConnectors = true
           this
         }
 
-        override def allFiles(): ChickList = {
+        override def allFiles(): CheckList = {
           this.requireAllFiles = true
           this
         }
 
-        override def allNodes(): ChickList = {
+        override def allNodes(): CheckList = {
           this.requireAllNodes = true
           this
         }
 
-        override def allZookeepers(): ChickList = {
+        override def allZookeepers(): CheckList = {
           this.requireAllZookeepers = true
           this
         }
 
-        override def allBrokers(): ChickList = {
+        override def allBrokers(): CheckList = {
           this.requireAllBrokers = true
           this
         }
 
-        override def allWorkers(): ChickList = {
+        override def allWorkers(): CheckList = {
           this.requireAllWorkers = true
           this
         }
 
-        override def allStreams(): ChickList = {
+        override def allStreams(): CheckList = {
           this.requireAllStreams = true
           this
         }

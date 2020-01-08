@@ -46,11 +46,6 @@ public class TestSettingDef extends OharaTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullType() {
-    SettingDef.builder().required(null);
-  }
-
-  @Test(expected = NullPointerException.class)
   public void nullDefaultWithString() {
     SettingDef.builder().optional((String) null);
   }
@@ -382,6 +377,21 @@ public class TestSettingDef extends OharaTest {
 
     def.checker().accept("aaa");
     def.checker().accept(111);
+  }
+
+  @Test
+  public void testStringTypeWithRecommendedValues() {
+    Set<String> recommendedValues =
+        new HashSet<>(
+            Arrays.asList(
+                CommonUtils.randomString(),
+                CommonUtils.randomString(),
+                CommonUtils.randomString()));
+
+    // required with recommended values(default is null)
+    SettingDef settingDef1 =
+        SettingDef.builder().key(CommonUtils.randomString()).required(recommendedValues).build();
+    Assert.assertEquals(settingDef1.recommendedValues(), recommendedValues);
   }
 
   @Test
