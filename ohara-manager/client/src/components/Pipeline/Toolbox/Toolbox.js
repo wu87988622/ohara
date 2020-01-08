@@ -28,18 +28,17 @@ import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
 import * as joint from 'jointjs';
 
-import * as fileApi from 'api/fileApi';
-import * as context from 'context';
-import * as utils from './toolboxUtils';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
 import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import ToolboxUploadButton from './ToolboxUploadButton';
+import * as utils from './toolboxUtils';
+import * as context from 'context';
 import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
 import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
-import { getKey, hashKey } from 'utils/object';
+import { getKey } from 'utils/object';
 
 const Toolbox = props => {
   const {
@@ -62,6 +61,7 @@ const Toolbox = props => {
   } = context.useWorkspace();
   const { updatePipeline } = context.usePipelineActions();
   const { createStream } = context.useStreamActions();
+  const { createFile } = context.useFileActions();
   const {
     startConnector,
     stopConnector,
@@ -87,7 +87,7 @@ const Toolbox = props => {
       y: 0,
     },
   });
-  const { streams, files: streamFiles, setStatus } = useFiles(currentWorkspace);
+  const { streams, files: streamFiles } = useFiles();
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
 
@@ -111,30 +111,12 @@ const Toolbox = props => {
     connectors,
   });
 
-  const uploadJar = async file => {
-    const response = await fileApi.create({
-      file,
-      group: hashKey(currentWorkspace),
-    });
-
-    showMessage(response.title);
-  };
-
-  const handleFileSelect = event => {
+  const handleFileSelect = async event => {
     const [file] = event.target.files;
 
     if (!file) return;
-
-    const isDuplicate = streamFiles.some(
-      streamFile => streamFile.name === file.name,
-    );
-
-    if (isDuplicate) {
-      return showMessage('The jar name is already taken!');
-    }
-
-    uploadJar(file);
-    setStatus('loading');
+    const { error } = await createFile(file);
+    if (error) return showMessage(error);
   };
 
   const removeTempCell = () => {

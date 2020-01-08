@@ -95,7 +95,7 @@ export const createApi = context => {
         if (!isEmpty(stageRes.errors)) {
           throw new Error(stageRes.title);
         }
-        const infoRes = await inspectApi.getStreamsInfo(values);
+        const infoRes = await inspectApi.getStreamsInfo(params);
         if (!isEmpty(infoRes.errors)) {
           throw new Error(infoRes.title);
         }

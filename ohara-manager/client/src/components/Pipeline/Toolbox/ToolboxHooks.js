@@ -18,9 +18,7 @@ import { useEffect, useState, useRef } from 'react';
 import { isEmpty } from 'lodash';
 
 import { KIND } from 'const';
-import * as fileApi from 'api/fileApi';
-import { hashKey } from 'utils/object';
-import { useTopicState } from 'context';
+import { useTopicState, useFileActions, useFileState } from 'context';
 
 export const useTopics = () => {
   const { data: topicsData } = useTopicState();
@@ -46,55 +44,40 @@ export const useTopics = () => {
   return [topics, topicsData];
 };
 
-export const useFiles = workspace => {
-  // We're not filtering out other jars here
-  // but it should be done when stream jars
+export const useFiles = () => {
   const [streams, setStreams] = useState([]);
-  const [files, setFiles] = useState([]);
-  const [status, setStatus] = useState('loading');
+
+  const { fetchFiles } = useFileActions();
+  const { data: files } = useFileState();
 
   useEffect(() => {
-    if (!workspace || status !== 'loading') return;
-    let didCancel = false;
+    const loadFiles = async () => {
+      await fetchFiles();
 
-    const fetchFiles = async () => {
-      const result = await fileApi.getAll({ group: hashKey(workspace) });
-      if (!didCancel) {
-        if (!result.errors) {
-          setFiles(result.data);
+      const streamClasses = files
+        .map(file => file.classInfos)
+        .flat()
+        .filter(cls => cls.classType === KIND.stream);
 
-          const streamClasses = result.data
-            .map(file => file.classInfos)
-            .flat()
-            .filter(cls => cls.classType === KIND.stream);
-
-          if (streamClasses.length > 0) {
-            const results = streamClasses
-              .map(({ className, classType }) => {
-                const name = className.split('.').pop();
-                return {
-                  name,
-                  classType,
-                  className,
-                };
-              })
-              .sort((a, b) => a.className.localeCompare(b.className));
-            setStreams(results);
-          }
-
-          setStatus('loaded');
-        }
+      if (streamClasses.length > 0) {
+        const results = streamClasses
+          .map(({ className, classType }) => {
+            const name = className.split('.').pop();
+            return {
+              name,
+              classType,
+              className,
+            };
+          })
+          .sort((a, b) => a.className.localeCompare(b.className));
+        setStreams(results);
       }
     };
 
-    fetchFiles();
+    loadFiles();
+  }, [fetchFiles, files]);
 
-    return () => {
-      didCancel = true;
-    };
-  }, [status, workspace]);
-
-  return { streams, setStatus, files };
+  return { streams, files };
 };
 
 export const useToolboxHeight = ({
