@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { useParams, Link, NavLink } from 'react-router-dom';
+import { useParams, NavLink } from 'react-router-dom';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -64,9 +64,7 @@ const AppBar = () => {
     <StyledAppBar>
       <header>
         <div className="brand">
-          <Link to="/">
-            <Logo width="38" height="38" />
-          </Link>
+          <Logo width="38" height="38" />
         </div>
         <div className="workspace-list">
           {workspaces.map(({ name }) => {
