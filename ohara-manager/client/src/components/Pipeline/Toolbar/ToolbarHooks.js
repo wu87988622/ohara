@@ -15,7 +15,6 @@
  */
 
 import React from 'react';
-import _ from 'lodash';
 
 import { KIND } from 'const';
 import {
@@ -32,32 +31,26 @@ export const useDeleteServices = () => {
   const { deleteStream, stopStream } = useStreamActions();
 
   const deleteServices = async services => {
-    const runningServices = services.filter(
-      service => service.kind !== KIND.topic && Boolean(service.state),
-    );
-
-    // If there's no running objects, don't display the process bar
-    if (!_.isEmpty(runningServices)) {
-      setSteps([...services.map(object => object.name)]);
-    }
+    setSteps([...services.map(object => object.name)]);
 
     // Need to use a while loop so we can update
     // react state: `activeStep` in the loop
     let index = 0;
     while (index < services.length) {
       const service = services[index];
-      const { kind, name } = service;
+      const { kind, name, tags } = service;
       const isRunning = Boolean(service.state);
 
-      // Connectors and stream apps are the only services that
-      // we're going to delete
       if (kind === KIND.source || kind === KIND.sink) {
         if (isRunning) await stopConnector(name);
 
         await deleteConnector(name);
       }
 
-      if (kind === KIND.topic) {
+      // Only private topics are belong to this Pipeline and so need to
+      // be deleted along with this pipeline
+      const isPrivate = tags.type === 'private';
+      if (kind === KIND.topic && isPrivate) {
         if (isRunning) await stopTopic(name);
 
         await deleteTopic(name);
