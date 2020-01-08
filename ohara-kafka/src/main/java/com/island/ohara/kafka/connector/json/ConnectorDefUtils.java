@@ -109,6 +109,7 @@ public final class ConnectorDefUtils {
                   .key("connector.class")
                   .required(Type.CLASS)
                   .documentation("the class name of connector")
+                  .permission(SettingDef.Permission.CREATE_ONLY)
                   .build());
 
   public static final SettingDef TOPIC_KEYS_DEFINITION =

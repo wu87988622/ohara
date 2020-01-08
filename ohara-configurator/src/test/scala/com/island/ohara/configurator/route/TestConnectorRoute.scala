@@ -124,7 +124,8 @@ class TestConnectorRoute extends OharaTest {
         .update()
     )
     response2.name shouldBe name
-    response2.className shouldBe className2
+    // the classname is NOT editable
+    response2.className shouldBe className
     response2.columns shouldBe columns2
     response2.numberOfTasks shouldBe numberOfTasks2
 

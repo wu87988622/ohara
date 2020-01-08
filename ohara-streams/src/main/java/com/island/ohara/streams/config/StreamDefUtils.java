@@ -112,6 +112,7 @@ public final class StreamDefUtils {
           .documentation(
               "the stream class running in all stream nodes. If you don't define it, Configurator will seek all jar files to find the available one.")
           .optional(Type.CLASS)
+          .permission(SettingDef.Permission.CREATE_ONLY)
           .build();
 
   public static final SettingDef FROM_TOPIC_KEYS_DEFINITION =

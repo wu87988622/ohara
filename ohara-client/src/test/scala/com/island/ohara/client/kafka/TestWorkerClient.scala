@@ -207,7 +207,7 @@ class TestWorkerClient extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
-      .permission() shouldBe SettingDef.Permission.EDITABLE
+      .permission() shouldBe SettingDef.Permission.CREATE_ONLY
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
