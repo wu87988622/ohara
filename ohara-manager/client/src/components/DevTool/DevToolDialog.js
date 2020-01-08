@@ -190,6 +190,11 @@ const DevToolDialog = () => {
 
   const fetchLogs = useCallback(
     async (timeSeconds = 600, hostname = '') => {
+      if (!workspaceName && data.service !== 'configurator') {
+        // when there are no workspaces, we empty all the previous data
+        setDataDispatch({ hosts: [], hostLog: [] });
+        return;
+      }
       let response;
       setDataDispatch({ isLoading: true });
       switch (data.service) {
@@ -280,14 +285,13 @@ const DevToolDialog = () => {
   }, [currentWorkspace, pipelineName, workspaceName]);
 
   useEffect(() => {
-    if (isEmpty(currentWorkspace)) return;
     if (!isEmpty(data.service)) {
       fetchLogs();
       if (data.service === 'stream') {
         fetchStreams();
       }
     }
-  }, [currentWorkspace, data.service, data.stream, fetchLogs, fetchStreams]);
+  }, [data.service, data.stream, fetchLogs, fetchStreams]);
 
   const handleTabChange = (event, currentTab) => {
     setSelectedCell(null);

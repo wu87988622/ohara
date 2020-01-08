@@ -230,7 +230,7 @@ const Header = props => {
             }
             index={tabName.log}
             currentTab={tabIndex}
-            value={data.hostname}
+            value={isEmpty(data.hosts) ? '' : data.hostname}
             onChange={event => handleSelect(event, 'hostname')}
             list={data.hosts}
             setAnchor={handleSelectAnchor}
