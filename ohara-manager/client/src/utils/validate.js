@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { isArray } from 'lodash';
+
 // Return `undefined` means the test has passed!
 export const required = value =>
   value ? undefined : 'This is a required field';
@@ -48,6 +50,15 @@ export const validWithRegex = regex => value => {
   return regex.test(value)
     ? `The value does not meet the rules ${regex}`
     : undefined;
+};
+
+export const checkDuplicate = validateList => value => {
+  // we skip this function if the validate list is empty
+  if (!validateList || !isArray(validateList)) return undefined;
+  return (
+    validateList.find(validate => Object.is(value, validate)) &&
+    `The value ${value} is in used`
+  );
 };
 
 export const composeValidators = (...validators) => value =>

@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { get } from 'lodash';
+import { get, map } from 'lodash';
 
 import Step from '@material-ui/core/Step';
 import Card from '@material-ui/core/Card';
@@ -38,6 +38,7 @@ import {
   required,
   maxLength,
   validServiceName,
+  checkDuplicate,
   composeValidators,
 } from 'utils/validate';
 import * as fileApi from 'api/fileApi';
@@ -47,6 +48,7 @@ import WorkspaceCard from './Card/WorkspaceCard';
 
 import {
   useWorkspaceActions,
+  useWorkspace,
   useWorkerActions,
   useBrokerActions,
   useZookeeperActions,
@@ -102,6 +104,7 @@ const WorkspaceQuick = props => {
   const { createBroker } = useBrokerActions();
   const { createZookeeper } = useZookeeperActions();
   const { refreshNodes } = useNodeActions();
+  const { workspaces } = useWorkspace();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -188,14 +191,21 @@ const WorkspaceQuick = props => {
     setFiles(newFiles);
   };
 
+  const workspaceNameRules = [
+    required,
+    validServiceName,
+    checkDuplicate(map(workspaces, 'name')),
+    // Configurator API only accept length < 25
+    // we use the same rules here
+    maxLength(25),
+  ];
+
   const checkStepValue = (values, index) => {
     switch (index) {
       case 0:
-        const error = composeValidators(
-          required,
-          validServiceName,
-          maxLength(64),
-        )(values.workspaceName);
+        const error = composeValidators(...workspaceNameRules)(
+          values.workspaceName,
+        );
         return !isUndefined(error);
 
       case 1:
@@ -291,11 +301,7 @@ const WorkspaceQuick = props => {
             component={StyledTextField}
             autoFocus
             required
-            validate={composeValidators(
-              required,
-              validServiceName,
-              maxLength(64),
-            )}
+            validate={composeValidators(...workspaceNameRules)}
           />
         );
       case 1:

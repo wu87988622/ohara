@@ -22,6 +22,7 @@ import {
   maxLength,
   minNumber,
   maxNumber,
+  checkDuplicate,
 } from '../validate';
 
 describe('required()', () => {
@@ -101,5 +102,21 @@ describe('maxValue()', () => {
     const error = 'The value must be less than 50';
     expect(max(51)).toBe(error);
     expect(max(100)).toBe(error);
+  });
+});
+
+describe('checkDuplicate()', () => {
+  let list;
+  it('returns `undefined` if the list is empty or not array', () => {
+    expect(checkDuplicate(null)(123)).toBeUndefined();
+    expect(checkDuplicate('fake')(456)).toBeUndefined();
+    expect(checkDuplicate(undefined)('abc')).toBeUndefined();
+    expect(checkDuplicate(list)([])).toBeUndefined();
+  });
+  const list2 = [123, 'foo', 'bar'];
+  it('returns `undefined` if the number or string is not in list', () => {
+    expect(checkDuplicate(list2)(123)).toBe('The value 123 is in used');
+    expect(checkDuplicate(list2)(456)).toBeUndefined();
+    expect(checkDuplicate(list2)('foo')).toBe('The value foo is in used');
   });
 });
