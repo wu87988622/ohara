@@ -20,7 +20,6 @@ import * as joint from 'jointjs';
 import $ from 'jquery';
 import _ from 'lodash';
 import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
-import BuildIcon from '@material-ui/icons/Build';
 import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
@@ -61,7 +60,6 @@ const TopicGraph = params => {
   );
   const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
   const linkIcon = renderToString(<TrendingUpIcon />);
-  const settingIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
@@ -71,7 +69,6 @@ const TopicGraph = params => {
         <div class="title"></div>
         <div class="topic-menu">
           <Button id="topic-link">${linkIcon}</Button>
-          <Button id="topic-setting">${settingIcon}</Button>
           <Button id="topic-remove">${removeIcon}</Button> 
         </div>
       </div>`,
