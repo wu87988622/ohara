@@ -18,7 +18,6 @@ package com.island.ohara.common.data;
 
 import com.island.ohara.common.util.ByteUtils;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -178,54 +177,67 @@ public interface Serializer<T> {
       new Serializer<Cell<?>>() {
         @Override
         public byte[] to(Cell<?> cell) {
-          try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+          byte[] nameBytes = STRING.to(cell.name());
+          final byte[] valueBytes;
+          DataType type = DataType.from(cell.value());
+          switch (type) {
+            case BYTES:
+              valueBytes = BYTES.to((byte[]) cell.value());
+              break;
+            case BOOLEAN:
+              valueBytes = BOOLEAN.to((Boolean) cell.value());
+              break;
+            case BYTE:
+              valueBytes = BYTE.to((Byte) cell.value());
+              break;
+            case SHORT:
+              valueBytes = SHORT.to((Short) cell.value());
+              break;
+            case INT:
+              valueBytes = INT.to((Integer) cell.value());
+              break;
+            case LONG:
+              valueBytes = LONG.to((Long) cell.value());
+              break;
+            case FLOAT:
+              valueBytes = FLOAT.to((Float) cell.value());
+              break;
+            case DOUBLE:
+              valueBytes = DOUBLE.to((Double) cell.value());
+              break;
+            case STRING:
+              valueBytes = STRING.to((String) cell.value());
+              break;
+            case CELL:
+              valueBytes = CELL.to((Cell) cell.value());
+              break;
+            case ROW:
+              valueBytes = ROW.to((Row) cell.value());
+              break;
+            case OBJECT:
+              valueBytes = OBJECT.to(cell.value());
+              break;
+            default:
+              throw new UnsupportedClassVersionError(type.getClass().getName());
+          }
+          int initialSize =
+              // version
+              ByteUtils.SIZE_OF_BYTE
+                  // name length
+                  + ByteUtils.SIZE_OF_SHORT
+                  // name
+                  + nameBytes.length
+                  // type order
+                  + ByteUtils.SIZE_OF_SHORT
+                  // value length
+                  + ByteUtils.SIZE_OF_SHORT
+                  // value
+                  + valueBytes.length;
+          try (ByteArrayOutputStream output = new ByteArrayOutputStream(initialSize)) {
             // version
             output.write(BYTE.to((byte) 0));
             // we have got to cast Cell<?> to Cell<object>. Otherwise, we can't obey CAP#1
             try {
-              byte[] nameBytes = STRING.to(cell.name());
-              final byte[] valueBytes;
-              DataType type = DataType.from(cell.value());
-              switch (type) {
-                case BYTES:
-                  valueBytes = BYTES.to((byte[]) cell.value());
-                  break;
-                case BOOLEAN:
-                  valueBytes = BOOLEAN.to((Boolean) cell.value());
-                  break;
-                case BYTE:
-                  valueBytes = BYTE.to((Byte) cell.value());
-                  break;
-                case SHORT:
-                  valueBytes = SHORT.to((Short) cell.value());
-                  break;
-                case INT:
-                  valueBytes = INT.to((Integer) cell.value());
-                  break;
-                case LONG:
-                  valueBytes = LONG.to((Long) cell.value());
-                  break;
-                case FLOAT:
-                  valueBytes = FLOAT.to((Float) cell.value());
-                  break;
-                case DOUBLE:
-                  valueBytes = DOUBLE.to((Double) cell.value());
-                  break;
-                case STRING:
-                  valueBytes = STRING.to((String) cell.value());
-                  break;
-                case CELL:
-                  valueBytes = CELL.to((Cell) cell.value());
-                  break;
-                case ROW:
-                  valueBytes = ROW.to((Row) cell.value());
-                  break;
-                case OBJECT:
-                  valueBytes = OBJECT.to(cell.value());
-                  break;
-                default:
-                  throw new UnsupportedClassVersionError(type.getClass().getName());
-              }
               if (nameBytes.length > Short.MAX_VALUE)
                 throw new IllegalArgumentException(
                     "the max size from name is "
@@ -313,47 +325,58 @@ public interface Serializer<T> {
       new Serializer<Row>() {
         @Override
         public byte[] to(Row row) {
-          try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+          List<byte[]> cellsInBytes =
+              row.cells().stream().map(CELL::to).collect(Collectors.toList());
+          List<byte[]> tagsInBytes =
+              row.tags().stream().map(STRING::to).collect(Collectors.toList());
+          int initialSize =
+              // version
+              ByteUtils.SIZE_OF_BYTE
+                  // cells count
+                  + ByteUtils.SIZE_OF_INT
+                  // all cells' size
+                  + cellsInBytes.stream().mapToInt(bs -> bs.length + ByteUtils.SIZE_OF_INT).sum()
+                  // tags count
+                  + ByteUtils.SIZE_OF_SHORT
+                  // all tags' size
+                  + tagsInBytes.stream().mapToInt(bs -> bs.length + ByteUtils.SIZE_OF_SHORT).sum();
+          try (ByteArrayOutputStream output = new ByteArrayOutputStream(initialSize)) {
             // version
             output.write(BYTE.to((byte) 0));
-            // cell count
+            // cells count
             output.write(INT.to(row.cells().size()));
-            row.cells()
-                .forEach(
-                    cell -> {
-                      byte[] bytes = CELL.to(cell);
-                      int cellSize = bytes.length;
-                      try {
-                        // cell size
-                        output.write(INT.to(cellSize));
-                        // cell
-                        output.write(bytes);
-                      } catch (Exception e) {
-                        throw new IllegalArgumentException(e);
-                      }
-                    });
+            cellsInBytes.forEach(
+                bytes -> {
+                  int cellSize = bytes.length;
+                  try {
+                    // cell size
+                    output.write(INT.to(cellSize));
+                    // cell
+                    output.write(bytes);
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(e);
+                  }
+                });
 
             // process tag
             // noted: the (int) length is converted to short type.
             output.write(SHORT.to((short) row.tags().size()));
-            row.tags()
-                .forEach(
-                    tag -> {
-                      try {
-                        byte[] tagBytes = STRING.to(tag);
-                        if (tagBytes.length > Short.MAX_VALUE)
-                          throw new IllegalArgumentException(
-                              "the max size from tag is "
-                                  + Short.MAX_VALUE
-                                  + " current:"
-                                  + tagBytes.length);
-                        // noted: the (int) length is converted to short type.
-                        output.write(SHORT.to((short) tagBytes.length));
-                        output.write(tagBytes);
-                      } catch (IOException e) {
-                        throw new IllegalArgumentException(e);
-                      }
-                    });
+            tagsInBytes.forEach(
+                tagBytes -> {
+                  try {
+                    if (tagBytes.length > Short.MAX_VALUE)
+                      throw new IllegalArgumentException(
+                          "the max size from tag is "
+                              + Short.MAX_VALUE
+                              + " current:"
+                              + tagBytes.length);
+                    // noted: the (int) length is converted to short type.
+                    output.write(SHORT.to((short) tagBytes.length));
+                    output.write(tagBytes);
+                  } catch (IOException e) {
+                    throw new IllegalArgumentException(e);
+                  }
+                });
             output.flush();
             return output.toByteArray();
           } catch (Exception e) {
@@ -405,7 +428,7 @@ public interface Serializer<T> {
       new Serializer<Object>() {
         @Override
         public byte[] to(Object obj) {
-          try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+          try (ByteArrayOutputStream bytes = new ByteArrayOutputStream(100);
               ObjectOutputStream out = new ObjectOutputStream(bytes)) {
             out.writeObject(obj);
             out.flush();

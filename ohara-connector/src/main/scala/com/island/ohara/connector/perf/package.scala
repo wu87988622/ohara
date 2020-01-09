@@ -67,8 +67,8 @@ package object perf {
     * Since schema is not "required" in ohara, making a default schema avoid confusing users when they miss the schema
     */
   val DEFAULT_SCHEMA: Seq[Column] = Seq(
-    Column.builder().name("a").dataType(DataType.STRING).order(0).build(),
-    Column.builder().name("b").dataType(DataType.STRING).order(1).build(),
-    Column.builder().name("c").dataType(DataType.STRING).order(2).build()
+    Column.builder().name("a").dataType(DataType.BYTES).order(0).build(),
+    Column.builder().name("b").dataType(DataType.BYTES).order(1).build(),
+    Column.builder().name("c").dataType(DataType.BYTES).order(2).build()
   )
 }

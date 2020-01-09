@@ -48,7 +48,7 @@ class PerfSourceTask extends RowSourceTask {
           c.dataType match {
             case DataType.BOOLEAN => false
             case DataType.BYTE    => ByteUtils.toBytes(CommonUtils.current()).head
-            case DataType.BYTES   => ByteUtils.toBytes(CommonUtils.current())
+            case DataType.BYTES   => new Array[Byte](props.cellSize)
             case DataType.SHORT   => CommonUtils.current().toShort
             case DataType.INT     => CommonUtils.current().toInt
             case DataType.LONG    => CommonUtils.current()

@@ -38,6 +38,17 @@ public interface Cell<T> {
   static <T> Cell<T> of(String name, T value) {
     Objects.requireNonNull(name);
     Objects.requireNonNull(value);
+    int hashCode;
+    if (value instanceof byte[]) {
+      byte[] bs = (byte[]) value;
+      hashCode =
+          name.hashCode()
+              + 31
+                  * IntStream.range(0, bs.length)
+                      .map(i -> bs[i])
+                      .reduce(1, (hash, current) -> hash * 31 + current);
+    } else hashCode = name.hashCode() + 31 * value.hashCode();
+
     return new Cell<T>() {
 
       @Override
@@ -57,15 +68,7 @@ public interface Cell<T> {
 
       @Override
       public int hashCode() {
-        final int valueHash;
-        if (value() instanceof byte[]) {
-          byte[] bs = (byte[]) value;
-          valueHash =
-              IntStream.range(0, bs.length)
-                  .map(i -> bs[i])
-                  .reduce(1, (hash, current) -> hash * 31 + current);
-        } else valueHash = value().hashCode();
-        return name().hashCode() * 31 + valueHash;
+        return hashCode;
       }
 
       @Override
