@@ -119,7 +119,7 @@ const NodeDialog = () => {
   };
 
   const openDetailView = node => {
-    openViewNodeDialog(node);
+    openViewNodeDialog(node.hostname);
   };
 
   const viewButton = node => {

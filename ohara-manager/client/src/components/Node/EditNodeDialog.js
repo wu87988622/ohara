@@ -23,7 +23,6 @@ import { Dialog } from 'components/common/Dialog';
 import {
   required,
   minNumber,
-  maxLength,
   maxNumber,
   composeValidators,
 } from 'utils/validate';
@@ -42,6 +41,8 @@ const EditNodeDialog = () => {
   const port = get(node, 'port', '');
   const user = get(node, 'user', '');
   const password = get(node, 'password', '');
+
+  const parse = value => (isNaN(parseInt(value)) ? '' : parseInt(value));
 
   const onSubmit = async (values, form) => {
     updateNode(values);
@@ -75,10 +76,8 @@ const EditNodeDialog = () => {
                 margin="normal"
                 helperText="hostname of the node"
                 component={InputField}
-                autoFocus
-                required
+                disabled
                 defaultValue={hostname}
-                validate={composeValidators(required, maxLength(63))}
               />
               <Field
                 name="port"
@@ -88,6 +87,7 @@ const EditNodeDialog = () => {
                 margin="normal"
                 helperText="SSH port of the node"
                 component={InputField}
+                parse={parse}
                 defaultValue={port}
                 validate={composeValidators(
                   required,

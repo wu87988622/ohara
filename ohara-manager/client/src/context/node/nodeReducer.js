@@ -26,7 +26,8 @@ const initialState = {
 
 const sort = nodes => sortBy(nodes, 'hostname');
 
-const isEqual = (object, other) => isEqualWith(object, other, ['hostname']);
+const isEqual = (object, other) =>
+  isEqualWith(object, other, (a, b) => a.hostname === b.hostname);
 
 const reducer = (state, action) => {
   switch (action.type) {

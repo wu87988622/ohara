@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { get, round, isEmpty, capitalize } from 'lodash';
+import { get, find, round, isEmpty, capitalize } from 'lodash';
 import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
@@ -105,7 +105,7 @@ const ViewNodeDialog = props => {
   const {
     isOpen,
     close: closeViewNodeDialog,
-    data: nodeData,
+    data: nodeName,
   } = context.useViewNodeDialog();
 
   const { mode } = props;
@@ -113,10 +113,10 @@ const ViewNodeDialog = props => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { open: openEditNodeDialog } = context.useEditNodeDialog();
   const { data: configuratorInfo } = context.useConfiguratorState();
-  const { isFetching: isDeleting } = context.useNodeState();
+  const { data: nodes, isFetching: isDeleting } = context.useNodeState();
   const { deleteNode } = context.useNodeActions();
 
-  const nodeName = get(nodeData, 'hostname', '');
+  const nodeData = find(nodes, node => node.hostname === nodeName);
   const { data: zookeepers } = context.useZookeeperState();
   const { data: brokers } = context.useBrokerState();
   const { data: workers } = context.useWorkerState();

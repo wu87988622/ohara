@@ -103,8 +103,8 @@ const SelectTable = props => {
     setSelected(blockedRows);
   };
 
-  const handleClick = (event, row) => {
-    if (isItemDisabled(row)) return;
+  const handleClick = row => {
+    if (!hasSelect || isItemDisabled(row)) return;
 
     const selectedIndex = selected
       .map(select => select[Object.keys(select)[0]])
@@ -163,7 +163,7 @@ const SelectTable = props => {
                 return (
                   <TableRow
                     hover
-                    onClick={event => handleClick(event, row)}
+                    onClick={() => handleClick(row)}
                     role="checkbox"
                     aria-checked={isItemSelected}
                     tabIndex={-1}
