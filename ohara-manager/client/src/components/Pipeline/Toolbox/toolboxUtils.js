@@ -220,7 +220,16 @@ export const enableDragAndDrop = params => {
         });
       });
 
+      // Make sure we're not creating more than one topics
+      // this is due to creating a topic involve lots of Http requests
+      // behind the sense and while the UI is creating the topic
+      // if users click on the paper, it will create more topic along
+      // the way. So adding this flag, ensure that only one topic is
+      // created during the process
+      let isWorking = false;
       $('#paper').on('mouseup.fly', async event => {
+        if (isWorking) return;
+
         const x = event.pageX;
         const y = event.pageY;
         const target = paper.current.$el.offset();
@@ -301,6 +310,7 @@ export const enableDragAndDrop = params => {
 
             let topicGroup;
             if (!isPublicTopic) {
+              isWorking = true;
               const { data } = await createTopic({
                 name: privateTopicName,
                 tags: {
