@@ -168,20 +168,17 @@ object NodeRoute {
 
   private[this] def creationToNode(
     creation: Creation
-  )(
-    implicit
-    advertisedInfo: AdvertisedInfo,
-    executionContext: ExecutionContext,
-    serviceCollie: ServiceCollie
   ): Future[Node] =
-    updateRuntimeInfo(
+    // we don't update the run-time information since the node does not exist in store
+    // so our collie CAN'T see them and fail to return any status for them.
+    Future.successful(
       Node(
         hostname = creation.hostname,
         port = creation.port,
         user = creation.user,
         password = creation.password,
         services = Seq.empty,
-        state = State.AVAILABLE,
+        state = State.UNAVAILABLE,
         error = None,
         lastModified = CommonUtils.current(),
         resources = Seq.empty,
@@ -189,12 +186,19 @@ object NodeRoute {
       )
     )
 
-  private[this] def hookOfCreation(
-    implicit
-    advertisedInfo: AdvertisedInfo,
+  private[this] def hookOfCreation: HookOfCreation[Creation, Node] = creationToNode(_)
+
+  private[this] def hookAfterCreation(
+    implicit advertisedInfo: AdvertisedInfo,
     executionContext: ExecutionContext,
     serviceCollie: ServiceCollie
-  ): HookOfCreation[Creation, Node] = creationToNode(_)
+  ): HookAfterCreation[Node] = updateRuntimeInfo(_)
+
+  private[this] def hookAfterUpdating(
+    implicit advertisedInfo: AdvertisedInfo,
+    executionContext: ExecutionContext,
+    serviceCollie: ServiceCollie
+  ): HookAfterUpdating[Node] = updateRuntimeInfo(_)
 
   private[this] def checkConflict(nodeName: String, serviceName: String, clusterInfos: Seq[ClusterInfo]): Unit = {
     val conflicted = clusterInfos.filter(_.nodeNames.contains(nodeName))
@@ -204,10 +208,8 @@ object NodeRoute {
 
   private[this] def hookOfUpdating(
     implicit
-    advertisedInfo: AdvertisedInfo,
     objectChecker: ObjectChecker,
-    executionContext: ExecutionContext,
-    serviceCollie: ServiceCollie
+    executionContext: ExecutionContext
   ): HookOfUpdating[Updating, Node] =
     (key: ObjectKey, updating: Updating, previousOption: Option[Node]) =>
       previousOption match {
@@ -295,7 +297,9 @@ object NodeRoute {
     RouteBuilder[Creation, Updating, Node]()
       .root(NODES_PREFIX_PATH)
       .hookOfCreation(hookOfCreation)
+      .hookAfterCreation(hookAfterCreation)
       .hookOfUpdating(hookOfUpdating)
+      .hookAfterUpdating(hookAfterUpdating)
       .hookOfGet(hookOfGet)
       .hookOfList(hookOfList)
       .hookBeforeDelete(hookBeforeDelete)

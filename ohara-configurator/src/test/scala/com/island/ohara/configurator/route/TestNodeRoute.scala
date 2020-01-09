@@ -261,6 +261,31 @@ class TestNodeRoute extends OharaTest {
     nodeDesc4.tags shouldBe Map.empty
   }
 
+  @Test
+  def resourcesShouldBeInResponse(): Unit = {
+    val resources = result(
+      nodeApi.request
+        .hostname(CommonUtils.randomString(10))
+        .port(22)
+        .user("user")
+        .password("password")
+        .create()
+    ).resources
+    resources should not be Set.empty
+    resources.foreach(r => r.value should not be 0)
+  }
+
+  @Test
+  def stateShouldBeAvailable(): Unit =
+    result(
+      nodeApi.request
+        .hostname(CommonUtils.randomString(10))
+        .port(22)
+        .user("user")
+        .password("password")
+        .create()
+    ).state shouldBe NodeApi.State.AVAILABLE
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

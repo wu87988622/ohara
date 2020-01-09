@@ -64,6 +64,8 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   private[this] var root: String                                             = _
   private[this] var customPost: Option[() => Route]                          = None
   private[this] var hookOfCreation: Option[HookOfCreation[Creation, Res]]    = None
+  private[this] var hookAfterCreation: Option[HookAfterCreation[Res]]        = None
+  private[this] var hookAfterUpdating: Option[HookAfterUpdating[Res]]        = None
   private[this] var hookOfUpdating: Option[HookOfUpdating[Updating, Res]]    = None
   private[this] var hookOfGet: HookOfGet[Res]                                = (res: Res) => Future.successful(res)
   private[this] var hookOfList: HookOfList[Res]                              = (res: Seq[Res]) => Future.successful(res)
@@ -91,6 +93,18 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     if (customPost.isDefined)
       throw new IllegalArgumentException("you can't define both of customPost and hookOfCreation")
     this.hookOfCreation = Some(hookOfCreation)
+    this
+  }
+
+  @Optional("nothing happen after creating response")
+  def hookAfterCreation(hookAfterCreation: HookAfterCreation[Res]): RouteBuilder[Creation, Updating, Res] = {
+    this.hookAfterCreation = Some(hookAfterCreation)
+    this
+  }
+
+  @Optional("nothing happen after updating response")
+  def hookAfterUpdating(hookAfterUpdating: HookAfterUpdating[Res]): RouteBuilder[Creation, Updating, Res] = {
+    this.hookAfterUpdating = Some(hookAfterUpdating)
     this
   }
 
@@ -151,6 +165,8 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     root = CommonUtils.requireNonEmpty(root),
     customPost = customPost,
     hookOfCreation = hookOfCreation,
+    hookAfterCreation = hookAfterCreation,
+    hookAfterUpdating = hookAfterUpdating,
     hookOfUpdating = hookOfUpdating,
     hookOfGet = Objects.requireNonNull(hookOfGet),
     hookOfList = Objects.requireNonNull(hookOfList),
@@ -165,6 +181,8 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     root: String,
     customPost: Option[() => Route],
     hookOfCreation: Option[HookOfCreation[Creation, Res]],
+    hookAfterCreation: Option[HookAfterCreation[Res]],
+    hookAfterUpdating: Option[HookAfterUpdating[Res]],
     hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
@@ -191,6 +209,8 @@ object RouteBuilder {
       root: String,
       customPost: Option[() => Route],
       hookOfCreation: Option[HookOfCreation[Creation, Res]],
+      hookAfterCreation: Option[HookAfterCreation[Res]],
+      hookAfterUpdating: Option[HookAfterUpdating[Res]],
       hookOfUpdating: Option[HookOfUpdating[Updating, Res]],
       hookOfList: HookOfList[Res],
       hookOfGet: HookOfGet[Res],
@@ -206,7 +226,14 @@ object RouteBuilder {
             .map(_.apply())
             .getOrElse(post(entity(as[Creation]) { creation =>
               hookOfCreation
-                .map(hook => complete(hook(creation).flatMap(res => store.addIfAbsent(res))))
+                .map(
+                  hook =>
+                    complete(
+                      hook(creation)
+                        .flatMap(res => store.addIfAbsent(res))
+                        .flatMap(res => hookAfterCreation.map(hook => hook(res)).getOrElse(Future.successful(res)))
+                    )
+                )
                 .getOrElse(routeToOfficialUrl(s"/$root"))
             })) ~
             get {
@@ -247,6 +274,9 @@ object RouteBuilder {
                               .get[Res](key)
                               .flatMap(previous => hook(key = key, updating = update, previous = previous))
                               .flatMap(store.add)
+                              .flatMap(
+                                res => hookAfterUpdating.map(hook => hook(res)).getOrElse(Future.successful(res))
+                              )
                           )
                       )
                       .getOrElse(routeToOfficialUrl(s"/$root/${key.name}?${key.group()}"))
