@@ -32,6 +32,7 @@ import Typography from '@material-ui/core/Typography';
 import * as topicApi from 'api/topicApi';
 import { useListWorkspacesDialog, useWorkspace } from 'context';
 import { Dialog } from 'components/common/Dialog';
+import { Tooltip } from 'components/common/Tooltip';
 import { Wrapper } from './WorkspaceListStyles';
 
 const Statistic = ({ value, label }) => (
@@ -152,15 +153,25 @@ function WorkspaceList() {
                       </Grid>
                     </CardContent>
                     <CardActions>
-                      <Button
-                        size="large"
-                        startIcon={<InputIcon />}
+                      <Tooltip
+                        title={
+                          isActive
+                            ? "This is the workspace that you're at now"
+                            : ''
+                        }
+                        placement="top"
+                        enterDelay={isActive ? 250 : 1000}
                         className="call-to-action"
-                        onClick={handleClick(name)}
-                        disabled={isActive}
                       >
-                        Into Workspace
-                      </Button>
+                        <Button
+                          size="large"
+                          startIcon={<InputIcon />}
+                          onClick={handleClick(name)}
+                          disabled={isActive}
+                        >
+                          Into Workspace
+                        </Button>
+                      </Tooltip>
                     </CardActions>
                   </Card>
                 </Grid>
