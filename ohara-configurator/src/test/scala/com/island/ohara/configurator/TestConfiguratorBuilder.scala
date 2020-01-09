@@ -25,7 +25,7 @@ import com.island.ohara.agent.ServiceCollie
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
 import org.junit.Test
 import org.scalatest.Matchers._
@@ -241,7 +241,7 @@ class TestConfiguratorBuilder extends OharaTest {
                                     |        "containers": [
                                     |          {
                                     |            "name": "ohara",
-                                    |            "image": "oharastream/broker:0.10.0-SNAPSHOT",
+                                    |            "image": "oharastream/broker:${VersionUtils.VERSION}",
                                     |            "ports": [
                                     |              {
                                     |                "hostPort": 43507,

@@ -24,7 +24,7 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.k8s.K8SJson._
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json._
@@ -50,7 +50,7 @@ class TestK8SClient extends OharaTest {
                     |        "containers": [
                     |          {
                     |            "name": "ohara",
-                    |            "image": "oharastream/broker:0.10.0-SNAPSHOT",
+                    |            "image": "oharastream/broker:${VersionUtils.VERSION}",
                     |            "ports": [
                     |              {
                     |                "hostPort": 43507,
