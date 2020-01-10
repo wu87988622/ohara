@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { capitalize } from 'lodash';
+import { find, some, filter, isEmpty, capitalize } from 'lodash';
 import List from '@material-ui/core/List';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -192,11 +192,19 @@ const SettingDialog = props => {
   `;
 
   const onSubmit = async values => {
-    if (values.topicKeys) {
-      if (values.topicKeys.startsWith('T')) {
-        const privateTopic = currentTopics.filter(
-          topic => topic.tags.displayName === values.topicKeys,
-        )[0];
+    if (!isEmpty(values.topicKeys)) {
+      // topicKeys could be an empty array or single string
+      // May need refactoring to only one type (array)
+      // But it's ok to use filter function here
+      if (
+        !isEmpty(filter(values.topicKeys, topicKey => topicKey.startsWith('T')))
+      ) {
+        const privateTopic = find(currentTopics, topic =>
+          some(
+            values.topicKeys,
+            topicKey => topicKey === topic.tags.displayName,
+          ),
+        );
 
         values.topicKeys = [
           { name: privateTopic.name, group: privateTopic.group },
