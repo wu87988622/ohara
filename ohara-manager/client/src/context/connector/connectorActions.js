@@ -21,6 +21,7 @@ export const createActions = context => {
   const { state, dispatch, connectorApi } = context;
 
   return {
+    state,
     fetchConnectors: async () => {
       const routine = routines.fetchConnectorsRoutine;
       if (state.isFetching || state.lastUpdated || state.error) return;

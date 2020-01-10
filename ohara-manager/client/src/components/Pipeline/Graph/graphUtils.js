@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-import * as joint from 'jointjs';
-
 import { KIND } from 'const';
+import * as generate from 'utils/generate';
 import { TopicGraph } from '../Graph/Topic';
+
+const getPrivateTopicDisplayNames = topics => {
+  const topicIndex = topics
+    .map(topic => topic.tags)
+    .filter(topic => topic.type === 'private')
+    .map(topic => topic.displayName.replace('T', ''))
+    .sort();
+
+  if (topicIndex.length === 0) return 'T1';
+  return `T${Number(topicIndex.pop()) + 1}`;
+};
 
 export const updateCurrentCell = currentCell => {
   if (currentCell.current) {
@@ -31,24 +41,32 @@ export const updateCurrentCell = currentCell => {
   }
 };
 
-export const createConnection = params => {
+export const createConnection = async params => {
   const {
     currentLink: sourceLink,
     showMessage,
-    resetLink,
     graph,
     paper,
     cellView,
     setInitToolboxList,
+    createTopic,
+    stopTopic,
+    deleteTopic,
+    currentTopic,
+    updatePipeline,
+    currentPipeline,
+    updateConnector,
   } = params;
 
   const targetCell = cellView.model;
+  const targetName = targetCell.attributes.params.name;
   const targetId = targetCell.get('id');
   const targetType = targetCell.get('classType');
   const targetTitle = targetCell.get('title');
   const targetConnectedLinks = graph.current.getConnectedLinks(targetCell);
 
   const sourceId = sourceLink.get('source').id;
+  const sourceName = graph.current.getCell(sourceId).attributes.params.name;
   const sourceType = graph.current.getCell(sourceId).attributes.classType;
   const sourceCell = graph.current.getCell(sourceId);
   const sourceTitle = sourceCell.get('title');
@@ -65,14 +83,12 @@ export const createConnection = params => {
     showMessage(message);
 
     // Reset a link when connection failed
-    resetLink();
   };
 
   // Cell connection logic
   if (targetId === sourceId) {
     // A cell cannot connect to itself, not throwing a
     // message out here since the behavior is not obvious
-    resetLink();
   } else if (targetType === KIND.source) {
     handleError(`Target ${targetTitle} is a source!`);
   } else if (
@@ -198,40 +214,78 @@ export const createConnection = params => {
       const topicX = (sourcePosition.x + targetPosition.x + 23) / 2;
       const topicY = (sourcePosition.y + targetPosition.y + 23) / 2;
 
+      const privateTopicName = generate.serviceName({ length: 5 });
+      const displayName = getPrivateTopicDisplayNames(currentTopic);
+
+      const { data: topicData } = await createTopic({
+        name: privateTopicName,
+        tags: {
+          type: 'private',
+          displayName,
+        },
+      });
+
+      await updatePipeline({
+        name: currentPipeline.name,
+        endpoints: [
+          ...currentPipeline.endpoints,
+          {
+            name: privateTopicName,
+            kind: KIND.topic,
+          },
+        ],
+      });
+
       graph.current.addCell(
         TopicGraph({
+          name: privateTopicName,
+          graph,
+          paper,
+          stopTopic,
+          deleteTopic,
+          title: displayName,
           cellInfo: {
+            classType: KIND.topic,
+            className: 'privateTopic',
             position: {
               x: topicX,
               y: topicY,
             },
-            classType: KIND.topic,
-            className: 'privateTopic', // This topic should always be a private topic
           },
-          graph,
-          paper,
+          currentPipeline,
+          updatePipeline,
         }),
       );
 
-      // Since we just added this topic into graph, it's the last cell
-      const topicId = graph.current.getLastCell().attributes.id;
-      sourceLink.target({ id: topicId });
+      await updateConnector({
+        name: sourceName,
+        topicKeys: [{ name: topicData.name, group: topicData.group }],
+      });
 
-      // Restore pinter event so the link can be clicked by mouse again
-      sourceLink.attr('root/style', 'pointer-events: auto');
-
-      const newLink = new joint.shapes.standard.Link();
-      newLink.source({ id: topicId });
-      newLink.target({ id: targetCell.id });
-      newLink.attr({ line: { stroke: '#9e9e9e' } });
-      newLink.addTo(graph.current);
+      await updateConnector({
+        name: targetName,
+        topicKeys: [{ name: topicData.name, group: topicData.group }],
+      });
 
       // There's a bug causes by not re-initializing JointJS' HTML element
       // Because we're using these custom HTML elements both in `TopicGraph`
       // Component as well as Toolbox. And so we're manually re-initializing
       // Toolbox to prevent the bug
       setInitToolboxList(prevState => prevState + 1);
-      return;
+    } else if (sourceType === KIND.topic && targetType === KIND.sink) {
+      const topicData = currentTopic.find(topic => topic.name === sourceName);
+
+      await updateConnector({
+        name: targetName,
+        topicKeys: [{ name: topicData.name, group: topicData.group }],
+      });
+    } else if (sourceType === KIND.source && targetType === KIND.topic) {
+      const topicData = currentTopic.find(topic => topic.name === targetName);
+
+      await updateConnector({
+        name: sourceName,
+        topicKeys: [{ name: topicData.name, group: topicData.group }],
+      });
     }
 
     // Link to the target cell

@@ -20,6 +20,7 @@ import * as action from 'utils/action';
 export const createActions = context => {
   const { state, dispatch, topicApi } = context;
   return {
+    state,
     fetchTopics: async () => {
       const routine = routines.fetchTopicsRoutine;
       if (state.isFetching || state.lastUpdated || state.error) return;

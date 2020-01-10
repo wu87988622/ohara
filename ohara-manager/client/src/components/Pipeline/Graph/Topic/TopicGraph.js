@@ -182,6 +182,8 @@ const TopicGraph = params => {
       'classInfo',
       'stopTopic',
       'deleteTopic',
+      'updatePipeline',
+      'currentPipeline',
     ]),
   });
 };

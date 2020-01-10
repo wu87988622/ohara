@@ -156,15 +156,17 @@ const StyleList = styled(List)(
 
 const SettingDialog = props => {
   const { open, handleClose, data = {}, maxWidth = 'md' } = props;
-  const { title = '', classInfo = {} } = data;
+  const { title = '', classInfo = {}, name: connectorName } = data;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
   const { data: currentConnectors } = useConnectorState();
   const { data: currentTopics } = useTopicState();
   const { updateConnector } = useConnectorActions();
-  const targetConnector = currentConnectors.filter(
-    connector => connector.className === classInfo.className,
-  )[0];
+  const targetConnector = currentConnectors.find(
+    connector =>
+      connector.className === classInfo.className &&
+      connector.name === connectorName,
+  );
 
   const groupBy = array => {
     if (!array) return [];
