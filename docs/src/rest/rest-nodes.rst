@@ -38,10 +38,10 @@ following services.
 
 The version (tag) depends on which ohara you used. It would be better to
 use the same version to Ohara. For example, the version of Ohara
-configurator you are running is 0.4, then the official images you should
-download is oharastream/xxxx:0.4.
+configurator you are running is 0.9.0, then the official images you should
+download is oharastream/xxxx:0.9.0.
 
-The properties used in describing a node are shown below.
+The properties used by describing a node are shown below.
 
 #. hostname (**string**) — hostname of node.
 
@@ -60,21 +60,17 @@ The following information are updated at run-time.
 
    - services[i].name (**string**) — service name (configurator, zookeeper, broker, connect-worker and _stream)
    - services[i].clusterKeys (**array(object)**) — the keys of this service
+
 #. resources (**array(object)**) — the available resources of this node
 
    - resources[i].name (**string**) — the resource name
    - resources[i].value (**number**) — the "pure" number of resource
-   - resources[i].used (**option(double)**) — the used "value" in percentage. Noted: this value may be null if the impl is unable
-                                      to calculate the used resource.
+   - resources[i].used (**option(double)**) — the used "value" in percentage. Noted: this value may be null if the impl is unable to calculate the used resource.
    - resources[i].unit (**string**) — the description of the "value" unit
 
 #. state (**String**) — "available" means this node works well. otherwise, "unavailable" is returned
 #. error (**option(String)**) — the description to the unavailable node
-
-The following information are tagged by Ohara:
-
 #. lastModified (**long**) — the last time to update this node
-
 
 store a node
 ------------
@@ -89,12 +85,12 @@ store a node
 Example Request
   .. code-block:: json
 
-     {
-       "hostname": "node00",
-       "port": 22,
-       "user": "abc",
-       "password": "pwd"
-     }
+    {
+      "hostname": "node00",
+      "port": 22,
+      "user": "abc",
+      "password": "pwd"
+    }
 
 Example Response
   .. code-block:: json
@@ -103,12 +99,7 @@ Example Response
       "services": [
         {
           "name": "zookeeper",
-          "clusterKeys": [
-            {
-              "group": "default",
-              "name": "zk"
-            }
-          ]
+          "clusterKeys": []
         },
         {
           "name": "broker",
@@ -121,27 +112,36 @@ Example Response
         {
           "name": "stream",
           "clusterKeys": []
-        }
-      ],
-      "resources": [
-        {
-          "name": "CPU",
-          "value": 4,
-          "unit": "core"
         },
         {
-          "name": "Memory",
-          "value": 2048,
-          "unit": "MB"
+          "name": "configurator",
+          "clusterKeys": [
+            {
+                "group": "N/A",
+                "name": "node00"
+            }
+          ]
         }
       ],
       "hostname": "node00",
-      "lastModified": 1569569857613,
+      "state": "AVAILABLE",
+      "lastModified": 1578627668686,
       "tags": {},
       "port": 22,
-      "user": "chia7712",
-      "password": "jellynina0208",
-      "state": "available"
+      "resources": [
+        {
+          "name": "CPU",
+          "value": 6.0,
+          "unit": "cores"
+        },
+        {
+          "name": "Memory",
+          "value": 10.496479034423828,
+          "unit": "GB"
+        }
+      ],
+      "user": "abc",
+      "password": "pwd"
     }
 
 
@@ -159,11 +159,9 @@ Example Request
 
   .. code-block:: json
 
-     {
-       "port": 22,
-       "user": "abc",
-       "password": "pwd"
-     }
+    {
+      "port": 9999
+    }
 
   .. note::
      An new node will be created if your input name does not exist
@@ -178,12 +176,7 @@ Example Response
       "services": [
         {
           "name": "zookeeper",
-          "clusterKeys": [
-            {
-              "group": "default",
-              "name": "zk"
-            }
-          ]
+          "clusterKeys": []
         },
         {
           "name": "broker",
@@ -196,27 +189,36 @@ Example Response
         {
           "name": "stream",
           "clusterKeys": []
-        }
-      ],
-      "resources": [
-        {
-          "name": "CPU",
-          "value": 4,
-          "unit": "core"
         },
         {
-          "name": "Memory",
-          "value": 2048,
-          "unit": "MB"
+          "name": "configurator",
+          "clusterKeys": [
+            {
+                "group": "N/A",
+                "name": "node00"
+            }
+          ]
         }
       ],
       "hostname": "node00",
-      "lastModified": 1569569857613,
+      "state": "AVAILABLE",
+      "lastModified": 1578627668686,
       "tags": {},
-      "port": 22,
-      "user": "chia7712",
-      "password": "jellynina0208",
-      "state": "available"
+      "port": 9999,
+      "resources": [
+        {
+          "name": "CPU",
+          "value": 6.0,
+          "unit": "cores"
+        },
+        {
+          "name": "Memory",
+          "value": 10.496479034423828,
+          "unit": "GB"
+        }
+      ],
+      "user": "abc",
+      "password": "pwd"
     }
 
 
@@ -233,12 +235,7 @@ Example Response
         "services": [
           {
             "name": "zookeeper",
-            "clusterKeys": [
-              {
-                "group": "default",
-                "name": "zk"
-              }
-            ]
+            "clusterKeys": []
           },
           {
             "name": "broker",
@@ -251,27 +248,36 @@ Example Response
           {
             "name": "stream",
             "clusterKeys": []
-          }
-        ],
-        "resources": [
-          {
-            "name": "CPU",
-            "value": 4,
-            "unit": "core"
           },
           {
-            "name": "Memory",
-            "value": 2048,
-            "unit": "MB"
+            "name": "configurator",
+            "clusterKeys": [
+              {
+                  "group": "N/A",
+                  "name": "node00"
+              }
+            ]
           }
         ],
         "hostname": "node00",
-        "lastModified": 1569569857613,
+        "state": "AVAILABLE",
+        "lastModified": 1578627668686,
         "tags": {},
         "port": 22,
-        "user": "chia7712",
-        "password": "jellynina0208",
-        "state": "available"
+        "resources": [
+          {
+            "name": "CPU",
+            "value": 6.0,
+            "unit": "cores"
+          },
+          {
+            "name": "Memory",
+            "value": 10.496479034423828,
+            "unit": "GB"
+          }
+        ],
+        "user": "abc",
+        "password": "pwd"
       }
     ]
 
@@ -304,12 +310,7 @@ Example Response
       "services": [
         {
           "name": "zookeeper",
-          "clusterKeys": [
-            {
-              "group": "default",
-              "name": "zk"
-            }
-          ]
+          "clusterKeys": []
         },
         {
           "name": "broker",
@@ -322,27 +323,36 @@ Example Response
         {
           "name": "stream",
           "clusterKeys": []
-        }
-      ],
-      "resources": [
-        {
-          "name": "CPU",
-          "value": 4,
-          "unit": "core"
         },
         {
-          "name": "Memory",
-          "value": 2048,
-          "unit": "MB"
+          "name": "configurator",
+          "clusterKeys": [
+            {
+                "group": "N/A",
+                "name": "node00"
+            }
+          ]
         }
       ],
       "hostname": "node00",
-      "lastModified": 1569569857613,
+      "state": "AVAILABLE",
+      "lastModified": 1578627668686,
       "tags": {},
       "port": 22,
-      "user": "chia7712",
-      "password": "jellynina0208",
-      "state": "available"
+      "resources": [
+        {
+          "name": "CPU",
+          "value": 6.0,
+          "unit": "cores"
+        },
+        {
+          "name": "Memory",
+          "value": 10.496479034423828,
+          "unit": "GB"
+        }
+      ],
+      "user": "abc",
+      "password": "pwd"
     }
 
 .. _oharastream/zookeeper: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/zookeeper
