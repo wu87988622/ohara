@@ -173,6 +173,7 @@ const ConnectorGraph = params => {
         setData({
           title: `Editing the settings for ${title} ${displayedClassName}`,
           classInfo,
+          name,
         });
       });
 
@@ -273,6 +274,8 @@ const ConnectorGraph = params => {
       'startConnector',
       'stopConnector',
       'deleteConnector',
+      'updatePipeline',
+      'currentPipeline',
     ]),
   });
 };

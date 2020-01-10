@@ -24,7 +24,7 @@ import IntroDialog from './IntroDialog';
 import SettingDialog from './SettingDialog';
 import Graph from './Graph';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
-import { useApp, useConnectorActions, useTopicActions } from 'context';
+import { useApp } from 'context';
 import { usePrevious } from 'utils/hooks';
 
 const Pipeline = () => {
@@ -151,8 +151,7 @@ const Pipeline = () => {
               }}
               toolboxKey={toolboxKey}
               setToolboxExpanded={setToolboxExpanded}
-              useConnectorActions={useConnectorActions}
-              useTopicActions={useTopicActions}
+              context={context}
             />
           )}
         </>

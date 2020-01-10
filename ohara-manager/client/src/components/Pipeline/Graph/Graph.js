@@ -18,21 +18,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
 import { useTheme } from '@material-ui/core/styles';
-import { get } from 'lodash';
+import { get, isEqual } from 'lodash';
 
 import { KIND } from 'const';
 import Toolbar from '../Toolbar';
 import Toolbox from '../Toolbox';
 import ConnectorGraph from './Connector/ConnectorGraph';
 import TopicGraph from '../Graph/Topic/TopicGraph';
-import * as context from 'context';
 import { Paper, PaperWrapper } from './GraphStyles';
 import { usePrevious, useMountEffect, useLocalStorage } from 'utils/hooks';
 import { updateCurrentCell, createConnection } from './graphUtils';
 import { useZoom, useCenter } from './GraphHooks';
+import * as context from 'context';
 
 const Graph = props => {
-  const { useConnectorActions, useTopicActions } = props;
   const { palette } = useTheme();
   const [initToolboxList, setInitToolboxList] = useState(0);
   const [isMetricsOn, setIsMetricsOn] = useLocalStorage(
@@ -44,12 +43,15 @@ const Graph = props => {
   const { currentWorker, currentPipeline } = context.useWorkspace();
   const { selectedCell } = context.usePipelineState();
   const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
+  const { data: currentConnector } = context.useConnectorState();
+  const { data: currentTopic } = context.useTopicState();
+  const { stopTopic, deleteTopic, createTopic } = context.useTopicActions();
   const {
     startConnector,
     stopConnector,
     deleteConnector,
-  } = useConnectorActions();
-  const { stopTopic, deleteTopic } = useTopicActions();
+    updateConnector,
+  } = context.useConnectorActions();
   const showMessage = context.useSnackbar();
 
   const {
@@ -73,10 +75,11 @@ const Graph = props => {
     setToolboxExpanded,
   } = props;
 
-  let graph = useRef(null);
-  let paper = useRef(null);
+  let graphRef = useRef(null);
+  let paperRef = useRef(null);
   let dragStartPosition = useRef(null);
   let currentCell = useRef(null);
+  let isAdding = useRef(null);
   let currentPipelineRef = useRef(null);
 
   useEffect(() => {
@@ -84,229 +87,62 @@ const Graph = props => {
   }, [currentPipeline]);
 
   useMountEffect(() => {
-    const renderGraph = () => {
-      const namespace = joint.shapes;
-      graph.current = new joint.dia.Graph({}, { cellNamespace: namespace });
-      paper.current = new joint.dia.Paper(
-        {
-          el: document.getElementById('paper'),
-          model: graph.current,
-          width: '100%',
-          height: '100%',
+    const namespace = joint.shapes;
+    graphRef.current = new joint.dia.Graph({}, { cellNamespace: namespace });
 
-          // Grid settings
-          gridSize: 10,
-          drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
+    paperRef.current = new joint.dia.Paper(
+      {
+        el: document.getElementById('paper'),
+        model: graphRef.current,
+        width: '100%',
+        height: '100%',
 
-          background: { color: palette.common.white },
+        // Grid settings
+        gridSize: 10,
+        drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
 
-          // Tweak the default highlighting to match our theme
-          highlighting: {
-            default: {
-              name: 'stroke',
-              options: {
-                padding: 4,
-                rx: 4,
-                ry: 4,
-                attrs: {
-                  'stroke-width': 2,
-                  stroke: palette.primary.main,
-                },
+        background: { color: palette.common.white },
+
+        // Tweak the default highlighting to match our theme
+        highlighting: {
+          default: {
+            name: 'stroke',
+            options: {
+              padding: 4,
+              rx: 4,
+              ry: 4,
+              attrs: {
+                'stroke-width': 2,
+                stroke: palette.primary.main,
               },
             },
           },
-
-          // Ensures the link should always link to a valid target
-          linkPinning: false,
-
-          // Fix es6 module issue with JointJS
-          cellViewNamespace: joint.shapes,
-
-          // prevent graph from stepping outside of the paper
-          restrictTranslate: true,
         },
-        { cellNamespace: namespace },
-      );
 
-      paper.current.on('cell:pointerclick', cellView => {
-        currentCell.current = {
-          cellView,
-          bBox: {
-            ...cellView.getBBox(),
-            ...cellView.getBBox().center(),
-          },
-        };
+        // Ensures the link should always link to a valid target
+        linkPinning: false,
 
-        const { title, classType } = cellView.model.attributes;
-        setSelectedCell({
-          name: title,
-          classType,
-        });
+        // Fix es6 module issue with JointJS
+        cellViewNamespace: joint.shapes,
 
-        if (!cellView.$box) return;
+        // prevent graph from stepping outside of the paper
+        restrictTranslate: true,
+      },
+      { cellNamespace: namespace },
+    );
+  });
 
-        resetAll();
-        cellView.highlight();
-        cellView.model.attributes.menuDisplay = 'block';
-        cellView.updateBox();
-        const links = graph.current.getLinks();
-
-        if (links.length > 0) {
-          const currentLink = links.find(link => !link.get('target').id);
-
-          if (currentLink) {
-            createConnection({
-              currentLink,
-              cellView,
-              graph,
-              paper,
-              showMessage,
-              resetLink,
-              setInitToolboxList,
-            });
-          }
-        }
-      });
-
-      paper.current.on('link:pointerclick', linkView => {
-        resetLink();
-
-        linkView.addTools(
-          new joint.dia.ToolsView({
-            tools: [
-              // Allow users to add vertices on link view
-              new joint.linkTools.Vertices(),
-              new joint.linkTools.Segments(),
-              // Add a custom remove tool
-              new joint.linkTools.Remove({
-                offset: 15,
-                distance: '50%',
-                markup: [
-                  {
-                    tagName: 'circle',
-                    selector: 'button',
-                    attributes: {
-                      r: 8,
-                      fill: 'grey',
-                      cursor: 'pointer',
-                    },
-                  },
-                  {
-                    tagName: 'path',
-                    selector: 'icon',
-                    attributes: {
-                      d: 'M -3 -3 3 3 M -3 3 3 -3',
-                      fill: 'none',
-                      stroke: '#fff',
-                      'stroke-width': 2,
-                      'pointer-events': 'none',
-                    },
-                  },
-                ],
-              }),
-            ],
-          }),
-        );
-      });
-
-      // Cell and link hover effect
-      paper.current.on('cell:mouseenter', cellViewOrLinkView => {
-        cellViewOrLinkView.highlight();
-      });
-
-      paper.current.on('cell:mouseleave', cellViewOrLinkView => {
-        if (cellViewOrLinkView.model.isLink()) {
-          cellViewOrLinkView.unhighlight();
-        } else {
-          // Keep cell menu when necessary
-          if (cellViewOrLinkView.model.attributes.menuDisplay === 'none') {
-            cellViewOrLinkView.unhighlight();
-          }
-        }
-      });
-
-      paper.current.on('blank:pointerdown', (event, x, y) => {
-        // Using the scales from paper itself instead of our
-        // paperScale state since it will cause re-render
-        // which destroy all graphs on current paper...
-        dragStartPosition.current = {
-          x: x * paper.current.scale().sx,
-          y: y * paper.current.scale().sy,
-        };
-
-        paper.current.$el.addClass('is-being-grabbed');
-      });
-
-      paper.current.on('blank:pointerclick', () => {
-        resetAll();
-        resetLink();
-        currentCell.current = null;
-        setSelectedCell(null);
-      });
-
-      paper.current.on('cell:pointerup blank:pointerup', event => {
-        if (dragStartPosition.current) {
-          delete dragStartPosition.current.x;
-          delete dragStartPosition.current.y;
-        }
-
-        if (
-          get(event, 'options.model.attributes.type', null) === 'html.Element'
-        ) {
-          const originCell = currentPipelineRef.current.tags.cells.filter(
-            cell => cell.id === event.options.model.attributes.id,
-          )[0];
-
-          if (
-            event.options.model.attributes.position.x !==
-              originCell.position.x ||
-            event.options.model.attributes.position.y !== originCell.position.y
-          ) {
-            updatePipeline({
-              name: currentPipeline.name,
-              tags: graph.current.toJSON(),
-            });
-          }
-        }
-        updateCurrentCell(currentCell);
-        setIsCentered(false);
-        paper.current.$el.removeClass('is-being-grabbed');
-      });
-
-      graph.current.on('change:target', link => {
-        if (link.get('target').id) {
-          updatePipeline({
-            name: currentPipeline.name,
-            tags: graph.current.toJSON(),
-          });
-        }
-      });
-
-      graph.current.on('add', cell => {
-        if (cell.attributes.isTemporary) return;
-        if (cell.attributes.isFetch) return;
-        if (cell.attributes.type === 'standard.Link') {
-          if (!cell.get('attributes.target.id', null)) return;
-        }
-
-        updatePipeline({
-          name: currentPipeline.name,
-          tags: {
-            cells: graph.current
-              .toJSON()
-              .cells.filter(cell => !cell.isTemporary),
-          },
-        });
-      });
-    };
+  useEffect(() => {
+    const paper = paperRef.current;
+    const graph = graphRef.current;
 
     const resetAll = () => {
-      paper.current.findViewsInArea(paper.current.getArea()).forEach(cell => {
+      paper.findViewsInArea(paper.getArea()).forEach(cell => {
         cell.model.attributes.menuDisplay = 'none';
         cell.unhighlight();
       });
 
-      const views = paper.current._views;
+      const views = paper._views;
       Object.keys(views).forEach(key => {
         if (!views[key].$box) return;
         views[key].updateBox();
@@ -315,17 +151,219 @@ const Graph = props => {
 
     const resetLink = () => {
       // Remove link tools that were added in the previous event
-      paper.current.removeTools();
+      paper.removeTools();
 
-      const links = graph.current.getLinks();
+      const links = graph.getLinks();
       if (links.length > 0) {
         const currentLink = links.find(link => !link.get('target').id);
         if (currentLink) currentLink.remove();
       }
     };
 
-    renderGraph();
-  });
+    paper.on('cell:pointerclick', cellView => {
+      currentCell.current = {
+        cellView,
+        bBox: {
+          ...cellView.getBBox(),
+          ...cellView.getBBox().center(),
+        },
+      };
+
+      const { title, classType } = cellView.model.attributes;
+      setSelectedCell({
+        name: title,
+        classType,
+      });
+
+      if (!cellView.$box) return;
+
+      resetAll();
+      cellView.highlight();
+      cellView.model.attributes.menuDisplay = 'block';
+      cellView.updateBox();
+      const links = graph.getLinks();
+
+      if (links.length > 0) {
+        const currentLink = links.find(link => !link.get('target').id);
+        if (currentLink) {
+          resetLink();
+          createConnection({
+            currentLink,
+            cellView,
+            graph: graphRef,
+            paper: paperRef,
+            showMessage,
+            setInitToolboxList,
+            createTopic,
+            stopTopic,
+            deleteTopic,
+            updatePipeline,
+            updateConnector,
+            currentTopic,
+            currentPipeline,
+          });
+        }
+      }
+    });
+
+    paper.on('link:pointerclick', linkView => {
+      resetLink();
+
+      linkView.addTools(
+        new joint.dia.ToolsView({
+          tools: [
+            // Allow users to add vertices on link view
+            new joint.linkTools.Vertices(),
+            new joint.linkTools.Segments(),
+            // Add a custom remove tool
+            new joint.linkTools.Remove({
+              offset: 15,
+              distance: '50%',
+              markup: [
+                {
+                  tagName: 'circle',
+                  selector: 'button',
+                  attributes: {
+                    r: 8,
+                    fill: 'grey',
+                    cursor: 'pointer',
+                  },
+                },
+                {
+                  tagName: 'path',
+                  selector: 'icon',
+                  attributes: {
+                    d: 'M -3 -3 3 3 M -3 3 3 -3',
+                    fill: 'none',
+                    stroke: '#fff',
+                    'stroke-width': 2,
+                    'pointer-events': 'none',
+                  },
+                },
+              ],
+            }),
+          ],
+        }),
+      );
+    });
+
+    // Cell and link hover effect
+    paper.on('cell:mouseenter', cellViewOrLinkView => {
+      cellViewOrLinkView.highlight();
+    });
+
+    paper.on('cell:mouseleave', cellViewOrLinkView => {
+      if (cellViewOrLinkView.model.isLink()) {
+        cellViewOrLinkView.unhighlight();
+      } else {
+        // Keep cell menu when necessary
+        if (cellViewOrLinkView.model.attributes.menuDisplay === 'none') {
+          cellViewOrLinkView.unhighlight();
+        }
+      }
+    });
+
+    paper.on('blank:pointerdown', (event, x, y) => {
+      // Using the scales from paper itself instead of our
+      // paperScale state since it will cause re-render
+      // which destroy all graphs on current paper...
+      dragStartPosition.current = {
+        x: x * paper.scale().sx,
+        y: y * paper.scale().sy,
+      };
+
+      paper.$el.addClass('is-being-grabbed');
+    });
+
+    paper.on('blank:pointerclick', () => {
+      resetAll();
+      resetLink();
+      currentCell.current = null;
+      setSelectedCell(null);
+    });
+
+    paper.on('cell:pointerup blank:pointerup', event => {
+      if (dragStartPosition.current) {
+        delete dragStartPosition.current.x;
+        delete dragStartPosition.current.y;
+      }
+
+      if (
+        get(event, 'options.model.attributes.type', null) === 'html.Element'
+      ) {
+        const originCell = currentPipeline.tags.cells.filter(
+          cell => cell.id === event.options.model.attributes.id,
+        )[0];
+
+        if (
+          event.options.model.attributes.position.x !== originCell.position.x ||
+          event.options.model.attributes.position.y !== originCell.position.y
+        ) {
+          if (!isEqual(currentPipeline.tags, graph.toJSON())) {
+            updatePipeline({
+              name: currentPipeline.name,
+              tags: graph.toJSON(),
+            });
+          }
+        }
+      }
+      updateCurrentCell(currentCell);
+      setIsCentered(false);
+      paper.$el.removeClass('is-being-grabbed');
+    });
+
+    graph.on('change:target', link => {
+      if (link.get('target').id) {
+        if (!isEqual(currentPipeline.tags, graph.toJSON())) {
+          updatePipeline({
+            name: currentPipeline.name,
+            tags: graph.toJSON(),
+          });
+        }
+      }
+    });
+
+    graph.on('add', graphCell => {
+      if (graphCell.attributes.isTemporary) return;
+      if (graphCell.attributes.isFetch) return;
+      if (graphCell.attributes.type === 'standard.Link') {
+        if (!graphCell.get('attributes.target.id', null)) return;
+      }
+      const cells = get(currentPipeline, 'tags.cells', []);
+      if (!cells.find(cell => cell.id === graphCell.id)) {
+        if (isAdding.current === graphCell) return;
+        updatePipeline({
+          name: currentPipeline.name,
+          tags: {
+            cells: graph.toJSON().cells.filter(cell => !cell.isTemporary),
+          },
+        });
+        isAdding.current = graphCell;
+      }
+    });
+
+    return () => {
+      paper.off('cell:pointerclick');
+      paper.off('link:pointerclick');
+      paper.off('cell:mouseenter');
+      paper.off('cell:mouseleave');
+      paper.off('blank:pointerdown');
+      paper.off('blank:pointerclick');
+      paper.off('cell:pointerup');
+      paper.off('blank:pointerup');
+    };
+  }, [
+    createTopic,
+    currentPipeline,
+    currentTopic,
+    deleteTopic,
+    setIsCentered,
+    setSelectedCell,
+    showMessage,
+    stopTopic,
+    updateConnector,
+    updatePipeline,
+  ]);
 
   useEffect(() => {
     if (isMetricsOn === null) {
@@ -335,15 +373,13 @@ const Graph = props => {
   }, [isMetricsOn, setIsMetricsOn]);
 
   useEffect(() => {
-    if (!currentPipeline) return;
-    const cells = currentPipeline.tags.cells ? currentPipeline.tags.cells : [];
-
-    cells
+    if (!currentPipelineRef.current) return;
+    get(currentPipelineRef, 'current.tags.cells', [])
       .filter(cell => cell.type === 'html.Element')
       .forEach(cell => {
         if (
-          graph.current !== null &&
-          paper.current !== null &&
+          graphRef.current !== null &&
+          paperRef.current !== null &&
           currentWorker !== null
         ) {
           switch (cell.classType) {
@@ -359,12 +395,12 @@ const Graph = props => {
                   object.name === cell.title && object.kind === cell.classType,
               );
 
-              graph.current.addCell(
+              graphRef.current.addCell(
                 ConnectorGraph({
                   ...cell.params,
                   id: cell.id,
-                  paper,
-                  graph,
+                  paper: paperRef,
+                  graph: graphRef,
                   openSettingDialog,
                   setData,
                   classInfo,
@@ -386,12 +422,12 @@ const Graph = props => {
               break;
 
             case KIND.topic:
-              graph.current.addCell(
+              graphRef.current.addCell(
                 TopicGraph({
                   ...cell.params,
                   id: cell.id,
-                  graph,
-                  paper,
+                  graph: graphRef,
+                  paper: paperRef,
                   isFetch: true,
                   cellInfo: {
                     ...cell.params.cellInfo,
@@ -410,9 +446,19 @@ const Graph = props => {
           }
         }
       });
-    if (graph.current.getElements().length > 0) {
-      cells
+    if (graphRef.current.getElements().length > 0) {
+      get(currentPipelineRef, 'current.tags.cells', [])
         .filter(cell => cell.type === 'standard.Link')
+        .filter(
+          cell =>
+            !graphRef.current
+              .getLinks()
+              .find(
+                link =>
+                  link.attributes.source.id === cell.source.id &&
+                  link.attributes.target.id === cell.target.id,
+              ),
+        )
         .forEach(cell => {
           const link = new joint.shapes.standard.Link();
           link.source({ id: cell.source.id });
@@ -420,13 +466,82 @@ const Graph = props => {
           link.attr({
             line: { stroke: '#9e9e9e' },
           });
-          link.addTo(graph.current);
+          link.addTo(graphRef.current);
         });
     }
+  });
 
-    setInitToolboxList(prevState => prevState + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPipeline.tags.cells, currentWorker]);
+  useEffect(() => {
+    if (currentConnector) {
+      currentConnector
+        .filter(connector => connector.topicKeys.length > 0)
+        .forEach(linkedConnector => {
+          const connector = currentPipeline.tags.cells
+            .filter(cell => cell.type === 'html.Element')
+            .find(cell => cell.params.name === linkedConnector.name);
+
+          const topic = currentPipeline.tags.cells
+            .filter(cell => cell.type === 'html.Element')
+            .filter(cell => cell.classType === KIND.topic)
+            .find(
+              cell => cell.params.name === linkedConnector.topicKeys[0].name,
+            );
+
+          const isLinked = currentPipeline.tags.cells
+            .filter(cell => cell.type === 'standard.Link')
+            .find(
+              cell =>
+                cell.source.id === connector.id ||
+                cell.target.id === connector.id,
+            );
+          if (!isLinked && topic) {
+            const link = new joint.shapes.standard.Link();
+            switch (connector.classType) {
+              case KIND.source:
+                link.source({ id: connector.id });
+                link.target({ id: topic.id });
+                link.attr({
+                  line: { stroke: '#9e9e9e' },
+                });
+                link.addTo(graphRef.current);
+
+                if (!isEqual(currentPipeline.tags, graphRef.current.toJSON())) {
+                  updatePipeline({
+                    name: currentPipeline.name,
+                    tags: graphRef.current.toJSON(),
+                  });
+                }
+                break;
+
+              case KIND.sink:
+                link.source({ id: topic.id });
+                link.target({ id: connector.id });
+                link.attr({
+                  line: { stroke: '#9e9e9e' },
+                });
+                link.addTo(graphRef.current);
+
+                if (!isEqual(currentPipeline.tags, graphRef.current.toJSON())) {
+                  updatePipeline({
+                    name: currentPipeline.name,
+                    tags: graphRef.current.toJSON(),
+                  });
+                }
+                break;
+
+              default:
+                break;
+            }
+          }
+        });
+    }
+  }, [
+    currentConnector,
+    currentPipeline.name,
+    currentPipeline.tags,
+    updateConnector,
+    updatePipeline,
+  ]);
 
   const prevPaperScale = usePrevious(paperScale);
   useEffect(() => {
@@ -434,7 +549,7 @@ const Graph = props => {
     if (prevPaperScale === paperScale) return;
     if (isFitToContent) return;
 
-    paper.current.scale(paperScale);
+    paperRef.current.scale(paperScale);
 
     updateCurrentCell(currentCell);
     setIsCentered(false);
@@ -443,14 +558,14 @@ const Graph = props => {
   useEffect(() => {
     if (!isFitToContent) return;
 
-    paper.current.scaleContentToFit({
+    paperRef.current.scaleContentToFit({
       padding: 30,
       maxScale: 1,
     });
 
     // This update is needed so the scale which displays on zoom in/out
     // dropdown will be reflected
-    setPaperScale(paper.current.scale().sx);
+    setPaperScale(paperRef.current.scale().sx);
     updateCurrentCell(currentCell);
     setIsCentered(false);
   }, [isFitToContent, setIsCentered, setPaperScale]);
@@ -465,7 +580,7 @@ const Graph = props => {
         dragStartPosition.current.x &&
         dragStartPosition.current.y
       ) {
-        paper.current.translate(
+        paperRef.current.translate(
           event.offsetX - dragStartPosition.current.x,
           event.offsetY - dragStartPosition.current.y,
         );
@@ -487,7 +602,7 @@ const Graph = props => {
         handleCenter={() => {
           // We don't want to re-center again
           if (!isCentered) {
-            setCenter({ paper, currentCell, paperScale });
+            setCenter({ paper: paperRef, currentCell, paperScale });
 
             setIsFitToContent(false);
             setIsCentered(true);
@@ -502,8 +617,8 @@ const Graph = props => {
           expanded={toolboxExpanded}
           handleClick={handleToolboxClick}
           handleClose={handleToolboxClose}
-          paper={paper}
-          graph={graph}
+          paper={paperRef}
+          graph={graphRef}
           toolboxKey={toolboxKey}
           setToolboxExpanded={setToolboxExpanded}
           initToolboxList={initToolboxList}
@@ -527,8 +642,6 @@ Graph.propTypes = {
   handleToolboxClose: PropTypes.func.isRequired,
   toolboxKey: PropTypes.number.isRequired,
   setToolboxExpanded: PropTypes.func.isRequired,
-  useConnectorActions: PropTypes.func.isRequired,
-  useTopicActions: PropTypes.func.isRequired,
 };
 
 export default Graph;

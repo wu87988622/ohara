@@ -51,6 +51,7 @@ const TopicProvider = ({ children }) => {
 
 const useTopicState = () => {
   const context = React.useContext(TopicStateContext);
+
   if (context === undefined) {
     throw new Error('useTopicState must be used within a TopicProvider');
   }
