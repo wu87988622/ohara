@@ -208,7 +208,7 @@ package object route {
     */
   def apiUrl: String = {
     val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
-    s"https://ohara.readthedocs.io/en/$docVersion/rest_interface.html"
+    s"https://ohara.readthedocs.io/en/$docVersion/rest/index.html"
   }
 
   private[this] def errorWithOfficialApis(inputPath: String): ErrorApi.Error = ErrorApi.Error(
