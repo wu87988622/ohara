@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import AppBar from './AppBar';
+import AppLayout from './AppLayout';
 
-export default AppBar;
+export default AppLayout;

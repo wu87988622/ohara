@@ -18,16 +18,11 @@ import styled, { css } from 'styled-components';
 
 export const StyledDevTool = styled.div(
   ({ theme }) => css`
-    position: absolute;
-    /* AppBar width */
-    left: 70px;
-    width: calc(100% - 70px);
-    min-width: 956px;
-    height: 50%;
+    width: 100%;
+    height: 100%;
 
     /* We need to leave some space for StatusBar */
     bottom: 26px;
-    z-index: ${theme.zIndex.modal};
     background-color: ${theme.palette.common.white};
 
     &.is-close {

@@ -22,8 +22,8 @@ import { Button } from 'components/common/Form';
 
 export const StyledNavigator = styled.nav(
   ({ theme }) => css`
-    min-width: 220px;
-    width: 220px;
+    width: 100%;
+    height: 100%;
     background-color: ${theme.palette.primary[500]};
   `,
 );

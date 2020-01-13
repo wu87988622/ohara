@@ -15,35 +15,16 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import GlobalStyle from 'theme/globalStyle';
-import AppBar from 'components/Layout/AppBar';
+import AppLayout from 'components/Layout';
 import { NotFoundPage, NotImplementedPage } from 'components/ErrorPages';
-import { DevToolDialog, DataWindow } from 'components/DevTool';
-import { Pipeline, Navigator } from 'components/Pipeline';
+import { DataWindow } from 'components/DevTool';
 
 // We need joint's CSS
 import '../node_modules/jointjs/dist/joint.min.css';
-
-const Container = styled.div`
-  display: flex;
-
-  /* 
-    Make sure AppBar can stretch to the bottom of the browser view even if the content
-    height is not enough to do so
-  */
-  min-height: 100vh;
-
-  /* Resolution under 1280px is not supported, display a scrollbar */
-  min-width: ${props => props.theme.breakpoints.width('lg')}px;
-`;
-
-const Main = styled.main`
-  width: 100%;
-`;
 
 const App = () => {
   return (
@@ -62,36 +43,12 @@ const App = () => {
             path="/:workspaceName?/:pipelineName?/view"
             component={DataWindow}
           />
-
-          <Container className="container">
-            <Route
-              exact
-              path="/:workspaceName?/:pipelineName?"
-              component={AppBar}
-            />
-
-            <Route
-              exact
-              path="/:workspaceName?/:pipelineName?"
-              component={Navigator}
-            />
-            <Route
-              exact
-              path="/:workspaceName?/:pipelineName?"
-              component={DevToolDialog}
-            />
-
-            <Main>
-              <Switch>
-                <Route
-                  exact
-                  path="/:workspaceName?/:pipelineName?"
-                  component={Pipeline}
-                />
-                <Route path="*" component={NotFoundPage} />
-              </Switch>
-            </Main>
-          </Container>
+          <Route
+            exact
+            path="/:workspaceName?/:pipelineName?"
+            component={AppLayout}
+          />
+          <Route path="*" component={NotFoundPage} />
         </Switch>
       </Router>
     </>

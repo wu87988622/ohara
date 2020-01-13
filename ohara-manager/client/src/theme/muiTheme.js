@@ -42,6 +42,7 @@ const MuiTheme = createMuiTheme({
     },
   },
   palette: {
+    transparent: 'rgba(0, 0, 0, 0)',
     primary: {
       50: '#E2F5FD',
       100: '#B6E5FA',

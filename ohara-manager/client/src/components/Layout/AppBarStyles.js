@@ -19,15 +19,14 @@ import styled, { css } from 'styled-components';
 export const StyledAppBar = styled.div(
   ({ theme }) => css`
     background: ${theme.palette.primary[900]};
+    height: 100%;
+    width: 100%;
 
     header {
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 70px;
-      min-width: 70px;
       height: 100%;
-
       .brand {
         margin-top: ${theme.spacing(2)}px;
         margin-bottom: ${theme.spacing(3)}px;
