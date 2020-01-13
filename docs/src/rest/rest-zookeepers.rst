@@ -47,8 +47,7 @@ The following information are updated by Ohara.
 
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of zookeeper
 #. state (**option(string)**) — only started/failed zookeeper has state (RUNNING or DEAD)
-#. error (**option(string)**) — the error message from a failed zookeeper.
-   If zookeeper is fine or un-started, you won’t get this field.
+#. error (**option(string)**) — the error message from a failed zookeeper. If zookeeper is fine or un-started, you won’t get this field.
 #. lastModified (**long**) — last modified this jar time
 
 
@@ -62,74 +61,42 @@ create a zookeeper properties
 Example Request
   .. code-block:: json
 
-     {
-       "name": "zk00",
-       "group": "abc",
-       "imageName": "oharastream/zookeeper:$|version|",
-       "clientPort": 12345,
-       "peerPort": 12346,
-       "electionPort": 12347,
-       "nodeNames": [
-         "node00"
-       ],
-       "tags": {}
-     }
+    {
+      "name": "zk",
+      "nodeNames": [
+        "node00"
+      ]
+    }
 
 Example Response
   .. code-block:: json
 
     {
+      "syncLimit": 5,
       "name": "zk00",
-      "group": "abc",
-      "imageName": "oharastream/zookeeper:$|version|",
-      "jmxPort": 11111,
-      "clientPort": 12345,
-      "peerPort": 12346,
-      "electionPort": 12347,
-      "nodeNames": [
-      "node00"
-      ],
+      "xms": 1024,
+      "routes": {},
+      "lastModified": 1578642569693,
+      "dataDir": "/home/ohara/default/data",
       "tags": {},
+      "electionPort": 44371,
+      "xmx": 1024,
+      "imageName": "oharastream/zookeeper:$|version|",
       "aliveNodes": [],
-      "lastModified": 1563158986411
+      "initLimit": 10,
+      "jmxPort": 33915,
+      "clientPort": 42006,
+      "peerPort": 46559,
+      "tickTime": 2000,
+      "group": "default",
+      "nodeNames": [
+        "node00"
+      ]
     }
-
-  As mentioned before, ohara provides default to most settings. You can
-  just input nodeNames to run a zookeeper cluster.
-
-Example Request
-  .. code-block:: json
-
-     {
-       "nodeNames": [
-         "node00"
-       ]
-     }
 
   .. note::
-    All ports have default value so you can ignore them when creating
-    zookeeper cluster. However, the port conflict detect does not allow
+    All ports have default value so you can ignore them when creating zookeeper cluster. However, the port conflict detect does not allow
     you to reuse port on different purpose (a dangerous behavior, right?).
-
-Example Response
-  .. code-block:: json
-
-    {
-      "name": "f6a867ae32",
-      "group": "default",
-      "imageName": "oharastream/zookeeper:$|version|",
-      "jmxPort": 11111,
-      "clientPort": 12345,
-      "peerPort": 12346,
-      "electionPort": 12347,
-      "nodeNames": [
-      "node00"
-      ],
-      "tags": {},
-      "aliveNodes": [],
-      "lastModified": 1563158986411
-    }
-
 
 list all zookeeper clusters
 ---------------------------
@@ -137,6 +104,7 @@ list all zookeeper clusters
 *GET /v0/zookeepers*
 
 the accepted query keys are listed below.
+
 #. group
 #. name
 #. lastModified
@@ -151,22 +119,26 @@ Example Response
 
     [
       {
+        "syncLimit": 5,
         "name": "zk00",
-        "group": "default",
+        "xms": 1024,
+        "routes": {},
+        "lastModified": 1578642569693,
+        "dataDir": "/home/ohara/default/data",
+        "tags": {},
+        "electionPort": 44371,
+        "xmx": 1024,
         "imageName": "oharastream/zookeeper:$|version|",
-        "jmxPort": 11111,
-        "clientPort": 12345,
-        "peerPort": 12346,
-        "electionPort": 12347,
+        "aliveNodes": [],
+        "initLimit": 10,
+        "jmxPort": 33915,
+        "clientPort": 42006,
+        "peerPort": 46559,
+        "tickTime": 2000,
+        "group": "default",
         "nodeNames": [
           "node00"
-        ],
-        "tags": {},
-        "state": "RUNNING",
-        "aliveNodes": [
-          "node00"
-        ],
-        "lastModified": 1563158986411
+        ]
       }
     ]
 
@@ -181,35 +153,34 @@ update zookeeper cluster properties
 Example Request
   .. code-block:: json
 
-     {
-       "imageName": "oharastream/zookeeper:$|version|",
-       "jmxPort": 11111,
-       "clientPort": 12345,
-       "peerPort": 12346,
-       "electionPort": 12347,
-       "nodeNames": [
-         "node00"
-       ],
-       "tags": {}
-     }
+    {
+      "jmxPort": 12345
+    }
 
 Example Response
   .. code-block:: json
 
     {
-      "name": "zk01",
-      "group": "default",
+      "syncLimit": 5,
+      "name": "zk00",
+      "xms": 1024,
+      "routes": {},
+      "lastModified": 1578642751122,
+      "dataDir": "/home/ohara/default/data",
+      "tags": {},
+      "electionPort": 44371,
+      "xmx": 1024,
       "imageName": "oharastream/zookeeper:$|version|",
-      "jmxPort": 11111,
-      "clientPort": 12345,
-      "peerPort": 12346,
-      "electionPort": 12347,
+      "aliveNodes": [],
+      "initLimit": 10,
+      "jmxPort": 12345,
+      "clientPort": 42006,
+      "peerPort": 46559,
+      "tickTime": 2000,
+      "group": "default",
       "nodeNames": [
         "node00"
-      ],
-      "tags": {},
-      "aliveNodes": [],
-      "lastModified": 1563158986411
+      ]
     }
 
 
@@ -245,22 +216,26 @@ Example Response
   .. code-block:: json
 
     {
+      "syncLimit": 5,
       "name": "zk00",
-      "group": "default",
+      "xms": 1024,
+      "routes": {},
+      "lastModified": 1578642569693,
+      "dataDir": "/home/ohara/default/data",
+      "tags": {},
+      "electionPort": 44371,
+      "xmx": 1024,
       "imageName": "oharastream/zookeeper:$|version|",
-      "jmxPort": 11111,
-      "clientPort": 12345,
-      "peerPort": 12346,
-      "electionPort": 12347,
+      "aliveNodes": [],
+      "initLimit": 10,
+      "jmxPort": 33915,
+      "clientPort": 42006,
+      "peerPort": 46559,
+      "tickTime": 2000,
+      "group": "default",
       "nodeNames": [
         "node00"
-      ],
-      "tags": {}
-      "state": "RUNNING",
-      "aliveNodes": [
-        "node00"
-      ],
-      "lastModified": 1563158986411
+      ]
     }
 
 
