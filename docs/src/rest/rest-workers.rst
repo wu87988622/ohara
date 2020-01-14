@@ -94,106 +94,46 @@ Example Request
   .. code-block:: json
 
     {
-      "name": "wk00",
-      "group": "default",
-      "clientPort": 12345,
-      "jmxPort": 12346,
-      "freePorts": [],
-      "brokerClusterKey": "preCreatedBkCluster",
-      "group.id": "abcdefg",
-      "config.storage.topic": "configTopic",
-      "config.storage.replication.factor": 1,
-      "offset.storage.topic": "offsetTopic",
-      "offset.storage.replication.factor": 1,
-      "offset.storage.partitions": 1,
-      "status.storage.topic": "statusTopic",
-      "status.storage.replication.factor": 1,
-      "status.storage.partitions": 1,
-      "nodeNames": [
-        "node00"
-      ]
-    }
-
-Example Response
-  .. code-block:: json
-
-    {
-      "lastModified": 1567177024356,
-      "aliveNodes": [],
-      "status.storage.topic": "statusTopic",
-      "name": "wk00",
-      "group": "default",
-      "offset.storage.partitions": 1,
-      "brokerClusterKey": {
-        "group": "default",
-        "name": "preCreatedBkCluster"
-      },
-      "tags": {},
-      "jarInfos": [],
-      "offset.storage.topic": "offsetTopic",
-      "group.id": "abcdefg",
-      "status.storage.replication.factor": 1,
-      "offset.storage.replication.factor": 1,
-      "config.storage.replication.factor": 1,
-      "status.storage.partitions": 1,
-      "config.storage.topic": "configTopic",
-      "jmxPort": 12346,
-      "clientPort": 12345,
-      "freePorts": [],
-      "pluginKeys": [],
-      "sharedJarKeys": [],
-      "nodeNames": [
-        "node00"
-      ]
-    }
-
-  As mentioned before, ohara provides default to most settings. You can
-  just input nodeNames to run a worker cluster.
-
-Example Request
-  .. code-block:: json
-
-    {
-      "nodeNames": [
-        "node10"
-      ]
-    }
-
-  .. note::
-    All ports have default value so you can ignore them when creating worker cluster.
-    However, the port conflict detect does not allow you to reuse port on different purpose (a dangerous behavior, right?).
-
-Example Response
-  .. code-block:: json
-
-    {
-      "lastModified": 1567176877946,
-      "aliveNodes": [],
-      "status.storage.topic": "a6c5018531",
       "name": "wk",
-      "group": "default",
-      "offset.storage.partitions": 1,
+      "nodeNames": ["node00"],
+      "brokerClusterKey": "bk"
+    }
+
+Example Response
+  .. code-block:: json
+
+    {
       "brokerClusterKey": {
         "group": "default",
-        "name": "preCreatedBkCluster"
+        "name": "bk00"
       },
-      "tags": {},
-      "jarInfos": [],
-      "offset.storage.topic": "6ec3cd5f1b",
-      "group.id": "979a8c0c18",
-      "status.storage.replication.factor": 1,
-      "offset.storage.replication.factor": 1,
-      "config.storage.replication.factor": 1,
-      "status.storage.partitions": 1,
-      "config.storage.topic": "4fdfdabb51",
-      "jmxPort": 37116,
-      "clientPort": 37634,
-      "freePorts": [],
-      "pluginKeys": [],
+      "name": "wk00",
+      "offset.storage.partitions": 1,
+      "xms": 2048,
+      "routes": {},
+      "config.storage.topic": "b8dadc3de21048fa927335b8f",
       "sharedJarKeys": [],
+      "lastModified": 1578982566359,
+      "tags": {},
+      "xmx": 2048,
+      "imageName": "oharastream/connect-worker:$|version|",
+      "offset.storage.topic": "346b839ea3e74387ab1eea409",
+      "status.storage.replication.factor": 1,
+      "group.id": "af4b4d49234a4848bb90fb452",
+      "offset.storage.replication.factor": 1,
+      "aliveNodes": [],
+      "pluginKeys": [],
+      "status.storage.partitions": 1,
+      "freePorts": [],
+      "jmxPort": 33333,
+      "config.storage.partitions": 1,
+      "clientPort": 45127,
+      "config.storage.replication.factor": 1,
+      "group": "default",
       "nodeNames": [
-        "node10"
-      ]
+        "node00"
+      ],
+      "status.storage.topic": "1cdca943f0b945bc892ebe9a7"
     }
 
 .. _rest-workers-list:
@@ -203,49 +143,45 @@ list all workers clusters
 
 *GET /v0/workers*
 
-the accepted query keys are listed below.
-#. group
-#. name
-#. lastModified
-#. tags
-#. tag - this field is similar to tags but it addresses the "contain" behavior.
-#. state
-#. aliveNodes
-#. key
-
 Example Response
   .. code-block:: json
 
     [
       {
-        "lastModified": 1567177024356,
-        "aliveNodes": [],
-        "status.storage.topic": "statusTopic",
-        "name": "wk00",
-        "offset.storage.partitions": 1,
         "brokerClusterKey": {
           "group": "default",
-          "name": "preCreatedBkCluster"
+          "name": "bk00"
         },
-        "tags": {},
-        "jarInfos": [],
-        "offset.storage.topic": "offsetTopic",
-        "group.id": "abcdefg",
-        "status.storage.replication.factor": 1,
-        "offset.storage.replication.factor": 1,
-        "config.storage.replication.factor": 1,
-        "status.storage.partitions": 1,
-        "config.storage.topic": "configTopic",
-        "jmxPort": 12346,
-        "clientPort": 12345,
-        "freePorts": [],
-        "pluginKeys": [],
+        "name": "wk00",
+        "offset.storage.partitions": 1,
+        "xms": 2048,
+        "routes": {},
+        "config.storage.topic": "b8dadc3de21048fa927335b8f",
         "sharedJarKeys": [],
+        "lastModified": 1578982566359,
+        "tags": {},
+        "xmx": 2048,
+        "imageName": "oharastream/connect-worker:$|version|",
+        "offset.storage.topic": "346b839ea3e74387ab1eea409",
+        "status.storage.replication.factor": 1,
+        "group.id": "af4b4d49234a4848bb90fb452",
+        "offset.storage.replication.factor": 1,
+        "aliveNodes": [],
+        "pluginKeys": [],
+        "status.storage.partitions": 1,
+        "freePorts": [],
+        "jmxPort": 33333,
+        "config.storage.partitions": 1,
+        "clientPort": 45127,
+        "config.storage.replication.factor": 1,
+        "group": "default",
         "nodeNames": [
           "node00"
-        ]
+        ],
+        "status.storage.topic": "1cdca943f0b945bc892ebe9a7"
       }
     ]
+
 
 update broker cluster properties
 --------------------------------
@@ -259,58 +195,44 @@ Example Request
   .. code-block:: json
 
     {
-      "clientPort": 12345,
-      "jmxPort": 12346,
-      "freePorts": [],
-      "brokerClusterKey": {
-        "group": "default",
-        "name": "preCreatedBkCluster"
-      },
-      "group.id": "abcdefg",
-      "config.storage.topic": "configTopic",
-      "config.storage.replication.factor": 1,
-      "offset.storage.topic": "offsetTopic",
-      "offset.storage.replication.factor": 1,
-      "offset.storage.partitions": 1,
-      "status.storage.topic": "statusTopic",
-      "status.storage.replication.factor": 1,
-      "status.storage.partitions": 1,
-      "nodeNames": [
-        "node00"
-      ]
+      "jmxPort": 7777
     }
 
 Example Response
   .. code-block:: json
 
     {
-      "lastModified": 1567177024356,
-      "aliveNodes": [],
-      "status.storage.topic": "statusTopic",
-      "name": "wk00",
-      "group": "default",
-      "offset.storage.partitions": 1,
       "brokerClusterKey": {
         "group": "default",
-        "name": "preCreatedBkCluster"
+        "name": "bk00"
       },
-      "tags": {},
-      "jarInfos": [],
-      "offset.storage.topic": "offsetTopic",
-      "group.id": "abcdefg",
-      "status.storage.replication.factor": 1,
-      "offset.storage.replication.factor": 1,
-      "config.storage.replication.factor": 1,
-      "status.storage.partitions": 1,
-      "config.storage.topic": "configTopic",
-      "jmxPort": 12346,
-      "clientPort": 12345,
-      "freePorts": [],
-      "pluginKeys": [],
+      "name": "wk00",
+      "offset.storage.partitions": 1,
+      "xms": 2048,
+      "routes": {},
+      "config.storage.topic": "b8dadc3de21048fa927335b8f",
       "sharedJarKeys": [],
+      "lastModified": 1578982765738,
+      "tags": {},
+      "xmx": 2048,
+      "imageName": "oharastream/connect-worker:$|version|",
+      "offset.storage.topic": "346b839ea3e74387ab1eea409",
+      "status.storage.replication.factor": 1,
+      "group.id": "af4b4d49234a4848bb90fb452",
+      "offset.storage.replication.factor": 1,
+      "aliveNodes": [],
+      "pluginKeys": [],
+      "status.storage.partitions": 1,
+      "freePorts": [],
+      "jmxPort": 7777,
+      "config.storage.partitions": 1,
+      "clientPort": 45127,
+      "config.storage.replication.factor": 1,
+      "group": "default",
       "nodeNames": [
         "node00"
-      ]
+      ],
+      "status.storage.topic": "1cdca943f0b945bc892ebe9a7"
     }
 
 delete a worker properties
@@ -343,34 +265,39 @@ Example Response
   .. code-block:: json
 
     {
-      "lastModified": 1567178933996,
-      "aliveNodes": [],
-      "status.storage.topic": "d28ca7c875",
-      "name": "wk",
-      "group": "default",
-      "offset.storage.partitions": 1,
       "brokerClusterKey": {
         "group": "default",
-        "name": "preCreatedBkCluster"
+        "name": "bk00"
       },
-      "tags": {},
-      "offset.storage.topic": "f1f6ae812c",
-      "imageName": "oharastream/connect-worker:$|version|",
-      "group.id": "16f3408f84",
-      "status.storage.replication.factor": 1,
-      "offset.storage.replication.factor": 1,
-      "config.storage.replication.factor": 1,
-      "status.storage.partitions": 1,
-      "config.storage.topic": "4279f8a236",
-      "jmxPort": 33983,
-      "freePorts": [],
-      "clientPort": 34601,
-      "pluginKeys": [],
+      "name": "wk00",
+      "offset.storage.partitions": 1,
+      "xms": 2048,
+      "routes": {},
+      "config.storage.topic": "b8dadc3de21048fa927335b8f",
       "sharedJarKeys": [],
+      "lastModified": 1578982765738,
+      "tags": {},
+      "xmx": 2048,
+      "imageName": "oharastream/connect-worker:$|version|",
+      "offset.storage.topic": "346b839ea3e74387ab1eea409",
+      "status.storage.replication.factor": 1,
+      "group.id": "af4b4d49234a4848bb90fb452",
+      "offset.storage.replication.factor": 1,
+      "aliveNodes": [],
+      "pluginKeys": [],
+      "status.storage.partitions": 1,
+      "freePorts": [],
+      "jmxPort": 7777,
+      "config.storage.partitions": 1,
+      "clientPort": 45127,
+      "config.storage.replication.factor": 1,
+      "group": "default",
       "nodeNames": [
-        "node10"
-      ]
+        "node00"
+      ],
+      "status.storage.topic": "1cdca943f0b945bc892ebe9a7"
     }
+
 
 start a worker cluster
 ----------------------
