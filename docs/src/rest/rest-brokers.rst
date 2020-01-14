@@ -65,97 +65,42 @@ create a broker cluster
 
 *POST /v0/brokers*
 
-#. name (**string**) — cluster name ; default is random string
-#. group (**string**) — cluster group ; default value is "default"
-#. imageName (**string**) — docker image ; default is oharastream/broker:|version|
-#. clientPort (**int**) — broker client port ; default is random port
-#. jmxPort (**int**) — port used by jmx service ; default is random port
-#. zookeeperClusterKey (**option(object)**) — key of zookeeper cluster used to store metadata of broker cluster.
-   default will find a zookeeper for you
-#. nodeNames (**array(string)**) — the nodes running the broker process
-#. tags(**object**) — the user defined parameters ; default is empty
-
 Example Request
   .. code-block:: json
 
-     {
-       "name": "bk00",
-       "group": "abc",
-       "imageName": "oharastream/broker:$|version|",
-       "zookeeperClusterKey": {
-         "group": "default",
-         "name": "zk00"
-       },
-       "clientPort": 12345,
-       "jmxPort": 12347,
-       "nodeNames": [
-         "node00"
-       ],
-       "tags": {}
-     }
+    {
+      "name": "bk",
+      "nodeNames": ["node00"],
+      "zookeeperClusterKey": "zk"
+    }
 
 Example Response
   .. code-block:: json
 
     {
       "name": "bk00",
-      "group": "abc",
+      "offsets.topic.replication.factor": 1,
+      "xms": 1024,
+      "routes": {},
+      "num.partitions": 1,
+      "lastModified": 1578903360246,
+      "num.network.threads": 1,
+      "tags": {},
+      "xmx": 1024,
+      "imageName": "oharastream/broker:$|version|",
+      "log.dirs": "/home/ohara/default/data",
+      "aliveNodes": [],
+      "jmxPort": 42020,
+      "num.io.threads": 1,
+      "clientPort": 39614,
       "zookeeperClusterKey": {
         "group": "default",
         "name": "zk00"
       },
-      "imageName": "oharastream/broker:$|version|",
-      "clientPort": 12345,
-      "jmxPort": 12347,
-      "nodeNames": [
-        "node00"
-      ],
-      "tags": {},
-      "aliveNodes": [],
-      "lastModified": 1563158986411
-    }
-
-  As mentioned before, ohara provides default to most settings. You can
-  just input nodeNames to run a broker cluster.
-
-Example Request
-  .. code-block:: json
-
-     {
-       "nodeNames": [
-         "node00"
-       ]
-     }
-
-  .. note::
-    As you don’t input the zookeeper cluster name, Ohara will try to pick
-    up a zookeeper cluster for you. If the number of zookeeper cluster
-    host by ohara is only one, ohara do deploy broker cluster on the
-    zookeeper cluster. Otherwise, ohara will say that it can’t match a
-    zookeeper cluster for you. All ports have default value so you can
-    ignore them when creating zookeeper cluster. However, the port
-    conflict detect does not allow you to reuse port on different purpose
-    (a dangerous behavior, right?).
-
-Example Response
-  .. code-block:: json
-
-    {
-      "name": "403e6c457d",
       "group": "default",
-      "zookeeperClusterKey": {
-        "group": "default",
-        "name": "zk00"
-      },
-      "imageName": "oharastream/broker:$|version|",
-      "clientPort": 12345,
-      "jmxPort": 12347,
       "nodeNames": [
         "node00"
-      ],
-      "tags": {},
-      "aliveNodes": [],
-      "lastModified": 1563158986411
+      ]
     }
 
 list all broker clusters
@@ -163,36 +108,34 @@ list all broker clusters
 
 *GET /v0/brokers*
 
-the accepted query keys are listed below.
-#. group
-#. name
-#. lastModified
-#. tags
-#. tag - this field is similar to tags but it addresses the "contain" behavior.
-#. state
-#. aliveNodes
-#. key
-
 Example Response
   .. code-block:: json
 
     [
       {
         "name": "bk00",
-        "group": "default",
+        "offsets.topic.replication.factor": 1,
+        "xms": 1024,
+        "routes": {},
+        "num.partitions": 1,
+        "lastModified": 1578903360246,
+        "num.network.threads": 1,
+        "tags": {},
+        "xmx": 1024,
+        "imageName": "oharastream/broker:$|version|",
+        "log.dirs": "/home/ohara/default/data",
+        "aliveNodes": [],
+        "jmxPort": 42020,
+        "num.io.threads": 1,
+        "clientPort": 39614,
         "zookeeperClusterKey": {
           "group": "default",
           "name": "zk00"
         },
-        "imageName": "oharastream/broker:$|version|",
-        "clientPort": 12345,
-        "jmxPort": 12347,
+        "group": "default",
         "nodeNames": [
           "node00"
-        ],
-        "tags": {},
-        "aliveNodes": [],
-        "lastModified": 1563158986411
+        ]
       }
     ]
 
@@ -204,50 +147,39 @@ update broker cluster properties
 .. note::
    If the required broker (group, name) was not exists, we will try to use this request as POST
 
-Example Request
-  #. imageName (**string**) — docker image ; default is oharastream/broker:|version|
-  #. clientPort (**int**) — broker client port ; default is random port
-  #. jmxPort (**int**) — port used by jmx service ; default is random port
-  #. zookeeperClusterKey (**option(object)**) — key of zookeeper cluster used to store metadata of broker cluster.
-     default will find a zookeeper for you
-  #. nodeNames (**array(string)**) — the nodes running the broker process
-  #. tags(**object**) — the user defined parameters ; default is empty
-
   .. code-block:: json
 
-     {
-       "imageName": "oharastream/broker:$|version|",
-       "zookeeperClusterKey": {
-         "group": "default",
-         "name": "zk00"
-       },
-       "clientPort": 12345,
-       "jmxPort": 12347,
-       "nodeNames": [
-         "node00"
-       ],
-       "tags": {}
-     }
+    {
+      "xmx": 2048
+    }
 
 Example Response
   .. code-block:: json
 
     {
       "name": "bk00",
-      "group": "default",
+      "offsets.topic.replication.factor": 1,
+      "xms": 1024,
+      "routes": {},
+      "num.partitions": 1,
+      "lastModified": 1578903494681,
+      "num.network.threads": 1,
+      "tags": {},
+      "xmx": 2048,
+      "imageName": "oharastream/broker:$|version|",
+      "log.dirs": "/home/ohara/default/data",
+      "aliveNodes": [],
+      "jmxPort": 42020,
+      "num.io.threads": 1,
+      "clientPort": 39614,
       "zookeeperClusterKey": {
         "group": "default",
         "name": "zk00"
       },
-      "imageName": "oharastream/broker:$|version|",
-      "clientPort": 12345,
-      "jmxPort": 12347,
+      "group": "default",
       "nodeNames": [
         "node00"
-      ],
-      "tags": {},
-      "aliveNodes": [],
-      "lastModified": 1563158986411
+      ]
     }
 
 delete a broker properties
@@ -281,23 +213,28 @@ Example Response
 
     {
       "name": "bk00",
-      "group": "default",
+      "offsets.topic.replication.factor": 1,
+      "xms": 1024,
+      "routes": {},
+      "num.partitions": 1,
+      "lastModified": 1578903494681,
+      "num.network.threads": 1,
+      "tags": {},
+      "xmx": 2048,
+      "imageName": "oharastream/broker:$|version|",
+      "log.dirs": "/home/ohara/default/data",
+      "aliveNodes": [],
+      "jmxPort": 42020,
+      "num.io.threads": 1,
+      "clientPort": 39614,
       "zookeeperClusterKey": {
         "group": "default",
         "name": "zk00"
       },
-      "imageName": "oharastream/broker:$|version|",
-      "clientPort": 9092,
-      "jmxPort": 9093,
+      "group": "default",
       "nodeNames": [
         "node00"
-      ],
-      "tags": {},
-      "aliveNodes": [
-        "node00"
-      ],
-      "state": "RUNNING",
-      "lastModified": 1563158986411
+      ]
     }
 
 
