@@ -26,8 +26,10 @@ Similar to other APIs, the required fields are "name" and "group".
 
 #. name (**string**) — name of object.
 #. group (**string**) — group of object
+#. tags (**option(object)**) — the extra description to this object
 
 The following information are updated at run-time.
+
 #. lastModified (**long**) — the last time to update this node
 
 
@@ -47,11 +49,13 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "name": "n0",
-       "k": "v",
-       "lastModified": 12345
-     }
+    {
+      "name": "n0",
+      "lastModified": 1579071742763,
+      "tags": {},
+      "k": "v",
+      "group": "default"
+    }
 
 update a object
 ---------------
@@ -68,13 +72,14 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "name": "n0",
-       "k": "v",
-       "k0": "v0",
-       "lastModified": 12346
-     }
-
+    {
+      "name": "n0",
+      "k0": "v0",
+      "lastModified": 1579072298657,
+      "tags": {},
+      "k": "v",
+      "group": "default"
+    }
 
 list all objects
 ----------------
@@ -84,12 +89,16 @@ list all objects
 Example Response
   .. code-block:: json
 
-     {
-       "name": "n0",
-       "k": "v",
-       "k0": "v0",
-       "lastModified": 12346
-     }
+    [
+      {
+        "name": "n0",
+        "k0": "v1000000",
+        "lastModified": 1579072345437,
+        "tags": {},
+        "k": "v",
+        "group": "default"
+      }
+    ]
 
 delete a node
 -------------
@@ -109,9 +118,11 @@ get a object
 Example Response
   .. code-block:: json
 
-     {
-       "name": "n0",
-       "k": "v",
-       "k0": "v0",
-       "lastModified": 12346
-     }
+    {
+      "name": "n0",
+      "k0": "v0",
+      "lastModified": 1579072345437,
+      "tags": {},
+      "k": "v",
+      "group": "default"
+    }
