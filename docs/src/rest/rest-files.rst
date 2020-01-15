@@ -23,10 +23,15 @@ Ohara encourages user to write custom application if the official
 applications can satisfy requirements for your use case. Jar APIs is a
 useful entry of putting your jar on ohara and then start related
 services with it. For example, :ref:`Worker APIs <rest-workers-create>`
-accept a **jars** element which can
+accept a **sharedJarKeys** element which can
 carry the jar name pointing to a existent jar in ohara. The worker
 cluster will load all connectors of the input jar, and then you are able
 to use the connectors on the worker cluster.
+
+The File API upload jar file to use by the :ref:`Worker <rest-workers>` and :ref:`Stream <rest-streams>`.
+
+  .. note::
+    The file used by a worker or stream can't be either updated or deleted.
 
 The properties stored by ohara are shown below.
 
@@ -34,14 +39,17 @@ The properties stored by ohara are shown below.
 #. group (**string**) — the group name (we use this field to separate different workspaces)
 #. size (**long**) — file size
 #. url (**option(string)**) — url to download this jar from Ohara Configurator. Noted not all jars are downloadable to user.
+#. lastModified (**long**) — the time of uploading this file
+#. tags (**object**) — the user defined parameters
+#. bytes (**array(object)**) — read file content to bytes
 #. classInfos (**array(object)**) — the information of available classes in this file
 
   - classInfos[i].className — the name of this class
   - classInfos[i].classType — the type of this class. for example, topic, source connector, sink connector or stream app
   - classInfos[i].settingDefinitions — the definitions of this class
 
-#. lastModified (**long**) — the time of uploading this file
-
+  .. note::
+    The field "classInfos" is empty if the file is NOT a valid jar.
 
 upload a file to Ohara
 ----------------------
@@ -56,8 +64,8 @@ Example Request
   .. code-block:: text
 
      Content-Type: multipart/form-data
-     file="aa.jar"
-     group="wk01"
+     file="ohara-it-stream.jar"
+     group="default"
      tags={}
 
   .. note::
@@ -69,14 +77,38 @@ Example Response
   .. code-block:: json
 
     {
-      "name": "aa.jar",
-      "group": "wk01",
-      "size": 1779,
-      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-      "classInfos": [],
-      "lastModified": 1561012496975
+      "name": "ohara-it-stream.jar",
+      "size": 1896,
+      "url": "http://localhost:12345/v0/downloadFiles/default/ohara-it-stream.jar",
+      "lastModified": 1578967196525,
+      "tags": {},
+      "classInfos": [
+        {
+          "classType": "stream",
+          "className": "com.island.ohara.it.stream.DumbStream",
+          "settingDefinitions": [
+            {
+              "blacklist": [],
+              "reference": "BROKER_CLUSTER",
+              "displayName": "Broker cluster key",
+              "regex": null,
+              "internal": false,
+              "permission": "EDITABLE",
+              "documentation": "the key of broker cluster used to transfer data for this stream",
+              "necessary": "REQUIRED",
+              "valueType": "OBJECT_KEY",
+              "tableKeys": [],
+              "orderInGroup": 0,
+              "key": "brokerClusterKey",
+              "defaultValue": null,
+              "recommendedValues": [],
+              "group": "core"
+            }
+          ]
+        }
+      ],
+      "group": "default"
     }
-
 
 list all jars
 -------------
@@ -84,22 +116,46 @@ list all jars
 Get all jars from specific group of query parameter. If no query
 parameter, wll return all jars.
 
-*GET /v0/files?group=wk01*
+*GET /v0/files?group=default*
 
 Example Response
   .. code-block:: json
 
     [
       {
-        "name": "aa.jar",
-        "group": "wk01",
-        "size": 1779,
-        "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-        "classInfos": [],
-        "lastModified": 1561012496975
+        "name": "ohara-it-stream.jar",
+        "size": 1896,
+        "url": "http://localhost:5000/v0/downloadFiles/default/ohara-it-stream.jar",
+        "lastModified": 1578973197877,
+        "tags": {},
+        "classInfos": [
+          {
+            "classType": "stream",
+            "className": "com.island.ohara.it.stream.DumbStream",
+            "settingDefinitions": [
+              {
+                "blacklist": [],
+                "reference": "BROKER_CLUSTER",
+                "displayName": "Broker cluster key",
+                "regex": null,
+                "internal": false,
+                "permission": "EDITABLE",
+                "documentation": "the key of broker cluster used to transfer data for this stream",
+                "necessary": "REQUIRED",
+                "valueType": "OBJECT_KEY",
+                "tableKeys": [],
+                "orderInGroup": 0,
+                "key": "brokerClusterKey",
+                "defaultValue": null,
+                "recommendedValues": [],
+                "group": "core"
+              },
+            ]
+          }
+        ],
+        "group": "default"
       }
     ]
-
 
 delete a file
 -------------
@@ -107,7 +163,7 @@ delete a file
 Delete a file with specific name and group. Note: the query parameter
 must exists.
 
-*DELETE /v0/files/$name?group=wk01*
+*DELETE /v0/files/$name?group=default*
 
 Example Response
   ::
@@ -127,25 +183,50 @@ get a file
 Get a file with specific name and group. Note: the query parameter must
 exists.
 
-*GET /v0/files/$name?group=wk01*
+*GET /v0/files/$name?group=default*
 
 Example Response
   .. code-block:: json
 
     {
-      "name": "aa.jar",
-      "group": "wk01",
-      "size": 1779,
-      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-      "classInfos": [],
-      "lastModified": 1561012496975
+      "name": "ohara-it-stream.jar",
+      "size": 1896,
+      "url": "http://localhost:5000/v0/downloadFiles/default/ohara-it-stream.jar",
+      "lastModified": 1578973197877,
+      "tags": {},
+      "classInfos": [
+        {
+          "classType": "stream",
+          "className": "com.island.ohara.it.stream.DumbStream",
+          "settingDefinitions": [
+            {
+              "blacklist": [],
+              "reference": "BROKER_CLUSTER",
+              "displayName": "Broker cluster key",
+              "regex": null,
+              "internal": false,
+              "permission": "EDITABLE",
+              "documentation": "the key of broker cluster used to transfer data for this stream",
+              "necessary": "REQUIRED",
+              "valueType": "OBJECT_KEY",
+              "tableKeys": [],
+              "orderInGroup": 0,
+              "key": "brokerClusterKey",
+              "defaultValue": null,
+              "recommendedValues": [],
+              "group": "core"
+            }
+          ]
+        }
+      ],
+      "group": "default"
     }
 
 
 update tags of file
 -------------------
 
-*PUT /v0/files/$name?group=wk01*
+*PUT /v0/files/$name?group=default*
 
 Example Response
   .. code-block:: json
@@ -164,14 +245,37 @@ Example Response
   .. code-block:: json
 
     {
-      "name": "aa.jar",
-      "group": "wk01",
-      "size": 1779,
-      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
-      "classInfos": [],
-      "lastModified": 1561012496975,
+      "name": "ohara-it-stream.jar",
+      "size": 1896,
+      "url": "http://localhost:5000/v0/downloadFiles/default/ohara-it-stream.jar",
+      "lastModified": 1578974415307,
       "tags": {
         "a": "b"
-      }
+      },
+      "classInfos": [
+        {
+          "classType": "stream",
+          "className": "com.island.ohara.it.stream.DumbStream",
+          "settingDefinitions": [
+            {
+              "blacklist": [],
+              "reference": "BROKER_CLUSTER",
+              "displayName": "Broker cluster key",
+              "regex": null,
+              "internal": false,
+              "permission": "EDITABLE",
+              "documentation": "the key of broker cluster used to transfer data for this stream",
+              "necessary": "REQUIRED",
+              "valueType": "OBJECT_KEY",
+              "tableKeys": [],
+              "orderInGroup": 0,
+              "key": "brokerClusterKey",
+              "defaultValue": null,
+              "recommendedValues": [],
+              "group": "core"
+            }
+          ]
+        }
+      ],
+      "group": "default"
     }
-
