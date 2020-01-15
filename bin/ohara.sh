@@ -33,8 +33,9 @@ if [ "$1" == "start" ]; then
 elif [ "$1" == "stop" ]; then
   SCRIPT="$BIN_DIR/stop-service.sh"
   shift 1
-elif [ "$1" == "-v" ] || [ "$1" == "version" ] || [ "$1" == "-version" ]; then
+elif [ "$1" == "-v" ] || [ "$1" == "-version" ]; then
   "$BIN_DIR/run_java.sh" com.island.ohara.common.util.VersionUtils
+  java -version
   exit 0
 else
   echo "Usage: (start|stop) {service name}"

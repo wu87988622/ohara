@@ -18,7 +18,7 @@
 # change the working path from root to ohara folder
 cd $OHARA_HOME/bin
 
-if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
+if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
   if [[ -f "$OHARA_HOME/bin/ohara_version" ]]; then
     cat $OHARA_HOME/bin/ohara_version
   else

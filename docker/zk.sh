@@ -29,7 +29,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
-    -v|--version)
+    -v|-version)
     if [[ -f "$VERSION_FILE" ]]; then
       echo "zookeeper $(cat "$VERSION_FILE")"
     else
@@ -40,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     else
       echo "ohara: unknown"
     fi
+    java -version
     exit
     ;;
     --config)
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]]; do
     FILE_DATA+=("$2")
     shift
     shift
+    ;;
+    *)
+    echo "unknown key:$key"
+    exit 1
     ;;
   esac
 done
