@@ -58,8 +58,10 @@ object ConnectorTestUtils {
     CommonUtils.await(
       () => {
         val workerClient = WorkerClient(workersConnProps)
-        try Await.result(workerClient.status(connectorKey), 10 seconds).connector.state == State.RUNNING.name
-        catch {
+        try {
+          val status = Await.result(workerClient.status(connectorKey), 10 seconds)
+          status.connector.state == State.RUNNING.name && status.tasks.nonEmpty
+        } catch {
           case _: Throwable => false
         }
       },

@@ -19,7 +19,7 @@ FROM oharastream/ohara:deps as deps
 # download kafka
 # WARN: Please don't change the value of KAFKA_DIR
 ARG KAFKA_DIR=/opt/kafka
-ARG KAFKA_VERSION=2.2.1
+ARG KAFKA_VERSION=2.4.0
 ARG SCALA_VERSION=2.12
 RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN mkdir ${KAFKA_DIR}
@@ -66,10 +66,6 @@ RUN chmod +x /home/$USER/default/bin/worker.sh
 RUN chown -R $USER:$USER /home/$USER
 ENV KAFKA_HOME=/home/$USER/default
 ENV PATH=$PATH:$KAFKA_HOME/bin
-
-# Remove old Scala version
-RUN rm /home/$USER/default/libs/scala-library-2.12.8.jar
-RUN rm /home/$USER/default/libs/scala-reflect-2.12.8.jar
 
 # copy Tini
 COPY --from=deps /tini /tini

@@ -77,31 +77,47 @@ class TestControlConnector extends WithBrokerWorker {
     try {
       await(
         () =>
-          try if (result(workerClient.exist(sink.key))) true else false
+          try result(workerClient.exist(sink.key))
           catch {
             case _: Throwable => false
           }
       )
-      await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
+      await(
+        () =>
+          try result(workerClient.status(sink.key)).connector.state == State.RUNNING.name
+          catch {
+            case _: Throwable => false
+          }
+      )
       result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ => result(connectorApi.pause(sink.key)))
-      await(() => result(workerClient.status(sink.key)).connector.state == State.PAUSED.name)
+      await(
+        () =>
+          try result(workerClient.status(sink.key)).connector.state == State.PAUSED.name
+          catch {
+            case _: Throwable => false
+          }
+      )
       result(connectorApi.get(sink.key)).state.get shouldBe State.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ => result(connectorApi.resume(sink.key)))
-      await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
+      await(
+        () =>
+          try result(workerClient.status(sink.key)).connector.state == State.RUNNING.name
+          catch {
+            case _: Throwable => false
+          }
+      )
       result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => result(connectorApi.stop(sink.key)))
-      await(() => if (result(workerClient.nonExist(sink.key))) true else false)
-      result(connectorApi.get(sink.key)).state shouldBe None
-    } finally {
-      if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
-    }
+      await(() => result(workerClient.nonExist(sink.key)))
+      await(() => result(connectorApi.get(sink.key)).state.nonEmpty)
+    } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
   }
 
   @Test
@@ -131,12 +147,18 @@ class TestControlConnector extends WithBrokerWorker {
     try {
       await(
         () =>
-          try if (result(workerClient.exist(sink.key))) true else false
+          try result(workerClient.exist(sink.key))
           catch {
             case _: Throwable => false
           }
       )
-      await(() => result(workerClient.status(sink.key)).connector.state == State.RUNNING.name)
+      await(
+        () =>
+          try result(workerClient.status(sink.key)).connector.state == State.RUNNING.name
+          catch {
+            case _: Throwable => false
+          }
+      )
 
       an[IllegalArgumentException] should be thrownBy result(
         connectorApi.request
@@ -156,7 +178,7 @@ class TestControlConnector extends WithBrokerWorker {
 
       // test stop. the connector should be removed
       result(connectorApi.stop(sink.key))
-      await(() => if (result(workerClient.nonExist(sink.key))) true else false)
+      await(() => result(workerClient.nonExist(sink.key)))
       await(() => result(connectorApi.get(sink.key)).state.isEmpty)
     } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
   }
@@ -188,7 +210,7 @@ class TestControlConnector extends WithBrokerWorker {
     try {
       await(
         () =>
-          try if (result(workerClient.exist(sink.key))) true else false
+          try result(workerClient.exist(sink.key))
           catch {
             case _: Throwable => false
           }
