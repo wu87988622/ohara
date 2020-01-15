@@ -83,4 +83,18 @@ class TestFileInfoApi extends OharaTest {
     copy.url shouldBe fileInfo.url
     copy.tags shouldBe fileInfo.tags
   }
+
+  @Test
+  def nullUrlShouldBeRemoved(): Unit = {
+    val fileInfo = new FileInfo(
+      group = CommonUtils.randomString(),
+      name = CommonUtils.randomString(),
+      lastModified = CommonUtils.current(),
+      bytes = Array.emptyByteArray,
+      url = None,
+      classInfos = Seq.empty,
+      tags = Map("a" -> JsString("b"))
+    )
+    FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo).asJsObject.fields should not contain "url"
+  }
 }

@@ -171,15 +171,20 @@ object FileInfoApi {
       * @param obj file info
       * @return js object
       */
-    override def write(obj: FileInfo): JsValue = JsObject(
-      GROUP_KEY         -> JsString(obj.group),
-      NAME_KEY          -> JsString(obj.name),
-      URL_KEY           -> obj.url.map(_.toString).map(JsString(_)).getOrElse(JsNull),
-      SIZE_KEY          -> JsNumber(obj.size),
-      LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
-      CLASS_INFOS_KEY   -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
-      TAGS_KEY          -> JsObject(obj.tags)
-    )
+    override def write(obj: FileInfo): JsValue =
+      JsObject(
+        noJsNull(
+          Map(
+            GROUP_KEY         -> JsString(obj.group),
+            NAME_KEY          -> JsString(obj.name),
+            URL_KEY           -> obj.url.map(_.toString).map(JsString(_)).getOrElse(JsNull),
+            SIZE_KEY          -> JsNumber(obj.size),
+            LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
+            CLASS_INFOS_KEY   -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
+            TAGS_KEY          -> JsObject(obj.tags)
+          )
+        )
+      )
   }
 
   sealed trait Request {

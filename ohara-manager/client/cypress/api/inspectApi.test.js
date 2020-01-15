@@ -222,8 +222,8 @@ describe('Inspect API', () => {
         expect(tags).to.be.an('object');
         expect(tags.name).to.eq(file.name);
 
-        // the file does not upload, url will be null
-        expect(url).to.eq(null);
+        // the file is not uploaded so url is not generated
+        expect(url).to.be.undefined;
       });
   });
 
@@ -277,8 +277,8 @@ describe('Inspect API', () => {
         expect(tags).to.be.an('object');
         expect(tags.name).to.eq(source.name);
 
-        // the file does not upload, url will be null
-        expect(url).to.eq(null);
+        // the file is not uploaded so url is not generated
+        expect(url).to.be.undefined;
       });
   });
 
@@ -332,8 +332,8 @@ describe('Inspect API', () => {
         expect(tags).to.be.an('object');
         expect(tags.name).to.eq(sink.name);
 
-        // the file does not upload, url will be null
-        expect(url).to.eq(null);
+        // the file is not uploaded so url is not generated
+        expect(url).to.be.undefined;
       });
   });
 });
