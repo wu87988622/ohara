@@ -25,7 +25,8 @@ RUN yum install -y \
 # WARN: Please don't change the value of ZOOKEEPER_DIR
 ARG ZOOKEEPER_DIR=/opt/zookeeper
 ARG ZOOKEEPER_VERSION=3.4.13
-RUN wget https://archive.apache.org/dist/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz
+ARG MIRROR_SITE=https://archive.apache.org/dist
+RUN wget $MIRROR_SITE/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz
 RUN mkdir ${ZOOKEEPER_DIR}
 RUN tar -zxvf zookeeper-${ZOOKEEPER_VERSION}.tar.gz -C ${ZOOKEEPER_DIR}
 RUN rm -f zookeeper-${ZOOKEEPER_VERSION}.tar.gz

@@ -26,7 +26,8 @@ RUN yum install -y \
 ARG KAFKA_DIR=/opt/kafka
 ARG KAFKA_VERSION=2.4.0
 ARG SCALA_VERSION=2.12
-RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+ARG MIRROR_SITE=https://archive.apache.org/dist
+RUN wget $MIRROR_SITE/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN mkdir ${KAFKA_DIR}
 RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
