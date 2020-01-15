@@ -48,13 +48,14 @@ Example Response
     {
       "versionInfo": {
         "branch": "$|branch|",
+        "revision": "b303f3c2e52647ee5e79e55f9d74a5e51238a92c",
         "version": "$|version|",
-        "user": "chia",
-        "revision": "b86742ca03a0ca02cc3578f8686e38e5cf2fb461",
-        "date": "2019-05-13 09:59:38"
+        "date": "2020-01-08 06:05:47",
+        "user": "root"
       },
-      "mode": "FAKE"
+      "mode": "K8S"
     }
+
 
 get zookeeper/broker/worker/stream info
 ---------------------------------------
@@ -80,26 +81,31 @@ Example Response
       "imageName": "oharastream/zookeeper:$|version|",
       "settingDefinitions": [
         {
-          "reference": "NONE",
-          "displayName": "group",
-          "internal": false,
-          "documentation": "group of this worker cluster",
-          "valueType": "STRING",
-          "tableKeys": [],
-          "orderInGroup": 1,
-          "key": "group",
-          "required": false,
-          "defaultValue": "default",
-          "group": "core",
-          "editable": true
-        }
-      ]
+           "blacklist": [],
+           "reference": "NONE",
+           "displayName": "peerPort",
+           "regex": null,
+           "internal": false,
+           "permission": "EDITABLE",
+           "documentation": "the port exposed to each quorum",
+           "necessary": "OPTIONAL_WITH_RANDOM_DEFAULT",
+           "valueType": "BINDING_PORT",
+           "tableKeys": [],
+           "orderInGroup": 10,
+           "key": "peerPort",
+           "defaultValue": null,
+           "recommendedValues": [],
+           "group": "core"
+        },
+      ],
+      "classInfos": []
     }
+
 
 get running zookeeper/broker/worker/stream info
 -----------------------------------------------
 
-*GET /v0/inspect/$service/name=$name?group=$group*
+*GET /v0/inspect/$service/$name?group=$group*
 
 This API used to fetch the definitions for specific cluster service and the definitions of available classes in the service.
 The following fields are returned.
@@ -123,25 +129,50 @@ Example Response
   .. code-block:: json
 
     {
-      "imageName": "oharastream/stream:$|version|",
+      "imageName": "oharastream/broker:$|version|",
       "settingDefinitions": [
         {
+          "blacklist": [],
           "reference": "NONE",
-          "displayName": "group",
+          "displayName": "xmx",
+          "regex": null,
           "internal": false,
-          "documentation": "group of this worker cluster",
-          "valueType": "STRING",
+          "permission": "EDITABLE",
+          "documentation": "maximum memory allocation (in MB)",
+          "necessary": "OPTIONAL_WITH_DEFAULT",
+          "valueType": "POSITIVE_LONG",
           "tableKeys": [],
-          "orderInGroup": 1,
-          "key": "group",
-          "required": false,
-          "defaultValue": "default",
-          "group": "core",
-          "editable": true
+          "orderInGroup": 8,
+          "key": "xmx",
+          "defaultValue": 1024,
+          "recommendedValues": [],
+          "group": "core"
         }
       ],
       "classInfos": [
-
+        {
+          "classType": "topic",
+          "className": "N/A",
+          "settingDefinitions": [
+            {
+              "blacklist": [],
+              "reference": "NONE",
+              "displayName": "numberOfPartitions",
+              "regex": null,
+              "internal": false,
+              "permission": "EDITABLE",
+              "documentation": "the number of partitions",
+              "necessary": "OPTIONAL_WITH_DEFAULT",
+              "valueType": "POSITIVE_INT",
+              "tableKeys": [],
+              "orderInGroup": 4,
+              "key": "numberOfPartitions",
+              "defaultValue": 1,
+              "recommendedValues": [],
+              "group": "core"
+            }
+          ]
+        }
       ]
     }
 
@@ -176,15 +207,12 @@ following fields.
 Example Request
   .. code-block:: json
 
-     {
-       "url": "jdbc:sqlserver://",
-       "user": "abc",
-       "password": "abc",
-       "workerClusterKey": {
-         "group": "default",
-         "name": "wk00"
-       }
-     }
+    {
+      "url": "jdbc:postgresql://localhost:5432/postgres",
+      "user": "ohara",
+      "password": "123456",
+      "workerClusterKey": "wk00"
+    }
 
 Example Response
   #. name (**string**) — database name
@@ -201,21 +229,27 @@ Example Response
 
   .. code-block:: json
 
-     {
-       "name": "sqlserver",
-       "tables": [
-         {
-           "name": "t0",
-           "columns": [
-             {
-               "name": "c0",
-               "dataType": "integer",
-               "pk": true
-             }
-           ]
-         }
-       ]
-     }
+    {
+      "name": "postgresql",
+      "tables": [
+        {
+          "schemaPattern": "public",
+          "name": "table1",
+          "columns": [
+            {
+              "name": "column1",
+              "dataType": "timestamp",
+              "pk": false
+            },
+            {
+              "name": "column2",
+              "dataType": "varchar",
+              "pk": true
+            }
+          ]
+        }
+      ]
+    }
 
 
 Query Topic
@@ -240,31 +274,27 @@ the response includes following items.
   - messages[i].error (**Option(String)**) — error message happen in failing to parse value
 
 Example Response
+  .. code-block:: json
 
-.. code-block:: json
-
-  {
-    "messages": [
-      {
-        "partition": 1,
-        "offset": 12,
-        "sourceClass": "com.abc.SourceTask",
-        "sourceKey": {
-          "group": "g",
-          "name": "n"
-        },
-        "value": {
-          "a": "b",
-          "b": "c"
+    {
+      "messages": [
+        {
+          "sourceKey": {
+            "group": "default",
+            "name": "perf"
+          },
+          "sourceClass": "com.island.ohara.connector.perf.PerfSourceTask",
+          "partition": 0,
+          "offset": 0,
+          "value": {
+            "a": "c54e2f3477",
+            "b": "32ae422fb5",
+            "c": "53e448ab80",
+            "tags": []
+          }
         }
-      },
-      {
-        "partition": 1,
-        "offset": 13,
-        "error": "unknown message"
-      }
-    ]
-  }
+      ]
+    }
 
 Query File
 -----------
@@ -272,13 +302,14 @@ Query File
 #. name (**string**) — the file name without extension
 #. group (**string**) — the group name (we use this field to separate different workspaces)
 #. size (**long**) — file size
+#. tags (**object**) — the extra description to this object
+#. lastModified (**long**) — the time of uploading this file
 #. classInfos (**array(object)**) — the information of available classes in this file
 
   - classInfos[i].className — the name of this class
   - classInfos[i].classType — the type of this class. for example, topic, source connector, sink connector or stream app
   - classInfos[i].settingDefinitions — the definitions of this class
 
-#. lastModified (**long**) — the time of uploading this file
 
 *POST /v0/inspect/files*
 
@@ -286,30 +317,43 @@ Example Request
   .. code-block:: text
 
      Content-Type: multipart/form-data
-     file="aa.jar"
-     group="wk01"
+     file="ohara-it-sink.jar"
+     group="default"
 
 
 Example Response
-
   .. code-block:: json
 
     {
-      "name": "aa.jar",
-      "group": "wk01",
-      "size": 1779,
-      "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+      "name": "ohara-it-sink.jar",
+      "size": 7902,
+      "url": null,
+      "lastModified": 1579055900202,
+      "tags": {},
       "classInfos": [
         {
-          "classType": "connector",
-          "className": "a.b.c.Source",
-          "settingDefinitions": []
-        },
-        {
-          "classType": "stream",
-          "className": "a.b.c.bbb",
-          "settingDefinitions": []
+          "classType": "sink",
+          "className": "com.island.ohara.it.connector.DumbSinkConnector",
+          "settingDefinitions": [
+            {
+              "blacklist": [],
+              "reference": "NONE",
+              "displayName": "kind",
+              "regex": null,
+              "internal": false,
+              "permission": "READ_ONLY",
+              "documentation": "kind of connector",
+              "necessary": "OPTIONAL_WITH_DEFAULT",
+              "valueType": "STRING",
+              "tableKeys": [],
+              "orderInGroup": 13,
+              "key": "kind",
+              "defaultValue": "sink",
+              "recommendedValues": [],
+              "group": "core"
+            }
+          ]
         }
       ],
-      "lastModified": 1561012496975
+      "group": "default"
     }
