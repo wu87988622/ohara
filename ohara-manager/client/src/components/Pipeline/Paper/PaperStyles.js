@@ -16,14 +16,7 @@
 
 import styled, { css } from 'styled-components';
 
-export const PaperWrapper = styled.div`
-  position: relative;
-
-  /* Subtract the height of Toolbar  */
-  height: calc(100vh - 72px);
-`;
-
-export const Paper = styled.div(
+export const StyledPaper = styled.div(
   ({ theme }) => css`
     border: ${theme.spacing(1)}px solid ${theme.palette.common.white};
     overflow: hidden;
@@ -91,7 +84,7 @@ export const Paper = styled.div(
 
           &:hover {
             cursor: pointer;
-            
+
             svg {
               background-color: ${theme.palette.action.hover};
               border-radius: ${theme.shape.borderRadius}px;
@@ -112,20 +105,35 @@ export const Paper = styled.div(
         width: 40px;
         height: 40px;
         border-radius: 100%;
-        background-color: ${theme.palette.grey[600]};
         display: flex;
         align-items: center;
         justify-content: center;
         margin: ${theme.spacing(2)}px;
 
+        &.stopped {
+          background-color: ${theme.palette.grey[600]};
+        }
+
+        &.pending {
+          background-color: ${theme.palette.warning.main};
+        }
+
+        &.running {
+          background-color: ${theme.palette.success.main};
+        }
+
+        &.failed {
+          background-color: ${theme.palette.error.main};
+        }
+
         svg {
           color: white;
         }
       }
-      
-      .title {
+
+      .display-name {
         font-size: ${theme.typography.h5};
-        color:${theme.palette.text.primary};
+        color: ${theme.palette.text.primary};
         margin-top: ${theme.spacing(2)}px;
         width: 150px;
         overflow: hidden;
@@ -134,7 +142,7 @@ export const Paper = styled.div(
 
       .type {
         font-size: ${theme.typography.body2};
-        color:${theme.palette.text.secondary};
+        color: ${theme.palette.text.secondary};
       }
 
       .metrics {
@@ -144,7 +152,6 @@ export const Paper = styled.div(
           display: flex;
           padding: ${theme.spacing(0.5, 2)};
           border-bottom: 1px solid ${theme.palette.divider};
-
         }
 
         .field-name {
@@ -158,16 +165,22 @@ export const Paper = styled.div(
         }
 
         .field-value {
-          margin-left: auto
+          margin-left: auto;
         }
       }
-      
+
       .status {
         display: flex;
         justify-content: space-between;
         border-top: 1px solid ${theme.palette.divider};
         width: 100%;
         padding: ${theme.spacing(0.5, 2, 0, 2)};
+      }
+
+      .status-value {
+        &:first-letter {
+          text-transform: capitalize;
+        }
       }
     }
 
@@ -176,10 +189,10 @@ export const Paper = styled.div(
       pointer-events: none;
       background-color: white;
 
-      .title {
-        ${theme.typography.h5}
-        color:${theme.palette.text.primary};
-        text-align:center;
+      .display-name {
+        font-size: ${theme.typography.h5};
+        color: ${theme.palette.text.primary};
+        text-align: center;
       }
 
       .topic-menu {
@@ -200,13 +213,13 @@ export const Paper = styled.div(
 
           &:hover {
             cursor: pointer;
-            
+
             svg {
               background-color: ${theme.palette.action.hover};
               border-radius: ${theme.shape.borderRadius}px;
             }
           }
-          
+
           &:focus {
             outline: 0;
           }

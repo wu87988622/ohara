@@ -14,28 +14,11 @@
  * limitations under the License.
  */
 
-// kind of all objects
-export const KIND = {
-  configurator: 'configurator',
-  zookeeper: 'zookeeper',
-  broker: 'broker',
-  worker: 'worker',
-  stream: 'stream',
-  sink: 'sink',
-  source: 'source',
-  topic: 'topic',
-  object: 'object',
-};
+import styled from 'styled-components';
 
-export const MODE = {
-  fake: 'FAKE',
-  docker: 'DOCKER',
-  k8s: 'K8S',
-};
+export const PaperWrapper = styled.div`
+  position: relative;
 
-export const CELL_STATUS = {
-  stopped: 'stopped',
-  pending: 'pending',
-  running: 'running',
-  failed: 'failed',
-};
+  /* Subtract the height of Toolbar  */
+  height: calc(100vh - 72px);
+`;

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useContext } from 'react';
 import { isEmpty } from 'lodash';
 
 import { KIND } from 'const';
 import { useTopicState, useFileActions, useFileState } from 'context';
+import { PaperContext } from '../Pipeline';
 
 export const useTopics = () => {
   const { data: topicsData } = useTopicState();
@@ -91,11 +92,10 @@ export const useToolboxHeight = ({
   const toolboxHeaderRef = useRef(null);
   const panelSummaryRef = useRef(null);
   const panelAddButtonRef = useRef(null);
+  const paperApi = useContext(PaperContext);
 
   useEffect(() => {
-    if (!paper.current) return;
-
-    const paperHeight = paper.current.getComputedSize().height;
+    const paperHeight = paperApi.getBbox().height;
     const toolboxOffsetTop = toolboxRef.current.state.y + 8; // 8 is the offset top of toolbox
     const toolboxHeaderHeight = toolboxHeaderRef.current.clientHeight;
     const summaryHeight = panelSummaryRef.current.clientHeight * 4; // we have 4 summaries
@@ -129,7 +129,7 @@ export const useToolboxHeight = ({
 
     // Reset, value `0` would remove the scrollbar from Toolbox body
     return setToolboxHeight(0);
-  }, [connectors, expanded, paper, searchResults]);
+  }, [connectors, expanded, paper, paperApi, searchResults]);
 
   return {
     toolboxHeight,

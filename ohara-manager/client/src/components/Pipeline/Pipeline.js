@@ -14,101 +14,57 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useEffect, useRef, createContext } from 'react';
 import _ from 'lodash';
 
 import * as context from 'context';
+import Paper from './Paper';
+import Toolbar from './Toolbar';
+import Toolbox from './Toolbox';
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
 import SettingDialog from './SettingDialog';
-import Graph from './Graph';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
-import { useApp } from 'context';
-import { usePrevious } from 'utils/hooks';
+import { usePrevious, useLocalStorage } from 'utils/hooks';
+import { PaperWrapper } from './PipelineStyles';
+import {
+  usePipelineState as usePipelineReducerState,
+  useRedirect,
+} from './PipelineHooks';
+
+export const PaperContext = createContext(null);
 
 const Pipeline = () => {
-  const history = useHistory();
-  const { workspaceName, pipelineName } = useApp();
   const {
     workspaces,
     currentWorkspace,
     currentPipeline,
   } = context.useWorkspace();
   const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
-  const {
-    data: pipelines,
-    lastUpdated: isPipelineReady,
-  } = context.usePipelineState();
-  const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
-  const [isToolboxOpen, setIsToolboxOpen] = useState(true);
-  const [toolboxKey, setToolboxKey] = useState(0);
+
   const {
     isOpen: openSettingDialog,
     close: closeSettingDialog,
     data: settingDialogData,
   } = context.useGraphSettingDialog();
+  const { setSelectedCell } = context.usePipelineActions();
 
-  const initialState = {
-    topic: false,
-    source: false,
-    sink: false,
-    stream: false,
-  };
+  const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
 
-  const [toolboxExpanded, setToolboxExpanded] = useState(initialState);
+  const [
+    { isToolboxOpen, toolboxExpanded, toolboxKey },
+    pipelineDispatch,
+  ] = usePipelineReducerState();
 
-  const handleToolboxClick = panel => {
-    setToolboxExpanded(prevState => {
-      return {
-        ...prevState,
-        [panel]: !prevState[panel],
-      };
-    });
-  };
+  const [isMetricsOn, setIsMetricsOn] = useLocalStorage(
+    'isPipelineMetricsOn',
+    null,
+  );
 
-  useEffect(() => {
-    if (!isWorkspaceReady) return;
+  const paperRef = useRef();
+  const isPaperApiReady = _.has(paperRef, 'current.state.isReady');
 
-    const hasWorkspace = workspaces.length > 0;
-    const hasPipeline = pipelines.length > 0;
-    const hasCurrentWorkspace = workspaces.some(
-      workspace => workspace.name === workspaceName,
-    );
-    const hasCurrentPipeline = pipelines.some(
-      pipeline => pipeline.name === pipelineName,
-    );
-
-    if (pipelineName && isPipelineReady) {
-      if (!hasCurrentPipeline) {
-        const url = hasPipeline
-          ? `/${workspaceName}/${pipelines[0].name}`
-          : `/${workspaceName}`;
-        history.push(url);
-      } else {
-        history.push(`/${workspaceName}/${pipelineName}`);
-      }
-    } else if (isPipelineReady && hasWorkspace && hasPipeline) {
-      history.push(`/${workspaceName}/${pipelines[0].name}`);
-    } else if (workspaceName) {
-      if (!hasCurrentWorkspace) {
-        const url = hasWorkspace ? `/${workspaces[0].name}` : '/';
-        history.push(url);
-      } else {
-        history.push(`/${workspaceName}`);
-      }
-    } else if (hasWorkspace) {
-      history.push(`/${workspaces[0].name}`);
-    }
-  }, [
-    history,
-    isPipelineReady,
-    isWorkspaceReady,
-    pipelineName,
-    pipelines,
-    workspaceName,
-    workspaces,
-  ]);
+  useRedirect();
 
   useEffect(() => {
     if (!isWorkspaceReady) return;
@@ -126,33 +82,49 @@ const Pipeline = () => {
     const prevPipelineName = _.get(prevPipeline, 'name', '');
     if (currentPipelineName === prevPipelineName) return;
 
-    setToolboxExpanded(initialState);
+    pipelineDispatch({ type: 'resetToolbox' });
     // re-renders Toolbox
-    setToolboxKey(prevKey => prevKey + 1);
-  }, [currentPipeline, initialState, prevPipeline]);
+    pipelineDispatch({ type: 'setToolboxKey' });
+  }, [currentPipeline, pipelineDispatch, prevPipeline]);
 
   return (
     <>
       {currentWorkspace && (
         <>
           {currentPipeline && (
-            <Graph
-              isToolboxOpen={isToolboxOpen}
-              toolboxExpanded={toolboxExpanded}
-              handleToolbarClick={panel =>
-                // Open a particular panel
-                setToolboxExpanded({ ...initialState, [panel]: true })
-              }
-              handleToolboxOpen={() => setIsToolboxOpen(true)}
-              handleToolboxClick={handleToolboxClick}
-              handleToolboxClose={() => {
-                setIsToolboxOpen(false);
-                setToolboxExpanded(initialState);
-              }}
-              toolboxKey={toolboxKey}
-              setToolboxExpanded={setToolboxExpanded}
-              context={context}
-            />
+            <PaperContext.Provider value={{ ...paperRef.current }}>
+              {isPaperApiReady && (
+                <Toolbar
+                  isToolboxOpen={isToolboxOpen}
+                  handleToolboxOpen={() =>
+                    pipelineDispatch({ type: 'openToolbox' })
+                  }
+                  handleToolbarClick={panel => {
+                    // Open a particular panel
+                    pipelineDispatch({ type: 'resetToolbox' });
+                    pipelineDispatch({ type: 'setToolbox', payload: panel });
+                  }}
+                  isMetricsOn={isMetricsOn}
+                  setIsMetricsOn={setIsMetricsOn}
+                />
+              )}
+
+              <PaperWrapper>
+                <Paper
+                  ref={paperRef}
+                  onCellSelect={cellView => setSelectedCell(cellView)}
+                  onCellDeselect={() => setSelectedCell(null)}
+                />
+                {isPaperApiReady && (
+                  <Toolbox
+                    isOpen={isToolboxOpen}
+                    expanded={toolboxExpanded}
+                    pipelineDispatch={pipelineDispatch}
+                    toolboxKey={toolboxKey}
+                  />
+                )}
+              </PaperWrapper>
+            </PaperContext.Provider>
           )}
         </>
       )}

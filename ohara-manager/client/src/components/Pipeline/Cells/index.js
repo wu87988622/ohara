@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
-import Graph from './Graph';
+import ConnectorCell from './ConnectorCell';
+import TopicCell from './TopicCell';
 
-export default Graph;
+export { ConnectorCell, TopicCell };

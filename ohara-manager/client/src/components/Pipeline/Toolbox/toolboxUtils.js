@@ -25,10 +25,8 @@ import * as joint from 'jointjs';
 import $ from 'jquery';
 
 import { KIND } from 'const';
-import * as generate from 'utils/generate';
-import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
-import TopicGraph from '../Graph/Topic/TopicGraph';
 import { AddPublicTopicIcon } from 'components/common/Icon';
+import * as generate from 'utils/generate';
 
 export const createToolboxList = params => {
   const {
@@ -162,16 +160,9 @@ export const createToolboxList = params => {
 export const enableDragAndDrop = params => {
   const {
     toolPapers,
-    graph,
-    paper,
     setCellInfo,
     setIsOpen: openAddConnectorDialog,
-    currentPipeline,
-    topicsData,
-    createTopic,
-    stopTopic,
-    deleteTopic,
-    updatePipeline,
+    paperApi,
   } = params;
 
   toolPapers.forEach(toolPaper => {
@@ -220,143 +211,63 @@ export const enableDragAndDrop = params => {
         });
       });
 
-      // Make sure we're not creating more than one topics
-      // this is due to creating a topic involve lots of Http requests
-      // behind the sense and while the UI is creating the topic
-      // if users click on the paper, it will create more topic along
-      // the way. So adding this flag, ensure that only one topic is
-      // created during the process
-      let isWorking = false;
       $('#paper').on('mouseup.fly', async event => {
-        if (isWorking) return;
-
         const x = event.pageX;
         const y = event.pageY;
-        const target = paper.current.$el.offset();
+        const { width, height, offsetLeft, offsetTop } = paperApi.getBbox();
 
         const isInsidePaper =
-          x > target.left &&
-          x < target.left + paper.current.$el.width() &&
-          y > target.top &&
-          y < target.top + paper.current.$el.height();
+          x > offsetLeft &&
+          x < offsetLeft + width &&
+          y > offsetTop &&
+          y < offsetTop + height;
 
         // Dropped over paper ?
         if (isInsidePaper) {
-          const localPoint = paper.current.paperToLocalPoint(
-            paper.current.translate(),
-          );
-          const scale = paper.current.scale();
-          const newX = (x - target.left - offset.x) / scale.sx + localPoint.x;
-          const newY = (y - target.top - offset.y) / scale.sy + localPoint.y;
-
-          const {
-            classType,
-            className,
-            name,
-            icon,
-          } = cellView.model.attributes;
-
+          const localPoint = paperApi.getLocalPoint();
+          const scale = paperApi.scale();
+          const newX = (x - offsetLeft - offset.x) / scale.sx + localPoint.x;
+          const newY = (y - offsetTop - offset.y) / scale.sy + localPoint.y;
+          const { classType, className, name } = cellView.model.attributes;
           const isTopic = classType === KIND.topic;
 
           // These info will be used when creating a cell
-          setCellInfo(prevState => ({
-            ...prevState,
-            classType,
-            className,
-            displayedClassName: name,
-            icon,
-            position: {
-              ...prevState.position,
-              x: newX,
-              y: newY,
-            },
-          }));
-
           const params = {
             position: { x: newX, y: newY },
-            isTemporary: !isTopic, // Display a temp cell for all connectors but topic
-            title: !isTopic ? 'newgraph' : name, // Same here, display a temp name for all connectors except topic
-            graph,
-            paper,
-            cellInfo: {
-              classType,
-              className,
-              icon,
-              displayedClassName: name,
-              position: {
-                x: newX,
-                y: newY,
-              },
-            },
+            displayName: name,
+            classType,
+            className,
           };
 
-          const getPrivateTopicDisplayNames = topics => {
-            const topicIndex = topics
-              .map(topic => topic.tags)
-              .filter(topic => topic.type === 'private')
-              .map(topic => topic.displayName.replace('T', ''))
-              .sort();
-
-            if (topicIndex.length === 0) return 'T1';
-            return `T${Number(topicIndex.pop()) + 1}`;
-          };
+          setCellInfo(prevState => ({
+            ...prevState,
+            ...params,
+          }));
 
           if (isTopic) {
-            const privateTopicName = generate.serviceName({ length: 5 });
+            const privateTopicName = generate.serviceName();
             const isPublicTopic = className === 'publicTopic';
+
             const displayName = isPublicTopic
               ? name
-              : getPrivateTopicDisplayNames(topicsData);
+              : getPrivateTopicDisplayNames(paperApi.getCells('topic'));
 
-            let topicGroup;
-            if (!isPublicTopic) {
-              isWorking = true;
-              const { data } = await createTopic({
-                name: privateTopicName,
-                tags: {
-                  type: 'private',
-                  displayName,
-                },
-              });
-
-              if (data) {
-                topicGroup = data.group;
-              }
-            }
-
-            await updatePipeline({
-              name: currentPipeline.name,
-              endpoints: [
-                ...currentPipeline.endpoints,
-                {
-                  name: privateTopicName,
-                  group: topicGroup,
-                  kind: KIND.topic,
-                },
-              ],
+            paperApi.addElement({
+              ...params,
+              name: privateTopicName,
+              displayName,
             });
-
-            graph.current.addCell(
-              TopicGraph({
-                name: privateTopicName,
-                graph,
-                paper,
-                stopTopic,
-                deleteTopic,
-                title: displayName,
-                cellInfo: params.cellInfo,
-                currentPipeline,
-                updatePipeline,
-              }),
-            );
           } else {
             openAddConnectorDialog(true);
 
             // A temporary cell which gives users a better idea of
             // where the graph will be added at. It will be removed
             // once the real graph is added
-            const newCell = ConnectorGraph(params);
-            graph.current.addCell(newCell);
+            paperApi.addElement({
+              ...params,
+              isTemporary: true,
+              name: 'newgraph',
+            });
           }
         }
         // Clean up
@@ -371,7 +282,17 @@ export const enableDragAndDrop = params => {
   });
 };
 
-export const getConnectorInfo = worker => {
+function getPrivateTopicDisplayNames(topicCells) {
+  const topicIndex = topicCells
+    .filter(topicCell => topicCell.attributes.className === 'privateTopic')
+    .map(topicCell => topicCell.attributes.displayName.replace('T', ''))
+    .sort((a, b) => a - b);
+
+  if (topicIndex.length === 0) return 'T1';
+  return `T${Number(topicIndex.pop()) + 1}`;
+}
+
+export function getConnectorInfo(worker) {
   let sources = [];
   let sinks = [];
 
@@ -392,4 +313,4 @@ export const getConnectorInfo = worker => {
   }
 
   return [sources, sinks];
-};
+}

@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import TopicGraph from './TopicGraph';
+import Paper from './Paper';
 
-export { TopicGraph };
+export default Paper;

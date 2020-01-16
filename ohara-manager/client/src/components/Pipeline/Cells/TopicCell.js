@@ -15,30 +15,28 @@
  */
 
 import React from 'react';
-import { renderToString } from 'react-dom/server';
-import * as joint from 'jointjs';
-import $ from 'jquery';
-import _ from 'lodash';
-import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
 import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
+import { renderToString } from 'react-dom/server';
+import * as joint from 'jointjs';
+import _ from 'lodash';
+import $ from 'jquery';
 
-const TopicGraph = params => {
+import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
+import { CELL_STATUS } from 'const';
+
+const TopicCell = options => {
   const {
-    title,
-    paper,
-    graph,
-    isTemporary = false,
-    isFetch = false,
-    cellInfo,
     id,
-    stopTopic,
-    deleteTopic,
     name,
-    updatePipeline,
-    currentPipeline,
-  } = params;
-  const { classType, className, position } = cellInfo;
+    displayName,
+    classType,
+    className,
+    position,
+    paperApi,
+    onCellRemove,
+    status = CELL_STATUS.stopped,
+  } = options;
 
   let link;
 
@@ -66,51 +64,34 @@ const TopicGraph = params => {
     template: `
       <div class="topic">
         ${className === 'publicTopic' ? publicIcon : privateIcon}
-        <div class="title"></div>
+        <div class="display-name">${displayName}</div>
         <div class="topic-menu">
-          <Button id="topic-link">${linkIcon}</Button>
-          <Button id="topic-remove">${removeIcon}</Button> 
+          <Button class="topic-link">${linkIcon}</Button>
+          <Button class="topic-remove">${removeIcon}</Button> 
         </div>
       </div>`,
     init() {
       this.listenTo(this.model, 'change', this.updateBox);
     },
     onRender() {
-      if (this.$box) this.$box.remove();
       const boxMarkup = joint.util.template(this.template)();
       const $box = (this.$box = $(boxMarkup));
       this.listenTo(this.paper, 'scale translate', this.updateBox);
-
       $box.appendTo(this.paper.el);
 
-      const modelId = this.model.id;
-      this.$box.find('#topic-link').on('mousedown', function() {
-        link = new joint.shapes.standard.Link();
-        link.source({ id: modelId });
+      const $linkButton = this.$box.find('.topic-link');
+      const $removeButton = this.$box.find('.topic-remove');
 
-        // The link doesn't show up in the right position, set it to
-        // `transparent` and reset it back in the mousemove event
-        link.attr({ line: { stroke: 'transparent' } });
-        link.addTo(graph.current);
+      const id = this.model.id;
+      const name = this.attributes.name;
+
+      $linkButton.on('mousedown', () => {
+        paperApi.addCell(id);
       });
 
-      this.$box
-        .find('#topic-remove')
-        .on('click', _.bind(this.model.remove, this.model));
-
-      this.$box.find('#topic-remove').on('mousedown', async function() {
-        await stopTopic(name);
-        await deleteTopic(name);
-
-        const removedEndpoints = currentPipeline.endpoints.filter(
-          endpoint => endpoint.name !== name,
-        );
-
-        await updatePipeline({
-          name: currentPipeline.name,
-          endpoints: removedEndpoints,
-          tags: graph.current.toJSON(),
-        });
+      $removeButton.on('click', () => {
+        if (_.isFunction(onCellRemove)) onCellRemove(id, name);
+        this.$box.remove();
       });
 
       this.updateBox();
@@ -119,7 +100,7 @@ const TopicGraph = params => {
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
       const bBox = this.getBBox({ useModelGeometry: true });
-      const scale = paper.current.scale();
+      const scale = paperApi.scale();
 
       this.$box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
@@ -130,17 +111,15 @@ const TopicGraph = params => {
         top: bBox.y,
       });
 
-      this.$box.find('.title').text(this.model.get('title'));
-      this.$box
-        .find('.topic-menu')
-        .attr('style', `display:${this.model.get('menuDisplay')};`);
+      const displayValue = this.model.get('isMenuDisplayed') ? 'block' : 'none';
+      this.$box.find('.display-name').text(this.model.get('displayName'));
+      this.$box.find('.topic-menu').attr('style', `display: ${displayValue};`);
+
       if (this.paper) {
         this.paper.$document.on('mousemove', function(event) {
           if (link) {
             if (!link.get('target').id) {
-              const localPoint = paper.current.paperToLocalPoint(
-                paper.current.translate(),
-              );
+              const localPoint = paperApi.getLocalPoint();
 
               // 290: AppBar and Navigator width
               // 72: Toolbar height
@@ -166,25 +145,15 @@ const TopicGraph = params => {
   });
 
   return new joint.shapes.html.Element({
-    id: id ? id : undefined,
-    size: { width: 56, height: 76 },
-    title,
-    menuDisplay: 'none',
-    position,
+    id: id ? id : undefined, // undefined -> id is controlled by JointJS
+    name,
     classType,
-    isTemporary,
-    isFetch,
-    params: _.omit(params, [
-      'graph',
-      'paper',
-      'openSettingDialog',
-      'setData',
-      'classInfo',
-      'stopTopic',
-      'deleteTopic',
-      'updatePipeline',
-      'currentPipeline',
-    ]),
+    className,
+    displayName,
+    position,
+    status,
+    size: { width: 56, height: 76 },
+    isMenuDisplayed: false,
   });
 };
-export default TopicGraph;
+export default TopicCell;

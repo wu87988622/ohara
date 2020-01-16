@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Draggable from 'react-draggable';
 import Typography from '@material-ui/core/Typography';
@@ -30,7 +30,6 @@ import * as joint from 'jointjs';
 
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
-import ConnectorGraph from '../Graph/Connector/ConnectorGraph';
 import ToolboxUploadButton from './ToolboxUploadButton';
 import * as utils from './toolboxUtils';
 import * as context from 'context';
@@ -38,56 +37,40 @@ import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
 import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
-import { getKey } from 'utils/object';
+import { PaperContext } from '../Pipeline';
 
 const Toolbox = props => {
   const {
     isOpen: isToolboxOpen,
     expanded,
-    handleClose,
-    handleClick,
-    paper,
-    graph,
     toolboxKey,
-    setToolboxExpanded,
-    initToolboxList,
+    pipelineDispatch,
   } = props;
 
   const {
     currentWorker,
     currentWorkspace,
-    currentBroker,
     currentPipeline,
   } = context.useWorkspace();
-  const { updatePipeline } = context.usePipelineActions();
-  const { createStream } = context.useStreamActions();
   const { createFile } = context.useFileActions();
-  const {
-    startConnector,
-    stopConnector,
-    deleteConnector,
-  } = context.useConnectorActions();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
-  const { open: openSettingDialog, setData } = context.useGraphSettingDialog();
-  const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
-  const { createConnector } = context.useConnectorActions();
   const showMessage = context.useSnackbar();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [zIndex, setZIndex] = useState(2);
-  const [searchResults, setSearchResults] = useState(null);
-  const [cellInfo, setCellInfo] = useState({
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [zIndex, setZIndex] = React.useState(2);
+  const [searchResults, setSearchResults] = React.useState(null);
+  const [cellInfo, setCellInfo] = React.useState({
     classType: '',
     className: '',
-    displayedClassName: '',
-    icon: '',
+    displayName: '',
     position: {
       x: 0,
       y: 0,
     },
   });
-  const { streams, files: streamFiles } = useFiles();
+  const paperApi = React.useContext(PaperContext);
+  const { streams } = useFiles();
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
 
@@ -106,7 +89,6 @@ const Toolbox = props => {
     panelAddButtonRef,
   } = useToolboxHeight({
     expanded,
-    paper,
     searchResults,
     connectors,
   });
@@ -121,105 +103,32 @@ const Toolbox = props => {
 
   const removeTempCell = () => {
     // Remove temporary cells
-    const tempCells = graph.current
+    paperApi
       .getCells()
-      .filter(cell => Boolean(cell.attributes.isTemporary));
-    tempCells.forEach(cell => cell.remove());
+      .filter(cell => cell.attributes.isTemporary)
+      .forEach(cell => cell.remove());
   };
 
   const handleAddGraph = async newGraphName => {
     setZIndex(zIndex + 1);
 
     const sharedParams = {
-      title: newGraphName,
-      graph,
-      paper,
-      cellInfo,
+      displayName: newGraphName,
+      ...cellInfo,
     };
 
     switch (cellInfo.classType) {
       case KIND.stream:
-        const [targetStream] = streamFiles
-          .filter(streamFile =>
-            streamFile.classInfos.find(
-              classInfo => classInfo.className === cellInfo.className,
-            ),
-          )
-          .map(streamFile => {
-            const stream = {
-              ...streamFile,
-              classInfos: streamFile.classInfos.filter(
-                classInfo => classInfo.className === cellInfo.className,
-              ),
-            };
-            return stream;
-          });
-        const requestParams = {
-          name: newGraphName,
-          jarKey: { name: targetStream.name, group: targetStream.group },
-          brokerClusterKey: getKey(currentBroker),
-          connector__class: cellInfo.className,
-        };
-        const definition = targetStream.classInfos[0];
-
-        createStream(requestParams, definition);
-        await updatePipeline({
-          name: currentPipeline.name,
-          endpoints: [
-            ...currentPipeline.endpoints,
-            {
-              name: requestParams.name,
-              kind: KIND.stream,
-            },
-          ],
-        });
-
-        graph.current.addCell(
-          ConnectorGraph({
-            ...sharedParams,
-          }),
-        );
+        paperApi.addElement(sharedParams);
 
         break;
 
       case KIND.source:
       case KIND.sink:
-        const { classInfos } = currentWorker;
-
-        const connectorRes = await createConnector({
+        paperApi.addElement({
+          ...sharedParams,
           name: newGraphName,
-          connector__class: cellInfo.className,
         });
-
-        await updatePipeline({
-          name: currentPipeline.name,
-          endpoints: [
-            ...currentPipeline.endpoints,
-            {
-              name: connectorRes.data.name,
-              kind: connectorRes.data.kind,
-            },
-          ],
-        });
-
-        const [targetConnector] = classInfos.filter(
-          classInfo => classInfo.className === cellInfo.className,
-        );
-
-        graph.current.addCell(
-          ConnectorGraph({
-            ...sharedParams,
-            openSettingDialog,
-            setData,
-            classInfo: targetConnector,
-            name: connectorRes.data.name,
-            startConnector,
-            stopConnector,
-            deleteConnector,
-            updatePipeline,
-            currentPipeline,
-          }),
-        );
         break;
 
       default:
@@ -230,12 +139,12 @@ const Toolbox = props => {
     setIsOpen(false);
   };
 
-  let sourceGraph = useRef(null);
-  let sinkGraph = useRef(null);
-  let topicGraph = useRef(null);
-  let streamGraph = useRef(null);
+  let sourceGraph = React.useRef(null);
+  let sinkGraph = React.useRef(null);
+  let topicGraph = React.useRef(null);
+  let streamGraph = React.useRef(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!connectors.sources || !connectors.sinks) return;
 
     const renderToolbox = () => {
@@ -288,35 +197,16 @@ const Toolbox = props => {
       // Add the ability to drag and drop connectors/streams/topics
       utils.enableDragAndDrop({
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
-        paper,
         setCellInfo,
         setIsOpen,
-        graph,
         currentPipeline,
         topicsData,
-        createTopic,
-        stopTopic,
-        deleteTopic,
-        updatePipeline,
+        paperApi,
       });
     };
 
     renderToolbox();
-  }, [
-    createTopic,
-    connectors,
-    currentBroker,
-    currentPipeline,
-    graph,
-    paper,
-    searchResults,
-    topicsData,
-    updatePipeline,
-    initToolboxList,
-    topics,
-    stopTopic,
-    deleteTopic,
-  ]);
+  }, [connectors, currentPipeline, paperApi, searchResults, topicsData]);
 
   return (
     <Draggable
@@ -329,7 +219,9 @@ const Toolbox = props => {
         <div className="toolbox-header" ref={toolboxHeaderRef}>
           <div className="title toolbox-title">
             <Typography variant="subtitle1">Toolbox</Typography>
-            <IconButton onClick={handleClose}>
+            <IconButton
+              onClick={() => pipelineDispatch({ type: 'closeToolbox' })}
+            >
               <CloseIcon />
             </IconButton>
           </div>
@@ -337,7 +229,7 @@ const Toolbox = props => {
           <ToolboxSearch
             searchData={Object.values(connectors).flat()}
             setSearchResults={setSearchResults}
-            setToolboxExpanded={setToolboxExpanded}
+            pipelineDispatch={pipelineDispatch}
           />
         </div>
 
@@ -349,7 +241,9 @@ const Toolbox = props => {
             <ExpansionPanelSummary
               ref={panelSummaryRef}
               expandIcon={<ExpandMoreIcon />}
-              onClick={() => handleClick('source')}
+              onClick={() =>
+                pipelineDispatch({ type: 'setToolbox', payload: 'source' })
+              }
             >
               <Typography variant="subtitle1">Source</Typography>
             </ExpansionPanelSummary>
@@ -370,7 +264,9 @@ const Toolbox = props => {
             <ExpansionPanelSummary
               className="panel-title"
               expandIcon={<ExpandMoreIcon />}
-              onClick={() => handleClick('topic')}
+              onClick={() =>
+                pipelineDispatch({ type: 'setToolbox', payload: 'topic' })
+              }
             >
               <Typography variant="subtitle1">Topic</Typography>
             </ExpansionPanelSummary>
@@ -394,7 +290,9 @@ const Toolbox = props => {
             <ExpansionPanelSummary
               className="panel-title"
               expandIcon={<ExpandMoreIcon />}
-              onClick={() => handleClick('stream')}
+              onClick={() =>
+                pipelineDispatch({ type: 'setToolbox', payload: 'stream' })
+              }
             >
               <Typography variant="subtitle1">Stream</Typography>
             </ExpansionPanelSummary>
@@ -415,7 +313,9 @@ const Toolbox = props => {
             <ExpansionPanelSummary
               className="panel-title"
               expandIcon={<ExpandMoreIcon />}
-              onClick={() => handleClick('sink')}
+              onClick={() =>
+                pipelineDispatch({ type: 'setToolbox', payload: 'sink' })
+              }
             >
               <Typography variant="subtitle1">Sink</Typography>
             </ExpansionPanelSummary>
@@ -449,8 +349,7 @@ const Toolbox = props => {
 
 Toolbox.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
-  handleClick: PropTypes.func.isRequired,
+  pipelineDispatch: PropTypes.func.isRequired,
   expanded: PropTypes.shape({
     topic: PropTypes.bool.isRequired,
     source: PropTypes.bool.isRequired,
@@ -458,10 +357,6 @@ Toolbox.propTypes = {
     stream: PropTypes.bool.isRequired,
   }).isRequired,
   toolboxKey: PropTypes.number.isRequired,
-  setToolboxExpanded: PropTypes.func.isRequired,
-  initToolboxList: PropTypes.number.isRequired,
-  paper: PropTypes.any,
-  graph: PropTypes.any,
 };
 
 export default Toolbox;

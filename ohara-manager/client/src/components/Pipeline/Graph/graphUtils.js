@@ -16,7 +16,6 @@
 
 import { KIND } from 'const';
 import * as generate from 'utils/generate';
-import { TopicGraph } from '../Graph/Topic';
 
 const getPrivateTopicDisplayNames = topics => {
   const topicIndex = topics
@@ -29,29 +28,14 @@ const getPrivateTopicDisplayNames = topics => {
   return `T${Number(topicIndex.pop()) + 1}`;
 };
 
-export const updateCurrentCell = currentCell => {
-  if (currentCell.current) {
-    currentCell.current = {
-      cellView: currentCell.current.cellView,
-      bBox: {
-        ...currentCell.current.cellView.getBBox(),
-        ...currentCell.current.cellView.getBBox().center(),
-      },
-    };
-  }
-};
-
 export const createConnection = async params => {
   const {
     currentLink: sourceLink,
     showMessage,
     graph,
-    paper,
     cellView,
     setInitToolboxList,
     createTopic,
-    stopTopic,
-    deleteTopic,
     currentTopic,
     updatePipeline,
     currentPipeline,
@@ -236,26 +220,17 @@ export const createConnection = async params => {
         ],
       });
 
-      graph.current.addCell(
-        TopicGraph({
-          name: privateTopicName,
-          graph,
-          paper,
-          stopTopic,
-          deleteTopic,
-          title: displayName,
-          cellInfo: {
-            classType: KIND.topic,
-            className: 'privateTopic',
-            position: {
-              x: topicX,
-              y: topicY,
-            },
-          },
-          currentPipeline,
-          updatePipeline,
-        }),
-      );
+      graph.current.addCell({
+        name: privateTopicName,
+        graph,
+        title: displayName,
+        classType: KIND.topic,
+        className: 'privateTopic',
+        position: {
+          x: topicX,
+          y: topicY,
+        },
+      });
 
       await updateConnector({
         name: sourceName,

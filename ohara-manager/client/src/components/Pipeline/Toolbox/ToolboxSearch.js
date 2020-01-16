@@ -36,11 +36,7 @@ const StyledToolboxSearch = styled.div(
   `,
 );
 
-const ToolboxSearch = ({
-  searchData,
-  setSearchResults,
-  setToolboxExpanded,
-}) => {
+const ToolboxSearch = ({ searchData, setSearchResults, pipelineDispatch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const prevSearchTerm = usePrevious(debouncedSearchTerm);
@@ -66,14 +62,14 @@ const ToolboxSearch = ({
       });
 
       // Open panels that contain results
-      setToolboxExpanded(prevState => {
-        return {
-          ...prevState,
+      pipelineDispatch({
+        type: 'setMultiplePanels',
+        payload: {
           source: !isEmpty(sources),
           sink: !isEmpty(sinks),
           topic: !isEmpty(topics),
           stream: !isEmpty(streams),
-        };
+        },
       });
 
       setSearchResults({ sources, sinks, topics, streams });
@@ -82,10 +78,10 @@ const ToolboxSearch = ({
     }
   }, [
     debouncedSearchTerm,
+    pipelineDispatch,
     prevSearchTerm,
     searchData,
     setSearchResults,
-    setToolboxExpanded,
   ]);
 
   return (
@@ -106,7 +102,7 @@ const ToolboxSearch = ({
 ToolboxSearch.propTypes = {
   searchData: PropTypes.array,
   setSearchResults: PropTypes.func.isRequired,
-  setToolboxExpanded: PropTypes.func.isRequired,
+  pipelineDispatch: PropTypes.func.isRequired,
 };
 
 export default ToolboxSearch;

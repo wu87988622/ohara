@@ -35,23 +35,19 @@ import { useHistory } from 'react-router-dom';
 import _ from 'lodash';
 
 import { KIND } from 'const';
-import * as context from 'context';
 import { Progress } from 'components/common/Progress';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
-import { useDeleteServices } from './ToolbarHooks';
+import { useDeleteServices, useZoom } from './ToolbarHooks';
 import { Tooltip } from 'components/common/Tooltip';
+import { PaperContext } from '../Pipeline';
+import * as context from 'context';
 
 const Toolbar = props => {
   const {
-    paperScale,
     handleToolboxOpen,
     handleToolbarClick,
     isToolboxOpen,
-    handleZoom,
-    handleFit,
-    handleCenter,
-    hasSelectedCell,
     setIsMetricsOn,
     isMetricsOn,
   } = props;
@@ -59,13 +55,17 @@ const Toolbar = props => {
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
   const [isDeletingPipeline, setIsDeletingPipeline] = React.useState(false);
+
   const { deletePipeline } = context.usePipelineActions();
   const { startConnector, stopConnector } = context.useConnectorActions();
   const { startStream, stopStream } = context.useStreamActions();
   const { currentWorkspace, currentPipeline, error } = context.useWorkspace();
+  const { selectedCell } = context.usePipelineState();
 
   const { steps, activeStep, deleteServices } = useDeleteServices();
+  const { setZoom, scale, setScale } = useZoom();
   const history = useHistory();
+  const paperApi = React.useContext(PaperContext);
 
   const handleZoomClick = event => {
     setZoomAnchorEl(event.currentTarget);
@@ -75,9 +75,9 @@ const Toolbar = props => {
     setZoomAnchorEl(null);
   };
 
-  const handleZoomItemClick = newScale => () => {
-    handleZoom(newScale);
-    handleZoomClose();
+  const handleZoom = (scale, instruction) => {
+    setZoom(scale, instruction);
+    if (instruction === 'fromDropdown') handleZoomClose();
   };
 
   const handlePipelineControlsClick = event => {
@@ -140,8 +140,8 @@ const Toolbar = props => {
     handleToolbarClick(panel);
   };
 
-  const getZoomDisplayedValue = value => {
-    const percentage = value * 100;
+  const getZoomDisplayedValue = scale => {
+    const percentage = scale * 100;
     return `${Math.trunc(percentage)}%`;
   };
 
@@ -176,8 +176,8 @@ const Toolbar = props => {
         <div className="zoom">
           <ButtonGroup size="small">
             <Button
-              onClick={() => handleZoom(paperScale, 'out')}
-              disabled={paperScale <= 0.02}
+              onClick={() => handleZoom(scale, 'out')}
+              disabled={scale <= 0.02}
             >
               <Tooltip title="Zoom out">
                 <RemoveIcon color="action" />
@@ -189,11 +189,11 @@ const Toolbar = props => {
               color="default"
               size="small"
             >
-              {getZoomDisplayedValue(paperScale)}
+              {getZoomDisplayedValue(scale)}
             </Button>
             <Button
-              onClick={() => handleZoom(paperScale, 'in')}
-              disabled={paperScale >= 2}
+              onClick={() => handleZoom(scale, 'in')}
+              disabled={scale >= 2}
             >
               <Tooltip title="Zoom in">
                 <AddIcon color="action" />
@@ -208,16 +208,25 @@ const Toolbar = props => {
             open={Boolean(zoomAnchorEl)}
             onClose={handleZoomClose}
           >
-            <MenuItem onClick={handleZoomItemClick(0.5)}>50%</MenuItem>
-            <MenuItem onClick={handleZoomItemClick(1)}>100%</MenuItem>
-            <MenuItem onClick={handleZoomItemClick(2)}>200%</MenuItem>
+            <MenuItem onClick={() => handleZoom(0.5, 'fromDropdown')}>
+              50%
+            </MenuItem>
+            <MenuItem onClick={() => handleZoom(1, 'fromDropdown')}>
+              100%
+            </MenuItem>
+            <MenuItem onClick={() => handleZoom(2, 'fromDropdown')}>
+              200%
+            </MenuItem>
           </Menu>
         </div>
 
         <div className="fit">
           <Tooltip title="Resize the paper to fit the content">
             <Button
-              onClick={handleFit}
+              onClick={() => {
+                const newScale = paperApi.fit();
+                setScale(newScale);
+              }}
               variant="outlined"
               color="default"
               size="small"
@@ -231,11 +240,11 @@ const Toolbar = props => {
         <div className="center">
           <Tooltip title="Move selected graph to the center">
             <Button
-              onClick={handleCenter}
+              onClick={() => paperApi.center(selectedCell)}
               variant="outlined"
               color="default"
               size="small"
-              disabled={!hasSelectedCell}
+              disabled={!selectedCell}
             >
               <FullscreenExitIcon color="action" />
             </Button>
@@ -304,11 +313,6 @@ Toolbar.propTypes = {
   handleToolboxOpen: PropTypes.func.isRequired,
   handleToolbarClick: PropTypes.func.isRequired,
   isToolboxOpen: PropTypes.bool.isRequired,
-  paperScale: PropTypes.number.isRequired,
-  handleZoom: PropTypes.func.isRequired,
-  handleFit: PropTypes.func.isRequired,
-  handleCenter: PropTypes.func.isRequired,
-  hasSelectedCell: PropTypes.bool.isRequired,
   setIsMetricsOn: PropTypes.func.isRequired,
   isMetricsOn: PropTypes.bool,
 };
