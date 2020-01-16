@@ -59,5 +59,10 @@ export const Wrapper = styled.div(
     .Resizer.disabled {
       cursor: default;
     }
+
+    .pane {
+      width: 100%;
+      height: 100%;
+    }
   `,
 );

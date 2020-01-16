@@ -18,7 +18,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useSnackbar } from 'context/SnackbarContext';
-import { useApp } from 'context';
+import { useApp, useEventLogActions } from 'context';
 import { createApi as createBrokerApi } from './brokerApi';
 import { createApi as createFileApi } from './fileApi';
 import { createApi as createNodeApi } from './nodeApi';
@@ -49,6 +49,7 @@ const ApiProvider = ({ children }) => {
     workspaceKey,
   } = useApp();
   const showMessage = useSnackbar();
+  const { createEventLog } = useEventLogActions();
 
   const brokerApi = useMemo(
     () => createBrokerApi({ brokerGroup, zookeeperGroup, showMessage }),
@@ -79,8 +80,8 @@ const ApiProvider = ({ children }) => {
   const nodeApi = useMemo(() => createNodeApi({ showMessage }), [showMessage]);
 
   const pipelineApi = useMemo(
-    () => createPipelineApi({ pipelineGroup, showMessage }),
-    [pipelineGroup, showMessage],
+    () => createPipelineApi({ pipelineGroup, showMessage, createEventLog }),
+    [pipelineGroup, showMessage, createEventLog],
   );
 
   const streamApi = useMemo(

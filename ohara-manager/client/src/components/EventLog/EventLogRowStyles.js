@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-export const EDIT_WORKSPACE_DIALOG = 'editWorkspace';
-export const ADD_TOPIC_DIALOG = 'addTopic';
-export const VIEW_TOPIC_DIALOG = 'viewTopic';
-export const LIST_NODE_DIALOG = 'listNode';
-export const VIEW_NODE_DIALOG = 'viewNode';
-export const EDIT_NODE_DIALOG = 'editNode';
-export const ADD_NODE_DIALOG = 'addNode';
-export const DEV_TOOL_DIALOG = 'devTool';
-export const EVENT_LOG_DIALOG = 'eventLog';
-export const GRAPH_SETTING_DIALOG = 'graphSetting';
-export const LIST_WORKSPACES_DIALOG = 'listWorkspace';
-export const ADD_PLUGIN_DIALOG = 'addPlugin';
+import styled, { css } from 'styled-components';
+
+export default styled.div(
+  ({ theme }) => css`
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: ${theme.spacing(0.5, 1.5, 0.25, 3)};
+    border-bottom: 1px solid ${theme.palette.divider};
+
+    &.default {
+      color: ${theme.palette.error.main};
+    }
+
+    &.error {
+      color: ${theme.palette.error.main};
+    }
+
+    .date {
+      min-width: ${theme.spacing(15)}px;
+      text-align: right;
+    }
+  `,
+);

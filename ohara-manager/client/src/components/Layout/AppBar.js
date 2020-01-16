@@ -37,13 +37,16 @@ const AppBar = () => {
   const { setWorkspaceName, setPipelineName } = context.useApp();
   const { workspaces } = context.useWorkspace();
   const { setIsOpen: setIsNewWorkspaceOpen } = context.useNewWorkspace();
-  const { open: openListNodeDialog } = context.useListNodeDialog();
+  const { toggle: toggleNodeList } = context.useListNodeDialog();
   const {
-    open: openDevToolDialog,
-    isOpen: isDevToolDialogOpen,
-    close: closeDevToolDialog,
+    toggle: toggleDevTool,
+    close: closeDevTool,
   } = context.useDevToolDialog();
-  const { open: openListWorkspacesDialog } = context.useListWorkspacesDialog();
+  const {
+    toggle: toggleEventLog,
+    close: closeEventLog,
+  } = context.useEventLogDialog();
+  const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
 
   const prevWorkspaceName = usePrevious(workspaceName);
   const prevPipelineName = usePrevious(pipelineName);
@@ -97,14 +100,20 @@ const AppBar = () => {
           <Tooltip title="Workspace list" placement="right">
             <IconButton
               className="workspace-list item"
-              onClick={openListWorkspacesDialog}
+              onClick={toggleWorkspaceList}
             >
               <AppsIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Event logs" placement="right">
-            <IconButton disabled className="event-logs item">
+            <IconButton
+              className="event-logs item"
+              onClick={() => {
+                toggleEventLog();
+                closeDevTool();
+              }}
+            >
               <AssignmentIcon />
             </IconButton>
           </Tooltip>
@@ -112,16 +121,17 @@ const AppBar = () => {
           <Tooltip title="Developer Tools" placement="right">
             <IconButton
               className="developer-tools item"
-              onClick={
-                isDevToolDialogOpen ? closeDevToolDialog : openDevToolDialog
-              }
+              onClick={() => {
+                toggleDevTool();
+                closeEventLog();
+              }}
             >
               <DeveloperModeIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Node list" placement="right">
-            <IconButton className="node-list item" onClick={openListNodeDialog}>
+            <IconButton className="node-list item" onClick={toggleNodeList}>
               <StorageIcon />
             </IconButton>
           </Tooltip>

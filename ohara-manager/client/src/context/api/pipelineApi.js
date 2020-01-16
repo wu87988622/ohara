@@ -19,7 +19,7 @@ import * as pipelineApi from 'api/pipelineApi';
 import { validate } from './utils';
 
 export const createApi = context => {
-  const { pipelineGroup, showMessage } = context;
+  const { pipelineGroup, showMessage, createEventLog } = context;
   if (!pipelineGroup) return;
 
   const group = pipelineGroup;
@@ -46,8 +46,10 @@ export const createApi = context => {
         const params = { ...values, group };
         const res = await pipelineApi.create(params);
         if (!isEmpty(res.errors)) {
+          createEventLog(res, 'error');
           throw new Error(res.title);
         }
+        createEventLog(res);
         showMessage(res.title);
         return res.data;
       } catch (e) {
@@ -75,8 +77,10 @@ export const createApi = context => {
         const params = { name, group };
         const res = await pipelineApi.remove(params);
         if (!isEmpty(res.errors)) {
+          createEventLog(res, 'error');
           throw new Error(res.title);
         }
+        createEventLog(res);
         showMessage(res.title);
         return params;
       } catch (e) {

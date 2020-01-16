@@ -33,6 +33,13 @@ export const openDialogCreator = (_, dispatch) => (name, data) =>
 export const closeDialogCreator = (_, dispatch) => name =>
   dispatch(closeDialogRoutine.trigger({ name }));
 
+export const toggleDialogCreator = (state, dispatch) => name =>
+  dispatch(
+    some(state.dialogs, { name })
+      ? closeDialogRoutine.trigger({ name })
+      : openDialogRoutine.trigger({ name }),
+  );
+
 export const setDialogDataCreator = (_, dispatch) => (name, data) =>
   dispatch(setDialogDataRoutine.trigger({ name, data }));
 

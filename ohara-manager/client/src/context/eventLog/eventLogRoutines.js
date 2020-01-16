@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-export const EDIT_WORKSPACE_DIALOG = 'editWorkspace';
-export const ADD_TOPIC_DIALOG = 'addTopic';
-export const VIEW_TOPIC_DIALOG = 'viewTopic';
-export const LIST_NODE_DIALOG = 'listNode';
-export const VIEW_NODE_DIALOG = 'viewNode';
-export const EDIT_NODE_DIALOG = 'editNode';
-export const ADD_NODE_DIALOG = 'addNode';
-export const DEV_TOOL_DIALOG = 'devTool';
-export const EVENT_LOG_DIALOG = 'eventLog';
-export const GRAPH_SETTING_DIALOG = 'graphSetting';
-export const LIST_WORKSPACES_DIALOG = 'listWorkspace';
-export const ADD_PLUGIN_DIALOG = 'addPlugin';
+import { createRoutine } from 'redux-routines';
+
+export const fetchEventLogsRoutine = createRoutine('FETCH_EVENT_LOGS');
+export const createEventLogRoutine = createRoutine('CREATE_EVENT_LOG');
+export const clearEventLogsRoutine = createRoutine('CLEAR_EVENT_LOGS');

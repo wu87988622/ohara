@@ -102,11 +102,6 @@ export const StyledAppBar = styled.div(
         }
       }
 
-      /* Feature is disabled because it's not implemented in 0.9 */
-      .event-logs {
-        display: none;
-      }
-
       .node-list {
         margin-bottom: ${theme.spacing(1)}px;
       }

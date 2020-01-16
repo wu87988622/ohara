@@ -21,10 +21,13 @@ import AppBar from './AppBar';
 import * as context from 'context';
 import { Pipeline, Navigator } from 'components/Pipeline';
 import { DevToolDialog } from 'components/DevTool';
+import EventLog from 'components/EventLog';
 import { Wrapper } from './AppLayoutStyles';
 
 const AppLayout = () => {
   const { isOpen: isDevToolOpen } = context.useDevToolDialog();
+  const { isOpen: isEventLogOpen } = context.useEventLogDialog();
+
   return (
     <Wrapper>
       <SplitPane split="vertical" defaultSize={64} allowResize={false}>
@@ -32,9 +35,9 @@ const AppLayout = () => {
         <SplitPane
           split="horizontal"
           primary="second"
-          defaultSize={isDevToolOpen ? 240 : 0}
-          minSize={isDevToolOpen ? 80 : 0}
-          maxSize={isDevToolOpen ? 480 : 0}
+          defaultSize={isDevToolOpen || isEventLogOpen ? 240 : 0}
+          minSize={isDevToolOpen || isEventLogOpen ? 80 : 0}
+          maxSize={isDevToolOpen || isEventLogOpen ? 480 : 0}
         >
           <SplitPane
             split="vertical"
@@ -45,7 +48,9 @@ const AppLayout = () => {
             <Navigator />
             <Pipeline />
           </SplitPane>
-          <DevToolDialog />
+          {isEventLogOpen && <EventLog />}
+          {isDevToolOpen && <DevToolDialog />}
+          <div />
         </SplitPane>
       </SplitPane>
     </Wrapper>

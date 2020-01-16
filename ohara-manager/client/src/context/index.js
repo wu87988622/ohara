@@ -20,6 +20,7 @@ export * from 'context/broker/BrokerContext';
 export * from 'context/configurator/ConfiguratorContext';
 export * from 'context/connector/ConnectorContext';
 export * from 'context/dialog/DialogContext';
+export * from 'context/eventLog/EventLogContext';
 export * from 'context/file/FileContext';
 export * from 'context/log/LogContext';
 export * from 'context/node/NodeContext';

@@ -17,15 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import {
-  isDialogOpenCreator,
-  openDialogCreator,
-  closeDialogCreator,
-  getDialogDataCreator,
-  setDialogDataCreator,
-  closePeakDialogCreator,
-  closeAllDialogCreator,
-} from './dialogActions';
+import * as actions from './dialogActions';
 import * as dialogNames from './dialogNames';
 import { reducer, initialState } from './dialogReducer';
 
@@ -68,13 +60,14 @@ const useDialogActions = () => {
   const state = useDialogState();
   const dispatch = useDialogDispatch();
   return {
-    isDialogOpen: isDialogOpenCreator(state, dispatch),
-    openDialog: openDialogCreator(state, dispatch),
-    closeDialog: closeDialogCreator(state, dispatch),
-    getDialogData: getDialogDataCreator(state, dispatch),
-    setDialogData: setDialogDataCreator(state, dispatch),
-    closePeakDialog: closePeakDialogCreator(state, dispatch),
-    closeAllDialog: closeAllDialogCreator(state, dispatch),
+    isDialogOpen: actions.isDialogOpenCreator(state, dispatch),
+    openDialog: actions.openDialogCreator(state, dispatch),
+    closeDialog: actions.closeDialogCreator(state, dispatch),
+    toggleDialog: actions.toggleDialogCreator(state, dispatch),
+    getDialogData: actions.getDialogDataCreator(state, dispatch),
+    setDialogData: actions.setDialogDataCreator(state, dispatch),
+    closePeakDialog: actions.closePeakDialogCreator(state, dispatch),
+    closeAllDialog: actions.closeAllDialogCreator(state, dispatch),
   };
 };
 
@@ -83,6 +76,7 @@ const createUseDialogActions = name => () => {
     isDialogOpen,
     openDialog,
     closeDialog,
+    toggleDialog,
     getDialogData,
     setDialogData,
     closePeakDialog,
@@ -92,6 +86,7 @@ const createUseDialogActions = name => () => {
     isOpen: isDialogOpen(name),
     open: data => openDialog(name, data),
     close: () => closeDialog(name),
+    toggle: () => toggleDialog(name),
     data: getDialogData(name),
     setData: data => setDialogData(name, data),
     closePeak: closePeakDialog,
@@ -111,6 +106,7 @@ const useViewNodeDialog = createUseDialogActions(dialogNames.VIEW_NODE_DIALOG);
 const useEditNodeDialog = createUseDialogActions(dialogNames.EDIT_NODE_DIALOG);
 const useAddNodeDialog = createUseDialogActions(dialogNames.ADD_NODE_DIALOG);
 const useDevToolDialog = createUseDialogActions(dialogNames.DEV_TOOL_DIALOG);
+const useEventLogDialog = createUseDialogActions(dialogNames.EVENT_LOG_DIALOG);
 const useGraphSettingDialog = createUseDialogActions(
   dialogNames.GRAPH_SETTING_DIALOG,
 );
@@ -135,6 +131,7 @@ export {
   useEditNodeDialog,
   useAddNodeDialog,
   // Others
+  useEventLogDialog,
   useDevToolDialog,
   useGraphSettingDialog,
   useAddPluginDialog,
