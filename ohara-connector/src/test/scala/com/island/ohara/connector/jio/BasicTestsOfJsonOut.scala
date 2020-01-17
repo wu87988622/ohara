@@ -21,7 +21,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, StreamTcpException}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -48,7 +48,8 @@ trait BasicTestsOfJsonOut {
 
   private[this] def props: JioProps = JioProps(freePort)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] val timeout                    = 10 seconds
+  private[this] def result[T](f: Future[T]): T = Await.result(f, timeout)
 
   private[this] def pushData(data: Seq[JioData], topicKey: TopicKey): Unit = pushRawData(data.map(_.row), topicKey)
 
@@ -67,13 +68,20 @@ trait BasicTestsOfJsonOut {
   private[this] def pollData(connectorHostname: String, topicKey: TopicKey): Seq[JioData] = {
     implicit val actorSystem: ActorSystem             = ActorSystem("Executor-TestJsonIn")
     implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
-    try result(
+    def post(): Future[Seq[JioData]] = {
+      val endtime = CommonUtils.current() + timeout.toMillis
       Http()
         .singleRequest(
           HttpRequest(HttpMethods.GET, s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}")
         )
         .flatMap(res => Unmarshal(res.entity).to[Seq[JioData]])
-    )
+        .recoverWith {
+          // kafka doesn't sync the state and state so the state "running" may equal connection failure
+          case _: StreamTcpException if endtime > CommonUtils.current() => post()
+        }
+    }
+
+    try result(post())
     finally Releasable.close(() => Await.result(actorSystem.terminate(), props.closeTimeout))
   }
 
@@ -116,7 +124,9 @@ trait BasicTestsOfJsonOut {
     )
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
+    println(s"[CHIA] testNormalCase v1")
     CommonUtils.await(() => pollData(connectorHostname, topicKey).size == 2, java.time.Duration.ofSeconds(60))
+    println(s"[CHIA] testNormalCase v2")
     val receivedData = pollData(connectorHostname, topicKey)
     receivedData.size shouldBe data.size
     data.foreach { d =>
@@ -131,7 +141,9 @@ trait BasicTestsOfJsonOut {
     val data                          = Row.of(Cell.of("abc", Row.of(Cell.of("a", "b"))))
     pushRawData(Seq(data), topicKey)
     CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
+    println(s"[CHIA] testNestedRowData v1")
     pollData(connectorHostname, topicKey).head.fields("abc").asJsObject.fields("a") shouldBe JsString("b")
+    println(s"[CHIA] testNestedRowData v2")
   }
 
   @Test
@@ -148,8 +160,10 @@ trait BasicTestsOfJsonOut {
         )
     )
     pushData(data, topicKey)
+    println(s"[CHIA] testBufferSize v1")
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
+    println(s"[CHIA] testBufferSize v2")
     val receivedData = pollData(connectorHostname, topicKey)
     // the size of data is larger than buffer size so some data must be discard
     receivedData.size shouldBe bufferSize

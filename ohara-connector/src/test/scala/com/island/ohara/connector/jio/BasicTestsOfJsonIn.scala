@@ -20,7 +20,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, StatusCode}
+import akka.http.scaladsl.model._
+import akka.stream.StreamTcpException
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -47,26 +48,35 @@ trait BasicTestsOfJsonIn {
 
   private[this] def props: JioProps = JioProps(freePort)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] val timeout = 10 seconds
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, timeout)
 
   private[this] def pushData(connectorHostname: String, data: Seq[JioData]): Seq[StatusCode] =
     pushRawData(connectorHostname, data.map(JioData.JIO_DATA_FORMAT.write))
 
   private[this] def pushRawData(connectorHostname: String, data: Seq[JsValue]): Seq[StatusCode] = {
     implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestJsonIn")
-    def post(request: JsValue) = {
-      Marshal(request).to[RequestEntity].flatMap { entity =>
-        Http().singleRequest(
-          HttpRequest(
-            HttpMethods.POST,
-            s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}",
-            entity = entity
+    def post(request: JsValue): Future[HttpResponse] = {
+      val endtime = CommonUtils.current() + timeout.toMillis
+      Marshal(request)
+        .to[RequestEntity]
+        .flatMap { entity =>
+          Http().singleRequest(
+            HttpRequest(
+              HttpMethods.POST,
+              s"http://$connectorHostname:${props.bindingPort}/${props.bindingPath}",
+              entity = entity
+            )
           )
-        )
-      }
+        }
+        .recoverWith {
+          // kafka doesn't sync the state and state so the state "running" may equal connection failure
+          case _: StreamTcpException if endtime > CommonUtils.current() => post(request)
+        }
     }
 
-    try result(Future.sequence(data.map(post))).map(_.status)
+    try data.map(post).map(result).map(_.status)
     finally Releasable.close(() => Await.result(actorSystem.terminate(), props.closeTimeout))
   }
 

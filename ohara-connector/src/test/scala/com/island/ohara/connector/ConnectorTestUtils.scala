@@ -47,25 +47,19 @@ object ConnectorTestUtils {
   def checkConnector(testingUtil: OharaTestUtils, connectorKey: ConnectorKey): Unit =
     checkConnector(testingUtil.workersConnProps(), connectorKey)
 
-  def checkConnector(workersConnProps: String, connectorKey: ConnectorKey): Unit = {
-    CommonUtils.await(
-      () => {
-        val workerClient = WorkerClient(workersConnProps)
-        Await.result(workerClient.activeConnectors(), 10 seconds).contains(connectorKey.connectorNameOnKafka())
-      },
-      TIMEOUT
-    )
+  def checkConnector(workersConnProps: String, connectorKey: ConnectorKey): Unit =
     CommonUtils.await(
       () => {
         val workerClient = WorkerClient(workersConnProps)
         try {
+          Await.result(workerClient.activeConnectors(), 10 seconds).contains(connectorKey.connectorNameOnKafka())
           val status = Await.result(workerClient.status(connectorKey), 10 seconds)
-          status.connector.state == State.RUNNING.name && status.tasks.nonEmpty
+          status.connector.state == State.RUNNING.name && status.tasks.nonEmpty && status.tasks
+            .forall(_.state == State.RUNNING.name)
         } catch {
           case _: Throwable => false
         }
       },
       TIMEOUT
     )
-  }
 }
