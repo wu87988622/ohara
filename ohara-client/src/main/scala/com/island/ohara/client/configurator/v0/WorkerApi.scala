@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
+import com.google.common.collect.ImmutableSet
 import com.island.ohara.client.configurator.QueryRequest
 import com.island.ohara.client.configurator.v0.ClusterAccess.Query
 import com.island.ohara.common.annotations.Optional
@@ -167,6 +168,17 @@ object WorkerApi {
     _.key(OFFSET_TOPIC_REPLICATIONS_KEY)
       .documentation("number of replications for offset topic")
       .positiveNumber(OFFSET_TOPIC_REPLICATIONS_DEFAULT)
+      .build()
+  )
+  //-------------[others]-------------//
+  private[this] val CONNECTOR_CLIENT_POLICY_KEY             = "connector.client.config.override.policy"
+  private[this] val CONNECTOR_CLIENT_POLICY_DEFAULT: String = "none"
+  val CONNECTOR_CLIENT_POLICY: SettingDef = createDef(
+    _.key(CONNECTOR_CLIENT_POLICY_KEY)
+      .documentation(
+        "all means connector users CAN override any configs used by connector producer/consumer. default value is none"
+      )
+      .optional(CONNECTOR_CLIENT_POLICY_DEFAULT, ImmutableSet.of("all", "none"))
       .build()
   )
 
