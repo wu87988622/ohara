@@ -268,6 +268,17 @@ public final class ConnectorDefUtils {
                   .permission(SettingDef.Permission.READ_ONLY)
                   .build());
 
+  public static final SettingDef PARTITIONER_CLASS_DEFINITION =
+      createDef(
+          builder ->
+              builder
+                  .displayName("partitioner class")
+                  .key("producer.override.partitioner.class")
+                  .documentation("partitioner decides the partition to send the message")
+                  .optionalClassValue(
+                      "org.apache.kafka.clients.producer.internals.DefaultPartitioner")
+                  .build());
+
   public static final SettingDef TAGS_DEFINITION =
       createDef(
           builder ->

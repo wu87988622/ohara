@@ -84,6 +84,8 @@ public interface Workers extends Releasable {
                           "http://" + CommonUtils.hostname() + ":" + availablePort);
                       config.put(
                           WorkerConfig.OFFSET_COMMIT_INTERVAL_MS_CONFIG, String.valueOf(500));
+                      // enable us to override the connector configs
+                      config.put(WorkerConfig.CONNECTOR_CLIENT_POLICY_CLASS_CONFIG, "All");
 
                       Connect connect = new ConnectDistributed().startConnect(config);
                       availablePorts.add(availablePort);

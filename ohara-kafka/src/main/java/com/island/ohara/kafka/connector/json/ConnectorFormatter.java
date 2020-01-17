@@ -19,11 +19,7 @@ package com.island.ohara.kafka.connector.json;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
-import com.island.ohara.common.setting.ConnectorKey;
-import com.island.ohara.common.setting.ObjectKey;
-import com.island.ohara.common.setting.PropGroup;
-import com.island.ohara.common.setting.SettingDef;
-import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.setting.*;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -148,6 +144,12 @@ public final class ConnectorFormatter {
     return setting(
         ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key(),
         String.valueOf(CommonUtils.requirePositiveInt(numberOfTasks)));
+  }
+
+  public ConnectorFormatter partitionClassName(String className) {
+    return setting(
+        ConnectorDefUtils.PARTITIONER_CLASS_DEFINITION.key(),
+        CommonUtils.requireNonEmpty(className));
   }
 
   public ConnectorFormatter propGroup(String key, PropGroup propGroup) {

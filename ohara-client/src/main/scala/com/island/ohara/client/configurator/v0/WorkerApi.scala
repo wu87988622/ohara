@@ -172,13 +172,13 @@ object WorkerApi {
   )
   //-------------[others]-------------//
   private[this] val CONNECTOR_CLIENT_POLICY_KEY             = "connector.client.config.override.policy"
-  private[this] val CONNECTOR_CLIENT_POLICY_DEFAULT: String = "none"
+  private[this] val CONNECTOR_CLIENT_POLICY_DEFAULT: String = "All"
   val CONNECTOR_CLIENT_POLICY: SettingDef = createDef(
     _.key(CONNECTOR_CLIENT_POLICY_KEY)
       .documentation(
-        "all means connector users CAN override any configs used by connector producer/consumer. default value is none"
+        "All means connector users CAN override any configs used by connector producer/consumer. default value is None"
       )
-      .optional(CONNECTOR_CLIENT_POLICY_DEFAULT, ImmutableSet.of("all", "none"))
+      .optional(CONNECTOR_CLIENT_POLICY_DEFAULT, ImmutableSet.of("All", "Principal", "None"))
       .build()
   )
 

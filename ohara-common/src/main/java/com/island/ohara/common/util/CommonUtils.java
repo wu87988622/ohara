@@ -149,7 +149,7 @@ public final class CommonUtils {
               + " seconds more than the timeout time "
               + d.getSeconds()
               + " seconds. Please turning your timeout time.");
-      throw new IllegalStateException("timeout");
+      throw new IllegalStateException("timeout after " + d.toMillis() + " milliseconds");
     } else return false;
   }
 
